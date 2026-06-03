@@ -1,0 +1,51 @@
+@startuml
+title DFD Level 2 - Surat Masuk & Keluar
+
+actor Admin_Sekretariat
+actor Pimpinan
+
+rectangle "Letters Module" {
+    (Catat Surat Masuk)
+    (Upload Scan Surat Masuk)
+    (Catat Disposisi)
+    (Buat Draft Surat Keluar)
+    (Generate PDF Surat Keluar)
+    (Sisipkan Tanda Tangan & Stempel)
+    (Kirim / Distribusi Surat)
+    (Arsip Surat)
+    (Export CSV/PDF)
+}
+
+Admin_Sekretariat --> (Catat Surat Masuk)
+Admin_Sekretariat --> (Buat Draft Surat Keluar)
+Pimpinan --> (Catat Disposisi)
+
+(Catat Surat Masuk) --> (Upload Scan Surat Masuk)
+(Upload Scan Surat Masuk) --> (Catat Disposisi)
+(Catat Disposisi) --> (Arsip Surat)
+
+(Buat Draft Surat Keluar) --> (Generate PDF Surat Keluar)
+(Generate PDF Surat Keluar) --> (Sisipkan Tanda Tangan & Stempel)
+(Sisipkan Tanda Tangan & Stempel) --> (Kirim / Distribusi Surat)
+(Kirim / Distribusi Surat) --> (Arsip Surat)
+
+(Arsip Surat) --> (Export CSV/PDF)
+
+Note top of (Catat Surat Masuk)
+  Data: nomor_surat, tanggal_terima,
+  pengirim, perihal, file_scan
+end note
+
+Note top of (Buat Draft Surat Keluar)
+  Data: nomor_surat, tanggal,
+  tujuan, perihal, isi
+end note
+
+database "Letters DB" as DB
+(Catat Surat Masuk) --> DB
+(Catat Disposisi) --> DB
+(Buat Draft Surat Keluar) --> DB
+(Kirim / Distribusi Surat) --> DB
+(Arsip Surat) --> DB
+(Export CSV/PDF) --> DB
+@enduml

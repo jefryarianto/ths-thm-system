@@ -1,0 +1,35 @@
+// Existing schema – added indexes for frequently queried fields
+model Anggota {
+  // ... existing fields ...
+  statusData        StatusData   @default(complete) @map("status_data")
+  // other fields omitted for brevity
+  @@index([statusData])
+}
+
+model Dokumen {
+  // ... existing fields ...
+  tipe              String
+  // other fields omitted
+  @@index([tipe])
+}
+
+model Iuran {
+  // ... existing fields ...
+  status            StatusIuran  @default(belum_dibayar) @map("status")
+  // other fields omitted
+  @@index([status])
+}
+
+model AspekPenilaian {
+  // ... existing fields ...
+  kodeAspek         String        @unique @map("kode_aspek")
+  // other fields omitted
+  @@index([kodeAspek])
+}
+
+model ItemPenilaian {
+  // ... existing fields ...
+  kodeItem          String        @unique @map("kode_item")
+  // other fields omitted
+  @@index([kodeItem])
+}

@@ -1,0 +1,483 @@
+@startuml
+title ERD Lengkap Rinci - THS-THM System Manajemen
+
+hide circle
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+' ===== Struktur Organisasi =====
+entity "nasional" as nasional {
+  * id : uuid <<PK>>
+  nama : varchar
+  kode : varchar <<unique>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "distrik" as distrik {
+  * id : uuid <<PK>>
+  nasional_id : uuid <<FK>>
+  kode_distrik : varchar <<unique>>
+  nama : varchar
+  alamat : text
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "wilayah" as wilayah {
+  * id : uuid <<PK>>
+  distrik_id : uuid <<FK>>
+  kode_wilayah : varchar <<unique>>
+  nama : varchar
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "ranting" as ranting {
+  * id : uuid <<PK>>
+  wilayah_id : uuid <<FK>>
+  kode_ranting : varchar <<unique>>
+  nama : varchar
+  lokasi_latihan : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "unit_latihan" as unit_latihan {
+  * id : uuid <<PK>>
+  distrik_id : uuid <<FK>>
+  nama : varchar
+  tipe : enum('reguler','khusus')
+  lokasi : text
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== User & Auth =====
+entity "users" as users {
+  * id : uuid <<PK>>
+  email : varchar <<unique>>
+  password_hash : varchar
+  nama_lengkap : varchar
+  role : enum('superadmin','admin_distrik','admin_wilayah','admin_ranting','admin_kegiatan','penguji','anggota')
+  ranting_id : uuid <<FK nullable>>
+  fcm_token : text <<nullable>>
+  refresh_token : text <<nullable>>
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Anggota & Calon =====
+entity "anggota" as anggota {
+  * id : uuid <<PK>>
+  ranting_id : uuid <<FK>>
+  nomor_anggota : varchar <<unique>>
+  nama_lengkap : varchar
+  jenis_kelamin : enum('L','P')
+  tempat_lahir : varchar <<nullable>>
+  tanggal_lahir : date <<nullable>>
+  alamat : text <<nullable>>
+  no_hp : varchar <<nullable>>
+  email : varchar <<nullable>>
+  foto_path : varchar <<nullable>>
+  status_keanggotaan : enum('aktif','nonaktif','pindah','keluar','meninggal')
+  tingkat : varchar
+  status_data : enum('complete','incomplete')
+  status_validasi : enum('pending','approved','rejected')
+  missing_fields : jsonb
+  deleted_at : timestamp <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "calon_anggota" as calon_anggota {
+  * id : uuid <<PK>>
+  ranting_id : uuid <<FK>>
+  nama_lengkap : varchar
+  jenis_kelamin : enum('L','P')
+  tempat_lahir : varchar <<nullable>>
+  tanggal_lahir : date <<nullable>>
+  alamat : text <<nullable>>
+  no_hp : varchar <<nullable>>
+  email : varchar <<nullable>>
+  status : enum('diusulkan','mengikuti_pendadaran','lulus','gagal','dibatalkan')
+  usul_oleh_user_id : uuid <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "pendaftaran" as pendaftaran {
+  * id : uuid <<PK>>
+  nama_lengkap : varchar
+  jenis_kelamin : enum('L','P')
+  tempat_lahir : varchar <<nullable>>
+  tanggal_lahir : date <<nullable>>
+  alamat : text <<nullable>>
+  no_hp : varchar <<nullable>>
+  email : varchar <<nullable>>
+  sumber_info : varchar <<nullable>>
+  status : enum('pending','approved','rejected')
+  catatan : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "klaim" as klaim {
+  * id : uuid <<PK>>
+  anggota_id : uuid <<FK>>
+  tipe : enum('sertifikat','piagam','kartu_anggota','dokumen_lainnya')
+  status : enum('pending','diproses','disetujui','ditolak')
+  catatan : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Kegiatan & Latihan =====
+entity "kegiatan" as kegiatan {
+  * id : uuid <<PK>>
+  scope_type : enum('nasional','distrik','wilayah','ranting','unit_latihan')
+  scope_id : uuid
+  nama : varchar
+  tipe : enum('latihan','pendadaran','ujian_tingkat','rapat','retret','pelantikan','lainnya')
+  lokasi : text
+  tanggal_mulai : timestamp
+  tanggal_selesai : timestamp
+  created_by : uuid <<FK>>
+  status : enum('draft','published','closed','cancelled')
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "latihan" as latihan {
+  * id : uuid <<PK>>
+  ranting_id : uuid <<FK>>
+  kegiatan_id : uuid <<FK nullable>>
+  pelatih_id : uuid <<FK>>
+  hari_tanggal : timestamp
+  lokasi : text
+  jenis_materi : text
+  hasil_latihan_global : text
+  rekomendasi_latihan_berikutnya : text
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "absensi_latihan" as absensi_latihan {
+  * id : uuid <<PK>>
+  latihan_id : uuid <<FK>>
+  anggota_id : uuid <<FK>>
+  hadir : boolean
+  catatan : text <<nullable>>
+  created_at : timestamp
+}
+entity "evaluasi_latihan" as evaluasi_latihan {
+  * id : uuid <<PK>>
+  latihan_id : uuid <<FK>>
+  anggota_id : uuid <<FK>>
+  nilai : decimal
+  catatan : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Peserta & Presensi Kegiatan =====
+entity "kegiatan_peserta" as kegiatan_peserta {
+  * id : uuid <<PK>>
+  kegiatan_id : uuid <<FK>>
+  anggota_id : uuid <<FK>>
+  created_at : timestamp
+}
+entity "presensi_kegiatan" as presensi_kegiatan {
+  * id : uuid <<PK>>
+  kegiatan_id : uuid <<FK>>
+  anggota_id : uuid <<FK>>
+  hadir : boolean
+  created_at : timestamp
+}
+entity "dokumen_kegiatan" as dokumen_kegiatan {
+  * id : uuid <<PK>>
+  kegiatan_id : uuid <<FK>>
+  nama : varchar
+  file_path : text <<nullable>>
+  tipe : varchar
+  created_at : timestamp
+}
+
+' ===== Penilaian Pendadaran =====
+entity "aspek_penilaian" as aspek_penilaian {
+  * id : uuid <<PK>>
+  kode_aspek : varchar <<unique>>
+  nama_aspek : varchar
+  deskripsi : text
+  bobot : decimal
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "item_penilaian" as item_penilaian {
+  * id : uuid <<PK>>
+  aspek_id : uuid <<FK>>
+  kode_item : varchar <<unique>>
+  nama_item : varchar
+  skor_maksimal : decimal
+  bobot : decimal
+  urutan : int
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "nilai_pendadaran" as nilai_pendadaran {
+  * id : uuid <<PK>>
+  kegiatan_id : uuid <<FK>>
+  calon_anggota_id : uuid <<FK>>
+  anggota_id : uuid <<FK nullable>>
+  item_penilaian_id : uuid <<FK>>
+  penguji_user_id : uuid <<FK>>
+  skor : decimal
+  komentar : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "hasil_pendadaran" as hasil_pendadaran {
+  * id : uuid <<PK>>
+  kegiatan_id : uuid <<FK>>
+  calon_anggota_id : uuid <<FK>>
+  total_skor : decimal
+  ranking : int
+  status_kelulusan : enum('lulus','gagal')
+  status_validasi : enum('pending','approved','rejected')
+  divalidasi_oleh : uuid <<FK nullable>>
+  divalidasi_at : timestamp <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "penugasan_penguji" as penugasan_penguji {
+  * id : uuid <<PK>>
+  penguji_user_id : uuid <<FK>>
+  kegiatan_id : uuid <<FK>>
+  peran : varchar <<nullable>>
+  catatan : text <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Dokumen =====
+entity "dokumen" as dokumen {
+  * id : uuid <<PK>>
+  anggota_id : uuid <<FK>>
+  tipe : enum('kartu_anggota','sertifikat_pendadaran','sertifikat_pelatihan','piagam_prestasi')
+  nomor_dokumen : varchar <<unique>>
+  file_path : text <<nullable>>
+  verification_url : text <<nullable>>
+  signature_id : uuid <<nullable>>
+  stamp_id : uuid <<nullable>>
+  status : enum('generated','downloaded','revoked')
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "qr_validation" as qr_validation {
+  * id : uuid <<PK>>
+  dokumen_id : uuid <<FK unique>>
+  token : varchar <<unique>>
+  is_valid : boolean
+  scanned_at : timestamp <<nullable>>
+  scan_count : int
+  created_at : timestamp
+}
+entity "tanda_tangan" as tanda_tangan {
+  * id : uuid <<PK>>
+  user_id : uuid <<FK>>
+  nama : varchar
+  jabatan : varchar
+  image_path : varchar
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "stempel" as stempel {
+  * id : uuid <<PK>>
+  nama : varchar
+  image_path : varchar
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Dokumen Organisasi =====
+entity "dokumen_organisasi" as dokumen_organisasi {
+  * id : uuid <<PK>>
+  kategori_id : uuid <<FK>>
+  judul : varchar
+  deskripsi : text
+  file_path : varchar
+  uploaded_by : uuid <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "kategori_dokumen" as kategori_dokumen {
+  * id : uuid <<PK>>
+  nama : varchar
+  deskripsi : text
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Surat =====
+entity "surat_masuk" as surat_masuk {
+  * id : uuid <<PK>>
+  nomor_surat : varchar
+  tanggal_surat : timestamp
+  tanggal_terima : timestamp
+  pengirim : varchar
+  perihal : varchar
+  file_scan_path : text <<nullable>>
+  status : enum('draft','diterima','diproses','terkirim','diarsipkan')
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "surat_keluar" as surat_keluar {
+  * id : uuid <<PK>>
+  nomor_surat : varchar
+  tanggal_surat : timestamp
+  tujuan : varchar
+  perihal : varchar
+  isi : text
+  file_path : text <<nullable>>
+  status : enum('draft','diterima','diproses','terkirim','diarsipkan')
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "disposisi" as disposisi {
+  * id : uuid <<PK>>
+  surat_masuk_id : uuid <<FK>>
+  dari_user_id : uuid <<FK>>
+  kepada_user_id : uuid <<FK>>
+  isi : text
+  status : enum('pending','dibaca','ditindaklanjuti')
+  created_at : timestamp
+}
+
+' ===== Iuran =====
+entity "iuran" as iuran {
+  * id : uuid <<PK>>
+  anggota_id : uuid <<FK>>
+  periode : varchar
+  jumlah : decimal
+  tanggal_bayar : timestamp <<nullable>>
+  metode_bayar : enum('manual','transfer','online')
+  status : enum('belum_dibayar','menunggu_verifikasi','lunas','menunggak')
+  bukti_bayar_path : text <<nullable>>
+  diverifikasi_oleh : uuid <<FK nullable>>
+  diverifikasi_at : timestamp <<nullable>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Notifikasi =====
+entity "notifikasi" as notifikasi {
+  * id : uuid <<PK>>
+  user_id : uuid <<FK>>
+  judul : varchar
+  isi : text
+  tipe : enum('welcome','data_incomplete','reminder_latihan','reminder_pendadaran','reminder_iuran','status_klaim','dokumen_ready','umum')
+  is_read : boolean
+  data : jsonb
+  created_at : timestamp
+}
+entity "device_tokens" as device_tokens {
+  * id : uuid <<PK>>
+  user_id : uuid <<FK>>
+  token : varchar <<unique>>
+  platform : varchar
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ===== Konfigurasi =====
+entity "settings" as settings {
+  * id : uuid <<PK>>
+  key : varchar <<unique>>
+  value : jsonb
+  created_at : timestamp
+  updated_at : timestamp
+}
+entity "periode" as periode {
+  * id : uuid <<PK>>
+  nama : varchar
+  tgl_mulai : timestamp
+  tgl_selesai : timestamp
+  is_active : boolean
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ========================
+' RELASI
+' ========================
+
+' Organisasi
+nasional ||--o{ distrik
+distrik ||--o{ wilayah
+distrik ||--o{ unit_latihan
+wilayah ||--o{ ranting
+
+' User & Anggota
+ranting ||--o{ users
+ranting ||--o{ anggota
+ranting ||--o{ calon_anggota
+users ||--o{ calon_anggota : usul_oleh
+users ||--o{ kegiatan : creator
+users ||--o{ latihan : pelatih
+users ||--o{ nilai_pendadaran : penguji
+users ||--o{ hasil_pendadaran : validator
+
+' Anggota relations
+anggota ||--o{ dokumen
+anggota ||--o{ iuran
+anggota ||--o{ klaim
+anggota ||--o{ nilai_pendadaran
+
+' Calon relations
+calon_anggota ||--o{ nilai_pendadaran
+calon_anggota ||--o{ hasil_pendadaran
+
+' Kegiatan & Latihan
+kegiatan ||--o{ latihan
+kegiatan ||--o{ nilai_pendadaran
+kegiatan ||--o{ hasil_pendadaran
+kegiatan ||--o{ kegiatan_peserta
+kegiatan ||--o{ presensi_kegiatan
+kegiatan ||--o{ dokumen_kegiatan
+kegiatan ||--o{ penugasan_penguji
+latihan ||--o{ absensi_latihan
+latihan ||--o{ evaluasi_latihan
+
+' Partisipasi
+kegiatan_peserta }o--|| anggota
+presensi_kegiatan }o--|| anggota
+absensi_latihan }o--|| anggota
+evaluasi_latihan }o--|| anggota
+dokumen_kegiatan }o--|| kegiatan
+
+' Penilaian
+aspek_penilaian ||--o{ item_penilaian
+item_penilaian ||--o{ nilai_pendadaran
+
+' Penugasan Penguji
+penugasan_penguji }o--|| users : penguji
+penugasan_penguji }o--|| kegiatan
+
+' Dokumen
+dokumen ||--|| qr_validation
+users ||--o{ tanda_tangan
+
+' Dokumen Organisasi
+kategori_dokumen ||--o{ dokumen_organisasi
+users ||--o{ dokumen_organisasi : uploader
+
+' Surat
+surat_masuk ||--o{ disposisi
+users ||--o{ disposisi : dari
+users ||--o{ disposisi : kepada
+
+' Iuran
+users ||--o{ iuran : verifikator
+
+' Notifikasi
+users ||--o{ notifikasi
+users ||--o{ device_tokens
+
+@enduml

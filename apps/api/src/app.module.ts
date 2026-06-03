@@ -1,0 +1,77 @@
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { HealthController } from './common/health.controller';
+import { JwtAuthGuard, RolesGuard } from './modules/auth/guards/jwt-auth.guard';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { MembersModule } from './modules/members/members.module';
+import { CandidatesModule } from './modules/candidates/candidates.module';
+import { RegistrationsModule } from './modules/registrations/registrations.module';
+import { ClaimsModule } from './modules/claims/claims.module';
+import { TrainingsModule } from './modules/trainings/trainings.module';
+import { GraduationsModule } from './modules/graduations/graduations.module';
+import { ActivitiesModule } from './modules/activities/activities.module';
+import { ExaminersModule } from './modules/examiners/examiners.module';
+import { AssessmentsModule } from './modules/assessments/assessments.module';
+import { DocumentsModule } from './modules/documents/documents.module';
+import { OrgDocumentsModule } from './modules/org-documents/org-documents.module';
+import { LettersModule } from './modules/letters/letters.module';
+import { DuesModule } from './modules/dues/dues.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { SettingsModule } from './modules/settings/settings.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '../../.env', '.env.production'],
+    }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: parseInt(process.env.THROTTLE_TTL || '60', 10),
+        limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
+      },
+    ]),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    MembersModule,
+    CandidatesModule,
+    RegistrationsModule,
+    ClaimsModule,
+    TrainingsModule,
+    GraduationsModule,
+    ActivitiesModule,
+    ExaminersModule,
+    AssessmentsModule,
+    DocumentsModule,
+    OrgDocumentsModule,
+    LettersModule,
+    DuesModule,
+    PaymentsModule,
+    NotificationsModule,
+    ReportsModule,
+    SettingsModule,
+  ],
+  controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
+})
+export class AppModule {}

@@ -1,0 +1,10 @@
+kode_item,kode_aspek,nama_item,skor_maksimal,bobot,urutan,is_active
+I01,A01,Pukulan Dasar,10,10,1,true
+I02,A01,Tendangan Dasar,10,10,2,true
+I03,A01,Blocking/Elakan,10,10,3,true
+I04,A02,Kehadiran,5,5,1,true
+I05,A02,Kedisiplinan Latihan,5,5,2,true
+I06,A03,Stamina,10,10,1,true
+I07,A03,Kekuatan,10,10,2,true
+I08,A04,Sikap Hormat,5,5,1,true
+I09,A04,Kedisiplinan Etika,5,5,2,true

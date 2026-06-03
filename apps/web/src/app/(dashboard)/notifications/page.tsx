@@ -1,0 +1,417 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import apiClient from '@/lib/api-client';
+import DataTable from '@/components/tables/data-table';
+import {
+  Send, Bell, BellOff, Filter, CheckCheck, Download, X, Settings,
+} from 'lucide-react';
+import Link from 'next/link';
+
+const TIPE_OPTIONS = [
+  { value: '', label: 'Semua Tipe' },
+  { value: 'umum', label: 'Umum' },
+  { value: 'welcome', label: 'Selamat Datang' },
+  { value: 'data_incomplete', label: 'Data Tidak Lengkap' },
+  { value: 'reminder_latihan', label: 'Reminder Latihan' },
+  { value: 'reminder_pendadaran', label: 'Reminder Pendadaran' },
+  { value: 'reminder_iuran', label: 'Reminder Iuran' },
+  { value: 'status_klaim', label: 'Status Klaim' },
+  { value: 'dokumen_ready', label: 'Dokumen Ready' },
+];
+
+const tipeColors: Record<string, string> = {
+  umum: 'bg-gray-100 text-gray-700',
+  welcome: 'bg-blue-100 text-blue-700',
+  data_incomplete: 'bg-orange-100 text-orange-700',
+  reminder_latihan: 'bg-green-100 text-green-700',
+  reminder_pendadaran: 'bg-purple-100 text-purple-700',
+  reminder_iuran: 'bg-yellow-100 text-yellow-700',
+  status_klaim: 'bg-pink-100 text-pink-700',
+  dokumen_ready: 'bg-teal-100 text-teal-700',
+};
+
+const columns = [
+  {
+    key: 'judul',
+    label: 'Judul',
+    render: (n: any) => (
+      <div className="flex items-center gap-2">
+        {!n.isRead && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />}
+        <span className={`font-medium ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>{n.judul}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'isi',
+    label: 'Pesan',
+    render: (n: any) => (
+      <span className="text-gray-500">{n.isi?.length > 60 ? n.isi.slice(0, 60) + '...' : n.isi || ''}</span>
+    ),
+  },
+  {
+    key: 'tipe',
+    label: 'Tipe',
+    render: (n: any) => (
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${tipeColors[n.tipe] || 'bg-gray-100 text-gray-600'}`}>
+        {TIPE_OPTIONS.find(t => t.value === n.tipe)?.label || n.tipe}
+      </span>
+    ),
+  },
+  {
+    key: 'isRead',
+    label: 'Status',
+    render: (n: any) => n.isRead
+      ? <span className="text-green-600 text-xs font-medium">Dibaca</span>
+      : <span className="text-blue-600 text-xs font-semibold">Baru</span>,
+  },
+  {
+    key: 'createdAt',
+    label: 'Tanggal',
+    render: (n: any) => new Date(n.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+  },
+];
+
+export default function NotificationsPage() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 0, unreadCount: 0 });
+  const [filterTipe, setFilterTipe] = useState('');
+  const [markingAll, setMarkingAll] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Send notification modal state
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendTarget, setSendTarget] = useState('broadcast');
+  const [sendTargetRole, setSendTargetRole] = useState('admin_distrik');
+  const [sendTargetUserId, setSendTargetUserId] = useState('');
+  const [sendForm, setSendForm] = useState({ judul: '', isi: '', tipe: 'umum' });
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: any = { page, limit: 10 };
+      if (filterTipe) params.tipe = filterTipe;
+      const { data: res } = await apiClient.get('/notifications', { params });
+      setData(res.data);
+      setMeta(res.meta);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, [page, filterTipe]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Real-time polling: refresh unread count every 30s
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const { data: res } = await apiClient.get('/notifications/count');
+        setMeta((prev) => ({ ...prev, unreadCount: res.data?.count || 0 }));
+      } catch { /* ignore */ }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAllRead = async () => {
+    setMarkingAll(true);
+    try {
+      await apiClient.patch('/notifications/read-all');
+      setData((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setMeta((prev) => ({ ...prev, unreadCount: 0 }));
+    } catch { /* ignore */ }
+    setMarkingAll(false);
+  };
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      // Fetch all pages
+      const allData: any[] = [];
+      if (!meta.total) {
+        setExporting(false);
+        return;
+      }
+      let p = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const params: any = { page: p, limit: 50 };
+        if (filterTipe) params.tipe = filterTipe;
+        const { data: res } = await apiClient.get('/notifications', { params });
+        allData.push(...(res.data || []));
+        hasMore = p < res.meta.totalPages;
+        p++;
+      }
+
+      // Build CSV
+      const headers = ['ID', 'Judul', 'Isi', 'Tipe', 'Dibaca', 'Tanggal'];
+      const rows = allData.map((n: any) => [
+        n.id,
+        JSON.stringify(n.judul || ''),
+        JSON.stringify(n.isi || ''),
+        n.tipe,
+        n.isRead ? 'Ya' : 'Tidak',
+        new Date(n.createdAt).toLocaleDateString('id-ID'),
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `notifikasi-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+    setExporting(false);
+  };
+
+  const handleSendNotification = async () => {
+    if (!sendForm.judul || !sendForm.isi) return;
+    setSending(true);
+    setSendResult(null);
+    try {
+      let res;
+      if (sendTarget === 'broadcast') {
+        res = await apiClient.post('/notifications/broadcast', sendForm);
+      } else if (sendTarget === 'role') {
+        res = await apiClient.post('/notifications/role', { ...sendForm, role: sendTargetRole });
+      } else if (sendTarget === 'user') {
+        res = await apiClient.post('/notifications/send', { ...sendForm, userId: sendTargetUserId });
+      }
+      setSendResult(`Berhasil! ${res?.data?.data?.sentTo || 1} notifikasi terkirim.`);
+      setSendForm({ judul: '', isi: '', tipe: 'umum' });
+      setTimeout(() => { setSendResult(null); setShowSendModal(false); }, 2000);
+    } catch (err: any) {
+      setSendResult(err?.response?.data?.message || 'Gagal mengirim notifikasi');
+    }
+    setSending(false);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilterTipe(value);
+    setPage(1);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">Notifikasi</h1>
+          {meta.unreadCount > 0 && (
+            <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+              {meta.unreadCount} baru
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {meta.unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllRead}
+              disabled={markingAll}
+              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
+            >
+              <CheckCheck size={14} />
+              {markingAll ? 'Memproses...' : 'Tandai semua dibaca'}
+            </button>
+          )}
+          <button
+            onClick={handleExportCSV}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
+          >
+            <Download size={14} /> {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+          <Link
+            href="/notifications/preferences"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition"
+          >
+            <Settings size={14} /> Pengaturan
+          </Link>
+          <button
+            onClick={() => setShowSendModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
+          >
+            <Send size={14} /> Kirim Notifikasi
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-blue-50"><Bell size={18} className="text-blue-600" /></div>
+          <div>
+            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-lg font-bold text-gray-900">{meta.total}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-orange-50"><Bell size={18} className="text-orange-600" /></div>
+          <div>
+            <p className="text-xs text-gray-500">Belum Dibaca</p>
+            <p className="text-lg font-bold text-gray-900">{meta.unreadCount}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-green-50"><BellOff size={18} className="text-green-600" /></div>
+          <div>
+            <p className="text-xs text-gray-500">Sudah Dibaca</p>
+            <p className="text-lg font-bold text-gray-900">{meta.total - meta.unreadCount}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter */}
+      <div className="flex items-center gap-2">
+        <Filter size={16} className="text-gray-400" />
+        <select
+          value={filterTipe}
+          onChange={(e) => handleFilterChange(e.target.value)}
+          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          {TIPE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        {filterTipe && (
+          <button onClick={() => handleFilterChange('')} className="text-xs text-blue-600 hover:text-blue-800">
+            Reset
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <DataTable
+        data={data}
+        loading={loading}
+        page={page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        onPageChange={setPage}
+        columns={columns}
+      />
+
+      {/* Send Notification Modal */}
+      {showSendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowSendModal(false); setSendResult(null); }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Kirim Notifikasi</h2>
+              <button onClick={() => { setShowSendModal(false); setSendResult(null); }} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Target */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Kirim Ke</label>
+              <select
+                value={sendTarget}
+                onChange={(e) => setSendTarget(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="broadcast">Semua Anggota</option>
+                <option value="role">Berdasarkan Role</option>
+                <option value="user">User Tertentu</option>
+              </select>
+            </div>
+
+            {sendTarget === 'role' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  value={sendTargetRole}
+                  onChange={(e) => setSendTargetRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="superadmin">Superadmin</option>
+                  <option value="admin_distrik">Admin Distrik</option>
+                  <option value="admin_wilayah">Admin Wilayah</option>
+                  <option value="admin_ranting">Admin Ranting</option>
+                  <option value="anggota">Anggota</option>
+                </select>
+              </div>
+            )}
+
+            {sendTarget === 'user' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                <input
+                  type="text"
+                  value={sendTargetUserId}
+                  onChange={(e) => setSendTargetUserId(e.target.value)}
+                  placeholder="Masukkan User ID"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            {/* Form fields */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+              <input
+                type="text"
+                value={sendForm.judul}
+                onChange={(e) => setSendForm((p) => ({ ...p, judul: e.target.value }))}
+                placeholder="Judul notifikasi"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pesan</label>
+              <textarea
+                value={sendForm.isi}
+                onChange={(e) => setSendForm((p) => ({ ...p, isi: e.target.value }))}
+                placeholder="Isi notifikasi"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+              <select
+                value={sendForm.tipe}
+                onChange={(e) => setSendForm((p) => ({ ...p, tipe: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              >
+                {TIPE_OPTIONS.filter(t => t.value).map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Result */}
+            {sendResult && (
+              <div className={`text-sm px-3 py-2 rounded-lg ${sendResult.includes('Berhasil') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {sendResult}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => { setShowSendModal(false); setSendResult(null); }}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSendNotification}
+                disabled={sending || !sendForm.judul || !sendForm.isi}
+                className="px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+              >
+                {sending ? 'Mengirim...' : 'Kirim'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

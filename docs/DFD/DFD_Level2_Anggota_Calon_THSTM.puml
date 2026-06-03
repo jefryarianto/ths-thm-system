@@ -1,0 +1,57 @@
+@startuml
+title DFD Level 2 - Manajemen Anggota & Calon Anggota
+
+actor Superadmin
+actor Admin_Distrik
+actor Admin_Wilayah
+actor Admin_Ranting
+actor Anggota
+
+rectangle "Member & Candidate Module" {
+    (Tambah/Ubah Anggota)
+    (Import CSV Anggota)
+    (Validasi Data Anggota)
+    (Approval Admin)
+    (Update Status Anggota)
+    (Tambah/Ubah Calon)
+    (Import CSV Calon)
+    (Validasi Data Calon)
+    (Approve Calon -> Anggota)
+    (Reject Calon)
+    (Export Data)
+}
+
+Superadmin --> (Tambah/Ubah Anggota)
+Superadmin --> (Tambah/Ubah Calon)
+Admin_Distrik --> (Tambah/Ubah Anggota)
+Admin_Wilayah --> (Tambah/Ubah Anggota)
+Admin_Ranting --> (Tambah/Ubah Anggota)
+Anggota --> (Update Data Anggota)
+
+(Import CSV Anggota) --> (Validasi Data Anggota)
+(Validasi Data Anggota) --> (Approval Admin)
+(Approval Admin) --> (Update Status Anggota)
+(Update Status Anggota) --> (Export Data)
+
+(Import CSV Calon) --> (Validasi Data Calon)
+(Validasi Data Calon) --> (Approve Calon -> Anggota)
+(Validasi Data Calon) --> (Reject Calon)
+(Approve Calon -> Anggota) --> database "Member DB"
+
+Note top of (Validasi Data Anggota)
+  Data tidak lengkap →
+  status 'incomplete' +
+  notifikasi FCM ke anggota
+end note
+
+Note top of (Import CSV Anggota)
+  Kolom: nama, email, hp,
+  alamat, tgl_lahir, tgl_bergabung
+end note
+
+database "Member DB" as DB
+(Tambah/Ubah Anggota) --> DB
+(Tambah/Ubah Calon) --> DB
+(Approval Admin) --> DB
+(Export Data) --> DB
+@enduml

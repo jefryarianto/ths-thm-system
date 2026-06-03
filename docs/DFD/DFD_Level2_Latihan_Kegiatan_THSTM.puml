@@ -1,0 +1,48 @@
+@startuml
+title DFD Level 2 - Latihan & Kegiatan
+
+actor Admin_Kegiatan
+actor Pelatih
+actor Anggota
+
+rectangle "Training & Activity Module" {
+    (Buat Jadwal Latihan)
+    (Daftar Peserta Latihan)
+    (Import CSV Peserta)
+    (Catat Absensi QR)
+    (Input Evaluasi Latihan)
+    (Buat Kegiatan)
+    (Daftar Peserta Kegiatan)
+    (Catat Kehadiran)
+    (Upload Dokumen Kegiatan)
+}
+
+Admin_Kegiatan --> (Buat Jadwal Latihan)
+Admin_Kegiatan --> (Buat Kegiatan)
+Pelatih --> (Catat Absensi QR)
+Pelatih --> (Input Evaluasi Latihan)
+Anggota --> (Lihat Jadwal Latihan)
+
+(Buat Jadwal Latihan) --> (Daftar Peserta Latihan)
+(Daftar Peserta Latihan) --> (Import CSV Peserta)
+(Import CSV Peserta) --> (Catat Absensi QR)
+(Catat Absensi QR) --> (Input Evaluasi Latihan)
+
+(Buat Kegiatan) --> (Daftar Peserta Kegiatan)
+(Daftar Peserta Kegiatan) --> (Catat Kehadiran)
+(Catat Kehadiran) --> (Upload Dokumen Kegiatan)
+
+Note right of (Catat Absensi QR)
+  Scan QR code oleh pelatih
+  → auto catat kehadiran
+  → simpan timestamp
+end note
+
+database "Training & Activity DB" as DB
+(Buat Jadwal Latihan) --> DB
+(Catat Absensi QR) --> DB
+(Input Evaluasi Latihan) --> DB
+(Buat Kegiatan) --> DB
+(Catat Kehadiran) --> DB
+(Upload Dokumen Kegiatan) --> DB
+@enduml

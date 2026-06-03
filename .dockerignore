@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+.expo/
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+.git
+.gitignore
+Dockerfile*
+docker-compose*
+.coverage
+coverage/
+.nyc_output

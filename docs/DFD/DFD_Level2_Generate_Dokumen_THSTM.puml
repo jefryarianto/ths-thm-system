@@ -1,0 +1,54 @@
+@startuml
+title DFD Level 2 - Generate Dokumen (Sertifikat, Piagam, Kartu Anggota)
+
+actor Superadmin
+actor Admin
+actor Anggota
+actor "Mobile App" as Mobile
+
+rectangle "Document Generation Module" {
+    (Pilih Template Dokumen)
+    (Generate Dokumen)
+    (Render PDF)
+    (Sisipkan Tanda Tangan)
+    (Sisipkan Cap/Stempel)
+    (Generate QR Code)
+    (Download / Kirim Dokumen)
+    (Validasi QR)
+}
+
+Superadmin --> (Pilih Template Dokumen)
+Admin --> (Pilih Template Dokumen)
+Anggota --> (Download / Kirim Dokumen)
+Mobile --> (Validasi QR)
+
+(Pilih Template Dokumen) --> (Generate Dokumen)
+(Generate Dokumen) --> (Render PDF)
+(Render PDF) --> (Sisipkan Tanda Tangan)
+(Render PDF) --> (Sisipkan Cap/Stempel)
+(Render PDF) --> (Generate QR Code)
+(Sisipkan Tanda Tangan) --> (Download / Kirim Dokumen)
+(Sisipkan Cap/Stempel) --> (Download / Kirim Dokumen)
+(Generate QR Code) --> (Download / Kirim Dokumen)
+(Download / Kirim Dokumen) --> (Validasi QR)
+
+Note top of (Generate QR Code)
+  QR berisi URL verifikasi unik
+  → GET /api/documents/:id/verify-qr
+  → return { valid: true/false }
+end note
+
+Note right of (Pilih Template Dokumen)
+  Template JSX:
+  - Kartu Anggota (85.6x54mm)
+  - Sertifikat (A4 landscape)
+  - Piagam (A4 portrait)
+end note
+
+database "Document DB" as DB
+(Generate Dokumen) --> DB
+(Validasi QR) --> DB
+
+database "File Storage (S3/Local)" as Files
+(Render PDF) --> Files
+@enduml

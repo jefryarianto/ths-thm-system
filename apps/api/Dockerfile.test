@@ -1,0 +1,21 @@
+# Test Stage — lightweight image for running E2E tests
+FROM node:20-alpine AS test
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy workspace config files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/api/package.json apps/api/
+COPY packages/shared/package.json packages/shared/
+COPY packages/templates/package.json packages/templates/
+
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --filter @ths-thm/api --filter @ths-thm/shared --filter @ths-thm/templates
+
+COPY . .
+
+# Generate Prisma client
+RUN cd apps/api && npx prisma generate
+
+ENV NODE_ENV=test

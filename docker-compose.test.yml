@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: ths-thm-test-db
+    environment:
+      POSTGRES_USER: ths_thm
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: ths_thm_test
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ths_thm -d ths_thm_test']
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  e2e-test:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile.test
+    container_name: ths-thm-e2e-runner
+    environment:
+      DATABASE_URL: postgresql://ths_thm:test_password@postgres-test:5432/ths_thm_test
+      JWT_SECRET: test-jwt-secret
+      JWT_REFRESH_SECRET: test-jwt-refresh-secret
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      NODE_ENV: test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    command: >
+      sh -c "
+        cd apps/api &&
+        npx prisma migrate deploy &&
+        npx jest --config ./test/jest-e2e.json --testPathPattern app.e2e-spec --runInBand --forceExit
+      "

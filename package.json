@@ -1,0 +1,47 @@
+{
+  "name": "ths-thm-system",
+  "version": "1.0.0",
+  "description": "THS-THM System Manajemen - Monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @ths-thm/api dev\" \"pnpm --filter @ths-thm/web dev\"",
+    "dev:api": "pnpm --filter @ths-thm/api start:dev",
+    "dev:web": "pnpm --filter @ths-thm/web dev",
+    "dev:mobile": "pnpm --filter @ths-thm/mobile start",
+    "build": "pnpm --filter @ths-thm/api build && pnpm --filter @ths-thm/web build",
+    "build:api": "pnpm --filter @ths-thm/api build",
+    "build:web": "pnpm --filter @ths-thm/web build",
+    "start:api": "pnpm --filter @ths-thm/api start:prod",
+    "start:web": "pnpm --filter @ths-thm/web start",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "db:migrate": "pnpm --filter @ths-thm/api prisma:migrate",
+    "db:deploy": "pnpm --filter @ths-thm/api prisma:deploy",
+    "db:seed": "pnpm --filter @ths-thm/api prisma:seed",
+    "db:studio": "pnpm --filter @ths-thm/api prisma:studio",
+    "db:generate": "pnpm --filter @ths-thm/api prisma:generate",
+    "lint": "pnpm -r run lint",
+    "lint:api": "pnpm --filter @ths-thm/api lint",
+    "lint:web": "pnpm --filter @ths-thm/web lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r run typecheck 2>/dev/null || true",
+    "test": "pnpm --filter @ths-thm/api test",
+    "test:cov": "pnpm --filter @ths-thm/api test:cov",
+    "test:e2e": "pnpm --filter @ths-thm/api test:e2e",
+    "test:e2e:docker": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit && docker compose -f docker-compose.test.yml down",
+    "clean": "pnpm -r exec rm -rf dist .next .expo node_modules coverage",
+    "prepare": "pnpm --filter @ths-thm/api prisma:generate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.0"
+  }
+}

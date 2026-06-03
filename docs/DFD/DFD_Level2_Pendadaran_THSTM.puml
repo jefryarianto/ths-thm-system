@@ -1,0 +1,25 @@
+@startuml
+title DFD Level 2 - Pendadaran & Ujian Praktek
+
+actor Admin_Kegiatan
+actor Penguji
+actor Anggota
+
+rectangle "Pendadaran Module" {
+    (Daftar Calon Anggota)
+    (Input Nilai Aspek & Item)
+    (Hitung Total & Ranking)
+    (Validasi Nilai oleh Admin)
+    (Generate Sertifikat & Piagam)
+    (Update Status Anggota Aktif)
+}
+
+Admin_Kegiatan --> (Daftar Calon Anggota)
+Penguji --> (Input Nilai Aspek & Item)
+(Input Nilai Aspek & Item) --> (Hitung Total & Ranking)
+(Hitung Total & Ranking) --> (Validasi Nilai oleh Admin)
+(Validasi Nilai oleh Admin) --> (Generate Sertifikat & Piagam)
+(Generate Sertifikat & Piagam) --> (Update Status Anggota Aktif)
+(Generate Sertifikat & Piagam) --> database "Pendadaran DB"
+
+@enduml

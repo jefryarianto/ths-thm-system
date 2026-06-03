@@ -1,0 +1,132 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+
+@Injectable()
+export class TrainingsService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(query: any) {
+    const page = parseInt(query.page) || 1;
+    const limit = parseInt(query.limit) || 10;
+    const where: any = {};
+    if (query.rantingId) where.rantingId = query.rantingId;
+
+    const [data, total] = await Promise.all([
+      this.prisma.latihan.findMany({
+        where, skip: (page - 1) * limit, take: limit,
+        include: { ranting: true, pelatih: { select: { id: true, namaLengkap: true } } },
+        orderBy: { hariTanggal: 'desc' },
+      }),
+      this.prisma.latihan.count({ where }),
+    ]);
+
+    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async findOne(id: string) {
+    const training = await this.prisma.latihan.findUnique({
+      where: { id },
+      include: {
+        ranting: true,
+        pelatih: { select: { id: true, namaLengkap: true } },
+        absensi: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } },
+        evaluasi: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } },
+      },
+    });
+    if (!training) throw new NotFoundException('Latihan tidak ditemukan');
+    return { success: true, data: training };
+  }
+
+  async create(dto: any) {
+    const training = await this.prisma.latihan.create({ data: dto });
+    return { success: true, data: training, message: 'Latihan berhasil dibuat' };
+  }
+
+  async update(id: string, dto: any) {
+    const training = await this.prisma.latihan.update({ where: { id }, data: dto });
+    return { success: true, data: training, message: 'Latihan berhasil diperbarui' };
+  }
+
+  async remove(id: string) {
+    await this.prisma.latihan.delete({ where: { id } });
+    return { success: true, message: 'Latihan berhasil dihapus' };
+  }
+
+  async getAttendances(trainingId: string) {
+    const attendances = await this.prisma.absensiLatihan.findMany({
+      where: { latihanId: trainingId },
+      include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { success: true, data: attendances };
+  }
+
+  async recordAttendance(trainingId: string, dto: any) {
+    const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
+    if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
+
+    const attendance = await this.prisma.absensiLatihan.upsert({
+      where: { id: dto.id || '' },
+      update: { hadir: dto.hadir !== false, catatan: dto.catatan },
+      create: {
+        latihanId: trainingId,
+        anggotaId: dto.anggotaId || dto.memberId,
+        hadir: dto.hadir !== false,
+        catatan: dto.catatan,
+      },
+    });
+    return { success: true, data: attendance, message: 'Kehadiran tercatat' };
+  }
+
+  async importAttendance(trainingId: string, data: any[]) {
+    const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
+    if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
+
+    let imported = 0;
+    for (const row of data) {
+      const anggotaId = row.anggotaId || row.memberId;
+      const existing = await this.prisma.absensiLatihan.findFirst({
+        where: { latihanId: trainingId, anggotaId },
+      });
+      if (!existing) {
+        await this.prisma.absensiLatihan.create({
+          data: { latihanId: trainingId, anggotaId, hadir: row.hadir !== false, catatan: row.catatan },
+        });
+        imported++;
+      }
+    }
+    return { success: true, data: { imported }, message: `${imported} kehadiran berhasil diimpor` };
+  }
+
+  async getEvaluations(trainingId: string) {
+    const evaluations = await this.prisma.evaluasiLatihan.findMany({
+      where: { latihanId: trainingId },
+      include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { success: true, data: evaluations };
+  }
+
+  async createEvaluation(trainingId: string, dto: any) {
+    const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
+    if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
+
+    const evaluation = await this.prisma.evaluasiLatihan.create({
+      data: { latihanId: trainingId, anggotaId: dto.anggotaId || dto.memberId, nilai: dto.nilai, catatan: dto.catatan },
+    });
+    return { success: true, data: evaluation, message: 'Evaluasi berhasil disimpan' };
+  }
+
+  async updateEvaluation(trainingId: string, evaluationId: string, dto: any) {
+    const evaluation = await this.prisma.evaluasiLatihan.update({
+      where: { id: evaluationId },
+      data: { nilai: dto.nilai, catatan: dto.catatan },
+    });
+    return { success: true, data: evaluation, message: 'Evaluasi berhasil diperbarui' };
+  }
+
+  async removeEvaluation(trainingId: string, evaluationId: string) {
+    await this.prisma.evaluasiLatihan.delete({ where: { id: evaluationId } });
+    return { success: true, message: 'Evaluasi berhasil dihapus' };
+  }
+}

@@ -1,0 +1,52 @@
+@startuml
+title DFD Level 2 - Iuran Anggota
+
+actor Admin_Keuangan
+actor Admin_Ranting
+actor Anggota
+
+rectangle "Dues Module" {
+    (Set Tarif Iuran)
+    (Catat Pembayaran Manual)
+    (Import CSV Pembayaran)
+    (Verifikasi Pembayaran)
+    (Cek Tunggakan)
+    (Kirim Reminder Iuran)
+    (Generate Laporan Keuangan)
+}
+
+Admin_Keuangan --> (Set Tarif Iuran)
+Admin_Keuangan --> (Verifikasi Pembayaran)
+Admin_Ranting --> (Catat Pembayaran Manual)
+Admin_Ranting --> (Import CSV Pembayaran)
+Anggota --> (Lihat Status Iuran)
+
+(Set Tarif Iuran) --> (Catat Pembayaran Manual)
+(Catat Pembayaran Manual) --> (Verifikasi Pembayaran)
+(Import CSV Pembayaran) --> (Verifikasi Pembayaran)
+(Verifikasi Pembayaran) --> (Cek Tunggakan)
+
+(Cek Tunggakan) --> (Kirim Reminder Iuran)
+(Cek Tunggakan) --> (Generate Laporan Keuangan)
+
+Note right of (Kirim Reminder Iuran)
+  Trigger otomatis:
+  - H-7 jatuh tempo → FCM
+  - H-1 jatuh tempo → FCM + Email
+  - Lewat jatuh tempo → status 'menunggak'
+end note
+
+Note bottom of (Generate Laporan Keuangan)
+  Export format:
+  - PDF (rekap per ranting/wilayah)
+  - XLSX (detail transaksi)
+  - Filter: periode, status, ranting
+end note
+
+database "Dues DB" as DB
+(Set Tarif Iuran) --> DB
+(Catat Pembayaran Manual) --> DB
+(Verifikasi Pembayaran) --> DB
+(Cek Tunggakan) --> DB
+(Generate Laporan Keuangan) --> DB
+@enduml

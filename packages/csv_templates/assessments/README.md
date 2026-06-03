@@ -1,0 +1,1 @@
+aspect_name,item_name,description,max_score,is_active

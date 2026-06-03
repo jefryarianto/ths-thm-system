@@ -1,0 +1,61 @@
+@startuml
+title DFD Level 2 - Notifikasi FCM (Firebase Cloud Messaging)
+
+actor Superadmin
+actor "System (Trigger Otomatis)" as System
+actor "Mobile App" as Mobile
+
+rectangle "Notification Module" {
+    (Register FCM Token)
+    (Kirim Notifikasi Manual)
+    (Kirim Notifikasi Massal)
+    (Jadwalkan Notifikasi)
+    (Trigger Otomatis)
+    (Riwayat Notifikasi)
+    (Manage Device Tokens)
+}
+
+Mobile --> (Register FCM Token)
+Superadmin --> (Kirim Notifikasi Manual)
+Superadmin --> (Kirim Notifikasi Massal)
+System --> (Trigger Otomatis)
+
+(Register FCM Token) --> (Manage Device Tokens)
+
+(Kirim Notifikasi Manual) --> database "FCM Gateway"
+(Kirim Notifikasi Massal) --> database "FCM Gateway"
+(Jadwalkan Notifikasi) --> database "FCM Gateway"
+(Trigger Otomatis) --> database "FCM Gateway"
+
+database "FCM Gateway" as FCM
+FCM --> Mobile : Push Notification
+
+(Register FCM Token) --> (Riwayat Notifikasi)
+(Kirim Notifikasi Manual) --> (Riwayat Notifikasi)
+(Kirim Notifikasi Massal) --> (Riwayat Notifikasi)
+(Trigger Otomatis) --> (Riwayat Notifikasi)
+
+Note top of (Trigger Otomatis)
+  Event trigger:
+  - Anggota baru terdaftar → welcome
+  - Data import tidak lengkap → incomplete
+  - Latihan terjadwal → reminder H-1
+  - Pendadaran terjadwal → reminder H-3
+  - Iuran jatuh tempo → reminder H-7, H-1
+  - Klaim disetujui/ditolak → status update
+  - Dokumen siap → download ready
+end note
+
+Note right of (Kirim Notifikasi Massal)
+  Target:
+  - Per role (admin_distrik, penguji, dll)
+  - Per ranting / wilayah / distrik
+  - Per status anggota
+end note
+
+database "Notification DB" as DB
+(Register FCM Token) --> DB
+(Manage Device Tokens) --> DB
+(Riwayat Notifikasi) --> DB
+(Jadwalkan Notifikasi) --> DB
+@enduml

@@ -1,0 +1,51 @@
+@startuml
+title DFD Level 1 - THS-THM System Manajemen
+
+actor Superadmin
+actor Admin_Distrik
+actor Admin_Wilayah
+actor Admin_Ranting
+actor Admin_Kegiatan
+actor Penguji
+actor Anggota
+
+rectangle "Backend THS-THM" {
+    (Manage Anggota & Calon Anggota)
+    (Import CSV)
+    (Validate Data Anggota)
+    (Manage Kegiatan & Latihan)
+    (Pendadaran & Input Nilai)
+    (Generate Dokumen)
+    (Manage Iuran)
+    (Manage Surat Masuk/Keluar)
+    (Manage Dokumen Organisasi)
+    (Send FCM Notifications)
+}
+
+Superadmin --> (Manage Anggota & Calon Anggota)
+Admin_Distrik --> (Manage Anggota & Calon Anggota)
+Admin_Wilayah --> (Manage Anggota & Calon Anggota)
+Admin_Ranting --> (Manage Anggota & Calon Anggota)
+Admin_Kegiatan --> (Manage Kegiatan & Latihan)
+Penguji --> (Pendadaran & Input Nilai)
+Anggota --> (Update Data / View Dokumen)
+
+(Import CSV) --> (Validate Data Anggota)
+(Validate Data Anggota) --> (Manage Anggota & Calon Anggota)
+(Manage Kegiatan & Latihan) --> (Pendadaran & Input Nilai)
+(Pendadaran & Input Nilai) --> (Generate Dokumen)
+(Generate Dokumen) --> (Send FCM Notifications)
+(Manage Iuran) --> (Send FCM Notifications)
+(Manage Surat Masuk/Keluar) --> (Send FCM Notifications)
+(Manage Dokumen Organisasi) --> (Send FCM Notifications)
+
+database "Database THS-THM" as DB
+(Manage Anggota & Calon Anggota) --> DB
+(Validate Data Anggota) --> DB
+(Manage Kegiatan & Latihan) --> DB
+(Pendadaran & Input Nilai) --> DB
+(Generate Dokumen) --> DB
+(Manage Iuran) --> DB
+(Manage Surat Masuk/Keluar) --> DB
+(Manage Dokumen Organisasi) --> DB
+@enduml

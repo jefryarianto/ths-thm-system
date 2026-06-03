@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ths-thm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ths_thm
+      POSTGRES_PASSWORD: ths_thm_password
+      POSTGRES_DB: ths_thm_db
+    ports:
+      - '54321:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ths_thm -d ths_thm_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: ths-thm-api
+    restart: unless-stopped
+    ports:
+      - '4000:3001'
+    environment:
+      DATABASE_URL: postgresql://ths_thm:ths_thm_password@postgres:5432/ths_thm_db
+      JWT_SECRET: ${JWT_SECRET:-docker-dev-secret-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-docker-dev-refresh-secret}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      APP_PORT: 3001
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:3000
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID}
+      FCM_PRIVATE_KEY: ${FCM_PRIVATE_KEY}
+      FCM_CLIENT_EMAIL: ${FCM_CLIENT_EMAIL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "cd apps/api && npx prisma migrate deploy && node dist/main.js"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: ths-thm-web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3001
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
