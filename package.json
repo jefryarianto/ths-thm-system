@@ -31,7 +31,7 @@
     "lint:web": "pnpm --filter @ths-thm/web lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "typecheck": "pnpm -r run typecheck 2>/dev/null || true",
+    "typecheck": "pnpm -r run typecheck",
     "test": "pnpm --filter @ths-thm/api test",
     "test:cov": "pnpm --filter @ths-thm/api test:cov",
     "test:e2e": "pnpm --filter @ths-thm/api test:e2e",

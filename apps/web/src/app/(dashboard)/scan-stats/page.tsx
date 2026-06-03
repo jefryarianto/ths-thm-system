@@ -36,7 +36,7 @@ export default function ScanStatsPage() {
         `"${(a.catatan || '-').replace(/"/g, '""')}"`,
         new Date(a.tanggal).toLocaleString('id-ID'),
       ]);
-      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csv = [headers.join(','), ...rows.map((r: string[]) => r.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');

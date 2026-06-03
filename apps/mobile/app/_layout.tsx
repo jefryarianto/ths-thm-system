@@ -1,10 +1,10 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { useAuthStore } from '../src/store/auth-store';
+import { useAuthStore, AuthState } from '../src/store/auth-store';
 
 export default function RootLayout() {
-  const loadUser = useAuthStore((s) => s.loadUser);
+  const loadUser = useAuthStore((s: AuthState) => s.loadUser);
 
   useEffect(() => { loadUser(); }, []);
 

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { useAuthStore } from '../../store/auth-store';
+import { useAuthStore, AuthState } from '../../store/auth-store';
 import { registerForPushNotifications } from '../../lib/fcm';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const login = useAuthStore((s) => s.login);
+  const login = useAuthStore((s: AuthState) => s.login);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -20,7 +20,7 @@ export default function LoginScreen() {
       await login(email, password);
       // Register FCM token after successful login
       registerForPushNotifications();
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/home' as any);
     } catch (error: any) {
       const msg = error?.response?.data?.message || 'Login gagal. Periksa email dan password Anda.';
       Alert.alert('Error', msg);

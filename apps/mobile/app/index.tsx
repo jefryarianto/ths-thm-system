@@ -1,10 +1,10 @@
 import { Redirect } from 'expo-router';
-import { useAuthStore } from '../../src/store/auth-store';
+import { useAuthStore, AuthState } from '../src/store/auth-store';
 import { ActivityIndicator, View } from 'react-native';
 
 export default function Index() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s: AuthState) => s.isAuthenticated);
+  const isLoading = useAuthStore((s: AuthState) => s.isLoading);
 
   if (isLoading) {
     return (
@@ -14,5 +14,5 @@ export default function Index() {
     );
   }
 
-  return isAuthenticated ? <Redirect href="/(tabs)/home" /> : <Redirect href="/login" />;
+  return isAuthenticated ? <Redirect href={"/(tabs)/home" as any} /> : <Redirect href={"/login" as any} />;
 }
