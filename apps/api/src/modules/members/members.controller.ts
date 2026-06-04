@@ -34,15 +34,17 @@ export class MembersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMemberDto) {
-    return this.membersService.update(id, dto);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  update(@Param('id') id: string, @Body() dto: UpdateMemberDto, @Req() req: ScopedRequest) {
+    return this.membersService.update(id, dto, req.scope);
   }
 
   @Delete(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  remove(@Param('id') id: string) {
-    return this.membersService.remove(id);
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.membersService.remove(id, req.scope);
   }
 
   @Post('import')

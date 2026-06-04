@@ -86,16 +86,34 @@ export class MembersService {
     return { success: true, data: member, message: 'Anggota berhasil ditambahkan' };
   }
 
-  async update(id: string, dto: UpdateMemberDto) {
-    const member = await this.prisma.anggota.update({
+  async update(id: string, dto: UpdateMemberDto, scope?: UserScope) {
+    // Verify scope access before mutation
+    if (scope) {
+      const member = await this.prisma.anggota.findUnique({ where: { id }, select: { rantingId: true } });
+      if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
+    const updated = await this.prisma.anggota.update({
       where: { id },
       data: dto,
     });
 
-    return { success: true, data: member, message: 'Data anggota berhasil diperbarui' };
+    return { success: true, data: updated, message: 'Data anggota berhasil diperbarui' };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    // Verify scope access before mutation
+    if (scope) {
+      const member = await this.prisma.anggota.findUnique({ where: { id }, select: { rantingId: true } });
+      if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     await this.prisma.anggota.update({
       where: { id },
       data: { deletedAt: new Date() },

@@ -28,12 +28,12 @@ export class TrainingsController {
   @Patch(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  update(@Param('id') id: string, @Body() dto: UpdateTrainingDto) { return this.service.update(id, dto); }
+  update(@Param('id') id: string, @Body() dto: UpdateTrainingDto, @Req() req: ScopedRequest) { return this.service.update(id, dto, req.scope); }
 
   @Delete(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  remove(@Param('id') id: string) { return this.service.remove(id); }
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.remove(id, req.scope); }
 
   @Get(':id/attendances')
   getAttendances(@Param('id') id: string) { return this.service.getAttendances(id); }

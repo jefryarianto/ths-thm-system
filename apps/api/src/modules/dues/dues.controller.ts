@@ -23,11 +23,13 @@ export class DuesController {
 
   @Patch(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  update(@Param('id') id: string, @Body() dto: UpdateDueDto) { return this.service.update(id, dto); }
+  @RequireScope('branch')
+  update(@Param('id') id: string, @Body() dto: UpdateDueDto, @Req() req: ScopedRequest) { return this.service.update(id, dto, req.scope); }
 
   @Delete(':id')
   @Roles('superadmin', 'admin_distrik')
-  remove(@Param('id') id: string) { return this.service.remove(id); }
+  @RequireScope('branch')
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.remove(id, req.scope); }
 
   @Get('members/:memberId')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')

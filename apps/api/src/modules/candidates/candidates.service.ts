@@ -62,7 +62,6 @@ export class CandidatesService {
   }
 
   async create(dto: CreateCandidateDto, scope?: UserScope) {
-    // Auto-assign rantingId from scope for branch-level users
     if (scope?.rantingId && !dto.rantingId) {
       (dto as any).rantingId = scope.rantingId;
     }
@@ -76,16 +75,32 @@ export class CandidatesService {
     return { success: true, data: candidate, message: 'Calon anggota berhasil ditambahkan' };
   }
 
-  async update(id: string, dto: UpdateCandidateDto) {
-    const candidate = await this.prisma.calonAnggota.update({
+  async update(id: string, dto: UpdateCandidateDto, scope?: UserScope) {
+    if (scope) {
+      const candidate = await this.prisma.calonAnggota.findUnique({ where: { id }, select: { rantingId: true } });
+      if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
+    const updated = await this.prisma.calonAnggota.update({
       where: { id },
       data: dto,
     });
 
-    return { success: true, data: candidate, message: 'Data calon anggota berhasil diperbarui' };
+    return { success: true, data: updated, message: 'Data calon anggota berhasil diperbarui' };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    if (scope) {
+      const candidate = await this.prisma.calonAnggota.findUnique({ where: { id }, select: { rantingId: true } });
+      if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     await this.prisma.calonAnggota.delete({ where: { id } });
     return { success: true, message: 'Calon anggota berhasil dihapus' };
   }

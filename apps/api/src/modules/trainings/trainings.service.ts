@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -66,7 +66,15 @@ export class TrainingsService {
     return { success: true, data: training, message: 'Latihan berhasil dibuat' };
   }
 
-  async update(id: string, dto: UpdateTrainingDto) {
+  async update(id: string, dto: UpdateTrainingDto, scope?: UserScope) {
+    if (scope) {
+      const training = await this.prisma.latihan.findUnique({ where: { id }, select: { rantingId: true } });
+      if (!training) throw new NotFoundException('Latihan tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     const data: Record<string, unknown> = {};
     if (dto.lokasi) data.lokasi = dto.lokasi;
     if (dto.jenisMateri) data.jenisMateri = dto.jenisMateri;
@@ -78,7 +86,15 @@ export class TrainingsService {
     return { success: true, data: training, message: 'Latihan berhasil diperbarui' };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    if (scope) {
+      const training = await this.prisma.latihan.findUnique({ where: { id }, select: { rantingId: true } });
+      if (!training) throw new NotFoundException('Latihan tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     await this.prisma.latihan.delete({ where: { id } });
     return { success: true, message: 'Latihan berhasil dihapus' };
   }

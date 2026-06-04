@@ -34,13 +34,17 @@ export class CandidatesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateCandidateDto) {
-    return this.candidatesService.update(id, dto);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  update(@Param('id') id: string, @Body() dto: UpdateCandidateDto, @Req() req: ScopedRequest) {
+    return this.candidatesService.update(id, dto, req.scope);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.candidatesService.remove(id);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.candidatesService.remove(id, req.scope);
   }
 
   @Post('import')

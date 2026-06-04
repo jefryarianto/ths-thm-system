@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -45,7 +45,15 @@ export class DuesService {
     return { success: true, data: due };
   }
 
-  async update(id: string, dto: UpdateDueDto) {
+  async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
+    if (scope) {
+      const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!due) throw new NotFoundException('Iuran tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.['rantingId']))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     const data: Record<string, unknown> = {};
     if (dto.periode) data.periode = dto.periode;
     if (dto.jumlah !== undefined) data.jumlah = dto.jumlah;
@@ -58,7 +66,15 @@ export class DuesService {
     return { success: true, data: due, message: 'Data iuran berhasil diperbarui' };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    if (scope) {
+      const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!due) throw new NotFoundException('Iuran tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.['rantingId']))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     await this.prisma.iuran.delete({ where: { id } });
     return { success: true, message: 'Data iuran berhasil dihapus' };
   }
