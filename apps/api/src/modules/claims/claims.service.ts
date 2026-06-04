@@ -1,14 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
 
 @Injectable()
 export class ClaimsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
+  async findAll(query: ClaimFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const where: Record<string, unknown> = {};
     if (query.status) where.status = query.status;
     if (query.tipe) where.tipe = query.tipe;
 
@@ -25,13 +26,15 @@ export class ClaimsService {
     return { success: true, data: claim };
   }
 
-  async create(dto: any) {
-    const claim = await this.prisma.klaim.create({ data: { ...dto, status: 'pending' } });
+  async create(dto: CreateClaimDto) {
+    const claim = await this.prisma.klaim.create({ data: { anggotaId: dto.anggotaId, tipe: dto.tipe as never, catatan: dto.catatan, status: 'pending' } });
     return { success: true, data: claim, message: 'Klaim berhasil diajukan' };
   }
 
-  async update(id: string, dto: any) {
-    const claim = await this.prisma.klaim.update({ where: { id }, data: dto });
+  async update(id: string, dto: UpdateClaimDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.catatan !== undefined) data.catatan = dto.catatan;
+    const claim = await this.prisma.klaim.update({ where: { id }, data });
     return { success: true, data: claim, message: 'Klaim berhasil diperbarui' };
   }
 

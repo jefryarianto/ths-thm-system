@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Patch } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto, ChangePasswordDto } from './dto/auth.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -42,19 +42,19 @@ export class AuthController {
 
   @Get('me')
   @ApiBearerAuth()
-  getProfile(@CurrentUser() user: any) {
+  getProfile(@CurrentUser() user: { id: string }) {
     return this.authService.getProfile(user.id);
   }
 
   @Patch('me')
   @ApiBearerAuth()
-  updateProfile(@CurrentUser() user: any, @Body() dto: any) {
+  updateProfile(@CurrentUser() user: { id: string }, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(user.id, dto);
   }
 
   @Patch('change-password')
   @ApiBearerAuth()
-  changePassword(@CurrentUser() user: any, @Body() dto: any) {
+  changePassword(@CurrentUser() user: { id: string }, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(user.id, dto);
   }
 }

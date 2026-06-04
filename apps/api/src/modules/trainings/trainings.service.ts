@@ -1,14 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
 
 @Injectable()
 export class TrainingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
+  async findAll(query: TrainingFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const where: Record<string, unknown> = {};
     if (query.rantingId) where.rantingId = query.rantingId;
 
     const [data, total] = await Promise.all([
@@ -37,13 +38,31 @@ export class TrainingsService {
     return { success: true, data: training };
   }
 
-  async create(dto: any) {
-    const training = await this.prisma.latihan.create({ data: dto });
+  async create(dto: CreateTrainingDto) {
+    const training = await this.prisma.latihan.create({
+      data: {
+        rantingId: dto.rantingId,
+        kegiatanId: dto.kegiatanId,
+        pelatihId: dto.pelatihId,
+        hariTanggal: new Date(dto.hariTanggal),
+        lokasi: dto.lokasi,
+        jenisMateri: dto.jenisMateri,
+        hasilLatihanGlobal: dto.hasilLatihanGlobal,
+        rekomendasiBerikutnya: dto.rekomendasiBerikutnya,
+      },
+    });
     return { success: true, data: training, message: 'Latihan berhasil dibuat' };
   }
 
-  async update(id: string, dto: any) {
-    const training = await this.prisma.latihan.update({ where: { id }, data: dto });
+  async update(id: string, dto: UpdateTrainingDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.lokasi) data.lokasi = dto.lokasi;
+    if (dto.jenisMateri) data.jenisMateri = dto.jenisMateri;
+    if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
+    if (dto.rekomendasiBerikutnya !== undefined) data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
+    if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
+
+    const training = await this.prisma.latihan.update({ where: { id }, data });
     return { success: true, data: training, message: 'Latihan berhasil diperbarui' };
   }
 
@@ -61,7 +80,7 @@ export class TrainingsService {
     return { success: true, data: attendances };
   }
 
-  async recordAttendance(trainingId: string, dto: any) {
+  async recordAttendance(trainingId: string, dto: RecordAttendanceDto) {
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
@@ -70,7 +89,7 @@ export class TrainingsService {
       update: { hadir: dto.hadir !== false, catatan: dto.catatan },
       create: {
         latihanId: trainingId,
-        anggotaId: dto.anggotaId || dto.memberId,
+        anggotaId: dto.anggotaId,
         hadir: dto.hadir !== false,
         catatan: dto.catatan,
       },
@@ -78,13 +97,14 @@ export class TrainingsService {
     return { success: true, data: attendance, message: 'Kehadiran tercatat' };
   }
 
-  async importAttendance(trainingId: string, data: any[]) {
+  async importAttendance(trainingId: string, data: Array<{ anggotaId?: string; memberId?: string; hadir?: boolean; catatan?: string }>) {
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
     let imported = 0;
     for (const row of data) {
       const anggotaId = row.anggotaId || row.memberId;
+      if (!anggotaId) continue;
       const existing = await this.prisma.absensiLatihan.findFirst({
         where: { latihanId: trainingId, anggotaId },
       });
@@ -107,20 +127,24 @@ export class TrainingsService {
     return { success: true, data: evaluations };
   }
 
-  async createEvaluation(trainingId: string, dto: any) {
+  async createEvaluation(trainingId: string, dto: CreateEvaluationDto) {
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
     const evaluation = await this.prisma.evaluasiLatihan.create({
-      data: { latihanId: trainingId, anggotaId: dto.anggotaId || dto.memberId, nilai: dto.nilai, catatan: dto.catatan },
+      data: { latihanId: trainingId, anggotaId: dto.anggotaId, nilai: dto.nilai, catatan: dto.catatan },
     });
     return { success: true, data: evaluation, message: 'Evaluasi berhasil disimpan' };
   }
 
-  async updateEvaluation(trainingId: string, evaluationId: string, dto: any) {
+  async updateEvaluation(trainingId: string, evaluationId: string, dto: UpdateEvaluationDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.nilai !== undefined) data.nilai = dto.nilai;
+    if (dto.catatan !== undefined) data.catatan = dto.catatan;
+
     const evaluation = await this.prisma.evaluasiLatihan.update({
       where: { id: evaluationId },
-      data: { nilai: dto.nilai, catatan: dto.catatan },
+      data,
     });
     return { success: true, data: evaluation, message: 'Evaluasi berhasil diperbarui' };
   }

@@ -1,24 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateGraduationDto, GraduationFilterDto, RegisterParticipantDto, GraduateDto } from './dto/graduation.dto';
 
 @Injectable()
 export class GraduationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
-    if (query.tipe) where.tipe = 'pendadaran';
+  async findAll(query: GraduationFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const where: Record<string, unknown> = { tipe: 'pendadaran' };
     if (query.status) where.status = query.status;
 
     const [data, total] = await Promise.all([
       this.prisma.kegiatan.findMany({
-        where: { ...where, tipe: 'pendadaran' },
-        skip: (page - 1) * limit, take: limit,
+        where, skip: (page - 1) * limit, take: limit,
         orderBy: { tanggalMulai: 'desc' },
       }),
-      this.prisma.kegiatan.count({ where: { ...where, tipe: 'pendadaran' } }),
+      this.prisma.kegiatan.count({ where }),
     ]);
 
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
@@ -30,14 +29,23 @@ export class GraduationsService {
     return { success: true, data: graduation };
   }
 
-  async create(dto: any) {
+  async create(dto: CreateGraduationDto) {
     const graduation = await this.prisma.kegiatan.create({
-      data: { ...dto, tipe: 'pendadaran' },
+      data: {
+        nama: dto.nama,
+        lokasi: dto.lokasi,
+        tanggalMulai: new Date(dto.tanggalMulai),
+        tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
+        scopeType: dto.scopeType as 'nasional' | 'distrik' | 'wilayah' | 'ranting' | 'unit_latihan' | undefined,
+        scopeId: dto.scopeId,
+        tipe: 'pendadaran',
+        status: 'draft',
+      } as never,
     });
     return { success: true, data: graduation, message: 'Pendadaran berhasil dibuat' };
   }
 
-  async registerParticipant(graduationId: string, dto: any) {
+  async registerParticipant(graduationId: string, dto: RegisterParticipantDto) {
     const candidate = await this.prisma.calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'mengikuti_pendadaran' },
@@ -45,7 +53,7 @@ export class GraduationsService {
     return { success: true, data: candidate, message: 'Peserta berhasil didaftarkan' };
   }
 
-  async unregisterParticipant(graduationId: string, dto: any) {
+  async unregisterParticipant(graduationId: string, dto: RegisterParticipantDto) {
     await this.prisma.calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'diusulkan' },
@@ -61,13 +69,14 @@ export class GraduationsService {
     return { success: true, data: participants };
   }
 
-  async importParticipants(graduationId: string, data: any[]) {
+  async importParticipants(graduationId: string, data: Array<{ candidateId?: string; id?: string }>) {
     const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: graduationId } });
     if (!kegiatan) throw new NotFoundException('Pendadaran tidak ditemukan');
 
     let imported = 0;
     for (const row of data) {
       const candidateId = row.candidateId || row.id;
+      if (!candidateId) continue;
       const candidate = await this.prisma.calonAnggota.findUnique({ where: { id: candidateId } });
       if (candidate && candidate.status === 'diusulkan') {
         await this.prisma.calonAnggota.update({
@@ -80,7 +89,7 @@ export class GraduationsService {
     return { success: true, data: { imported }, message: `${imported} peserta berhasil diimpor` };
   }
 
-  async graduate(graduationId: string, dto: any) {
+  async graduate(graduationId: string, dto: GraduateDto) {
     for (const result of dto.results || []) {
       await this.prisma.hasilPendadaran.create({
         data: {

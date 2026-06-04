@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ReportFilterDto } from './dto/report.dto';
 
 @Injectable()
 export class ReportsService {
@@ -14,9 +15,12 @@ export class ReportsService {
     return { success: true, data: { total, byStatus, byRanting: byRanting.map(r => ({ ranting: r.nama, count: r._count.anggota })) } };
   }
 
-  async assessmentsReport(query: any) {
+  async assessmentsReport(query: ReportFilterDto) {
+    const where: Record<string, unknown> = {};
+    if (query.kegiatanId) where.kegiatanId = query.kegiatanId;
+
     const data = await this.prisma.nilaiPendadaran.findMany({
-      where: query.kegiatanId ? { kegiatanId: query.kegiatanId } : {},
+      where,
       include: {
         calonAnggota: { select: { namaLengkap: true } },
         itemPenilaian: { select: { namaItem: true, aspek: { select: { namaAspek: true } } } },
@@ -118,7 +122,7 @@ export class ReportsService {
         totalDokumen,
         activeKegiatan,
         absensiHarian,
-        recentAbsensi: recentAbsensi.map((a: any) => ({
+        recentAbsensi: recentAbsensi.map((a) => ({
           namaAnggota: a.anggota?.namaLengkap || '-',
           nomorAnggota: a.anggota?.nomorAnggota || '-',
           kegiatan: a.latihan?.kegiatan?.nama || a.latihan?.jenisMateri || '-',
@@ -146,14 +150,14 @@ export class ReportsService {
         ORDER BY "created_at"::date ASC
       `;
 
-      return rows.map((r: any) => ({ tanggal: r.tanggal, count: Number(r.count) }));
+      return rows.map((r) => ({ tanggal: r.tanggal, count: Number(r.count) }));
     } catch {
       return [];
     }
   }
 
-  async exportReport(type: string, query: any) {
-    let data: any[] = [];
+  async exportReport(type: string, _query: ReportFilterDto) {
+    let data: unknown[] = [];
     switch (type) {
       case 'members':
         data = await this.prisma.anggota.findMany({ where: { deletedAt: null }, include: { ranting: true } });

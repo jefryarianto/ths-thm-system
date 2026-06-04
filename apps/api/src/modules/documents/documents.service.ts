@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { GenerateDocumentDto, BatchGenerateDocumentDto, DocumentFilterDto } from './dto/document.dto';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -14,10 +15,10 @@ export class DocumentsService {
     fs.mkdirSync(this.outputDir, { recursive: true });
   }
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
+  async findAll(query: DocumentFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const where: Record<string, unknown> = {};
     if (query.tipe) where.tipe = query.tipe;
     if (query.anggotaId) where.anggotaId = query.anggotaId;
 
@@ -34,7 +35,7 @@ export class DocumentsService {
     return { success: true, data: doc };
   }
 
-  async generate(dto: any) {
+  async generate(dto: GenerateDocumentDto) {
     const token = uuidv4();
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/documents/verify/${token}`;
     const nomorDokumen = `DOC-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
@@ -42,7 +43,7 @@ export class DocumentsService {
     const doc = await this.prisma.dokumen.create({
       data: {
         anggotaId: dto.memberId,
-        tipe: dto.type,
+        tipe: dto.type as never,
         nomorDokumen,
         verificationUrl,
         signatureId: dto.signatureId,
@@ -97,10 +98,10 @@ export class DocumentsService {
     return { success: true, data: doc, message: 'Dokumen berhasil digenerate' };
   }
 
-  async batchGenerate(dto: any) {
+  async batchGenerate(dto: BatchGenerateDocumentDto) {
     const results = [];
     for (const memberId of dto.memberIds || []) {
-      const result = await this.generate({ ...dto, memberId });
+      const result = await this.generate({ memberId, type: dto.type, signatureId: dto.signatureId, stampId: dto.stampId });
       results.push(result);
     }
     return { success: true, data: { generated: results.length }, message: `${results.length} dokumen berhasil digenerate` };
@@ -130,7 +131,6 @@ export class DocumentsService {
     });
 
     if (!qr) return { success: false, message: 'QR code tidak valid' };
-
     if (!qr.isValid) return { success: false, message: 'Dokumen sudah tidak berlaku' };
 
     await this.prisma.qRValidation.update({

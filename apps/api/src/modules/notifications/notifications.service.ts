@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsGateway } from './events.gateway';
+import { SendNotificationDto, BroadcastNotificationDto, SendToRoleDto, NotificationFilterDto } from './dto/notification.dto';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class NotificationsService {
@@ -9,7 +11,7 @@ export class NotificationsService {
     @Optional() private readonly eventsGateway?: EventsGateway,
   ) {}
 
-  async send(userId: string, dto: any) {
+  async send(userId: string, dto: SendNotificationDto) {
     // Check user notification preferences
     const tipe = dto.tipe || 'umum';
     const enabled = await this.isPreferenceEnabled(userId, tipe);
@@ -22,8 +24,8 @@ export class NotificationsService {
         userId,
         judul: dto.judul,
         isi: dto.isi,
-        tipe,
-        data: dto.data || null,
+        tipe: tipe as never,
+        data: (dto.data || undefined) as never,
       },
     });
 
@@ -38,7 +40,7 @@ export class NotificationsService {
     return { success: true, data: notification, message: 'Notifikasi berhasil dikirim' };
   }
 
-  async broadcast(dto: any) {
+  async broadcast(dto: BroadcastNotificationDto) {
     const users = await this.prisma.user.findMany({ where: { isActive: true } });
 
     // Batch filter users by 'umum' preference (single query)
@@ -62,7 +64,6 @@ export class NotificationsService {
     await this.pushBroadcast(dto.judul, dto.isi, allowedUsers.map(u => u.id));
 
     // Emit real-time via WebSocket to each allowed user
-    // Batch-fetch unread counts to avoid N+1 queries
     const countResults = await this.prisma.notifikasi.groupBy({
       by: ['userId'],
       where: { userId: { in: allowedUsers.map((u) => u.id) }, isRead: false },
@@ -80,9 +81,9 @@ export class NotificationsService {
     return { success: true, data: { sentTo: allowedUsers.length, total: users.length }, message: `Notifikasi broadcast ke ${allowedUsers.length}/${users.length} user` };
   }
 
-  async sendToRole(dto: any) {
+  async sendToRole(dto: SendToRoleDto) {
     const users = await this.prisma.user.findMany({
-      where: { role: dto.role, isActive: true },
+      where: { role: dto.role as Role, isActive: true },
     });
 
     const tipe = dto.tipe || 'umum';
@@ -97,7 +98,7 @@ export class NotificationsService {
           userId: user.id,
           judul: dto.judul,
           isi: dto.isi,
-          tipe,
+          tipe: tipe as never,
         },
       });
     }
@@ -106,7 +107,6 @@ export class NotificationsService {
     await this.pushBroadcast(dto.judul, dto.isi, allowedUsers.map(u => u.id));
 
     // Emit real-time via WebSocket to each allowed user
-    // Batch-fetch unread counts to avoid N+1 queries
     const countResults = await this.prisma.notifikasi.groupBy({
       by: ['userId'],
       where: { userId: { in: allowedUsers.map((u) => u.id) }, isRead: false },
@@ -121,10 +121,10 @@ export class NotificationsService {
     return { success: true, data: { sentTo: allowedUsers.length, total: users.length }, message: `Notifikasi ke role ${dto.role} berhasil (${allowedUsers.length}/${users.length} menerima)` };
   }
 
-  async findAll(userId: string, query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 20;
-    const where: any = { userId };
+  async findAll(userId: string, query: NotificationFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const where: Record<string, unknown> = { userId };
     if (query.tipe) where.tipe = query.tipe;
 
     const [data, total, unreadCount] = await Promise.all([
@@ -202,8 +202,8 @@ export class NotificationsService {
   async updatePreferences(userId: string, prefs: Record<string, boolean>) {
     await this.prisma.setting.upsert({
       where: { key: this.prefKey(userId) },
-      update: { value: prefs },
-      create: { key: this.prefKey(userId), value: prefs },
+      update: { value: prefs as never },
+      create: { key: this.prefKey(userId), value: prefs as never },
     });
     return { success: true, message: 'Pengaturan notifikasi berhasil disimpan' };
   }
@@ -214,13 +214,11 @@ export class NotificationsService {
     return p[tipe] !== false;
   }
 
-  /** Batch-load preferences for multiple users — single query instead of N+1 */
   private async batchCheckPreference(userIds: string[], tipe: string): Promise<Set<string>> {
     const keys = userIds.map((id) => this.prefKey(id));
     const settings = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
     const prefMap = new Map<string, Record<string, boolean>>();
     for (const s of settings) {
-      // Extract userId from key "notif_pref:<userId>"
       const userId = s.key.replace('notif_pref:', '');
       prefMap.set(userId, s.value as Record<string, boolean>);
     }
@@ -228,7 +226,6 @@ export class NotificationsService {
     const allowed = new Set<string>();
     for (const id of userIds) {
       const saved = prefMap.get(id);
-      // If no preference saved, default to true (enabled)
       if (!saved || saved[tipe] !== false) {
         allowed.add(id);
       }
@@ -273,25 +270,18 @@ export class NotificationsService {
 
       if (tokens.length === 0) return;
 
-      let admin: any;
-      try {
-        admin = require('firebase-admin');
-        if (!admin.apps.length) {
-          admin.initializeApp({
-            credential: admin.credential.cert({
-              projectId: process.env.FCM_PROJECT_ID,
-              privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-              clientEmail: process.env.FCM_CLIENT_EMAIL,
-            }),
-          });
-        }
-      } catch {
-        console.warn('firebase-admin not available, using mock FCM');
-        console.log(`[FCM Mock] Push to ${tokens.length} devices: ${title}`);
-        return;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const admin = require('firebase-admin');
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FCM_PROJECT_ID,
+            privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            clientEmail: process.env.FCM_CLIENT_EMAIL,
+          }),
+        });
       }
 
-      // Send in batches of 500 (FCM multicast limit)
       const BATCH_SIZE = 500;
       for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
         const batch = tokens.slice(i, i + BATCH_SIZE);
@@ -304,9 +294,8 @@ export class NotificationsService {
         const response = await admin.messaging().sendEachForMulticast(message);
         console.log(`FCM batch ${Math.floor(i / BATCH_SIZE) + 1}: ${response.successCount} success, ${response.failureCount} failures`);
 
-        // Cleanup invalid tokens
         if (response.failureCount > 0) {
-          response.responses.forEach((resp: any, idx: number) => {
+          response.responses.forEach((resp: { success: boolean; error?: { code?: string } }, idx: number) => {
             if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
               this.prisma.deviceToken.updateMany({
                 where: { token: batch[idx].token },
@@ -317,7 +306,7 @@ export class NotificationsService {
         }
       }
     } catch (error) {
-      console.error('FCM push failed:', error);
+      console.warn('FCM push failed (firebase-admin not configured):', (error as Error).message);
     }
   }
 }

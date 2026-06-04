@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateAspectDto, UpdateAspectDto, CreateItemDto, UpdateItemDto, CreateScoreDto, ScoreFilterDto, AssessmentFilterDto } from './dto/assessment.dto';
 
 @Injectable()
 export class AssessmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAspects(query: any) {
+  async getAspects(query: AssessmentFilterDto) {
     const data = await this.prisma.aspekPenilaian.findMany({ include: { itemPenilaian: true } });
     return { success: true, data };
   }
@@ -16,12 +17,12 @@ export class AssessmentsService {
     return { success: true, data: aspect };
   }
 
-  async createAspect(dto: any) {
+  async createAspect(dto: CreateAspectDto) {
     const aspect = await this.prisma.aspekPenilaian.create({ data: dto });
     return { success: true, data: aspect, message: 'Aspek penilaian berhasil dibuat' };
   }
 
-  async updateAspect(id: string, dto: any) {
+  async updateAspect(id: string, dto: UpdateAspectDto) {
     const aspect = await this.prisma.aspekPenilaian.update({ where: { id }, data: dto });
     return { success: true, data: aspect, message: 'Aspek penilaian diperbarui' };
   }
@@ -31,8 +32,8 @@ export class AssessmentsService {
     return { success: true, message: 'Aspek penilaian dinonaktifkan' };
   }
 
-  async getItems(query: any) {
-    const where: any = {};
+  async getItems(query: AssessmentFilterDto) {
+    const where: Record<string, unknown> = {};
     if (query.aspekId) where.aspekId = query.aspekId;
     const data = await this.prisma.itemPenilaian.findMany({ where, include: { aspek: true }, orderBy: { urutan: 'asc' } });
     return { success: true, data };
@@ -44,12 +45,12 @@ export class AssessmentsService {
     return { success: true, data: item };
   }
 
-  async createItem(dto: any) {
-    const item = await this.prisma.itemPenilaian.create({ data: dto });
+  async createItem(dto: CreateItemDto) {
+    const item = await this.prisma.itemPenilaian.create({ data: dto as never });
     return { success: true, data: item, message: 'Item penilaian berhasil dibuat' };
   }
 
-  async updateItem(id: string, dto: any) {
+  async updateItem(id: string, dto: UpdateItemDto) {
     const item = await this.prisma.itemPenilaian.update({ where: { id }, data: dto });
     return { success: true, data: item, message: 'Item penilaian diperbarui' };
   }
@@ -59,10 +60,10 @@ export class AssessmentsService {
     return { success: true, message: 'Item penilaian dinonaktifkan' };
   }
 
-  async getScores(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 20;
-    const where: any = {};
+  async getScores(query: ScoreFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const where: Record<string, unknown> = {};
     if (query.kegiatanId) where.kegiatanId = query.kegiatanId;
     if (query.calonAnggotaId) where.calonAnggotaId = query.calonAnggotaId;
 
@@ -73,22 +74,32 @@ export class AssessmentsService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async createScore(dto: any) {
-    const score = await this.prisma.nilaiPendadaran.create({ data: dto });
+  async createScore(dto: CreateScoreDto) {
+    const score = await this.prisma.nilaiPendadaran.create({
+      data: {
+        kegiatanId: dto.kegiatanId,
+        calonAnggotaId: dto.calonAnggotaId,
+        anggotaId: dto.anggotaId,
+        itemPenilaianId: dto.itemPenilaianId,
+        pengujiUserId: dto.pengujiUserId,
+        skor: dto.skor,
+        komentar: dto.komentar,
+      },
+    });
     return { success: true, data: score, message: 'Nilai berhasil disimpan' };
   }
 
-  async importScores(data: any[]) {
+  async importScores(data: Record<string, unknown>[]) {
     let imported = 0;
     for (const row of data) {
       try {
         await this.prisma.nilaiPendadaran.create({
           data: {
-            kegiatanId: row.kegiatan_id,
-            calonAnggotaId: row.calon_anggota_id,
-            itemPenilaianId: row.item_penilaian_id,
-            pengujiUserId: row.penguji_user_id,
-            skor: parseFloat(row.skor),
+            kegiatanId: row.kegiatan_id as string,
+            calonAnggotaId: row.calon_anggota_id as string,
+            itemPenilaianId: row.item_penilaian_id as string,
+            pengujiUserId: row.penguji_user_id as string,
+            skor: parseFloat(row.skor as string),
           },
         });
         imported++;

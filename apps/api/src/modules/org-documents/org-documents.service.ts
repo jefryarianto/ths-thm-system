@@ -1,14 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateOrgDocumentDto, UpdateOrgDocumentDto, OrgDocumentFilterDto, CreateCategoryDto, UpdateCategoryDto } from './dto/org-document.dto';
 
 @Injectable()
 export class OrgDocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
+  async findAll(query: OrgDocumentFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const where: Record<string, unknown> = {};
     if (query.kategoriId) where.kategoriId = query.kategoriId;
     if (query.search) where.judul = { contains: query.search };
 
@@ -25,12 +26,12 @@ export class OrgDocumentsService {
     return { success: true, data: doc };
   }
 
-  async create(dto: any) {
-    const doc = await this.prisma.dokumenOrganisasi.create({ data: dto });
+  async create(dto: CreateOrgDocumentDto) {
+    const doc = await this.prisma.dokumenOrganisasi.create({ data: dto as never });
     return { success: true, data: doc, message: 'Dokumen berhasil diupload' };
   }
 
-  async update(id: string, dto: any) {
+  async update(id: string, dto: UpdateOrgDocumentDto) {
     const doc = await this.prisma.dokumenOrganisasi.update({ where: { id }, data: dto });
     return { success: true, data: doc, message: 'Dokumen berhasil diperbarui' };
   }
@@ -45,7 +46,7 @@ export class OrgDocumentsService {
     return { success: true, data: categories };
   }
 
-  async createCategory(dto: any) {
+  async createCategory(dto: CreateCategoryDto) {
     const cat = await this.prisma.kategoriDokumen.create({ data: dto });
     return { success: true, data: cat, message: 'Kategori berhasil dibuat' };
   }
@@ -56,7 +57,7 @@ export class OrgDocumentsService {
     return { success: true, data: cat };
   }
 
-  async updateCategory(id: string, dto: any) {
+  async updateCategory(id: string, dto: UpdateCategoryDto) {
     const cat = await this.prisma.kategoriDokumen.update({ where: { id }, data: dto });
     return { success: true, data: cat, message: 'Kategori berhasil diperbarui' };
   }

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DuesService } from './dues.service';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 
 @ApiTags('Dues')
 @Controller('dues')
@@ -11,15 +12,15 @@ export class DuesController {
 
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  findAll(@Query() query: any) { return this.service.findAll(query); }
+  findAll(@Query() query: DueFilterDto) { return this.service.findAll(query); }
 
   @Post()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  create(@Body() dto: any) { return this.service.create(dto); }
+  create(@Body() dto: CreateDueDto) { return this.service.create(dto); }
 
   @Patch(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  update(@Param('id') id: string, @Body() dto: any) { return this.service.update(id, dto); }
+  update(@Param('id') id: string, @Body() dto: UpdateDueDto) { return this.service.update(id, dto); }
 
   @Delete(':id')
   @Roles('superadmin', 'admin_distrik')
@@ -31,23 +32,23 @@ export class DuesController {
 
   @Get('arrears')
   @Roles('superadmin', 'admin_distrik')
-  getArrears(@Query() query: any) { return this.service.getArrears(query); }
+  getArrears() { return this.service.getArrears({}); }
 
   @Get('report')
   @Roles('superadmin', 'admin_distrik')
-  getReport(@Query() query: any) { return this.service.getReport(query); }
+  getReport() { return this.service.getReport({}); }
 
   @Get('report/export')
   @Roles('superadmin', 'admin_distrik')
-  exportReport(@Query() query: any) { return this.service.exportReport(query); }
+  exportReport() { return this.service.exportReport({}); }
 
   @Post('import')
   @Roles('superadmin', 'admin_distrik')
-  importDues(@Body() data: any[]) { return this.service.importDues(data); }
+  importDues(@Body() importDto: { data: Record<string, unknown>[] }) { return this.service.importDues(importDto.data); }
 
   @Patch('batch')
   @Roles('superadmin', 'admin_distrik')
-  batchPayment(@Body() dto: any) { return this.service.batchPayment(dto); }
+  batchPayment(@Body() dto: BatchPaymentDto) { return this.service.batchPayment(dto); }
 
   @Get('dashboard/stats')
   @Roles('superadmin', 'admin_distrik')

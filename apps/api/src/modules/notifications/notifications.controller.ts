@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { SendNotificationDto, BroadcastNotificationDto, SendToRoleDto, NotificationFilterDto, RegisterDeviceTokenDto } from './dto/notification.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -12,24 +13,24 @@ export class NotificationsController {
 
   @Post('send')
   @Roles('superadmin', 'admin_distrik')
-  send(@Body() dto: any) { return this.service.send(dto.userId, dto); }
+  send(@Body() dto: SendNotificationDto) { return this.service.send(dto.userId, dto); }
 
   @Post('broadcast')
   @Roles('superadmin')
-  broadcast(@Body() dto: any) { return this.service.broadcast(dto); }
+  broadcast(@Body() dto: BroadcastNotificationDto) { return this.service.broadcast(dto); }
 
   @Post('role')
   @Roles('superadmin')
-  sendToRole(@Body() dto: any) { return this.service.sendToRole(dto); }
+  sendToRole(@Body() dto: SendToRoleDto) { return this.service.sendToRole(dto); }
 
   @Get('count')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
-  getCount(@CurrentUser() user: any) {
+  getCount(@CurrentUser() user: { id: string }) {
     return this.service.getUnreadCount(user.id);
   }
 
   @Get()
-  findAll(@CurrentUser() user: any, @Query() query: any) {
+  findAll(@CurrentUser() user: { id: string }, @Query() query: NotificationFilterDto) {
     return this.service.findAll(user.id, query);
   }
 
@@ -37,17 +38,15 @@ export class NotificationsController {
   markAsRead(@Param('id') id: string) { return this.service.markAsRead(id); }
 
   @Patch('read-all')
-  markAllAsRead(@CurrentUser() user: any) { return this.service.markAllAsRead(user.id); }
-
-  // ─── Notification Preferences ───
+  markAllAsRead(@CurrentUser() user: { id: string }) { return this.service.markAllAsRead(user.id); }
 
   @Get('preferences')
-  getPreferences(@CurrentUser() user: any) {
+  getPreferences(@CurrentUser() user: { id: string }) {
     return this.service.getPreferences(user.id);
   }
 
   @Patch('preferences')
-  updatePreferences(@CurrentUser() user: any, @Body() dto: Record<string, boolean>) {
+  updatePreferences(@CurrentUser() user: { id: string }, @Body() dto: Record<string, boolean>) {
     return this.service.updatePreferences(user.id, dto);
   }
 
@@ -58,7 +57,7 @@ export class NotificationsController {
   delete(@Param('id') id: string) { return this.service.delete(id); }
 
   @Post('fcm-token')
-  registerToken(@CurrentUser() user: any, @Body() dto: any) {
+  registerToken(@CurrentUser() user: { id: string }, @Body() dto: RegisterDeviceTokenDto) {
     return this.service.registerDeviceToken(user.id, dto.token, dto.platform);
   }
 

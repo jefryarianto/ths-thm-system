@@ -1,5 +1,5 @@
 import { IsEmail, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class LoginDto {
   @ApiProperty({ example: 'admin@ths-thm.org' })
@@ -52,6 +52,49 @@ export class ResetPasswordDto {
   @ApiProperty()
   @IsString()
   token: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+}
+
+export class UpdateProfileDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  namaLengkap?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  noHp?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  alamat?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tempatLahir?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tanggalLahir?: string;
+}
+
+export class ChangePasswordDto {
+  @ApiProperty()
+  @IsString()
+  currentPassword: string;
 
   @ApiProperty()
   @IsString()
