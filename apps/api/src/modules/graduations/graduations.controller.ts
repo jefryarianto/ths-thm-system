@@ -38,7 +38,9 @@ export class GraduationsController {
   importParticipants(@Param('id') id: string, @Body() importDto: { data: Array<{ candidateId?: string; id?: string }> }) { return this.service.importParticipants(id, importDto.data); }
 
   @Post(':id/graduate')
-  graduate(@Param('id') id: string, @Body() dto: GraduateDto) { return this.service.graduate(id, dto); }
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  graduate(@Param('id') id: string, @Body() dto: GraduateDto, @Req() req: ScopedRequest) { return this.service.graduate(id, dto, req.scope); }
 
   @Post(':id/generate-docs')
   generateDocs(@Param('id') id: string) { return this.service.generateDocuments(id); }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { ScopedRequest, UserScope } from '../interfaces/user-scope.interface';
 
 /**
@@ -80,6 +80,25 @@ export class ScopeHelper {
     }
 
     return {};
+  }
+
+  /**
+   * Verify scope access for kegiatan-based resources by scopeType/scopeId fields.
+   * Checks ranting, wilayah, and distrik level.
+   * Throws ForbiddenException if access is denied.
+   */
+  verifyKegiatanScope(scope: UserScope | undefined, scopeType?: string, scopeId?: string): void {
+    if (!scope || !scopeType || !scopeId) return;
+
+    if (scope.rantingId && scopeType === 'ranting' && scopeId !== scope.rantingId) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+    if (scope.wilayahId && scopeType === 'wilayah' && scopeId !== scope.wilayahId) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+    if (scope.distrikId && scopeType === 'distrik' && scopeId !== scope.distrikId) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
   }
 
   /**

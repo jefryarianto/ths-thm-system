@@ -16,7 +16,6 @@ export class GraduationsService {
     const limit = query.limit || 10;
     const where: Record<string, unknown> = { tipe: 'pendadaran' };
 
-    // Scope filtering via scopeType/scopeId fields on kegiatan
     if (scope?.rantingId) {
       where.OR = [
         { scopeType: 'ranting', scopeId: scope.rantingId },
@@ -51,14 +50,7 @@ export class GraduationsService {
   async findOne(id: string, scope?: UserScope) {
     const graduation = await this.prisma.kegiatan.findUnique({ where: { id } });
     if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
-
-    // Verify scope access via scopeType/scopeId
-    if (scope && graduation.scopeType && graduation.scopeId) {
-      if (scope.rantingId && graduation.scopeType === 'ranting' && graduation.scopeId !== scope.rantingId) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
-
+    this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
     return { success: true, data: graduation };
   }
 
@@ -126,7 +118,13 @@ export class GraduationsService {
     return { success: true, data: { imported }, message: `${imported} peserta berhasil diimpor` };
   }
 
-  async graduate(graduationId: string, dto: GraduateDto) {
+  async graduate(graduationId: string, dto: GraduateDto, scope?: UserScope) {
+    if (scope) {
+      const graduation = await this.prisma.kegiatan.findUnique({ where: { id: graduationId }, select: { scopeType: true, scopeId: true } });
+      if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
+      this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
+    }
+
     for (const result of dto.results || []) {
       await this.prisma.hasilPendadaran.create({
         data: {

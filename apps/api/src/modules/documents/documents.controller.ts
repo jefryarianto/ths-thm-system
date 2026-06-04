@@ -36,11 +36,15 @@ export class DocumentsController {
 
   @Post('batch')
   @ApiBearerAuth()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   batchGenerate(@Body() dto: BatchGenerateDocumentDto) { return this.service.batchGenerate(dto); }
 
   @Delete(':id')
   @ApiBearerAuth()
-  remove(@Param('id') id: string) { return this.service.remove(id); }
+  @Roles('superadmin', 'admin_distrik')
+  @RequireScope('branch')
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.remove(id, req.scope); }
 
   @Get('types/list')
   @ApiBearerAuth()

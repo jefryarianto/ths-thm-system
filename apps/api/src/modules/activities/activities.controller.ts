@@ -20,8 +20,14 @@ export class ActivitiesController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   create(@Body() dto: CreateActivityDto, @Req() req: ScopedRequest) { return this.service.create(dto, req.scope); }
-  @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateActivityDto) { return this.service.update(id, dto); }
-  @Delete(':id') remove(@Param('id') id: string) { return this.service.remove(id); }
+  @Patch(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
+  update(@Param('id') id: string, @Body() dto: UpdateActivityDto, @Req() req: ScopedRequest) { return this.service.update(id, dto, req.scope); }
+  @Delete(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.remove(id, req.scope); }
   @Post(':id/participants') addParticipant(@Param('id') id: string, @Body() dto: AddParticipantDto) { return this.service.addParticipant(id, dto); }
   @Delete(':id/participants/:pid') removeParticipant(@Param('id') id: string, @Param('pid') pid: string) { return this.service.removeParticipant(id, pid); }
   @Post(':id/participants/import') importParticipants(@Param('id') id: string, @Body() importDto: { data: Array<{ anggotaId?: string; memberId?: string }> }) { return this.service.importParticipants(id, importDto.data); }

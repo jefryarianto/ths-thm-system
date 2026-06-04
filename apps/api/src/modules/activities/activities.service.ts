@@ -16,7 +16,6 @@ export class ActivitiesService {
     const limit = query.limit || 10;
     const where: Record<string, unknown> = { tipe: { not: 'pendadaran' } };
 
-    // Scope filtering via scopeType/scopeId fields on kegiatan
     if (scope?.rantingId) {
       where.OR = [
         { scopeType: 'ranting', scopeId: scope.rantingId },
@@ -56,14 +55,7 @@ export class ActivitiesService {
       include: { creator: { select: { id: true, namaLengkap: true } }, peserta: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } }, presensi: true, dokumenKegiatan: true },
     });
     if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
-
-    // Verify scope access via scopeType/scopeId
-    if (scope && activity.scopeType && activity.scopeId) {
-      if (scope.rantingId && activity.scopeType === 'ranting' && activity.scopeId !== scope.rantingId) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
-
+    this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
     return { success: true, data: activity };
   }
 
@@ -88,7 +80,13 @@ export class ActivitiesService {
     return { success: true, data: activity, message: 'Kegiatan berhasil dibuat' };
   }
 
-  async update(id: string, dto: UpdateActivityDto) {
+  async update(id: string, dto: UpdateActivityDto, scope?: UserScope) {
+    if (scope) {
+      const activity = await this.prisma.kegiatan.findUnique({ where: { id }, select: { scopeType: true, scopeId: true } });
+      if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
+      this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
+    }
+
     const data: Record<string, unknown> = {};
     if (dto.nama) data.nama = dto.nama;
     if (dto.lokasi) data.lokasi = dto.lokasi;
@@ -100,7 +98,13 @@ export class ActivitiesService {
     return { success: true, data: activity, message: 'Kegiatan berhasil diperbarui' };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    if (scope) {
+      const activity = await this.prisma.kegiatan.findUnique({ where: { id }, select: { scopeType: true, scopeId: true } });
+      if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
+      this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
+    }
+
     await this.prisma.kegiatan.update({ where: { id }, data: { status: 'cancelled' } });
     return { success: true, message: 'Kegiatan dibatalkan' };
   }

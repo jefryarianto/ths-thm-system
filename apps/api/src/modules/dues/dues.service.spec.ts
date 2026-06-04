@@ -30,6 +30,7 @@ describe('DuesService', () => {
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     extractScope: jest.fn().mockReturnValue({}),
+    verifyKegiatanScope: jest.fn(),
   };
 
   beforeEach(async () => {

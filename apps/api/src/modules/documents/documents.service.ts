@@ -116,7 +116,15 @@ export class DocumentsService {
     return { success: true, data: { generated: results.length }, message: `${results.length} dokumen berhasil digenerate` };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    if (scope) {
+      const doc = await this.prisma.dokumen.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, doc.anggota?.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     await this.prisma.dokumen.update({ where: { id }, data: { status: 'revoked' } });
     return { success: true, message: 'Dokumen berhasil dihapus' };
   }

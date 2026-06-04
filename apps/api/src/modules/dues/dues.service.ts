@@ -39,17 +39,17 @@ export class DuesService {
   async findOne(id: string, scope?: UserScope) {
     const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } } } });
     if (!due) throw new NotFoundException('Iuran tidak ditemukan');
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.['rantingId']))) {
-      throw new NotFoundException('Iuran tidak ditemukan');
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
     return { success: true, data: due };
   }
 
   async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
     if (scope) {
-      const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
-      if (!due) throw new NotFoundException('Iuran tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.['rantingId']))) {
+      const existing = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.anggota?.rantingId))) {
         throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
       }
     }
@@ -68,9 +68,9 @@ export class DuesService {
 
   async remove(id: string, scope?: UserScope) {
     if (scope) {
-      const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
-      if (!due) throw new NotFoundException('Iuran tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.['rantingId']))) {
+      const existing = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.anggota?.rantingId))) {
         throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
       }
     }
