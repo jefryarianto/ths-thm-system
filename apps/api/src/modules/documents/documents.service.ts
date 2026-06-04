@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GenerateDocumentDto, BatchGenerateDocumentDto, DocumentFilterDto } from './dto/document.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -10,15 +12,19 @@ import * as fs from 'fs';
 export class DocumentsService {
   private readonly outputDir: string;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {
     this.outputDir = path.resolve('storage', 'documents');
     fs.mkdirSync(this.outputDir, { recursive: true });
   }
 
-  async findAll(query: DocumentFilterDto) {
+  async findAll(query: DocumentFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
-    const where: Record<string, unknown> = {};
+    const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
+    const where: Record<string, unknown> = { ...scopeFilter };
     if (query.tipe) where.tipe = query.tipe;
     if (query.anggotaId) where.anggotaId = query.anggotaId;
 
@@ -29,9 +35,12 @@ export class DocumentsService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: string) {
-    const doc = await this.prisma.dokumen.findUnique({ where: { id }, include: { qrValidation: true } });
+  async findOne(id: string, scope?: UserScope) {
+    const doc = await this.prisma.dokumen.findUnique({ where: { id }, include: { qrValidation: true, anggota: { select: { rantingId: true } } } });
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, doc.anggota?.rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
     return { success: true, data: doc };
   }
 

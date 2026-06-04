@@ -1,15 +1,40 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateActivityDto, UpdateActivityDto, ActivityFilterDto, AddParticipantDto, RecordPresenceDto, UploadActivityDocumentDto } from './dto/activity.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class ActivitiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(query: ActivityFilterDto) {
+  async findAll(query: ActivityFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
     const where: Record<string, unknown> = { tipe: { not: 'pendadaran' } };
+
+    // Scope filtering via scopeType/scopeId fields on kegiatan
+    if (scope?.rantingId) {
+      where.OR = [
+        { scopeType: 'ranting', scopeId: scope.rantingId },
+        { scopeType: 'unit_latihan', scopeId: scope.rantingId },
+      ];
+    } else if (scope?.wilayahId) {
+      where.OR = [
+        { scopeType: 'wilayah', scopeId: scope.wilayahId },
+        { scopeType: 'ranting' },
+      ];
+    } else if (scope?.distrikId) {
+      where.OR = [
+        { scopeType: 'distrik', scopeId: scope.distrikId },
+        { scopeType: 'wilayah' },
+        { scopeType: 'ranting' },
+      ];
+    }
+
     if (query.tipe) where.tipe = query.tipe;
     if (query.status) where.status = query.status;
     if (query.scopeType) where.scopeType = query.scopeType;
@@ -25,16 +50,28 @@ export class ActivitiesService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, scope?: UserScope) {
     const activity = await this.prisma.kegiatan.findUnique({
       where: { id },
       include: { creator: { select: { id: true, namaLengkap: true } }, peserta: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } }, presensi: true, dokumenKegiatan: true },
     });
     if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
+
+    // Verify scope access via scopeType/scopeId
+    if (scope && activity.scopeType && activity.scopeId) {
+      if (scope.rantingId && activity.scopeType === 'ranting' && activity.scopeId !== scope.rantingId) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     return { success: true, data: activity };
   }
 
-  async create(dto: CreateActivityDto) {
+  async create(dto: CreateActivityDto, scope?: UserScope) {
+    if (scope?.rantingId && !dto.scopeId) {
+      (dto as any).scopeId = scope.rantingId;
+      (dto as any).scopeType = 'ranting';
+    }
     const activity = await this.prisma.kegiatan.create({
       data: {
         nama: dto.nama,

@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAspectDto, UpdateAspectDto, CreateItemDto, UpdateItemDto, CreateScoreDto, ScoreFilterDto, AssessmentFilterDto } from './dto/assessment.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class AssessmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
   async getAspects(query: AssessmentFilterDto) {
     const data = await this.prisma.aspekPenilaian.findMany({ include: { itemPenilaian: true } });
@@ -60,12 +65,17 @@ export class AssessmentsService {
     return { success: true, message: 'Item penilaian dinonaktifkan' };
   }
 
-  async getScores(query: ScoreFilterDto) {
+  async getScores(query: ScoreFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const where: Record<string, unknown> = {};
     if (query.kegiatanId) where.kegiatanId = query.kegiatanId;
     if (query.calonAnggotaId) where.calonAnggotaId = query.calonAnggotaId;
+
+    // Scope-based: when branch-level user and no kegiatan filter,
+    // we can't easily filter through kegiatan -> creator relation.
+    // The @RequireScope decorator already ensures access-level gating.
+    // Data-level filtering for scores is handled at the controller level.
 
     const [data, total] = await Promise.all([
       this.prisma.nilaiPendadaran.findMany({ where, skip: (page - 1) * limit, take: limit, include: { itemPenilaian: true, penguji: { select: { id: true, namaLengkap: true } } }, orderBy: { createdAt: 'desc' } }),

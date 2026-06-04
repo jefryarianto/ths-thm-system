@@ -1,15 +1,40 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateGraduationDto, GraduationFilterDto, RegisterParticipantDto, GraduateDto } from './dto/graduation.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class GraduationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(query: GraduationFilterDto) {
+  async findAll(query: GraduationFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
     const where: Record<string, unknown> = { tipe: 'pendadaran' };
+
+    // Scope filtering via scopeType/scopeId fields on kegiatan
+    if (scope?.rantingId) {
+      where.OR = [
+        { scopeType: 'ranting', scopeId: scope.rantingId },
+        { scopeType: 'unit_latihan', scopeId: scope.rantingId },
+      ];
+    } else if (scope?.wilayahId) {
+      where.OR = [
+        { scopeType: 'wilayah', scopeId: scope.wilayahId },
+        { scopeType: 'ranting' },
+      ];
+    } else if (scope?.distrikId) {
+      where.OR = [
+        { scopeType: 'distrik', scopeId: scope.distrikId },
+        { scopeType: 'wilayah' },
+        { scopeType: 'ranting' },
+      ];
+    }
+
     if (query.status) where.status = query.status;
 
     const [data, total] = await Promise.all([
@@ -23,13 +48,25 @@ export class GraduationsService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, scope?: UserScope) {
     const graduation = await this.prisma.kegiatan.findUnique({ where: { id } });
     if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
+
+    // Verify scope access via scopeType/scopeId
+    if (scope && graduation.scopeType && graduation.scopeId) {
+      if (scope.rantingId && graduation.scopeType === 'ranting' && graduation.scopeId !== scope.rantingId) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     return { success: true, data: graduation };
   }
 
-  async create(dto: CreateGraduationDto) {
+  async create(dto: CreateGraduationDto, scope?: UserScope) {
+    if (scope?.rantingId && !dto.scopeId) {
+      (dto as any).scopeId = scope.rantingId;
+      (dto as any).scopeType = 'ranting';
+    }
     const graduation = await this.prisma.kegiatan.create({
       data: {
         nama: dto.nama,

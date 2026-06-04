@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DocumentsService } from './documents.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { GenerateDocumentDto, BatchGenerateDocumentDto, DocumentFilterDto } from './dto/document.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Documents')
 @Controller('documents')
@@ -21,11 +22,11 @@ export class DocumentsController {
   @ApiBearerAuth()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  findAll(@Query() q: DocumentFilterDto) { return this.service.findAll(q); }
+  findAll(@Query() q: DocumentFilterDto, @Req() req: ScopedRequest) { return this.service.findAll(q, req.scope); }
 
   @Get(':id')
   @ApiBearerAuth()
-  findOne(@Param('id') id: string) { return this.service.findOne(id); }
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
 
   @Post('generate')
   @ApiBearerAuth()
