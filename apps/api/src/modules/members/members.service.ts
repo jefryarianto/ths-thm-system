@@ -1,17 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(filter: MemberFilterDto) {
+  async findAll(filter: MemberFilterDto, scope?: UserScope) {
     const page = filter.page || 1;
     const limit = filter.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: any = { deletedAt: null };
+    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+
+    const where: any = { deletedAt: null, ...scopeFilter };
 
     if (filter.search) {
       where.OR = [
@@ -42,7 +49,7 @@ export class MembersService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, scope?: UserScope) {
     const member = await this.prisma.anggota.findUnique({
       where: { id, deletedAt: null },
       include: {
@@ -53,10 +60,20 @@ export class MembersService {
     });
 
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+
+    // Verify scope access (async for region/district hierarchy check)
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+
     return { success: true, data: member };
   }
 
-  async create(dto: CreateMemberDto) {
+  async create(dto: CreateMemberDto, scope?: UserScope) {
+    // Auto-assign rantingId from scope for branch-level users
+    if (scope?.rantingId && !dto.rantingId) {
+      (dto as any).rantingId = scope.rantingId;
+    }
     const member = await this.prisma.anggota.create({
       data: {
         ...dto,
@@ -87,7 +104,7 @@ export class MembersService {
     return { success: true, message: 'Anggota berhasil dihapus' };
   }
 
-  async importCsv(data: any[]) {
+  async importCsv(data: any[], scope?: UserScope) {
     const results = { success: 0, incomplete: 0, errors: 0, details: [] as any[] };
 
     for (const row of data) {
@@ -123,9 +140,10 @@ export class MembersService {
     return { success: true, data: results };
   }
 
-  async exportCsv(filter: MemberFilterDto) {
+  async exportCsv(filter: MemberFilterDto, scope?: UserScope) {
+    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
     const members = await this.prisma.anggota.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, ...scopeFilter },
       select: {
         nomorAnggota: true,
         namaLengkap: true,

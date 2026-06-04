@@ -1,15 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class DuesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(query: DueFilterDto) {
+  async findAll(query: DueFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
-    const where: Record<string, unknown> = {};
+    const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
+    const where: Record<string, unknown> = { ...scopeFilter };
     if (query.status) where.status = query.status;
     if (query.periode) where.periode = query.periode;
 
@@ -30,9 +36,12 @@ export class DuesService {
     return { success: true, data: due, message: 'Pembayaran iuran berhasil dicatat' };
   }
 
-  async findOne(id: string) {
-    const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } });
+  async findOne(id: string, scope?: UserScope) {
+    const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } } } });
     if (!due) throw new NotFoundException('Iuran tidak ditemukan');
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.['rantingId']))) {
+      throw new NotFoundException('Iuran tidak ditemukan');
+    }
     return { success: true, data: due };
   }
 

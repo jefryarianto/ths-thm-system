@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "147310838518",
-    "project_id": "ths-thm-si",
-    "storage_bucket": "ths-thm-si.firebasestorage.app"
+    "project_number": "287904471765",
+    "project_id": "thsthm-project",
+    "storage_bucket": "thsthm-project.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:147310838518:android:0d7522ca8c1608f70d22d7",
+        "mobilesdk_app_id": "1:287904471765:android:0374a430de2ede0a2ba05c",
         "android_client_info": {
-          "package_name": "com.thsthm"
+          "package_name": "com.thsthm.mobile"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCXBTp4spJ5F33y41iBsyJ00eBN1LJFhqA"
+          "current_key": "AIzaSyCmEjYkpJ886p9qXFV0OrY6ejhADTyUeaE"
         }
       ],
       "services": {

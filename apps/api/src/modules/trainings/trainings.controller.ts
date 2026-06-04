@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TrainingsService } from './trainings.service';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto, ImportAttendanceDto } from './dto/training.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Trainings')
 @Controller('trainings')
@@ -14,20 +15,24 @@ export class TrainingsController {
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
   @RequireScope('branch')
-  findAll(@Query() query: TrainingFilterDto) { return this.service.findAll(query); }
+  findAll(@Query() query: TrainingFilterDto, @Req() req: ScopedRequest) { return this.service.findAll(query, req.scope); }
 
   @Get(':id')
-  findOne(@Param('id') id: string) { return this.service.findOne(id); }
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
 
   @Post()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  create(@Body() dto: CreateTrainingDto) { return this.service.create(dto); }
+  create(@Body() dto: CreateTrainingDto, @Req() req: ScopedRequest) { return this.service.create(dto, req.scope); }
 
   @Patch(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   update(@Param('id') id: string, @Body() dto: UpdateTrainingDto) { return this.service.update(id, dto); }
 
   @Delete(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   remove(@Param('id') id: string) { return this.service.remove(id); }
 
   @Get(':id/attendances')

@@ -1,11 +1,12 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Members')
 @Controller('members')
@@ -16,20 +17,20 @@ export class MembersController {
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
   @RequireScope('branch')
-  findAll(@Query() filter: MemberFilterDto) {
-    return this.membersService.findAll(filter);
+  findAll(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
+    return this.membersService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.membersService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.membersService.findOne(id, req.scope);
   }
 
   @Post()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  create(@Body() dto: CreateMemberDto) {
-    return this.membersService.create(dto);
+  create(@Body() dto: CreateMemberDto, @Req() req: ScopedRequest) {
+    return this.membersService.create(dto, req.scope);
   }
 
   @Patch(':id')
@@ -45,13 +46,13 @@ export class MembersController {
   }
 
   @Post('import')
-  importCsv(@Body() data: any[]) {
-    return this.membersService.importCsv(data);
+  importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
+    return this.membersService.importCsv(data, req.scope);
   }
 
   @Get('export/csv')
-  exportCsv(@Query() filter: MemberFilterDto) {
-    return this.membersService.exportCsv(filter);
+  exportCsv(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
+    return this.membersService.exportCsv(filter, req.scope);
   }
 
   @Post(':id/validate')

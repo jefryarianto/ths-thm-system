@@ -1,15 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class TrainingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(query: TrainingFilterDto) {
+  async findAll(query: TrainingFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
-    const where: Record<string, unknown> = {};
+    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+    const where: Record<string, unknown> = { ...scopeFilter };
     if (query.rantingId) where.rantingId = query.rantingId;
 
     const [data, total] = await Promise.all([
@@ -24,7 +30,7 @@ export class TrainingsService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, scope?: UserScope) {
     const training = await this.prisma.latihan.findUnique({
       where: { id },
       include: {
@@ -35,10 +41,16 @@ export class TrainingsService {
       },
     });
     if (!training) throw new NotFoundException('Latihan tidak ditemukan');
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))) {
+      throw new NotFoundException('Latihan tidak ditemukan');
+    }
     return { success: true, data: training };
   }
 
-  async create(dto: CreateTrainingDto) {
+  async create(dto: CreateTrainingDto, scope?: UserScope) {
+    if (scope?.rantingId && !dto.rantingId) {
+      (dto as any).rantingId = scope.rantingId;
+    }
     const training = await this.prisma.latihan.create({
       data: {
         rantingId: dto.rantingId,

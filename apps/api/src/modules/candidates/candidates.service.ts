@@ -1,17 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class CandidatesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(filter: CandidateFilterDto) {
+  async findAll(filter: CandidateFilterDto, scope?: UserScope) {
     const page = filter.page || 1;
     const limit = filter.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+    const where: any = { ...scopeFilter };
 
     if (filter.search) {
       where.OR = [
@@ -40,17 +46,26 @@ export class CandidatesService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, scope?: UserScope) {
     const candidate = await this.prisma.calonAnggota.findUnique({
       where: { id },
       include: { ranting: { include: { wilayah: { include: { distrik: true } } } } },
     });
 
     if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
+
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+
     return { success: true, data: candidate };
   }
 
-  async create(dto: CreateCandidateDto) {
+  async create(dto: CreateCandidateDto, scope?: UserScope) {
+    // Auto-assign rantingId from scope for branch-level users
+    if (scope?.rantingId && !dto.rantingId) {
+      (dto as any).rantingId = scope.rantingId;
+    }
     const candidate = await this.prisma.calonAnggota.create({
       data: {
         ...dto,

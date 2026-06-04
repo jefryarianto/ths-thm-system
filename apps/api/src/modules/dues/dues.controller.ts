@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DuesService } from './dues.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Dues')
 @Controller('dues')
@@ -14,7 +15,7 @@ export class DuesController {
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  findAll(@Query() query: DueFilterDto) { return this.service.findAll(query); }
+  findAll(@Query() query: DueFilterDto, @Req() req: ScopedRequest) { return this.service.findAll(query, req.scope); }
 
   @Post()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
@@ -61,5 +62,5 @@ export class DuesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) { return this.service.findOne(id); }
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
 }
