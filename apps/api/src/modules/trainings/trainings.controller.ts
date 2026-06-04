@@ -2,6 +2,8 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { TrainingsService } from './trainings.service';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto, ImportAttendanceDto } from './dto/training.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 
 @ApiTags('Trainings')
 @Controller('trainings')
@@ -10,12 +12,16 @@ export class TrainingsController {
   constructor(private readonly service: TrainingsService) {}
 
   @Get()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   findAll(@Query() query: TrainingFilterDto) { return this.service.findAll(query); }
 
   @Get(':id')
   findOne(@Param('id') id: string) { return this.service.findOne(id); }
 
   @Post()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   create(@Body() dto: CreateTrainingDto) { return this.service.create(dto); }
 
   @Patch(':id')

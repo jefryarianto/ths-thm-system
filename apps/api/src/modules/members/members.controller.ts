@@ -4,6 +4,8 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
+import { RequireScope } from '../../common/decorators/scope.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('Members')
 @Controller('members')
@@ -12,6 +14,8 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
   @Get()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   findAll(@Query() filter: MemberFilterDto) {
     return this.membersService.findAll(filter);
   }
@@ -22,6 +26,8 @@ export class MembersController {
   }
 
   @Post()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   create(@Body() dto: CreateMemberDto) {
     return this.membersService.create(dto);
   }
@@ -32,6 +38,8 @@ export class MembersController {
   }
 
   @Delete(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   remove(@Param('id') id: string) {
     return this.membersService.remove(id);
   }

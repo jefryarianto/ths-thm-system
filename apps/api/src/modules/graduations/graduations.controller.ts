@@ -2,6 +2,8 @@ import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/commo
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { GraduationsService } from './graduations.service';
 import { CreateGraduationDto, GraduationFilterDto, RegisterParticipantDto, GraduateDto } from './dto/graduation.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 
 @ApiTags('Graduations')
 @Controller('graduations')
@@ -10,12 +12,16 @@ export class GraduationsController {
   constructor(private readonly service: GraduationsService) {}
 
   @Get()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   findAll(@Query() query: GraduationFilterDto) { return this.service.findAll(query); }
 
   @Get(':id')
   findOne(@Param('id') id: string) { return this.service.findOne(id); }
 
   @Post()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   create(@Body() dto: CreateGraduationDto) { return this.service.create(dto); }
 
   @Post(':id/register')

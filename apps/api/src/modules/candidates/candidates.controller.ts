@@ -4,6 +4,8 @@ import {
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 
 @ApiTags('Candidates')
 @Controller('candidates')
@@ -12,6 +14,8 @@ export class CandidatesController {
   constructor(private readonly candidatesService: CandidatesService) {}
 
   @Get()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   findAll(@Query() filter: CandidateFilterDto) {
     return this.candidatesService.findAll(filter);
   }
@@ -22,6 +26,8 @@ export class CandidatesController {
   }
 
   @Post()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   create(@Body() dto: CreateCandidateDto) {
     return this.candidatesService.create(dto);
   }

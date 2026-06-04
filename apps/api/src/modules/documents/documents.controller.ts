@@ -3,6 +3,8 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DocumentsService } from './documents.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { GenerateDocumentDto, BatchGenerateDocumentDto, DocumentFilterDto } from './dto/document.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 
 @ApiTags('Documents')
 @Controller('documents')
@@ -17,6 +19,8 @@ export class DocumentsController {
 
   @Get()
   @ApiBearerAuth()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   findAll(@Query() q: DocumentFilterDto) { return this.service.findAll(q); }
 
   @Get(':id')
@@ -25,6 +29,8 @@ export class DocumentsController {
 
   @Post('generate')
   @ApiBearerAuth()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   generate(@Body() dto: GenerateDocumentDto) { return this.service.generate(dto); }
 
   @Post('batch')

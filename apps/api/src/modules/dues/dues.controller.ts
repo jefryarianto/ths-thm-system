@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DuesService } from './dues.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 
 @ApiTags('Dues')
 @Controller('dues')
@@ -12,6 +13,7 @@ export class DuesController {
 
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   findAll(@Query() query: DueFilterDto) { return this.service.findAll(query); }
 
   @Post()
@@ -32,10 +34,12 @@ export class DuesController {
 
   @Get('arrears')
   @Roles('superadmin', 'admin_distrik')
+  @RequireScope('district')
   getArrears() { return this.service.getArrears({}); }
 
   @Get('report')
   @Roles('superadmin', 'admin_distrik')
+  @RequireScope('district')
   getReport() { return this.service.getReport({}); }
 
   @Get('report/export')
