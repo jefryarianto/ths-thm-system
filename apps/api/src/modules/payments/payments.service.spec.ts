@@ -1,9 +1,10 @@
 // @ts-nocheck
 // Tests written before DTO refactor - testing service logic, not DTO validation
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 const mockConstructEvent = jest.fn();
 const mockCreate = jest.fn();
@@ -27,6 +28,14 @@ describe('PaymentsService', () => {
     },
   };
 
+  const mockScopeHelper = {
+    buildScopeFilter: jest.fn().mockReturnValue({}),
+    buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
+    hasAccessToResource: jest.fn().mockReturnValue(true),
+    hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
+    verifyKegiatanScope: jest.fn(),
+  };
+
   beforeAll(() => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
@@ -37,6 +46,7 @@ describe('PaymentsService', () => {
       providers: [
         PaymentsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ScopeHelper, useValue: mockScopeHelper },
       ],
     }).compile();
 
@@ -63,6 +73,14 @@ describe('PaymentsService', () => {
       await expect(
         service.createIntent({ iuranId: 'nonexistent', amount: 100000, currency: 'idr' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException for out-of-scope iuran', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue({ id: 'iuran1', anggota: { rantingId: 'r-other' } });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.createIntent({ iuranId: 'iuran1', amount: 100000, currency: 'idr' }, { rantingId: 'r1' }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 

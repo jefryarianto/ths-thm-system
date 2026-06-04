@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAspectDto, UpdateAspectDto, CreateItemDto, UpdateItemDto, CreateScoreDto, ScoreFilterDto, AssessmentFilterDto } from './dto/assessment.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -69,13 +69,25 @@ export class AssessmentsService {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const where: Record<string, unknown> = {};
-    if (query.kegiatanId) where.kegiatanId = query.kegiatanId;
     if (query.calonAnggotaId) where.calonAnggotaId = query.calonAnggotaId;
 
-    // Scope-based: when branch-level user and no kegiatan filter,
-    // we can't easily filter through kegiatan -> creator relation.
-    // The @RequireScope decorator already ensures access-level gating.
-    // Data-level filtering for scores is handled at the controller level.
+    // When a specific kegiatanId is provided, verify scope access on that kegiatan
+    if (query.kegiatanId) {
+      const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: query.kegiatanId } });
+      if (kegiatan) {
+        this.scopeHelper.verifyKegiatanScope(scope, kegiatan.scopeType ?? undefined, kegiatan.scopeId ?? undefined);
+      }
+      where.kegiatanId = query.kegiatanId;
+    } else if (scope) {
+      // No kegiatanId filter: scope filter through kegiatan relation
+      if (scope.rantingId) {
+        where.kegiatan = { scopeType: 'ranting', scopeId: scope.rantingId };
+      } else if (scope.wilayahId) {
+        where.kegiatan = { scopeType: 'wilayah', scopeId: scope.wilayahId };
+      } else if (scope.distrikId) {
+        where.kegiatan = { scopeType: 'distrik', scopeId: scope.distrikId };
+      }
+    }
 
     const [data, total] = await Promise.all([
       this.prisma.nilaiPendadaran.findMany({ where, skip: (page - 1) * limit, take: limit, include: { itemPenilaian: true, penguji: { select: { id: true, namaLengkap: true } } }, orderBy: { createdAt: 'desc' } }),
@@ -84,7 +96,15 @@ export class AssessmentsService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async createScore(dto: CreateScoreDto) {
+  async createScore(dto: CreateScoreDto, scope?: UserScope) {
+    // Scope verification: verify the kegiatan is within scope
+    if (dto.kegiatanId && scope) {
+      const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: dto.kegiatanId } });
+      if (kegiatan) {
+        this.scopeHelper.verifyKegiatanScope(scope, kegiatan.scopeType ?? undefined, kegiatan.scopeId ?? undefined);
+      }
+    }
+
     const score = await this.prisma.nilaiPendadaran.create({
       data: {
         kegiatanId: dto.kegiatanId,

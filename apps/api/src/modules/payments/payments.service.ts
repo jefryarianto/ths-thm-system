@@ -1,6 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const Stripe = require('stripe');
@@ -9,13 +11,25 @@ const Stripe = require('stripe');
 export class PaymentsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private stripe: any;
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
   }
 
-  async createIntent(dto: CreatePaymentIntentDto) {
-    const iuran = await this.prisma.iuran.findUnique({ where: { id: dto.iuranId } });
+  async createIntent(dto: CreatePaymentIntentDto, scope?: UserScope) {
+    const iuran = await this.prisma.iuran.findUnique({
+      where: { id: dto.iuranId },
+      include: { anggota: { select: { rantingId: true } } },
+    });
     if (!iuran) throw new NotFoundException('Iuran not found');
+
+    // Scope verification: iuran → anggota → ranting
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, (iuran as any).anggota?.rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: dto.amount,
       currency: dto.currency,

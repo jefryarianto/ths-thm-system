@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { ScopedRequest, UserScope } from '../interfaces/user-scope.interface';
+import { UserScope } from '../interfaces/user-scope.interface';
 
 /**
  * Helper to extract scope from request and build Prisma where clauses.
@@ -7,13 +7,6 @@ import { ScopedRequest, UserScope } from '../interfaces/user-scope.interface';
  */
 @Injectable()
 export class ScopeHelper {
-  /**
-   * Extract scope from request object.
-   */
-  extractScope(request: ScopedRequest): UserScope {
-    return request.scope || {};
-  }
-
   /**
    * Build a Prisma where clause that filters data by scope.
    * - If scope has rantingId, filter to that ranting (branch level)
@@ -39,21 +32,6 @@ export class ScopeHelper {
       return { [basePath]: { wilayah: { distrikId: scope.distrikId } } };
     }
 
-    return {};
-  }
-
-  /**
-   * Build a simple where clause for models that have rantingId directly.
-   */
-  buildDirectRantingFilter(scope: UserScope): Record<string, unknown> {
-    if (!scope) return {};
-
-    if (scope.rantingId) {
-      return { rantingId: scope.rantingId };
-    }
-
-    // For region/district level, we need a nested filter through ranting relation
-    // This is handled by buildScopeFilter
     return {};
   }
 

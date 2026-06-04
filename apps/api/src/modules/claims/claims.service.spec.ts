@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ClaimsService } from './claims.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -24,7 +24,7 @@ describe('ClaimsService', () => {
     buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
-    extractScope: jest.fn().mockReturnValue({}),
+    verifyKegiatanScope: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -52,6 +52,14 @@ describe('ClaimsService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
+
+    it('should apply scope filter', async () => {
+      mockPrisma.klaim.findMany.mockResolvedValue([]);
+      mockPrisma.klaim.count.mockResolvedValue(0);
+      mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({ anggota: { rantingId: 'r1' } });
+      await service.findAll({ page: 1, limit: 10 }, { rantingId: 'r1' });
+      expect(mockScopeHelper.buildIndirectScopeFilter).toHaveBeenCalledWith({ rantingId: 'r1' }, 'anggota');
+    });
   });
 
   describe('findOne', () => {
@@ -64,6 +72,12 @@ describe('ClaimsService', () => {
     it('should throw NotFoundException when not found', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue(null);
       await expect(service.findOne('cl1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException for out-of-scope resource', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({ id: 'cl1', anggota: { rantingId: 'r-other' } });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(service.findOne('cl1', { rantingId: 'r1' })).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -81,6 +95,12 @@ describe('ClaimsService', () => {
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', tipe: 'asuransi' });
       const result = await service.update('cl1', { tipe: 'asuransi' });
       expect(result.success).toBe(true);
+    });
+
+    it('should throw ForbiddenException for out-of-scope resource', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({ id: 'cl1', anggota: { rantingId: 'r-other' } });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(service.update('cl1', { catatan: 'test' }, { rantingId: 'r1' })).rejects.toThrow(ForbiddenException);
     });
   });
 
