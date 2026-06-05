@@ -1,9 +1,12 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Candidates')
 @Controller('candidates')
@@ -12,28 +15,36 @@ export class CandidatesController {
   constructor(private readonly candidatesService: CandidatesService) {}
 
   @Get()
-  findAll(@Query() filter: CandidateFilterDto) {
-    return this.candidatesService.findAll(filter);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  findAll(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest) {
+    return this.candidatesService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.candidatesService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.candidatesService.findOne(id, req.scope);
   }
 
   @Post()
-  create(@Body() dto: CreateCandidateDto) {
-    return this.candidatesService.create(dto);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  create(@Body() dto: CreateCandidateDto, @Req() req: ScopedRequest) {
+    return this.candidatesService.create(dto, req.scope);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateCandidateDto) {
-    return this.candidatesService.update(id, dto);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  update(@Param('id') id: string, @Body() dto: UpdateCandidateDto, @Req() req: ScopedRequest) {
+    return this.candidatesService.update(id, dto, req.scope);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.candidatesService.remove(id);
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.candidatesService.remove(id, req.scope);
   }
 
   @Post('import')

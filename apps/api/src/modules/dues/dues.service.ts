@@ -1,14 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class DuesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
+  async findAll(query: DueFilterDto, scope?: UserScope) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
+    const where: Record<string, unknown> = { ...scopeFilter };
     if (query.status) where.status = query.status;
     if (query.periode) where.periode = query.periode;
 
@@ -24,23 +31,50 @@ export class DuesService {
     return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async create(dto: any) {
-    const due = await this.prisma.iuran.create({ data: dto });
+  async create(dto: CreateDueDto) {
+    const due = await this.prisma.iuran.create({ data: dto as never });
     return { success: true, data: due, message: 'Pembayaran iuran berhasil dicatat' };
   }
 
-  async findOne(id: string) {
-    const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } });
+  async findOne(id: string, scope?: UserScope) {
+    const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } } } });
     if (!due) throw new NotFoundException('Iuran tidak ditemukan');
+    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.rantingId))) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
     return { success: true, data: due };
   }
 
-  async update(id: string, dto: any) {
-    const due = await this.prisma.iuran.update({ where: { id }, data: dto });
+  async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
+    if (scope) {
+      const existing = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.anggota?.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
+    const data: Record<string, unknown> = {};
+    if (dto.periode) data.periode = dto.periode;
+    if (dto.jumlah !== undefined) data.jumlah = dto.jumlah;
+    if (dto.tanggalBayar) data.tanggalBayar = new Date(dto.tanggalBayar);
+    if (dto.metodeBayar) data.metodeBayar = dto.metodeBayar;
+    if (dto.status) data.status = dto.status;
+    if (dto.buktiBayarPath) data.buktiBayarPath = dto.buktiBayarPath;
+
+    const due = await this.prisma.iuran.update({ where: { id }, data });
     return { success: true, data: due, message: 'Data iuran berhasil diperbarui' };
   }
 
-  async remove(id: string) {
+  async remove(id: string, scope?: UserScope) {
+    if (scope) {
+      const existing = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
+      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.anggota?.rantingId))) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
     await this.prisma.iuran.delete({ where: { id } });
     return { success: true, message: 'Data iuran berhasil dihapus' };
   }
@@ -53,7 +87,7 @@ export class DuesService {
     return { success: true, data: dues };
   }
 
-  async getArrears(query: any) {
+  async getArrears(_query: Record<string, unknown>) {
     const arrears = await this.prisma.iuran.findMany({
       where: { status: 'menunggak' },
       include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } } },
@@ -99,7 +133,7 @@ export class DuesService {
     };
   }
 
-  async getReport(query: any) {
+  async getReport(_query: Record<string, unknown>) {
     const stats = await this.prisma.iuran.groupBy({
       by: ['status'],
       _count: true,
@@ -109,34 +143,34 @@ export class DuesService {
     return { success: true, data: stats };
   }
 
-  async exportReport(query: any) {
+  async exportReport(_query: Record<string, unknown>) {
     const dues = await this.prisma.iuran.findMany({
       include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
     });
     return { success: true, data: dues };
   }
 
-  async importDues(data: any[]) {
+  async importDues(data: Record<string, unknown>[]) {
     let success = 0;
     for (const row of data) {
       try {
         await this.prisma.iuran.create({
           data: {
-            anggotaId: row.anggota_id,
-            periode: row.periode,
-            jumlah: parseFloat(row.jumlah),
-            tanggalBayar: row.tanggal_bayar ? new Date(row.tanggal_bayar) : null,
-            metodeBayar: row.metode_bayar || 'manual',
-            status: row.status || 'lunas',
+            anggotaId: row.anggota_id as string,
+            periode: row.periode as string,
+            jumlah: parseFloat(row.jumlah as string),
+            tanggalBayar: row.tanggal_bayar ? new Date(row.tanggal_bayar as string) : null,
+            metodeBayar: (row.metode_bayar as 'manual' | 'transfer' | 'online') || 'manual',
+            status: (row.status as 'belum_dibayar' | 'menunggu_verifikasi' | 'lunas' | 'menunggak') || 'lunas',
           },
         });
         success++;
-      } catch (e) { /* skip errors */ }
+      } catch { /* skip errors */ }
     }
     return { success: true, data: { imported: success, failed: data.length - success } };
   }
 
-  async batchPayment(dto: any) {
+  async batchPayment(dto: BatchPaymentDto) {
     const { memberIds, periode, jumlah } = dto;
     for (const memberId of memberIds) {
       await this.prisma.iuran.create({

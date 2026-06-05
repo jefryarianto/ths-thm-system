@@ -1,14 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateRegistrationDto, UpdateRegistrationDto, RegistrationFilterDto } from './dto/registration.dto';
 
 @Injectable()
 export class RegistrationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    const where: any = {};
+  async findAll(query: RegistrationFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const where: Record<string, unknown> = {};
     if (query.status) where.status = query.status;
 
     const [data, total] = await Promise.all([
@@ -24,13 +25,13 @@ export class RegistrationsService {
     return { success: true, data: reg };
   }
 
-  async create(dto: any) {
-    const reg = await this.prisma.pendaftaran.create({ data: { ...dto, status: 'pending' } });
+  async create(dto: CreateRegistrationDto) {
+    const reg = await this.prisma.pendaftaran.create({ data: { ...dto, status: 'pending', jenisKelamin: dto.jenisKelamin as never } });
     return { success: true, data: reg, message: 'Pendaftaran berhasil dibuat' };
   }
 
-  async update(id: string, dto: any) {
-    const reg = await this.prisma.pendaftaran.update({ where: { id }, data: dto });
+  async update(id: string, dto: UpdateRegistrationDto) {
+    const reg = await this.prisma.pendaftaran.update({ where: { id }, data: dto as never });
     return { success: true, data: reg, message: 'Pendaftaran berhasil diperbarui' };
   }
 
@@ -55,7 +56,7 @@ export class RegistrationsService {
 
     const candidate = await this.prisma.calonAnggota.create({
       data: {
-        rantingId: reg.sumberInfo as string || '',
+        rantingId: (reg.sumberInfo as string) || '',
         namaLengkap: reg.namaLengkap,
         jenisKelamin: reg.jenisKelamin,
         tempatLahir: reg.tempatLahir,
@@ -77,18 +78,18 @@ export class RegistrationsService {
     return { success: true, message: reason || 'Pendaftaran ditolak' };
   }
 
-  async importCsv(data: any[]) {
+  async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;
     for (const row of data) {
       try {
         await this.prisma.pendaftaran.create({
           data: {
-            namaLengkap: row.nama_lengkap || row.name,
-            jenisKelamin: row.jenis_kelamin || 'L',
-            noHp: row.no_hp,
-            email: row.email,
-            alamat: row.alamat,
-            sumberInfo: row.sumber_info,
+            namaLengkap: (row.nama_lengkap || row.name) as string,
+            jenisKelamin: ((row.jenis_kelamin as string) || 'L') as never,
+            noHp: row.no_hp as string,
+            email: row.email as string,
+            alamat: row.alamat as string,
+            sumberInfo: row.sumber_info as string,
             status: 'pending',
           },
         });

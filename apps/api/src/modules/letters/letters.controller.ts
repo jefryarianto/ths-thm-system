@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestj
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { LettersService } from './letters.service';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { LetterFilterDto, CreateIncomingLetterDto, UpdateIncomingLetterDto, CreateOutgoingLetterDto, UpdateOutgoingLetterDto, CreateDispositionDto } from './dto/letter.dto';
 
 @ApiTags('Letters')
 @Controller('letters')
@@ -11,11 +12,11 @@ export class LettersController {
 
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  findAllCombined(@Query() query: any) { return this.service.findAllCombined(query); }
+  findAllCombined(@Query() query: LetterFilterDto) { return this.service.findAllCombined(query); }
 
   @Get('incoming')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  incomingFindAll(@Query() query: any) { return this.service.incomingFindAll(query); }
+  incomingFindAll(@Query() query: LetterFilterDto) { return this.service.incomingFindAll(query); }
 
   @Get('incoming/:id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
@@ -23,11 +24,11 @@ export class LettersController {
 
   @Post('incoming')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  incomingCreate(@Body() dto: any) { return this.service.incomingCreate(dto); }
+  incomingCreate(@Body() dto: CreateIncomingLetterDto) { return this.service.incomingCreate(dto); }
 
   @Patch('incoming/:id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  incomingUpdate(@Param('id') id: string, @Body() dto: any) { return this.service.incomingUpdate(id, dto); }
+  incomingUpdate(@Param('id') id: string, @Body() dto: UpdateIncomingLetterDto) { return this.service.incomingUpdate(id, dto); }
 
   @Delete('incoming/:id')
   @Roles('superadmin', 'admin_distrik')
@@ -35,11 +36,11 @@ export class LettersController {
 
   @Post('incoming/:id/disposition')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  createDisposition(@Param('id') id: string, @Body() dto: any) { return this.service.createDisposition(id, dto); }
+  createDisposition(@Param('id') id: string, @Body() dto: CreateDispositionDto) { return this.service.createDisposition(id, dto); }
 
   @Get('outgoing')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  outgoingFindAll(@Query() query: any) { return this.service.outgoingFindAll(query); }
+  outgoingFindAll(@Query() query: LetterFilterDto) { return this.service.outgoingFindAll(query); }
 
   @Get('outgoing/:id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
@@ -47,11 +48,11 @@ export class LettersController {
 
   @Post('outgoing')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  outgoingCreate(@Body() dto: any) { return this.service.outgoingCreate(dto); }
+  outgoingCreate(@Body() dto: CreateOutgoingLetterDto) { return this.service.outgoingCreate(dto); }
 
   @Patch('outgoing/:id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  outgoingUpdate(@Param('id') id: string, @Body() dto: any) { return this.service.outgoingUpdate(id, dto); }
+  outgoingUpdate(@Param('id') id: string, @Body() dto: UpdateOutgoingLetterDto) { return this.service.outgoingUpdate(id, dto); }
 
   @Delete('outgoing/:id')
   @Roles('superadmin', 'admin_distrik')

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreatePeriodDto, UpdatePeriodDto, CreateSignatureDto, CreateStampDto } from './dto/setting.dto';
 
 @Injectable()
 export class SettingsService {
@@ -10,9 +11,9 @@ export class SettingsService {
     return { success: true, data: settings };
   }
 
-  async updateSettings(dto: any) {
+  async updateSettings(dto: Record<string, unknown>) {
     for (const [key, value] of Object.entries(dto)) {
-      await this.prisma.setting.upsert({ where: { key }, update: { value: value as any }, create: { key, value: value as any } });
+      await this.prisma.setting.upsert({ where: { key }, update: { value: value as never }, create: { key, value: value as never } });
     }
     return { success: true, message: 'Konfigurasi berhasil diperbarui' };
   }
@@ -28,13 +29,19 @@ export class SettingsService {
     return { success: true, data: period };
   }
 
-  async createPeriod(dto: any) {
+  async createPeriod(dto: CreatePeriodDto) {
     const period = await this.prisma.periode.create({ data: dto });
     return { success: true, data: period, message: 'Periode berhasil dibuat' };
   }
 
-  async updatePeriod(id: string, dto: any) {
-    const period = await this.prisma.periode.update({ where: { id }, data: dto });
+  async updatePeriod(id: string, dto: UpdatePeriodDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.nama) data.nama = dto.nama;
+    if (dto.tglMulai) data.tglMulai = new Date(dto.tglMulai);
+    if (dto.tglSelesai) data.tglSelesai = new Date(dto.tglSelesai);
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+
+    const period = await this.prisma.periode.update({ where: { id }, data });
     return { success: true, data: period, message: 'Periode berhasil diperbarui' };
   }
 
@@ -58,7 +65,7 @@ export class SettingsService {
     };
   }
 
-  async uploadSignature(dto: any) {
+  async uploadSignature(dto: CreateSignatureDto) {
     const sig = await this.prisma.tandaTangan.create({ data: dto });
     return { success: true, data: sig, message: 'Tanda tangan berhasil diupload' };
   }
@@ -73,7 +80,7 @@ export class SettingsService {
     return { success: true, message: 'Tanda tangan berhasil dihapus' };
   }
 
-  async uploadStamp(dto: any) {
+  async uploadStamp(dto: CreateStampDto) {
     const stamp = await this.prisma.stempel.create({ data: dto });
     return { success: true, data: stamp, message: 'Stempel berhasil diupload' };
   }

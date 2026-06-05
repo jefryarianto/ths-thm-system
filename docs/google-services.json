@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "287904471765",
+    "project_id": "thsthm-project",
+    "storage_bucket": "thsthm-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287904471765:android:0374a430de2ede0a2ba05c",
+        "android_client_info": {
+          "package_name": "com.thsthm.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmEjYkpJ886p9qXFV0OrY6ejhADTyUeaE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { LetterFilterDto, CreateIncomingLetterDto, UpdateIncomingLetterDto, CreateOutgoingLetterDto, UpdateOutgoingLetterDto, CreateDispositionDto } from './dto/letter.dto';
 
 @Injectable()
 export class LettersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAllCombined(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
+  async findAllCombined(query: LetterFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
     const skip = (page - 1) * limit;
 
     const [masuk, keluar, totalMasuk, totalKeluar] = await Promise.all([
@@ -28,9 +29,9 @@ export class LettersService {
     return { success: true, data: combined.slice(0, limit), meta: { total, page, limit, totalPages } };
   }
 
-  async incomingFindAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
+  async incomingFindAll(query: LetterFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
     const [data, total] = await Promise.all([
       this.prisma.suratMasuk.findMany({ skip: (page - 1) * limit, take: limit, orderBy: { tanggalTerima: 'desc' } }),
       this.prisma.suratMasuk.count(),
@@ -44,13 +45,31 @@ export class LettersService {
     return { success: true, data: letter };
   }
 
-  async incomingCreate(dto: any) {
-    const letter = await this.prisma.suratMasuk.create({ data: { ...dto, status: 'diterima' } });
+  async incomingCreate(dto: CreateIncomingLetterDto) {
+    const letter = await this.prisma.suratMasuk.create({
+      data: {
+        nomorSurat: dto.nomorSurat,
+        tanggalSurat: new Date(dto.tanggalSurat),
+        tanggalTerima: new Date(dto.tanggalTerima),
+        pengirim: dto.pengirim,
+        perihal: dto.perihal,
+        fileScanPath: dto.fileScanPath,
+        status: 'diterima',
+      },
+    });
     return { success: true, data: letter, message: 'Surat masuk berhasil dicatat' };
   }
 
-  async incomingUpdate(id: string, dto: any) {
-    const letter = await this.prisma.suratMasuk.update({ where: { id }, data: dto });
+  async incomingUpdate(id: string, dto: UpdateIncomingLetterDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.nomorSurat) data.nomorSurat = dto.nomorSurat;
+    if (dto.tanggalSurat) data.tanggalSurat = new Date(dto.tanggalSurat);
+    if (dto.pengirim) data.pengirim = dto.pengirim;
+    if (dto.perihal) data.perihal = dto.perihal;
+    if (dto.status) data.status = dto.status;
+    if (dto.fileScanPath) data.fileScanPath = dto.fileScanPath;
+
+    const letter = await this.prisma.suratMasuk.update({ where: { id }, data });
     return { success: true, data: letter, message: 'Surat masuk berhasil diperbarui' };
   }
 
@@ -59,7 +78,7 @@ export class LettersService {
     return { success: true, message: 'Surat masuk berhasil dihapus' };
   }
 
-  async createDisposition(suratMasukId: string, dto: any) {
+  async createDisposition(suratMasukId: string, dto: CreateDispositionDto) {
     const disposition = await this.prisma.disposisi.create({
       data: {
         suratMasukId,
@@ -71,9 +90,9 @@ export class LettersService {
     return { success: true, data: disposition, message: 'Disposisi berhasil dicatat' };
   }
 
-  async outgoingFindAll(query: any) {
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
+  async outgoingFindAll(query: LetterFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
     const [data, total] = await Promise.all([
       this.prisma.suratKeluar.findMany({ skip: (page - 1) * limit, take: limit, orderBy: { tanggalSurat: 'desc' } }),
       this.prisma.suratKeluar.count(),
@@ -87,13 +106,31 @@ export class LettersService {
     return { success: true, data: letter };
   }
 
-  async outgoingCreate(dto: any) {
-    const letter = await this.prisma.suratKeluar.create({ data: { ...dto, status: 'draft' } });
+  async outgoingCreate(dto: CreateOutgoingLetterDto) {
+    const letter = await this.prisma.suratKeluar.create({
+      data: {
+        nomorSurat: dto.nomorSurat,
+        tanggalSurat: new Date(dto.tanggalSurat),
+        tujuan: dto.tujuan,
+        perihal: dto.perihal,
+        isi: dto.isi,
+        filePath: dto.filePath,
+        status: 'draft',
+      },
+    });
     return { success: true, data: letter, message: 'Draft surat keluar berhasil dibuat' };
   }
 
-  async outgoingUpdate(id: string, dto: any) {
-    const letter = await this.prisma.suratKeluar.update({ where: { id }, data: dto });
+  async outgoingUpdate(id: string, dto: UpdateOutgoingLetterDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.nomorSurat) data.nomorSurat = dto.nomorSurat;
+    if (dto.tanggalSurat) data.tanggalSurat = new Date(dto.tanggalSurat);
+    if (dto.tujuan) data.tujuan = dto.tujuan;
+    if (dto.perihal) data.perihal = dto.perihal;
+    if (dto.isi) data.isi = dto.isi;
+    if (dto.status) data.status = dto.status;
+
+    const letter = await this.prisma.suratKeluar.update({ where: { id }, data });
     return { success: true, data: letter, message: 'Surat keluar berhasil diperbarui' };
   }
 
