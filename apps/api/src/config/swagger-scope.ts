@@ -85,6 +85,10 @@ export function setupSwagger(app: Parameters<typeof SwaggerModule.createDocument
     .addTag('Examiners', 'Manajemen penguji — scope check on assign')
     .addTag('Settings', 'Pengaturan sistem — global')
     .addTag('Registrations', 'Pendaftaran baru — admin-level access')
+    .addTag('API Key Management', 'Manajemen API key untuk integrasi eksternal (superadmin only)')
+    .addTag('Cache Management', 'Manajemen in-memory cache — statistik dan invalidasi (superadmin only)')
+    .addTag('Audit Logs', 'Log audit dan compliance — query, export CSV, statistik (superadmin only)')
+    .addTag('Health', 'Status sistem — database, cache, audit, memory')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

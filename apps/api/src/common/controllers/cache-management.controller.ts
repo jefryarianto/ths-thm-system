@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { Roles } from '../decorators/roles.decorator';
 import { RequireScope } from '../decorators/scope.decorator';
 import { CacheService } from '../services/cache.service';
@@ -26,7 +26,8 @@ export class CacheManagementController {
   @Get('stats')
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Get cache statistics (superadmin only)' })
+  @ApiOperation({ summary: 'Get cache statistics (superadmin only)', description: 'Returns total number of cached entries and all cache keys. Useful for monitoring cache hit rates and debugging stale data.' })
+  @ApiOkResponse({ description: 'Cache stats with entry count and key list' })
   getStats() {
     return this.cache.getStats();
   }
@@ -42,7 +43,8 @@ export class CacheManagementController {
   @Post('invalidate')
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Invalidate cache entries (superadmin only)' })
+  @ApiOperation({ summary: 'Invalidate cache entries (superadmin only)', description: 'Clear specific cache prefix (e.g. "members:") or all cache. Clearing all cache temporarily increases DB load until entries are re-populated.' })
+  @ApiOkResponse({ description: 'Invalidation result — success and affected scope' })
   invalidate(@Body() dto: InvalidateCacheDto) {
     if (dto.prefix) {
       this.cache.invalidatePrefix(dto.prefix);

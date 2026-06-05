@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Roles } from '../decorators/roles.decorator';
 import { RequireScope } from '../decorators/scope.decorator';
@@ -26,7 +26,8 @@ export class AuditLogController {
   @Get()
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Query audit log entries (superadmin only)' })
+  @ApiOperation({ summary: 'Query audit log entries (superadmin only)', description: 'Returns paginated audit log entries with optional filters (eventType, userId, role, method, path, date range). Newest entries first.' })
+  @ApiOkResponse({ description: 'Paginated audit log entries with total count' })
   findAll(@Query() query: AuditLogQueryDto) {
     return this.store.query({
       eventType: query.eventType,
@@ -47,7 +48,8 @@ export class AuditLogController {
   @Get('stats')
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Get audit log statistics (superadmin only)' })
+  @ApiOperation({ summary: 'Get audit log statistics (superadmin only)', description: 'Returns total entry count, breakdown by event type and role, plus recent scope violation count (last hour).' })
+  @ApiOkResponse({ description: 'Audit log statistics with event type and role breakdowns' })
   getStats() {
     return this.store.getStats();
   }
@@ -60,7 +62,7 @@ export class AuditLogController {
   @Get('export')
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Export audit logs as CSV (superadmin only)' })
+  @ApiOperation({ summary: 'Export audit logs as CSV (superadmin only)', description: 'Downloads all matching entries as a CSV file (max 5000 entries). Supports the same filters as the query endpoint.' })
   exportCsv(@Query() query: AuditLogQueryDto, @Res() res: Response) {
     const entries = this.store.queryAll({
       eventType: query.eventType,
