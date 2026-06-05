@@ -4,10 +4,14 @@ import { SCOPE_KEY, ScopeLevel } from '../decorators/scope.decorator';
 describe('ScopeGuard', () => {
   let guard: ScopeGuard;
   let reflector: { getAllAndOverride: jest.Mock };
+  let mockAuditService: { logScopeViolation: jest.Mock };
 
-  const mockRequest = (user: { id: string; role: string; rantingId?: string }) => ({
+  const mockRequest = (user: { id: string; email?: string; role: string; rantingId?: string }) => ({
     user,
     scope: undefined,
+    method: 'GET',
+    url: '/api/test',
+    ip: '127.0.0.1',
   });
 
   const mockExecutionContext = (request: ReturnType<typeof mockRequest>) => ({
@@ -20,7 +24,8 @@ describe('ScopeGuard', () => {
 
   beforeEach(() => {
     reflector = { getAllAndOverride: jest.fn() } as never;
-    guard = new ScopeGuard(reflector as never);
+    mockAuditService = { logScopeViolation: jest.fn() };
+    guard = new ScopeGuard(reflector as never, mockAuditService as never);
   });
 
   it('should be defined', () => {
@@ -165,8 +170,8 @@ describe('ScopeGuard', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockImplementation(
         (key: string) => key === SCOPE_KEY ? 'self' as ScopeLevel : undefined,
       );
-      const req = { user: undefined as never, scope: undefined };
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(false);
+      const req = { user: undefined as never, scope: undefined, method: 'GET', url: '/api/test', ip: '127.0.0.1' };
+      expect(guard.canActivate(mockExecutionContext(req as never))).toBe(false);
     });
   });
 

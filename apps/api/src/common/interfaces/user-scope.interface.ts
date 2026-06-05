@@ -22,4 +22,7 @@ export interface ScopedRequest {
     rantingId?: string;
   };
   scope?: UserScope;
+  method?: string;
+  url?: string;
+  ip?: string;
 }

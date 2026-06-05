@@ -2,6 +2,7 @@ import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SCOPE_KEY, ScopeLevel } from '../decorators/scope.decorator';
 import { ScopedRequest, UserScope } from '../interfaces/user-scope.interface';
+import { AuditService } from '../services/audit.service';
 
 /**
  * Role → minimum scope level mapping.
@@ -36,7 +37,10 @@ function hasRequiredScope(userRole: ScopeLevel, requiredScope: ScopeLevel): bool
  */
 @Injectable()
 export class ScopeGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly auditService: AuditService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredScope = this.reflector.getAllAndOverride<ScopeLevel>(SCOPE_KEY, [
@@ -54,6 +58,20 @@ export class ScopeGuard implements CanActivate {
     const userScopeLevel = ROLE_SCOPE[user.role] || 'self';
 
     if (!hasRequiredScope(userScopeLevel, requiredScope)) {
+      // Log the scope violation for audit trail
+      this.auditService.logScopeViolation({
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
+        userScope: {
+          rantingId: user.rantingId,
+        },
+        requiredScope,
+        method: request.method ?? 'UNKNOWN',
+        path: request.url ?? 'UNKNOWN',
+        ip: request.ip,
+      });
+
       return false;
     }
 
