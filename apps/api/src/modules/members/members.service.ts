@@ -3,50 +3,63 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class MembersService {
+  private readonly CACHE_PREFIX = 'members:';
+  private readonly CACHE_TTL = 30_000; // 30 seconds
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly cache: CacheService,
   ) {}
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
     const page = filter.page || 1;
     const limit = filter.limit || 10;
-    const skip = (page - 1) * limit;
 
-    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+    // Build cache key from scope + filter params
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${page}:${limit}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}`;
 
-    const where: any = { deletedAt: null, ...scopeFilter };
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const skip = (page - 1) * limit;
+        const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+        const where: any = { deletedAt: null, ...scopeFilter };
 
-    if (filter.search) {
-      where.OR = [
-        { namaLengkap: { contains: filter.search } },
-        { nomorAnggota: { contains: filter.search } },
-        { email: { contains: filter.search } },
-      ];
-    }
-    if (filter.rantingId) where.rantingId = filter.rantingId;
-    if (filter.statusKeanggotaan) where.statusKeanggotaan = filter.statusKeanggotaan;
-    if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;
+        if (filter.search) {
+          where.OR = [
+            { namaLengkap: { contains: filter.search } },
+            { nomorAnggota: { contains: filter.search } },
+            { email: { contains: filter.search } },
+          ];
+        }
+        if (filter.rantingId) where.rantingId = filter.rantingId;
+        if (filter.statusKeanggotaan) where.statusKeanggotaan = filter.statusKeanggotaan;
+        if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;
 
-    const [data, total] = await Promise.all([
-      this.prisma.anggota.findMany({
-        where,
-        skip,
-        take: limit,
-        include: { ranting: true },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.anggota.count({ where }),
-    ]);
+        const [data, total] = await Promise.all([
+          this.prisma.anggota.findMany({
+            where,
+            skip,
+            take: limit,
+            include: { ranting: true },
+            orderBy: { createdAt: 'desc' },
+          }),
+          this.prisma.anggota.count({ where }),
+        ]);
 
-    return {
-      success: true,
-      data,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+        return {
+          success: true,
+          data,
+          meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        };
+      },
+      this.CACHE_TTL,
+    );
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -83,6 +96,7 @@ export class MembersService {
       } as any,
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: member, message: 'Anggota berhasil ditambahkan' };
   }
 
@@ -101,6 +115,7 @@ export class MembersService {
       data: dto,
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: updated, message: 'Data anggota berhasil diperbarui' };
   }
 
@@ -119,6 +134,7 @@ export class MembersService {
       data: { deletedAt: new Date() },
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Anggota berhasil dihapus' };
   }
 
@@ -155,6 +171,7 @@ export class MembersService {
       }
     }
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: results };
   }
 

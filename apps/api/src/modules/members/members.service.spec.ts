@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('MembersService', () => {
   let service: MembersService;
@@ -32,12 +33,23 @@ describe('MembersService', () => {
     verifyKegiatanScope: jest.fn(),
   };
 
+  const mockCache = {
+    get: jest.fn().mockReturnValue(undefined),
+    set: jest.fn(),
+    del: jest.fn(),
+    invalidatePrefix: jest.fn(),
+    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    clear: jest.fn(),
+    getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -46,6 +58,7 @@ describe('MembersService', () => {
     // Reset default mock return values after clearAllMocks
     mockScopeHelper.buildScopeFilter.mockReturnValue({});
     mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+    mockCache.invalidatePrefix.mockClear();
   });
 
   it('should be defined', () => {
