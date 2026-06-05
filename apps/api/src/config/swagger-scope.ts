@@ -89,6 +89,7 @@ export function setupSwagger(app: Parameters<typeof SwaggerModule.createDocument
     .addTag('Cache Management', 'Manajemen in-memory cache — statistik dan invalidasi (superadmin only)')
     .addTag('Audit Logs', 'Log audit dan compliance — query, export CSV, statistik (superadmin only)')
     .addTag('Health', 'Status sistem — database, cache, audit, memory')
+    .addTag('Gamification', 'Points, badges, leaderboard — gamifikasi anggota')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

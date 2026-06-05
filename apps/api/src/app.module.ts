@@ -29,6 +29,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { GamificationModule } from './modules/gamification/gamification.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     NotificationsModule,
     ReportsModule,
     SettingsModule,
+    GamificationModule,
   ],
   controllers: [HealthController],
   providers: [
