@@ -6,10 +6,11 @@ import { AuditLogController } from './controllers/audit-log.controller';
 import { CacheService } from './services/cache.service';
 import { ApiKeyStore } from './guards/api-key.guard';
 import { ApiKeyManagementController } from './controllers/api-key-management.controller';
+import { CacheManagementController } from './controllers/cache-management.controller';
 
 @Global()
 @Module({
-  controllers: [AuditLogController, ApiKeyManagementController],
+  controllers: [AuditLogController, ApiKeyManagementController, CacheManagementController],
   providers: [ScopeHelper, AuditLogStore, AuditService, CacheService, ApiKeyStore],
   exports: [ScopeHelper, AuditService, AuditLogStore, CacheService, ApiKeyStore],
 })
