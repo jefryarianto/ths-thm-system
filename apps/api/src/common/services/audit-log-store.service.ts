@@ -144,6 +144,36 @@ export class AuditLogStore {
   }
 
   /**
+   * Get latency percentiles (p50, p95, p99) from audit log duration data.
+   * Useful for monitoring API response time performance.
+   */
+  getLatencyPercentiles(): { p50: number; p95: number; p99: number; avg: number; count: number } {
+    const durations = this.entries
+      .filter((e) => e.durationMs != null && e.durationMs >= 0)
+      .map((e) => e.durationMs!)
+      .sort((a, b) => a - b);
+
+    if (durations.length === 0) {
+      return { p50: 0, p95: 0, p99: 0, avg: 0, count: 0 };
+    }
+
+    const percentile = (p: number): number => {
+      const index = Math.ceil((p / 100) * durations.length) - 1;
+      return durations[Math.max(0, index)];
+    };
+
+    const sum = durations.reduce((acc, d) => acc + d, 0);
+
+    return {
+      p50: Math.round(percentile(50)),
+      p95: Math.round(percentile(95)),
+      p99: Math.round(percentile(99)),
+      avg: Math.round(sum / durations.length),
+      count: durations.length,
+    };
+  }
+
+  /**
    * Get the current number of entries in the store.
    */
   get size(): number {

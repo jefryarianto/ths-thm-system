@@ -71,6 +71,7 @@ export class HealthController {
         auditLog: {
           totalEntries: auditStats.total,
           recentViolations: auditStats.recentViolations,
+          latency: this.auditLogStore.getLatencyPercentiles(),
         },
         apiKeys: {
           active: apiKeys.length,

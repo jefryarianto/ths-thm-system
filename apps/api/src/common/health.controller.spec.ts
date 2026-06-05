@@ -25,6 +25,7 @@ describe('HealthController', () => {
       byRole: { superadmin: 30, anggota: 70 },
       recentViolations: 2,
     }),
+    getLatencyPercentiles: jest.fn().mockReturnValue({ p50: 45, p95: 230, p99: 890, avg: 67, count: 150 }),
   };
 
   const mockApiKeyStore = {
@@ -70,9 +71,11 @@ describe('HealthController', () => {
       expect(result.data.cache).toEqual({ entries: 3, maxEntries: 1000 });
     });
 
-    it('should include audit log stats', async () => {
+    it('should include audit log stats with latency percentiles', async () => {
       const result = await controller.check();
-      expect(result.data.auditLog).toEqual({ totalEntries: 150, recentViolations: 2 });
+      expect(result.data.auditLog.totalEntries).toBe(150);
+      expect(result.data.auditLog.recentViolations).toBe(2);
+      expect(result.data.auditLog.latency).toEqual({ p50: 45, p95: 230, p99: 890, avg: 67, count: 150 });
     });
 
     it('should include active API keys count', async () => {
