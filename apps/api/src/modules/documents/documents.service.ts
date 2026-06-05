@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { GenerateDocumentDto, BatchGenerateDocumentDto, DocumentFilterDto } from './dto/document.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -11,10 +12,12 @@ import * as fs from 'fs';
 @Injectable()
 export class DocumentsService {
   private readonly outputDir: string;
+  private readonly CACHE_PREFIX = 'documents:';
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly cache: CacheService,
   ) {
     this.outputDir = path.resolve('storage', 'documents');
     fs.mkdirSync(this.outputDir, { recursive: true });
@@ -23,16 +26,20 @@ export class DocumentsService {
   async findAll(query: DocumentFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
-    const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
-    const where: Record<string, unknown> = { ...scopeFilter };
-    if (query.tipe) where.tipe = query.tipe;
-    if (query.anggotaId) where.anggotaId = query.anggotaId;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${page}:${limit}:${query.tipe || ''}:${query.anggotaId || ''}`;
 
-    const [data, total] = await Promise.all([
-      this.prisma.dokumen.findMany({ where, skip: (page - 1) * limit, take: limit, include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.dokumen.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return this.cache.getOrSet(cacheKey, async () => {
+      const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
+      const where: Record<string, unknown> = { ...scopeFilter };
+      if (query.tipe) where.tipe = query.tipe;
+      if (query.anggotaId) where.anggotaId = query.anggotaId;
+
+      const [data, total] = await Promise.all([
+        this.prisma.dokumen.findMany({ where, skip: (page - 1) * limit, take: limit, include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } }, orderBy: { createdAt: 'desc' } }),
+        this.prisma.dokumen.count({ where }),
+      ]);
+      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    }, 30);
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -104,6 +111,7 @@ export class DocumentsService {
       console.warn('PDF generation skipped (react-pdf renderer may need setup):', (pdfError as Error).message);
     }
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: doc, message: 'Dokumen berhasil digenerate' };
   }
 
@@ -126,6 +134,7 @@ export class DocumentsService {
     }
 
     await this.prisma.dokumen.update({ where: { id }, data: { status: 'revoked' } });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Dokumen berhasil dihapus' };
   }
 

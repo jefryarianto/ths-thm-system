@@ -3,12 +3,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EventsGateway } from './events.gateway';
 import { SendNotificationDto, BroadcastNotificationDto, SendToRoleDto, NotificationFilterDto } from './dto/notification.dto';
 import { Role } from '@prisma/client';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class NotificationsService {
+  private readonly CACHE_PREFIX = 'notifications:';
+
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly eventsGateway?: EventsGateway,
+    private readonly cache?: CacheService,
   ) {}
 
   async send(userId: string, dto: SendNotificationDto) {
@@ -37,6 +41,7 @@ export class NotificationsService {
     const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
     this.eventsGateway?.sendUnreadCount(userId, count);
 
+    this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
     return { success: true, data: notification, message: 'Notifikasi berhasil dikirim' };
   }
 
@@ -124,6 +129,28 @@ export class NotificationsService {
   async findAll(userId: string, query: NotificationFilterDto) {
     const page = query.page || 1;
     const limit = query.limit || 20;
+    const cacheKey = `${this.CACHE_PREFIX}${userId}:list:${page}:${limit}:${query.tipe || ''}`;
+
+    return this.cache?.getOrSet(cacheKey, async () => {
+      const where: Record<string, unknown> = { userId };
+      if (query.tipe) where.tipe = query.tipe;
+
+      const [data, total, unreadCount] = await Promise.all([
+        this.prisma.notifikasi.findMany({
+          where, skip: (page - 1) * limit, take: limit,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.notifikasi.count({ where }),
+        this.prisma.notifikasi.count({ where: { userId, isRead: false } }),
+      ]);
+
+      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit), unreadCount } };
+    }, 15) ?? this.findAllUncached(userId, query);
+  }
+
+  private async findAllUncached(userId: string, query: NotificationFilterDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
     const where: Record<string, unknown> = { userId };
     if (query.tipe) where.tipe = query.tipe;
 
@@ -147,7 +174,9 @@ export class NotificationsService {
   }
 
   async markAsRead(id: string) {
+    const notif = await this.prisma.notifikasi.findUnique({ where: { id }, select: { userId: true } });
     await this.prisma.notifikasi.update({ where: { id }, data: { isRead: true } });
+    if (notif) this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
     return { success: true, message: 'Notifikasi ditandai dibaca' };
   }
 
@@ -162,11 +191,14 @@ export class NotificationsService {
       where: { userId, isRead: false },
       data: { isRead: true },
     });
+    this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
     return { success: true, message: 'Semua notifikasi ditandai dibaca' };
   }
 
   async delete(id: string) {
+    const notif = await this.prisma.notifikasi.findUnique({ where: { id }, select: { userId: true } });
     await this.prisma.notifikasi.delete({ where: { id } });
+    if (notif) this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
     return { success: true, message: 'Notifikasi berhasil dihapus' };
   }
 

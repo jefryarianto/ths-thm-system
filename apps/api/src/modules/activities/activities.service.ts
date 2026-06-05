@@ -3,60 +3,72 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateActivityDto, UpdateActivityDto, ActivityFilterDto, AddParticipantDto, RecordPresenceDto, UploadActivityDocumentDto } from './dto/activity.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class ActivitiesService {
+  private readonly CACHE_PREFIX = 'activities:';
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly cache: CacheService,
   ) {}
 
   async findAll(query: ActivityFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
-    const where: Record<string, unknown> = { tipe: { not: 'pendadaran' } };
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${page}:${limit}:${query.tipe || ''}:${query.status || ''}:${query.scopeType || ''}`;
 
-    if (scope?.rantingId) {
-      where.OR = [
-        { scopeType: 'ranting', scopeId: scope.rantingId },
-        { scopeType: 'unit_latihan', scopeId: scope.rantingId },
-      ];
-    } else if (scope?.wilayahId) {
-      where.OR = [
-        { scopeType: 'wilayah', scopeId: scope.wilayahId },
-        { scopeType: 'ranting' },
-      ];
-    } else if (scope?.distrikId) {
-      where.OR = [
-        { scopeType: 'distrik', scopeId: scope.distrikId },
-        { scopeType: 'wilayah' },
-        { scopeType: 'ranting' },
-      ];
-    }
+    return this.cache.getOrSet(cacheKey, async () => {
+      const where: Record<string, unknown> = { tipe: { not: 'pendadaran' } };
 
-    if (query.tipe) where.tipe = query.tipe;
-    if (query.status) where.status = query.status;
-    if (query.scopeType) where.scopeType = query.scopeType;
+      if (scope?.rantingId) {
+        where.OR = [
+          { scopeType: 'ranting', scopeId: scope.rantingId },
+          { scopeType: 'unit_latihan', scopeId: scope.rantingId },
+        ];
+      } else if (scope?.wilayahId) {
+        where.OR = [
+          { scopeType: 'wilayah', scopeId: scope.wilayahId },
+          { scopeType: 'ranting' },
+        ];
+      } else if (scope?.distrikId) {
+        where.OR = [
+          { scopeType: 'distrik', scopeId: scope.distrikId },
+          { scopeType: 'wilayah' },
+          { scopeType: 'ranting' },
+        ];
+      }
 
-    const [data, total] = await Promise.all([
-      this.prisma.kegiatan.findMany({
-        where, skip: (page - 1) * limit, take: limit,
-        include: { creator: { select: { id: true, namaLengkap: true } }, peserta: true, presensi: true, dokumenKegiatan: true },
-        orderBy: { tanggalMulai: 'desc' },
-      }),
-      this.prisma.kegiatan.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+      if (query.tipe) where.tipe = query.tipe;
+      if (query.status) where.status = query.status;
+      if (query.scopeType) where.scopeType = query.scopeType;
+
+      const [data, total] = await Promise.all([
+        this.prisma.kegiatan.findMany({
+          where, skip: (page - 1) * limit, take: limit,
+          include: { creator: { select: { id: true, namaLengkap: true } }, peserta: true, presensi: true, dokumenKegiatan: true },
+          orderBy: { tanggalMulai: 'desc' },
+        }),
+        this.prisma.kegiatan.count({ where }),
+      ]);
+      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    }, 30);
   }
 
   async findOne(id: string, scope?: UserScope) {
-    const activity = await this.prisma.kegiatan.findUnique({
-      where: { id },
-      include: { creator: { select: { id: true, namaLengkap: true } }, peserta: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } }, presensi: true, dokumenKegiatan: true },
-    });
-    if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
-    this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
-    return { success: true, data: activity };
+    const cacheKey = `${this.CACHE_PREFIX}detail:${id}`;
+
+    return this.cache.getOrSet(cacheKey, async () => {
+      const activity = await this.prisma.kegiatan.findUnique({
+        where: { id },
+        include: { creator: { select: { id: true, namaLengkap: true } }, peserta: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } }, presensi: true, dokumenKegiatan: true },
+      });
+      if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
+      this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
+      return { success: true, data: activity };
+    }, 30);
   }
 
   async create(dto: CreateActivityDto, scope?: UserScope) {
@@ -77,6 +89,7 @@ export class ActivitiesService {
         createdById: dto.createdById,
       } as never,
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: activity, message: 'Kegiatan berhasil dibuat' };
   }
 
@@ -95,6 +108,7 @@ export class ActivitiesService {
     if (dto.status) data.status = dto.status;
 
     const activity = await this.prisma.kegiatan.update({ where: { id }, data });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: activity, message: 'Kegiatan berhasil diperbarui' };
   }
 
@@ -106,6 +120,7 @@ export class ActivitiesService {
     }
 
     await this.prisma.kegiatan.update({ where: { id }, data: { status: 'cancelled' } });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Kegiatan dibatalkan' };
   }
 
@@ -116,11 +131,13 @@ export class ActivitiesService {
     const participant = await this.prisma.kegiatanPeserta.create({
       data: { kegiatanId: activityId, anggotaId: dto.anggotaId },
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: participant, message: 'Peserta berhasil ditambahkan' };
   }
 
   async removeParticipant(activityId: string, participantId: string) {
     await this.prisma.kegiatanPeserta.delete({ where: { id: participantId } });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Peserta berhasil dihapus' };
   }
 
@@ -142,6 +159,7 @@ export class ActivitiesService {
         imported++;
       }
     }
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: { imported }, message: `${imported} peserta berhasil diimpor` };
   }
 
@@ -161,6 +179,7 @@ export class ActivitiesService {
     const presence = await this.prisma.presensiKegiatan.create({
       data: { kegiatanId: activityId, anggotaId: dto.anggotaId, hadir: dto.hadir !== false },
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: presence, message: 'Kehadiran tercatat' };
   }
 
@@ -176,6 +195,7 @@ export class ActivitiesService {
     const doc = await this.prisma.dokumenKegiatan.create({
       data: { kegiatanId: activityId, nama: dto.nama, filePath: dto.filePath, tipe: dto.tipe || 'dokumen' },
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: doc, message: 'Dokumen berhasil diupload' };
   }
 }

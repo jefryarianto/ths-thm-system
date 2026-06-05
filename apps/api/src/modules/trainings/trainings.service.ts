@@ -3,31 +3,39 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class TrainingsService {
+  private readonly CACHE_PREFIX = 'trainings:';
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly cache: CacheService,
   ) {}
 
   async findAll(query: TrainingFilterDto, scope?: UserScope) {
     const page = query.page || 1;
     const limit = query.limit || 10;
-    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
-    const where: Record<string, unknown> = { ...scopeFilter };
-    if (query.rantingId) where.rantingId = query.rantingId;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${page}:${limit}:${query.rantingId || ''}`;
 
-    const [data, total] = await Promise.all([
-      this.prisma.latihan.findMany({
-        where, skip: (page - 1) * limit, take: limit,
-        include: { ranting: true, pelatih: { select: { id: true, namaLengkap: true } } },
-        orderBy: { hariTanggal: 'desc' },
-      }),
-      this.prisma.latihan.count({ where }),
-    ]);
+    return this.cache.getOrSet(cacheKey, async () => {
+      const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+      const where: Record<string, unknown> = { ...scopeFilter };
+      if (query.rantingId) where.rantingId = query.rantingId;
 
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+      const [data, total] = await Promise.all([
+        this.prisma.latihan.findMany({
+          where, skip: (page - 1) * limit, take: limit,
+          include: { ranting: true, pelatih: { select: { id: true, namaLengkap: true } } },
+          orderBy: { hariTanggal: 'desc' },
+        }),
+        this.prisma.latihan.count({ where }),
+      ]);
+
+      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    }, 30);
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -63,6 +71,7 @@ export class TrainingsService {
         rekomendasiBerikutnya: dto.rekomendasiBerikutnya,
       },
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: training, message: 'Latihan berhasil dibuat' };
   }
 
@@ -83,6 +92,7 @@ export class TrainingsService {
     if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
 
     const training = await this.prisma.latihan.update({ where: { id }, data });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: training, message: 'Latihan berhasil diperbarui' };
   }
 
@@ -96,6 +106,7 @@ export class TrainingsService {
     }
 
     await this.prisma.latihan.delete({ where: { id } });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Latihan berhasil dihapus' };
   }
 
@@ -122,6 +133,7 @@ export class TrainingsService {
         catatan: dto.catatan,
       },
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: attendance, message: 'Kehadiran tercatat' };
   }
 
@@ -162,6 +174,7 @@ export class TrainingsService {
     const evaluation = await this.prisma.evaluasiLatihan.create({
       data: { latihanId: trainingId, anggotaId: dto.anggotaId, nilai: dto.nilai, catatan: dto.catatan },
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: evaluation, message: 'Evaluasi berhasil disimpan' };
   }
 
@@ -174,11 +187,13 @@ export class TrainingsService {
       where: { id: evaluationId },
       data,
     });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: evaluation, message: 'Evaluasi berhasil diperbarui' };
   }
 
   async removeEvaluation(trainingId: string, evaluationId: string) {
     await this.prisma.evaluasiLatihan.delete({ where: { id: evaluationId } });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Evaluasi berhasil dihapus' };
   }
 }

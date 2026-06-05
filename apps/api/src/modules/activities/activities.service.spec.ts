@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 import { ActivitiesService } from './activities.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('ActivitiesService', () => {
   let service: ActivitiesService;
@@ -39,12 +40,18 @@ describe('ActivitiesService', () => {
     verifyKegiatanScope: jest.fn(),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ActivitiesService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 

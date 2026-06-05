@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EventsGateway } from './events.gateway';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -40,12 +41,18 @@ describe('NotificationsService', () => {
     sendUnreadCount: jest.fn(),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventsGateway, useValue: mockGateway },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -94,6 +101,7 @@ describe('NotificationsService', () => {
 
   describe('markAsRead', () => {
     it('should mark a notification as read', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'u1' });
       mockPrisma.notifikasi.update.mockResolvedValue({});
       const result = await service.markAsRead('n1');
       expect(result.success).toBe(true);
@@ -131,6 +139,7 @@ describe('NotificationsService', () => {
 
   describe('delete', () => {
     it('should delete a notification', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'u1' });
       mockPrisma.notifikasi.delete.mockResolvedValue({});
       const result = await service.delete('n1');
       expect(result.success).toBe(true);
