@@ -76,12 +76,22 @@ export class AuditInterceptor implements NestInterceptor {
           const statusCode = response.statusCode || 500;
           const user = request.user;
 
-          // Only log non-scope-violation errors here
-          // (scope violations are already logged by ScopeGuard)
+          const baseParams = {
+            userId: user?.id,
+            userEmail: user?.email,
+            userRole: user?.role,
+            method,
+            path: url,
+            statusCode: statusCode as number,
+            durationMs,
+          };
+
+          // Log errors to audit store (except scope violations — already logged by ScopeGuard)
           if (statusCode !== 403) {
-            this.logger.debug(
-              `[REQUEST_ERROR] ${method} ${url} ${statusCode} ${durationMs}ms — ${error?.message || 'unknown'}`,
-            );
+            this.auditService.logDataMutation({
+              ...baseParams,
+              details: { error: error?.message || 'unknown error' },
+            });
           }
         },
       }),

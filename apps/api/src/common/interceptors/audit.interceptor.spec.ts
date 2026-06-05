@@ -1,4 +1,4 @@
-import { ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { AuditInterceptor } from './audit.interceptor';
 import { AuditService } from '../services/audit.service';
@@ -136,7 +136,7 @@ describe('AuditInterceptor', () => {
   });
 
   describe('Error handling', () => {
-    it('should log non-403 errors via logger.debug', (done) => {
+    it('should log non-403 errors to audit store', (done) => {
       const request = createMockRequest({ method: 'GET', url: '/api/members' });
       const response = createMockResponse(500);
       const context = createMockContext(request, response);
@@ -147,20 +147,22 @@ describe('AuditInterceptor', () => {
 
       interceptor.intercept(context, errorCallHandler).subscribe({
         error: () => {
-          // Should not log data access on error
           expect(mockAuditService.logDataAccess).not.toHaveBeenCalled();
-          expect(loggerSpy.debug).toHaveBeenCalledWith(
-            expect.stringContaining('[REQUEST_ERROR]'),
-          );
-          expect(loggerSpy.debug).toHaveBeenCalledWith(
-            expect.stringContaining('Server error'),
+          expect(mockAuditService.logDataMutation).toHaveBeenCalledTimes(1);
+          expect(mockAuditService.logDataMutation).toHaveBeenCalledWith(
+            expect.objectContaining({
+              method: 'GET',
+              path: '/api/members',
+              statusCode: 500,
+              details: { error: 'Server error' },
+            }),
           );
           done();
         },
       });
     });
 
-    it('should skip debug logging for 403 errors (already logged by ScopeGuard)', (done) => {
+    it('should skip audit logging for 403 errors (already logged by ScopeGuard)', (done) => {
       const request = createMockRequest({ method: 'GET', url: '/api/members' });
       const response = createMockResponse(403);
       const context = createMockContext(request, response);
@@ -172,7 +174,7 @@ describe('AuditInterceptor', () => {
       interceptor.intercept(context, errorCallHandler).subscribe({
         error: () => {
           expect(mockAuditService.logDataAccess).not.toHaveBeenCalled();
-          expect(loggerSpy.debug).not.toHaveBeenCalled();
+          expect(mockAuditService.logDataMutation).not.toHaveBeenCalled();
           done();
         },
       });
