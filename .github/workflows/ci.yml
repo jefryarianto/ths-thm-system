@@ -258,3 +258,71 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker rm -f api-smoke || true
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [typecheck, test, e2e]
+    # Only deploy when on develop branch AND Render secrets are configured
+    if: github.ref == 'refs/heads/develop' && vars.RENDER_STAGING_SERVICE_ID != '' && secrets.RENDER_API_KEY != ''
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Render (Staging)
+        run: |
+          echo "🚀 Deploying to staging..."
+          curl -X POST "https://api.render.com/v1/services/${{ vars.RENDER_STAGING_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json"
+          echo "✅ Staging deploy triggered"
+      - name: Verify staging health
+        if: vars.STAGING_URL != ''
+        run: |
+          echo "Waiting for staging to deploy..."
+          for i in $(seq 1 30); do
+            if curl -sf "${{ vars.STAGING_URL }}/api/health" > /dev/null 2>&1; then
+              echo "✅ Staging is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/30 — waiting 10s..."
+            sleep 10
+          done
+          echo "❌ Staging failed to become healthy within 300s"
+          exit 1
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [typecheck, test, e2e, smoke-test]
+    # Only deploy when on main branch AND Render secrets are configured
+    if: github.ref == 'refs/heads/main' && vars.RENDER_PRODUCTION_SERVICE_ID != '' && secrets.RENDER_API_KEY != ''
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Render (Production)
+        run: |
+          echo "🚀 Deploying to production..."
+          curl -X POST "https://api.render.com/v1/services/${{ vars.RENDER_PRODUCTION_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json"
+          echo "✅ Production deploy triggered"
+      - name: Verify production health
+        if: vars.PRODUCTION_URL != ''
+        run: |
+          echo "Waiting for production to deploy..."
+          for i in $(seq 1 30); do
+            if curl -sf "${{ vars.PRODUCTION_URL }}/api/health" > /dev/null 2>&1; then
+              echo "✅ Production is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/30 — waiting 10s..."
+            sleep 10
+          done
+          echo "❌ Production failed to become healthy within 300s"
+          exit 1
+          # Note: No automatic rollback on failure. Manual intervention required.
+          # Consider adding Render rollback API call here if needed.
