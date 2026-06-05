@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Response } from 'express';
 import { Roles } from '../decorators/roles.decorator';
 import { RequireScope } from '../decorators/scope.decorator';
 import { AuditLogStore } from '../services/audit-log-store.service';
@@ -49,5 +50,72 @@ export class AuditLogController {
   @ApiOperation({ summary: 'Get audit log statistics (superadmin only)' })
   getStats() {
     return this.store.getStats();
+  }
+
+  /**
+   * Export audit log entries as CSV.
+   * Supports the same filters as the query endpoint.
+   * Returns a CSV file download with all matching entries (no pagination limit).
+   */
+  @Get('export')
+  @Roles('superadmin')
+  @RequireScope('national')
+  @ApiOperation({ summary: 'Export audit logs as CSV (superadmin only)' })
+  exportCsv(@Query() query: AuditLogQueryDto, @Res() res: Response) {
+    const entries = this.store.queryAll({
+      eventType: query.eventType,
+      userId: query.userId,
+      userRole: query.userRole,
+      method: query.method,
+      path: query.path,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+
+    const headers = [
+      'Timestamp',
+      'Event Type',
+      'User ID',
+      'User Email',
+      'User Role',
+      'Method',
+      'Path',
+      'Status Code',
+      'Duration (ms)',
+      'Details',
+    ];
+
+    const rows = entries.map((e) => [
+      e.timestamp,
+      e.eventType,
+      e.userId || '',
+      e.userEmail || '',
+      e.userRole || '',
+      e.method,
+      e.path,
+      e.statusCode?.toString() || '',
+      e.durationMs?.toString() || '',
+      e.details ? JSON.stringify(e.details) : '',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) =>
+        row.map((cell) => {
+          // Escape CSV cells that contain commas, quotes, or newlines
+          const str = String(cell);
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        }).join(','),
+      ),
+    ].join('\n');
+
+    const filename = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
   }
 }

@@ -8,6 +8,24 @@ import { AuditLogEntry } from './audit.service';
 const MAX_ENTRIES = 10_000;
 
 /**
+ * Maximum entries allowed in a single export to prevent huge CSV files.
+ */
+const MAX_EXPORT = 5_000;
+
+/**
+ * Filter parameters shared between query and queryAll.
+ */
+interface FilterParams {
+  eventType?: string;
+  userId?: string;
+  userRole?: string;
+  method?: string;
+  path?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+/**
  * In-memory store for audit log entries.
  *
  * Captures structured audit events from AuditService for querying
@@ -33,19 +51,10 @@ export class AuditLogStore {
   }
 
   /**
-   * Query audit log entries with optional filters and pagination.
+   * Apply filters to entries (shared logic for query and queryAll).
+   * Returns filtered and sorted entries (newest first).
    */
-  query(filters?: {
-    eventType?: string;
-    userId?: string;
-    userRole?: string;
-    method?: string;
-    path?: string;
-    startDate?: string;
-    endDate?: string;
-    limit?: number;
-    offset?: number;
-  }): { data: AuditLogEntry[]; total: number } {
+  private applyFilters(filters?: FilterParams): AuditLogEntry[] {
     let filtered = [...this.entries];
 
     if (filters?.eventType) {
@@ -72,8 +81,15 @@ export class AuditLogStore {
       filtered = filtered.filter((e) => new Date(e.timestamp).getTime() <= end);
     }
 
-    // Sort newest first
     filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return filtered;
+  }
+
+  /**
+   * Query audit log entries with optional filters and pagination.
+   */
+  query(filters?: FilterParams & { limit?: number; offset?: number }): { data: AuditLogEntry[]; total: number } {
+    const filtered = this.applyFilters(filters);
 
     const total = filtered.length;
     const limit = filters?.limit ?? 50;
@@ -81,6 +97,14 @@ export class AuditLogStore {
     const data = filtered.slice(offset, offset + limit);
 
     return { data, total };
+  }
+
+  /**
+   * Query all audit log entries with filters (no pagination).
+   * Used for export endpoints. Capped at MAX_EXPORT entries.
+   */
+  queryAll(filters?: FilterParams): AuditLogEntry[] {
+    return this.applyFilters(filters).slice(0, MAX_EXPORT);
   }
 
   /**
