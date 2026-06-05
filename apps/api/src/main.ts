@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
+import { setupSwagger } from './config/swagger-scope';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -33,17 +33,7 @@ async function bootstrap() {
   );
 
   if (process.env.NODE_ENV !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('THS-THM API')
-      .setDescription('API Dokumentasi THS-THM System Manajemen')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addServer('http://localhost:3001', 'Development')
-      .addServer('https://ths-thm-api.onrender.com', 'Production')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    setupSwagger(app);
   }
 
   await app.listen(process.env.APP_PORT || 3001);
