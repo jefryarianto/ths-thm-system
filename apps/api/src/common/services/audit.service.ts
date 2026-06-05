@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { AuditLogStore } from './audit-log-store.service';
 
 /**
  * Audit event types for classification.
@@ -42,13 +43,13 @@ export interface AuditLogEntry {
  * Logs are output in structured JSON format for easy ingestion by
  * log aggregation tools (ELK, Datadog, CloudWatch, etc.)
  *
- * Usage:
- *   This service is injected into ScopeGuard and AuditInterceptor
- *   to automatically capture audit events.
+ * Also stores entries in AuditLogStore for querying via /audit-logs endpoint.
  */
 @Injectable()
 export class AuditService {
   private readonly logger = new Logger('Audit');
+
+  constructor(private readonly store: AuditLogStore) {}
 
   /**
    * Log a scope violation (access denied by ScopeGuard).
@@ -85,8 +86,8 @@ export class AuditService {
       `(required: ${params.requiredScope})`,
     );
 
-    // Structured JSON for log aggregation
     this.logger.log(JSON.stringify(entry));
+    this.store.add(entry);
   }
 
   /**
@@ -115,7 +116,10 @@ export class AuditService {
       details: params.details,
     };
 
-    this.logger.debug(JSON.stringify(entry));
+    this.logger.debug(JSON.stringify(entry))
+    // Note: DATA_ACCESS events are logged but not stored to avoid
+    // flooding the in-memory buffer. Only mutations, violations,
+    // and auth failures are stored for querying.
   }
 
   /**
@@ -145,6 +149,7 @@ export class AuditService {
     };
 
     this.logger.log(JSON.stringify(entry));
+    this.store.add(entry);
   }
 
   /**
@@ -172,5 +177,6 @@ export class AuditService {
     );
 
     this.logger.log(JSON.stringify(entry));
+    this.store.add(entry);
   }
 }

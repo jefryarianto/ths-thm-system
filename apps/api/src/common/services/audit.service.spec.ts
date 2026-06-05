@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { AuditService, AuditEventType } from './audit.service';
+import { AuditLogStore } from './audit-log-store.service';
 
 describe('AuditService', () => {
   let service: AuditService;
   let loggerSpy: { warn: jest.Mock; log: jest.Mock; debug: jest.Mock };
+  let mockStore: { add: jest.Mock };
 
   beforeEach(async () => {
     loggerSpy = {
@@ -12,9 +14,13 @@ describe('AuditService', () => {
       log: jest.fn(),
       debug: jest.fn(),
     };
+    mockStore = { add: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuditService],
+      providers: [
+        AuditService,
+        { provide: AuditLogStore, useValue: mockStore },
+      ],
     }).compile();
 
     service = module.get<AuditService>(AuditService);
@@ -78,6 +84,19 @@ describe('AuditService', () => {
       expect(loggedEntry.timestamp).toBeDefined();
     });
 
+    it('should store the entry in AuditLogStore', () => {
+      service.logScopeViolation({
+        requiredScope: 'branch',
+        method: 'POST',
+        path: '/api/candidates',
+      });
+
+      expect(mockStore.add).toHaveBeenCalledTimes(1);
+      const stored = mockStore.add.mock.calls[0][0];
+      expect(stored.eventType).toBe(AuditEventType.SCOPE_VIOLATION);
+      expect(stored.method).toBe('POST');
+    });
+
     it('should handle missing optional fields gracefully', () => {
       service.logScopeViolation({
         requiredScope: 'branch',
@@ -91,7 +110,6 @@ describe('AuditService', () => {
       expect(loggedEntry.userEmail).toBeUndefined();
       expect(loggedEntry.userRole).toBeUndefined();
       expect(loggedEntry.details.ip).toBeUndefined();
-      // Should fallback to 'unknown' in warn message
       expect(loggerSpy.warn).toHaveBeenCalledWith(
         expect.stringContaining('unknown'),
       );
@@ -117,6 +135,17 @@ describe('AuditService', () => {
       expect(loggedEntry.path).toBe('/api/members');
       expect(loggedEntry.statusCode).toBe(200);
       expect(loggedEntry.durationMs).toBe(42);
+    });
+
+    it('should NOT store DATA_ACCESS in AuditLogStore to avoid buffer flooding', () => {
+      service.logDataAccess({
+        method: 'GET',
+        path: '/api/members',
+        statusCode: 200,
+        durationMs: 10,
+      });
+
+      expect(mockStore.add).not.toHaveBeenCalled();
     });
 
     it('should include optional details', () => {
@@ -150,6 +179,21 @@ describe('AuditService', () => {
       expect(loggedEntry.statusCode).toBe(201);
       expect(loggedEntry.durationMs).toBe(85);
     });
+
+    it('should store the entry in AuditLogStore', () => {
+      service.logDataMutation({
+        userId: 'u1',
+        method: 'DELETE',
+        path: '/api/members/123',
+        statusCode: 200,
+        durationMs: 50,
+      });
+
+      expect(mockStore.add).toHaveBeenCalledTimes(1);
+      const stored = mockStore.add.mock.calls[0][0];
+      expect(stored.eventType).toBe(AuditEventType.DATA_MUTATION);
+      expect(stored.method).toBe('DELETE');
+    });
   });
 
   describe('logAuthFailure', () => {
@@ -168,6 +212,18 @@ describe('AuditService', () => {
       expect(loggerSpy.warn).toHaveBeenCalledWith(
         expect.stringContaining('Invalid credentials'),
       );
+    });
+
+    it('should store the entry in AuditLogStore', () => {
+      service.logAuthFailure({
+        method: 'POST',
+        path: '/api/auth/login',
+        reason: 'Token expired',
+      });
+
+      expect(mockStore.add).toHaveBeenCalledTimes(1);
+      const stored = mockStore.add.mock.calls[0][0];
+      expect(stored.eventType).toBe(AuditEventType.AUTH_FAILURE);
     });
 
     it('should log structured JSON with auth failure details', () => {
