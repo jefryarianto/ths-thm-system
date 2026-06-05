@@ -1,5 +1,6 @@
 import { Injectable, ExecutionContext, UnauthorizedException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { randomBytes } from 'crypto';
 import { ScopedRequest } from '../interfaces/user-scope.interface';
 
 /**
@@ -103,6 +104,13 @@ export class ApiKeyStore {
    */
   remove(apiKey: string): boolean {
     return this.keys.delete(apiKey);
+  }
+
+  /**
+   * Generate a new cryptographically random API key.
+   */
+  generateKey(): string {
+    return randomBytes(32).toString('hex');
   }
 }
 
