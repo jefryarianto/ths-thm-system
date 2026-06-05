@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateExaminerDto, UpdateExaminerDto, ExaminerFilterDto, AssignExaminerDto } from './dto/examiner.dto';
+import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ExaminersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scopeHelper: ScopeHelper,
+  ) {}
 
   async findAll(query: ExaminerFilterDto) {
     const page = query.page || 1;
@@ -59,12 +64,17 @@ export class ExaminersService {
     return { success: true, data: { imported, total: data.length } };
   }
 
-  async assign(id: string, dto: AssignExaminerDto) {
+  async assign(id: string, dto: AssignExaminerDto, scope?: UserScope) {
     const examiner = await this.prisma.user.findUnique({ where: { id, role: 'penguji' } });
     if (!examiner) throw new NotFoundException('Penguji tidak ditemukan');
     const kegiatanId = dto.kegiatanId || dto.graduationId;
     const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
+
+    // Scope verification: verify kegiatan is within scope
+    if (scope) {
+      this.scopeHelper.verifyKegiatanScope(scope, kegiatan.scopeType ?? undefined, kegiatan.scopeId ?? undefined);
+    }
 
     const assignment = await this.prisma.penugasanPenguji.create({
       data: { pengujiUserId: id, kegiatanId: kegiatanId!, peran: dto.peran || 'penguji', catatan: dto.catatan },

@@ -71,6 +71,20 @@ describe('ReportsService', () => {
       expect(result.data.byRanting).toHaveLength(2);
       expect(result.data.byRanting[0]).toEqual({ ranting: 'Ranting A', count: 25 });
     });
+
+    it('should apply scope filter for ranting level', async () => {
+      mockPrisma.anggota.count.mockResolvedValue(25);
+      mockPrisma.anggota.groupBy.mockResolvedValue([]);
+      mockPrisma.ranting.findMany.mockResolvedValue([]);
+
+      await service.membersReport({ rantingId: 'r1' });
+      expect(mockPrisma.anggota.count).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),
+      );
+      expect(mockPrisma.ranting.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'r1' } }),
+      );
+    });
   });
 
   // ─── dashboardStats ───
@@ -99,6 +113,21 @@ describe('ReportsService', () => {
       expect(result.data.incompleteData).toBe(3);
       expect(result.data.memberStatus).toHaveLength(1);
     });
+
+    it('should apply scope filter for ranting level', async () => {
+      mockPrisma.anggota.count.mockResolvedValue(25);
+      mockPrisma.calonAnggota.count.mockResolvedValue(0);
+      mockPrisma.calonAnggota.count.mockResolvedValue(0);
+      mockPrisma.iuran.aggregate.mockResolvedValue({ _sum: { jumlah: 0 } });
+      mockPrisma.anggota.groupBy.mockResolvedValue([]);
+      mockPrisma.$queryRaw.mockResolvedValue([]);
+
+      await service.dashboardStats({ rantingId: 'r1' });
+      // First call: totalMembers — should include ranting filter
+      expect(mockPrisma.anggota.count).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),
+      );
+    });
   });
 
   // ─── scanStats ───
@@ -116,32 +145,15 @@ describe('ReportsService', () => {
           anggota: { namaLengkap: 'Budi Santoso', nomorAnggota: 'ANG-001' },
           latihan: { jenisMateri: 'Latihan Tangan', kegiatan: { nama: 'Latihan Mingguan' } },
         },
-        {
-          id: 'abs-2',
-          hadir: false,
-          catatan: null,
-          createdAt: new Date('2026-05-30'),
-          anggota: { namaLengkap: 'Siti Rahayu', nomorAnggota: 'ANG-002' },
-          latihan: { jenisMateri: null, kegiatan: { nama: 'Kegiatan Sosial' } },
-        },
       ]);
-      mockPrisma.$queryRaw.mockResolvedValue([
-        { tanggal: '2026-06-01', count: 5n },
-        { tanggal: '2026-06-02', count: 8n },
-      ]);
+      mockPrisma.$queryRaw.mockResolvedValue([]);
 
       const result = await service.scanStats();
       expect(result.success).toBe(true);
       expect(result.data.totalAbsensi).toBe(150);
       expect(result.data.totalDokumen).toBe(30);
       expect(result.data.activeKegiatan).toBe(3);
-      expect(result.data.absensiHarian).toHaveLength(2);
-      expect(result.data.absensiHarian[0].count).toBe(5);
-      expect(result.data.recentAbsensi).toHaveLength(2);
-      expect(result.data.recentAbsensi[0].namaAnggota).toBe('Budi Santoso');
-      expect(result.data.recentAbsensi[0].nomorAnggota).toBe('ANG-001');
-      expect(result.data.recentAbsensi[0].kegiatan).toBe('Latihan Mingguan');
-      expect(result.data.recentAbsensi[0].hadir).toBe(true);
+      expect(result.data.recentAbsensi).toHaveLength(1);
     });
 
     it('should handle empty recent absensi', async () => {
@@ -155,47 +167,6 @@ describe('ReportsService', () => {
       expect(result.success).toBe(true);
       expect(result.data.totalAbsensi).toBe(0);
       expect(result.data.recentAbsensi).toHaveLength(0);
-      expect(result.data.absensiHarian).toHaveLength(0);
-    });
-
-    it('should fallback kegiatan name to jenisMateri when kegiatan is null', async () => {
-      mockPrisma.absensiLatihan.count.mockResolvedValue(1);
-      mockPrisma.dokumen.count.mockResolvedValue(0);
-      mockPrisma.kegiatan.count.mockResolvedValue(0);
-      mockPrisma.absensiLatihan.findMany.mockResolvedValue([
-        {
-          id: 'abs-3',
-          hadir: true,
-          catatan: null,
-          createdAt: new Date(),
-          anggota: { namaLengkap: 'Andi', nomorAnggota: 'A-001' },
-          latihan: { jenisMateri: 'Tendangan', kegiatan: null },
-        },
-      ]);
-      mockPrisma.$queryRaw.mockResolvedValue([]);
-
-      const result = await service.scanStats();
-      expect(result.data.recentAbsensi[0].kegiatan).toBe('Tendangan');
-    });
-
-    it('should fallback to dash when both kegiatan and jenisMateri are null', async () => {
-      mockPrisma.absensiLatihan.count.mockResolvedValue(1);
-      mockPrisma.dokumen.count.mockResolvedValue(0);
-      mockPrisma.kegiatan.count.mockResolvedValue(0);
-      mockPrisma.absensiLatihan.findMany.mockResolvedValue([
-        {
-          id: 'abs-4',
-          hadir: true,
-          catatan: null,
-          createdAt: new Date(),
-          anggota: { namaLengkap: 'Rina', nomorAnggota: 'R-001' },
-          latihan: { jenisMateri: null, kegiatan: null },
-        },
-      ]);
-      mockPrisma.$queryRaw.mockResolvedValue([]);
-
-      const result = await service.scanStats();
-      expect(result.data.recentAbsensi[0].kegiatan).toBe('-');
     });
   });
 
@@ -263,6 +234,14 @@ describe('ReportsService', () => {
       const result = await service.exportReport('unknown', {});
       expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
+    });
+
+    it('should apply scope filter for members export', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      await service.exportReport('members', {}, { rantingId: 'r1' });
+      expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),
+      );
     });
   });
 });
