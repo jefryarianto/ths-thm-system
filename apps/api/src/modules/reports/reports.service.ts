@@ -2,10 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ReportFilterDto } from './dto/report.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly CACHE_PREFIX = 'reports:';
+  private readonly CACHE_TTL = 30_000; // 30 seconds
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   async membersReport(scope?: UserScope) {
     // Scope filtering for members report
@@ -55,6 +62,11 @@ export class ReportsService {
   }
 
   async dashboardStats(scope?: UserScope) {
+    const cacheKey = `${this.CACHE_PREFIX}dashboard:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}`;
+    return this.cache.getOrSet(cacheKey, async () => this.computeDashboardStats(scope), this.CACHE_TTL);
+  }
+
+  private async computeDashboardStats(scope?: UserScope) {
     // Build scope-aware where clauses
     const anggotaWhere: Record<string, unknown> = { deletedAt: null };
     const iuranWhere: Record<string, unknown> = { status: 'lunas' };
@@ -166,6 +178,11 @@ export class ReportsService {
   }
 
   async scanStats(scope?: UserScope) {
+    const cacheKey = `${this.CACHE_PREFIX}scan:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}`;
+    return this.cache.getOrSet(cacheKey, async () => this.computeScanStats(scope), this.CACHE_TTL);
+  }
+
+  private async computeScanStats(scope?: UserScope) {
     // Build scope-aware where for absensi
     const absensiWhere: Record<string, unknown> = {};
     if (scope?.rantingId) {

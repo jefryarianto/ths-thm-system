@@ -3,47 +3,55 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class CandidatesService {
+  private readonly CACHE_PREFIX = 'candidates:';
+  private readonly CACHE_TTL = 30_000;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly cache: CacheService,
   ) {}
 
   async findAll(filter: CandidateFilterDto, scope?: UserScope) {
     const page = filter.page || 1;
     const limit = filter.limit || 10;
-    const skip = (page - 1) * limit;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${page}:${limit}:${filter.search || ''}:${filter.rantingId || ''}:${filter.status || ''}`;
 
-    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
-    const where: any = { ...scopeFilter };
+    return this.cache.getOrSet(cacheKey, async () => {
+      const skip = (page - 1) * limit;
+      const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+      const where: any = { ...scopeFilter };
 
-    if (filter.search) {
-      where.OR = [
-        { namaLengkap: { contains: filter.search } },
-        { email: { contains: filter.search } },
-      ];
-    }
-    if (filter.rantingId) where.rantingId = filter.rantingId;
-    if (filter.status) where.status = filter.status;
+      if (filter.search) {
+        where.OR = [
+          { namaLengkap: { contains: filter.search } },
+          { email: { contains: filter.search } },
+        ];
+      }
+      if (filter.rantingId) where.rantingId = filter.rantingId;
+      if (filter.status) where.status = filter.status;
 
-    const [data, total] = await Promise.all([
-      this.prisma.calonAnggota.findMany({
-        where,
-        skip,
-        take: limit,
-        include: { ranting: true },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.calonAnggota.count({ where }),
-    ]);
+      const [data, total] = await Promise.all([
+        this.prisma.calonAnggota.findMany({
+          where,
+          skip,
+          take: limit,
+          include: { ranting: true },
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.calonAnggota.count({ where }),
+      ]);
 
-    return {
-      success: true,
-      data,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+      return {
+        success: true,
+        data,
+        meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    }, this.CACHE_TTL);
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -72,6 +80,7 @@ export class CandidatesService {
       },
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: candidate, message: 'Calon anggota berhasil ditambahkan' };
   }
 
@@ -89,6 +98,7 @@ export class CandidatesService {
       data: dto,
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: updated, message: 'Data calon anggota berhasil diperbarui' };
   }
 
@@ -102,6 +112,7 @@ export class CandidatesService {
     }
 
     await this.prisma.calonAnggota.delete({ where: { id } });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Calon anggota berhasil dihapus' };
   }
 
@@ -129,6 +140,7 @@ export class CandidatesService {
       }
     }
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: results };
   }
 
@@ -166,6 +178,8 @@ export class CandidatesService {
       data: { status: 'lulus' },
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('members:');
     return { success: true, data: member, message: 'Calon anggota disetujui dan menjadi anggota' };
   }
 
@@ -179,6 +193,7 @@ export class CandidatesService {
       data: { status: 'dibatalkan' },
     });
 
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: reason || 'Calon anggota ditolak' };
   }
 

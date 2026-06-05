@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('ReportsService', () => {
   let service: ReportsService;
@@ -35,11 +36,22 @@ describe('ReportsService', () => {
     $queryRawUnsafe: jest.fn(),
   };
 
+  const mockCache = {
+    get: jest.fn().mockReturnValue(undefined),
+    set: jest.fn(),
+    del: jest.fn(),
+    invalidatePrefix: jest.fn(),
+    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    clear: jest.fn(),
+    getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReportsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
