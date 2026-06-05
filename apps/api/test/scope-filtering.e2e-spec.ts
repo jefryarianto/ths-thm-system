@@ -163,6 +163,9 @@ describe('Scope Filtering E2E', () => {
       await prisma.iuran.deleteMany({ where: { anggotaId: { in: [memberInRanting1, memberInRanting2, memberInRanting3] } } });
       await prisma.kegiatan.deleteMany({ where: { nama: { startsWith: 'Kegiatan R' } } });
       await prisma.kegiatan.deleteMany({ where: { nama: 'Auto Activity' } });
+      await prisma.klaim.deleteMany({ where: { anggotaId: { in: [memberInRanting1, memberInRanting2, memberInRanting3] } } });
+      await prisma.dokumen.deleteMany({ where: { namaFile: { startsWith: 'TEST-kartu-' } } });
+      await prisma.user.deleteMany({ where: { email: { in: ['scope-user-r1@test.com', 'scope-user-r2@test.com', 'scope-auto-user@test.com'] } } });
       await prisma.calonAnggota.deleteMany({ where: { namaLengkap: { in: ['Calon R1', 'Calon R2', 'Auto Calon'] } } });
       await prisma.anggota.deleteMany({ where: { nomorAnggota: { startsWith: 'TEST-' } } });
       await prisma.user.deleteMany({ where: { email: { contains: 'scope-' } } });
@@ -731,6 +734,232 @@ describe('Scope Filtering E2E', () => {
     it('ranting admin gets 403 deleting activity in another ranting', async () => {
       await request(app.getHttpServer())
         .delete(`/api/activities/${activityInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(403);
+    });
+  });
+
+  // ═══════════════════════════════════════════════
+  // Claims: scope filtering via anggota relation
+  // ═══════════════════════════════════════════════
+  describe('Claims - Scope Filtering', () => {
+    let claimInR1: string;
+    let claimInR2: string;
+
+    beforeAll(async () => {
+      const [cl1, cl2] = await Promise.all([
+        prisma.klaim.create({
+          data: { anggotaId: memberInRanting1, tipe: 'sertifikat', status: 'pending', catatan: 'Claim R1' },
+        }),
+        prisma.klaim.create({
+          data: { anggotaId: memberInRanting2, tipe: 'piagam', status: 'pending', catatan: 'Claim R2' },
+        }),
+      ]);
+      claimInR1 = cl1.id;
+      claimInR2 = cl2.id;
+    });
+
+    it('superadmin sees all claims', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/claims')
+        .set('Authorization', `Bearer ${superadminToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+    });
+
+    it('ranting admin sees only claims for members in their ranting', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/claims')
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      const claimIds = res.body.data.map((c: any) => c.id);
+      expect(claimIds).toContain(claimInR1);
+      expect(claimIds).not.toContain(claimInR2);
+    });
+
+    it('ranting admin can view claim in their ranting', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/claims/${claimInR1}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(200);
+
+      expect(res.body.data.id).toBe(claimInR1);
+    });
+
+    it('ranting admin gets 403 viewing claim in another ranting', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/claims/${claimInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(403);
+    });
+
+    it('ranting admin gets 403 updating claim in another ranting', async () => {
+      await request(app.getHttpServer())
+        .patch(`/api/claims/${claimInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .send({ catatan: 'Hacked' })
+        .expect(403);
+    });
+
+    it('ranting admin gets 403 deleting claim in another ranting', async () => {
+      await request(app.getHttpServer())
+        .delete(`/api/claims/${claimInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(403);
+    });
+  });
+
+  // ═══════════════════════════════════════════════
+  // Documents: scope filtering via anggota relation
+  // ═══════════════════════════════════════════════
+  describe('Documents - Scope Filtering', () => {
+    let docInR1: string;
+    let docInR2: string;
+
+    beforeAll(async () => {
+      const [d1, d2] = await Promise.all([
+        prisma.dokumen.create({
+          data: { anggotaId: memberInRanting1, tipe: 'kartu_anggota', namaFile: 'TEST-kartu-r1.pdf', status: 'generated' },
+        }),
+        prisma.dokumen.create({
+          data: { anggotaId: memberInRanting2, tipe: 'kartu_anggota', namaFile: 'TEST-kartu-r2.pdf', status: 'generated' },
+        }),
+      ]);
+      docInR1 = d1.id;
+      docInR2 = d2.id;
+    });
+
+    it('superadmin sees all documents', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/documents')
+        .set('Authorization', `Bearer ${superadminToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+    });
+
+    it('ranting admin sees only documents for members in their ranting', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/documents')
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      const docIds = res.body.data.map((d: any) => d.id);
+      expect(docIds).toContain(docInR1);
+      expect(docIds).not.toContain(docInR2);
+    });
+
+    it('ranting admin can view document in their ranting', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/documents/${docInR1}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(200);
+
+      expect(res.body.data.id).toBe(docInR1);
+    });
+
+    it('ranting admin gets 403 viewing document in another ranting', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/documents/${docInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(403);
+    });
+
+    it('ranting admin gets 403 deleting document in another ranting', async () => {
+      await request(app.getHttpServer())
+        .delete(`/api/documents/${docInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(403);
+    });
+  });
+
+  // ═══════════════════════════════════════════════
+  // Users: scope filtering by rantingId
+  // ═══════════════════════════════════════════════
+  describe('Users - Scope Filtering', () => {
+    let userInR1: string;
+    let userInR2: string;
+
+    beforeAll(async () => {
+      const passwordHash = await bcrypt.hash('test1234', 12);
+      const [u1, u2] = await Promise.all([
+        prisma.user.create({
+          data: { email: 'scope-user-r1@test.com', passwordHash, namaLengkap: 'User R1', role: 'admin_ranting', rantingId: rantingId1 },
+        }),
+        prisma.user.create({
+          data: { email: 'scope-user-r2@test.com', passwordHash, namaLengkap: 'User R2', role: 'admin_ranting', rantingId: rantingId2 },
+        }),
+      ]);
+      userInR1 = u1.id;
+      userInR2 = u2.id;
+    });
+
+    it('superadmin sees all users', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/users')
+        .set('Authorization', `Bearer ${superadminToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      const emails = res.body.data.map((u: any) => u.email);
+      expect(emails).toContain('scope-user-r1@test.com');
+      expect(emails).toContain('scope-user-r2@test.com');
+    });
+
+    it('ranting admin sees only users in their ranting', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/users')
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      const emails = res.body.data.map((u: any) => u.email);
+      expect(emails).toContain('scope-user-r1@test.com');
+      expect(emails).not.toContain('scope-user-r2@test.com');
+    });
+
+    it('ranting admin can view user in their ranting', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/users/${userInR1}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(200);
+
+      expect(res.body.data.email).toBe('scope-user-r1@test.com');
+    });
+
+    it('ranting admin gets 403 viewing user in another ranting', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/users/${userInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .expect(403);
+    });
+
+    it('ranting admin creates user with auto-assigned rantingId from scope', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/users')
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .send({ email: 'scope-auto-user@test.com', namaLengkap: 'Auto User', role: 'admin_ranting' })
+        .expect(201);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.rantingId).toBe(rantingId1);
+    });
+
+    it('ranting admin gets 403 updating user in another ranting', async () => {
+      await request(app.getHttpServer())
+        .patch(`/api/users/${userInR2}`)
+        .set('Authorization', `Bearer ${rantingAdminToken}`)
+        .send({ namaLengkap: 'Hacked' })
+        .expect(403);
+    });
+
+    it('ranting admin gets 403 deleting user in another ranting', async () => {
+      await request(app.getHttpServer())
+        .delete(`/api/users/${userInR2}`)
         .set('Authorization', `Bearer ${rantingAdminToken}`)
         .expect(403);
     });
