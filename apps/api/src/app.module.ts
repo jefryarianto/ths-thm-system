@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { RoleBasedThrottlerGuard } from './common/guards/role-throttler.guard';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './common/health.controller';
@@ -66,7 +67,7 @@ import { SettingsModule } from './modules/settings/settings.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: RoleBasedThrottlerGuard,
     },
     {
       provide: APP_GUARD,
