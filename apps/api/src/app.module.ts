@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './common/health.controller';
 import { JwtAuthGuard, RolesGuard } from './modules/auth/guards/jwt-auth.guard';
 import { ScopeGuard } from './common/guards/scope.guard';
+import { ApiKeyStore, ApiKeyGuard } from './common/guards/api-key.guard';
 import { ScopeModule } from './common/scope.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
@@ -68,6 +69,11 @@ import { SettingsModule } from './modules/settings/settings.module';
     {
       provide: APP_GUARD,
       useClass: RoleBasedThrottlerGuard,
+    },
+    ApiKeyStore,
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
     },
     {
       provide: APP_GUARD,

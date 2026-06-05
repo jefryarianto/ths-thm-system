@@ -39,6 +39,7 @@ export const env = {
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10),
   throttleTtl: parseInt(process.env.THROTTLE_TTL || '60', 10),
   throttleLimit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
+  apiKeys: process.env.API_KEYS || '',
   smtp: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
