@@ -78,7 +78,7 @@ export class ReportsService {
       this.prisma.anggota.count({ where: { ...anggotaWhere, statusValidasi: 'pending' } }),
       this.prisma.anggota.count({ where: { ...anggotaWhere, statusData: 'incomplete' } }),
       this.prisma.anggota.groupBy({ by: ['statusKeanggotaan'], _count: true, where: anggotaWhere }),
-      this.getMonthlyDues(),
+      this.getMonthlyDues(scope),
     ]);
 
     return {
@@ -93,7 +93,7 @@ export class ReportsService {
     };
   }
 
-  private async getMonthlyDues() {
+  private async getMonthlyDues(scope?: UserScope) {
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
@@ -101,21 +101,47 @@ export class ReportsService {
     const sixMonthsAgo = new Date(now);
     sixMonthsAgo.setMonth(now.getMonth() - 5);
 
+    // Build scope-aware JOIN and WHERE conditions
+    let joinClause = '';
+    let scopeWhere = '';
+    const params: unknown[] = [];
+    let paramIdx = 1;
+
+    if (scope?.rantingId) {
+      joinClause = 'JOIN "anggota" a ON i."anggota_id" = a."id"';
+      scopeWhere = `AND a."ranting_id" = $${paramIdx++}`;
+      params.push(scope.rantingId);
+    } else if (scope?.wilayahId) {
+      joinClause = 'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
+      scopeWhere = `AND r."wilayah_id" = $${paramIdx++}`;
+      params.push(scope.wilayahId);
+    } else if (scope?.distrikId) {
+      joinClause = 'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
+      scopeWhere = `AND w."distrik_id" = $${paramIdx++}`;
+      params.push(scope.distrikId);
+    }
+
+    // Parameterized query to prevent SQL injection
+    const sql = `
+      SELECT
+        EXTRACT(MONTH FROM i."tanggal_bayar")::int as "bulan",
+        EXTRACT(YEAR FROM i."tanggal_bayar")::int as "tahun",
+        CAST(COALESCE(SUM(i."jumlah"), 0) AS TEXT) as "jumlah",
+        CAST(COUNT(*) AS BIGINT) as "count"
+      FROM "iuran" i
+      ${joinClause}
+      WHERE i."tanggal_bayar" IS NOT NULL
+        ${scopeWhere}
+        AND ((i."tahun" = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int >= $${paramIdx++})
+          OR (i."tahun" = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int <= $${paramIdx++})
+          OR (i."tahun" > $${paramIdx++} AND i."tahun" < $${paramIdx++}))
+      GROUP BY i."tahun", i."bulan"
+      ORDER BY i."tahun" ASC, i."bulan" ASC
+    `;
+    params.push(sixMonthsAgo.getFullYear(), sixMonthsAgo.getMonth() + 1, currentYear, currentMonth, sixMonthsAgo.getFullYear(), currentYear);
+
     const rows: Array<{ bulan: number; tahun: number; jumlah: string; count: bigint }> =
-      await this.prisma.$queryRaw`
-        SELECT
-          EXTRACT(MONTH FROM "tanggal_bayar")::int as "bulan",
-          EXTRACT(YEAR FROM "tanggal_bayar")::int as "tahun",
-          CAST(COALESCE(SUM("jumlah"), 0) AS TEXT) as "jumlah",
-          CAST(COUNT(*) AS BIGINT) as "count"
-        FROM "iuran"
-        WHERE "tanggal_bayar" IS NOT NULL
-          AND (("tahun" = ${sixMonthsAgo.getFullYear()} AND EXTRACT(MONTH FROM "tanggal_bayar")::int >= ${sixMonthsAgo.getMonth() + 1})
-            OR ("tahun" = ${currentYear} AND EXTRACT(MONTH FROM "tanggal_bayar")::int <= ${currentMonth})
-            OR ("tahun" > ${sixMonthsAgo.getFullYear()} AND "tahun" < ${currentYear}))
-        GROUP BY "tahun", "bulan"
-        ORDER BY "tahun" ASC, "bulan" ASC
-      `;
+      await this.prisma.$queryRawUnsafe(sql, ...params);
 
     const monthMap: Record<string, { jumlah: number; count: number }> = {};
     for (let i = 5; i >= 0; i--) {
@@ -152,7 +178,7 @@ export class ReportsService {
 
     const [totalAbsensi, absensiHarian, totalDokumen, activeKegiatan, recentAbsensi] = await Promise.all([
       this.prisma.absensiLatihan.count({ where: absensiWhere }),
-      this.getAbsensiHarian(),
+      this.getAbsensiHarian(scope),
       this.prisma.dokumen.count({ where: { status: 'generated' } }),
       this.prisma.kegiatan.count({ where: { status: 'published' } }),
       this.prisma.absensiLatihan.findMany({
@@ -185,21 +211,46 @@ export class ReportsService {
     };
   }
 
-  private async getAbsensiHarian() {
+  private async getAbsensiHarian(scope?: UserScope) {
     try {
       const now = new Date();
       const thirtyDaysAgo = new Date(now);
       thirtyDaysAgo.setDate(now.getDate() - 30);
 
-      const rows: Array<{ tanggal: string; count: bigint }> = await this.prisma.$queryRaw`
+      // Build scope-aware JOIN and WHERE conditions
+      let joinClause = '';
+      let scopeWhere = '';
+      const params: unknown[] = [];
+      let paramIdx = 1;
+
+      if (scope?.rantingId) {
+        joinClause = 'JOIN "anggota" a ON al."anggota_id" = a."id"';
+        scopeWhere = `AND a."ranting_id" = $${paramIdx++}`;
+        params.push(scope.rantingId);
+      } else if (scope?.wilayahId) {
+        joinClause = 'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
+        scopeWhere = `AND r."wilayah_id" = $${paramIdx++}`;
+        params.push(scope.wilayahId);
+      } else if (scope?.distrikId) {
+        joinClause = 'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
+        scopeWhere = `AND w."distrik_id" = $${paramIdx++}`;
+        params.push(scope.distrikId);
+      }
+
+      const sql = `
         SELECT
-          TO_CHAR("created_at"::date, 'YYYY-MM-DD') as "tanggal",
+          TO_CHAR(al."created_at"::date, 'YYYY-MM-DD') as "tanggal",
           CAST(COUNT(*) AS BIGINT) as "count"
-        FROM "absensi_latihan"
-        WHERE "created_at" >= ${thirtyDaysAgo}
-        GROUP BY "created_at"::date
-        ORDER BY "created_at"::date ASC
+        FROM "absensi_latihan" al
+        ${joinClause}
+        WHERE al."created_at" >= $${paramIdx++}
+          ${scopeWhere}
+        GROUP BY al."created_at"::date
+        ORDER BY al."created_at"::date ASC
       `;
+      params.push(thirtyDaysAgo);
+
+      const rows: Array<{ tanggal: string; count: bigint }> = await this.prisma.$queryRawUnsafe(sql, ...params);
 
       return rows.map((r) => ({ tanggal: r.tanggal, count: Number(r.count) }));
     } catch {

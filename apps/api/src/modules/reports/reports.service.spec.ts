@@ -32,7 +32,7 @@ describe('ReportsService', () => {
     kegiatan: {
       count: jest.fn(),
     },
-    $queryRaw: jest.fn(),
+    $queryRawUnsafe: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -101,7 +101,8 @@ describe('ReportsService', () => {
       mockPrisma.anggota.groupBy.mockResolvedValue([
         { statusKeanggotaan: 'aktif', _count: 90 },
       ]);
-      mockPrisma.$queryRaw.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.dashboardStats();
       expect(result.success).toBe(true);
@@ -120,7 +121,8 @@ describe('ReportsService', () => {
       mockPrisma.calonAnggota.count.mockResolvedValue(0);
       mockPrisma.iuran.aggregate.mockResolvedValue({ _sum: { jumlah: 0 } });
       mockPrisma.anggota.groupBy.mockResolvedValue([]);
-      mockPrisma.$queryRaw.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       await service.dashboardStats({ rantingId: 'r1' });
       // First call: totalMembers — should include ranting filter
@@ -146,7 +148,8 @@ describe('ReportsService', () => {
           latihan: { jenisMateri: 'Latihan Tangan', kegiatan: { nama: 'Latihan Mingguan' } },
         },
       ]);
-      mockPrisma.$queryRaw.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.scanStats();
       expect(result.success).toBe(true);
@@ -161,7 +164,8 @@ describe('ReportsService', () => {
       mockPrisma.dokumen.count.mockResolvedValue(0);
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.absensiLatihan.findMany.mockResolvedValue([]);
-      mockPrisma.$queryRaw.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.scanStats();
       expect(result.success).toBe(true);
@@ -177,7 +181,7 @@ describe('ReportsService', () => {
       mockPrisma.dokumen.count.mockResolvedValue(0);
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.absensiLatihan.findMany.mockResolvedValue([]);
-      mockPrisma.$queryRaw.mockResolvedValue([
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
         { tanggal: '2026-05-15', count: 3n },
         { tanggal: '2026-05-16', count: 7n },
       ]);
@@ -193,7 +197,7 @@ describe('ReportsService', () => {
       mockPrisma.dokumen.count.mockResolvedValue(0);
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.absensiLatihan.findMany.mockResolvedValue([]);
-      mockPrisma.$queryRaw.mockRejectedValue(new Error('Table does not exist'));
+      mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('Table does not exist'));
 
       const result = await service.scanStats();
       expect(result.data.absensiHarian).toEqual([]);
