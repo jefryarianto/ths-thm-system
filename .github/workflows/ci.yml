@@ -123,17 +123,34 @@ jobs:
     runs-on: ubuntu-latest
     needs: [typecheck, test]
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Build API image
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/api
+          tags: |
+            type=sha
+            type=raw,value=latest
+      - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/api/Dockerfile
-          push: false
-          tags: ths-thm/api:latest
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -142,16 +159,102 @@ jobs:
     runs-on: ubuntu-latest
     needs: [typecheck]
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Build Web image
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/web
+          tags: |
+            type=sha
+            type=raw,value=latest
+      - name: Build and push Web image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: apps/web/Dockerfile
-          push: false
-          tags: ths-thm/web:latest
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  smoke-test:
+    name: Smoke Test (API Docker)
+    runs-on: ubuntu-latest
+    needs: [build-api, e2e]
+    if: github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ths_thm
+          POSTGRES_PASSWORD: smoke_password
+          POSTGRES_DB: ths_thm_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build API image for smoke test
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: ths-thm/api:smoke
+          load: true
+          cache-from: type=gha
+      - name: Start API container
+        run: |
+          docker run -d --name api-smoke \
+            -p 4001:3001 \
+            -e DATABASE_URL=postgresql://ths_thm:smoke_password@host.docker.internal:5432/ths_thm_smoke \
+            -e JWT_SECRET=smoke-test-secret \
+            -e JWT_REFRESH_SECRET=smoke-test-refresh \
+            -e APP_PORT=3001 \
+            -e NODE_ENV=production \
+            --add-host=host.docker.internal:host-gateway \
+            ths-thm/api:smoke
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API to start..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4001/api/health > /dev/null 2>&1; then
+              echo "✅ API is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/60 — waiting 2s..."
+            sleep 2
+          done
+          echo "❌ API failed to become healthy within 120s"
+          docker logs api-smoke
+          exit 1
+      - name: Verify health endpoint response
+        run: |
+          response=$(curl -sf http://localhost:4001/api/health)
+          echo "Health response: $response"
+          echo "$response" | grep -q '"status":"ok"'
+          echo "$response" | grep -q '"database"'
+          echo "$response" | grep -q '"cache"'
+          echo "✅ All health checks passed"
+      - name: Cleanup
+        if: always()
+        run: docker rm -f api-smoke || true
