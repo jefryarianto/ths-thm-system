@@ -9,7 +9,9 @@ describe('HealthController', () => {
   let controller: HealthController;
 
   const mockPrisma = {
-    $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+    $queryRaw: jest.fn()
+      .mockResolvedValueOnce([{ '?column?': 1 }])  // SELECT 1
+      .mockResolvedValueOnce([{ state: 'active', count: 3 }, { state: 'idle', count: 2 }]), // pg_stat_activity
   };
 
   const mockCache = {
@@ -56,7 +58,7 @@ describe('HealthController', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.status).toBe('ok');
-      expect(result.data.database).toBe('connected');
+      expect(result.data.database).toEqual({ status: 'connected', pool: { active: 3, idle: 2, total: 5 } });
       expect(result.data).toHaveProperty('timestamp');
       expect(result.data).toHaveProperty('uptime');
       expect(result.data).toHaveProperty('version');
@@ -87,7 +89,7 @@ describe('HealthController', () => {
     it('should return disconnected when DB fails', async () => {
       mockPrisma.$queryRaw.mockRejectedValueOnce(new Error('Connection refused'));
       const result = await controller.check();
-      expect(result.data.database).toBe('disconnected');
+      expect(result.data.database).toEqual({ status: 'disconnected', pool: { active: 0, idle: 0, total: 0 } });
     });
   });
 });
