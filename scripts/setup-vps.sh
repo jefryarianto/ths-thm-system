@@ -149,7 +149,7 @@ if ! command -v fail2ban-client &> /dev/null; then
     info "Installing fail2ban..."
     sudo apt-get install -y fail2ban
     
-    # Create custom jail for SSH
+    # Create custom jail for SSH + Nginx
     sudo tee /etc/fail2ban/jail.local > /dev/null << 'EOF'
 [DEFAULT]
 bantime = 3600
@@ -162,6 +162,27 @@ port = ssh
 filter = sshd
 logpath = /var/log/auth.log
 maxretry = 3
+
+[nginx-http-auth]
+enabled = true
+filter = nginx-http-auth
+logpath = /var/log/nginx/error.log
+maxretry = 5
+bantime = 1800
+
+[nginx-limit-req]
+enabled = true
+filter = nginx-limit-req
+logpath = /var/log/nginx/error.log
+maxretry = 10
+bantime = 600
+
+[nginx-botsearch]
+enabled = true
+filter = nginx-botsearch
+logpath = /var/log/nginx/access.log
+maxretry = 2
+bantime = 86400
 EOF
     
     sudo systemctl enable fail2ban
@@ -192,6 +213,23 @@ EOF
 sudo systemctl restart docker
 
 log "Docker log rotation configured"
+
+# ═══════════════════════════════════════════════════════════════
+# Setup Database Backup Cron
+# ═══════════════════════════════════════════════════════════════
+
+info "Setting up database backup cron..."
+
+sudo mkdir -p /opt/backups/ths-thm
+sudo chown "$DEPLOY_USER":"$DEPLOY_USER" /opt/backups/ths-thm
+
+# Daily backup at 2 AM
+sudo tee /etc/cron.d/ths-thm-backup > /dev/null << 'EOF'
+# THS-THM Database Backup — daily at 2 AM
+0 2 * * * ths-thm /opt/ths-thm/scripts/backup-database.sh >> /var/log/ths-thm-backup.log 2>&1
+EOF
+
+log "Database backup cron configured (daily at 2 AM)"
 
 # ═══════════════════════════════════════════════════════════════
 # Install Certbot (Let's Encrypt)
