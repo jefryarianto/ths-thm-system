@@ -242,8 +242,8 @@ export default function LettersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Surat</h1>
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Surat</h1>
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
             {([
               { value: 'all', label: 'Semua' },
               { value: 'incoming', label: 'Masuk' },
@@ -254,8 +254,8 @@ export default function LettersPage() {
                 onClick={() => setTab(t.value)}
                 className={`px-3 py-1.5 text-sm rounded-md transition ${
                   tab === t.value
-                    ? 'bg-white shadow-sm text-gray-900 font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
                 {t.label}
@@ -266,7 +266,7 @@ export default function LettersPage() {
         <div className="flex gap-2">
           <button
             onClick={() => openCreate('masuk')}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
             <Plus size={14} /> Surat Masuk
           </button>
@@ -296,16 +296,16 @@ export default function LettersPage() {
 
         {/* Detail Panel */}
         {selectedLetter && (
-          <div className="w-96 flex-shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900">Detail Surat</h3>
-              <button onClick={closeDetail} className="p-1 hover:bg-gray-100 rounded-lg transition">
-                <X size={18} className="text-gray-500" />
+          <div className="w-96 flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Detail Surat</h3>
+              <button onClick={closeDetail} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+                <X size={18} className="text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
             {loadingDetail ? (
-              <div className="p-8 text-center text-sm text-gray-500">Memuat data...</div>
+              <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">Memuat data...</div>
             ) : detailData ? (
               <div className="p-5 space-y-4">
                 {/* Status Badge */}
@@ -342,7 +342,7 @@ export default function LettersPage() {
                 {detailData.isi && (
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Isi / Konten</p>
-                    <p className="text-sm text-gray-900 leading-relaxed bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">{detailData.isi}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed bg-gray-50 dark:bg-gray-900 rounded-lg p-3 whitespace-pre-wrap">{detailData.isi}</p>
                   </div>
                 )}
 
@@ -373,13 +373,13 @@ export default function LettersPage() {
                 )}
 
                 {/* Created / Updated */}
-                <div className="border-t border-gray-100 pt-3 mt-3">
-                  <p className="text-xs text-gray-400">
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     Dibuat: {new Date(detailData.createdAt).toLocaleString('id-ID')}
                   </p>
                   {detailData.updatedAt && (
-                    <p className="text-xs text-gray-400">
-                      Diperbarui: {new Date(detailData.updatedAt).toLocaleString('id-ID')}
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Diperbarui: {new Date(detailData.updatedAt).toLocaleString('id-ID')}
                     </p>
                   )}
                 </div>
@@ -388,14 +388,14 @@ export default function LettersPage() {
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => openEdit(detailData)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   >
                     <Edit3 size={14} /> Edit
                   </button>
                   <button
                     onClick={() => handleDelete(detailData)}
                     disabled={deleting}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-red-200 text-red-600 rounded-lg text-sm hover:bg-red-50 transition disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
                   >
                     <Trash2 size={14} /> {deleting ? 'Menghapus...' : 'Hapus'}
                   </button>
@@ -410,17 +410,16 @@ export default function LettersPage() {
 
       {/* ─── Create / Edit Modal ─── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeForm}>
-          <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeForm}>            <div
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {editLetter ? 'Edit Surat' : 'Tambah Surat'} {formType === 'masuk' ? 'Masuk' : 'Keluar'}
               </h2>
-              <button onClick={closeForm} className="p-1 hover:bg-gray-100 rounded-lg">
-                <X size={18} className="text-gray-500" />
+              <button onClick={closeForm} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <X size={18} className="text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
@@ -431,7 +430,7 @@ export default function LettersPage() {
                 value={form.nomorSurat}
                 onChange={(e) => setForm((p) => ({ ...p, nomorSurat: e.target.value }))}
                 placeholder="Contoh: 001/THS-THM/V/2026"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </Field>
 
@@ -443,7 +442,7 @@ export default function LettersPage() {
                   value={form.pengirim}
                   onChange={(e) => setForm((p) => ({ ...p, pengirim: e.target.value }))}
                   placeholder="Nama pengirim / instansi"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </Field>
             ) : (
@@ -453,7 +452,7 @@ export default function LettersPage() {
                   value={form.tujuan}
                   onChange={(e) => setForm((p) => ({ ...p, tujuan: e.target.value }))}
                   placeholder="Nama tujuan / instansi"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </Field>
             )}
@@ -465,7 +464,7 @@ export default function LettersPage() {
                 value={form.perihal}
                 onChange={(e) => setForm((p) => ({ ...p, perihal: e.target.value }))}
                 placeholder="Perihal surat"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </Field>
 
@@ -475,7 +474,7 @@ export default function LettersPage() {
                 type="date"
                 value={form.tanggalSurat}
                 onChange={(e) => setForm((p) => ({ ...p, tanggalSurat: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </Field>
 
@@ -486,7 +485,7 @@ export default function LettersPage() {
                   type="date"
                   value={form.tanggalTerima}
                   onChange={(e) => setForm((p) => ({ ...p, tanggalTerima: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </Field>
             )}
@@ -499,7 +498,7 @@ export default function LettersPage() {
                   onChange={(e) => setForm((p) => ({ ...p, isi: e.target.value }))}
                   placeholder="Isi surat (opsional)"
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
                 />
               </Field>
             )}
@@ -514,7 +513,7 @@ export default function LettersPage() {
                   else setForm((p) => ({ ...p, filePath: e.target.value }));
                 }}
                 placeholder="URL file lampiran (opsional)"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </Field>
 
@@ -523,7 +522,7 @@ export default function LettersPage() {
               <select
                 value={form.status}
                 onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 {formType === 'masuk' ? (
                   <>
@@ -543,14 +542,14 @@ export default function LettersPage() {
 
             {/* Error */}
             {formError && (
-              <div className="text-sm px-3 py-2 rounded-lg bg-red-50 text-red-700">{formError}</div>
+              <div className="text-sm px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400">{formError}</div>
             )}
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={closeForm}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Batal
               </button>
@@ -574,7 +573,7 @@ export default function LettersPage() {
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
@@ -585,8 +584,8 @@ function Field({ label, required, children }: { label: string; required?: boolea
 function DetailRow({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex flex-col">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-sm text-gray-900 font-medium">{value || '-'}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-sm text-gray-900 dark:text-white font-medium">{value || '-'}</p>
     </div>
   );
 }

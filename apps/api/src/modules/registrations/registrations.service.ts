@@ -65,7 +65,7 @@ export class RegistrationsService {
         noHp: reg.noHp,
         email: reg.email,
         status: 'diusulkan',
-        usulOlehId: userId || reg.id,
+        usulOlehUserId: userId || reg.id,
       },
     });
 

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Badge definition.
@@ -13,7 +14,7 @@ export interface Badge {
 }
 
 /**
- * Member gamification profile.
+ * Member gamification profile (API response shape).
  */
 export interface GamificationProfile {
   anggotaId: string;
@@ -38,9 +39,6 @@ export interface PointEvent {
   timestamp: string;
 }
 
-/** Maximum events to keep in memory */
-const MAX_EVENTS = 10_000;
-
 /** All available badges */
 const BADGES: Badge[] = [
   { id: 'latihan_5', name: 'Pemula Latihan', description: 'Mengikuti 5 latihan', icon: '🥋', threshold: 5, category: 'latihan' },
@@ -56,131 +54,300 @@ const BADGES: Badge[] = [
 ];
 
 /**
- * In-memory gamification service.
+ * Database-backed gamification service.
  *
- * Tracks points, badges, and streaks for members.
+ * Tracks points, badges, and streaks for members via PostgreSQL.
  * Points are earned through training attendance, on-time dues payments, and achievements.
- *
- * No external dependencies — can be replaced with database-backed storage later.
  */
 @Injectable()
 export class GamificationService {
-  private profiles = new Map<string, GamificationProfile>();
-  private events: PointEvent[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
   /** Get or create a member's gamification profile */
-  private getOrCreate(anggotaId: string): GamificationProfile {
-    if (!this.profiles.has(anggotaId)) {
-      this.profiles.set(anggotaId, {
-        anggotaId,
-        points: 0,
-        badges: [],
-        streaks: { latihan: 0, iuran: 0 },
-        lastActivity: new Date().toISOString(),
+  private async getOrCreate(anggotaId: string) {
+    let profile = await this.prisma.gamificationProfile.findUnique({
+      where: { anggotaId },
+    });
+
+    if (!profile) {
+      profile = await this.prisma.gamificationProfile.create({
+        data: {
+          anggotaId,
+          points: 0,
+          latihanStreak: 0,
+          iuranStreak: 0,
+        },
       });
     }
-    return this.profiles.get(anggotaId)!;
+
+    return profile;
   }
 
   /** Add points to a member and check for new badges */
-  addPoints(anggotaId: string, type: string, points: number, description: string): {
-    profile: GamificationProfile;
-    newBadges: Badge[];
-  } {
-    const profile = this.getOrCreate(anggotaId);
-    const oldBadges = [...profile.badges];
+  async addPoints(
+    anggotaId: string,
+    type: string,
+    points: number,
+    description: string,
+  ): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
+    const profile = await this.getOrCreate(anggotaId);
+
+    // Get existing badge IDs
+    const existingBadges = await this.prisma.gamificationBadge.findMany({
+      where: { profileId: profile.id },
+      select: { badgeId: true },
+    });
+    const existingBadgeIds = new Set(existingBadges.map((b) => b.badgeId));
 
     // Add points
-    profile.points += points;
-    profile.lastActivity = new Date().toISOString();
+    const updatedProfile = await this.prisma.gamificationProfile.update({
+      where: { id: profile.id },
+      data: {
+        points: profile.points + points,
+        lastActivity: new Date(),
+      },
+    });
 
     // Record event
-    const event: PointEvent = {
-      id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      anggotaId,
-      type,
-      points,
-      description,
-      timestamp: new Date().toISOString(),
-    };
-    this.events.push(event);
-    if (this.events.length > MAX_EVENTS) {
-      this.events = this.events.slice(-MAX_EVENTS);
-    }
+    await this.prisma.gamificationEvent.create({
+      data: {
+        profileId: profile.id,
+        anggotaId,
+        type,
+        points,
+        description,
+      },
+    });
 
     // Check for new badges
     const newBadges: Badge[] = [];
+    const badgesToAward: Array<{ badgeId: string; name: string; description: string; icon: string; category: string }> = [];
+
     for (const badge of BADGES) {
-      if (profile.badges.includes(badge.id)) continue;
+      if (existingBadgeIds.has(badge.id)) continue;
 
       let earned = false;
-      if (badge.category === 'keaktifan' && profile.points >= badge.threshold) {
+      if (badge.category === 'keaktifan' && updatedProfile.points >= badge.threshold) {
         earned = true;
       }
-      // Other badge categories are checked via explicit awarding
 
       if (earned) {
-        profile.badges.push(badge.id);
         newBadges.push(badge);
+        badgesToAward.push({
+          badgeId: badge.id,
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon,
+          category: badge.category,
+        });
       }
     }
 
-    return { profile, newBadges };
+    // Persist new badges
+    if (badgesToAward.length > 0) {
+      await this.prisma.gamificationBadge.createMany({
+        data: badgesToAward.map((b) => ({
+          profileId: profile.id,
+          badgeId: b.badgeId,
+          name: b.name,
+          description: b.description,
+          icon: b.icon,
+          category: b.category,
+        })),
+      });
+    }
+
+    // Reload profile with all badges
+    const fullBadges = await this.prisma.gamificationBadge.findMany({
+      where: { profileId: profile.id },
+      select: { badgeId: true },
+    });
+
+    return {
+      profile: {
+        anggotaId,
+        points: updatedProfile.points,
+        badges: fullBadges.map((b) => b.badgeId),
+        streaks: {
+          latihan: updatedProfile.latihanStreak,
+          iuran: updatedProfile.iuranStreak,
+        },
+        lastActivity: updatedProfile.lastActivity.toISOString(),
+      },
+      newBadges,
+    };
   }
 
   /** Award a training attendance point */
-  recordTraining(anggotaId: string): { profile: GamificationProfile; newBadges: Badge[] } {
-    const profile = this.getOrCreate(anggotaId);
-    profile.streaks.latihan += 1;
+  async recordTraining(anggotaId: string): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
+    const profile = await this.getOrCreate(anggotaId);
 
-    const result = this.addPoints(anggotaId, 'training', 10, 'Latihan rutin');
+    // Increment latihan streak
+    const updatedProfile = await this.prisma.gamificationProfile.update({
+      where: { id: profile.id },
+      data: {
+        latihanStreak: profile.latihanStreak + 1,
+      },
+    });
+
+    const result = await this.addPoints(anggotaId, 'training', 10, 'Latihan rutin');
 
     // Check training streak badges
+    const existingBadgeIds = new Set(result.profile.badges);
+    const newStreakBadges: Badge[] = [];
+    const badgesToAward: Array<{ badgeId: string; name: string; description: string; icon: string; category: string }> = [];
+
     for (const badge of BADGES) {
-      if (badge.category !== 'latihan' || profile.badges.includes(badge.id)) continue;
-      if (profile.streaks.latihan >= badge.threshold) {
-        profile.badges.push(badge.id);
-        result.newBadges.push(badge);
+      if (badge.category !== 'latihan' || existingBadgeIds.has(badge.id)) continue;
+      if (updatedProfile.latihanStreak >= badge.threshold) {
+        newStreakBadges.push(badge);
+        badgesToAward.push({
+          badgeId: badge.id,
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon,
+          category: badge.category,
+        });
       }
     }
 
-    return result;
+    if (badgesToAward.length > 0) {
+      await this.prisma.gamificationBadge.createMany({
+        data: badgesToAward.map((b) => ({
+          profileId: profile.id,
+          badgeId: b.badgeId,
+          name: b.name,
+          description: b.description,
+          icon: b.icon,
+          category: b.category,
+        })),
+      });
+    }
+
+    // Reload final badges
+    const allBadges = await this.prisma.gamificationBadge.findMany({
+      where: { profileId: profile.id },
+      select: { badgeId: true },
+    });
+
+    return {
+      ...result,
+      newBadges: [...result.newBadges, ...newStreakBadges],
+      profile: {
+        ...result.profile,
+        badges: allBadges.map((b) => b.badgeId),
+        streaks: {
+          latihan: updatedProfile.latihanStreak,
+          iuran: result.profile.streaks.iuran,
+        },
+      },
+    };
   }
 
   /** Record an on-time dues payment */
-  recordDuesPayment(anggotaId: string, onTime: boolean): { profile: GamificationProfile; newBadges: Badge[] } {
-    const profile = this.getOrCreate(anggotaId);
+  async recordDuesPayment(anggotaId: string, onTime: boolean): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
+    const profile = await this.getOrCreate(anggotaId);
 
     if (onTime) {
-      profile.streaks.iuran += 1;
+      await this.prisma.gamificationProfile.update({
+        where: { id: profile.id },
+        data: { iuranStreak: profile.iuranStreak + 1 },
+      });
     } else {
-      profile.streaks.iuran = 0;
+      await this.prisma.gamificationProfile.update({
+        where: { id: profile.id },
+        data: { iuranStreak: 0 },
+      });
     }
 
     const points = onTime ? 20 : 5;
-    const result = this.addPoints(anggotaId, 'dues', points, onTime ? 'Iuran tepat waktu' : 'Iuran terlambat');
+    const result = await this.addPoints(anggotaId, 'dues', points, onTime ? 'Iuran tepat waktu' : 'Iuran terlambat');
 
     // Check iuran streak badges
+    const existingBadgeIds = new Set(result.profile.badges);
+    const newStreakBadges: Badge[] = [];
+    const badgesToAward: Array<{ badgeId: string; name: string; description: string; icon: string; category: string }> = [];
+
+    const updatedProfile = await this.prisma.gamificationProfile.findUnique({
+      where: { anggotaId },
+    });
+
     for (const badge of BADGES) {
-      if (badge.category !== 'iuran' || profile.badges.includes(badge.id)) continue;
-      if (profile.streaks.iuran >= badge.threshold) {
-        profile.badges.push(badge.id);
-        result.newBadges.push(badge);
+      if (badge.category !== 'iuran' || existingBadgeIds.has(badge.id)) continue;
+      if (updatedProfile && updatedProfile.iuranStreak >= badge.threshold) {
+        newStreakBadges.push(badge);
+        badgesToAward.push({
+          badgeId: badge.id,
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon,
+          category: badge.category,
+        });
       }
     }
 
-    return result;
+    if (badgesToAward.length > 0) {
+      await this.prisma.gamificationBadge.createMany({
+        data: badgesToAward.map((b) => ({
+          profileId: profile.id,
+          badgeId: b.badgeId,
+          name: b.name,
+          description: b.description,
+          icon: b.icon,
+          category: b.category,
+        })),
+      });
+    }
+
+    // Reload final badges
+    const allBadges = await this.prisma.gamificationBadge.findMany({
+      where: { profileId: profile.id },
+      select: { badgeId: true },
+    });
+
+    return {
+      ...result,
+      newBadges: [...result.newBadges, ...newStreakBadges],
+      profile: {
+        ...result.profile,
+        badges: allBadges.map((b) => b.badgeId),
+        streaks: {
+          latihan: result.profile.streaks.latihan,
+          iuran: updatedProfile?.iuranStreak ?? 0,
+        },
+      },
+    };
   }
 
   /** Get a member's gamification profile */
-  getProfile(anggotaId: string): GamificationProfile {
-    return this.getOrCreate(anggotaId);
+  async getProfile(anggotaId: string): Promise<GamificationProfile> {
+    const profile = await this.getOrCreate(anggotaId);
+    const badges = await this.prisma.gamificationBadge.findMany({
+      where: { profileId: profile.id },
+      select: { badgeId: true },
+    });
+
+    return {
+      anggotaId,
+      points: profile.points,
+      badges: badges.map((b) => b.badgeId),
+      streaks: {
+        latihan: profile.latihanStreak,
+        iuran: profile.iuranStreak,
+      },
+      lastActivity: profile.lastActivity.toISOString(),
+    };
   }
 
   /** Get all badges a member has earned with full details */
-  getBadges(anggotaId: string): Badge[] {
-    const profile = this.getOrCreate(anggotaId);
-    return BADGES.filter((b) => profile.badges.includes(b.id));
+  async getBadges(anggotaId: string): Promise<Badge[]> {
+    const profile = await this.getOrCreate(anggotaId);
+    const earned = await this.prisma.gamificationBadge.findMany({
+      where: { profileId: profile.id },
+      select: { badgeId: true },
+    });
+    const earnedIds = new Set(earned.map((b) => b.badgeId));
+    return BADGES.filter((b) => earnedIds.has(b.id));
   }
 
   /** Get all available badges */
@@ -189,35 +356,63 @@ export class GamificationService {
   }
 
   /** Get leaderboard — top members by points */
-  getLeaderboard(limit: number = 10): GamificationProfile[] {
-    return Array.from(this.profiles.values())
-      .sort((a, b) => b.points - a.points)
-      .slice(0, limit);
+  async getLeaderboard(limit: number = 10): Promise<GamificationProfile[]> {
+    const profiles = await this.prisma.gamificationProfile.findMany({
+      orderBy: { points: 'desc' },
+      take: limit,
+      include: { badges: { select: { badgeId: true } } },
+    });
+
+    return profiles.map((p) => ({
+      anggotaId: p.anggotaId,
+      points: p.points,
+      badges: p.badges.map((b) => b.badgeId),
+      streaks: {
+        latihan: p.latihanStreak,
+        iuran: p.iuranStreak,
+      },
+      lastActivity: p.lastActivity.toISOString(),
+    }));
   }
 
   /** Get recent point events for a member */
-  getRecentEvents(anggotaId: string, limit: number = 20): PointEvent[] {
-    return this.events
-      .filter((e) => e.anggotaId === anggotaId)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+  async getRecentEvents(anggotaId: string, limit: number = 20): Promise<PointEvent[]> {
+    const profile = await this.prisma.gamificationProfile.findUnique({
+      where: { anggotaId },
+    });
+
+    if (!profile) return [];
+
+    const events = await this.prisma.gamificationEvent.findMany({
+      where: { profileId: profile.id },
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+    });
+
+    return events.map((e) => ({
+      id: e.id,
+      anggotaId: e.anggotaId,
+      type: e.type,
+      points: e.points,
+      description: e.description,
+      timestamp: e.timestamp.toISOString(),
+    }));
   }
 
   /** Get gamification stats */
-  getStats(): { totalMembers: number; totalEvents: number; totalPointsAwarded: number; badgesAwarded: number } {
-    let totalPointsAwarded = 0;
-    let badgesAwarded = 0;
-
-    for (const profile of this.profiles.values()) {
-      totalPointsAwarded += profile.points;
-      badgesAwarded += profile.badges.length;
-    }
+  async getStats(): Promise<{ totalMembers: number; totalEvents: number; totalPointsAwarded: number; badgesAwarded: number }> {
+    const [totalMembers, totalEvents, pointsAgg, badgesCount] = await Promise.all([
+      this.prisma.gamificationProfile.count(),
+      this.prisma.gamificationEvent.count(),
+      this.prisma.gamificationProfile.aggregate({ _sum: { points: true } }),
+      this.prisma.gamificationBadge.count(),
+    ]);
 
     return {
-      totalMembers: this.profiles.size,
-      totalEvents: this.events.length,
-      totalPointsAwarded,
-      badgesAwarded,
+      totalMembers,
+      totalEvents,
+      totalPointsAwarded: pointsAgg._sum.points ?? 0,
+      badgesAwarded: badgesCount,
     };
   }
 }

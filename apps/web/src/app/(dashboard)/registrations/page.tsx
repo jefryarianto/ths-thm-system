@@ -6,9 +6,9 @@ import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
+  pending: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  approved: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
+  rejected: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
 };
 
 const columns = [
@@ -46,7 +46,7 @@ export default function RegistrationsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Pendaftaran Baru</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Pendaftaran Baru</h1>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
           <Plus size={14} /> Tambah
         </button>

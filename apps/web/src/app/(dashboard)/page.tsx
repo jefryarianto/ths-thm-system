@@ -86,7 +86,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <p className="text-sm text-gray-500">Memuat dashboard...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Memuat dashboard...</p>
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ export default function DashboardPage() {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
           <p className="text-red-600 font-medium">{error}</p>
-          <p className="text-sm text-gray-500 mt-1">Periksa koneksi ke server API</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Periksa koneksi ke server API</p>
         </div>
       </div>
     );
@@ -117,10 +117,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Ringkasan data THS-THM</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Ringkasan data THS-THM</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <TrendingUp size={16} />
           <span>Overview</span>
         </div>
@@ -135,12 +135,12 @@ export default function DashboardPage() {
           return (
             <div
               key={key}
-              className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">{label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{displayValue}</p>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{displayValue}</p>
                 </div>
                 <div className={`p-3 rounded-xl ring-1 ${styles.ring} ${styles.bg}`}>
                   <Icon size={22} className={styles.icon} />
@@ -154,10 +154,10 @@ export default function DashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bar Chart - Monthly Dues */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Iuran 6 Bulan Terakhir</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Total iuran terkumpul per bulan</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Iuran 6 Bulan Terakhir</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total iuran terkumpul per bulan</p>
           </div>
           {data.monthlyDues && data.monthlyDues.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -192,17 +192,17 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
+            <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500 text-sm">
               Belum ada data iuran
             </div>
           )}
         </div>
 
         {/* Pie Chart - Member Status */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Status Keanggotaan</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Distribusi status anggota</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Status Keanggotaan</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Distribusi status anggota</p>
           </div>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>

@@ -6,10 +6,10 @@ import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-700',
-  disetujui: 'bg-green-100 text-green-700',
-  ditolak: 'bg-red-100 text-red-700',
-  diproses: 'bg-blue-100 text-blue-700',
+  pending: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  disetujui: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
+  ditolak: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
+  diproses: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
 };
 
 const columns = [
@@ -46,7 +46,7 @@ export default function ClaimsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Manajemen Klaim</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Manajemen Klaim</h1>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
           <Plus size={14} /> Tambah
         </button>

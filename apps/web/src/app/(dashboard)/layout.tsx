@@ -8,7 +8,7 @@ import { getSocket, disconnectSocket } from '@/lib/socket';
 import {
   Users, UserPlus, GraduationCap, Dumbbell, Calendar,
   FileText, Mail, CreditCard, Bell, BarChart3, Settings, LogOut, Menu,
-  Shield, ClipboardCheck, Wallet,
+  Shield, ClipboardCheck, Wallet, Trophy,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -33,8 +33,10 @@ const menuItems = [
   { href: '/dues', label: 'Iuran', icon: CreditCard },
   { href: '/payments', label: 'Pembayaran', icon: Wallet },
   { href: '/notifications', label: 'Notifikasi', icon: Bell },
+  { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3 },
   { href: '/reports', label: 'Laporan', icon: BarChart3 },
   { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3 },
+  { href: '/gamification', label: 'Gamifikasi', icon: Trophy },
   { href: '/users', label: 'Users', icon: Shield },
   { href: '/settings', label: 'Pengaturan', icon: Settings },
 ];

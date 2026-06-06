@@ -25,13 +25,13 @@ const SearchForm = ({ placeholder = 'Cari...', onSearch, defaultValue = '' }: Se
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
       <div className="relative flex-1">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
       <button
@@ -44,7 +44,7 @@ const SearchForm = ({ placeholder = 'Cari...', onSearch, defaultValue = '' }: Se
         <button
           type="button"
           onClick={handleClear}
-          className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition"
+          className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition"
         >
           Reset
         </button>

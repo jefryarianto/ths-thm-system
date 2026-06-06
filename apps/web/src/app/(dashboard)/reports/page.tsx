@@ -45,22 +45,22 @@ export default function ReportsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Laporan & Statistik</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Laporan & Statistik</h1>
       </div>
 
       {stats && (
         <div className="grid grid-cols-4 gap-4 mb-6">
           {statCards.map((s) => (
-            <div key={s.label} className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">{s.label}</p>
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <div key={s.label} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">{s.label}</p>
+              <p className={`text-2xl font-bold ${s.color} dark:opacity-90`}>{s.value}</p>
             </div>
           ))}
         </div>
       )}
 
       <div className="mb-2">
-        <h2 className="text-lg font-medium text-gray-700">Data Anggota</h2>
+        <h2 className="text-lg font-medium text-gray-700 dark:text-gray-300">Data Anggota</h2>
       </div>
 
       <DataTable

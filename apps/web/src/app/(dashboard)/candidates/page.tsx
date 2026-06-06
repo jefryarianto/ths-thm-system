@@ -23,9 +23,9 @@ export default function CandidatesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Manajemen Calon Anggota</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Manajemen Calon Anggota</h1>
         <div className="flex gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-2 border rounded-md text-sm text-gray-700 hover:bg-gray-50"><Upload size={14} /> Import</button>
+          <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"><Upload size={14} /> Import</button>
           <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"><Plus size={14} /> Tambah</button>
         </div>
       </div>
@@ -38,7 +38,7 @@ export default function CandidatesPage() {
           { key: 'noHp', label: 'No. HP', render: (c) => c.noHp || '-' },
           { key: 'email', label: 'Email', render: (c) => c.email || '-' },
           { key: 'status', label: 'Status', render: (c) => {
-            const colors: Record<string, string> = { diusulkan: 'bg-gray-100 text-gray-700', mengikuti_pendadaran: 'bg-blue-100 text-blue-700', lulus: 'bg-green-100 text-green-700', gagal: 'bg-red-100 text-red-700', dibatalkan: 'bg-orange-100 text-orange-700' };
+            const colors: Record<string, string> = { diusulkan: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300', mengikuti_pendadaran: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400', lulus: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400', gagal: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400', dibatalkan: 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400' };
             return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[c.status] || ''}`}>{c.status}</span>;
           }},
         ]}

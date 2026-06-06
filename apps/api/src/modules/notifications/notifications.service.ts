@@ -202,6 +202,46 @@ export class NotificationsService {
     return { success: true, message: 'Notifikasi berhasil dihapus' };
   }
 
+  // ─── Stats ───
+
+  async getStats(userId: string) {
+    const [total, unread, byType] = await Promise.all([
+      this.prisma.notifikasi.count({ where: { userId } }),
+      this.prisma.notifikasi.count({ where: { userId, isRead: false } }),
+      this.prisma.notifikasi.groupBy({
+        by: ['tipe', 'isRead'],
+        where: { userId },
+        _count: true,
+      }),
+    ]);
+
+    // Aggregate by type
+    const typeStats: Record<string, { total: number; unread: number }> = {};
+    for (const t of NotificationsService.NOTIFICATION_TYPES) {
+      typeStats[t.key] = { total: 0, unread: 0 };
+    }
+
+    for (const row of byType) {
+      const key = row.tipe as string;
+      if (!typeStats[key]) typeStats[key] = { total: 0, unread: 0 };
+      typeStats[key].total += row._count;
+      if (!row.isRead) {
+        typeStats[key].unread += row._count;
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        total,
+        unread,
+        read: total - unread,
+        byType: typeStats,
+        types: NotificationsService.NOTIFICATION_TYPES,
+      },
+    };
+  }
+
   // ─── Notification Preferences ───
 
   static readonly NOTIFICATION_TYPES = [

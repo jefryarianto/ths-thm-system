@@ -31,11 +31,11 @@ export default function SettingsPage() {
     })();
   }, []);
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Memuat pengaturan...</div>;
+  if (loading) return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Memuat pengaturan...</div>;
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-6">Pengaturan Sistem</h1>
+      <h1 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Pengaturan Sistem</h1>
 
       <div className="grid grid-cols-2 gap-6">
         <SectionCard title="Informasi Organisasi">
@@ -47,8 +47,7 @@ export default function SettingsPage() {
               <InfoRow label="Email" value={org.email} />
               <InfoRow label="Website" value={org.website} />
             </div>
-          ) : (
-            <p className="text-sm text-gray-400">Belum ada data</p>
+          ) : (              <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada data</p>
           )}
         </SectionCard>
 
@@ -62,8 +61,7 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
-          ) : (
-            <p className="text-sm text-gray-400">Belum ada stempel</p>
+          ) : (              <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada stempel</p>
           )}
         </SectionCard>
 
@@ -89,8 +87,7 @@ export default function SettingsPage() {
                 ))}
               </tbody>
             </table>
-          ) : (
-            <p className="text-sm text-gray-400">Belum ada periode</p>
+          ) : (              <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada periode</p>
           )}
         </SectionCard>
 
@@ -118,8 +115,7 @@ export default function SettingsPage() {
                 ))}
               </tbody>
             </table>
-          ) : (
-            <p className="text-sm text-gray-400">Belum ada tanda tangan</p>
+          ) : (              <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada tanda tangan</p>
           )}
         </SectionCard>
       </div>
@@ -129,8 +125,8 @@ export default function SettingsPage() {
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h2 className="font-medium text-gray-800 mb-3">{title}</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+      <h2 className="font-medium text-gray-800 dark:text-gray-200 mb-3">{title}</h2>
       {children}
     </div>
   );
@@ -139,8 +135,8 @@ function SectionCard({ title, children }: { title: string; children: React.React
 function InfoRow({ label, value }: { label: string; value: any }) {
   return (
     <div className="flex">
-      <span className="text-gray-500 w-28 shrink-0">{label}</span>
-      <span className="text-gray-800">{value || '-'}</span>
+      <span className="text-gray-500 dark:text-gray-400 w-28 shrink-0">{label}</span>
+      <span className="text-gray-800 dark:text-gray-200">{value || '-'}</span>
     </div>
   );
 }

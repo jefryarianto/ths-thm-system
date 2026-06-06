@@ -74,16 +74,16 @@ export default function NotificationPreferencesPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/notifications"
-          className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-600"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-400"
         >
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Settings size={24} />
             Pengaturan Notifikasi
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Pilih jenis notifikasi yang ingin Anda terima
           </p>
         </div>
@@ -91,16 +91,16 @@ export default function NotificationPreferencesPage() {
 
       {/* Status bar */}
       {!loading && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-blue-50">
-              <Bell size={18} className="text-blue-600" />
+            <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950 flex-shrink-0">
+              <Bell size={18} className="text-blue-600 dark:text-blue-400" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {enabledCount} dari {types.length} aktif
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {enabledCount === types.length
                   ? 'Semua notifikasi aktif'
                   : enabledCount === 0
@@ -109,18 +109,18 @@ export default function NotificationPreferencesPage() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={handleDisableAll}
               disabled={enabledCount === 0}
-              className="px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+              className="flex-1 sm:flex-none px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
             >
               Matikan Semua
             </button>
             <button
               onClick={handleEnableAll}
               disabled={enabledCount === types.length}
-              className="px-3 py-1.5 text-xs text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition disabled:opacity-50"
+              className="flex-1 sm:flex-none px-3 py-1.5 text-xs text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"
             >
               Aktifkan Semua
             </button>
@@ -130,7 +130,7 @@ export default function NotificationPreferencesPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
@@ -139,13 +139,13 @@ export default function NotificationPreferencesPage() {
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-40 mb-2" />
-                  <div className="h-3 bg-gray-200 rounded w-64" />
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 mb-2" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-64" />
                 </div>
-                <div className="h-6 w-11 bg-gray-200 rounded-full" />
+                <div className="h-6 w-11 bg-gray-200 dark:bg-gray-700 rounded-full" />
               </div>
             </div>
           ))}
@@ -158,15 +158,15 @@ export default function NotificationPreferencesPage() {
           {types.map((type) => (
             <div
               key={type.key}
-              className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition"
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-gray-900">{type.label}</h3>
-                    <span className="text-xs text-gray-400 font-mono">({type.key})</span>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{type.label}</h3>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">({type.key})</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">{type.description}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{type.description}</p>
                 </div>
                 <button
                   onClick={() => handleToggle(type.key)}
@@ -191,16 +191,16 @@ export default function NotificationPreferencesPage() {
 
       {/* Save button */}
       {!loading && (
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-end gap-3 pt-2">
           {saved && (
-            <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium animate-pulse">
+            <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 font-medium">
               <Check size={16} /> Tersimpan
             </span>
           )}
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
           >
             <Save size={14} />
             {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}

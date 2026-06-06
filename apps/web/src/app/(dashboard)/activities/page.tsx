@@ -45,7 +45,7 @@ export default function ActivitiesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Manajemen Kegiatan</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Manajemen Kegiatan</h1>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
           <Plus size={14} /> Tambah
         </button>

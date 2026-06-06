@@ -75,9 +75,17 @@ export class CandidatesService {
     }
     const candidate = await this.prisma.calonAnggota.create({
       data: {
-        ...dto,
+        namaLengkap: dto.namaLengkap,
+        jenisKelamin: dto.jenisKelamin,
+        tempatLahir: dto.tempatLahir,
+        tanggalLahir: dto.tanggalLahir,
+        alamat: dto.alamat,
+        noHp: dto.noHp,
+        email: dto.email,
+        rantingId: dto.rantingId,
+        usulOlehUserId: dto.usulOlehId,
         status: 'diusulkan',
-      },
+      } as never,
     });
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);

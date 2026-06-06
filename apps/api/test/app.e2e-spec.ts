@@ -7,6 +7,7 @@ describe('THS-THM API (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let refreshToken: string;
+  let e2eUserId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,6 +26,7 @@ describe('THS-THM API (e2e)', () => {
       if (loginRes.status === 201 && loginRes.body.data?.accessToken) {
         accessToken = loginRes.body.data.accessToken;
         refreshToken = loginRes.body.data.refreshToken;
+        e2eUserId = loginRes.body.data.user?.id || '';
       }
     } catch { /* user may not exist yet */ }
 
@@ -34,6 +36,7 @@ describe('THS-THM API (e2e)', () => {
         .send({ email: 'e2e@test.com', password: 'test1234', namaLengkap: 'E2E Test User', role: 'superadmin' });
       accessToken = regRes.body.data.accessToken;
       refreshToken = regRes.body.data.refreshToken;
+      e2eUserId = regRes.body.data.user?.id || '';
     }
 
     expect(accessToken).toBeDefined();
@@ -169,6 +172,118 @@ describe('THS-THM API (e2e)', () => {
           expect(res.body.success).toBe(true);
           expect(typeof res.body.data.totalIuran).toBe('number');
           expect(typeof res.body.data.anggotaAktif).toBe('number');
+        });
+    });
+  });
+
+  // ─── Notification Preferences ───
+  describe('Notification Preferences', () => {
+    it('GET /api/notifications/preferences — should return default preferences', () => {
+      return request(app.getHttpServer())
+        .get('/api/notifications/preferences')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(res.body.data).toBeDefined();
+          expect(res.body.types).toBeDefined();
+          expect(Array.isArray(res.body.types)).toBe(true);
+          // All defaults should be true
+          for (const val of Object.values(res.body.data)) {
+            expect(val).toBe(true);
+          }
+        });
+    });
+
+    it('PATCH /api/notifications/preferences — should save and return preferences', () => {
+      return request(app.getHttpServer())
+        .patch('/api/notifications/preferences')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ welcome: false, umum: true, reminder_iuran: false })
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+        });
+    });
+
+    it('GET /api/notifications/preferences — should return updated preferences', () => {
+      return request(app.getHttpServer())
+        .get('/api/notifications/preferences')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(res.body.data.welcome).toBe(false);
+          expect(res.body.data.umum).toBe(true);
+          expect(res.body.data.reminder_iuran).toBe(false);
+        });
+    });
+
+    it('PATCH /api/notifications/preferences — should reset preferences back to defaults', () => {
+      return request(app.getHttpServer())
+        .patch('/api/notifications/preferences')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({})
+        .expect(200);
+    });
+
+    it('GET /api/notifications/preferences — should reject without auth', () => {
+      return request(app.getHttpServer())
+        .get('/api/notifications/preferences')
+        .expect(401);
+    });
+  });
+
+  // ─── Notification Sending ───
+  describe('Notification Sending', () => {
+    it('POST /api/notifications/send — superadmin can send notification', () => {
+      return request(app.getHttpServer())
+        .post('/api/notifications/send')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ userId: e2eUserId, judul: 'Test E2E', isi: 'Test notifikasi E2E', tipe: 'umum' })
+        .expect(201)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(res.body.message).toContain('berhasil');
+        });
+    });
+
+    it('POST /api/notifications/send — should reject without judul', () => {
+      return request(app.getHttpServer())
+        .post('/api/notifications/send')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ userId: e2eUserId, isi: 'Test tanpa judul' })
+        .expect(400);
+    });
+
+    it('POST /api/notifications/send — should reject without auth', () => {
+      return request(app.getHttpServer())
+        .post('/api/notifications/send')
+        .send({ userId: e2eUserId, judul: 'Test Unauthorized', isi: 'Should fail' })
+        .expect(401);
+    });
+
+    it('POST /api/notifications/broadcast — superadmin can broadcast', () => {
+      return request(app.getHttpServer())
+        .post('/api/notifications/broadcast')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ judul: 'Broadcast E2E', isi: 'Test broadcast E2E', tipe: 'umum' })
+        .expect(201)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(res.body.data.sentTo).toBeDefined();
+        });
+    });
+
+    it('POST /api/notifications/role — superadmin can send to role', () => {
+      return request(app.getHttpServer())
+        .post('/api/notifications/role')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ role: 'superadmin', judul: 'Role E2E', isi: 'Test role E2E', tipe: 'umum' })
+        .expect(201)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(res.body.data.sentTo).toBeGreaterThanOrEqual(0);
         });
     });
   });

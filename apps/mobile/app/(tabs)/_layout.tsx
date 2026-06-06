@@ -99,6 +99,10 @@ export default function TabLayout() {
         options={{ tabBarLabel: 'Scan QR', tabBarIcon: ({ color, size }) => <Ionicons name="qr-code" size={size} color={color} /> }}
       />
       <Tabs.Screen
+        name="gamification"
+        options={{ tabBarLabel: 'Poin', tabBarIcon: ({ color, size }) => <Ionicons name="trophy" size={size} color={color} /> }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{ tabBarLabel: 'Profil', tabBarIcon: ({ color, size }) => <Ionicons name="person-circle" size={size} color={color} /> }}
       />

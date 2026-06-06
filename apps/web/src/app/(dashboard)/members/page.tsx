@@ -66,25 +66,25 @@ export default function MembersPage() {
       <div className="flex items-center justify-between mb-6">
         <form onSubmit={handleSearch} className="flex items-center gap-2">
           <div className="relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari anggota..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-80"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-80"
             />
           </div>
-          <button type="submit" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition">
+          <button type="submit" className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition">
             Cari
           </button>
         </form>
 
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
             <Upload size={16} /> Import CSV
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
             <Download size={16} /> Export
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
@@ -94,47 +94,47 @@ export default function MembersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">No. Anggota</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Nama</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">JK</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">No. HP</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Data</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Validasi</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Aksi</th>
+              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">No. Anggota</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nama</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">JK</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">No. HP</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Validasi</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-500">
+                  <td colSpan={8} className="text-center py-12 text-gray-500 dark:text-gray-400">
                     Memuat data...
                   </td>
                 </tr>
               ) : members.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-500">
+                  <td colSpan={8} className="text-center py-12 text-gray-500 dark:text-gray-400">
                     Tidak ada data anggota
                   </td>
                 </tr>
               ) : (
                 members.map((member) => (
-                  <tr key={member.id} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3 text-sm font-mono text-gray-600">{member.nomorAnggota}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{member.namaLengkap}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{member.jenisKelamin}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{member.noHp || '-'}</td>
+                  <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-400">{member.nomorAnggota}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{member.namaLengkap}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{member.jenisKelamin}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{member.noHp || '-'}</td>
                     <td className="px-4 py-3">{getStatusBadge(member.statusKeanggotaan)}</td>
                     <td className="px-4 py-3">{getStatusBadge(member.statusData)}</td>
                     <td className="px-4 py-3">{getStatusBadge(member.statusValidasi)}</td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1 hover:bg-gray-100 rounded transition">
-                        <MoreVertical size={16} className="text-gray-500" />
+                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition">
+                        <MoreVertical size={16} className="text-gray-500 dark:text-gray-400" />
                       </button>
                     </td>
                   </tr>
@@ -146,25 +146,25 @@ export default function MembersPage() {
 
         {/* Pagination */}
         {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <span className="text-sm text-gray-600">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               Total {meta.total} anggota
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50"
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               >
                 Sebelumnya
               </button>
-              <span className="px-3 py-1 text-sm text-gray-600">
+              <span className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400">
                 {page} / {meta.totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
                 disabled={page === meta.totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50"
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               >
                 Selanjutnya
               </button>

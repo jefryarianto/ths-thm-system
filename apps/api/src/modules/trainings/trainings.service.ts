@@ -68,7 +68,7 @@ export class TrainingsService {
         lokasi: dto.lokasi,
         jenisMateri: dto.jenisMateri,
         hasilLatihanGlobal: dto.hasilLatihanGlobal,
-        rekomendasiBerikutnya: dto.rekomendasiBerikutnya,
+        rekomendasiLatihanBerikutnya: dto.rekomendasiBerikutnya,
       },
     });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);

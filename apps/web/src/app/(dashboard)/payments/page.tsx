@@ -88,39 +88,39 @@ export default function PaymentsPage() {
     <div>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg"><CreditCard size={20} className="text-blue-600" /></div>
+            <div className="p-2 bg-blue-100 dark:bg-blue-950 rounded-lg"><CreditCard size={20} className="text-blue-600 dark:text-blue-400" /></div>
             <div>
-              <p className="text-xs text-gray-500">Total Terkumpul</p>
-              <p className="text-lg font-bold text-gray-900">{formatRupiah(stats.totalCollected)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total Terkumpul</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{formatRupiah(stats.totalCollected)}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg"><CheckCircle size={20} className="text-green-600" /></div>
+            <div className="p-2 bg-green-100 dark:bg-green-950 rounded-lg"><CheckCircle size={20} className="text-green-600 dark:text-green-400" /></div>
             <div>
-              <p className="text-xs text-gray-500">Lunas</p>
-              <p className="text-lg font-bold text-gray-900">{stats.paidCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Lunas</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.paidCount}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg"><Clock size={20} className="text-yellow-600" /></div>
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-950 rounded-lg"><Clock size={20} className="text-yellow-600 dark:text-yellow-400" /></div>
             <div>
-              <p className="text-xs text-gray-500">Belum Lunas</p>
-              <p className="text-lg font-bold text-gray-900">{stats.pendingCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Belum Lunas</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.pendingCount}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg"><ArrowUpRight size={20} className="text-purple-600" /></div>
+            <div className="p-2 bg-purple-100 dark:bg-purple-950 rounded-lg"><ArrowUpRight size={20} className="text-purple-600 dark:text-purple-400" /></div>
             <div>
-              <p className="text-xs text-gray-500">Total Iuran</p>
-              <p className="text-lg font-bold text-gray-900">{stats.totalDues}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total Iuran</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.totalDues}</p>
             </div>
           </div>
         </div>
@@ -128,17 +128,16 @@ export default function PaymentsPage() {
 
       {/* Search */}
       <form onSubmit={handleSearch} className="flex items-center gap-2 mb-6">
-        <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div className="relative">            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari pembayaran..."
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-80"
+            className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-80"
           />
         </div>
-        <button type="submit" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition">
+        <button type="submit" className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition">
           Cari
         </button>
       </form>

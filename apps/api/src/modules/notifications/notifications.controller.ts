@@ -40,6 +40,12 @@ export class NotificationsController {
   @Patch('read-all')
   markAllAsRead(@CurrentUser() user: { id: string }) { return this.service.markAllAsRead(user.id); }
 
+  @Get('stats')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  getStats(@CurrentUser() user: { id: string }) {
+    return this.service.getStats(user.id);
+  }
+
   @Get('preferences')
   getPreferences(@CurrentUser() user: { id: string }) {
     return this.service.getPreferences(user.id);

@@ -21,14 +21,14 @@ const TIPE_OPTIONS = [
 ];
 
 const tipeColors: Record<string, string> = {
-  umum: 'bg-gray-100 text-gray-700',
-  welcome: 'bg-blue-100 text-blue-700',
-  data_incomplete: 'bg-orange-100 text-orange-700',
-  reminder_latihan: 'bg-green-100 text-green-700',
-  reminder_pendadaran: 'bg-purple-100 text-purple-700',
-  reminder_iuran: 'bg-yellow-100 text-yellow-700',
-  status_klaim: 'bg-pink-100 text-pink-700',
-  dokumen_ready: 'bg-teal-100 text-teal-700',
+  umum: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+  welcome: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
+  data_incomplete: 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400',
+  reminder_latihan: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
+  reminder_pendadaran: 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400',
+  reminder_iuran: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
+  status_klaim: 'bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-400',
+  dokumen_ready: 'bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-400',
 };
 
 const columns = [
@@ -37,8 +37,7 @@ const columns = [
     label: 'Judul',
     render: (n: any) => (
       <div className="flex items-center gap-2">
-        {!n.isRead && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />}
-        <span className={`font-medium ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>{n.judul}</span>
+        {!n.isRead && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />}                <span className={`font-medium ${!n.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>{n.judul}</span>
       </div>
     ),
   },
@@ -46,7 +45,7 @@ const columns = [
     key: 'isi',
     label: 'Pesan',
     render: (n: any) => (
-      <span className="text-gray-500">{n.isi?.length > 60 ? n.isi.slice(0, 60) + '...' : n.isi || ''}</span>
+      <span className="text-gray-500 dark:text-gray-400">{n.isi?.length > 60 ? n.isi.slice(0, 60) + '...' : n.isi || ''}</span>
     ),
   },
   {
@@ -198,36 +197,42 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">Notifikasi</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifikasi</h1>
           {meta.unreadCount > 0 && (
-            <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+            <span className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 text-xs font-semibold px-2.5 py-0.5 rounded-full">
               {meta.unreadCount} baru
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {meta.unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
               disabled={markingAll}
-              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
             >
               <CheckCheck size={14} />
-              {markingAll ? 'Memproses...' : 'Tandai semua dibaca'}
+              {markingAll ? 'Memproses...' : 'Baca Semua'}
             </button>
           )}
           <button
             onClick={handleExportCSV}
             disabled={exporting}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
           >
-            <Download size={14} /> {exporting ? 'Exporting...' : 'Export CSV'}
+            <Download size={14} /> {exporting ? 'Export...' : 'CSV'}
           </button>
           <Link
+            href="/notifications/report"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+          >
+            <Download size={14} /> Laporan
+          </Link>
+          <Link
             href="/notifications/preferences"
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 transition"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
             <Settings size={14} /> Pengaturan
           </Link>
@@ -235,50 +240,50 @@ export default function NotificationsPage() {
             onClick={() => setShowSendModal(true)}
             className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
           >
-            <Send size={14} /> Kirim Notifikasi
+            <Send size={14} /> Kirim
           </button>
         </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-blue-50"><Bell size={18} className="text-blue-600" /></div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950"><Bell size={18} className="text-blue-600 dark:text-blue-400" /></div>
           <div>
-            <p className="text-xs text-gray-500">Total</p>
-            <p className="text-lg font-bold text-gray-900">{meta.total}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{meta.total}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-orange-50"><Bell size={18} className="text-orange-600" /></div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-orange-50 dark:bg-orange-950"><Bell size={18} className="text-orange-600 dark:text-orange-400" /></div>
           <div>
-            <p className="text-xs text-gray-500">Belum Dibaca</p>
-            <p className="text-lg font-bold text-gray-900">{meta.unreadCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Belum Dibaca</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{meta.unreadCount}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-green-50"><BellOff size={18} className="text-green-600" /></div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-950"><BellOff size={18} className="text-green-600 dark:text-green-400" /></div>
           <div>
-            <p className="text-xs text-gray-500">Sudah Dibaca</p>
-            <p className="text-lg font-bold text-gray-900">{meta.total - meta.unreadCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Sudah Dibaca</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">{meta.total - meta.unreadCount}</p>
           </div>
         </div>
       </div>
 
       {/* Filter */}
       <div className="flex items-center gap-2">
-        <Filter size={16} className="text-gray-400" />
+        <Filter size={16} className="text-gray-400 dark:text-gray-500" />
         <select
           value={filterTipe}
           onChange={(e) => handleFilterChange(e.target.value)}
-          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         >
           {TIPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
         {filterTipe && (
-          <button onClick={() => handleFilterChange('')} className="text-xs text-blue-600 hover:text-blue-800">
+          <button onClick={() => handleFilterChange('')} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
             Reset
           </button>
         )}
@@ -297,22 +302,21 @@ export default function NotificationsPage() {
 
       {/* Send Notification Modal */}
       {showSendModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowSendModal(false); setSendResult(null); }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowSendModal(false); setSendResult(null); }}>            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Kirim Notifikasi</h2>
-              <button onClick={() => { setShowSendModal(false); setSendResult(null); }} className="p-1 hover:bg-gray-100 rounded-lg">
-                <X size={18} className="text-gray-500" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Kirim Notifikasi</h2>
+              <button onClick={() => { setShowSendModal(false); setSendResult(null); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <X size={18} className="text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
             {/* Target */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kirim Ke</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kirim Ke</label>
               <select
                 value={sendTarget}
                 onChange={(e) => setSendTarget(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               >
                 <option value="broadcast">Semua Anggota</option>
                 <option value="role">Berdasarkan Role</option>
@@ -322,11 +326,11 @@ export default function NotificationsPage() {
 
             {sendTarget === 'role' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                 <select
                   value={sendTargetRole}
                   onChange={(e) => setSendTargetRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="superadmin">Superadmin</option>
                   <option value="admin_distrik">Admin Distrik</option>
@@ -339,46 +343,46 @@ export default function NotificationsPage() {
 
             {sendTarget === 'user' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User ID</label>
                 <input
                   type="text"
                   value={sendTargetUserId}
                   onChange={(e) => setSendTargetUserId(e.target.value)}
                   placeholder="Masukkan User ID"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             )}
 
             {/* Form fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul</label>
               <input
                 type="text"
                 value={sendForm.judul}
                 onChange={(e) => setSendForm((p) => ({ ...p, judul: e.target.value }))}
                 placeholder="Judul notifikasi"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pesan</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pesan</label>
               <textarea
                 value={sendForm.isi}
                 onChange={(e) => setSendForm((p) => ({ ...p, isi: e.target.value }))}
                 placeholder="Isi notifikasi"
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
               <select
                 value={sendForm.tipe}
                 onChange={(e) => setSendForm((p) => ({ ...p, tipe: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               >
                 {TIPE_OPTIONS.filter(t => t.value).map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -388,7 +392,7 @@ export default function NotificationsPage() {
 
             {/* Result */}
             {sendResult && (
-              <div className={`text-sm px-3 py-2 rounded-lg ${sendResult.includes('Berhasil') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              <div className={`text-sm px-3 py-2 rounded-lg ${sendResult.includes('Berhasil') ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400'}`}>
                 {sendResult}
               </div>
             )}
@@ -397,7 +401,7 @@ export default function NotificationsPage() {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => { setShowSendModal(false); setSendResult(null); }}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Batal
               </button>
