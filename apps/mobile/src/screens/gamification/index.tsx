@@ -18,6 +18,7 @@ import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import apiClient from '../../lib/api-client';
 import Confetti from './confetti';
+import GamificationTour from './tour';
 
 interface Badge {
   id: string;
@@ -813,7 +814,7 @@ export default function GamificationScreen() {
         <Text style={styles.adminButtonText}>Admin Reward</Text>
       </TouchableOpacity>
 
-      <Confetti visible={showConfetti} onFinish={() => setShowConfetti(false)} />
+      <GamificationTour />
       <View style={{ height: 40 }} />
     </ScrollView>
   );

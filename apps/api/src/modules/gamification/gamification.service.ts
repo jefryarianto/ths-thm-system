@@ -756,6 +756,74 @@ export class GamificationService {
     }));
   }
 
+  /** Get gamification configuration settings */
+  async getConfig(): Promise<Record<string, unknown>> {
+    const settings = await this.prisma.setting.findMany({
+      where: { key: { startsWith: 'gamification_' } },
+    });
+    const config: Record<string, unknown> = {};
+    for (const s of settings) {
+      config[s.key.replace('gamification_', '')] = s.value;
+    }
+    return config;
+  }
+
+  /** Update gamification configuration settings */
+  async updateConfig(data: Record<string, unknown>): Promise<void> {
+    for (const [key, value] of Object.entries(data)) {
+      await this.prisma.setting.upsert({
+        where: { key: `gamification_${key}` },
+        update: { value: value as never },
+        create: { key: `gamification_${key}`, value: value as never },
+      });
+    }
+  }
+
+  /** Get weekly summary for a member */
+  async getWeeklySummary(anggotaId: string): Promise<{
+    pointsEarned: number;
+    events: number;
+    badgesEarned: number;
+    level: string;
+    currentPoints: number;
+    periodStart: string;
+    periodEnd: string;
+  }> {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const profile = await this.prisma.gamificationProfile.findUnique({
+      where: { anggotaId },
+    });
+
+    const events = await this.prisma.gamificationEvent.findMany({
+      where: {
+        anggotaId,
+        timestamp: { gte: weekAgo },
+      },
+      select: { points: true },
+    });
+
+    const pointsEarned = events.reduce((sum, e) => sum + e.points, 0);
+
+    const badges = await this.prisma.gamificationBadge.findMany({
+      where: {
+        profileId: profile?.id ?? '',
+        earnedAt: { gte: weekAgo },
+      },
+    });
+
+    return {
+      pointsEarned,
+      events: events.length,
+      badgesEarned: badges.length,
+      level: getLevel(profile?.points ?? 0).name,
+      currentPoints: profile?.points ?? 0,
+      periodStart: weekAgo.toISOString(),
+      periodEnd: now.toISOString(),
+    };
+  }
+
   /** Get gamification stats */
   async getStats(): Promise<{ totalMembers: number; totalEvents: number; totalPointsAwarded: number; badgesAwarded: number }> {
     const [totalMembers, totalEvents, pointsAgg, badgesCount] = await Promise.all([

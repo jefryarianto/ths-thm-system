@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
@@ -199,6 +199,38 @@ export class GamificationController {
       (period as 'weekly' | 'monthly') || 'monthly',
       limit ? parseInt(limit) : 20,
     );
+    return { success: true, data };
+  }
+
+  /**
+   * Get gamification configuration settings.
+   */
+  @Get('admin/config')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @ApiOperation({ summary: 'Get gamification configuration' })
+  async getConfig() {
+    const data = await this.gamificationService.getConfig();
+    return { success: true, data };
+  }
+
+  /**
+   * Update gamification configuration settings.
+   */
+  @Put('admin/config')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @ApiOperation({ summary: 'Update gamification configuration' })
+  async updateConfig(@Body() body: Record<string, unknown>) {
+    await this.gamificationService.updateConfig(body);
+    return { success: true, message: 'Konfigurasi berhasil diperbarui' };
+  }
+
+  /**
+   * Get weekly summary for a member.
+   */
+  @Get('profile/:anggotaId/weekly-summary')
+  @ApiOperation({ summary: 'Get weekly gamification summary for a member' })
+  async getWeeklySummary(@Param('anggotaId') anggotaId: string) {
+    const data = await this.gamificationService.getWeeklySummary(anggotaId);
     return { success: true, data };
   }
 
