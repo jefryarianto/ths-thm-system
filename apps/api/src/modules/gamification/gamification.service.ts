@@ -882,6 +882,50 @@ export class GamificationService {
     return { sent, summary };
   }
 
+  /** Get scoreboard breakdown — real points aggregated by event type per period */
+  async getScoreboardBreakdown(period: 'all' | 'weekly' | 'monthly' = 'all'): Promise<Array<{ module: string; label: string; points: number; percentage: number; color: string }>> {
+    const now = new Date();
+    let since: Date | undefined;
+    if (period === 'weekly') since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    else if (period === 'monthly') since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const where: Record<string, unknown> = {};
+    if (since) where.timestamp = { gte: since };
+
+    const events = await this.prisma.gamificationEvent.findMany({
+      where,
+      select: { type: true, points: true },
+    });
+
+    const moduleMap = new Map<string, number>();
+    for (const e of events) {
+      moduleMap.set(e.type, (moduleMap.get(e.type) || 0) + e.points);
+    }
+
+    const moduleConfig: Record<string, { label: string; color: string }> = {
+      training: { label: 'Latihan', color: '#3b82f6' },
+      dues: { label: 'Iuran', color: '#22c55e' },
+      badge: { label: 'Badge', color: '#a855f7' },
+      achievement: { label: 'Prestasi', color: '#f59e0b' },
+    };
+
+    const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
+    const result: Array<{ module: string; label: string; points: number; percentage: number; color: string }> = [];
+
+    for (const [type, config] of Object.entries(moduleConfig)) {
+      const points = moduleMap.get(type) || 0;
+      result.push({
+        module: type,
+        label: config.label,
+        points,
+        percentage: totalPoints > 0 ? Math.round((points / totalPoints) * 100) : 0,
+        color: config.color,
+      });
+    }
+
+    return result.sort((a, b) => b.points - a.points);
+  }
+
   /** Get gamification stats */
   async getStats(): Promise<{ totalMembers: number; totalEvents: number; totalPointsAwarded: number; badgesAwarded: number }> {
     const [totalMembers, totalEvents, pointsAgg, badgesCount] = await Promise.all([

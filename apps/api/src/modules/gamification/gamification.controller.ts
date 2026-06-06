@@ -150,6 +150,18 @@ export class GamificationController {
   }
 
   /**
+   * Get scoreboard breakdown — points aggregated by event type for a period.
+   */
+  @Get('scoreboard/breakdown')
+  @ApiOperation({ summary: 'Get real points breakdown per module for scoreboard' })
+  async getScoreboardBreakdown(@Query('period') period?: string) {
+    const data = await this.gamificationService.getScoreboardBreakdown(
+      (period as 'all' | 'weekly' | 'monthly') || 'all',
+    );
+    return { success: true, data };
+  }
+
+  /**
    * Get gamification stats.
    */
   @Get('stats')

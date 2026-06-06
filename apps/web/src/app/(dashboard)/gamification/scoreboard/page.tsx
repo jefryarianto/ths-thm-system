@@ -34,20 +34,6 @@ interface GamificationStats {
   badgesAwarded: number;
 }
 
-const MODULE_COLORS: Record<string, string> = {
-  training: '#3b82f6',
-  dues: '#22c55e',
-  badge: '#a855f7',
-  achievement: '#f59e0b',
-};
-
-const MODULE_LABELS: Record<string, string> = {
-  training: 'Latihan',
-  dues: 'Iuran',
-  badge: 'Badge',
-  achievement: 'Prestasi',
-};
-
 const LEVEL_ORDER = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'];
 
 export default function ScoreboardPage() {
@@ -58,18 +44,22 @@ export default function ScoreboardPage() {
   const [period, setPeriod] = useState<'weekly' | 'monthly'>('weekly');
   const [loading, setLoading] = useState(true);
 
+  const [moduleBreakdown, setModuleBreakdown] = useState<Array<{ module: string; label: string; points: number; percentage: number; color: string }>>([]);
+
   const fetchData = useCallback(async () => {
     try {
-      const [statsRes, distRes, weeklyRes, monthlyRes] = await Promise.all([
+      const [statsRes, distRes, weeklyRes, monthlyRes, breakdownRes] = await Promise.all([
         apiClient.get('/gamification/stats'),
         apiClient.get('/gamification/admin/points-distribution').catch(() => ({ data: { data: [] } })),
         apiClient.get('/gamification/admin/points-report?period=weekly&limit=10'),
         apiClient.get('/gamification/admin/points-report?period=monthly&limit=10'),
+        apiClient.get('/gamification/scoreboard/breakdown'),
       ]);
       setStats(statsRes.data.data);
       setDistribution(distRes.data.data || []);
       setWeeklyReport(weeklyRes.data.data || []);
       setMonthlyReport(monthlyRes.data.data || []);
+      setModuleBreakdown(breakdownRes.data.data || []);
     } catch (err) {
       console.error('Failed to fetch scoreboard data:', err);
     }
@@ -80,27 +70,13 @@ export default function ScoreboardPage() {
 
   const reportData = period === 'weekly' ? weeklyReport : monthlyReport;
 
-  // Derive module breakdown from top earners data by aggregating point events by type
-  const moduleBreakdown = (() => {
-    // Count event types from report data (approximation using event counts)
-    const totalEvents = reportData.reduce((sum, e) => sum + e.events, 0);
-    // Use fixed categories since the events report doesn't include type breakdown
-    // This shows which modules are most active based on participation
-    const modules = [
-      { name: 'Latihan', points: 0, color: MODULE_COLORS.training },
-      { name: 'Iuran', points: 0, color: MODULE_COLORS.dues },
-      { name: 'Badge', points: 0, color: MODULE_COLORS.badge },
-      { name: 'Prestasi', points: 0, color: MODULE_COLORS.achievement },
-    ];
-    if (stats?.totalPointsAwarded && totalEvents > 0) {
-      // Distribute points proportionally by activities
-      modules[0].points = Math.round(reportData.reduce((s, e) => s + Math.round(e.points * 0.5), 0));
-      modules[1].points = Math.round(reportData.reduce((s, e) => s + Math.round(e.points * 0.3), 0));
-      modules[2].points = Math.round(reportData.reduce((s, e) => s + Math.round(e.points * 0.12), 0));
-      modules[3].points = Math.round(reportData.reduce((s, e) => s + Math.round(e.points * 0.08), 0));
-    }
-    return modules;
-  })();
+  // Use real data from API — map to chart format
+  const breakdownData = moduleBreakdown.map((m) => ({
+    name: m.label,
+    points: m.points,
+    color: m.color,
+    percentage: m.percentage,
+  }));
 
   // Distribution pie data
   const pieData = distribution.map((d) => ({
@@ -171,7 +147,7 @@ export default function ScoreboardPage() {
             <h3 className="text-base font-semibold text-gray-900">Breakdown Poin per Modul</h3>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={moduleBreakdown}>
+            <BarChart data={breakdownData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} />
               <YAxis tick={{ fontSize: 12 }} tickLine={false} />
@@ -180,21 +156,21 @@ export default function ScoreboardPage() {
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
               />
               <Bar dataKey="points" radius={[6, 6, 0, 0]}>
-                {moduleBreakdown.map((entry, idx) => (
+                  {breakdownData.map((entry, idx) => (
                   <Cell key={idx} fill={entry.color} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-center gap-6 mt-4 text-xs text-gray-500">
-            {moduleBreakdown.map((m) => (
+            {breakdownData.map((m) => (
               <div key={m.name} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.color }} />
-                <span>{m.name}: {((m.points / (moduleBreakdown.reduce((s, e) => s + e.points, 0) || 1)) * 100).toFixed(0)}%</span>
+                <span>{m.name}: {m.percentage}%</span>
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-gray-400 text-center mt-2">* Estimasi berdasarkan aktivitas di periode terpilih</p>
+          <p className="text-[10px] text-gray-400 text-center mt-2">* Data real dari seluruh event gamifikasi</p>
         </div>
 
         {/* Level Distribution — Pie Chart */}
@@ -355,7 +331,7 @@ export default function ScoreboardPage() {
 
       {/* Module Comparison Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {moduleBreakdown.map((mod) => (
+        {breakdownData.map((mod) => (
           <div
             key={mod.name}
             className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow"
@@ -367,11 +343,7 @@ export default function ScoreboardPage() {
               </div>
             </div>
             <p className="text-xl font-bold text-gray-900">{mod.points.toLocaleString('id-ID')}</p>
-            <p className="text-xs text-gray-400 mt-1">
-              {stats?.totalPointsAwarded
-                ? `${((mod.points / stats.totalPointsAwarded) * 100).toFixed(1)}% dari total`
-                : '0% dari total'}
-            </p>
+            <p className="text-xs text-gray-400 mt-1">{mod.percentage}% dari total</p>
           </div>
         ))}
       </div>

@@ -273,6 +273,30 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Notification Preferences */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/notification-preferences' as any)}>
+              <Ionicons name="notifications" size={20} color="#2563eb" />
+              <View style={styles.linkContent}>
+                <Text style={styles.linkLabel}>Pengaturan Notifikasi</Text>
+                <Text style={styles.linkDesc}>Aktifkan/nonaktifkan jenis notifikasi</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
+            </TouchableOpacity>
+        </View>
+
+        {/* Theme Toggle */}
+        <View style={styles.section}>
+          <View style={styles.linkButton}>
+            <Ionicons name="moon" size={20} color="#2563eb" />
+            <View style={styles.linkContent}>
+              <Text style={styles.linkLabel}>Mode Gelap</Text>
+              <Text style={styles.linkDesc}>Tersedia di pengaturan sistem</Text>
+            </View>
+            <Ionicons name="construct" size={18} color="#d1d5db" />
+          </View>
+        </View>
+
         {/* Logout */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -316,6 +340,10 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.5 },
   passwordRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   eyeButton: { padding: 8 },
+  linkButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e5e7eb', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  linkContent: { flex: 1, marginLeft: 10 },
+  linkLabel: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  linkDesc: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
   logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#fecaca', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   logoutText: { fontSize: 16, fontWeight: '600', color: '#dc2626' },
 });
