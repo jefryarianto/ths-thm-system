@@ -124,6 +124,9 @@ export class GamificationService {
     });
     const existingBadgeIds = new Set(existingBadges.map((b) => b.badgeId));
 
+    // Calculate old level for level-up detection
+    const oldLevel = getLevel(profile.points);
+
     // Add points
     const updatedProfile = await this.prisma.gamificationProfile.update({
       where: { id: profile.id },
@@ -132,6 +135,12 @@ export class GamificationService {
         lastActivity: new Date(),
       },
     });
+
+    // Send level-up notification if level changed
+    const newLevel = getLevel(updatedProfile.points);
+    if (newLevel.name !== oldLevel.name) {
+      await this.sendLevelUpNotification(anggotaId, oldLevel, newLevel);
+    }
 
     // Record event
     await this.prisma.gamificationEvent.create({
@@ -390,6 +399,38 @@ export class GamificationService {
   /** Get all available badges */
   getAllBadges(): Badge[] {
     return [...BADGES];
+  }
+
+  /** Send level-up notification when a member reaches a new tier */
+  private async sendLevelUpNotification(
+    anggotaId: string,
+    oldLevel: { name: string; icon: string },
+    newLevel: { name: string; icon: string },
+  ): Promise<void> {
+    try {
+      const anggota = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { namaLengkap: true, rantingId: true },
+      });
+      if (!anggota) return;
+
+      const users = await this.prisma.user.findMany({
+        where: { rantingId: anggota.rantingId, isActive: true },
+        select: { id: true },
+      });
+
+      for (const user of users) {
+        await this.notificationsService.send(user.id, {
+          userId: user.id,
+          judul: `${newLevel.icon} Level Up! ${anggota.namaLengkap} naik ke ${newLevel.name}`,
+          isi: `${anggota.namaLengkap} naik level dari ${oldLevel.icon} ${oldLevel.name} ke ${newLevel.icon} ${newLevel.name}!`,
+          tipe: 'badge_earned',
+          data: { anggotaId, oldLevel: oldLevel.name, newLevel: newLevel.name, type: 'level_up' },
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to send level-up notification:', (error as Error).message);
+    }
   }
 
   /** Send badge earned notifications to users in the same ranting */

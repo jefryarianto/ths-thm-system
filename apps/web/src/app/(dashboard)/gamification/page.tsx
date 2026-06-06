@@ -7,7 +7,7 @@ import apiClient from '@/lib/api-client';
 import {
   Trophy, Award, TrendingUp, Medal, Star, Zap,
   AlertCircle, Users, Target, Flame, Activity,
-  ArrowRight, Filter, X,
+  ArrowRight, Filter, X, Share2,
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
@@ -232,6 +232,22 @@ export default function GamificationPage() {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Trophy size={16} className="text-yellow-500" />
           <span>Gamification System</span>
+          <button
+            onClick={async () => {
+              const text = `🏆 THS-THM Leaderboard 🏆\n\n${leaderboard.slice(0, 5).map((e, i) => `${RANK_ICONS[e.rank] || `#${e.rank}`} ${e.namaLengkap || 'Member'} — ${e.points.toLocaleString('id-ID')} pts`).join('\n')}\n\nLihat selengkapnya di: ${window.location.origin}/public/leaderboard`;
+              if (navigator.share) {
+                await navigator.share({ title: 'THS-THM Leaderboard', text });
+              } else {
+                await navigator.clipboard.writeText(text);
+                alert('Leaderboard disalin ke clipboard!');
+              }
+            }}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition"
+            title="Bagikan leaderboard"
+          >
+            <Share2 size={12} />
+            Bagikan
+          </button>
         </div>
       </div>
 

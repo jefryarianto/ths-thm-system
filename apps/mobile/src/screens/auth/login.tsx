@@ -43,6 +43,10 @@ export default function LoginScreen() {
         <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleLogin} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Masuk</Text>}
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.publicButton} onPress={() => router.push('/public-leaderboard' as any)}>
+          <Text style={styles.publicButtonText}>🏆 Lihat Peringkat Publik</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -59,4 +63,6 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#2563eb', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 24 },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  publicButton: { marginTop: 16, padding: 12, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: '#d1d5db', backgroundColor: '#f9fafb' },
+  publicButtonText: { fontSize: 14, fontWeight: '500', color: '#374151' },
 });
