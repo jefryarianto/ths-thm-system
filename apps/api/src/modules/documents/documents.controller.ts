@@ -26,6 +26,8 @@ export class DocumentsController {
 
   @Get(':id')
   @ApiBearerAuth()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
 
   @Post('generate')
@@ -48,9 +50,13 @@ export class DocumentsController {
 
   @Get('types/list')
   @ApiBearerAuth()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   getTypes() { return this.service.getTypes(); }
 
   @Get(':id/verify-qr')
   @ApiBearerAuth()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  @RequireScope('branch')
   verifyQR(@Param('id') id: string) { return this.service.verifyQR(id); }
 }

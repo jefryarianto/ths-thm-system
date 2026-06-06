@@ -65,6 +65,126 @@ describe('NotificationsService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('broadcast', () => {
+    it('should send notification to all active users', async () => {
+      const mockUsers = [
+        { id: 'u1', email: 'a@test.com', namaLengkap: 'A', role: 'anggota', isActive: true },
+        { id: 'u2', email: 'b@test.com', namaLengkap: 'B', role: 'anggota', isActive: true },
+      ];
+      mockPrisma.user.findMany.mockResolvedValue(mockUsers);
+      // No custom preferences — all users allowed
+      mockPrisma.setting.findMany.mockResolvedValue([]);
+      mockPrisma.notifikasi.createMany.mockResolvedValue({ count: 2 });
+      mockPrisma.notifikasi.groupBy.mockResolvedValue([
+        { userId: 'u1', _count: 0 },
+        { userId: 'u2', _count: 1 },
+      ]);
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      const result = await service.broadcast({ judul: 'Broadcast', isi: 'Hello all' });
+      expect(result.success).toBe(true);
+      expect(result.data.sentTo).toBe(2);
+      expect(result.data.total).toBe(2);
+      // Should use createMany for batch insert
+      expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ userId: 'u1', judul: 'Broadcast' }),
+          expect.objectContaining({ userId: 'u2', judul: 'Broadcast' }),
+        ]),
+      });
+      // Should emit WebSocket to both users
+      expect(mockGateway.sendNotification).toHaveBeenCalledTimes(2);
+      expect(mockGateway.sendUnreadCount).toHaveBeenCalledTimes(2);
+    });
+
+    it('should filter users by notification preference', async () => {
+      const mockUsers = [
+        { id: 'u1', email: 'a@test.com', namaLengkap: 'A', role: 'anggota', isActive: true },
+        { id: 'u2', email: 'b@test.com', namaLengkap: 'B', role: 'anggota', isActive: true },
+      ];
+      mockPrisma.user.findMany.mockResolvedValue(mockUsers);
+      // User u1 has disabled 'umum' notifications
+      mockPrisma.setting.findMany.mockResolvedValue([
+        { key: 'notif_pref:u1', value: { umum: false } },
+      ]);
+      mockPrisma.notifikasi.createMany.mockResolvedValue({ count: 1 });
+      mockPrisma.notifikasi.groupBy.mockResolvedValue([{ userId: 'u2', _count: 0 }]);
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      const result = await service.broadcast({ judul: 'Broadcast', isi: 'Hello' });
+      expect(result.success).toBe(true);
+      // Only u2 should receive (u1 disabled 'umum')
+      expect(result.data.sentTo).toBe(1);
+      expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ userId: 'u2' })],
+      });
+    });
+
+    it('should handle empty user list gracefully', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([]);
+
+      const result = await service.broadcast({ judul: 'Empty', isi: 'No users' });
+      expect(result.success).toBe(true);
+      expect(result.data.sentTo).toBe(0);
+      // createMany should not be called with empty array
+      expect(mockPrisma.notifikasi.createMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sendToRole', () => {
+    it('should send notification to users with specified role', async () => {
+      const mockUsers = [
+        { id: 'u1', email: 'admin@test.com', namaLengkap: 'Admin', role: 'admin_distrik', isActive: true },
+        { id: 'u2', email: 'admin2@test.com', namaLengkap: 'Admin2', role: 'admin_distrik', isActive: true },
+      ];
+      mockPrisma.user.findMany.mockResolvedValue(mockUsers);
+      // No custom preferences — all allowed
+      mockPrisma.setting.findMany.mockResolvedValue([]);
+      mockPrisma.notifikasi.createMany.mockResolvedValue({ count: 2 });
+      mockPrisma.notifikasi.groupBy.mockResolvedValue([
+        { userId: 'u1', _count: 0 },
+        { userId: 'u2', _count: 0 },
+      ]);
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      const result = await service.sendToRole({
+        role: 'admin_distrik',
+        judul: 'Role broadcast',
+        isi: 'Only admins',
+      });
+      expect(result.success).toBe(true);
+      expect(result.data.sentTo).toBe(2);
+      // Verify role filter was applied
+      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
+        where: { role: 'admin_distrik', isActive: true },
+      });
+      expect(mockPrisma.notifikasi.createMany).toHaveBeenCalled();
+    });
+
+    it('should use custom tipe for preference check', async () => {
+      const mockUsers = [
+        { id: 'u1', email: 'a@test.com', namaLengkap: 'A', role: 'anggota', isActive: true },
+      ];
+      mockPrisma.user.findMany.mockResolvedValue(mockUsers);
+      // User has reminder_latihan enabled
+      mockPrisma.setting.findMany.mockResolvedValue([
+        { key: 'notif_pref:u1', value: { reminder_latihan: true } },
+      ]);
+      mockPrisma.notifikasi.createMany.mockResolvedValue({ count: 1 });
+      mockPrisma.notifikasi.groupBy.mockResolvedValue([{ userId: 'u1', _count: 0 }]);
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      const result = await service.sendToRole({
+        role: 'anggota',
+        judul: 'Training reminder',
+        isi: 'Time for training',
+        tipe: 'reminder_latihan',
+      });
+      expect(result.success).toBe(true);
+      expect(result.data.sentTo).toBe(1);
+    });
+  });
+
   describe('getUnreadCount', () => {
     it('should return unread count', async () => {
       mockPrisma.notifikasi.count.mockResolvedValue(5);
