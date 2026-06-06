@@ -90,8 +90,8 @@ export class GamificationController {
   @Get('public/leaderboard')
   @Public()
   @ApiOperation({ summary: 'Get public leaderboard (no auth required)' })
-  async getPublicLeaderboard(@Query('limit') limit?: string) {
-    const leaderboard = await this.gamificationService.getLeaderboard(limit ? parseInt(limit) : 20);
+  async getPublicLeaderboard(@Query('limit') limit?: string, @Query('search') search?: string) {
+    const leaderboard = await this.gamificationService.getLeaderboard(limit ? parseInt(limit) : 20, undefined, search);
     return {
       success: true,
       data: leaderboard.map((p, i) => ({
@@ -117,19 +117,22 @@ export class GamificationController {
   /**
    * Get the leaderboard — top members by points.
    * Filter by scope: rantingId, wilayahId, or distrikId.
+   * Search by member name: search query param.
    */
   @Get('leaderboard')
-  @ApiOperation({ summary: 'Get top members leaderboard (optional scope filter)' })
+  @ApiOperation({ summary: 'Get top members leaderboard (optional scope filter & search)' })
   async getLeaderboard(
     @Query('limit') limit?: string,
     @Query('rantingId') rantingId?: string,
     @Query('wilayahId') wilayahId?: string,
     @Query('distrikId') distrikId?: string,
+    @Query('search') search?: string,
   ) {
     const scope = rantingId ? { rantingId } : wilayahId ? { wilayahId } : distrikId ? { distrikId } : undefined;
     const leaderboard = await this.gamificationService.getLeaderboard(
       limit ? parseInt(limit) : 10,
       scope,
+      search,
     );
     return {
       success: true,

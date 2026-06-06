@@ -7,7 +7,7 @@ import apiClient from '@/lib/api-client';
 import {
   Trophy, Award, TrendingUp, Medal, Star, Zap,
   AlertCircle, Users, Target, Flame, Activity,
-  ArrowRight, Filter, X, Share2,
+  ArrowRight, Filter, X, Share2, Search,
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
@@ -103,6 +103,9 @@ export default function GamificationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Filter state
   const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
   const [selectedDistrik, setSelectedDistrik] = useState('');
@@ -127,6 +130,7 @@ export default function GamificationPage() {
       if (selectedRanting) params.set('rantingId', selectedRanting);
       else if (selectedWilayah) params.set('wilayahId', selectedWilayah);
       else if (selectedDistrik) params.set('distrikId', selectedDistrik);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
       params.set('limit', '10');
 
       const [badgesRes, leaderboardRes, statsRes, eventsRes] = await Promise.all([
@@ -145,7 +149,7 @@ export default function GamificationPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedDistrik, selectedWilayah, selectedRanting]);
+  }, [selectedDistrik, selectedWilayah, selectedRanting, searchQuery]);
 
   const fetchOrgStructure = async () => {
     try {
@@ -158,7 +162,7 @@ export default function GamificationPage() {
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     if (token) fetchData();
-  }, [selectedDistrik, selectedWilayah, selectedRanting]);
+  }, [selectedDistrik, selectedWilayah, selectedRanting, searchQuery]);
 
   const getTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -357,6 +361,25 @@ export default function GamificationPage() {
               <h3 className="text-base font-semibold text-gray-900">Leaderboard</h3>
             </div>
             <span className="text-xs text-gray-400">Klik nama untuk detail</span>
+          </div>
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari anggota..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
           {leaderboard.length > 0 ? (
             <div className="overflow-x-auto">

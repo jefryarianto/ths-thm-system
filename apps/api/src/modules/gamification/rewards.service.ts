@@ -248,7 +248,7 @@ export class RewardsService {
 
     // Send notification on status change
     if (status === 'approved' || status === 'rejected' || status === 'completed') {
-      await this.sendRedemptionNotification(existing.anggotaId, updated.reward.name, updated.reward.icon, status, anggota?.namaLengkap);
+      await this.sendRedemptionNotification(existing.anggotaId, updated.reward.name, updated.reward.icon, status, anggota?.namaLengkap, notes);
     }
 
     return {
@@ -272,12 +272,13 @@ export class RewardsService {
     rewardIcon: string,
     status: string,
     namaLengkap?: string,
+    notes?: string,
   ): Promise<void> {
     try {
       // Find users in same ranting as the member
       const anggota = await this.prisma.anggota.findUnique({
         where: { id: anggotaId },
-        select: { rantingId: true, namaLengkap: true },
+        select: { rantingId: true, namaLengkap: true, email: true },
       });
       if (!anggota) return;
 
@@ -301,6 +302,28 @@ export class RewardsService {
           tipe: 'umum',
           data: { anggotaId, rewardName, status, type: 'redemption_status' },
         });
+      }
+
+      // Also send personal notification to the member who redeemed
+      if (anggota.email) {
+        const memberUser = await this.prisma.user.findFirst({
+          where: { email: anggota.email, isActive: true },
+          select: { id: true },
+        });
+        if (memberUser) {
+          const memberLabels: Record<string, string> = {
+            approved: 'Disetujui ✅',
+            rejected: 'Ditolak ❌',
+            completed: 'Selesai 🎉',
+          };
+          await this.notificationsService.send(memberUser.id, {
+            userId: memberUser.id,
+            judul: `${rewardIcon} Redemption ${memberLabels[status] || status}`,
+            isi: `Redemption "${rewardName}" Anda telah ${memberLabels[status] || status}.` + (notes ? ` Catatan: ${notes}` : ''),
+            tipe: 'umum',
+            data: { anggotaId, rewardName, status, notes, type: 'redemption_personal' },
+          });
+        }
       }
     } catch (error) {
       console.warn('Failed to send redemption notification:', (error as Error).message);

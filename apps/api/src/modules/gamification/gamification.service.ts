@@ -470,7 +470,7 @@ export class GamificationService {
   }
 
   /** Get leaderboard — top members by points */
-  async getLeaderboard(limit: number = 10, scope?: { rantingId?: string; wilayahId?: string; distrikId?: string }): Promise<GamificationProfile[]> {
+  async getLeaderboard(limit: number = 10, scope?: { rantingId?: string; wilayahId?: string; distrikId?: string }, search?: string): Promise<GamificationProfile[]> {
     const where: Record<string, unknown> = {};
 
     if (scope?.rantingId) {
@@ -479,6 +479,17 @@ export class GamificationService {
       where.anggota = { ranting: { wilayahId: scope.wilayahId } };
     } else if (scope?.distrikId) {
       where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
+    }
+
+    // Add search filter for member name
+    if (search?.trim()) {
+      const anggotaFilter: Record<string, unknown> = { namaLengkap: { contains: search.trim(), mode: 'insensitive' } };
+      if (where.anggota) {
+        // Merge with existing scope filter
+        where.anggota = { ...(where.anggota as Record<string, unknown>), ...anggotaFilter };
+      } else {
+        where.anggota = anggotaFilter;
+      }
     }
 
     const profiles = await this.prisma.gamificationProfile.findMany({

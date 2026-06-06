@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import apiClient from '../../lib/api-client';
 
@@ -281,6 +282,9 @@ export default function GamificationScreen() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Filter state
   const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
   const [selectedDistrik, setSelectedDistrik] = useState('');
@@ -296,10 +300,10 @@ export default function GamificationScreen() {
     fetchOrgStructure();
   }, []);
 
-  // Re-fetch leaderboard when filter changes
+  // Re-fetch leaderboard when filter or search changes
   useEffect(() => {
     fetchData();
-  }, [selectedDistrik, selectedWilayah, selectedRanting]);
+  }, [selectedDistrik, selectedWilayah, selectedRanting, searchQuery]);
 
   const fetchOrgStructure = async () => {
     try {
@@ -326,11 +330,12 @@ export default function GamificationScreen() {
       const user = userStr ? JSON.parse(userStr) : null;
       const anggotaId = user?.anggotaId || user?.id;
 
-      // Build leaderboard URL with filter params
+      // Build leaderboard URL with filter params & search
       let leaderboardUrl = '/gamification/leaderboard?limit=10';
       if (selectedRanting) leaderboardUrl += `&rantingId=${selectedRanting}`;
       else if (selectedWilayah) leaderboardUrl += `&wilayahId=${selectedWilayah}`;
       else if (selectedDistrik) leaderboardUrl += `&distrikId=${selectedDistrik}`;
+      if (searchQuery.trim()) leaderboardUrl += `&search=${encodeURIComponent(searchQuery.trim())}`;
 
       const [badgesRes, leaderboardRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
@@ -529,6 +534,24 @@ export default function GamificationScreen() {
           <View style={styles.leaderboardHeader}>
             <Ionicons name="trophy" size={24} color="#f59e0b" />
             <Text style={styles.leaderboardTitle}>Top 10 Anggota</Text>
+          </View>
+
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={16} color="#9ca3af" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Cari anggota..."
+              placeholderTextColor="#9ca3af"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClear}>
+                <Ionicons name="close-circle" size={16} color="#9ca3af" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Filter Buttons */}
@@ -835,6 +858,12 @@ const styles = StyleSheet.create({
   rewardPoints: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   rewardPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
   rewardStock: { fontSize: 11, color: '#6b7280' },
+
+  // Search
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 10, marginBottom: 10 },
+  searchIcon: { marginRight: 6 },
+  searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: '#1f2937' },
+  searchClear: { padding: 4 },
 
   // Filter
   filterRow: { flexDirection: 'row', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
