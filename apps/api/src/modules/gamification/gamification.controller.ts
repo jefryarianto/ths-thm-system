@@ -72,6 +72,18 @@ export class GamificationController {
   }
 
   /**
+   * Get points history aggregated by month for a member.
+   */
+  @Get('profile/:anggotaId/points-history')
+  @ApiOperation({ summary: 'Get member points history by month' })
+  async getPointsHistory(@Param('anggotaId') anggotaId: string) {
+    return {
+      success: true,
+      data: await this.gamificationService.getPointsHistory(anggotaId),
+    };
+  }
+
+  /**
    * Get organization structure for filter dropdowns.
    */
   @Get('org-structure')

@@ -51,6 +51,13 @@ interface Reward {
   isActive: boolean;
 }
 
+interface OrgNode {
+  id: string;
+  nama: string;
+  wilayahs?: OrgNode[];
+  rantings?: { id: string; nama: string }[];
+}
+
 interface PointEvent {
   id: string;
   anggotaId: string;
@@ -186,13 +193,32 @@ export default function GamificationScreen() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
+  // Filter state
+  const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
+  const [selectedDistrik, setSelectedDistrik] = useState('');
+  const [selectedWilayah, setSelectedWilayah] = useState('');
+  const [selectedRanting, setSelectedRanting] = useState('');
+
   // Animated indicator position
   const tabIndicatorX = useRef(new Animated.Value(0)).current;
   const tabWidths = useRef({ profile: 0, leaderboard: 0, badges: 0 }).current;
 
   useEffect(() => {
     fetchData();
+    fetchOrgStructure();
   }, []);
+
+  // Re-fetch leaderboard when filter changes
+  useEffect(() => {
+    fetchData();
+  }, [selectedDistrik, selectedWilayah, selectedRanting]);
+
+  const fetchOrgStructure = async () => {
+    try {
+      const res = await apiClient.get('/gamification/org-structure');
+      setOrgTree(res.data.data || []);
+    } catch { /* ignore */ }
+  };
 
   const animateTab = (tab: TabType) => {
     const positions = { profile: 0, leaderboard: 1, badges: 2 };
@@ -212,9 +238,15 @@ export default function GamificationScreen() {
       const user = userStr ? JSON.parse(userStr) : null;
       const anggotaId = user?.anggotaId || user?.id;
 
+      // Build leaderboard URL with filter params
+      let leaderboardUrl = '/gamification/leaderboard?limit=10';
+      if (selectedRanting) leaderboardUrl += `&rantingId=${selectedRanting}`;
+      else if (selectedWilayah) leaderboardUrl += `&wilayahId=${selectedWilayah}`;
+      else if (selectedDistrik) leaderboardUrl += `&distrikId=${selectedDistrik}`;
+
       const [badgesRes, leaderboardRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
-        apiClient.get('/gamification/leaderboard?limit=10'),
+        apiClient.get(leaderboardUrl),
         apiClient.get('/gamification/events?limit=10'),
       ]);
       setAllBadges(badgesRes.data.data);
@@ -389,6 +421,70 @@ export default function GamificationScreen() {
           <View style={styles.leaderboardHeader}>
             <Ionicons name="trophy" size={24} color="#f59e0b" />
             <Text style={styles.leaderboardTitle}>Top 10 Anggota</Text>
+          </View>
+
+          {/* Filter Buttons */}
+          <View style={styles.filterRow}>
+            <TouchableOpacity
+              style={[styles.filterChip, selectedDistrik && styles.filterChipActive]}
+              onPress={async () => {
+                const options = [{ label: 'Semua Distrik', value: '' }, ...orgTree.map(d => ({ label: d.nama, value: d.id }))];
+                // Simple cycling through options
+                const idx = options.findIndex(o => o.value === selectedDistrik);
+                const next = options[(idx + 1) % options.length];
+                setSelectedDistrik(next.value);
+                setSelectedWilayah('');
+                setSelectedRanting('');
+              }}
+            >
+              <Text style={[styles.filterChipText, selectedDistrik && styles.filterChipTextActive]} numberOfLines={1}>
+                {selectedDistrik ? (orgTree.find(d => d.id === selectedDistrik)?.nama || 'Distrik') : '📌 Distrik'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterChip, selectedWilayah && styles.filterChipActive, !selectedDistrik && styles.filterChipDisabled]}
+              onPress={() => {
+                const wilayahs = orgTree.find(d => d.id === selectedDistrik)?.wilayahs || [];
+                if (!wilayahs.length) return;
+                const options = [{ label: 'Semua Wilayah', value: '' }, ...wilayahs.map(w => ({ label: w.nama, value: w.id }))];
+                const idx = options.findIndex(o => o.value === selectedWilayah);
+                const next = options[(idx + 1) % options.length];
+                setSelectedWilayah(next.value);
+                setSelectedRanting('');
+              }}
+            >
+              <Text style={[styles.filterChipText, selectedWilayah && styles.filterChipTextActive]} numberOfLines={1}>
+                {selectedWilayah
+                  ? (orgTree.find(d => d.id === selectedDistrik)?.wilayahs?.find(w => w.id === selectedWilayah)?.nama || 'Wilayah')
+                  : '📍 Wilayah'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterChip, selectedRanting && styles.filterChipActive, !selectedWilayah && styles.filterChipDisabled]}
+              onPress={() => {
+                const wilayahs = orgTree.find(d => d.id === selectedDistrik)?.wilayahs || [];
+                const rantings = wilayahs.find(w => w.id === selectedWilayah)?.rantings || [];
+                if (!rantings.length) return;
+                const options = [{ label: 'Semua Ranting', value: '' }, ...rantings.map(r => ({ label: r.nama, value: r.id }))];
+                const idx = options.findIndex(o => o.value === selectedRanting);
+                const next = options[(idx + 1) % options.length];
+                setSelectedRanting(next.value);
+              }}
+            >
+              <Text style={[styles.filterChipText, selectedRanting && styles.filterChipTextActive]} numberOfLines={1}>
+                {selectedRanting
+                  ? (orgTree.find(d => d.id === selectedDistrik)?.wilayahs?.find(w => w.id === selectedWilayah)?.rantings?.find(r => r.id === selectedRanting)?.nama || 'Ranting')
+                  : '🔴 Ranting'}
+              </Text>
+            </TouchableOpacity>
+            {(selectedDistrik || selectedWilayah || selectedRanting) && (
+              <TouchableOpacity
+                onPress={() => { setSelectedDistrik(''); setSelectedWilayah(''); setSelectedRanting(''); }}
+                style={styles.filterChipClear}
+              >
+                <Text style={styles.filterChipClearText}>✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
           {leaderboard.length > 0 ? (
             leaderboard.map((entry) => (
@@ -631,6 +727,16 @@ const styles = StyleSheet.create({
   rewardPoints: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   rewardPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
   rewardStock: { fontSize: 11, color: '#6b7280' },
+
+  // Filter
+  filterRow: { flexDirection: 'row', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
+  filterChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb' },
+  filterChipActive: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
+  filterChipDisabled: { opacity: 0.4 },
+  filterChipText: { fontSize: 11, color: '#6b7280', fontWeight: '500' },
+  filterChipTextActive: { color: '#fff' },
+  filterChipClear: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, backgroundColor: '#fee2e2', borderWidth: 1, borderColor: '#fecaca' },
+  filterChipClearText: { fontSize: 12, color: '#ef4444', fontWeight: '700' },
 
   // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },

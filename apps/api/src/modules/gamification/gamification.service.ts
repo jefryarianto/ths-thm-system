@@ -497,6 +497,42 @@ export class GamificationService {
     }));
   }
 
+  /** Get points history aggregated by month for a member */
+  async getPointsHistory(anggotaId: string): Promise<Array<{ month: string; points: number; count: number }>> {
+    const profile = await this.prisma.gamificationProfile.findUnique({
+      where: { anggotaId },
+    });
+    if (!profile) return [];
+
+    const events = await this.prisma.gamificationEvent.findMany({
+      where: { profileId: profile.id },
+      orderBy: { timestamp: 'asc' },
+      select: { points: true, timestamp: true },
+    });
+
+    // Aggregate by month
+    const monthlyMap = new Map<string, { points: number; count: number }>();
+    for (const event of events) {
+      const key = event.timestamp.toISOString().slice(0, 7); // YYYY-MM
+      const existing = monthlyMap.get(key) || { points: 0, count: 0 };
+      existing.points += event.points;
+      existing.count += 1;
+      monthlyMap.set(key, existing);
+    }
+
+    // Build cumulative points over time
+    let cumulative = 0;
+    const result: Array<{ month: string; points: number; cumulative: number; count: number }> = [];
+    const sortedKeys = [...monthlyMap.keys()].sort();
+    for (const key of sortedKeys) {
+      const data = monthlyMap.get(key)!;
+      cumulative += data.points;
+      result.push({ month: key, points: data.points, cumulative, count: data.count });
+    }
+
+    return result;
+  }
+
   /** Get organization structure for filter dropdowns */
   async getOrgStructure(): Promise<Array<{ id: string; nama: string; wilayahs: Array<{ id: string; nama: string; rantings: Array<{ id: string; nama: string }> }> }>> {
     const distriks = await this.prisma.distrik.findMany({

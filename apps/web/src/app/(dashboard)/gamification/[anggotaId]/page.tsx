@@ -6,8 +6,12 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import {
   ArrowLeft, Zap, Flame, Star, Award, Trophy,
-  AlertCircle, Clock, Activity, Target,
+  AlertCircle, Clock, Activity, Target, TrendingUp,
 } from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface Badge {
   id: string;
@@ -58,6 +62,7 @@ export default function GamificationProfilePage() {
 
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [events, setEvents] = useState<PointEvent[]>([]);
+  const [pointsHistory, setPointsHistory] = useState<Array<{ month: string; points: number; cumulative: number; count: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,12 +78,14 @@ export default function GamificationProfilePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [profileRes, eventsRes] = await Promise.all([
+      const [profileRes, eventsRes, historyRes] = await Promise.all([
         apiClient.get(`/gamification/profile/${anggotaId}`),
         apiClient.get(`/gamification/profile/${anggotaId}/events?limit=20`),
+        apiClient.get(`/gamification/profile/${anggotaId}/points-history`),
       ]);
       setProfile(profileRes.data.data);
       setEvents(eventsRes.data.data);
+      setPointsHistory(historyRes.data.data || []);
     } catch (err) {
       console.error('Failed to fetch gamification profile:', err);
       setError('Gagal memuat profil gamifikasi');
@@ -192,6 +199,52 @@ export default function GamificationProfilePage() {
           <p className="text-xs text-gray-400 mt-1">dari 10 badge tersedia</p>
         </div>
       </div>
+
+      {/* Points History Chart */}
+      {pointsHistory.length > 1 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <TrendingUp size={20} className="text-blue-500" />
+            <h2 className="text-base font-semibold text-gray-900">Perkembangan Poin</h2>
+          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={pointsHistory}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 11 }}
+                tickFormatter={(val) => {
+                  const [y, m] = val.split('-');
+                  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                  return `${months[parseInt(m) - 1]} ${y.slice(2)}`;
+                }}
+              />
+              <YAxis tick={{ fontSize: 11 }} />
+              <RechartsTooltip
+                formatter={(value: number, name: string) => [
+                  value.toLocaleString('id-ID'),
+                  name === 'cumulative' ? 'Total Poin' : 'Poin Bulan Ini',
+                ]}
+                labelFormatter={(label) => {
+                  const [y, m] = label.split('-');
+                  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                  return `${months[parseInt(m) - 1]} ${y}`;
+                }}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+              />
+              <Line
+                type="monotone"
+                dataKey="cumulative"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={{ r: 3, fill: '#3b82f6' }}
+                activeDot={{ r: 5 }}
+                name="cumulative"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Badges Section */}
       {profile.badges.length > 0 && (

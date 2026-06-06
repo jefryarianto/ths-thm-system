@@ -77,6 +77,7 @@ describe('RewardsService', () => {
       providers: [
         RewardsService,
         { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
+        { provide: require('../notifications/notifications.service').NotificationsService, useValue: { send: jest.fn() } },
       ],
     }).compile();
 

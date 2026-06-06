@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface Reward {
   id: string;
@@ -27,7 +28,11 @@ export interface Redemption {
 
 @Injectable()
 export class RewardsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /** Get all active rewards */
   async getRewards(): Promise<Reward[]> {
@@ -241,6 +246,11 @@ export class RewardsService {
       select: { namaLengkap: true },
     });
 
+    // Send notification on status change
+    if (status === 'approved' || status === 'rejected' || status === 'completed') {
+      await this.sendRedemptionNotification(existing.anggotaId, updated.reward.name, updated.reward.icon, status, anggota?.namaLengkap);
+    }
+
     return {
       id: updated.id,
       rewardId: updated.rewardId,
@@ -253,5 +263,47 @@ export class RewardsService {
       notes: updated.notes ?? undefined,
       createdAt: updated.createdAt.toISOString(),
     };
+  }
+
+  /** Send notification when redemption status changes */
+  private async sendRedemptionNotification(
+    anggotaId: string,
+    rewardName: string,
+    rewardIcon: string,
+    status: string,
+    namaLengkap?: string,
+  ): Promise<void> {
+    try {
+      // Find users in same ranting as the member
+      const anggota = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { rantingId: true, namaLengkap: true },
+      });
+      if (!anggota) return;
+
+      const users = await this.prisma.user.findMany({
+        where: { rantingId: anggota.rantingId, isActive: true },
+        select: { id: true },
+      });
+
+      const statusLabels: Record<string, string> = {
+        approved: 'Disetujui ✅',
+        rejected: 'Ditolak ❌',
+        completed: 'Selesai 🎉',
+      };
+      const label = statusLabels[status] || status;
+
+      for (const user of users) {
+        await this.notificationsService.send(user.id, {
+          userId: user.id,
+          judul: `${rewardIcon} Redemption ${label}`,
+          isi: `Redemption "${rewardName}" oleh ${namaLengkap || anggota.namaLengkap} telah ${label}`,
+          tipe: 'umum',
+          data: { anggotaId, rewardName, status, type: 'redemption_status' },
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to send redemption notification:', (error as Error).message);
+    }
   }
 }
