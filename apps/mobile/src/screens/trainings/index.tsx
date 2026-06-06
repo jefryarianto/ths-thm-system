@@ -61,7 +61,7 @@ export default function TrainingsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/trainings/${item.id}`); }}>
             <View style={styles.cardLeft}>
               <View style={styles.iconCircle}>
                 <Ionicons name="fitness" size={20} color="#2563eb" />

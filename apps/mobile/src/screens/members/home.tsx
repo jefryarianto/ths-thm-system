@@ -19,6 +19,7 @@ const menuItems = [
   { icon: 'mail', label: 'Surat', route: '/letters' },
   { icon: 'stats-chart', label: 'Laporan', route: '/reports' },
   { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },
+  { icon: 'settings', label: 'Set. Notifikasi', route: '/notification-preferences' },
 ];
 
 export default function HomeScreen() {

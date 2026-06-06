@@ -106,7 +106,7 @@ export default function CandidatesScreen() {
         renderItem={({ item }) => {
           const ss = STATUS_STYLES[item.status] || { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/candidates/${item.id}`); }}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{item.namaLengkap.charAt(0)}</Text>
               </View>

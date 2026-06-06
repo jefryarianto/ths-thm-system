@@ -8,7 +8,7 @@ import { getSocket, disconnectSocket } from '@/lib/socket';
 import {
   Users, UserPlus, GraduationCap, Dumbbell, Calendar,
   FileText, Mail, CreditCard, Bell, BarChart3, Settings, LogOut, Menu,
-  Shield, ClipboardCheck, Wallet, Trophy,
+  Shield, ClipboardCheck, Wallet, Trophy, TrendingUp,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -40,6 +40,7 @@ const menuItems = [
   { href: '/gamification/admin', label: 'Admin Gamifikasi', icon: Shield },
   { href: '/gamification/report', label: 'Lap. Gamifikasi', icon: BarChart3 },
   { href: '/gamification/settings', label: 'Set. Gamifikasi', icon: Settings },
+  { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp },
   { href: '/users', label: 'Users', icon: Shield },
   { href: '/settings', label: 'Pengaturan', icon: Settings },
 ];

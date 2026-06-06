@@ -106,7 +106,7 @@ export default function LettersScreen() {
         renderItem={({ item }) => {
           const s = STATUS_STYLES[item.status] || { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/letters/${item.id}?type=${tab}`); }}>
               <View style={styles.cardTop}>
                 <View style={styles.iconCircle}>
                   <Ionicons name="document-text" size={18} color="#2563eb" />
