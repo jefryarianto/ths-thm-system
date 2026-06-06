@@ -176,16 +176,23 @@ export class NotificationsService {
     return { success: true, data: { count } };
   }
 
-  async markAsRead(id: string) {
+  async markAsRead(id: string, userId?: string) {
     const notif = await this.prisma.notifikasi.findUnique({ where: { id }, select: { userId: true } });
+    if (!notif) throw new NotFoundException('Notifikasi tidak ditemukan');
+    if (userId && notif.userId !== userId) {
+      throw new NotFoundException('Notifikasi tidak ditemukan');
+    }
     await this.prisma.notifikasi.update({ where: { id }, data: { isRead: true } });
-    if (notif) this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
+    this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
     return { success: true, message: 'Notifikasi ditandai dibaca' };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const notif = await this.prisma.notifikasi.findUnique({ where: { id } });
     if (!notif) throw new NotFoundException('Notifikasi tidak ditemukan');
+    if (userId && notif.userId !== userId) {
+      throw new NotFoundException('Notifikasi tidak ditemukan');
+    }
     return { success: true, data: notif };
   }
 
@@ -198,10 +205,14 @@ export class NotificationsService {
     return { success: true, message: 'Semua notifikasi ditandai dibaca' };
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId?: string) {
     const notif = await this.prisma.notifikasi.findUnique({ where: { id }, select: { userId: true } });
+    if (!notif) throw new NotFoundException('Notifikasi tidak ditemukan');
+    if (userId && notif.userId !== userId) {
+      throw new NotFoundException('Notifikasi tidak ditemukan');
+    }
     await this.prisma.notifikasi.delete({ where: { id } });
-    if (notif) this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
+    this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
     return { success: true, message: 'Notifikasi berhasil dihapus' };
   }
 

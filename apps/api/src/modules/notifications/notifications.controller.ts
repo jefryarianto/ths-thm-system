@@ -37,7 +37,7 @@ export class NotificationsController {
 
   @Patch(':id/read')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
-  markAsRead(@Param('id') id: string) { return this.service.markAsRead(id); }
+  markAsRead(@Param('id') id: string, @CurrentUser() user: { id: string }) { return this.service.markAsRead(id, user.id); }
 
   @Patch('read-all')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
@@ -63,11 +63,11 @@ export class NotificationsController {
 
   @Get(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
-  findOne(@Param('id') id: string) { return this.service.findOne(id); }
+  findOne(@Param('id') id: string, @CurrentUser() user: { id: string }) { return this.service.findOne(id, user.id); }
 
   @Delete(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
-  delete(@Param('id') id: string) { return this.service.delete(id); }
+  delete(@Param('id') id: string, @CurrentUser() user: { id: string }) { return this.service.delete(id, user.id); }
 
   @Post('fcm-token')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')

@@ -231,6 +231,21 @@ describe('NotificationsService', () => {
         data: { isRead: true },
       });
     });
+
+    it('should throw NotFoundException when userId does not match', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'other-user' });
+      await expect(service.markAsRead('n1', 'current-user')).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.notifikasi.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow admin access without userId check', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'other-user' });
+      mockPrisma.notifikasi.update.mockResolvedValue({});
+      // Without userId param, skip ownership check
+      const result = await service.markAsRead('n1');
+      expect(result.success).toBe(true);
+      expect(mockPrisma.notifikasi.update).toHaveBeenCalled();
+    });
   });
 
   describe('markAllAsRead', () => {
@@ -247,14 +262,26 @@ describe('NotificationsService', () => {
 
   describe('findOne', () => {
     it('should return a notification', async () => {
-      mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', judul: 'Test' });
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', judul: 'Test', userId: 'u1' });
       const result = await service.findOne('n1');
       expect(result.success).toBe(true);
     });
 
-    it('should throw NotFoundException', async () => {
+    it('should throw NotFoundException when not found', async () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue(null);
       await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when userId does not match', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', userId: 'other-user' });
+      await expect(service.findOne('n1', 'current-user')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return notification when userId matches', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', judul: 'Test', userId: 'u1' });
+      const result = await service.findOne('n1', 'u1');
+      expect(result.success).toBe(true);
+      expect(result.data.userId).toBe('u1');
     });
   });
 
@@ -264,6 +291,20 @@ describe('NotificationsService', () => {
       mockPrisma.notifikasi.delete.mockResolvedValue({});
       const result = await service.delete('n1');
       expect(result.success).toBe(true);
+    });
+
+    it('should throw NotFoundException when userId does not match', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'other-user' });
+      await expect(service.delete('n1', 'current-user')).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.notifikasi.delete).not.toHaveBeenCalled();
+    });
+
+    it('should allow admin delete without userId check', async () => {
+      mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'other-user' });
+      mockPrisma.notifikasi.delete.mockResolvedValue({});
+      const result = await service.delete('n1');
+      expect(result.success).toBe(true);
+      expect(mockPrisma.notifikasi.delete).toHaveBeenCalled();
     });
   });
 
