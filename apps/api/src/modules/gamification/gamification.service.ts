@@ -439,10 +439,10 @@ export class GamificationService {
     badges: Array<{ name: string; description: string; icon: string }>,
   ): Promise<void> {
     try {
-      // Get the anggota's rantingId
+      // Get the anggota's rantingId and email
       const anggota = await this.prisma.anggota.findUnique({
         where: { id: anggotaId },
-        select: { namaLengkap: true, rantingId: true },
+        select: { namaLengkap: true, rantingId: true, email: true },
       });
       if (!anggota) return;
 
@@ -452,7 +452,7 @@ export class GamificationService {
         select: { id: true },
       });
 
-      // Send notification to each user
+      // Send notification to each user in the ranting
       for (const user of users) {
         for (const badge of badges) {
           await this.notificationsService.send(user.id, {
@@ -462,6 +462,25 @@ export class GamificationService {
             tipe: 'badge_earned',
             data: { anggotaId, badge: badge.name, type: 'badge_earned' },
           });
+        }
+      }
+
+      // Also send personal notification to the member who earned the badge
+      if (anggota.email) {
+        const memberUser = await this.prisma.user.findFirst({
+          where: { email: anggota.email, isActive: true },
+          select: { id: true },
+        });
+        if (memberUser) {
+          for (const badge of badges) {
+            await this.notificationsService.send(memberUser.id, {
+              userId: memberUser.id,
+              judul: `${badge.icon} Badge Baru Diraih!`,
+              isi: `Selamat! Anda mendapatkan badge "${badge.name}" — ${badge.description}`,
+              tipe: 'badge_earned',
+              data: { anggotaId, badge: badge.name, type: 'badge_earned_personal' },
+            });
+          }
         }
       }
     } catch (error) {
@@ -628,6 +647,53 @@ export class GamificationService {
         nama: w.nama,
         rantings: w.rantings.map((r) => ({ id: r.id, nama: r.nama })),
       })),
+    }));
+  }
+
+  /** Get points distribution — how many members are at each level */
+  async getPointsDistribution(): Promise<Array<{ level: string; icon: string; color: string; count: number }>> {
+    const profiles = await this.prisma.gamificationProfile.findMany({
+      select: { points: true },
+    });
+
+    const distribution = new Map<string, { icon: string; color: string; count: number }>();
+    for (const l of LEVELS) {
+      distribution.set(l.name, { icon: l.icon, color: l.color, count: 0 });
+    }
+
+    for (const p of profiles) {
+      const level = getLevel(p.points);
+      const entry = distribution.get(level.name);
+      if (entry) entry.count++;
+    }
+
+    return LEVELS.map((l) => ({
+      level: l.name,
+      icon: l.icon,
+      color: l.color,
+      count: distribution.get(l.name)?.count ?? 0,
+    }));
+  }
+
+  /** Get top reward redemptions with member info */
+  async getTopRedemptions(limit: number = 10): Promise<Array<{ id: string; rewardName: string; rewardIcon: string; namaLengkap: string; pointsSpent: number; status: string; createdAt: string }>> {
+    const redemptions = await this.prisma.gamificationRedemption.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        reward: { select: { name: true, icon: true } },
+        anggota: { select: { namaLengkap: true } },
+      },
+    });
+
+    return redemptions.map((r) => ({
+      id: r.id,
+      rewardName: r.reward.name,
+      rewardIcon: r.reward.icon,
+      namaLengkap: r.anggota.namaLengkap,
+      pointsSpent: r.pointsSpent,
+      status: r.status,
+      createdAt: r.createdAt.toISOString(),
     }));
   }
 

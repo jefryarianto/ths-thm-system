@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -697,22 +698,35 @@ export default function GamificationScreen() {
               key={reward.id}
               style={styles.rewardCard}
               activeOpacity={0.7}
-              onPress={async () => {
+              onPress={() => {
                 if (!profile) return;
-                setRedeemingId(reward.id);
-                try {
-                  await apiClient.post(`/gamification/rewards/${reward.id}/redeem`, {
-                    anggotaId: profile.anggotaId,
-                  });
-                  alert(`✅ ${reward.name} berhasil diredeem!`);
-                  // Refresh
-                  const rewardsRes = await apiClient.get('/gamification/rewards');
-                  setRewards(rewardsRes.data.data);
-                } catch (err: any) {
-                  alert(err.response?.data?.message || 'Gagal redeem');
-                } finally {
-                  setRedeemingId(null);
-                }
+                Alert.alert(
+                  `${reward.icon} Redeem Reward`,
+                  `Anda akan menukarkan ${reward.pointCost.toLocaleString('id-ID')} poin untuk "${reward.name}".\n\nStok tersedia: ${reward.stock}\n\nLanjutkan?`,
+                  [
+                    { text: 'Batal', style: 'cancel' },
+                    {
+                      text: 'Ya, Redeem',
+                      style: 'destructive',
+                      onPress: async () => {
+                        setRedeemingId(reward.id);
+                        try {
+                          await apiClient.post(`/gamification/rewards/${reward.id}/redeem`, {
+                            anggotaId: profile.anggotaId,
+                          });
+                          alert(`✅ ${reward.name} berhasil diredeem!`);
+                          // Refresh
+                          const rewardsRes = await apiClient.get('/gamification/rewards');
+                          setRewards(rewardsRes.data.data);
+                        } catch (err: any) {
+                          alert(err.response?.data?.message || 'Gagal redeem');
+                        } finally {
+                          setRedeemingId(null);
+                        }
+                      },
+                    },
+                  ],
+                );
               }}
               disabled={redeemingId === reward.id || reward.stock <= 0}
             >

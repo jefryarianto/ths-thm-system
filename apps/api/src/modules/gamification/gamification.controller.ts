@@ -164,6 +164,28 @@ export class GamificationController {
   }
 
   /**
+   * Get points distribution — how many members at each level.
+   */
+  @Get('admin/points-distribution')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @ApiOperation({ summary: 'Get points distribution by level' })
+  async getPointsDistribution() {
+    const data = await this.gamificationService.getPointsDistribution();
+    return { success: true, data };
+  }
+
+  /**
+   * Get top reward redemptions.
+   */
+  @Get('admin/top-redemptions')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @ApiOperation({ summary: 'Get top reward redemptions' })
+  async getTopRedemptions(@Query('limit') limit?: string) {
+    const data = await this.gamificationService.getTopRedemptions(limit ? parseInt(limit) : 10);
+    return { success: true, data };
+  }
+
+  /**
    * Record a training attendance for a member.
    */
   @Post('profile/:anggotaId/training')
