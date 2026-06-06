@@ -44,8 +44,27 @@ export default function GamificationSettingsPage() {
     }
   };
 
-  const handleChange = (key: string, value: string) => {
-    setConfig((prev) => ({ ...prev, [key]: value }));
+  const detectType = (value: unknown): { type: 'string' | 'number' | 'boolean' | 'json'; parsed: unknown } => {
+    if (value === null || value === undefined) return { type: 'string', parsed: '' };
+    const str = String(value);
+    // Try number
+    if (/^-?\d+(\.\d+)?$/.test(str) && !isNaN(Number(str))) return { type: 'number', parsed: Number(str) };
+    // Try boolean
+    if (str === 'true') return { type: 'boolean', parsed: true };
+    if (str === 'false') return { type: 'boolean', parsed: false };
+    // Try JSON object/array
+    if ((str.startsWith('{') && str.endsWith('}')) || (str.startsWith('[') && str.endsWith(']'))) {
+      try { return { type: 'json', parsed: JSON.parse(str) }; } catch { /* fall through */ }
+    }
+    return { type: 'string', parsed: str };
+  };
+
+  const handleChange = (key: string, rawValue: string, detectedType: 'string' | 'number' | 'boolean' | 'json') => {
+    let parsed: unknown = rawValue;
+    if (detectedType === 'number') parsed = rawValue === '' ? '' : Number(rawValue);
+    else if (detectedType === 'boolean') parsed = rawValue === 'true';
+    else if (detectedType === 'json') { try { parsed = JSON.parse(rawValue); } catch { parsed = rawValue; } }
+    setConfig((prev) => ({ ...prev, [key]: parsed }));
   };
 
   if (loading) {
@@ -121,27 +140,60 @@ export default function GamificationSettingsPage() {
 
         {configKeys.length > 0 ? (
           <div className="space-y-4">
-            {configKeys.map((key) => (
-              <div key={key} className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition bg-gray-50/30">
-                <div className="flex-1 min-w-0">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
-                    {key.replace(/_/g, ' ')}
-                  </label>
-                  <input
-                    type="text"
-                    value={String(config[key] ?? '')}
-                    onChange={(e) => handleChange(key, e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder={`Nilai untuk ${key}`}
-                  />
+            {configKeys.map((key) => {
+              const detected = detectType(config[key]);
+              const strValue = String(config[key] ?? '');
+              return (
+                <div key={key} className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition bg-gray-50/30">
+                  <div className="flex-1 min-w-0">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
+                      {key.replace(/_/g, ' ')}
+                    </label>
+                    {detected.type === 'boolean' ? (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleChange(key, config[key] === true ? 'false' : 'true', 'boolean')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            config[key] === true ? 'bg-blue-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              config[key] === true ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                        <span className={`text-sm font-medium ${config[key] === true ? 'text-green-600' : 'text-gray-400'}`}>
+                          {config[key] === true ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </div>
+                    ) : detected.type === 'json' ? (
+                      <textarea
+                        value={strValue}
+                        onChange={(e) => handleChange(key, e.target.value, 'json')}
+                        rows={4}
+                        className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder={`JSON value untuk ${key}`}
+                      />
+                    ) : (
+                      <input
+                        type={detected.type === 'number' ? 'number' : 'text'}
+                        value={strValue}
+                        onChange={(e) => handleChange(key, e.target.value, detected.type)}
+                        step={strValue.includes('.') ? '0.01' : '1'}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder={`Nilai untuk ${key}`}
+                      />
+                    )}
+                  </div>
+                  <div className="flex-shrink-0 mt-6">
+                    <span className="inline-block px-2 py-1 text-[10px] font-mono text-gray-400 bg-gray-100 rounded">
+                      {detected.type}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex-shrink-0 mt-6">
-                  <span className="inline-block px-2 py-1 text-[10px] font-mono text-gray-400 bg-gray-100 rounded">
-                    {typeof config[key]}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400">

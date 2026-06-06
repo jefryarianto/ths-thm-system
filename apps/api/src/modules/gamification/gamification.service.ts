@@ -777,6 +777,29 @@ export class GamificationService {
         create: { key: `gamification_${key}`, value: value as never },
       });
     }
+
+    // Auto-sync: send notification to admin users about config change
+    try {
+      const adminUsers = await this.prisma.user.findMany({
+        where: {
+          isActive: true,
+          role: { in: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'] },
+        },
+        select: { id: true, namaLengkap: true },
+      });
+
+      for (const user of adminUsers) {
+        await this.notificationsService.send(user.id, {
+          userId: user.id,
+          judul: 'Konfigurasi Gamifikasi Diperbarui',
+          isi: `${Object.keys(data).length} pengaturan gamifikasi telah diperbarui oleh admin.`,
+          tipe: 'umum',
+          data: { type: 'config_updated', updatedKeys: Object.keys(data) },
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to send config update notification:', (error as Error).message);
+    }
   }
 
   /** Get weekly summary for a member */
@@ -822,6 +845,41 @@ export class GamificationService {
       periodStart: weekAgo.toISOString(),
       periodEnd: now.toISOString(),
     };
+  }
+
+  /** Send weekly summary notification to a member via email matching */
+  async sendWeeklySummaryNotification(anggotaId: string): Promise<{ sent: boolean; summary: unknown }> {
+    const summary = await this.getWeeklySummary(anggotaId);
+    let sent = false;
+
+    try {
+      const anggota = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { email: true, namaLengkap: true },
+      });
+
+      if (anggota?.email) {
+        const user = await this.prisma.user.findFirst({
+          where: { email: anggota.email, isActive: true },
+          select: { id: true },
+        });
+
+        if (user) {
+          await this.notificationsService.send(user.id, {
+            userId: user.id,
+            judul: `📊 Ringkasan Mingguan Gamifikasi`,
+            isi: `Minggu ini: +${summary.pointsEarned} poin dari ${summary.events} aktivitas, ${summary.badgesEarned} badge baru. Level ${summary.level} (${summary.currentPoints} total poin)`,
+            tipe: 'badge_earned' as never,
+            data: { anggotaId, type: 'weekly_summary', ...summary },
+          });
+          sent = true;
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to send weekly summary notification:', (error as Error).message);
+    }
+
+    return { sent, summary };
   }
 
   /** Get gamification stats */

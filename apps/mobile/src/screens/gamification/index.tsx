@@ -281,6 +281,7 @@ export default function GamificationScreen() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [tourVisible, setTourVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -814,7 +815,17 @@ export default function GamificationScreen() {
         <Text style={styles.adminButtonText}>Admin Reward</Text>
       </TouchableOpacity>
 
-      <GamificationTour />
+      <GamificationTour show={tourVisible} onClose={() => setTourVisible(false)} />
+
+      {/* Tour Button */}
+      <TouchableOpacity
+        style={styles.tourButton}
+        onPress={() => setTourVisible(true)}
+      >
+        <Ionicons name="help-circle" size={18} color="#3b82f6" />
+        <Text style={styles.tourButtonText}>Panduan Fitur</Text>
+      </TouchableOpacity>
+
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -971,6 +982,10 @@ const styles = StyleSheet.create({
   // Admin Button
   adminButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginHorizontal: 16, marginTop: 8, backgroundColor: '#f3f4f6', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb' },
   adminButtonText: { fontSize: 13, fontWeight: '500', color: '#6b7280' },
+
+  // Tour Button
+  tourButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginHorizontal: 16, marginTop: 6, backgroundColor: '#eff6ff', borderRadius: 12, borderWidth: 1, borderColor: '#bfdbfe' },
+  tourButtonText: { fontSize: 13, fontWeight: '500', color: '#3b82f6' },
 
   // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },

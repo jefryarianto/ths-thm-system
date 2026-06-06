@@ -235,6 +235,23 @@ export class GamificationController {
   }
 
   /**
+   * Send weekly summary notification to a member.
+   */
+  @Post('profile/:anggotaId/weekly-summary/send')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @ApiOperation({ summary: 'Send weekly gamification summary as FCM notification to member' })
+  async sendWeeklySummaryNotification(@Param('anggotaId') anggotaId: string) {
+    const result = await this.gamificationService.sendWeeklySummaryNotification(anggotaId);
+    return {
+      success: true,
+      data: result,
+      message: result.sent
+        ? 'Ringkasan mingguan berhasil dikirim'
+        : 'Ringkasan mingguan tidak dapat dikirim (user tidak ditemukan)',
+    };
+  }
+
+  /**
    * Record a training attendance for a member.
    */
   @Post('profile/:anggotaId/training')

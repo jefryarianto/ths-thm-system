@@ -61,7 +61,12 @@ const TOUR_STEPS: TourStep[] = [
 
 const { width } = Dimensions.get('window');
 
-export default function GamificationTour() {
+interface GamificationTourProps {
+  show?: boolean;
+  onClose?: () => void;
+}
+
+export default function GamificationTour({ show: externalShow, onClose }: GamificationTourProps = {}) {
   const [visible, setVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -72,11 +77,18 @@ export default function GamificationTour() {
     checkTourSeen();
   }, []);
 
+  useEffect(() => {
+    if (externalShow) {
+      setCurrentStep(0);
+      animateStep(0);
+      setVisible(true);
+    }
+  }, [externalShow]);
+
   const checkTourSeen = async () => {
     try {
       const seen = await AsyncStorage.getItem(TOUR_STORAGE_KEY);
       if (!seen) {
-        // Show tour after a slight delay for smooth UX
         setTimeout(() => setVisible(true), 500);
       }
     } catch {
@@ -131,11 +143,13 @@ export default function GamificationTour() {
   const handleDone = () => {
     markSeen();
     setVisible(false);
+    onClose?.();
   };
 
   const handleSkip = () => {
     markSeen();
     setVisible(false);
+    onClose?.();
   };
 
   if (!visible) return null;
