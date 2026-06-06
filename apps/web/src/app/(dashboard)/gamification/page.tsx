@@ -8,7 +8,7 @@ import { useDebounce } from '@/lib/use-debounce';
 import {
   Trophy, Award, TrendingUp, Medal, Star, Zap,
   AlertCircle, Users, Target, Flame, Activity,
-  ArrowRight, Filter, X, Share2, Search,
+  ArrowRight, Filter, X, Share2, Search, Download,
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
@@ -266,6 +266,34 @@ export default function GamificationPage() {
           >
             <Share2 size={12} />
             Bagikan
+          </button>
+          <button
+            onClick={() => {
+              const csv = [
+                'Rank,Nama,Poin,Badge,Streak Latihan,Streak Iuran',
+                ...leaderboard.map((e) => `${e.rank},"${e.namaLengkap || ''}",${e.points},${e.badges},${e.streaks.latihan},${e.streaks.iuran}`),
+              ].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `leaderboard-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-green-50 hover:bg-green-100 rounded-md transition text-green-700"
+            title="Export CSV leaderboard"
+          >
+            <Download size={12} />
+            CSV
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 rounded-md transition text-blue-700"
+            title="Print leaderboard"
+          >
+            <Download size={12} />
+            Print
           </button>
         </div>
       </div>

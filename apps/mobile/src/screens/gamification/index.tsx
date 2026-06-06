@@ -801,6 +801,19 @@ export default function GamificationScreen() {
       </AnimatedTabContent>
 
       <Confetti visible={showConfetti} onFinish={() => setShowConfetti(false)} />
+      {/* Admin Button */}
+      <TouchableOpacity
+        style={styles.adminButton}
+        onPress={() => {
+          const { router: r } = require('expo-router');
+          r.push('/admin-rewards' as any);
+        }}
+      >
+        <Ionicons name="settings" size={16} color="#6b7280" />
+        <Text style={styles.adminButtonText}>Admin Reward</Text>
+      </TouchableOpacity>
+
+      <Confetti visible={showConfetti} onFinish={() => setShowConfetti(false)} />
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -953,6 +966,10 @@ const styles = StyleSheet.create({
   // Load More
   loadMoreButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, backgroundColor: '#eff6ff', borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#bfdbfe' },
   loadMoreText: { fontSize: 13, fontWeight: '600', color: '#3b82f6' },
+
+  // Admin Button
+  adminButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginHorizontal: 16, marginTop: 8, backgroundColor: '#f3f4f6', borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb' },
+  adminButtonText: { fontSize: 13, fontWeight: '500', color: '#6b7280' },
 
   // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },

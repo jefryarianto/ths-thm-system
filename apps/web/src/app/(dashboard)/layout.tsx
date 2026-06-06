@@ -37,6 +37,7 @@ const menuItems = [
   { href: '/reports', label: 'Laporan', icon: BarChart3 },
   { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3 },
   { href: '/gamification', label: 'Gamifikasi', icon: Trophy },
+  { href: '/gamification/report', label: 'Lap. Gamifikasi', icon: BarChart3 },
   { href: '/users', label: 'Users', icon: Shield },
   { href: '/settings', label: 'Pengaturan', icon: Settings },
 ];
