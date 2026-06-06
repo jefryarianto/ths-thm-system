@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { GamificationService } from './gamification.service';
 
 /**
@@ -80,6 +81,26 @@ export class GamificationController {
     return {
       success: true,
       data: await this.gamificationService.getPointsHistory(anggotaId),
+    };
+  }
+
+  /**
+   * Get public leaderboard — no auth required.
+   */
+  @Get('public/leaderboard')
+  @Public()
+  @ApiOperation({ summary: 'Get public leaderboard (no auth required)' })
+  async getPublicLeaderboard(@Query('limit') limit?: string) {
+    const leaderboard = await this.gamificationService.getLeaderboard(limit ? parseInt(limit) : 20);
+    return {
+      success: true,
+      data: leaderboard.map((p, i) => ({
+        rank: i + 1,
+        namaLengkap: p.namaLengkap,
+        points: p.points,
+        badges: p.badges.length,
+        streaks: p.streaks,
+      })),
     };
   }
 

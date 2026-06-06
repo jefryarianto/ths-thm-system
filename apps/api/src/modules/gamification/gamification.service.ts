@@ -21,6 +21,7 @@ export interface GamificationProfile {
   anggotaId: string;
   namaLengkap?: string;
   points: number;
+  level: { name: string; icon: string; color: string };
   badges: string[];
   streaks: {
     latihan: number;
@@ -40,6 +41,23 @@ export interface PointEvent {
   points: number;
   description: string;
   timestamp: string;
+}
+
+/** Member level definitions based on total points */
+const LEVELS = [
+  { name: 'Bronze', minPoints: 0, icon: '🥉', color: '#cd7f32' },
+  { name: 'Silver', minPoints: 100, icon: '🥈', color: '#c0c0c0' },
+  { name: 'Gold', minPoints: 300, icon: '🥇', color: '#ffd700' },
+  { name: 'Platinum', minPoints: 500, icon: '💎', color: '#e5e4e2' },
+  { name: 'Diamond', minPoints: 1000, icon: '🔥', color: '#b9f2ff' },
+];
+
+function getLevel(points: number): { name: string; icon: string; color: string } {
+  let level = LEVELS[0];
+  for (const l of LEVELS) {
+    if (points >= l.minPoints) level = l;
+  }
+  return level;
 }
 
 /** All available badges */
@@ -177,6 +195,7 @@ export class GamificationService {
       profile: {
         anggotaId,
         points: updatedProfile.points,
+        level: getLevel(updatedProfile.points),
         badges: fullBadges.map((b) => b.badgeId),
         streaks: {
           latihan: updatedProfile.latihanStreak,
@@ -347,6 +366,7 @@ export class GamificationService {
       anggotaId,
       namaLengkap: anggota?.namaLengkap ?? undefined,
       points: profile.points,
+      level: getLevel(profile.points),
       badges: badges.map((b) => b.badgeId),
       streaks: {
         latihan: profile.latihanStreak,
@@ -434,6 +454,7 @@ export class GamificationService {
       anggotaId: p.anggotaId,
       namaLengkap: p.anggota?.namaLengkap ?? undefined,
       points: p.points,
+      level: getLevel(p.points),
       badges: p.badges.map((b) => b.badgeId),
       streaks: {
         latihan: p.latihanStreak,
@@ -498,7 +519,7 @@ export class GamificationService {
   }
 
   /** Get points history aggregated by month for a member */
-  async getPointsHistory(anggotaId: string): Promise<Array<{ month: string; points: number; count: number }>> {
+  async getPointsHistory(anggotaId: string): Promise<Array<{ month: string; points: number; cumulative: number; count: number }>> {
     const profile = await this.prisma.gamificationProfile.findUnique({
       where: { anggotaId },
     });

@@ -26,6 +26,7 @@ interface GamificationProfile {
   anggotaId: string;
   namaLengkap?: string;
   points: number;
+  level?: { name: string; icon: string; color: string };
   badges: Badge[];
   streaks: { latihan: number; iuran: number };
   lastActivity: string;
@@ -168,6 +169,14 @@ export default function GamificationProfilePage() {
               {profile.points.toLocaleString('id-ID')}
             </div>
             <p className="text-xs text-gray-500">Total Poin</p>
+            {profile.level && (
+              <div className="flex items-center gap-1 mt-1 justify-end">
+                <span className="text-lg">{profile.level.icon}</span>
+                <span className="text-sm font-bold" style={{ color: profile.level.color }}>
+                  {profile.level.name}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

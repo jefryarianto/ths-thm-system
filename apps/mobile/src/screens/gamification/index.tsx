@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,11 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import apiClient from '../../lib/api-client';
 
 interface Badge {
@@ -27,6 +29,7 @@ interface GamificationProfile {
   anggotaId: string;
   namaLengkap?: string;
   points: number;
+  level?: { name: string; icon: string; color: string };
   badges: Badge[];
   streaks: { latihan: number; iuran: number };
   lastActivity: string;
@@ -169,6 +172,90 @@ function PulseDot() {
   return <Animated.View style={[styles.liveDot, { opacity }]} />;
 }
 
+/** Simple SVG line chart for points history */
+function PointsChart({ data }: { data: Array<{ month: string; cumulative: number }> }) {
+  const screenWidth = Dimensions.get('window').width;
+  const width = Math.min(screenWidth - 64, 320);
+  const height = 120;
+  const padding = 20;
+
+  const pathData = useMemo(() => {
+    if (!data || data.length < 2) return null;
+    const maxVal = Math.max(...data.map((d) => d.cumulative), 1);
+    const stepX = (width - padding * 2) / (data.length - 1);
+
+    let d = '';
+    data.forEach((point, i) => {
+      const x = padding + i * stepX;
+      const y = height - padding - (point.cumulative / maxVal) * (height - padding * 2);
+      d += i === 0 ? `M${x},${y}` : ` L${x},${y}`;
+    });
+    return { d, maxVal, stepX };
+  }, [data]);
+
+  if (!pathData) return null;
+
+  const labels = data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 4)) === 0 || i === data.length - 1);
+
+  return (
+    <View style={styles.chartContainer}>
+      <Svg width={width} height={height}>
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+          const y = height - padding - ratio * (height - padding * 2);
+          return (
+            <Line
+              key={ratio}
+              x1={padding}
+              y1={y}
+              x2={width - padding}
+              y2={y}
+              stroke="#e5e7eb"
+              strokeWidth={0.5}
+            />
+          );
+        })}
+        {/* Line path */}
+        <Path
+          d={pathData.d}
+          stroke="#3b82f6"
+          strokeWidth={2}
+          fill="none"
+          strokeLinecap="round"
+        />
+        {/* Dots */}
+        {data.map((point, i) => {
+          const x = padding + i * pathData.stepX;
+          const y = height - padding - (point.cumulative / pathData.maxVal) * (height - padding * 2);
+          return (
+            <Circle key={i} cx={x} cy={y} r={2.5} fill="#3b82f6" />
+          );
+        })}
+        {/* X-axis labels */}
+        {labels.map((point, i) => {
+          const idx = data.indexOf(point);
+          const x = padding + idx * pathData.stepX;
+          const [y, m] = point.month.split('-');
+          const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+          const label = `${months[parseInt(m) - 1]} ${y.slice(2)}`;
+          return (
+            <SvgText
+              key={i}
+              x={x}
+              y={height - 4}
+              fontSize={8}
+              fill="#9ca3af"
+              textAnchor="middle"
+            >
+              {label}
+            </SvgText>
+          );
+        })}
+      </Svg>
+    </View>
+  );
+}
+
 function getTimeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -185,6 +272,7 @@ export default function GamificationScreen() {
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
+  const [pointsHistory, setPointsHistory] = useState<Array<{ month: string; cumulative: number }>>([]);
   const [recentEvents, setRecentEvents] = useState<PointEvent[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
@@ -260,8 +348,12 @@ export default function GamificationScreen() {
       } catch { /* rewards optional */ }
 
       if (anggotaId) {
-        const profileRes = await apiClient.get(`/gamification/profile/${anggotaId}`);
+        const [profileRes, historyRes] = await Promise.all([
+          apiClient.get(`/gamification/profile/${anggotaId}`),
+          apiClient.get(`/gamification/profile/${anggotaId}/points-history`),
+        ]);
         setProfile(profileRes.data.data);
+        setPointsHistory(historyRes.data.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch gamification:', err);
@@ -349,7 +441,23 @@ export default function GamificationScreen() {
                 </View>
                 <AnimatedNumber value={profile.points} />
                 <Text style={styles.pointsLabel}>Total Poin</Text>
+                {profile.level && (
+                  <View style={styles.levelBadge}>
+                    <Text style={styles.levelIcon}>{profile.level.icon}</Text>
+                    <Text style={[styles.levelName, { color: profile.level.color }]}>{profile.level.name}</Text>
+                  </View>
+                )}
               </View>
+
+              {/* Points Chart */}
+              {pointsHistory.length > 1 && (
+                <View style={styles.chartSection}>
+                  <Text style={styles.chartTitle}>Perkembangan Poin</Text>
+                  <View style={styles.chartWrapper}>
+                    <PointsChart data={pointsHistory} />
+                  </View>
+                </View>
+              )}
 
               {/* Streaks */}
               <View style={styles.streaksRow}>
@@ -737,6 +845,17 @@ const styles = StyleSheet.create({
   filterChipTextActive: { color: '#fff' },
   filterChipClear: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, backgroundColor: '#fee2e2', borderWidth: 1, borderColor: '#fecaca' },
   filterChipClearText: { fontSize: 12, color: '#ef4444', fontWeight: '700' },
+
+  // Chart
+  chartSection: { marginBottom: 16 },
+  chartTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 },
+  chartContainer: { alignItems: 'center', paddingVertical: 8 },
+  chartWrapper: { backgroundColor: '#fff', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center' },
+
+  // Level Badge
+  levelBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  levelIcon: { fontSize: 16 },
+  levelName: { fontSize: 13, fontWeight: '700' },
 
   // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },
