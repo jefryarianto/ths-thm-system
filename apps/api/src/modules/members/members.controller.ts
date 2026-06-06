@@ -22,6 +22,8 @@ export class MembersController {
   }
 
   @Get(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.findOne(id, req.scope);
   }
@@ -48,41 +50,57 @@ export class MembersController {
   }
 
   @Post('import')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
     return this.membersService.importCsv(data, req.scope);
   }
 
   @Get('export/csv')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   exportCsv(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
     return this.membersService.exportCsv(filter, req.scope);
   }
 
   @Post(':id/validate')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   validate(@Param('id') id: string) {
     return this.membersService.validate(id);
   }
 
   @Post(':id/approve')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   approve(@Param('id') id: string) {
     return this.membersService.approve(id);
   }
 
   @Patch(':id/suspend')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   suspend(@Param('id') id: string) {
     return this.membersService.suspend(id);
   }
 
   @Patch(':id/reactivate')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   reactivate(@Param('id') id: string) {
     return this.membersService.reactivate(id);
   }
 
   @Get(':id/documents')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
   getDocuments(@Param('id') id: string) {
     return this.membersService.getDocuments(id);
   }
 
   @Get(':id/dues')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
   getDues(@Param('id') id: string) {
     return this.membersService.getDues(id);
   }

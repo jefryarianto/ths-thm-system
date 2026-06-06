@@ -56,15 +56,38 @@ export class AuthService {
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
-    const data: Record<string, unknown> = {};
-    if (dto.namaLengkap) data.namaLengkap = dto.namaLengkap;
-    if (dto.noHp) data.noHp = dto.noHp;
-    if (dto.email) data.email = dto.email;
-    if (dto.alamat !== undefined) data.alamat = dto.alamat;
-    if (dto.tempatLahir) data.tempatLahir = dto.tempatLahir;
-    if (dto.tanggalLahir) data.tanggalLahir = dto.tanggalLahir;
+    // Update User model (only fields that exist on the User schema)
+    const userData: Record<string, unknown> = {};
+    if (dto.namaLengkap) userData.namaLengkap = dto.namaLengkap;
+    if (dto.email) userData.email = dto.email;
 
-    const user = await this.prisma.user.update({ where: { id: userId }, data });
+    const user = await this.prisma.user.update({ where: { id: userId }, data: userData });
+
+    // Update Anggota model (profile fields like noHp, alamat, tempatLahir, tanggalLahir)
+    // Find the anggota record by matching email
+    if (dto.noHp !== undefined || dto.alamat !== undefined || dto.tempatLahir !== undefined || dto.tanggalLahir !== undefined || dto.email !== undefined || dto.namaLengkap !== undefined) {
+      const anggotaData: Record<string, unknown> = {};
+      if (dto.namaLengkap) anggotaData.namaLengkap = dto.namaLengkap;
+      if (dto.noHp !== undefined) anggotaData.noHp = dto.noHp;
+      if (dto.alamat !== undefined) anggotaData.alamat = dto.alamat;
+      if (dto.tempatLahir) anggotaData.tempatLahir = dto.tempatLahir;
+      if (dto.tanggalLahir) anggotaData.tanggalLahir = new Date(dto.tanggalLahir);
+      if (dto.email !== undefined) anggotaData.email = dto.email;
+
+      const anggota = await this.prisma.anggota.findFirst({
+        where: { email: user.email },
+      });
+
+      if (anggota) {
+        await this.prisma.anggota.update({
+          where: { id: anggota.id },
+          data: anggotaData,
+        });
+      } else if (dto.noHp !== undefined || dto.alamat !== undefined || dto.tempatLahir !== undefined || dto.tanggalLahir !== undefined) {
+        console.warn(`updateProfile: No Anggota record found for user ${userId} (email: ${user.email}) — profile fields not synced`);
+      }
+    }
+
     return { success: true, data: this.sanitizeUser(user) };
   }
 

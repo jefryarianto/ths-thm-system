@@ -35,6 +35,10 @@ describe('AuthService', () => {
       update: jest.fn(),
       count: jest.fn(),
     },
+    anggota: {
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
   };
 
   const mockJwt = {

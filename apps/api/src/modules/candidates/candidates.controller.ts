@@ -22,6 +22,8 @@ export class CandidatesController {
   }
 
   @Get(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.candidatesService.findOne(id, req.scope);
   }
@@ -48,26 +50,36 @@ export class CandidatesController {
   }
 
   @Post('import')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   importCsv(@Body() data: any[]) {
     return this.candidatesService.importCsv(data);
   }
 
   @Post(':id/validate')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   validate(@Param('id') id: string) {
     return this.candidatesService.validate(id);
   }
 
   @Post(':id/approve')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   approve(@Param('id') id: string) {
     return this.candidatesService.approve(id);
   }
 
   @Post(':id/reject')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   reject(@Param('id') id: string, @Body() body: { reason?: string }) {
     return this.candidatesService.reject(id, body.reason);
   }
 
   @Get('export/csv')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   exportCsv(@Query() filter: CandidateFilterDto) {
     return this.candidatesService.exportCsv(filter);
   }

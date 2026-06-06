@@ -802,6 +802,7 @@ model GamificationProfile {
 
   @@index([points(sort: Desc)])
   @@index([anggotaId])
+  @@index([points(sort: Desc), anggotaId])
   @@map("gamification_profiles")
 }
 
@@ -819,6 +820,7 @@ model GamificationBadge {
 
   @@index([profileId])
   @@index([badgeId])
+  @@index([profileId, badgeId])
   @@map("gamification_badges")
 }
 
@@ -837,6 +839,7 @@ model GamificationEvent {
   @@index([profileId])
   @@index([anggotaId])
   @@index([timestamp(sort: Desc)])
+  @@index([profileId, timestamp(sort: Desc)])
   @@map("gamification_events")
 }
 
