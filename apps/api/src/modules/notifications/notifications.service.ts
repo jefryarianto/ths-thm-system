@@ -252,6 +252,7 @@ export class NotificationsService {
     { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat pembayaran iuran' },
     { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
     { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
+    { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
   ];
 

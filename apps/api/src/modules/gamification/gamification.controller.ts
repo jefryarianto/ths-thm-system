@@ -73,11 +73,21 @@ export class GamificationController {
 
   /**
    * Get the leaderboard — top members by points.
+   * Filter by scope: rantingId, wilayahId, or distrikId.
    */
   @Get('leaderboard')
-  @ApiOperation({ summary: 'Get top members leaderboard' })
-  async getLeaderboard(@Query('limit') limit?: string) {
-    const leaderboard = await this.gamificationService.getLeaderboard(limit ? parseInt(limit) : 10);
+  @ApiOperation({ summary: 'Get top members leaderboard (optional scope filter)' })
+  async getLeaderboard(
+    @Query('limit') limit?: string,
+    @Query('rantingId') rantingId?: string,
+    @Query('wilayahId') wilayahId?: string,
+    @Query('distrikId') distrikId?: string,
+  ) {
+    const scope = rantingId ? { rantingId } : wilayahId ? { wilayahId } : distrikId ? { distrikId } : undefined;
+    const leaderboard = await this.gamificationService.getLeaderboard(
+      limit ? parseInt(limit) : 10,
+      scope,
+    );
     return {
       success: true,
       data: leaderboard.map((p, i) => ({

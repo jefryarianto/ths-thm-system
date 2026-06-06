@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 /**
  * Badge definition.
@@ -63,7 +64,11 @@ const BADGES: Badge[] = [
  */
 @Injectable()
 export class GamificationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /** Get or create a member's gamification profile */
   private async getOrCreate(anggotaId: string) {
@@ -157,6 +162,9 @@ export class GamificationService {
           category: b.category,
         })),
       });
+
+      // Send badge notifications
+      await this.sendBadgeNotifications(anggotaId, badgesToAward);
     }
 
     // Reload profile with all badges
@@ -364,14 +372,61 @@ export class GamificationService {
     return [...BADGES];
   }
 
+  /** Send badge earned notifications to users in the same ranting */
+  private async sendBadgeNotifications(
+    anggotaId: string,
+    badges: Array<{ name: string; description: string; icon: string }>,
+  ): Promise<void> {
+    try {
+      // Get the anggota's rantingId
+      const anggota = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { namaLengkap: true, rantingId: true },
+      });
+      if (!anggota) return;
+
+      // Find users in the same ranting
+      const users = await this.prisma.user.findMany({
+        where: { rantingId: anggota.rantingId, isActive: true },
+        select: { id: true },
+      });
+
+      // Send notification to each user
+      for (const user of users) {
+        for (const badge of badges) {
+          await this.notificationsService.send(user.id, {
+            userId: user.id,
+            judul: `${badge.icon} Badge Baru!`,
+            isi: `${anggota.namaLengkap} mendapatkan badge "${badge.name}" — ${badge.description}`,
+            tipe: 'badge_earned',
+            data: { anggotaId, badge: badge.name, type: 'badge_earned' },
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to send badge notification:', (error as Error).message);
+    }
+  }
+
   /** Get leaderboard — top members by points */
-  async getLeaderboard(limit: number = 10): Promise<GamificationProfile[]> {
+  async getLeaderboard(limit: number = 10, scope?: { rantingId?: string; wilayahId?: string; distrikId?: string }): Promise<GamificationProfile[]> {
+    const where: Record<string, unknown> = {};
+
+    if (scope?.rantingId) {
+      where.anggota = { rantingId: scope.rantingId };
+    } else if (scope?.wilayahId) {
+      where.anggota = { ranting: { wilayahId: scope.wilayahId } };
+    } else if (scope?.distrikId) {
+      where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
+    }
+
     const profiles = await this.prisma.gamificationProfile.findMany({
+      where,
       orderBy: { points: 'desc' },
       take: limit,
       include: {
         badges: { select: { badgeId: true } },
-        anggota: { select: { namaLengkap: true } },
+        anggota: { select: { namaLengkap: true, rantingId: true } },
       },
     });
 

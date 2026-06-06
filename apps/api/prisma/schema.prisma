@@ -291,8 +291,9 @@ model Anggota {
   evaluasiLatihans  EvaluasiLatihan[]
   kegiatanPesertas  KegiatanPeserta[]
   presensiKegiatans PresensiKegiatan[]
-  gamificationProfile GamificationProfile?
-  gamificationEvents GamificationEvent[]
+  gamificationProfile    GamificationProfile?
+  gamificationEvents     GamificationEvent[]
+  gamificationRedemptions GamificationRedemption[]
   nilaiPendadaranAnggota NilaiPendadaran[]
 
   @@index([statusData])
@@ -837,4 +838,38 @@ model GamificationEvent {
   @@index([anggotaId])
   @@index([timestamp(sort: Desc)])
   @@map("gamification_events")
+}
+
+model GamificationReward {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  icon        String   @default("🎁")
+  pointCost   Int      @map("point_cost")
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  redemptions GamificationRedemption[]
+
+  @@map("gamification_rewards")
+}
+
+model GamificationRedemption {
+  id        String   @id @default(uuid()) @db.Uuid
+  rewardId  String   @map("reward_id")
+  anggotaId String   @map("anggota_id")
+  pointsSpent Int    @map("points_spent")
+  status    String   @default("pending")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  reward  GamificationReward @relation(fields: [rewardId], references: [id])
+  anggota Anggota            @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+
+  @@index([rewardId])
+  @@index([anggotaId])
+  @@map("gamification_redemptions")
 }

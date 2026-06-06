@@ -41,6 +41,16 @@ interface LeaderboardEntry {
   streaks: { latihan: number; iuran: number };
 }
 
+interface Reward {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  pointCost: number;
+  stock: number;
+  isActive: boolean;
+}
+
 interface PointEvent {
   id: string;
   anggotaId: string;
@@ -67,7 +77,7 @@ const EVENT_ICONS: Record<string, string> = {
   achievement: '🎯',
 };
 
-type TabType = 'profile' | 'leaderboard' | 'badges';
+type TabType = 'profile' | 'leaderboard' | 'badges' | 'rewards';
 
 function AnimatedTabContent({ active, children }: { active: boolean; children: React.ReactNode }) {
   const opacity = useRef(new Animated.Value(active ? 1 : 0)).current;
@@ -169,6 +179,8 @@ export default function GamificationScreen() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
   const [recentEvents, setRecentEvents] = useState<PointEvent[]>([]);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -208,6 +220,12 @@ export default function GamificationScreen() {
       setAllBadges(badgesRes.data.data);
       setLeaderboard(leaderboardRes.data.data);
       setRecentEvents(eventsRes.data.data);
+
+      // Fetch rewards
+      try {
+        const rewardsRes = await apiClient.get('/gamification/rewards');
+        setRewards(rewardsRes.data.data);
+      } catch { /* rewards optional */ }
 
       if (anggotaId) {
         const profileRes = await apiClient.get(`/gamification/profile/${anggotaId}`);
@@ -252,6 +270,7 @@ export default function GamificationScreen() {
     { key: 'profile', label: 'Profil', icon: 'person' },
     { key: 'leaderboard', label: 'Peringkat', icon: 'trophy' },
     { key: 'badges', label: 'Badge', icon: 'medal' },
+    { key: 'rewards', label: 'Reward', icon: 'gift' },
   ];
 
   return (
@@ -400,6 +419,67 @@ export default function GamificationScreen() {
         </View>
       </AnimatedTabContent>
 
+      {/* Rewards Tab */}
+      <AnimatedTabContent active={activeTab === 'rewards'}>
+        <View style={styles.section}>
+          <Text style={styles.subTitle}>Reward ({rewards.filter(r => r.isActive).length})</Text>
+          {rewards.filter(r => r.isActive).map((reward) => (
+            <TouchableOpacity
+              key={reward.id}
+              style={styles.rewardCard}
+              activeOpacity={0.7}
+              onPress={async () => {
+                if (!profile) return;
+                setRedeemingId(reward.id);
+                try {
+                  await apiClient.post(`/gamification/rewards/${reward.id}/redeem`, {
+                    anggotaId: profile.anggotaId,
+                  });
+                  alert(`✅ ${reward.name} berhasil diredeem!`);
+                  // Refresh
+                  const rewardsRes = await apiClient.get('/gamification/rewards');
+                  setRewards(rewardsRes.data.data);
+                } catch (err: any) {
+                  alert(err.response?.data?.message || 'Gagal redeem');
+                } finally {
+                  setRedeemingId(null);
+                }
+              }}
+              disabled={redeemingId === reward.id || reward.stock <= 0}
+            >
+              <Text style={styles.rewardIcon}>{reward.icon}</Text>
+              <View style={styles.badgeCardInfo}>
+                <Text style={styles.badgeCardName}>{reward.name}</Text>
+                {reward.description && (
+                  <Text style={styles.badgeCardDesc}>{reward.description}</Text>
+                )}
+                <View style={styles.rewardMeta}>
+                  <View style={styles.rewardPoints}>
+                    <Ionicons name="zap" size={12} color="#f59e0b" />
+                    <Text style={styles.rewardPointsText}>{reward.pointCost.toLocaleString('id-ID')}</Text>
+                  </View>
+                  <Text style={styles.rewardStock}>
+                    {reward.stock > 0 ? `Stok: ${reward.stock}` : 'Habis'}
+                  </Text>
+                </View>
+              </View>
+              {redeemingId === reward.id ? (
+                <ActivityIndicator size="small" color="#3b82f6" />
+              ) : (
+                <Ionicons
+                  name={reward.stock > 0 ? 'gift' : 'close-circle'}
+                  size={24}
+                  color={reward.stock > 0 ? '#8b5cf6' : '#ef4444'}
+                />
+              )}
+            </TouchableOpacity>
+          ))}
+          {rewards.filter(r => r.isActive).length === 0 && (
+            <Text style={styles.emptyText}>Belum ada reward tersedia</Text>
+          )}
+        </View>
+      </AnimatedTabContent>
+
       {/* Badges Tab */}
       <AnimatedTabContent active={activeTab === 'badges'}>
         <View style={styles.section}>
@@ -543,6 +623,14 @@ const styles = StyleSheet.create({
   badgeCardDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
   categoryBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   categoryText: { fontSize: 10, color: '#fff', fontWeight: '600' },
+
+  // Rewards Tab
+  rewardCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+  rewardIcon: { fontSize: 32, width: 44, textAlign: 'center' },
+  rewardMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
+  rewardPoints: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  rewardPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
+  rewardStock: { fontSize: 11, color: '#6b7280' },
 
   // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },

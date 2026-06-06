@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GamificationService } from './gamification.service';
 
 /** Minimal Prisma mock — uses non-Once methods for findUnique since it's called multiple times */
-const prismaMock = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const prismaMock: any = {
   gamificationProfile: {
     findUnique: jest.fn(),
     create: jest.fn(),
@@ -21,6 +22,18 @@ const prismaMock = {
     findMany: jest.fn(),
     count: jest.fn(),
   },
+  anggota: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+  },
+  user: {
+    findMany: jest.fn(),
+  },
+  $transaction: jest.fn(),
+};
+
+const notificationsServiceMock = {
+  send: jest.fn(),
 };
 
 const PROFILE_TEMPLATE = {
@@ -66,6 +79,7 @@ describe('GamificationService', () => {
       providers: [
         GamificationService,
         { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
+        { provide: require('../notifications/notifications.service').NotificationsService, useValue: notificationsServiceMock },
       ],
     }).compile();
 
