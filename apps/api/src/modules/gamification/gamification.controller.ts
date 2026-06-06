@@ -72,6 +72,16 @@ export class GamificationController {
   }
 
   /**
+   * Get organization structure for filter dropdowns.
+   */
+  @Get('org-structure')
+  @ApiOperation({ summary: 'Get org structure (distrik → wilayah → ranting) for filters' })
+  async getOrgStructure() {
+    const data = await this.gamificationService.getOrgStructure();
+    return { success: true, data };
+  }
+
+  /**
    * Get the leaderboard — top members by points.
    * Filter by scope: rantingId, wilayahId, or distrikId.
    */

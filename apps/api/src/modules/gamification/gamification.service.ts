@@ -497,6 +497,30 @@ export class GamificationService {
     }));
   }
 
+  /** Get organization structure for filter dropdowns */
+  async getOrgStructure(): Promise<Array<{ id: string; nama: string; wilayahs: Array<{ id: string; nama: string; rantings: Array<{ id: string; nama: string }> }> }>> {
+    const distriks = await this.prisma.distrik.findMany({
+      include: {
+        wilayahs: {
+          include: {
+            rantings: { select: { id: true, nama: true } },
+          },
+        },
+      },
+      orderBy: { nama: 'asc' },
+    });
+
+    return distriks.map((d) => ({
+      id: d.id,
+      nama: d.nama,
+      wilayahs: d.wilayahs.map((w) => ({
+        id: w.id,
+        nama: w.nama,
+        rantings: w.rantings.map((r) => ({ id: r.id, nama: r.nama })),
+      })),
+    }));
+  }
+
   /** Get gamification stats */
   async getStats(): Promise<{ totalMembers: number; totalEvents: number; totalPointsAwarded: number; badgesAwarded: number }> {
     const [totalMembers, totalEvents, pointsAgg, badgesCount] = await Promise.all([

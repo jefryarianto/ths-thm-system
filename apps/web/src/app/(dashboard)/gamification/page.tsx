@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import {
   Trophy, Award, TrendingUp, Medal, Star, Zap,
   AlertCircle, Users, Target, Flame, Activity,
-  ArrowRight,
+  ArrowRight, Filter, X,
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
@@ -37,6 +37,13 @@ interface GamificationStats {
   totalEvents: number;
   totalPointsAwarded: number;
   badgesAwarded: number;
+}
+
+interface OrgNode {
+  id: string;
+  nama: string;
+  wilayahs?: OrgNode[];
+  rantings?: { id: string; nama: string }[];
 }
 
 interface PointEvent {
@@ -96,6 +103,13 @@ export default function GamificationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter state
+  const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
+  const [selectedDistrik, setSelectedDistrik] = useState('');
+  const [selectedWilayah, setSelectedWilayah] = useState('');
+  const [selectedRanting, setSelectedRanting] = useState('');
+  const [filterActive, setFilterActive] = useState(false);
+
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     if (!token) {
@@ -103,14 +117,21 @@ export default function GamificationPage() {
       return;
     }
     fetchData();
+    fetchOrgStructure();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      if (selectedRanting) params.set('rantingId', selectedRanting);
+      else if (selectedWilayah) params.set('wilayahId', selectedWilayah);
+      else if (selectedDistrik) params.set('distrikId', selectedDistrik);
+      params.set('limit', '10');
+
       const [badgesRes, leaderboardRes, statsRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
-        apiClient.get('/gamification/leaderboard?limit=10'),
+        apiClient.get(`/gamification/leaderboard?${params.toString()}`),
         apiClient.get('/gamification/stats'),
         apiClient.get('/gamification/events?limit=10'),
       ]);
@@ -124,7 +145,20 @@ export default function GamificationPage() {
     } finally {
       setLoading(false);
     }
+  }, [selectedDistrik, selectedWilayah, selectedRanting]);
+
+  const fetchOrgStructure = async () => {
+    try {
+      const res = await apiClient.get('/gamification/org-structure');
+      setOrgTree(res.data.data || []);
+    } catch { /* ignore */ }
   };
+
+  // Re-fetch when filter changes
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    if (token) fetchData();
+  }, [selectedDistrik, selectedWilayah, selectedRanting]);
 
   const getTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -161,6 +195,20 @@ export default function GamificationPage() {
     );
   }
 
+  // Derived filter options
+  const availableWilayahs = selectedDistrik
+    ? orgTree.find((d) => d.id === selectedDistrik)?.wilayahs || []
+    : [];
+  const availableRantings = selectedWilayah
+    ? availableWilayahs.find((w) => w.id === selectedWilayah)?.rantings || []
+    : [];
+
+  const clearFilter = () => {
+    setSelectedDistrik('');
+    setSelectedWilayah('');
+    setSelectedRanting('');
+  };
+
   // Badge distribution by category for pie chart
   const categoryData = badges.reduce((acc, b) => {
     acc[b.category] = (acc[b.category] || 0) + 1;
@@ -184,6 +232,74 @@ export default function GamificationPage() {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Trophy size={16} className="text-yellow-500" />
           <span>Gamification System</span>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Filter size={16} className="text-gray-400" />
+          <span className="text-xs font-medium text-gray-500 uppercase">Filter</span>
+
+          {/* Distrik */}
+          <select
+            value={selectedDistrik}
+            onChange={(e) => {
+              setSelectedDistrik(e.target.value);
+              setSelectedWilayah('');
+              setSelectedRanting('');
+              setFilterActive(!!e.target.value);
+            }}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Semua Distrik</option>
+            {orgTree.map((d) => (
+              <option key={d.id} value={d.id}>{d.nama}</option>
+            ))}
+          </select>
+
+          {/* Wilayah */}
+          <select
+            value={selectedWilayah}
+            onChange={(e) => {
+              setSelectedWilayah(e.target.value);
+              setSelectedRanting('');
+              setFilterActive(!!e.target.value || !!selectedDistrik);
+            }}
+            disabled={!selectedDistrik}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value="">Semua Wilayah</option>
+            {availableWilayahs.map((w: any) => (
+              <option key={w.id} value={w.id}>{w.nama}</option>
+            ))}
+          </select>
+
+          {/* Ranting */}
+          <select
+            value={selectedRanting}
+            onChange={(e) => {
+              setSelectedRanting(e.target.value);
+              setFilterActive(!!e.target.value || !!selectedWilayah || !!selectedDistrik);
+            }}
+            disabled={!selectedWilayah}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value="">Semua Ranting</option>
+            {availableRantings.map((r: any) => (
+              <option key={r.id} value={r.id}>{r.nama}</option>
+            ))}
+          </select>
+
+          {filterActive && (
+            <button
+              onClick={clearFilter}
+              className="flex items-center gap-1 text-xs text-red-600 hover:text-red-700 ml-auto"
+            >
+              <X size={14} />
+              Hapus filter
+            </button>
+          )}
         </div>
       </div>
 
