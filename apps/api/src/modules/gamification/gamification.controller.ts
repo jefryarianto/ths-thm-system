@@ -186,6 +186,23 @@ export class GamificationController {
   }
 
   /**
+   * Get points report for a period (weekly/monthly).
+   */
+  @Get('admin/points-report')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @ApiOperation({ summary: 'Get points report for a period' })
+  async getPointsReport(
+    @Query('period') period?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const data = await this.gamificationService.getPointsReport(
+      (period as 'weekly' | 'monthly') || 'monthly',
+      limit ? parseInt(limit) : 20,
+    );
+    return { success: true, data };
+  }
+
+  /**
    * Record a training attendance for a member.
    */
   @Post('profile/:anggotaId/training')

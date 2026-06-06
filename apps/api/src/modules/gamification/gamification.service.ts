@@ -650,6 +650,65 @@ export class GamificationService {
     }));
   }
 
+  /** Get points report — top earners for a period with CSV-friendly format */
+  async getPointsReport(period: 'weekly' | 'monthly' = 'monthly', limit: number = 20): Promise<Array<{ rank: number; namaLengkap: string; points: number; level: string; events: number; lastActive: string }>> {
+    const now = new Date();
+    let since: Date;
+    if (period === 'weekly') {
+      since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else {
+      since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get events in period grouped by anggotaId
+    const events = await this.prisma.gamificationEvent.findMany({
+      where: { timestamp: { gte: since } },
+      select: { anggotaId: true, points: true },
+    });
+
+    // Aggregate points per member
+    const memberMap = new Map<string, { points: number; events: number }>();
+    for (const e of events) {
+      const existing = memberMap.get(e.anggotaId) || { points: 0, events: 0 };
+      existing.points += e.points;
+      existing.events += 1;
+      memberMap.set(e.anggotaId, existing);
+    }
+
+    // Get member names and profiles
+    const anggotaIds = [...memberMap.keys()];
+    const anggotas = await this.prisma.anggota.findMany({
+      where: { id: { in: anggotaIds } },
+      select: { id: true, namaLengkap: true },
+    });
+    const namaMap = new Map(anggotas.map((a) => [a.id, a.namaLengkap]));
+
+    const profiles = await this.prisma.gamificationProfile.findMany({
+      where: { anggotaId: { in: anggotaIds } },
+      select: { anggotaId: true, points: true, lastActivity: true },
+    });
+    const profileMap = new Map(profiles.map((p) => [p.anggotaId, p]));
+
+    // Build result sorted by points earned in period
+    const result = [...memberMap.entries()]
+      .map(([anggotaId, data]) => {
+        const profile = profileMap.get(anggotaId);
+        return {
+          rank: 0,
+          namaLengkap: namaMap.get(anggotaId) || anggotaId,
+          points: data.points,
+          level: getLevel(profile?.points ?? 0).name,
+          events: data.events,
+          lastActive: profile?.lastActivity?.toISOString() ?? '',
+        };
+      })
+      .sort((a, b) => b.points - a.points)
+      .slice(0, limit)
+      .map((item, i) => ({ ...item, rank: i + 1 }));
+
+    return result;
+  }
+
   /** Get points distribution — how many members are at each level */
   async getPointsDistribution(): Promise<Array<{ level: string; icon: string; color: string; count: number }>> {
     const profiles = await this.prisma.gamificationProfile.findMany({

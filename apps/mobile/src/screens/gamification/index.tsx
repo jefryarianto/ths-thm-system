@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import apiClient from '../../lib/api-client';
+import Confetti from './confetti';
 
 interface Badge {
   id: string;
@@ -278,6 +279,7 @@ export default function GamificationScreen() {
   const [recentEvents, setRecentEvents] = useState<PointEvent[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -394,7 +396,12 @@ export default function GamificationScreen() {
           apiClient.get(`/gamification/profile/${anggotaId}`),
           apiClient.get(`/gamification/profile/${anggotaId}/points-history`),
         ]);
-        setProfile(profileRes.data.data);
+        const newProfile = profileRes.data.data;
+        // Check if profile has badges to trigger confetti
+        if (newProfile?.badges?.length > 0 && !profile) {
+          setShowConfetti(true);
+        }
+        setProfile(newProfile);
         setPointsHistory(historyRes.data.data || []);
       }
     } catch (err) {
@@ -793,6 +800,7 @@ export default function GamificationScreen() {
         </View>
       </AnimatedTabContent>
 
+      <Confetti visible={showConfetti} onFinish={() => setShowConfetti(false)} />
       <View style={{ height: 40 }} />
     </ScrollView>
   );
