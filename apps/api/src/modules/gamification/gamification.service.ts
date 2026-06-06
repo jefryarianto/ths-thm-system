@@ -470,7 +470,7 @@ export class GamificationService {
   }
 
   /** Get leaderboard — top members by points */
-  async getLeaderboard(limit: number = 10, scope?: { rantingId?: string; wilayahId?: string; distrikId?: string }, search?: string): Promise<GamificationProfile[]> {
+  async getLeaderboard(limit: number = 10, scope?: { rantingId?: string; wilayahId?: string; distrikId?: string }, search?: string, skip?: number): Promise<GamificationProfile[]> {
     const where: Record<string, unknown> = {};
 
     if (scope?.rantingId) {
@@ -495,6 +495,7 @@ export class GamificationService {
     const profiles = await this.prisma.gamificationProfile.findMany({
       where,
       orderBy: { points: 'desc' },
+      skip: skip || 0,
       take: limit,
       include: {
         badges: { select: { badgeId: true } },

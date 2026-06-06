@@ -284,6 +284,21 @@ export default function GamificationScreen() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
+  const [hasMore, setHasMore] = useState(true);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset page on search/filter change
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, selectedDistrik, selectedWilayah, selectedRanting]);
 
   // Filter state
   const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
@@ -298,12 +313,25 @@ export default function GamificationScreen() {
   useEffect(() => {
     fetchData();
     fetchOrgStructure();
-  }, []);
-
-  // Re-fetch leaderboard when filter or search changes
+  }, []);      // Re-fetch leaderboard when filter or debounced search changes
   useEffect(() => {
     fetchData();
-  }, [selectedDistrik, selectedWilayah, selectedRanting, searchQuery]);
+  }, [selectedDistrik, selectedWilayah, selectedRanting, debouncedSearch]);
+
+  const loadMore = async () => {
+    setPage((p) => p + 1);
+    try {
+      let leaderboardUrl = `/gamification/leaderboard?limit=${pageSize}&skip=${(page + 1) * pageSize}`;
+      if (selectedRanting) leaderboardUrl += `&rantingId=${selectedRanting}`;
+      else if (selectedWilayah) leaderboardUrl += `&wilayahId=${selectedWilayah}`;
+      else if (selectedDistrik) leaderboardUrl += `&distrikId=${selectedDistrik}`;
+      if (debouncedSearch.trim()) leaderboardUrl += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
+      const res = await apiClient.get(leaderboardUrl);
+      const newData = res.data.data || [];
+      setLeaderboard((prev) => [...prev, ...newData]);
+      setHasMore(newData.length >= pageSize);
+    } catch { /* ignore */ }
+  };
 
   const fetchOrgStructure = async () => {
     try {
@@ -330,12 +358,13 @@ export default function GamificationScreen() {
       const user = userStr ? JSON.parse(userStr) : null;
       const anggotaId = user?.anggotaId || user?.id;
 
-      // Build leaderboard URL with filter params & search
-      let leaderboardUrl = '/gamification/leaderboard?limit=10';
+      // Build leaderboard URL with filter params, search & pagination
+      let leaderboardUrl = `/gamification/leaderboard?limit=${pageSize}`;
       if (selectedRanting) leaderboardUrl += `&rantingId=${selectedRanting}`;
       else if (selectedWilayah) leaderboardUrl += `&wilayahId=${selectedWilayah}`;
       else if (selectedDistrik) leaderboardUrl += `&distrikId=${selectedDistrik}`;
-      if (searchQuery.trim()) leaderboardUrl += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      if (debouncedSearch.trim()) leaderboardUrl += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
+      if (page > 0) leaderboardUrl += `&skip=${page * pageSize}`;
 
       const [badgesRes, leaderboardRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
@@ -344,6 +373,13 @@ export default function GamificationScreen() {
       ]);
       setAllBadges(badgesRes.data.data);
       setLeaderboard(leaderboardRes.data.data);
+      const newLbData = leaderboardRes.data.data;
+      if (page === 0) {
+        setLeaderboard(newLbData);
+      } else {
+        setLeaderboard((prev) => [...prev, ...newLbData]);
+      }
+      setHasMore(newLbData.length >= pageSize);
       setRecentEvents(eventsRes.data.data);
 
       // Fetch rewards
@@ -643,6 +679,12 @@ export default function GamificationScreen() {
           ) : (
             <Text style={styles.emptyText}>Belum ada data leaderboard</Text>
           )}
+          {hasMore && leaderboard.length > 0 && (
+            <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore}>
+              <Ionicons name="arrow-down" size={16} color="#3b82f6" />
+              <Text style={styles.loadMoreText}>Muat Lainnya</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </AnimatedTabContent>
 
@@ -885,6 +927,10 @@ const styles = StyleSheet.create({
   levelBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   levelIcon: { fontSize: 16 },
   levelName: { fontSize: 13, fontWeight: '700' },
+
+  // Load More
+  loadMoreButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, backgroundColor: '#eff6ff', borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#bfdbfe' },
+  loadMoreText: { fontSize: 13, fontWeight: '600', color: '#3b82f6' },
 
   // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },

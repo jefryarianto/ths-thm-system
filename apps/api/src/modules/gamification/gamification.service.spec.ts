@@ -216,6 +216,55 @@ describe('GamificationService', () => {
       expect(leaderboard[1].points).toBe(150);
       expect(leaderboard[2].points).toBe(100);
     });
+
+    it('should filter by search query', async () => {
+      prismaMock.gamificationProfile.findMany.mockResolvedValue([
+        { anggotaId: 'a-1', points: 200, latihanStreak: 10, iuranStreak: 5, lastActivity: new Date(), badges: [] },
+      ]);
+
+      const leaderboard = await service.getLeaderboard(10, undefined, 'Test Member');
+
+      expect(leaderboard).toHaveLength(1);
+      expect(prismaMock.gamificationProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            anggota: expect.objectContaining({
+              namaLengkap: { contains: 'Test Member', mode: 'insensitive' },
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should support skip/offset pagination', async () => {
+      prismaMock.gamificationProfile.findMany.mockResolvedValue([
+        { anggotaId: 'a-1', points: 200, latihanStreak: 10, iuranStreak: 5, lastActivity: new Date(), badges: [] },
+      ]);
+
+      const leaderboard = await service.getLeaderboard(10, undefined, undefined, 5);
+
+      expect(leaderboard).toHaveLength(1);
+      expect(prismaMock.gamificationProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 5, take: 10 }),
+      );
+    });
+
+    it('should merge search with scope filter', async () => {
+      prismaMock.gamificationProfile.findMany.mockResolvedValue([]);
+
+      await service.getLeaderboard(10, { rantingId: 'ranting-1' }, 'Anggota');
+
+      expect(prismaMock.gamificationProfile.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            anggota: expect.objectContaining({
+              rantingId: 'ranting-1',
+              namaLengkap: { contains: 'Anggota', mode: 'insensitive' },
+            }),
+          }),
+        }),
+      );
+    });
   });
 
   describe('getRecentEvents', () => {

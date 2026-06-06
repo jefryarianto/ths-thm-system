@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import { useDebounce } from '@/lib/use-debounce';
 import {
   Trophy, Award, TrendingUp, Medal, Star, Zap,
   AlertCircle, Users, Target, Flame, Activity,
@@ -105,6 +106,10 @@ export default function GamificationPage() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
+  const [hasMore, setHasMore] = useState(true);
 
   // Filter state
   const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
@@ -123,15 +128,16 @@ export default function GamificationPage() {
     fetchOrgStructure();
   }, []);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (loadMore: boolean = false) => {
+    if (!loadMore) setLoading(true);
     try {
       const params = new URLSearchParams();
       if (selectedRanting) params.set('rantingId', selectedRanting);
       else if (selectedWilayah) params.set('wilayahId', selectedWilayah);
       else if (selectedDistrik) params.set('distrikId', selectedDistrik);
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      params.set('limit', '10');
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+      params.set('limit', String(pageSize));
+      if (loadMore) params.set('skip', String(page * pageSize));
 
       const [badgesRes, leaderboardRes, statsRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
@@ -139,8 +145,13 @@ export default function GamificationPage() {
         apiClient.get('/gamification/stats'),
         apiClient.get('/gamification/events?limit=10'),
       ]);
-      setBadges(badgesRes.data.data);
-      setLeaderboard(leaderboardRes.data.data);
+      const newData = leaderboardRes.data.data;
+      if (loadMore) {
+        setLeaderboard((prev) => [...prev, ...newData]);
+      } else {
+        setLeaderboard(newData);
+      }
+      setHasMore(newData.length >= pageSize);
       setStats(statsRes.data.data);
       setEvents(eventsRes.data.data);
     } catch (err) {
@@ -149,7 +160,7 @@ export default function GamificationPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedDistrik, selectedWilayah, selectedRanting, searchQuery]);
+  }, [selectedDistrik, selectedWilayah, selectedRanting, debouncedSearch, page]);
 
   const fetchOrgStructure = async () => {
     try {
@@ -160,9 +171,13 @@ export default function GamificationPage() {
 
   // Re-fetch when filter changes
   useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, selectedDistrik, selectedWilayah, selectedRanting]);
+
+  useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     if (token) fetchData();
-  }, [selectedDistrik, selectedWilayah, selectedRanting, searchQuery]);
+  }, [selectedDistrik, selectedWilayah, selectedRanting, debouncedSearch]);
 
   const getTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -382,59 +397,75 @@ export default function GamificationPage() {
             )}
           </div>
           {leaderboard.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Rank</th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Anggota</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Poin</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Badge</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Latihan</th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Iuran</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {leaderboard.map((entry) => (
-                    <tr
-                      key={entry.anggotaId}
-                      className={`hover:bg-blue-50 transition cursor-pointer ${entry.rank <= 3 ? 'bg-yellow-50/30' : ''}`}
-                      onClick={() => router.push(`/gamification/${entry.anggotaId}`)}
-                    >
-                      <td className="px-3 py-3">
-                        <span className="text-lg">{RANK_ICONS[entry.rank] || entry.rank}</span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
-                          {entry.namaLengkap || entry.anggotaId}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                          <Zap size={12} />
-                          {entry.points.toLocaleString('id-ID')}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="text-sm text-gray-600">{entry.badges}</span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-sm text-blue-600">
-                          <Flame size={12} />
-                          {entry.streaks.latihan}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right">
-                        <span className="inline-flex items-center gap-1 text-sm text-green-600">
-                          <Star size={12} />
-                          {entry.streaks.iuran}
-                        </span>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Rank</th>
+                      <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Anggota</th>
+                      <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Poin</th>
+                      <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Badge</th>
+                      <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Latihan</th>
+                      <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Iuran</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {leaderboard.map((entry) => (
+                      <tr
+                        key={entry.anggotaId}
+                        className={`hover:bg-blue-50 transition cursor-pointer ${entry.rank <= 3 ? 'bg-yellow-50/30' : ''}`}
+                        onClick={() => router.push(`/gamification/${entry.anggotaId}`)}
+                      >
+                        <td className="px-3 py-3">
+                          <span className="text-lg">{RANK_ICONS[entry.rank] || entry.rank}</span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                            {entry.namaLengkap || entry.anggotaId}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                            <Zap size={12} />
+                            {entry.points.toLocaleString('id-ID')}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <span className="text-sm text-gray-600">{entry.badges}</span>
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <span className="inline-flex items-center gap-1 text-sm text-blue-600">
+                            <Flame size={12} />
+                            {entry.streaks.latihan}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <span className="inline-flex items-center gap-1 text-sm text-green-600">
+                            <Star size={12} />
+                            {entry.streaks.iuran}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {hasMore && (
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => {
+                      setPage((p) => p + 1);
+                      fetchData(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                  >
+                    <ArrowRight size={14} />
+                    Muat Lainnya
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
               Belum ada data leaderboard

@@ -28,6 +28,10 @@ const prismaMock: any = {
   anggota: {
     findUnique: jest.fn(),
   },
+  user: {
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+  },
   $transaction: jest.fn((promises: any[]) => Promise.all(promises)),
 };
 
@@ -35,7 +39,7 @@ const REWARD_TEMPLATE = {
   id: 'reward-1',
   name: 'Test Reward',
   description: 'A test reward',
-  icon: '🎁',
+  icon: '\ud83c\udf81',
   pointCost: 100,
   stock: 10,
   isActive: true,
@@ -114,7 +118,7 @@ describe('RewardsService', () => {
 
       expect(result.name).toBe('New Reward');
       expect(result.pointCost).toBe(150);
-      expect(result.icon).toBe('🎁');
+      expect(result.icon).toBe('\ud83c\udf81');
       expect(result.stock).toBe(0);
     });
   });
@@ -247,7 +251,7 @@ describe('RewardsService', () => {
           status: 'pending',
           notes: null,
           createdAt: new Date(),
-          reward: { name: 'Test Reward', icon: '🎁' },
+          reward: { name: 'Test Reward', icon: '\ud83c\udf81' },
           anggota: { namaLengkap: 'Test Member' },
         },
       ]);
@@ -277,7 +281,7 @@ describe('RewardsService', () => {
         status: 'pending',
         notes: null,
         createdAt: new Date(),
-        reward: { name: 'Test Reward', icon: '🎁' },
+        reward: { name: 'Test Reward', icon: '\ud83c\udf81' },
       });
       prismaMock.gamificationRedemption.update.mockResolvedValue({
         id: 'r-1',
@@ -287,7 +291,7 @@ describe('RewardsService', () => {
         status: 'approved',
         notes: null,
         createdAt: new Date(),
-        reward: { name: 'Test Reward', icon: '🎁' },
+        reward: { name: 'Test Reward', icon: '\ud83c\udf81' },
       });
       prismaMock.anggota.findUnique.mockResolvedValue({
         id: 'anggota-1',
@@ -297,6 +301,59 @@ describe('RewardsService', () => {
       const result = await service.updateRedemptionStatus('r-1', 'approved');
 
       expect(result.status).toBe('approved');
+    });
+
+    it('should send personal notification to member via email on status change', async () => {
+      const testServiceModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          RewardsService,
+          { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
+          { provide: require('../notifications/notifications.service').NotificationsService, useValue: { send: jest.fn() } },
+        ],
+      }).compile();
+      const testService = testServiceModule.get<RewardsService>(RewardsService);
+
+      prismaMock.gamificationRedemption.findUnique.mockResolvedValue({
+        id: 'r-1',
+        rewardId: 'reward-1',
+        anggotaId: 'anggota-1',
+        pointsSpent: 100,
+        status: 'pending',
+        notes: null,
+        createdAt: new Date(),
+        reward: { name: 'Test Reward', icon: '\ud83c\udf81' },
+      });
+      prismaMock.gamificationRedemption.update.mockResolvedValue({
+        id: 'r-1',
+        rewardId: 'reward-1',
+        anggotaId: 'anggota-1',
+        pointsSpent: 100,
+        status: 'approved',
+        notes: 'Selamat!',
+        createdAt: new Date(),
+        reward: { name: 'Test Reward', icon: '\ud83c\udf81' },
+      });
+      // First anggota findUnique for namaLengkap
+      prismaMock.anggota.findUnique.mockResolvedValueOnce({
+        id: 'anggota-1',
+        namaLengkap: 'Test Member',
+      });
+      // Second anggota findUnique for rantingId + email (inside sendRedemptionNotification)
+      prismaMock.anggota.findUnique.mockResolvedValueOnce({
+        id: 'anggota-1',
+        namaLengkap: 'Test Member',
+        rantingId: 'ranting-1',
+        email: 'member@test.com',
+      });
+      prismaMock.user.findMany.mockResolvedValue([{ id: 'admin-1' }]);
+      prismaMock.user.findFirst.mockResolvedValue({ id: 'member-user-1' });
+
+      await testService.updateRedemptionStatus('r-1', 'approved', 'Selamat!');
+
+      expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+        where: { email: 'member@test.com', isActive: true },
+        select: { id: true },
+      });
     });
   });
 });
