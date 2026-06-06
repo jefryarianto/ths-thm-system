@@ -768,6 +768,12 @@ export class GamificationService {
     return config;
   }
 
+  /** Get sync config — returns config + timestamp for mobile auto-sync */
+  async getSyncConfig(): Promise<{ config: Record<string, unknown>; syncTimestamp: string }> {
+    const config = await this.getConfig();
+    return { config, syncTimestamp: new Date().toISOString() };
+  }
+
   /** Update gamification configuration settings */
   async updateConfig(data: Record<string, unknown>): Promise<void> {
     for (const [key, value] of Object.entries(data)) {

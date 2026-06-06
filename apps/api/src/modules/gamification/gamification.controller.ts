@@ -215,6 +215,17 @@ export class GamificationController {
   }
 
   /**
+   * Get sync config — config + timestamp for mobile clients.
+   */
+  @Get('sync-config')
+  @Public()
+  @ApiOperation({ summary: 'Get gamification config for sync (no auth required)' })
+  async getSyncConfig() {
+    const data = await this.gamificationService.getSyncConfig();
+    return { success: true, data };
+  }
+
+  /**
    * Get gamification configuration settings.
    */
   @Get('admin/config')
