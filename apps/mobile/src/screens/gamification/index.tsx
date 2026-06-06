@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,6 +25,7 @@ interface Badge {
 
 interface GamificationProfile {
   anggotaId: string;
+  namaLengkap?: string;
   points: number;
   badges: Badge[];
   streaks: { latihan: number; iuran: number };
@@ -32,9 +35,20 @@ interface GamificationProfile {
 interface LeaderboardEntry {
   rank: number;
   anggotaId: string;
+  namaLengkap?: string;
   points: number;
   badges: number;
   streaks: { latihan: number; iuran: number };
+}
+
+interface PointEvent {
+  id: string;
+  anggotaId: string;
+  namaLengkap?: string;
+  type: string;
+  points: number;
+  description: string;
+  timestamp: string;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -46,33 +60,154 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const RANK_ICONS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
+const EVENT_ICONS: Record<string, string> = {
+  training: '🥋',
+  dues: '💰',
+  badge: '🏅',
+  achievement: '🎯',
+};
+
+type TabType = 'profile' | 'leaderboard' | 'badges';
+
+function AnimatedTabContent({ active, children }: { active: boolean; children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(active ? 1 : 0)).current;
+  const translateY = useRef(new Animated.Value(active ? 0 : 20)).current;
+  const wasEverActive = useRef(active);
+
+  useEffect(() => {
+    if (active) wasEverActive.current = true;
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: active ? 1 : 0,
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: active ? 0 : 20,
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [active]);
+
+  if (!active && !wasEverActive.current) return null;
+
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+function AnimatedNumber({ value }: { value: number }) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        easing: Easing.elastic(1),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [value]);
+
+  return (
+    <Animated.Text style={[styles.pointsValue, { transform: [{ scale }] }]}>
+      {value.toLocaleString('id-ID')}
+    </Animated.Text>
+  );
+}
+
+function PulseDot() {
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, []);
+
+  return <Animated.View style={[styles.liveDot, { opacity }]} />;
+}
+
+function getTimeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'baru saja';
+  if (mins < 60) return `${mins}m lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}j lalu`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}h lalu`;
+  return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+}
+
 export default function GamificationScreen() {
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
+  const [recentEvents, setRecentEvents] = useState<PointEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'leaderboard' | 'badges'>('profile');
+  const [activeTab, setActiveTab] = useState<TabType>('profile');
+
+  // Animated indicator position
+  const tabIndicatorX = useRef(new Animated.Value(0)).current;
+  const tabWidths = useRef({ profile: 0, leaderboard: 0, badges: 0 }).current;
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  const animateTab = (tab: TabType) => {
+    const positions = { profile: 0, leaderboard: 1, badges: 2 };
+    Animated.spring(tabIndicatorX, {
+      toValue: positions[tab] * (120 + 8), // tab width + gap
+      useNativeDriver: true,
+      friction: 8,
+      tension: 60,
+    }).start();
+    setActiveTab(tab);
+  };
+
   const fetchData = async () => {
     try {
       setError(null);
-      // Get the anggotaId from the user stored in AsyncStorage
       const userStr = await AsyncStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
       const anggotaId = user?.anggotaId || user?.id;
 
-      const [badgesRes, leaderboardRes] = await Promise.all([
+      const [badgesRes, leaderboardRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
         apiClient.get('/gamification/leaderboard?limit=10'),
+        apiClient.get('/gamification/events?limit=10'),
       ]);
       setAllBadges(badgesRes.data.data);
       setLeaderboard(leaderboardRes.data.data);
+      setRecentEvents(eventsRes.data.data);
 
       if (anggotaId) {
         const profileRes = await apiClient.get(`/gamification/profile/${anggotaId}`);
@@ -113,71 +248,124 @@ export default function GamificationScreen() {
     );
   }
 
+  const tabs: Array<{ key: TabType; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
+    { key: 'profile', label: 'Profil', icon: 'person' },
+    { key: 'leaderboard', label: 'Peringkat', icon: 'trophy' },
+    { key: 'badges', label: 'Badge', icon: 'medal' },
+  ];
+
   return (
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
     >
-      {/* Tab Selector */}
+      {/* Animated Tab Selector */}
       <View style={styles.tabContainer}>
-        {(['profile', 'leaderboard', 'badges'] as const).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab === 'profile' ? 'Profil' : tab === 'leaderboard' ? 'Peringkat' : 'Badge'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <View style={styles.tabRow}>
+          {tabs.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => animateTab(tab.key)}
+              style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={tab.icon}
+                size={16}
+                color={activeTab === tab.key ? '#fff' : '#6b7280'}
+              />
+              <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Profile Tab */}
-      {activeTab === 'profile' && profile && (
+      <AnimatedTabContent active={activeTab === 'profile'}>
         <View style={styles.section}>
-          {/* Points Card */}
-          <View style={styles.pointsCard}>
-            <Ionicons name="zap" size={32} color="#f59e0b" />
-            <Text style={styles.pointsValue}>{profile.points.toLocaleString('id-ID')}</Text>
-            <Text style={styles.pointsLabel}>Total Poin</Text>
-          </View>
-
-          {/* Streaks */}
-          <View style={styles.streaksRow}>
-            <View style={styles.streakCard}>
-              <Ionicons name="flame" size={24} color="#3b82f6" />
-              <Text style={styles.streakValue}>{profile.streaks.latihan}</Text>
-              <Text style={styles.streakLabel}>Streak Latihan</Text>
-            </View>
-            <View style={styles.streakCard}>
-              <Ionicons name="star" size={24} color="#22c55e" />
-              <Text style={styles.streakValue}>{profile.streaks.iuran}</Text>
-              <Text style={styles.streakLabel}>Streak Iuran</Text>
-            </View>
-          </View>
-
-          {/* Earned Badges */}
-          <View style={styles.subSection}>
-            <Text style={styles.subTitle}>Badge Diraih ({profile.badges.length})</Text>
-            {profile.badges.length > 0 ? (
-              <View style={styles.badgeGrid}>
-                {profile.badges.map((badge) => (
-                  <View key={badge.id} style={styles.badgeItem}>
-                    <Text style={styles.badgeIcon}>{badge.icon}</Text>
-                    <Text style={styles.badgeName}>{badge.name}</Text>
+          {profile ? (
+            <>
+              {/* Points Card with animated number */}
+              <View style={styles.pointsCard}>
+                <View style={styles.pointsHeader}>
+                  <Ionicons name="zap" size={28} color="#f59e0b" />
+                  <View style={styles.liveIndicator}>
+                    <PulseDot />
+                    <Text style={styles.liveText}>Live</Text>
                   </View>
-                ))}
+                </View>
+                <AnimatedNumber value={profile.points} />
+                <Text style={styles.pointsLabel}>Total Poin</Text>
               </View>
-            ) : (
-              <Text style={styles.emptyText}>Belum ada badge. Mulai latihan dan bayar iuran tepat waktu!</Text>
-            )}
-          </View>
+
+              {/* Streaks */}
+              <View style={styles.streaksRow}>
+                <TouchableOpacity style={styles.streakCard} activeOpacity={0.7}>
+                  <Ionicons name="flame" size={24} color="#3b82f6" />
+                  <Text style={styles.streakValue}>{profile.streaks.latihan}</Text>
+                  <Text style={styles.streakLabel}>Streak Latihan</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.streakCard} activeOpacity={0.7}>
+                  <Ionicons name="star" size={24} color="#22c55e" />
+                  <Text style={styles.streakValue}>{profile.streaks.iuran}</Text>
+                  <Text style={styles.streakLabel}>Streak Iuran</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Earned Badges */}
+              {profile.badges.length > 0 && (
+                <View style={styles.subSection}>
+                  <Text style={styles.subTitle}>Badge Diraih ({profile.badges.length})</Text>
+                  <View style={styles.badgeGrid}>
+                    {profile.badges.map((badge, idx) => (
+                      <View key={badge.id} style={[styles.badgeItem, { animationDelay: `${idx * 50}ms` }]}>
+                        <Text style={styles.badgeIcon}>{badge.icon}</Text>
+                        <Text style={styles.badgeName}>{badge.name}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* No badges */}
+              {profile.badges.length === 0 && (
+                <View style={styles.subSection}>
+                  <Text style={styles.subTitle}>Badge Diraih (0)</Text>
+                  <Text style={styles.emptyText}>Belum ada badge. Mulai latihan dan bayar iuran tepat waktu!</Text>
+                </View>
+              )}
+
+              {/* Recent Events */}
+              {recentEvents.length > 0 && (
+                <View style={styles.subSection}>
+                  <Text style={styles.subTitle}>Aktivitas Terbaru</Text>
+                  {recentEvents.slice(0, 5).map((event, idx) => (
+                    <View key={event.id} style={styles.eventItem}>
+                      <View style={styles.eventIconWrap}>
+                        <Text style={styles.eventIcon}>{EVENT_ICONS[event.type] || '📌'}</Text>
+                      </View>
+                      <View style={styles.eventInfo}>
+                        <Text style={styles.eventDesc} numberOfLines={1}>{event.description}</Text>
+                        <Text style={styles.eventTime}>{getTimeAgo(event.timestamp)}</Text>
+                      </View>
+                      <View style={styles.eventPoints}>
+                        <Text style={styles.eventPointsText}>+{event.points}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
+          ) : (
+            <Text style={styles.emptyText}>Login untuk melihat profil gamifikasi Anda</Text>
+          )}
         </View>
-      )}
+      </AnimatedTabContent>
 
       {/* Leaderboard Tab */}
-      {activeTab === 'leaderboard' && (
+      <AnimatedTabContent active={activeTab === 'leaderboard'}>
         <View style={styles.section}>
           <View style={styles.leaderboardHeader}>
             <Ionicons name="trophy" size={24} color="#f59e0b" />
@@ -185,10 +373,16 @@ export default function GamificationScreen() {
           </View>
           {leaderboard.length > 0 ? (
             leaderboard.map((entry) => (
-              <View key={entry.anggotaId} style={[styles.leaderboardItem, entry.rank <= 3 && styles.topThree]}>
+              <TouchableOpacity
+                key={entry.anggotaId}
+                style={[styles.leaderboardItem, entry.rank <= 3 && styles.topThree]}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.rankIcon}>{RANK_ICONS[entry.rank] || `#${entry.rank}`}</Text>
                 <View style={styles.leaderboardInfo}>
-                  <Text style={styles.leaderboardName}>{entry.anggotaId}</Text>
+                  <Text style={styles.leaderboardName} numberOfLines={1}>
+                    {entry.namaLengkap || entry.anggotaId}
+                  </Text>
                   <View style={styles.leaderboardMeta}>
                     <Text style={styles.metaItem}>🔥 {entry.streaks.latihan}</Text>
                     <Text style={styles.metaItem}>⭐ {entry.streaks.iuran}</Text>
@@ -198,22 +392,26 @@ export default function GamificationScreen() {
                   <Ionicons name="zap" size={14} color="#f59e0b" />
                   <Text style={styles.pointsText}>{entry.points.toLocaleString('id-ID')}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           ) : (
             <Text style={styles.emptyText}>Belum ada data leaderboard</Text>
           )}
         </View>
-      )}
+      </AnimatedTabContent>
 
       {/* Badges Tab */}
-      {activeTab === 'badges' && (
+      <AnimatedTabContent active={activeTab === 'badges'}>
         <View style={styles.section}>
           <Text style={styles.subTitle}>Semua Badge ({allBadges.length})</Text>
           {allBadges.map((badge) => {
             const isEarned = profile?.badges.some((b) => b.id === badge.id);
             return (
-              <View key={badge.id} style={[styles.badgeCard, isEarned && styles.badgeEarned]}>
+              <TouchableOpacity
+                key={badge.id}
+                style={[styles.badgeCard, isEarned && styles.badgeEarned]}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.badgeCardIcon}>{badge.icon}</Text>
                 <View style={styles.badgeCardInfo}>
                   <Text style={styles.badgeCardName}>{badge.name}</Text>
@@ -226,11 +424,11 @@ export default function GamificationScreen() {
                     <Text style={styles.categoryText}>{badge.category}</Text>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
-      )}
+      </AnimatedTabContent>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -244,28 +442,89 @@ const styles = StyleSheet.create({
   errorText: { marginTop: 12, fontSize: 14, color: '#ef4444', textAlign: 'center' },
   retryButton: { marginTop: 16, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: '#3b82f6', borderRadius: 8 },
   retryText: { color: '#fff', fontWeight: '600' },
-  tabContainer: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, gap: 8 },
-  tab: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: '#fff', alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb' },
-  tabActive: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
+
+  // Animated Tabs
+  tabContainer: { paddingHorizontal: 16, paddingTop: 12 },
+  tabRow: { flexDirection: 'row', backgroundColor: '#e5e7eb', borderRadius: 12, padding: 3 },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  tabActive: { backgroundColor: '#3b82f6', shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
   tabText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
   tabTextActive: { color: '#fff' },
+
+  // Sections
   section: { paddingHorizontal: 16, paddingTop: 16 },
-  pointsCard: { backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 12 },
-  pointsValue: { fontSize: 36, fontWeight: '800', color: '#f59e0b', marginTop: 8 },
+
+  // Points Card
+  pointsCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  pointsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
+  liveIndicator: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
+  liveText: { fontSize: 10, color: '#22c55e', fontWeight: '600' },
+  pointsValue: { fontSize: 42, fontWeight: '800', color: '#f59e0b', marginTop: 8 },
   pointsLabel: { fontSize: 14, color: '#6b7280', marginTop: 4 },
+
+  // Streaks
   streaksRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  streakCard: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb' },
-  streakValue: { fontSize: 24, fontWeight: '700', color: '#1f2937', marginTop: 8 },
+  streakCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  streakValue: { fontSize: 28, fontWeight: '700', color: '#1f2937', marginTop: 8 },
   streakLabel: { fontSize: 12, color: '#6b7280', marginTop: 4 },
+
+  // Badge Grid
   subSection: { marginBottom: 16 },
   subTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badgeItem: { backgroundColor: '#fff', borderRadius: 12, padding: 12, alignItems: 'center', width: 80, borderWidth: 1, borderColor: '#e5e7eb' },
+  badgeItem: { backgroundColor: '#fff', borderRadius: 14, padding: 12, alignItems: 'center', width: 80, borderWidth: 1, borderColor: '#e5e7eb' },
   badgeIcon: { fontSize: 28 },
   badgeName: { fontSize: 10, color: '#374151', marginTop: 4, textAlign: 'center', fontWeight: '500' },
+
+  // Events
+  eventItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: '#e5e7eb' },
+  eventIconWrap: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
+  eventIcon: { fontSize: 16 },
+  eventInfo: { flex: 1, marginLeft: 10 },
+  eventDesc: { fontSize: 13, color: '#1f2937', fontWeight: '500' },
+  eventTime: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  eventPoints: { backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  eventPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
+
+  // Leaderboard
   leaderboardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   leaderboardTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937' },
-  leaderboardItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+  leaderboardItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
   topThree: { backgroundColor: '#fffbeb', borderColor: '#fde68a' },
   rankIcon: { fontSize: 20, width: 36, textAlign: 'center' },
   leaderboardInfo: { flex: 1 },
@@ -274,13 +533,17 @@ const styles = StyleSheet.create({
   metaItem: { fontSize: 11, color: '#6b7280' },
   leaderboardPoints: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fef3c7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   pointsText: { fontSize: 13, fontWeight: '700', color: '#92400e' },
-  badgeCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+
+  // Badges Tab
+  badgeCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
   badgeEarned: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
   badgeCardIcon: { fontSize: 28, width: 40, textAlign: 'center' },
   badgeCardInfo: { flex: 1, marginLeft: 8 },
   badgeCardName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
   badgeCardDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  categoryBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   categoryText: { fontSize: 10, color: '#fff', fontWeight: '600' },
+
+  // Empty
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },
 });

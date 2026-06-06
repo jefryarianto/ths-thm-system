@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import {
   Trophy, Award, TrendingUp, Medal, Star, Zap,
-  AlertCircle, Users, Target, Flame,
+  AlertCircle, Users, Target, Flame, Activity,
+  ArrowRight,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 
 interface Badge {
@@ -24,6 +26,7 @@ interface Badge {
 interface LeaderboardEntry {
   rank: number;
   anggotaId: string;
+  namaLengkap?: string;
   points: number;
   badges: number;
   streaks: { latihan: number; iuran: number };
@@ -34,6 +37,16 @@ interface GamificationStats {
   totalEvents: number;
   totalPointsAwarded: number;
   badgesAwarded: number;
+}
+
+interface PointEvent {
+  id: string;
+  anggotaId: string;
+  namaLengkap?: string;
+  type: string;
+  points: number;
+  description: string;
+  timestamp: string;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -67,11 +80,19 @@ const colorMap = {
 
 const RANK_ICONS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
+const EVENT_ICONS: Record<string, string> = {
+  training: '🥋',
+  dues: '💰',
+  badge: '🏅',
+  achievement: '🎯',
+};
+
 export default function GamificationPage() {
   const router = useRouter();
   const [badges, setBadges] = useState<Badge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<GamificationStats | null>(null);
+  const [events, setEvents] = useState<PointEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,20 +108,34 @@ export default function GamificationPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [badgesRes, leaderboardRes, statsRes] = await Promise.all([
+      const [badgesRes, leaderboardRes, statsRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
         apiClient.get('/gamification/leaderboard?limit=10'),
         apiClient.get('/gamification/stats'),
+        apiClient.get('/gamification/events?limit=10'),
       ]);
       setBadges(badgesRes.data.data);
       setLeaderboard(leaderboardRes.data.data);
       setStats(statsRes.data.data);
+      setEvents(eventsRes.data.data);
     } catch (err) {
       console.error('Failed to fetch gamification data:', err);
       setError('Gagal memuat data gamifikasi');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'baru saja';
+    if (mins < 60) return `${mins}m lalu`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}j lalu`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}h lalu`;
+    return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
   if (loading) {
@@ -184,9 +219,12 @@ export default function GamificationPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Leaderboard */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Medal size={20} className="text-yellow-500" />
-            <h3 className="text-base font-semibold text-gray-900">Leaderboard</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Medal size={20} className="text-yellow-500" />
+              <h3 className="text-base font-semibold text-gray-900">Leaderboard</h3>
+            </div>
+            <span className="text-xs text-gray-400">Klik nama untuk detail</span>
           </div>
           {leaderboard.length > 0 ? (
             <div className="overflow-x-auto">
@@ -203,12 +241,18 @@ export default function GamificationPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {leaderboard.map((entry) => (
-                    <tr key={entry.anggotaId} className={`hover:bg-gray-50 transition ${entry.rank <= 3 ? 'bg-yellow-50/30' : ''}`}>
+                    <tr
+                      key={entry.anggotaId}
+                      className={`hover:bg-blue-50 transition cursor-pointer ${entry.rank <= 3 ? 'bg-yellow-50/30' : ''}`}
+                      onClick={() => router.push(`/gamification/${entry.anggotaId}`)}
+                    >
                       <td className="px-3 py-3">
                         <span className="text-lg">{RANK_ICONS[entry.rank] || entry.rank}</span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-sm font-medium text-gray-900">{entry.anggotaId}</span>
+                        <span className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                          {entry.namaLengkap || entry.anggotaId}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
@@ -286,31 +330,82 @@ export default function GamificationPage() {
         </div>
       </div>
 
-      {/* All Badges Grid */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-gray-900">Semua Badge</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{badges.length} badge tersedia</p>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {badges.map((badge) => (
-            <div
-              key={badge.id}
-              className="relative p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center group"
-            >
-              <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
-                {badge.icon}
-              </div>
-              <p className="text-sm font-medium text-gray-900">{badge.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{badge.description}</p>
-              <span
-                className="mt-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-medium text-white"
-                style={{ backgroundColor: CATEGORY_COLORS[badge.category] || '#6b7280' }}
-              >
-                {CATEGORY_LABELS[badge.category] || badge.category}
-              </span>
+      {/* Recent Events + Badges Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Recent Events Feed */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity size={20} className="text-blue-500" />
+              <h3 className="text-base font-semibold text-gray-900">Aktivitas Terbaru</h3>
             </div>
-          ))}
+            <Link
+              href="/gamification"
+              className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+            >
+              Lihat semua <ArrowRight size={12} />
+            </Link>
+          </div>
+          {events.length > 0 ? (
+            <div className="space-y-0">
+              {events.map((event, idx) => (
+                <div key={event.id} className="flex gap-3 relative">
+                  {idx < events.length - 1 && (
+                    <div className="absolute left-[13px] top-8 bottom-0 w-0.5 bg-gray-100" />
+                  )}
+                  <div className="relative z-10 flex-shrink-0 w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center">
+                    <span className="text-xs">{EVENT_ICONS[event.type] || '📌'}</span>
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm text-gray-900 truncate">
+                          <span className="font-medium">{event.namaLengkap || event.anggotaId.slice(0, 8)}</span>
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{event.description}</p>
+                      </div>
+                      <span className="flex-shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-[10px] font-semibold">
+                        <Zap size={8} />+{event.points}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{getTimeAgo(event.timestamp)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+              Belum ada aktivitas
+            </div>
+          )}
+        </div>
+
+        {/* All Badges Grid */}
+        <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900">Semua Badge</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{badges.length} badge tersedia</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+            {badges.map((badge) => (
+              <div
+                key={badge.id}
+                className="relative p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-center group"
+              >
+                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">
+                  {badge.icon}
+                </div>
+                <p className="text-sm font-medium text-gray-900">{badge.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{badge.description}</p>
+                <span
+                  className="mt-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-medium text-white"
+                  style={{ backgroundColor: CATEGORY_COLORS[badge.category] || '#6b7280' }}
+                >
+                  {CATEGORY_LABELS[badge.category] || badge.category}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

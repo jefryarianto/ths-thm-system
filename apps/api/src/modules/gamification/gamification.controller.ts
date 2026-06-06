@@ -59,6 +59,19 @@ export class GamificationController {
   }
 
   /**
+   * Get recent point events across all members (activity feed).
+   */
+  @Get('events')
+  @ApiOperation({ summary: 'Get global recent point events (activity feed)' })
+  async getGlobalRecentEvents(@Query('limit') limit?: string) {
+    const events = await this.gamificationService.getGlobalRecentEvents(limit ? parseInt(limit) : 20);
+    return {
+      success: true,
+      data: events,
+    };
+  }
+
+  /**
    * Get the leaderboard — top members by points.
    */
   @Get('leaderboard')
@@ -70,6 +83,7 @@ export class GamificationController {
       data: leaderboard.map((p, i) => ({
         rank: i + 1,
         anggotaId: p.anggotaId,
+        namaLengkap: p.namaLengkap,
         points: p.points,
         badges: p.badges.length,
         streaks: p.streaks,

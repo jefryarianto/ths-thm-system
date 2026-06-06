@@ -18,6 +18,7 @@ export interface Badge {
  */
 export interface GamificationProfile {
   anggotaId: string;
+  namaLengkap?: string;
   points: number;
   badges: string[];
   streaks: {
@@ -33,6 +34,7 @@ export interface GamificationProfile {
 export interface PointEvent {
   id: string;
   anggotaId: string;
+  namaLengkap?: string;
   type: string;
   points: number;
   description: string;
@@ -327,8 +329,15 @@ export class GamificationService {
       select: { badgeId: true },
     });
 
+    // Get member name
+    const anggota = await this.prisma.anggota.findUnique({
+      where: { id: anggotaId },
+      select: { namaLengkap: true },
+    });
+
     return {
       anggotaId,
+      namaLengkap: anggota?.namaLengkap ?? undefined,
       points: profile.points,
       badges: badges.map((b) => b.badgeId),
       streaks: {
@@ -360,11 +369,15 @@ export class GamificationService {
     const profiles = await this.prisma.gamificationProfile.findMany({
       orderBy: { points: 'desc' },
       take: limit,
-      include: { badges: { select: { badgeId: true } } },
+      include: {
+        badges: { select: { badgeId: true } },
+        anggota: { select: { namaLengkap: true } },
+      },
     });
 
     return profiles.map((p) => ({
       anggotaId: p.anggotaId,
+      namaLengkap: p.anggota?.namaLengkap ?? undefined,
       points: p.points,
       badges: p.badges.map((b) => b.badgeId),
       streaks: {
@@ -389,9 +402,39 @@ export class GamificationService {
       take: limit,
     });
 
+    // Get member names for each event
+    const anggotaIds = [...new Set(events.map((e) => e.anggotaId))];
+    const anggotas = await this.prisma.anggota.findMany({
+      where: { id: { in: anggotaIds } },
+      select: { id: true, namaLengkap: true },
+    });
+    const namaMap = new Map(anggotas.map((a) => [a.id, a.namaLengkap]));
+
     return events.map((e) => ({
       id: e.id,
       anggotaId: e.anggotaId,
+      namaLengkap: namaMap.get(e.anggotaId) ?? undefined,
+      type: e.type,
+      points: e.points,
+      description: e.description,
+      timestamp: e.timestamp.toISOString(),
+    }));
+  }
+
+  /** Get recent point events across all members */
+  async getGlobalRecentEvents(limit: number = 20): Promise<PointEvent[]> {
+    const events = await this.prisma.gamificationEvent.findMany({
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+      include: {
+        anggota: { select: { namaLengkap: true } },
+      },
+    });
+
+    return events.map((e) => ({
+      id: e.id,
+      anggotaId: e.anggotaId,
+      namaLengkap: e.anggota?.namaLengkap ?? undefined,
       type: e.type,
       points: e.points,
       description: e.description,
