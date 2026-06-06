@@ -115,7 +115,7 @@ export default function LettersScreen() {
                   <Text style={styles.perihal} numberOfLines={1}>{item.perihal}</Text>
                   <Text style={styles.nomorSurat}>{item.nomorSurat}</Text>
                   <Text style={styles.partner}>
-                    {tab === 'incoming' ? `Dari: ${(item as IncomingLetter).pengirim}` : `Kepada: ${(item as OutgoingLetter).tujuan}`}
+                    {tab === 'incoming' ? `Dari: ${(item as any).pengirim}` : `Kepada: ${(item as any).tujuan}`}
                   </Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: s.bg }]}>

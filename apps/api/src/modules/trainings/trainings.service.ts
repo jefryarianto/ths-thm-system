@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class TrainingsService {
@@ -13,6 +14,8 @@ export class TrainingsService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    @Inject(forwardRef(() => GamificationService))
+    private readonly gamificationService: GamificationService,
   ) {}
 
   async findAll(query: TrainingFilterDto, scope?: UserScope) {
@@ -133,6 +136,16 @@ export class TrainingsService {
         catatan: dto.catatan,
       },
     });
+
+    // Auto-award gamification points for training attendance
+    if (dto.hadir !== false && dto.anggotaId) {
+      try {
+        await this.gamificationService.recordTraining(dto.anggotaId);
+      } catch (error) {
+        console.warn('Failed to award gamification points for training:', (error as Error).message);
+      }
+    }
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: attendance, message: 'Kehadiran tercatat' };
   }

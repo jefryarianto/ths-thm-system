@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class DuesService {
@@ -14,6 +15,8 @@ export class DuesService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    @Inject(forwardRef(() => GamificationService))
+    private readonly gamificationService: GamificationService,
   ) {}
 
   async findAll(query: DueFilterDto, scope?: UserScope) {
@@ -42,6 +45,16 @@ export class DuesService {
 
   async create(dto: CreateDueDto) {
     const due = await this.prisma.iuran.create({ data: dto as never });
+
+    // Auto-award gamification points for on-time dues payment
+    if (dto.status === 'lunas' && dto.anggotaId) {
+      try {
+        await this.gamificationService.recordDuesPayment(dto.anggotaId, true);
+      } catch (error) {
+        console.warn('Failed to award gamification points for dues:', (error as Error).message);
+      }
+    }
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
     return { success: true, data: due, message: 'Pembayaran iuran berhasil dicatat' };
@@ -66,14 +79,34 @@ export class DuesService {
     }
 
     const data: Record<string, unknown> = {};
+    let statusChangedToLunas = false;
     if (dto.periode) data.periode = dto.periode;
     if (dto.jumlah !== undefined) data.jumlah = dto.jumlah;
     if (dto.tanggalBayar) data.tanggalBayar = new Date(dto.tanggalBayar);
     if (dto.metodeBayar) data.metodeBayar = dto.metodeBayar;
-    if (dto.status) data.status = dto.status;
+    if (dto.status) {
+      data.status = dto.status;
+      if (dto.status === 'lunas') statusChangedToLunas = true;
+    }
     if (dto.buktiBayarPath) data.buktiBayarPath = dto.buktiBayarPath;
 
     const due = await this.prisma.iuran.update({ where: { id }, data });
+
+    // Auto-award gamification points when status changes to 'lunas'
+    if (statusChangedToLunas) {
+      try {
+        const existingDue = await this.prisma.iuran.findUnique({
+          where: { id },
+          select: { anggotaId: true },
+        });
+        if (existingDue?.anggotaId) {
+          await this.gamificationService.recordDuesPayment(existingDue.anggotaId, true);
+        }
+      } catch (error) {
+        console.warn('Failed to award gamification points for dues update:', (error as Error).message);
+      }
+    }
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
     return { success: true, data: due, message: 'Data iuran berhasil diperbarui' };

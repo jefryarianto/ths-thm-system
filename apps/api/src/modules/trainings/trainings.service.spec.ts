@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { TrainingsService } from './trainings.service';
+import { GamificationService } from '../gamification/gamification.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -45,6 +46,11 @@ describe('TrainingsService', () => {
     invalidatePrefix: jest.fn(),
   };
 
+  const mockGamification = {
+    recordTraining: jest.fn().mockResolvedValue({ profile: { points: 10 }, newBadges: [] }),
+    recordDuesPayment: jest.fn().mockResolvedValue({ profile: { points: 20 }, newBadges: [] }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -52,6 +58,7 @@ describe('TrainingsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
+        { provide: GamificationService, useValue: mockGamification },
       ],
     }).compile();
 

@@ -287,6 +287,12 @@ export default function GamificationScreen() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
+  // Filter state — must be declared BEFORE effects that use them
+  const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
+  const [selectedDistrik, setSelectedDistrik] = useState('');
+  const [selectedWilayah, setSelectedWilayah] = useState('');
+  const [selectedRanting, setSelectedRanting] = useState('');
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -305,15 +311,8 @@ export default function GamificationScreen() {
     setPage(0);
   }, [debouncedSearch, selectedDistrik, selectedWilayah, selectedRanting]);
 
-  // Filter state
-  const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
-  const [selectedDistrik, setSelectedDistrik] = useState('');
-  const [selectedWilayah, setSelectedWilayah] = useState('');
-  const [selectedRanting, setSelectedRanting] = useState('');
-
   // Animated indicator position
   const tabIndicatorX = useRef(new Animated.Value(0)).current;
-  const tabWidths = useRef({ profile: 0, leaderboard: 0, badges: 0 }).current;
 
   useEffect(() => {
     fetchData();
@@ -484,7 +483,7 @@ export default function GamificationScreen() {
               {/* Points Card with animated number */}
               <View style={styles.pointsCard}>
                 <View style={styles.pointsHeader}>
-                  <Ionicons name="zap" size={28} color="#f59e0b" />
+                  <Ionicons name={'zap' as any} size={28} color="#f59e0b" />
                   <View style={styles.liveIndicator}>
                     <PulseDot />
                     <Text style={styles.liveText}>Live</Text>
@@ -681,7 +680,7 @@ export default function GamificationScreen() {
                   </View>
                 </View>
                 <View style={styles.leaderboardPoints}>
-                  <Ionicons name="zap" size={14} color="#f59e0b" />
+                  <Ionicons name={'zap' as any} size={14} color="#f59e0b" />
                   <Text style={styles.pointsText}>{entry.points.toLocaleString('id-ID')}</Text>
                 </View>
               </TouchableOpacity>
@@ -691,7 +690,7 @@ export default function GamificationScreen() {
           )}
           {hasMore && leaderboard.length > 0 && (
             <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore}>
-              <Ionicons name="arrow-down" size={16} color="#3b82f6" />
+              <Ionicons name={'arrow-down' as any} size={16} color="#3b82f6" />
               <Text style={styles.loadMoreText}>Muat Lainnya</Text>
             </TouchableOpacity>
           )}
@@ -747,7 +746,7 @@ export default function GamificationScreen() {
                 )}
                 <View style={styles.rewardMeta}>
                   <View style={styles.rewardPoints}>
-                    <Ionicons name="zap" size={12} color="#f59e0b" />
+                    <Ionicons name={'zap' as any} size={12} color="#f59e0b" />
                     <Text style={styles.rewardPointsText}>{reward.pointCost.toLocaleString('id-ID')}</Text>
                   </View>
                   <Text style={styles.rewardStock}>
