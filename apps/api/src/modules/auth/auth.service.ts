@@ -64,8 +64,11 @@ export class AuthService {
     const user = await this.prisma.user.update({ where: { id: userId }, data: userData });
 
     // Update Anggota model (profile fields like noHp, alamat, tempatLahir, tanggalLahir)
-    // Find the anggota record by matching email
-    if (dto.noHp !== undefined || dto.alamat !== undefined || dto.tempatLahir !== undefined || dto.tanggalLahir !== undefined || dto.email !== undefined || dto.namaLengkap !== undefined) {
+    // Only triggers when profile-specific fields are provided
+    const hasAnggotaFields = dto.noHp !== undefined || dto.alamat !== undefined || dto.tempatLahir !== undefined || dto.tanggalLahir !== undefined;
+    const hasUserFields = dto.namaLengkap !== undefined || dto.email !== undefined;
+
+    if (hasAnggotaFields) {
       const anggotaData: Record<string, unknown> = {};
       if (dto.namaLengkap) anggotaData.namaLengkap = dto.namaLengkap;
       if (dto.noHp !== undefined) anggotaData.noHp = dto.noHp;
@@ -83,7 +86,7 @@ export class AuthService {
           where: { id: anggota.id },
           data: anggotaData,
         });
-      } else if (dto.noHp !== undefined || dto.alamat !== undefined || dto.tempatLahir !== undefined || dto.tanggalLahir !== undefined) {
+      } else {
         console.warn(`updateProfile: No Anggota record found for user ${userId} (email: ${user.email}) — profile fields not synced`);
       }
     }

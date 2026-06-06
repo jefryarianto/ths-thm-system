@@ -52,36 +52,35 @@ export class NotificationsService {
     const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), 'umum');
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
-    const notifications = [];
-    for (const user of allowedUsers) {
-      const notification = await this.prisma.notifikasi.create({
-        data: {
+    // Batch insert all notifications in a single query
+    if (allowedUsers.length > 0) {
+      await this.prisma.notifikasi.createMany({
+        data: allowedUsers.map((user) => ({
           userId: user.id,
           judul: dto.judul,
           isi: dto.isi,
           tipe: 'umum',
-        },
+        })),
       });
-      notifications.push(notification);
     }
 
     // Push FCM to filtered users
     await this.pushBroadcast(dto.judul, dto.isi, allowedUsers.map(u => u.id));
 
-    // Emit real-time via WebSocket to each allowed user
+    // Emit real-time via WebSocket — parallelized with Promise.allSettled
     const countResults = await this.prisma.notifikasi.groupBy({
       by: ['userId'],
       where: { userId: { in: allowedUsers.map((u) => u.id) }, isRead: false },
       _count: true,
     });
     const countMap = new Map(countResults.map((r) => [r.userId, r._count]));
-    for (const user of allowedUsers) {
-      const notif = notifications.find((n) => n.userId === user.id);
-      if (notif) {
-        this.eventsGateway?.sendNotification(user.id, notif);
+
+    await Promise.allSettled(
+      allowedUsers.map((user) => {
+        this.eventsGateway?.sendNotification(user.id, { judul: dto.judul, isi: dto.isi, tipe: 'umum' });
         this.eventsGateway?.sendUnreadCount(user.id, countMap.get(user.id) || 0);
-      }
-    }
+      }),
+    );
 
     return { success: true, data: { sentTo: allowedUsers.length, total: users.length }, message: `Notifikasi broadcast ke ${allowedUsers.length}/${users.length} user` };
   }
@@ -97,31 +96,35 @@ export class NotificationsService {
     const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), tipe);
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
-    for (const user of allowedUsers) {
-      await this.prisma.notifikasi.create({
-        data: {
+    // Batch insert all notifications in a single query
+    if (allowedUsers.length > 0) {
+      await this.prisma.notifikasi.createMany({
+        data: allowedUsers.map((user) => ({
           userId: user.id,
           judul: dto.judul,
           isi: dto.isi,
           tipe: tipe as never,
-        },
+        })),
       });
     }
 
     // Push FCM to filtered users
     await this.pushBroadcast(dto.judul, dto.isi, allowedUsers.map(u => u.id));
 
-    // Emit real-time via WebSocket to each allowed user
+    // Emit real-time via WebSocket — parallelized with Promise.allSettled
     const countResults = await this.prisma.notifikasi.groupBy({
       by: ['userId'],
       where: { userId: { in: allowedUsers.map((u) => u.id) }, isRead: false },
       _count: true,
     });
     const countMap = new Map(countResults.map((r) => [r.userId, r._count]));
-    for (const user of allowedUsers) {
-      this.eventsGateway?.sendNotification(user.id, { judul: dto.judul, isi: dto.isi, tipe });
-      this.eventsGateway?.sendUnreadCount(user.id, countMap.get(user.id) || 0);
-    }
+
+    await Promise.allSettled(
+      allowedUsers.map((user) => {
+        this.eventsGateway?.sendNotification(user.id, { judul: dto.judul, isi: dto.isi, tipe });
+        this.eventsGateway?.sendUnreadCount(user.id, countMap.get(user.id) || 0);
+      }),
+    );
 
     return { success: true, data: { sentTo: allowedUsers.length, total: users.length }, message: `Notifikasi ke role ${dto.role} berhasil (${allowedUsers.length}/${users.length} menerima)` };
   }

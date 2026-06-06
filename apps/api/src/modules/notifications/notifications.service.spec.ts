@@ -11,6 +11,7 @@ describe('NotificationsService', () => {
   const mockPrisma = {
     notifikasi: {
       create: jest.fn(),
+      createMany: jest.fn().mockResolvedValue({ count: 0 }),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       count: jest.fn(),

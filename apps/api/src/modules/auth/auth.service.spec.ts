@@ -178,6 +178,93 @@ describe('AuthService', () => {
       const result = await service.updateProfile('u1', { email: 'updated@ths-thm.org' });
       expect(result.success).toBe(true);
     });
+
+    it('should sync profile fields to Anggota model when noHp is provided', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        namaLengkap: 'Anggota User',
+      });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1', email: 'test@ths-thm.org' });
+      mockPrisma.anggota.update.mockResolvedValue({});
+
+      const result = await service.updateProfile('u1', {
+        namaLengkap: 'Anggota User',
+        noHp: '081234567890',
+        alamat: 'Jl. Test No. 123',
+      });
+
+      expect(result.success).toBe(true);
+      // Should find Anggota by user email
+      expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
+        where: { email: 'test@ths-thm.org' },
+      });
+      // Should update Anggota with profile fields
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: expect.objectContaining({
+          namaLengkap: 'Anggota User',
+          noHp: '081234567890',
+          alamat: 'Jl. Test No. 123',
+        }),
+      });
+    });
+
+    it('should handle tanggalLahir conversion to Date', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1', email: 'test@ths-thm.org' });
+      mockPrisma.anggota.update.mockResolvedValue({});
+
+      const result = await service.updateProfile('u1', {
+        tempatLahir: 'Jakarta',
+        tanggalLahir: '2000-01-15',
+      });
+
+      expect(result.success).toBe(true);
+      // Verify tanggalLahir is converted to Date object
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: expect.objectContaining({
+          tempatLahir: 'Jakarta',
+          tanggalLahir: expect.any(Date),
+        }),
+      });
+      // Verify date value
+      const updateCall = mockPrisma.anggota.update.mock.calls[0][0];
+      const date = updateCall.data.tanggalLahir as Date;
+      expect(date.toISOString()).toContain('2000-01-15');
+    });
+
+    it('should not update Anggota when no matching record found', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      // No matching Anggota record
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+
+      const result = await service.updateProfile('u1', {
+        noHp: '081234567890',
+        alamat: 'Jl. Test',
+      });
+
+      expect(result.success).toBe(true);
+      // Should NOT call anggota.update since no match found
+      expect(mockPrisma.anggota.update).not.toHaveBeenCalled();
+    });
+
+    it('should not try to update Anggota when only core User fields change', async () => {
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      // No Anggota search should happen for core-only fields
+      const result = await service.updateProfile('u1', {
+        email: 'newemail@ths-thm.org',
+      });
+
+      expect(result.success).toBe(true);
+      // Should not query or update Anggota at all
+      expect(mockPrisma.anggota.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.anggota.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('changePassword', () => {
