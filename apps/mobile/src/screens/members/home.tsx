@@ -12,6 +12,10 @@ const menuItems = [
   { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
   { icon: 'document-text', label: 'Dokumen', route: '/documents' },
   { icon: 'cash', label: 'Iuran', route: '/dues' },
+  { icon: 'fitness', label: 'Latihan', route: '/trainings' },
+  { icon: 'calendar', label: 'Kegiatan', route: '/activities' },
+  { icon: 'people', label: 'Calon', route: '/candidates' },
+  { icon: 'mail', label: 'Surat', route: '/letters' },
   { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },
 ];
 
@@ -81,7 +85,7 @@ const styles = StyleSheet.create({
   name: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
   cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -20 },
   card: {
-    width: '30%', backgroundColor: '#fff', borderRadius: 12, padding: 16, margin: '1.5%',
+    width: '30%', backgroundColor: '#fff', borderRadius: 12, padding: 14, margin: '1.5%',
     alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   cardLabel: { fontSize: 12, color: '#374151', marginTop: 8, textAlign: 'center', fontWeight: '500' },
