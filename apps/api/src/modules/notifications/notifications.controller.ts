@@ -30,14 +30,17 @@ export class NotificationsController {
   }
 
   @Get()
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   findAll(@CurrentUser() user: { id: string }, @Query() query: NotificationFilterDto) {
     return this.service.findAll(user.id, query);
   }
 
   @Patch(':id/read')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   markAsRead(@Param('id') id: string) { return this.service.markAsRead(id); }
 
   @Patch('read-all')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   markAllAsRead(@CurrentUser() user: { id: string }) { return this.service.markAllAsRead(user.id); }
 
   @Get('stats')
@@ -47,26 +50,32 @@ export class NotificationsController {
   }
 
   @Get('preferences')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   getPreferences(@CurrentUser() user: { id: string }) {
     return this.service.getPreferences(user.id);
   }
 
   @Patch('preferences')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   updatePreferences(@CurrentUser() user: { id: string }, @Body() dto: Record<string, boolean>) {
     return this.service.updatePreferences(user.id, dto);
   }
 
   @Get(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   findOne(@Param('id') id: string) { return this.service.findOne(id); }
 
   @Delete(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   delete(@Param('id') id: string) { return this.service.delete(id); }
 
   @Post('fcm-token')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   registerToken(@CurrentUser() user: { id: string }, @Body() dto: RegisterDeviceTokenDto) {
     return this.service.registerDeviceToken(user.id, dto.token, dto.platform);
   }
 
   @Delete('fcm-token/:id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   unregisterToken(@Param('id') id: string) { return this.service.unregisterDeviceToken(id); }
 }

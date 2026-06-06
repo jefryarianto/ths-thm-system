@@ -18,6 +18,8 @@ export class TrainingsController {
   findAll(@Query() query: TrainingFilterDto, @Req() req: ScopedRequest) { return this.service.findAll(query, req.scope); }
 
   @Get(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
 
   @Post()
@@ -36,23 +38,37 @@ export class TrainingsController {
   remove(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.remove(id, req.scope); }
 
   @Get(':id/attendances')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
   getAttendances(@Param('id') id: string) { return this.service.getAttendances(id); }
 
   @Post(':id/attendances')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   recordAttendance(@Param('id') id: string, @Body() dto: RecordAttendanceDto) { return this.service.recordAttendance(id, dto); }
 
   @Post(':id/attendances/import')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   importAttendance(@Param('id') id: string, @Body() importDto: ImportAttendanceDto) { return this.service.importAttendance(id, importDto.data); }
 
   @Get(':id/evaluations')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
   getEvaluations(@Param('id') id: string) { return this.service.getEvaluations(id); }
 
   @Post(':id/evaluations')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
   createEvaluation(@Param('id') id: string, @Body() dto: CreateEvaluationDto) { return this.service.createEvaluation(id, dto); }
 
   @Patch(':id/evaluations/:eid')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
   updateEvaluation(@Param('id') id: string, @Param('eid') eid: string, @Body() dto: UpdateEvaluationDto) { return this.service.updateEvaluation(id, eid, dto); }
 
   @Delete(':id/evaluations/:eid')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
   removeEvaluation(@Param('id') id: string, @Param('eid') eid: string) { return this.service.removeEvaluation(id, eid); }
 }

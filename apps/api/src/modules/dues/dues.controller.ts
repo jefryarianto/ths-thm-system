@@ -64,5 +64,7 @@ export class DuesController {
   }
 
   @Get(':id')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
 }

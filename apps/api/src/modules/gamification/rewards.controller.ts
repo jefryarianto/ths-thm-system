@@ -11,6 +11,8 @@ export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
   @Get('rewards')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get all available rewards' })
   async getRewards() {
     return { success: true, data: await this.rewardsService.getRewards() };
@@ -45,6 +47,8 @@ export class RewardsController {
   }
 
   @Post('rewards/:rewardId/redeem')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Redeem a reward with points' })
   async redeemReward(
     @Param('rewardId') rewardId: string,
@@ -55,6 +59,8 @@ export class RewardsController {
   }
 
   @Get('redemptions/:anggotaId')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get member redemptions' })
   async getMemberRedemptions(@Param('anggotaId') anggotaId: string) {
     return { success: true, data: await this.rewardsService.getMemberRedemptions(anggotaId) };
