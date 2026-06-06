@@ -21,6 +21,8 @@ export class GamificationController {
    * Get all available badges.
    */
   @Get('badges')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get all available badges' })
   getAllBadges() {
     return {
@@ -33,6 +35,8 @@ export class GamificationController {
    * Get a member's gamification profile.
    */
   @Get('profile/:anggotaId')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get member gamification profile' })
   async getProfile(@Param('anggotaId') anggotaId: string) {
     const profile = await this.gamificationService.getProfile(anggotaId);
@@ -47,6 +51,8 @@ export class GamificationController {
    * Get a member's recent point events.
    */
   @Get('profile/:anggotaId/events')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get member recent point events' })
   async getRecentEvents(
     @Param('anggotaId') anggotaId: string,
@@ -63,6 +69,8 @@ export class GamificationController {
    * Get recent point events across all members (activity feed).
    */
   @Get('events')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get global recent point events (activity feed)' })
   async getGlobalRecentEvents(@Query('limit') limit?: string) {
     const events = await this.gamificationService.getGlobalRecentEvents(limit ? parseInt(limit) : 20);
@@ -76,6 +84,8 @@ export class GamificationController {
    * Get points history aggregated by month for a member.
    */
   @Get('profile/:anggotaId/points-history')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get member points history by month' })
   async getPointsHistory(@Param('anggotaId') anggotaId: string) {
     return {
@@ -108,6 +118,8 @@ export class GamificationController {
    * Get organization structure for filter dropdowns.
    */
   @Get('org-structure')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get org structure (distrik → wilayah → ranting) for filters' })
   async getOrgStructure() {
     const data = await this.gamificationService.getOrgStructure();
@@ -120,6 +132,8 @@ export class GamificationController {
    * Search by member name: search query param.
    */
   @Get('leaderboard')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get top members leaderboard (optional scope filter, search & pagination)' })
   async getLeaderboard(
     @Query('limit') limit?: string,
@@ -153,6 +167,8 @@ export class GamificationController {
    * Get scoreboard breakdown — points aggregated by event type for a period.
    */
   @Get('scoreboard/breakdown')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get real points breakdown per module for scoreboard' })
   async getScoreboardBreakdown(@Query('period') period?: string) {
     const data = await this.gamificationService.getScoreboardBreakdown(
@@ -180,6 +196,7 @@ export class GamificationController {
    */
   @Get('admin/points-distribution')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get points distribution by level' })
   async getPointsDistribution() {
     const data = await this.gamificationService.getPointsDistribution();
@@ -191,6 +208,7 @@ export class GamificationController {
    */
   @Get('admin/top-redemptions')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get top reward redemptions' })
   async getTopRedemptions(@Query('limit') limit?: string) {
     const data = await this.gamificationService.getTopRedemptions(limit ? parseInt(limit) : 10);
@@ -202,6 +220,7 @@ export class GamificationController {
    */
   @Get('admin/points-report')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get points report for a period' })
   async getPointsReport(
     @Query('period') period?: string,
@@ -230,6 +249,7 @@ export class GamificationController {
    */
   @Get('admin/config')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get gamification configuration' })
   async getConfig() {
     const data = await this.gamificationService.getConfig();
@@ -241,6 +261,7 @@ export class GamificationController {
    */
   @Put('admin/config')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Update gamification configuration' })
   async updateConfig(@Body() body: Record<string, unknown>) {
     await this.gamificationService.updateConfig(body);
@@ -251,6 +272,8 @@ export class GamificationController {
    * Get weekly summary for a member.
    */
   @Get('profile/:anggotaId/weekly-summary')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
   @ApiOperation({ summary: 'Get weekly gamification summary for a member' })
   async getWeeklySummary(@Param('anggotaId') anggotaId: string) {
     const data = await this.gamificationService.getWeeklySummary(anggotaId);
