@@ -826,7 +826,7 @@ model GamificationBadge {
 
 model GamificationEvent {
   id          String   @id @default(uuid()) @db.Uuid
-  profileId   String   @map("profile_id")
+  profileId   String   @map("profile_id") @db.Uuid
   anggotaId   String   @map("anggota_id")
   type        String
   points      Int
@@ -861,7 +861,7 @@ model GamificationReward {
 
 model GamificationRedemption {
   id        String   @id @default(uuid()) @db.Uuid
-  rewardId  String   @map("reward_id")
+  rewardId  String   @map("reward_id") @db.Uuid
   anggotaId String   @map("anggota_id")
   pointsSpent Int    @map("points_spent")
   status    String   @default("pending")

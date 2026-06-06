@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ths-thm-db
+    container_name: ths-thm-system-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ths_thm
@@ -23,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: ths-thm-api
+    container_name: ths-thm-system-api
     restart: unless-stopped
     ports:
       - '4000:3001'
@@ -59,7 +59,7 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    container_name: ths-thm-web
+    container_name: ths-thm-system-web
     restart: unless-stopped
     ports:
       - '3000:3000'
