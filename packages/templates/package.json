@@ -1,0 +1,14 @@
+{
+  "name": "@ths-thm/templates",
+  "version": "1.0.0",
+  "description": "Document templates (JSX) for THS-THM System",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@react-pdf/renderer": "^3.4.0"
+  }
+}

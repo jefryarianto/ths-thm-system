@@ -8,11 +8,10 @@ WORKDIR /app
 # Copy workspace config files first for better layer caching
 copy pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 copy apps/api/package.json apps/api/
-copy packages/shared/package.json packages/shared/
 copy packages/templates/package.json packages/templates/
 
 # shamefully-hoist ensures all deps are at root node_modules (needed for ESM resolution from workspace packages)
-RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --filter @ths-thm/api --filter @ths-thm/shared --filter @ths-thm/templates
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --filter @ths-thm/api --filter @ths-thm/templates
 
 COPY . .
 
@@ -36,8 +35,6 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
 # Copy built workspace packages (dist and metadata)
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder /app/packages/templates/dist ./packages/templates/dist
 COPY --from=builder /app/packages/templates/package.json ./packages/templates/package.json
 
