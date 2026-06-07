@@ -19,7 +19,7 @@ RUN pnpm --filter @ths-thm/web build
 # Production Stage
 FROM node:20-alpine
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init wget
 
 WORKDIR /app
 
