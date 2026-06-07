@@ -11,7 +11,7 @@ copy apps/api/package.json apps/api/
 copy packages/templates/package.json packages/templates/
 
 # shamefully-hoist ensures all deps are at root node_modules (needed for ESM resolution from workspace packages)
-RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --filter @ths-thm/api --filter @ths-thm/templates
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --ignore-scripts --filter @ths-thm/api --filter @ths-thm/templates
 
 COPY . .
 
@@ -20,7 +20,9 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
-RUN cd apps/api && npx prisma generate && pnpm run build
+# Run prepare manually (schema is now available)
+RUN cd apps/api && pnpm run prisma:generate
+RUN cd apps/api && pnpm run build
 
 # Production Stage
 FROM node:20-alpine AS production
@@ -34,9 +36,8 @@ COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 
-# Copy built workspace packages (dist and metadata)
-COPY --from=builder /app/packages/templates/dist ./packages/templates/dist
-COPY --from=builder /app/packages/templates/package.json ./packages/templates/package.json
+# Copy workspace packages source (templates are JSX files used directly at runtime)
+COPY --from=builder /app/packages/templates ./packages/templates
 
 COPY --from=builder /app/package.json ./package.json
 
