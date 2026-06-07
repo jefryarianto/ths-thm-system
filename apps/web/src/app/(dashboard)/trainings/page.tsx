@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
-import { Plus, Upload } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export default function TrainingsPage() {
   const [data, setData] = useState<any[]>([]);

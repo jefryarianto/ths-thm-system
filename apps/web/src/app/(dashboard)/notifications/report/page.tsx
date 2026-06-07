@@ -42,8 +42,8 @@ export default function NotificationReportPage() {
   const [filterTipe, setFilterTipe] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
+  const [, setPage] = useState(1);
+  const [, setMeta] = useState({ total: 0, totalPages: 0 });
 
   // Fetch stats from dedicated API endpoint
   const fetchAllData = useCallback(async () => {
@@ -66,10 +66,10 @@ export default function NotificationReportPage() {
       setTotalStats({ total: stats.total, unread: stats.unread, read: stats.read });
 
       // Still fetch paginated data for CSV export (respect filters)
-      const params: Record<string, any> = { page: 1, limit: 50 };
-      if (filterTipe) params.tipe = filterTipe;
+      const listParams: Record<string, any> = { page: 1, limit: 50 };
+      if (filterTipe) listParams.tipe = filterTipe;
 
-      const { data: listRes } = await apiClient.get('/notifications', { params });
+      const { data: listRes } = await apiClient.get('/notifications', { params: listParams });
       const allData: NotificationItem[] = [...(listRes.data || [])];
       setMeta(listRes.meta || { total: 0, totalPages: 0 });
 
@@ -78,7 +78,7 @@ export default function NotificationReportPage() {
         const promises = [];
         for (let p = 2; p <= totalPages; p++) {
           promises.push(
-            apiClient.get('/notifications', { params: { ...params, page: p } })
+            apiClient.get('/notifications', { params: { ...listParams, page: p } })
               .then((r) => r.data?.data || [])
               .catch(() => [] as NotificationItem[])
           );

@@ -121,7 +121,7 @@ export default function DuesPage() {
             { label: 'Iuran Bulan Ini', value: formatRupiah(stats.iuranBulanIni), icon: TrendingUp, colorIdx: 0 },
             { label: 'Total Menunggak', value: formatRupiah(stats.totalMenunggak), icon: AlertTriangle, colorIdx: 1 },
             { label: 'Anggota Lunas', value: `${stats.lunasBulanIni} / ${stats.anggotaAktif}`, icon: CheckCircle, colorIdx: 0 },
-          ].map((s, i) => {
+          ].map((s) => {
             const styles = statColorMap[s.colorIdx];
             return (
               <div key={s.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow">

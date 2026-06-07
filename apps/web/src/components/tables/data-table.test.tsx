@@ -115,12 +115,9 @@ describe('DataTable', () => {
       />
     );
     
-    // Click next
     const buttons = screen.getAllByRole('button');
-    const nextBtn = buttons.find((b) => b.querySelector('svg')?.nextElementSibling === null || b.textContent === '');
-    // Find the chevron right button (next page)
     fireEvent.click(buttons[buttons.length - 1]);
-    expect(onPageChange).toHaveBeenCalled();
+    expect(onPageChange).toHaveBeenCalledWith();
   });
 
   it('does not render pagination when totalPages <= 1', () => {

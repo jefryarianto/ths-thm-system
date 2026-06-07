@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import {
   Gift, Zap, AlertCircle, CheckCircle, Clock, XCircle,
-  ShoppingBag, ArrowLeft, Loader2,
+  ShoppingBag, Loader2,
 } from 'lucide-react';
 
 interface Reward {

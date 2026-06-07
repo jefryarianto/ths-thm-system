@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { Trophy, Medal, Zap, Flame, Star, Award } from 'lucide-react';
+import { Trophy, Zap, Flame, Star, Award } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;

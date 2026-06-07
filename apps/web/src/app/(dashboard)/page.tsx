@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 import {
   Users, UserPlus, GraduationCap, CreditCard,
-  AlertCircle, CheckCircle, TrendingUp,
+  AlertCircle, TrendingUp,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

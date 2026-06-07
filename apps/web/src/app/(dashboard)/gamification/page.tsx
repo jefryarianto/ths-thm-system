@@ -6,7 +6,7 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { useDebounce } from '@/lib/use-debounce';
 import {
-  Trophy, Award, TrendingUp, Medal, Star, Zap,
+  Trophy, Award, Medal, Star, Zap,
   AlertCircle, Users, Target, Flame, Activity,
   ArrowRight, Filter, X, Share2, Search, Download,
 } from 'lucide-react';
@@ -97,7 +97,7 @@ const EVENT_ICONS: Record<string, string> = {
 
 export default function GamificationPage() {
   const router = useRouter();
-  const [badges, setBadges] = useState<Badge[]>([]);
+  const [badges] = useState<Badge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [events, setEvents] = useState<PointEvent[]>([]);
@@ -139,7 +139,7 @@ export default function GamificationPage() {
       params.set('limit', String(pageSize));
       if (loadMore) params.set('skip', String(page * pageSize));
 
-      const [badgesRes, leaderboardRes, statsRes, eventsRes] = await Promise.all([
+      const [, leaderboardRes, statsRes, eventsRes] = await Promise.all([
         apiClient.get('/gamification/badges'),
         apiClient.get(`/gamification/leaderboard?${params.toString()}`),
         apiClient.get('/gamification/stats'),

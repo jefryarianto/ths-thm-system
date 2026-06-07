@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import type { Member, PaginatedResponse } from '@/types';
-import { Plus, Search, Download, Upload, MoreVertical, Eye, Edit, Trash2, CheckCircle, XCircle, PauseCircle } from 'lucide-react';
+import { Plus, Search, Download, Upload, MoreVertical } from 'lucide-react';
 
 export default function MembersPage() {
   const router = useRouter();

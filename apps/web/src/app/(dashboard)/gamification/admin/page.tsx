@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 import {
-  Trophy, Award, Zap, AlertCircle, Gift, Users,
+  Trophy, Zap, AlertCircle, Gift, Users,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,

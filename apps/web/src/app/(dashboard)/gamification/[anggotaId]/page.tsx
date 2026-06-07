@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import {
-  ArrowLeft, Zap, Flame, Star, Award, Trophy,
-  AlertCircle, Clock, Activity, Target, TrendingUp,
+  ArrowLeft, Zap, Flame, Star, Award,
+  AlertCircle, Activity, TrendingUp,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,

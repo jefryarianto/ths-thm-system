@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import type { User, PaginatedResponse } from '@/types';
-import { Plus, Search, MoreVertical, Shield, UserCheck, UserX } from 'lucide-react';
+import { Plus, Search, MoreVertical, UserCheck, UserX } from 'lucide-react';
 
 export default function UsersPage() {
   const router = useRouter();

@@ -7,7 +7,7 @@ import apiClient, { clearTokens } from '@/lib/api-client';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import {
   Users, UserPlus, GraduationCap, Dumbbell, Calendar,
-  FileText, Mail, CreditCard, Bell, BarChart3, Settings, LogOut, Menu,
+  FileText, Mail, CreditCard, Bell, BarChart3, Settings, LogOut,
   Shield, ClipboardCheck, Wallet, Trophy, TrendingUp,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';

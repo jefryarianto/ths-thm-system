@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import {
-  Gift, Zap, Plus, Edit3, Trash2, AlertCircle, CheckCircle, XCircle, Clock,
+  Zap, Plus, Edit3, Trash2, AlertCircle, CheckCircle, XCircle,
   Loader2, Save, X,
 } from 'lucide-react';
 
@@ -82,10 +82,9 @@ export default function ManageRewardsPage() {
       setShowForm(false);
       setEditingReward(null);
       setForm({ name: '', description: '', icon: '🎁', pointCost: 100, stock: 10 });
-      await fetchData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menyimpan');
-    } finally { setSaving(false); }
+      await fetchData();      } catch (_err: any) {
+        alert(_err.response?.data?.message || 'Gagal menyimpan');
+      } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {

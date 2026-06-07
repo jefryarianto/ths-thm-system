@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { Plus, Search, MoreVertical, UserCheck, Trash2 } from 'lucide-react';
+import { Plus, Search, MoreVertical, UserCheck } from 'lucide-react';
 
 interface Examiner {
   id: string;
