@@ -5,15 +5,24 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface AssessmentRow {
+  [key: string]: unknown;
+  id: string;
+  kodeAspek: string;
+  namaAspek: string;
+  bobot: number;
+  isActive: boolean;
+}
+
 const columns = [
   { key: 'kodeAspek', label: 'Kode' },
-  { key: 'namaAspek', label: 'Aspek', render: (a: any) => <span className="font-medium">{a.namaAspek}</span> },
-  { key: 'bobot', label: 'Bobot', render: (a: any) => `${Number(a.bobot) * 100}%` },
-  { key: 'isActive', label: 'Aktif', render: (a: any) => a.isActive ? <span className="text-green-600">✔</span> : <span className="text-red-600">✘</span> },
+  { key: 'namaAspek', label: 'Aspek', render: (a: AssessmentRow) => <span className="font-medium">{a.namaAspek}</span> },
+  { key: 'bobot', label: 'Bobot', render: (a: AssessmentRow) => `${Number(a.bobot) * 100}%` },
+  { key: 'isActive', label: 'Aktif', render: (a: AssessmentRow) => a.isActive ? <span className="text-green-600">✔</span> : <span className="text-red-600">✘</span> },
 ];
 
 export default function AssessmentsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<AssessmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

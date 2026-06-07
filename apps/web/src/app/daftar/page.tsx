@@ -43,8 +43,9 @@ export default function DaftarPage() {
       }
 
       setStep('success');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Terjadi kesalahan. Silakan coba lagi.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan. Silakan coba lagi.';
+      setErrorMsg(message);
       setStep('error');
     } finally {
       setLoading(false);

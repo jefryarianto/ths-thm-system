@@ -4,16 +4,31 @@ import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 
+interface DashboardStats {
+  totalMembers: number;
+  totalCandidates: number;
+  totalGraduated: number;
+  pendingValidasi: number;
+}
+
+interface MemberRow {
+  id: string;
+  namaLengkap: string;
+  nomorAnggota: string;
+  statusKeanggotaan: string;
+  createdAt: string;
+}
+
 const memberColumns = [
-  { key: 'namaLengkap', label: 'Nama', render: (m: any) => <span className="font-medium">{m.namaLengkap}</span> },
+  { key: 'namaLengkap', label: 'Nama', render: (m: MemberRow) => <span className="font-medium">{m.namaLengkap}</span> },
   { key: 'nomorAnggota', label: 'No. Anggota' },
   { key: 'statusKeanggotaan', label: 'Status' },
-  { key: 'createdAt', label: 'Terdaftar', render: (m: any) => new Date(m.createdAt).toLocaleDateString('id-ID') },
+  { key: 'createdAt', label: 'Terdaftar', render: (m: MemberRow) => new Date(m.createdAt).toLocaleDateString('id-ID') },
 ];
 
 export default function ReportsPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [data, setData] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [data, setData] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

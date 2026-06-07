@@ -5,15 +5,23 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface OrgDocumentRow {
+  id: string;
+  judul: string;
+  kategori?: { nama: string };
+  uploader?: { namaLengkap: string };
+  createdAt: string;
+}
+
 const columns = [
-  { key: 'judul', label: 'Judul', render: (d: any) => <span className="font-medium">{d.judul}</span> },
-  { key: 'kategori', label: 'Kategori', render: (d: any) => d.kategori?.nama || '-' },
-  { key: 'uploader', label: 'Uploader', render: (d: any) => d.uploader?.namaLengkap || '-' },
-  { key: 'createdAt', label: 'Tanggal', render: (d: any) => new Date(d.createdAt).toLocaleDateString('id-ID') },
+  { key: 'judul', label: 'Judul', render: (d: OrgDocumentRow) => <span className="font-medium">{d.judul}</span> },
+  { key: 'kategori', label: 'Kategori', render: (d: OrgDocumentRow) => d.kategori?.nama || '-' },
+  { key: 'uploader', label: 'Uploader', render: (d: OrgDocumentRow) => d.uploader?.namaLengkap || '-' },
+  { key: 'createdAt', label: 'Tanggal', render: (d: OrgDocumentRow) => new Date(d.createdAt).toLocaleDateString('id-ID') },
 ];
 
 export default function OrgDocumentsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<OrgDocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

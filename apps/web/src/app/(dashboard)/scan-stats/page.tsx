@@ -7,8 +7,23 @@ import {
   BarChart3, CheckCircle, FileText, Activity, Download,
 } from 'lucide-react';
 
+interface ScanStats {
+  totalAbsensi: number;
+  totalDokumen: number;
+  activeKegiatan: number;
+  absensiHarian: Array<{ tanggal: string; count: number }>;
+  recentAbsensi: Array<{
+    namaAnggota: string;
+    nomorAnggota: string;
+    kegiatan: string;
+    hadir: boolean;
+    catatan?: string;
+    tanggal: string;
+  }>;
+}
+
 export default function ScanStatsPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<ScanStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -28,7 +43,7 @@ export default function ScanStatsPage() {
     setExporting(true);
     try {
       const headers = ['Nama', 'No. Anggota', 'Kegiatan', 'Status', 'Catatan', 'Tanggal'];
-      const rows = stats.recentAbsensi.map((a: any) => [
+      const rows = stats.recentAbsensi.map((a) => [
         `"${(a.namaAnggota || '').replace(/"/g, '""')}"`,
         a.nomorAnggota || '',
         `"${(a.kegiatan || '').replace(/"/g, '""')}"`,
@@ -36,7 +51,7 @@ export default function ScanStatsPage() {
         `"${(a.catatan || '-').replace(/"/g, '""')}"`,
         new Date(a.tanggal).toLocaleString('id-ID'),
       ]);
-      const csv = [headers.join(','), ...rows.map((r: string[]) => r.join(','))].join('\n');
+      const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -52,7 +67,7 @@ export default function ScanStatsPage() {
     { label: 'Total Absensi', value: stats.totalAbsensi, icon: CheckCircle, color: 'bg-blue-50', iconColor: 'text-blue-600' },
     { label: 'Dokumen Terverifikasi', value: stats.totalDokumen, icon: FileText, color: 'bg-green-50', iconColor: 'text-green-600' },
     { label: 'Kegiatan Aktif', value: stats.activeKegiatan, icon: Activity, color: 'bg-orange-50', iconColor: 'text-orange-600' },
-    { label: 'Absensi 30 Hari', value: stats.absensiHarian?.reduce((s: number, d: any) => s + d.count, 0) || 0, icon: BarChart3, color: 'bg-purple-50', iconColor: 'text-purple-600' },
+    { label: 'Absensi 30 Hari', value: stats.absensiHarian?.reduce((s, d) => s + d.count, 0) || 0, icon: BarChart3, color: 'bg-purple-50', iconColor: 'text-purple-600' },
   ] : [];
 
   return (
@@ -158,7 +173,7 @@ export default function ScanStatsPage() {
                 {stats.recentAbsensi.length === 0 ? (
                   <tr><td colSpan={5} className="text-center py-8 text-sm text-gray-400 dark:text-gray-500">Belum ada data</td></tr>
                 ) : (
-                  stats.recentAbsensi.map((a: any, i: number) => (
+                  stats.recentAbsensi.map((a, i) => (
                     <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                       <td className="px-5 py-3">
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{a.namaAnggota}</p>

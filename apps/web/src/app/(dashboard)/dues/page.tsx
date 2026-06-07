@@ -21,6 +21,15 @@ interface DuesStats {
   anggotaAktif: number;
 }
 
+interface DuesRow {
+  id: string;
+  anggota?: { namaLengkap: string };
+  periode: string;
+  jumlah: number;
+  status: string;
+  createdAt: string;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   lunas: '#22c55e',
   menunggak: '#ef4444',
@@ -54,24 +63,24 @@ function formatRupiah(value: number) {
 }
 
 const columns = [
-  { key: 'anggota', label: 'Anggota', render: (d: any) => <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span> },
+  { key: 'anggota', label: 'Anggota', render: (d: DuesRow) => <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span> },
   { key: 'periode', label: 'Periode' },
-  { key: 'jumlah', label: 'Jumlah', render: (d: any) => formatRupiah(Number(d.jumlah)) },
+  { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(Number(d.jumlah)) },
   {
     key: 'status',
     label: 'Status',
-    render: (d: any) => (
+    render: (d: DuesRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[d.status] || ''}`}>
         {STATUS_LABELS[d.status] || d.status}
       </span>
     ),
   },
-  { key: 'createdAt', label: 'Tanggal', render: (d: any) => new Date(d.createdAt).toLocaleDateString('id-ID') },
+  { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => new Date(d.createdAt).toLocaleDateString('id-ID') },
 ];
 
 export default function DuesPage() {
   const [stats, setStats] = useState<DuesStats | null>(null);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<DuesRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

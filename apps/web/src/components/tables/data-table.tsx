@@ -18,6 +18,7 @@ interface DataTableProps<T> {
   emptyText?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function DataTable<T extends Record<string, any>>({
   data, columns, loading, searchPlaceholder = 'Cari...', onSearch,
   page = 1, totalPages = 1, total = 0, onPageChange, actions, onRowClick, emptyText = 'Tidak ada data',

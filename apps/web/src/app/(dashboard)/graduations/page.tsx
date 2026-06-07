@@ -5,8 +5,17 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface GraduationRow {
+  id: string;
+  nama: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  lokasi: string;
+  status: string;
+}
+
 export default function GraduationsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<GraduationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
@@ -29,11 +38,11 @@ export default function GraduationsPage() {
         data={data} loading={loading} page={page} totalPages={meta.totalPages} total={meta.total}
         onPageChange={setPage}
         columns={[
-          { key: 'nama', label: 'Nama Kegiatan', render: (g) => <span className="font-medium">{g.nama}</span> },
-          { key: 'tanggalMulai', label: 'Mulai', render: (g) => new Date(g.tanggalMulai).toLocaleDateString('id-ID') },
-          { key: 'tanggalSelesai', label: 'Selesai', render: (g) => new Date(g.tanggalSelesai).toLocaleDateString('id-ID') },
-          { key: 'lokasi', label: 'Lokasi', render: (g) => g.lokasi || '-' },
-          { key: 'status', label: 'Status', render: (g) => {
+          { key: 'nama', label: 'Nama Kegiatan', render: (g: GraduationRow) => <span className="font-medium">{g.nama}</span> },
+          { key: 'tanggalMulai', label: 'Mulai', render: (g: GraduationRow) => new Date(g.tanggalMulai).toLocaleDateString('id-ID') },
+          { key: 'tanggalSelesai', label: 'Selesai', render: (g: GraduationRow) => new Date(g.tanggalSelesai).toLocaleDateString('id-ID') },
+          { key: 'lokasi', label: 'Lokasi', render: (g: GraduationRow) => g.lokasi || '-' },
+          { key: 'status', label: 'Status', render: (g: GraduationRow) => {
             const colors: Record<string, string> = { draft: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300', published: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400', closed: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400', cancelled: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400' };
             return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[g.status] || ''}`}>{g.status}</span>;
           }},

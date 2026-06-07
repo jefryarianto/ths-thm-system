@@ -130,8 +130,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {statConfigs.map(({ key, label, icon: Icon, color, isCurrency }) => {
           const styles = colorMap[color];
-          const rawValue = (data as any)[key];
-          const displayValue = isCurrency ? formatRupiah(Number(rawValue)) : rawValue?.toLocaleString('id-ID') || '0';
+          const rawValue = data[key as keyof DashboardData];
+          const rawNumber = Number(rawValue);
+          const displayValue = isCurrency ? formatRupiah(rawNumber) : (typeof rawValue === 'number' ? rawValue.toLocaleString('id-ID') : '0');
           return (
             <div
               key={key}

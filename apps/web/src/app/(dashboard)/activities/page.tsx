@@ -5,6 +5,15 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface ActivityRow {
+  [key: string]: unknown;
+  id: string;
+  nama: string;
+  tipe: string;
+  tanggalMulai: string;
+  status: string;
+}
+
 const statusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700',
   published: 'bg-blue-100 text-blue-700',
@@ -12,13 +21,13 @@ const statusColors: Record<string, string> = {
 };
 
 const columns = [
-  { key: 'nama', label: 'Nama', render: (a: any) => <span className="font-medium">{a.nama}</span> },
+  { key: 'nama', label: 'Nama', render: (a: ActivityRow) => <span className="font-medium">{a.nama}</span> },
   { key: 'tipe', label: 'Tipe' },
-  { key: 'tanggalMulai', label: 'Mulai', render: (a: any) => new Date(a.tanggalMulai).toLocaleDateString('id-ID') },
+  { key: 'tanggalMulai', label: 'Mulai', render: (a: ActivityRow) => new Date(a.tanggalMulai).toLocaleDateString('id-ID') },
   {
     key: 'status',
     label: 'Status',
-    render: (a: any) => (
+    render: (a: ActivityRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[a.status] || ''}`}>
         {a.status}
       </span>
@@ -27,7 +36,7 @@ const columns = [
 ];
 
 export default function ActivitiesPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

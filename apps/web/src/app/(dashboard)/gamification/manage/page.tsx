@@ -65,7 +65,7 @@ export default function ManageRewardsPage() {
       ]);
       setRewards(rewardsRes.data.data);
       setRedemptions(redemptionsRes.data.data);
-    } catch (err) {
+    } catch (_err) {
       setError('Gagal memuat data');
     } finally { setLoading(false); }
   };
@@ -92,8 +92,8 @@ export default function ManageRewardsPage() {
     try {
       await apiClient.delete(`/gamification/rewards/${id}`);
       await fetchData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Gagal menghapus');
     }
   };
 
@@ -101,8 +101,8 @@ export default function ManageRewardsPage() {
     try {
       await apiClient.patch(`/gamification/redemptions/${id}/status`, { status });
       await fetchData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal update status');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Gagal update status');
     }
   };
 

@@ -3,11 +3,40 @@
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
 
+interface OrgSettings {
+  nama: string;
+  alamat?: string;
+  noTelp?: string;
+  email?: string;
+  website?: string;
+}
+
+interface Period {
+  id: string;
+  nama?: string;
+  periode?: string;
+  isActive: boolean;
+}
+
+interface Signature {
+  id: string;
+  nama?: string;
+  namaLengkap?: string;
+  jabatan: string;
+  isActive: boolean;
+}
+
+interface Stamp {
+  nama?: string;
+  label?: string;
+  url?: string;
+}
+
 export default function SettingsPage() {
-  const [org, setOrg] = useState<any>(null);
-  const [periods, setPeriods] = useState<any[]>([]);
-  const [signatures, setSignatures] = useState<any[]>([]);
-  const [stamp, setStamp] = useState<any>(null);
+  const [org, setOrg] = useState<OrgSettings | null>(null);
+  const [periods, setPeriods] = useState<Period[]>([]);
+  const [signatures, setSignatures] = useState<Signature[]>([]);
+  const [stamp, setStamp] = useState<Stamp | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,7 +104,7 @@ export default function SettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {periods.map((p: any) => (
+                {periods.map((p) => (
                   <tr key={p.id} className="border-b last:border-0">
                     <td className="py-1.5">{p.nama || p.periode}</td>
                     <td className="py-1.5">
@@ -102,7 +131,7 @@ export default function SettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {signatures.map((s: any) => (
+                {signatures.map((s) => (
                   <tr key={s.id} className="border-b last:border-0">
                     <td className="py-1.5">{s.nama || s.namaLengkap}</td>
                     <td className="py-1.5">{s.jabatan}</td>
@@ -132,7 +161,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: any }) {
+function InfoRow({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex">
       <span className="text-gray-500 dark:text-gray-400 w-28 shrink-0">{label}</span>

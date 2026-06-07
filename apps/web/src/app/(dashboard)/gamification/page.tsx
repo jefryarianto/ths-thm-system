@@ -333,7 +333,7 @@ export default function GamificationPage() {
             className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">Semua Wilayah</option>
-            {availableWilayahs.map((w: any) => (
+            {availableWilayahs.map((w) => (
               <option key={w.id} value={w.id}>{w.nama}</option>
             ))}
           </select>
@@ -349,7 +349,7 @@ export default function GamificationPage() {
             className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">Semua Ranting</option>
-            {availableRantings.map((r: any) => (
+            {availableRantings.map((r) => (
               <option key={r.id} value={r.id}>{r.nama}</option>
             ))}
           </select>
@@ -371,7 +371,7 @@ export default function GamificationPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statConfigs.map(({ key, label, icon: Icon, color }) => {
             const styles = colorMap[color];
-            const value = (stats as any)[key] ?? 0;
+            const value = stats[key as keyof GamificationStats] ?? 0;
             return (
               <div
                 key={key}

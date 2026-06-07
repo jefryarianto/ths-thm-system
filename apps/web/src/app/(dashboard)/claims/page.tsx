@@ -5,6 +5,14 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface ClaimRow {
+  id: string;
+  tipe: string;
+  status: string;
+  anggota?: { namaLengkap: string };
+  createdAt: string;
+}
+
 const statusColors: Record<string, string> = {
   pending: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   disetujui: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
@@ -17,18 +25,18 @@ const columns = [
   {
     key: 'status',
     label: 'Status',
-    render: (c: any) => (
+    render: (c: ClaimRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[c.status] || 'bg-gray-100 text-gray-700'}`}>
         {c.status}
       </span>
     ),
   },
-  { key: 'anggota', label: 'Anggota', render: (c: any) => c.anggota?.namaLengkap || '-' },
-  { key: 'createdAt', label: 'Tanggal', render: (c: any) => new Date(c.createdAt).toLocaleDateString('id-ID') },
+  { key: 'anggota', label: 'Anggota', render: (c: ClaimRow) => c.anggota?.namaLengkap || '-' },
+  { key: 'createdAt', label: 'Tanggal', render: (c: ClaimRow) => new Date(c.createdAt).toLocaleDateString('id-ID') },
 ];
 
 export default function ClaimsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ClaimRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

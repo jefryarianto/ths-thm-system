@@ -5,6 +5,16 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface RegistrationRow {
+  id: string;
+  namaLengkap: string;
+  jenisKelamin: string;
+  noHp?: string;
+  email?: string;
+  sumberInfo?: string;
+  status: string;
+}
+
 const statusColors: Record<string, string> = {
   pending: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   approved: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
@@ -12,14 +22,14 @@ const statusColors: Record<string, string> = {
 };
 
 const columns = [
-  { key: 'namaLengkap', label: 'Nama', render: (r: any) => <span className="font-medium">{r.namaLengkap}</span> },
+  { key: 'namaLengkap', label: 'Nama', render: (r: RegistrationRow) => <span className="font-medium">{r.namaLengkap}</span> },
   { key: 'jenisKelamin', label: 'JK' },
-  { key: 'noHp', label: 'No. HP / Email', render: (r: any) => r.noHp || r.email || '-' },
+  { key: 'noHp', label: 'No. HP / Email', render: (r: RegistrationRow) => r.noHp || r.email || '-' },
   { key: 'sumberInfo', label: 'Sumber Info' },
   {
     key: 'status',
     label: 'Status',
-    render: (r: any) => (
+    render: (r: RegistrationRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status] || 'bg-gray-100 text-gray-700'}`}>
         {r.status}
       </span>
@@ -28,7 +38,7 @@ const columns = [
 ];
 
 export default function RegistrationsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<RegistrationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

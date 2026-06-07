@@ -29,8 +29,9 @@ export default function LoginPage() {
 
         router.push('/members');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login gagal, periksa email dan password');
+    } catch (err: unknown) {
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(apiError || 'Login gagal, periksa email dan password');
     } finally {
       setLoading(false);
     }

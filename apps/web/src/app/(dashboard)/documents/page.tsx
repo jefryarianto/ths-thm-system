@@ -5,16 +5,25 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus, FileText } from 'lucide-react';
 
+interface DocumentRow {
+  id: string;
+  nomorDokumen: string;
+  tipe: string;
+  anggota?: { namaLengkap: string };
+  status: string;
+  createdAt: string;
+}
+
 const columns = [
   { key: 'nomorDokumen', label: 'No. Dokumen' },
   { key: 'tipe', label: 'Tipe' },
-  { key: 'anggota', label: 'Anggota', render: (d: any) => d.anggota?.namaLengkap || '-' },
+  { key: 'anggota', label: 'Anggota', render: (d: DocumentRow) => d.anggota?.namaLengkap || '-' },
   { key: 'status', label: 'Status' },
-  { key: 'createdAt', label: 'Tanggal', render: (d: any) => new Date(d.createdAt).toLocaleDateString('id-ID') },
+  { key: 'createdAt', label: 'Tanggal', render: (d: DocumentRow) => new Date(d.createdAt).toLocaleDateString('id-ID') },
 ];
 
 export default function DocumentsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });

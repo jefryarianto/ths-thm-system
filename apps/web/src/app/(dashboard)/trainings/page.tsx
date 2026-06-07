@@ -5,8 +5,25 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import { Plus } from 'lucide-react';
 
+interface TrainingRow {
+  id: string;
+  hariTanggal: string;
+  ranting?: { nama: string };
+  jenisMateri?: string;
+  lokasi?: string;
+  pelatih?: { namaLengkap: string };
+}
+
+const columns = [
+  { key: 'hariTanggal', label: 'Tanggal', render: (t: TrainingRow) => new Date(t.hariTanggal).toLocaleDateString('id-ID') },
+  { key: 'ranting', label: 'Ranting', render: (t: TrainingRow) => t.ranting?.nama || '-' },
+  { key: 'jenisMateri', label: 'Materi', render: (t: TrainingRow) => t.jenisMateri || '-' },
+  { key: 'lokasi', label: 'Lokasi', render: (t: TrainingRow) => t.lokasi || '-' },
+  { key: 'pelatih', label: 'Pelatih', render: (t: TrainingRow) => t.pelatih?.namaLengkap || '-' },
+];
+
 export default function TrainingsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<TrainingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
@@ -28,13 +45,7 @@ export default function TrainingsPage() {
       <DataTable
         data={data} loading={loading} page={page} totalPages={meta.totalPages} total={meta.total}
         onPageChange={setPage}
-        columns={[
-          { key: 'hariTanggal', label: 'Tanggal', render: (t) => new Date(t.hariTanggal).toLocaleDateString('id-ID') },
-          { key: 'ranting', label: 'Ranting', render: (t) => t.ranting?.nama || '-' },
-          { key: 'jenisMateri', label: 'Materi', render: (t) => t.jenisMateri || '-' },
-          { key: 'lokasi', label: 'Lokasi', render: (t) => t.lokasi || '-' },
-          { key: 'pelatih', label: 'Pelatih', render: (t) => t.pelatih?.namaLengkap || '-' },
-        ]}
+        columns={columns}
       />
     </div>
   );
