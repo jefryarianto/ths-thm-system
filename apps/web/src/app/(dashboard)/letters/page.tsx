@@ -17,12 +17,26 @@ const statusColors: Record<string, string> = {
   dibatalkan: 'bg-red-100 text-red-700',
 };
 
+interface LetterRow {
+  [key: string]: unknown;
+  id: string;
+  nomorSurat: string;
+  type: string;
+  pengirim?: string;
+  tujuan?: string;
+  perihal: string;
+  tanggalSurat?: string;
+  tanggalTerima?: string;
+  tanggalKirim?: string;
+  status: string;
+}
+
 const columns = [
   { key: 'nomorSurat', label: 'No. Surat' },
   {
     key: 'type',
     label: 'Tipe',
-    render: (l: any) => (
+    render: (l: LetterRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
         l.type === 'masuk' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
       }`}>
@@ -30,12 +44,12 @@ const columns = [
       </span>
     ),
   },
-  { key: 'pengirim', label: 'Pengirim / Tujuan', render: (l: any) => l.pengirim || l.tujuan || '-' },
+  { key: 'pengirim', label: 'Pengirim / Tujuan', render: (l: LetterRow) => l.pengirim || l.tujuan || '-' },
   { key: 'perihal', label: 'Perihal' },
   {
     key: 'tanggalSurat',
     label: 'Tanggal',
-    render: (l: any) => {
+    render: (l: LetterRow) => {
       const date = l.tanggalSurat || l.tanggalTerima || l.tanggalKirim;
       return date ? new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
     },
@@ -43,7 +57,7 @@ const columns = [
   {
     key: 'status',
     label: 'Status',
-    render: (l: any) => (
+    render: (l: LetterRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[l.status] || 'bg-gray-100 text-gray-600'}`}>
         {l.status || '-'}
       </span>
@@ -52,6 +66,26 @@ const columns = [
 ];
 
 type LetterType = 'masuk' | 'keluar';
+
+interface LetterDetail {
+  [key: string]: unknown;
+  id: string;
+  nomorSurat: string;
+  type: string;
+  pengirim?: string;
+  tujuan?: string;
+  perihal: string;
+  tanggalSurat?: string;
+  tanggalTerima?: string;
+  tanggalKirim?: string;
+  isi?: string;
+  fileScanPath?: string;
+  filePath?: string;
+  status: string;
+  disposisi?: Array<{ id: string; kepadaUserId: string; isi: string }>;
+  createdAt: string;
+  updatedAt?: string;
+}
 
 interface LetterFormData {
   nomorSurat: string;
@@ -74,20 +108,20 @@ const emptyForm: LetterFormData = {
 
 export default function LettersPage() {
   const [tab, setTab] = useState<'incoming' | 'outgoing' | 'all'>('all');
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<LetterRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
 
   // Detail panel state
-  const [selectedLetter, setSelectedLetter] = useState<any>(null);
-  const [detailData, setDetailData] = useState<any>(null);
+  const [selectedLetter, setSelectedLetter] = useState<LetterRow | null>(null);
+  const [detailData, setDetailData] = useState<LetterDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   // Form modal state
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<LetterType>('masuk');
-  const [editLetter, setEditLetter] = useState<any>(null);
+  const [editLetter, setEditLetter] = useState<LetterDetail | null>(null);
   const [form, setForm] = useState<LetterFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
@@ -123,7 +157,7 @@ export default function LettersPage() {
   };
 
   // ─── Open edit modal ───
-  const openEdit = (letter: any) => {
+  const openEdit = (letter: LetterDetail) => {
     const type = letter.type || (letter.pengirim ? 'masuk' : 'keluar');
     setFormType(type);
     setEditLetter(letter);
@@ -161,7 +195,7 @@ export default function LettersPage() {
     setSaving(true);
     setFormError('');
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         nomorSurat: form.nomorSurat,
         tanggalSurat: form.tanggalSurat || undefined,
         perihal: form.perihal,
@@ -192,14 +226,15 @@ export default function LettersPage() {
       if (selectedLetter?.id === editLetter?.id) {
         handleRowClick(selectedLetter);
       }
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message || 'Gagal menyimpan surat');
+    } catch (err: unknown) {
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setFormError(apiErr || 'Gagal menyimpan surat');
     }
     setSaving(false);
   };
 
   // ─── Delete letter ───
-  const handleDelete = async (letter: any) => {
+  const handleDelete = async (letter: LetterDetail) => {
     if (!confirm('Yakin ingin menghapus surat ini?')) return;
     const type = letter.type || (letter.pengirim ? 'masuk' : 'keluar');
     const endpoint = type === 'masuk' ? '/letters/incoming' : '/letters/outgoing';
@@ -208,14 +243,15 @@ export default function LettersPage() {
       await apiClient.delete(`${endpoint}/${letter.id}`);
       closeDetail();
       fetchData();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menghapus surat');
+    } catch (err: unknown) {
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      alert(apiErr || 'Gagal menghapus surat');
     }
     setDeleting(false);
   };
 
   // ─── Row click → open detail ───
-  const handleRowClick = async (letter: any) => {
+  const handleRowClick = async (letter: LetterRow) => {
     setSelectedLetter(letter);
     setLoadingDetail(true);
     try {
@@ -362,7 +398,7 @@ export default function LettersPage() {
                   <div>
                     <p className="text-xs text-gray-500 mb-2">Disposisi</p>
                     <div className="space-y-2">
-                      {detailData.disposisi.map((d: any, i: number) => (
+                      {(detailData.disposisi as Array<Record<string, unknown>>).map((d, i) => (
                         <div key={d.id || i} className="bg-gray-50 rounded-lg p-3">
                           <p className="text-xs text-gray-500">Kepada: {d.kepadaUserId}</p>
                           <p className="text-sm text-gray-900 mt-1">{d.isi}</p>

@@ -31,11 +31,21 @@ const tipeColors: Record<string, string> = {
   dokumen_ready: 'bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-400',
 };
 
+interface NotificationRow {
+  [key: string]: unknown;
+  id: string;
+  judul: string;
+  isi: string;
+  tipe: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 const columns = [
   {
     key: 'judul',
     label: 'Judul',
-    render: (n: any) => (
+    render: (n: NotificationRow) => (
       <div className="flex items-center gap-2">
         {!n.isRead && <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />}                <span className={`font-medium ${!n.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>{n.judul}</span>
       </div>
@@ -44,14 +54,14 @@ const columns = [
   {
     key: 'isi',
     label: 'Pesan',
-    render: (n: any) => (
+    render: (n: NotificationRow) => (
       <span className="text-gray-500 dark:text-gray-400">{n.isi?.length > 60 ? n.isi.slice(0, 60) + '...' : n.isi || ''}</span>
     ),
   },
   {
     key: 'tipe',
     label: 'Tipe',
-    render: (n: any) => (
+    render: (n: NotificationRow) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${tipeColors[n.tipe] || 'bg-gray-100 text-gray-600'}`}>
         {TIPE_OPTIONS.find(t => t.value === n.tipe)?.label || n.tipe}
       </span>
@@ -60,19 +70,19 @@ const columns = [
   {
     key: 'isRead',
     label: 'Status',
-    render: (n: any) => n.isRead
+    render: (n: NotificationRow) => n.isRead
       ? <span className="text-green-600 text-xs font-medium">Dibaca</span>
       : <span className="text-blue-600 text-xs font-semibold">Baru</span>,
   },
   {
     key: 'createdAt',
     label: 'Tanggal',
-    render: (n: any) => new Date(n.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+    render: (n: NotificationRow) => new Date(n.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
   },
 ];
 
 export default function NotificationsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0, unreadCount: 0 });
@@ -92,7 +102,7 @@ export default function NotificationsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 10 };
+      const params: Record<string, unknown> = { page, limit: 10 };
       if (filterTipe) params.tipe = filterTipe;
       const { data: res } = await apiClient.get('/notifications', { params });
       setData(res.data);
@@ -128,7 +138,7 @@ export default function NotificationsPage() {
     setExporting(true);
     try {
       // Fetch all pages
-      const allData: any[] = [];
+      const allData: NotificationRow[] = [];
       if (!meta.total) {
         setExporting(false);
         return;
@@ -136,7 +146,7 @@ export default function NotificationsPage() {
       let p = 1;
       let hasMore = true;
       while (hasMore) {
-        const params: any = { page: p, limit: 50 };
+        const params: Record<string, unknown> = { page: p, limit: 50 };
         if (filterTipe) params.tipe = filterTipe;
         const { data: res } = await apiClient.get('/notifications', { params });
         allData.push(...(res.data || []));
@@ -146,7 +156,7 @@ export default function NotificationsPage() {
 
       // Build CSV
       const headers = ['ID', 'Judul', 'Isi', 'Tipe', 'Dibaca', 'Tanggal'];
-      const rows = allData.map((n: any) => [
+      const rows = allData.map((n: NotificationRow) => [
         n.id,
         JSON.stringify(n.judul || ''),
         JSON.stringify(n.isi || ''),
@@ -183,8 +193,9 @@ export default function NotificationsPage() {
       setSendResult(`Berhasil! ${res?.data?.data?.sentTo || 1} notifikasi terkirim.`);
       setSendForm({ judul: '', isi: '', tipe: 'umum' });
       setTimeout(() => { setSendResult(null); setShowSendModal(false); }, 2000);
-    } catch (err: any) {
-      setSendResult(err?.response?.data?.message || 'Gagal mengirim notifikasi');
+    } catch (err: unknown) {
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setSendResult(apiErr || 'Gagal mengirim notifikasi');
     }
     setSending(false);
   };
