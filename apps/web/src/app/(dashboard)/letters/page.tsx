@@ -106,8 +106,11 @@ const emptyForm: LetterFormData = {
   tanggalTerima: '', status: 'draft',
 };
 
+const TAB_VALUES = ['all', 'incoming', 'outgoing'] as const;
+type TabValue = (typeof TAB_VALUES)[number];
+
 export default function LettersPage() {
-  const [tab, setTab] = useState<'incoming' | 'outgoing' | 'all'>('all');
+  const [tab, setTab] = useState<TabValue>('all');
   const [data, setData] = useState<LetterRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -158,7 +161,7 @@ export default function LettersPage() {
 
   // ─── Open edit modal ───
   const openEdit = (letter: LetterDetail) => {
-    const type = letter.type || (letter.pengirim ? 'masuk' : 'keluar');
+    const type: LetterType = (letter.type === 'masuk' || letter.type === 'keluar') ? letter.type : (letter.pengirim ? 'masuk' : 'keluar');
     setFormType(type);
     setEditLetter(letter);
     setForm({
@@ -223,7 +226,7 @@ export default function LettersPage() {
       setShowForm(false);
       fetchData();
       // If detail panel is open, refresh it
-      if (selectedLetter?.id === editLetter?.id) {
+      if (selectedLetter && selectedLetter.id === editLetter?.id) {
         handleRowClick(selectedLetter);
       }
     } catch (err: unknown) {
@@ -280,14 +283,10 @@ export default function LettersPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Surat</h1>
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
-            {([
-              { value: 'all', label: 'Semua' },
-              { value: 'incoming', label: 'Masuk' },
-              { value: 'outgoing', label: 'Keluar' },
-            ] as const).map((t) => (
+            {(TAB_VALUES.map((value) => ({ value, label: value === 'all' ? 'Semua' : value === 'incoming' ? 'Masuk' : 'Keluar' }))).map((t) => (
               <button
                 key={t.value}
-                onClick={() => setTab(t.value)}
+                onClick={() => setTab(t.value as TabValue)}
                 className={`px-3 py-1.5 text-sm rounded-md transition ${
                   tab === t.value
                     ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white font-medium'
@@ -387,19 +386,19 @@ export default function LettersPage() {
                   <div>
                     <p className="text-xs text-gray-500 mb-2">Lampiran / File</p>
                     <FilePreview
-                      fileUrl={detailData.fileScanPath || detailData.filePath}
+                      fileUrl={(detailData.fileScanPath || detailData.filePath)!}
                       fileName={detailData.nomorSurat}
                     />
                   </div>
                 )}
 
                 {/* Disposisi */}
-                {detailData.type === 'masuk' && detailData.disposisi?.length > 0 && (
+                {detailData.type === 'masuk' && detailData.disposisi && detailData.disposisi.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-2">Disposisi</p>
                     <div className="space-y-2">
-                      {(detailData.disposisi as Array<Record<string, unknown>>).map((d, i) => (
-                        <div key={d.id || i} className="bg-gray-50 rounded-lg p-3">
+                      {detailData.disposisi.map((d, i) => (
+                        <div key={d.id ?? String(i)} className="bg-gray-50 rounded-lg p-3">
                           <p className="text-xs text-gray-500">Kepada: {d.kepadaUserId}</p>
                           <p className="text-sm text-gray-900 mt-1">{d.isi}</p>
                         </div>
