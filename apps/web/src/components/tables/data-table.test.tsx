@@ -117,7 +117,7 @@ describe('DataTable', () => {
     
     const buttons = screen.getAllByRole('button');
     fireEvent.click(buttons[buttons.length - 1]);
-    expect(onPageChange).toHaveBeenCalledWith();
+    expect(onPageChange).toHaveBeenCalledWith(3);
   });
 
   it('does not render pagination when totalPages <= 1', () => {
