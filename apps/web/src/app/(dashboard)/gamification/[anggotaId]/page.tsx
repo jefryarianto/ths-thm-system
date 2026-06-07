@@ -59,7 +59,7 @@ const EVENT_ICONS: Record<string, string> = {
 export default function GamificationProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const anggotaId = params.anggotaId as string;
+  const anggotaId = (params?.anggotaId as string) || '';
 
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [events, setEvents] = useState<PointEvent[]>([]);

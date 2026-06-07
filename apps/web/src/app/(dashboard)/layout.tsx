@@ -105,7 +105,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <nav className="flex-1 overflow-y-auto p-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname?.startsWith(item.href) || false;
             return (
               <Link
                 key={item.href}
@@ -138,7 +138,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            {menuItems.find((m) => pathname.startsWith(m.href))?.label || 'Dashboard'}
+            {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
           </h2>
           <div className="flex items-center gap-3">
             <ThemeToggle />

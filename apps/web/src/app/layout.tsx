@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ReactNode } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
@@ -10,13 +11,15 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactElement;
+  children: ReactNode;
 }) {
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider>{children as any}</ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
 }
+
+export const dynamic = 'force-dynamic';
