@@ -1,8 +1,9 @@
 const isWindows = process.platform === 'win32';
+const isBuild = !!process.env.NEXT_PHASE;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: isWindows ? undefined : 'standalone',
+  output: isBuild && !isWindows ? 'standalone' : undefined,
   images: {
     remotePatterns: [
       {
