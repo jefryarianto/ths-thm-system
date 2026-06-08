@@ -5,6 +5,7 @@ import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MailService } from '../../mail/mail.service';
 
 describe('MembersService', () => {
   let service: MembersService;
@@ -43,6 +44,10 @@ describe('MembersService', () => {
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +55,7 @@ describe('MembersService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 

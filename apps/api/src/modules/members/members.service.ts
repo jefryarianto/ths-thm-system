@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -7,6 +8,7 @@ import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class MembersService {
+  private readonly logger = new Logger(MembersService.name);
   private readonly CACHE_PREFIX = 'members:';
   private readonly CACHE_TTL = 30_000; // 30 seconds
 
@@ -14,6 +16,7 @@ export class MembersService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
@@ -96,6 +99,13 @@ export class MembersService {
       } as any,
     });
 
+    // Send welcome email if email address is provided
+    if (member.email) {
+      this.sendWelcomeEmail(member.namaLengkap, member.email).catch((err) =>
+        this.logger.error(`Welcome email failed for ${member.email}: ${err.message}`),
+      );
+    }
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: member, message: 'Anggota berhasil ditambahkan' };
   }
@@ -164,6 +174,13 @@ export class MembersService {
           results.details.push({ row, missingFields, memberId: member.id });
         } else {
           results.success++;
+        }
+
+        // Send welcome email if email is provided
+        if (member.email) {
+          this.sendWelcomeEmail(member.namaLengkap, member.email).catch((err) =>
+            this.logger.error(`Welcome email failed for CSV import (${member.email}): ${err.message}`),
+          );
         }
       } catch (error) {
         results.errors++;
@@ -264,6 +281,29 @@ export class MembersService {
     });
 
     return { success: true, data: dues };
+  }
+
+  private async sendWelcomeEmail(nama: string, email: string): Promise<void> {
+    await this.mailService.sendMail({
+      to: email,
+      subject: 'Selamat Datang di THS-THM!',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #1a56db;">Selamat Datang, ${nama}!</h1>
+          <p>Terima kasih telah bergabung dengan <strong>THS-THM</strong>.</p>
+          <p>Data keanggotaan Anda telah berhasil didaftarkan dalam sistem. Berikut adalah beberapa hal yang bisa Anda lakukan:</p>
+          <ul style="line-height: 1.8; color: #374151;">
+            <li>Melengkapi data profil keanggotaan</li>
+            <li>Mengikuti kegiatan dan latihan</li>
+            <li>Mendapatkan akses ke berbagai dokumen organisasi</li>
+          </ul>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+          <p style="color: #6b7280; font-size: 12px;">
+            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
+          </p>
+        </div>
+      `,
+    });
   }
 
   private async generateMemberNumber(): Promise<string> {
