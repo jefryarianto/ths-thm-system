@@ -18,20 +18,24 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly RESEND_API_URL = 'https://api.resend.com/emails';
 
-  async sendMail(options: SendMailOptions): Promise<void> {
+  /**
+   * Send email via Resend (primary) or SMTP (fallback).
+   * @returns true if email was sent successfully, false if skipped/failed
+   */
+  async sendMail(options: SendMailOptions): Promise<boolean> {
     const { to, subject, text, html } = options;
 
     if (env.nodeEnv === 'development') {
       this.logger.log(`[DEV] Email would be sent to ${to}: "${subject}"`);
-      return;
+      return true;
     }
 
     // Try Resend first (primary provider — uses native fetch, no packages needed)
     const sent = await this.sendViaResend(to, subject, text, html);
-    if (sent) return;
+    if (sent) return true;
 
     // Fallback to SMTP (requires nodemailer package to be installed)
-    await this.sendViaSmtp(to, subject, text, html);
+    return await this.sendViaSmtp(to, subject, text, html);
   }
 
   private async sendViaResend(
@@ -87,10 +91,10 @@ export class MailService {
     subject: string,
     text?: string,
     html?: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!env.smtp.user || !env.smtp.pass) {
       this.logger.warn('SMTP not configured — email not sent');
-      return;
+      return false;
     }
 
     try {
@@ -103,7 +107,7 @@ export class MailService {
           'nodemailer package not installed — SMTP fallback unavailable. ' +
           'Install with: cd apps/api && pnpm add nodemailer',
         );
-        return;
+        return false;
       }
 
       const transporter = nodemailerModule.createTransport({
@@ -122,8 +126,10 @@ export class MailService {
       });
 
       this.logger.log(`Email sent via SMTP to ${to}`);
+      return true;
     } catch (error) {
       this.logger.error(`SMTP fallback failed: ${(error as Error).message}`);
+      return false;
     }
   }
 }

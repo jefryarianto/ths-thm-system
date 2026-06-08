@@ -13,7 +13,7 @@ export class MailController {
   @Post('test')
   @Roles('superadmin')
   async test(@Body() dto: TestMailDto) {
-    await this.mailService.sendMail({
+    const sent = await this.mailService.sendMail({
       to: dto.email,
       subject: 'Test Email dari THS-THM System',
       html: `
@@ -29,6 +29,9 @@ export class MailController {
       `,
     });
 
-    return { success: true, message: 'Test email sent' };
+    if (sent) {
+      return { success: true, message: 'Test email sent successfully' };
+    }
+    return { success: false, message: 'Test email failed. Check API logs for details.' };
   }
 }
