@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
+import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import Confetti from './confetti';
 import GamificationTour from './tour';
@@ -345,7 +346,7 @@ export default function GamificationScreen() {
   };
 
   const animateTab = (tab: TabType) => {
-    const positions = { profile: 0, leaderboard: 1, badges: 2 };
+    const positions: Record<TabType, number> = { profile: 0, leaderboard: 1, badges: 2, rewards: 3 };
     Animated.spring(tabIndicatorX, {
       toValue: positions[tab] * (120 + 8), // tab width + gap
       useNativeDriver: true,
@@ -483,7 +484,7 @@ export default function GamificationScreen() {
               {/* Points Card with animated number */}
               <View style={styles.pointsCard}>
                 <View style={styles.pointsHeader}>
-                  <Ionicons name={'zap' as any} size={28} color="#f59e0b" />
+                  <Ionicons name={'zap' as keyof typeof Ionicons.glyphMap} size={28} color="#f59e0b" />
                   <View style={styles.liveIndicator}>
                     <PulseDot />
                     <Text style={styles.liveText}>Live</Text>
@@ -529,7 +530,7 @@ export default function GamificationScreen() {
                   <Text style={styles.subTitle}>Badge Diraih ({profile.badges.length})</Text>
                   <View style={styles.badgeGrid}>
                     {profile.badges.map((badge, idx) => (
-                      <View key={badge.id} style={[styles.badgeItem, { animationDelay: `${idx * 50}ms` }]}>
+                      <View key={badge.id} style={styles.badgeItem}>
                         <Text style={styles.badgeIcon}>{badge.icon}</Text>
                         <Text style={styles.badgeName}>{badge.name}</Text>
                       </View>
@@ -602,7 +603,7 @@ export default function GamificationScreen() {
           {/* Filter Buttons */}
           <View style={styles.filterRow}>
             <TouchableOpacity
-              style={[styles.filterChip, selectedDistrik && styles.filterChipActive]}
+              style={[styles.filterChip, selectedDistrik !== '' && styles.filterChipActive]}
               onPress={async () => {
                 const options = [{ label: 'Semua Distrik', value: '' }, ...orgTree.map(d => ({ label: d.nama, value: d.id }))];
                 // Simple cycling through options
@@ -613,12 +614,12 @@ export default function GamificationScreen() {
                 setSelectedRanting('');
               }}
             >
-              <Text style={[styles.filterChipText, selectedDistrik && styles.filterChipTextActive]} numberOfLines={1}>
+              <Text style={[styles.filterChipText, selectedDistrik !== '' && styles.filterChipTextActive]} numberOfLines={1}>
                 {selectedDistrik ? (orgTree.find(d => d.id === selectedDistrik)?.nama || 'Distrik') : '📌 Distrik'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.filterChip, selectedWilayah && styles.filterChipActive, !selectedDistrik && styles.filterChipDisabled]}
+              style={[styles.filterChip, selectedWilayah !== '' && styles.filterChipActive, selectedDistrik === '' && styles.filterChipDisabled]}
               onPress={() => {
                 const wilayahs = orgTree.find(d => d.id === selectedDistrik)?.wilayahs || [];
                 if (!wilayahs.length) return;
@@ -629,14 +630,14 @@ export default function GamificationScreen() {
                 setSelectedRanting('');
               }}
             >
-              <Text style={[styles.filterChipText, selectedWilayah && styles.filterChipTextActive]} numberOfLines={1}>
+              <Text style={[styles.filterChipText, selectedWilayah !== '' && styles.filterChipTextActive]} numberOfLines={1}>
                 {selectedWilayah
                   ? (orgTree.find(d => d.id === selectedDistrik)?.wilayahs?.find(w => w.id === selectedWilayah)?.nama || 'Wilayah')
                   : '📍 Wilayah'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.filterChip, selectedRanting && styles.filterChipActive, !selectedWilayah && styles.filterChipDisabled]}
+              style={[styles.filterChip, selectedRanting !== '' && styles.filterChipActive, selectedWilayah === '' && styles.filterChipDisabled]}
               onPress={() => {
                 const wilayahs = orgTree.find(d => d.id === selectedDistrik)?.wilayahs || [];
                 const rantings = wilayahs.find(w => w.id === selectedWilayah)?.rantings || [];
@@ -647,7 +648,7 @@ export default function GamificationScreen() {
                 setSelectedRanting(next.value);
               }}
             >
-              <Text style={[styles.filterChipText, selectedRanting && styles.filterChipTextActive]} numberOfLines={1}>
+              <Text style={[styles.filterChipText, selectedRanting !== '' && styles.filterChipTextActive]} numberOfLines={1}>
                 {selectedRanting
                   ? (orgTree.find(d => d.id === selectedDistrik)?.wilayahs?.find(w => w.id === selectedWilayah)?.rantings?.find(r => r.id === selectedRanting)?.nama || 'Ranting')
                   : '🔴 Ranting'}
@@ -680,7 +681,7 @@ export default function GamificationScreen() {
                   </View>
                 </View>
                 <View style={styles.leaderboardPoints}>
-                  <Ionicons name={'zap' as any} size={14} color="#f59e0b" />
+                  <Ionicons name={'zap' as keyof typeof Ionicons.glyphMap} size={14} color="#f59e0b" />
                   <Text style={styles.pointsText}>{entry.points.toLocaleString('id-ID')}</Text>
                 </View>
               </TouchableOpacity>
@@ -690,7 +691,7 @@ export default function GamificationScreen() {
           )}
           {hasMore && leaderboard.length > 0 && (
             <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore}>
-              <Ionicons name={'arrow-down' as any} size={16} color="#3b82f6" />
+              <Ionicons name={'arrow-down' as keyof typeof Ionicons.glyphMap} size={16} color="#3b82f6" />
               <Text style={styles.loadMoreText}>Muat Lainnya</Text>
             </TouchableOpacity>
           )}
@@ -726,8 +727,8 @@ export default function GamificationScreen() {
                           // Refresh
                           const rewardsRes = await apiClient.get('/gamification/rewards');
                           setRewards(rewardsRes.data.data);
-                        } catch (err: any) {
-                          alert(err.response?.data?.message || 'Gagal redeem');
+                        } catch (err: unknown) {
+                          alert((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Gagal redeem');
                         } finally {
                           setRedeemingId(null);
                         }
@@ -746,7 +747,7 @@ export default function GamificationScreen() {
                 )}
                 <View style={styles.rewardMeta}>
                   <View style={styles.rewardPoints}>
-                    <Ionicons name={'zap' as any} size={12} color="#f59e0b" />
+                    <Ionicons name={'zap' as keyof typeof Ionicons.glyphMap} size={12} color="#f59e0b" />
                     <Text style={styles.rewardPointsText}>{reward.pointCost.toLocaleString('id-ID')}</Text>
                   </View>
                   <Text style={styles.rewardStock}>
@@ -806,8 +807,7 @@ export default function GamificationScreen() {
       <TouchableOpacity
         style={styles.adminButton}
         onPress={() => {
-          const { router: r } = require('expo-router');
-          r.push('/admin-rewards' as any);
+          router.push('/admin-rewards' as never);
         }}
       >
         <Ionicons name="settings" size={16} color="#6b7280" />

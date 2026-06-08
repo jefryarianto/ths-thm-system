@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
 
 type LetterTab = 'incoming' | 'outgoing';
@@ -63,7 +64,7 @@ export default function LettersScreen() {
     return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const currentData = tab === 'incoming' ? incoming : outgoing;
+  const currentData: IncomingLetter[] | OutgoingLetter[] = tab === 'incoming' ? incoming : outgoing;
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
 
@@ -92,7 +93,7 @@ export default function LettersScreen() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
+      <FlatList<IncomingLetter | OutgoingLetter>
         data={currentData}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
@@ -106,7 +107,9 @@ export default function LettersScreen() {
         renderItem={({ item }) => {
           const s = STATUS_STYLES[item.status] || { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/letters/${item.id}?type=${tab}`); }}>
+            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() =>
+              router.push(`/letters/${item.id}?type=${tab}` as never)
+            }>
               <View style={styles.cardTop}>
                 <View style={styles.iconCircle}>
                   <Ionicons name="document-text" size={18} color="#2563eb" />

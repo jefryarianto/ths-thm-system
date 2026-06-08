@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+// @ts-ignore - react-native-qrcode-svg needs workspace install
 import QRCode from 'react-native-qrcode-svg';
 import apiClient from '../../lib/api-client';
 
+interface MemberInfo {
+  nomorAnggota: string;
+  namaLengkap: string;
+  tingkat: string;
+  ranting: { nama: string } | null;
+}
+
 export default function DigitalCardScreen() {
-  const [member, setMember] = useState<any>(null);
+  const [member, setMember] = useState<MemberInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

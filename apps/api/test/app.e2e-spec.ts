@@ -300,5 +300,62 @@ describe('THS-THM API (e2e)', () => {
           expect(Array.isArray(res.body.data)).toBe(true);
         });
     });
+
+    it('GET /api/members — should reject without auth', () => {
+      return request(app.getHttpServer())
+        .get('/api/members')
+        .expect(401);
+    });
+  });
+
+  // ─── Letters ───
+  describe('Letters', () => {
+    it('GET /api/letters/incoming — should return incoming letters', () => {
+      return request(app.getHttpServer())
+        .get('/api/letters/incoming')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(Array.isArray(res.body.data)).toBe(true);
+        });
+    });
+
+    it('GET /api/letters/outgoing — should return outgoing letters', () => {
+      return request(app.getHttpServer())
+        .get('/api/letters/outgoing')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(Array.isArray(res.body.data)).toBe(true);
+        });
+    });
+
+    it('GET /api/letters — should reject without auth', () => {
+      return request(app.getHttpServer())
+        .get('/api/letters/incoming')
+        .expect(401);
+    });
+  });
+
+  // ─── Candidates ───
+  describe('Candidates', () => {
+    it('GET /api/candidates — should return candidate list', () => {
+      return request(app.getHttpServer())
+        .get('/api/candidates')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(Array.isArray(res.body.data)).toBe(true);
+        });
+    });
+
+    it('GET /api/candidates — should reject without auth', () => {
+      return request(app.getHttpServer())
+        .get('/api/candidates')
+        .expect(401);
+    });
   });
 });

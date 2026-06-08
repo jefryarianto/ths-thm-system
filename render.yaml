@@ -47,6 +47,10 @@ services:
           name: ths-thm-web
           type: web
           property: url
+      # Transactional email via Resend (recommended — generous free tier)
+      # Replace legacy SMTP vars below with RESEND_API_KEY when migrating
+      - key: RESEND_API_KEY
+        sync: false
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -55,6 +59,7 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      # Firebase Cloud Messaging (FCM) — existing google-services.json configured
       - key: FCM_PROJECT_ID
         sync: false
       - key: FCM_PRIVATE_KEY
