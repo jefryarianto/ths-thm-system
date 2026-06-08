@@ -30,6 +30,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { GamificationModule } from './modules/gamification/gamification.module';
     ReportsModule,
     SettingsModule,
     GamificationModule,
+    MailModule,
   ],
   controllers: [HealthController],
   providers: [

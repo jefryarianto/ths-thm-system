@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-// @ts-ignore - react-native-qrcode-svg needs workspace install
 import QRCode from 'react-native-qrcode-svg';
 import apiClient from '../../lib/api-client';
 
