@@ -1,7 +1,6 @@
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { AuditInterceptor } from './audit.interceptor';
-import { AuditService } from '../services/audit.service';
 
 describe('AuditInterceptor', () => {
   let interceptor: AuditInterceptor;

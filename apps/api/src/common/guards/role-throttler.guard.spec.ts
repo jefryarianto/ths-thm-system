@@ -12,28 +12,32 @@ describe('RoleBasedThrottlerGuard', () => {
     expect(guard).toBeDefined();
   });
 
+  // Access protected methods for unit testing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getGuard = (g: RoleBasedThrottlerGuard) => g as unknown as { getTracker(req: unknown): Promise<string>; handleRequest(props: unknown): Promise<void> };
+
   describe('getTracker', () => {
     it('should return user ID for authenticated requests', async () => {
       const req = { user: { id: 'user-123' } };
-      const result = await (guard as any).getTracker(req);
+      const result = await getGuard(guard).getTracker(req);
       expect(result).toBe('user-123');
     });
 
     it('should fallback to IP for unauthenticated requests', async () => {
       const req = { ip: '192.168.1.1' };
-      const result = await (guard as any).getTracker(req);
+      const result = await getGuard(guard).getTracker(req);
       expect(result).toBe('192.168.1.1');
     });
 
     it('should return unknown when no user or IP', async () => {
       const req = {};
-      const result = await (guard as any).getTracker(req);
+      const result = await getGuard(guard).getTracker(req);
       expect(result).toBe('unknown');
     });
 
     it('should prefer user ID over IP', async () => {
       const req = { user: { id: 'user-123' }, ip: '192.168.1.1' };
-      const result = await (guard as any).getTracker(req);
+      const result = await getGuard(guard).getTracker(req);
       expect(result).toBe('user-123');
     });
   });
@@ -69,7 +73,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       expect(props.limit).toBe(20);
       expect(props.ttl).toBe(60);
@@ -85,7 +89,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       expect(props.limit).toBe(60);
     });
@@ -98,7 +102,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       expect(props.limit).toBe(200);
     });
@@ -111,7 +115,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       expect(props.limit).toBe(100);
     });
@@ -124,7 +128,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       expect(props.limit).toBe(120);
     });
@@ -137,7 +141,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       expect(props.limit).toBe(150);
     });
@@ -150,7 +154,7 @@ describe('RoleBasedThrottlerGuard', () => {
       ).mockResolvedValue(true);
 
       const props = createRequestProps(context);
-      await (guard as any).handleRequest(props);
+      await getGuard(guard).handleRequest(props);
 
       // Unknown role falls back to base limit
       expect(props.limit).toBe(100);

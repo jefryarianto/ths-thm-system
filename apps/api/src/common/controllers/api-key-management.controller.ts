@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { Roles } from '../decorators/roles.decorator';
 import { RequireScope } from '../decorators/scope.decorator';
 import { ApiKeyStore } from '../guards/api-key.guard';
 import { CreateApiKeyDto, RevokeApiKeyDto } from '../dto/api-key-management.dto';
-import { AuditService, AuditEventType } from '../services/audit.service';
+import { AuditService } from '../services/audit.service';
 
 /**
  * Controller for managing API keys at runtime.

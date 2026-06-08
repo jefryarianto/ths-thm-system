@@ -6,15 +6,12 @@ export interface Response<T> {
   success: boolean;
   data: T;
   message?: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 }
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
-    const ctx = context.switchToHttp();
-    const response = ctx.getResponse();
-
     return next.handle().pipe(
       map((data) => {
         if (data && data.success !== undefined) return data;

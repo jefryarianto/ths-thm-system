@@ -1,7 +1,7 @@
 import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SCOPE_KEY, ScopeLevel } from '../decorators/scope.decorator';
-import { ScopedRequest, UserScope } from '../interfaces/user-scope.interface';
+import { ScopedRequest } from '../interfaces/user-scope.interface';
 import { AuditService } from '../services/audit.service';
 
 /**

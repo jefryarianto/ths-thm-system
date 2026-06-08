@@ -2,7 +2,7 @@ import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from
 
 @Injectable()
 export class ParseIdPipe implements PipeTransform<string, string> {
-  transform(value: string, metadata: ArgumentMetadata): string {
+  transform(value: string, _metadata: ArgumentMetadata): string {
     if (!value || value.length < 10) {
       throw new BadRequestException('ID tidak valid');
     }

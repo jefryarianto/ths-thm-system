@@ -107,7 +107,7 @@ export class ScopeHelper {
    * Use this in findOne-style service methods for accurate scope checks.
    */
   async hasAccessToResourceAsync(
-    prisma: { ranting: { findUnique: (args: any) => Promise<any> } },
+    prisma: { ranting: { findUnique: (args: { where: { id: string }; include?: { wilayah?: boolean } }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null> } },
     scope: UserScope,
     resourceRantingId?: string,
   ): Promise<boolean> {

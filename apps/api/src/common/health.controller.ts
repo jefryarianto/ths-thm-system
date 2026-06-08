@@ -20,7 +20,7 @@ export class HealthController {
   @Public()
   async check() {
     let dbStatus = 'disconnected';
-    let dbPool = { active: 0, idle: 0, total: 0 };
+    const dbPool = { active: 0, idle: 0, total: 0 };
 
     try {
       await this.prisma.$queryRaw`SELECT 1`;

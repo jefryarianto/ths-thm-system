@@ -117,8 +117,9 @@ describe('ApiKeyGuard', () => {
 
       expect(guard.canActivate(ctx)).toBe(true);
       expect(request.user).toBeDefined();
-      expect((request.user as any).role).toBe('admin_ranting');
-      expect((request.user as any).email).toContain('apikey@');
+      const user = request.user as unknown as { role: string; email: string };
+      expect(user.role).toBe('admin_ranting');
+      expect(user.email).toContain('apikey@');
     });
 
     it('should attach scope from API key config', () => {

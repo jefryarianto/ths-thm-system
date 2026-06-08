@@ -1,7 +1,6 @@
 import { Injectable, ExecutionContext, UnauthorizedException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { randomBytes } from 'crypto';
-import { ScopedRequest } from '../interfaces/user-scope.interface';
 
 /**
  * Metadata key for marking endpoints that accept API key authentication.

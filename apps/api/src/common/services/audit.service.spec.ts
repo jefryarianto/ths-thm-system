@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@nestjs/common';
 import { AuditService, AuditEventType } from './audit.service';
 import { AuditLogStore } from './audit-log-store.service';
 
