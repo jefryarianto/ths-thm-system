@@ -8,9 +8,15 @@ export interface SendMailOptions {
   html?: string;
 }
 
+interface ResendResponse {
+  id?: string;
+  error?: { message: string; name?: string };
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
+  private readonly RESEND_API_URL = 'https://api.resend.com/emails';
 
   async sendMail(options: SendMailOptions): Promise<void> {
     const { to, subject, text, html } = options;
@@ -20,11 +26,11 @@ export class MailService {
       return;
     }
 
-    // Try Resend first (primary provider)
+    // Try Resend first (primary provider — uses native fetch, no packages needed)
     const sent = await this.sendViaResend(to, subject, text, html);
     if (sent) return;
 
-    // Fallback to SMTP
+    // Fallback to SMTP (requires nodemailer package to be installed)
     await this.sendViaSmtp(to, subject, text, html);
   }
 
@@ -41,28 +47,37 @@ export class MailService {
         return false;
       }
 
-      let ResendClass: typeof import('resend')['Resend'];
-      try {
-        ({ Resend: ResendClass } = await import('resend'));
-      } catch {
-        this.logger.warn('resend package not installed — skipping Resend');
+      const fromDomain = process.env.RESEND_DOMAIN;
+      if (!fromDomain) {
+        this.logger.warn('RESEND_DOMAIN not set — skipping Resend');
         return false;
       }
 
-      const resend = new ResendClass(apiKey);
-      const fromDomain = process.env.RESEND_DOMAIN || process.env.EMAIL_FROM || 'localhost';
-      await resend.emails.send({
-        from: `THS-THM <notifications@${fromDomain}>`,
-        to: [to],
-        subject,
-        text: text || '',
-        html: html || text || '',
+      const response = await fetch(this.RESEND_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `THS-THM <notifications@${fromDomain}>`,
+          to: [to],
+          subject,
+          text: text || '',
+          html: html || text || '',
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as ResendResponse;
+        this.logger.error(`Resend API error (${response.status}): ${errorData.error?.message || response.statusText}`);
+        return false;
+      }
 
       this.logger.log(`Email sent via Resend to ${to}: "${subject}"`);
       return true;
     } catch (error) {
-      this.logger.error(`Resend failed: ${(error as Error).message}`);
+      this.logger.error(`Resend request failed: ${(error as Error).message}`);
       return false;
     }
   }
@@ -79,11 +94,15 @@ export class MailService {
     }
 
     try {
+      // nodemailer is optional — install with: pnpm add nodemailer
       let nodemailerModule: typeof import('nodemailer');
       try {
         nodemailerModule = await import('nodemailer');
       } catch {
-        this.logger.warn('nodemailer package not installed — skipping SMTP');
+        this.logger.warn(
+          'nodemailer package not installed — SMTP fallback unavailable. ' +
+          'Install with: cd apps/api && pnpm add nodemailer',
+        );
         return;
       }
 
