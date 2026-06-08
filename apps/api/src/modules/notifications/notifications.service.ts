@@ -36,10 +36,8 @@ export class NotificationsService {
       },
     });
 
-    // Send email notification if user has email
-    this.sendEmailNotification(userId, dto.judul, dto.isi).catch((err) =>
-      this.logger.error(`Email notif failed for user ${userId}: ${err.message}`),
-    );
+    // Send email notification if user has email (method handles errors internally)
+    this.sendEmailNotification(userId, dto.judul, dto.isi);
 
     // Push FCM to device tokens
     await this.pushFCM(userId, dto.judul, dto.isi);

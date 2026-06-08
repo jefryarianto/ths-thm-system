@@ -22,6 +22,7 @@ describe('NotificationsService', () => {
       groupBy: jest.fn(),
     },
     user: {
+      findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
     },
