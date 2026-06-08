@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { EventsGateway } from './events.gateway';
 import { CacheService } from '../../common/services/cache.service';
 
@@ -42,6 +43,10 @@ describe('NotificationsService', () => {
     sendUnreadCount: jest.fn(),
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   const mockCache = {
     getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     invalidatePrefix: jest.fn(),
@@ -52,6 +57,7 @@ describe('NotificationsService', () => {
       providers: [
         NotificationsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: MailService, useValue: mockMailService },
         { provide: EventsGateway, useValue: mockGateway },
         { provide: CacheService, useValue: mockCache },
       ],

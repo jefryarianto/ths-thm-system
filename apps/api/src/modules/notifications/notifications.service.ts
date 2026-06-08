@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { EventsGateway } from './events.gateway';
 import { SendNotificationDto, BroadcastNotificationDto, SendToRoleDto, NotificationFilterDto } from './dto/notification.dto';
 import { Role } from '@prisma/client';
@@ -7,10 +8,12 @@ import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
   private readonly CACHE_PREFIX = 'notifications:';
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
     @Optional() private readonly eventsGateway?: EventsGateway,
     private readonly cache?: CacheService,
   ) {}
@@ -32,6 +35,11 @@ export class NotificationsService {
         data: (dto.data || undefined) as never,
       },
     });
+
+    // Send email notification if user has email
+    this.sendEmailNotification(userId, dto.judul, dto.isi).catch((err) =>
+      this.logger.error(`Email notif failed for user ${userId}: ${err.message}`),
+    );
 
     // Push FCM to device tokens
     await this.pushFCM(userId, dto.judul, dto.isi);
@@ -341,6 +349,35 @@ export class NotificationsService {
       data: { isActive: false },
     });
     return { success: true, message: 'Device token berhasil dihapus' };
+  }
+
+  private async sendEmailNotification(userId: string, judul: string, isi: string): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, namaLengkap: true },
+      });
+
+      if (!user?.email) return;
+
+      await this.mailService.sendMail({
+        to: user.email,
+        subject: `[THS-THM] ${judul}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #1a56db;">${judul}</h2>
+            <p>Halo <strong>${user.namaLengkap}</strong>,</p>
+            <p>${isi}</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+            <p style="color: #6b7280; font-size: 12px;">
+              THS-THM System &mdash; Notifikasi otomatis
+            </p>
+          </div>
+        `,
+      });
+    } catch (error) {
+      this.logger.error(`sendEmailNotification failed for user ${userId}: ${(error as Error).message}`);
+    }
   }
 
   private async pushFCM(userId: string, title: string, body: string) {
