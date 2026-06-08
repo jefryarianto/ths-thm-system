@@ -3,6 +3,7 @@ import { UnauthorizedException, ConflictException, NotFoundException } from '@ne
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 
 // Mock bcryptjs at module level so all tests can use it
 jest.mock('bcryptjs', () => ({
@@ -41,6 +42,10 @@ describe('AuthService', () => {
     },
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   const mockJwt = {
     sign: jest.fn().mockReturnValue('mock-jwt-token'),
     verify: jest.fn(),
@@ -52,6 +57,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -305,18 +311,41 @@ describe('AuthService', () => {
   });
 
   describe('forgotPassword', () => {
-    it('should return success message', async () => {
+    it('should return success message when user not found (prevent enumeration)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      const result = await service.forgotPassword({ email: 'unknown@test.com' });
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('reset password');
+    });
+
+    it('should send email when user exists', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       const result = await service.forgotPassword({ email: 'test@ths-thm.org' });
       expect(result.success).toBe(true);
       expect(result.message).toContain('reset password');
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'test@ths-thm.org', subject: expect.stringContaining('Reset') }),
+      );
     });
   });
 
   describe('resetPassword', () => {
-    it('should return success message', async () => {
-      const result = await service.resetPassword({ token: 'abc', newPassword: 'newpass' });
+    it('should reset password with valid token', async () => {
+      mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', purpose: 'reset-password' });
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      const result = await service.resetPassword({ token: 'valid-token', newPassword: 'newpass123' });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('reset');
+      expect(result.message).toContain('berhasil direset');
+    });
+
+    it('should throw UnauthorizedException for invalid token', async () => {
+      mockJwt.verify.mockImplementation(() => { throw new Error('invalid'); });
+
+      await expect(
+        service.resetPassword({ token: 'bad-token', newPassword: 'newpass' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
