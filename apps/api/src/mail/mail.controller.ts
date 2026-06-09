@@ -277,6 +277,69 @@ export class MailController {
       eventMap[e.event] = e._count;
     }
 
+    // ── Daily trend (7 days) ──
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Get all events from the last 7 days
+    const recentEvents = await this.prisma.emailEvent.findMany({
+      where: { createdAt: { gte: sevenDaysAgo } },
+      select: { event: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Get daily sent counts
+    const recentLogs = await this.prisma.emailLog.findMany({
+      where: { createdAt: { gte: sevenDaysAgo }, status: 'sent' },
+      select: { createdAt: true },
+    });
+
+    // Build daily aggregations
+    const dailySent: Record<string, number> = {};
+    for (const log of recentLogs) {
+      const day = log.createdAt.toISOString().slice(0, 10);
+      dailySent[day] = (dailySent[day] || 0) + 1;
+    }
+
+    const dailyEvents: Record<string, Record<string, number>> = {};
+    for (const evt of recentEvents) {
+      const day = evt.createdAt.toISOString().slice(0, 10);
+      if (!dailyEvents[day]) dailyEvents[day] = {};
+      dailyEvents[day][evt.event] = (dailyEvents[day][evt.event] || 0) + 1;
+    }
+
+    // Build daily trend data
+    const dailyTrend: Array<{
+      date: string;
+      sent: number;
+      opened: number;
+      clicked: number;
+      bounced: number;
+      openRate: number;
+      clickRate: number;
+      bounceRate: number;
+    }> = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const dateKey = d.toISOString().slice(0, 10);
+      const sent = dailySent[dateKey] || 0;
+      const dayEvents = dailyEvents[dateKey] || {};
+      const opened = dayEvents.opened || 0;
+      const clicked = dayEvents.clicked || 0;
+      const bounced = dayEvents.bounced || 0;
+
+      dailyTrend.push({
+        date: dateKey,
+        sent,
+        opened,
+        clicked,
+        bounced,
+        openRate: sent > 0 ? Math.round((opened / sent) * 100) : 0,
+        clickRate: sent > 0 ? Math.round((clicked / sent) * 100) : 0,
+        bounceRate: sent > 0 ? Math.round((bounced / sent) * 100) : 0,
+      });
+    }
+
     return {
       success: true,
       data: {
@@ -290,6 +353,7 @@ export class MailController {
           bounced: totalSent > 0 ? Math.round(((eventMap.bounced || 0) / totalSent) * 100) : 0,
           complained: totalSent > 0 ? Math.round(((eventMap.complained || 0) / totalSent) * 100) : 0,
         },
+        dailyTrend,
       },
     };
   }

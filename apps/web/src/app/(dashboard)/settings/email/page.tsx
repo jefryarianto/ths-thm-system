@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line,
 } from 'recharts';
 
 // ─── Email Template Directory ───
@@ -201,6 +201,7 @@ export default function EmailSettingsPage() {
     totalEvents: number;
     events: Record<string, number>;
     rates: Record<string, number>;
+    dailyTrend?: Array<{ date: string; sent: number; opened: number; clicked: number; bounced: number; openRate: number; clickRate: number; bounceRate: number }>;
   } | null>(null);
   const [engagementLoading, setEngagementLoading] = useState(false);
 
@@ -830,6 +831,48 @@ export default function EmailSettingsPage() {
                       <EngagementCard label="Click Rate" value={engagement.rates.clicked + '%'} color="text-purple-600" />
                       <EngagementCard label="Bounce Rate" value={engagement.rates.bounced + '%'} color={engagement.rates.bounced > 5 ? 'text-red-600' : 'text-yellow-600'} />
                     </div>
+                    {/* Daily Trend Line Chart */}
+                    {engagement.dailyTrend && engagement.dailyTrend.some(d => d.sent > 0) && (
+                      <div className="mb-4">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Tren 7 Hari (Open, Click, Bounce Rate)</p>
+                        <ResponsiveContainer width="100%" height={160}>
+                          <LineChart data={engagement.dailyTrend} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis
+                              dataKey="date"
+                              tick={{ fontSize: 10, fill: '#6b7280' }}
+                              tickLine={false}
+                              axisLine={{ stroke: '#e5e7eb' }}
+                              tickFormatter={(val) => {
+                                const d = new Date(val + 'T00:00:00');
+                                return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
+                              }}
+                            />
+                            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
+                            <Tooltip
+                              formatter={(value: number, name: string) => {
+                                const labels: Record<string, string> = { openRate: 'Open', clickRate: 'Click', bounceRate: 'Bounce' };
+                                return [`${value}%`, labels[name] || name];
+                              }}
+                              labelFormatter={(label) => {
+                                const d = new Date(label + 'T00:00:00');
+                                return d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                              }}
+                              contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Line type="monotone" dataKey="openRate" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} name="openRate" />
+                            <Line type="monotone" dataKey="clickRate" stroke="#a855f7" strokeWidth={2} dot={{ r: 3 }} name="clickRate" />
+                            <Line type="monotone" dataKey="bounceRate" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} name="bounceRate" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                        <div className="flex items-center justify-center gap-4 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-indigo-500" /> Open</span>
+                          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Click</span>
+                          <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500" /> Bounce</span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Mini bar chart */}
                     <ResponsiveContainer width="100%" height={120}>
                       <BarChart
