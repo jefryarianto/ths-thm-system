@@ -102,6 +102,27 @@ export class MailController {
     };
   }
 
+  @Get('modules')
+  @Roles('superadmin')
+  async getModules() {
+    const modules = await this.prisma.$queryRaw<Array<{ module: string; count: bigint }>>`
+      SELECT DISTINCT metadata->>'module' as module, COUNT(*)::bigint as count
+      FROM email_logs
+      WHERE metadata->>'module' IS NOT NULL
+      GROUP BY metadata->>'module'
+      ORDER BY module ASC
+    `;
+
+    return {
+      success: true,
+      data: modules.map((m) => ({
+        module: m.module,
+        label: m.module,
+        count: Number(m.count),
+      })),
+    };
+  }
+
   @Get('logs/stats')
   @Roles('superadmin')
   @ApiQuery({ name: 'module', required: false })

@@ -179,6 +179,8 @@ export default function EmailSettingsPage() {
   const [logsModuleFilter, setLogsModuleFilter] = useState('');
   const [logsStats, setLogsStats] = useState<LogStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [usedModules, setUsedModules] = useState<Array<{ module: string; label: string; count: number }>>([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -191,6 +193,7 @@ export default function EmailSettingsPage() {
       setStatusLoading(false);
     };
     fetchStatus();
+    fetchModules();
   }, []);
 
   const fetchLogs = async (page: number, status?: string, module?: string) => {
@@ -246,6 +249,15 @@ export default function EmailSettingsPage() {
   const handleFilterChange = (status: string) => {
     setLogsFilter(status);
     fetchLogs(1, status, logsModuleFilter);
+  };
+
+  const fetchModules = async () => {
+    setModulesLoading(true);
+    try {
+      const { data } = await apiClient.get('/mail/modules');
+      setUsedModules(data.data || []);
+    } catch { /* ignore */ }
+    setModulesLoading(false);
   };
 
   const handleModuleFilterChange = (module: string) => {
@@ -707,7 +719,17 @@ export default function EmailSettingsPage() {
                   onChange={(e) => handleModuleFilterChange(e.target.value)}
                   className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500"
                 >
-                  {MODULES.map((m) => (
+                  <option value="">Semua Modul</option>
+                  {usedModules.length > 0 ? usedModules.map((m) => {
+                    const label = MODULES.find(sm => sm.value === m.module)?.label || m.module;
+                    return (
+                      <option key={m.module} value={m.module}>
+                        {label} ({m.count})
+                      </option>
+                    );
+                  }) : modulesLoading ? (
+                    <option disabled>Memuat...</option>
+                  ) : MODULES.filter(m => m.value).map((m) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
