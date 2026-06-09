@@ -57,7 +57,7 @@ export class NotificationsController {
 
   @Patch('preferences')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
-  updatePreferences(@CurrentUser() user: { id: string }, @Body() dto: Record<string, boolean>) {
+  updatePreferences(@CurrentUser() user: { id: string }, @Body() dto: Record<string, unknown>) {
     return this.service.updatePreferences(user.id, dto);
   }
 

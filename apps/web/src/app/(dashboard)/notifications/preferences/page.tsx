@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
-import { Bell, Settings, ArrowLeft, Save, Check } from 'lucide-react';
+import { Bell, Settings, ArrowLeft, Save, Check, Mail, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 
 interface NotifType {
@@ -11,8 +11,13 @@ interface NotifType {
   description: string;
 }
 
+interface ChannelPrefs {
+  inApp: boolean;
+  email: boolean;
+}
+
 export default function NotificationPreferencesPage() {
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+  const [prefs, setPrefs] = useState<Record<string, ChannelPrefs>>({});
   const [types, setTypes] = useState<NotifType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,21 +39,32 @@ export default function NotificationPreferencesPage() {
 
   useEffect(() => { fetchPreferences(); }, [fetchPreferences]);
 
-  const handleToggle = (key: string) => {
-    setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+  const handleToggleInApp = (key: string) => {
+    setPrefs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], inApp: !prev[key]?.inApp },
+    }));
+    setSaved(false);
+  };
+
+  const handleToggleEmail = (key: string) => {
+    setPrefs((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], email: !prev[key]?.email },
+    }));
     setSaved(false);
   };
 
   const handleEnableAll = () => {
-    const allOn: Record<string, boolean> = {};
-    for (const t of types) allOn[t.key] = true;
+    const allOn: Record<string, ChannelPrefs> = {};
+    for (const t of types) allOn[t.key] = { inApp: true, email: true };
     setPrefs(allOn);
     setSaved(false);
   };
 
   const handleDisableAll = () => {
-    const allOff: Record<string, boolean> = {};
-    for (const t of types) allOff[t.key] = false;
+    const allOff: Record<string, ChannelPrefs> = {};
+    for (const t of types) allOff[t.key] = { inApp: false, email: false };
     setPrefs(allOff);
     setSaved(false);
   };
@@ -66,7 +82,8 @@ export default function NotificationPreferencesPage() {
     setSaving(false);
   };
 
-  const enabledCount = Object.values(prefs).filter(Boolean).length;
+  const inAppCount = Object.values(prefs).filter((p) => p?.inApp).length;
+  const emailCount = Object.values(prefs).filter((p) => p?.email).length;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -84,7 +101,7 @@ export default function NotificationPreferencesPage() {
             Pengaturan Notifikasi
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Pilih jenis notifikasi yang ingin Anda terima
+            Pilih channel notifikasi per jenis — {inAppCount}/{types.length} in-app, {emailCount}/{types.length} email
           </p>
         </div>
       </div>
@@ -98,28 +115,30 @@ export default function NotificationPreferencesPage() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {enabledCount} dari {types.length} aktif
+                <Smartphone size={14} className="inline mr-1" />
+                {inAppCount}/{types.length} in-app &bull; <Mail size={14} className="inline mr-1" />
+                {emailCount}/{types.length} email
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {enabledCount === types.length
-                  ? 'Semua notifikasi aktif'
-                  : enabledCount === 0
-                  ? 'Semua notifikasi dinonaktifkan'
-                  : 'Beberapa notifikasi dinonaktifkan'}
+                {inAppCount === 0 && emailCount === 0
+                  ? 'Semua notifikasi nonaktif'
+                  : inAppCount === types.length && emailCount === types.length
+                  ? 'Semua notifikasi aktif (kedua channel)'
+                  : 'Beberapa channel dinonaktifkan'}
               </p>
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={handleDisableAll}
-              disabled={enabledCount === 0}
+              disabled={inAppCount === 0 && emailCount === 0}
               className="flex-1 sm:flex-none px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
             >
               Matikan Semua
             </button>
             <button
               onClick={handleEnableAll}
-              disabled={enabledCount === types.length}
+              disabled={inAppCount === types.length && emailCount === types.length}
               className="flex-1 sm:flex-none px-3 py-1.5 text-xs text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"
             >
               Aktifkan Semua
@@ -155,37 +174,73 @@ export default function NotificationPreferencesPage() {
       {/* Preference toggles */}
       {!loading && (
         <div className="space-y-3">
-          {types.map((type) => (
-            <div
-              key={type.key}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{type.label}</h3>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">({type.key})</span>
+          {types.map((type) => {
+            const p = prefs[type.key] || { inApp: true, email: true };
+            return (
+              <div
+                key={type.key}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{type.label}</h3>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">({type.key})</span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{type.description}</p>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{type.description}</p>
                 </div>
-                <button
-                  onClick={() => handleToggle(type.key)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    prefs[type.key] ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
-                  role="switch"
-                  aria-checked={!!prefs[type.key]}
-                  aria-label={`Toggle ${type.label}`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      prefs[type.key] ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+
+                <div className="flex items-center gap-4 pl-1">
+                  {/* In-App toggle */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <button
+                      onClick={() => handleToggleInApp(type.key)}
+                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                        p.inApp ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                      }`}
+                      role="switch"
+                      aria-checked={p.inApp}
+                      aria-label={`Toggle in-app ${type.label}`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          p.inApp ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                      <Smartphone size={12} />
+                      In-App
+                    </span>
+                  </label>
+
+                  {/* Email toggle */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <button
+                      onClick={() => handleToggleEmail(type.key)}
+                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 ${
+                        p.email ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-600'
+                      }`}
+                      role="switch"
+                      aria-checked={p.email}
+                      aria-label={`Toggle email ${type.label}`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          p.email ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                      <Mail size={12} />
+                      Email
+                    </span>
+                  </label>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

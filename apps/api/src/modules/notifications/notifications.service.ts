@@ -38,7 +38,7 @@ export class NotificationsService {
     });
 
     // Send email notification if user has email (method handles errors internally)
-    this.sendEmailNotification(userId, dto.judul, dto.isi);
+    this.sendEmailNotification(userId, dto.judul, dto.isi, tipe);
 
     // Push FCM to device tokens
     await this.pushFCM(userId, dto.judul, dto.isi);
@@ -265,6 +265,11 @@ export class NotificationsService {
 
   // ─── Notification Preferences ───
 
+  /**
+   * Per-tipe notifikasi dengan channel inApp dan email.
+   * Format value: { inApp: boolean, email: boolean }
+   * Backward compatible: nilai boolean lama dianggap sama untuk kedua channel.
+   */
   static readonly NOTIFICATION_TYPES = [
     { key: 'welcome', label: 'Selamat Datang', description: 'Notifikasi saat pertama kali mendaftar' },
     { key: 'data_incomplete', label: 'Data Tidak Lengkap', description: 'Pengingat untuk melengkapi data diri' },
@@ -281,50 +286,106 @@ export class NotificationsService {
     return `notif_pref:${userId}`;
   }
 
+  /**
+   * Normalize a preference value — supports both old (boolean) and new ({ inApp, email }) formats.
+   */
+  private normalizePref(value: unknown): { inApp: boolean; email: boolean } {
+    if (typeof value === 'boolean') {
+      return { inApp: value, email: value };
+    }
+    if (typeof value === 'object' && value !== null) {
+      const obj = value as Record<string, unknown>;
+      return {
+        inApp: obj.inApp !== false,
+        email: obj.email !== false,
+      };
+    }
+    return { inApp: true, email: true };
+  }
+
   async getPreferences(userId: string) {
     const setting = await this.prisma.setting.findUnique({ where: { key: this.prefKey(userId) } });
-    const saved = (setting?.value as Record<string, boolean>) || {};
+    const saved = (setting?.value as Record<string, unknown>) || {};
 
-    const prefs: Record<string, boolean> = {};
+    const prefs: Record<string, { inApp: boolean; email: boolean }> = {};
     for (const t of NotificationsService.NOTIFICATION_TYPES) {
-      prefs[t.key] = saved[t.key] !== undefined ? saved[t.key] : true;
+      prefs[t.key] = saved[t.key] !== undefined
+        ? this.normalizePref(saved[t.key])
+        : { inApp: true, email: true };
     }
 
     return { success: true, data: prefs, types: NotificationsService.NOTIFICATION_TYPES };
   }
 
-  async updatePreferences(userId: string, prefs: Record<string, boolean>) {
+  async updatePreferences(userId: string, data: Record<string, unknown>) {
+    // Fetch existing preferences once — avoid N+1 queries inside the loop
+    const existingSetting = await this.prisma.setting.findUnique({ where: { key: this.prefKey(userId) } });
+    const existingData = (existingSetting?.value as Record<string, unknown>) || {};
+
+    // Normalize incoming data to the new format
+    const normalized: Record<string, { inApp: boolean; email: boolean }> = {};
+    for (const t of NotificationsService.NOTIFICATION_TYPES) {
+      if (data[t.key] !== undefined) {
+        normalized[t.key] = this.normalizePref(data[t.key]);
+      } else {
+        // Keep existing value for types not sent in the request
+        normalized[t.key] = existingData[t.key] !== undefined
+          ? this.normalizePref(existingData[t.key])
+          : { inApp: true, email: true };
+      }
+    }
+
     await this.prisma.setting.upsert({
       where: { key: this.prefKey(userId) },
-      update: { value: prefs as never },
-      create: { key: this.prefKey(userId), value: prefs as never },
+      update: { value: normalized as never },
+      create: { key: this.prefKey(userId), value: normalized as never },
     });
     return { success: true, message: 'Pengaturan notifikasi berhasil disimpan' };
   }
 
-  private async isPreferenceEnabled(userId: string, tipe: string): Promise<boolean> {
+  /**
+   * Check if a specific notification channel (inApp/email) is enabled for a type.
+   */
+  private async isChannelEnabled(userId: string, tipe: string, channel: 'inApp' | 'email'): Promise<boolean> {
     const prefs = await this.getPreferences(userId);
-    const p = prefs.data as Record<string, boolean>;
-    return p[tipe] !== false;
+    const p = prefs.data as Record<string, { inApp: boolean; email: boolean }>;
+    const pref = p[tipe];
+    return pref?.[channel] !== false;
+  }
+
+  private async isPreferenceEnabled(userId: string, tipe: string): Promise<boolean> {
+    return this.isChannelEnabled(userId, tipe, 'inApp');
+  }
+
+  private async isEmailPreferenceEnabled(userId: string, tipe: string): Promise<boolean> {
+    return this.isChannelEnabled(userId, tipe, 'email');
   }
 
   private async batchCheckPreference(userIds: string[], tipe: string): Promise<Set<string>> {
     const keys = userIds.map((id) => this.prefKey(id));
     const settings = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
-    const prefMap = new Map<string, Record<string, boolean>>();
+    const prefMap = new Map<string, Record<string, { inApp: boolean; email: boolean }>>();
     for (const s of settings) {
       const userId = s.key.replace('notif_pref:', '');
-      prefMap.set(userId, s.value as Record<string, boolean>);
+      prefMap.set(userId, this.normalizeSavedPrefs(s.value as Record<string, unknown>));
     }
 
     const allowed = new Set<string>();
     for (const id of userIds) {
       const saved = prefMap.get(id);
-      if (!saved || saved[tipe] !== false) {
+      if (!saved || saved[tipe]?.inApp !== false) {
         allowed.add(id);
       }
     }
     return allowed;
+  }
+
+  private normalizeSavedPrefs(saved: Record<string, unknown>): Record<string, { inApp: boolean; email: boolean }> {
+    const result: Record<string, { inApp: boolean; email: boolean }> = {};
+    for (const key of Object.keys(saved)) {
+      result[key] = this.normalizePref(saved[key]);
+    }
+    return result;
   }
 
   async registerDeviceToken(userId: string, token: string, platform: string) {
@@ -350,8 +411,17 @@ export class NotificationsService {
     return { success: true, message: 'Device token berhasil dihapus' };
   }
 
-  private async sendEmailNotification(userId: string, judul: string, isi: string): Promise<void> {
+  private async sendEmailNotification(userId: string, judul: string, isi: string, tipe?: string): Promise<void> {
     try {
+      // Check email preference for this notification type
+      if (tipe) {
+        const emailEnabled = await this.isEmailPreferenceEnabled(userId, tipe);
+        if (!emailEnabled) {
+          this.logger.log(`Email not sent for user ${userId}: ${tipe} email channel disabled`);
+          return;
+        }
+      }
+
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { email: true, namaLengkap: true },
@@ -360,7 +430,11 @@ export class NotificationsService {
       if (!user?.email) return;
 
       const tpl = generalNotificationEmail(user.namaLengkap, judul, isi);
-      await this.mailService.sendMail({ to: user.email, ...tpl });
+      await this.mailService.sendMail({
+        to: user.email,
+        ...tpl,
+        metadata: { module: 'notifications', template: 'generalNotificationEmail', userId, notifType: tipe },
+      });
     } catch (error) {
       this.logger.error(`sendEmailNotification failed for user ${userId}: ${(error as Error).message}`);
     }
