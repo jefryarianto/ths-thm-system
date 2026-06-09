@@ -1,5 +1,15 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  RefreshControl,
+  TextInput,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 
@@ -13,35 +23,72 @@ interface Training {
   pelatih?: { id: string; namaLengkap: string };
 }
 
+const MATERI_FILTERS = [
+  { value: '', label: 'Semua' },
+  { value: 'teknik_dasar', label: 'Teknik Dasar' },
+  { value: 'kata', label: 'Kata' },
+  { value: 'kumite', label: 'Kumite' },
+  { value: 'fisik', label: 'Fisik' },
+  { value: 'teori', label: 'Teori' },
+];
+
 export default function TrainingsScreen() {
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterMateri, setFilterMateri] = useState('');
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
+  const fetchData = async (query?: string, materi?: string) => {
     try {
-      const res = await apiClient.get('/trainings', { params: { limit: 50 } });
+      const params: Record<string, unknown> = { limit: 50 };
+      if (query?.trim()) params.search = query.trim();
+      if (materi) params.jenisMateri = materi;
+      const res = await apiClient.get('/trainings', { params });
       setTrainings(res.data.data || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => fetchData(search, filterMateri), 300);
+    return () => clearTimeout(timer);
+  }, [search, filterMateri]);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(search, filterMateri);
     setRefreshing(false);
   };
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading)
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
 
   return (
     <View style={styles.container}>
@@ -49,6 +96,42 @@ export default function TrainingsScreen() {
         <Text style={styles.headerTitle}>Latihan</Text>
         <Text style={styles.headerSub}>{trainings.length} sesi latihan</Text>
       </View>
+
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={16} color="#9ca3af" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Cari latihan..."
+          placeholderTextColor="#9ca3af"
+          value={search}
+          onChangeText={setSearch}
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Materi Filter */}
+      <View style={styles.filterRow}>
+        {MATERI_FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.value}
+            style={[styles.filterChip, filterMateri === f.value && styles.filterChipActive]}
+            onPress={() => {
+              setFilterMateri(f.value);
+              setLoading(true);
+            }}
+          >
+            <Text style={[styles.filterText, filterMateri === f.value && styles.filterTextActive]}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
         data={trainings}
         keyExtractor={(item) => item.id}
@@ -57,11 +140,20 @@ export default function TrainingsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="fitness" size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>Belum ada data latihan</Text>
+            <Text style={styles.emptyText}>
+              {search || filterMateri ? 'Tidak ada latihan yang cocok' : 'Belum ada data latihan'}
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/trainings/${item.id}`); }}>
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.7}
+            onPress={() => {
+              const { router: r } = require('expo-router');
+              r.push(`/trainings/${item.id}`);
+            }}
+          >
             <View style={styles.cardLeft}>
               <View style={styles.iconCircle}>
                 <Ionicons name="fitness" size={20} color="#2563eb" />
@@ -101,14 +193,60 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
+  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
+  filterTextActive: { color: '#fff' },
   card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 14, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: '#f3f4f6',
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   cardLeft: { marginRight: 12 },
-  iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center' },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cardBody: { flex: 1 },
   materi: { fontSize: 15, fontWeight: '600', color: '#111827' },
   date: { fontSize: 12, color: '#6b7280', marginTop: 4 },
