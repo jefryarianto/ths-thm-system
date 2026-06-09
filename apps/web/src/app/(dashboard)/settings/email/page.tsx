@@ -184,6 +184,8 @@ export default function EmailSettingsPage() {
   const [retryLoading, setRetryLoading] = useState(false);
   const [retryResult, setRetryResult] = useState<{ retried: number; succeeded: number; failed: number } | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -205,6 +207,8 @@ export default function EmailSettingsPage() {
       const params: Record<string, unknown> = { page, limit: 20 };
       if (status) params.status = status;
       if (module) params.module = module;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
       const { data } = await apiClient.get('/mail/logs', { params });
       setLogs(data.data || []);
       setLogsMeta(data.meta || { total: 0, totalPages: 0, page, limit: 20 });
@@ -217,6 +221,8 @@ export default function EmailSettingsPage() {
     try {
       const params: Record<string, unknown> = {};
       if (module) params.module = module;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
       const { data } = await apiClient.get('/mail/logs/stats', { params });
       setLogsStats(data.data);
     } catch { /* ignore */ }
@@ -271,6 +277,18 @@ export default function EmailSettingsPage() {
       const { data } = await apiClient.post('/mail/retry');
       // Refresh logs and stats after retry
       fetchLogs(1, logsFilter, logsModuleFilter);
+      fetchStats(logsModuleFilter);
+      setRetryResult(data.data);
+    } catch { /* ignore */ }
+    setRetryLoading(false);
+  };
+
+  const handleRetrySingle = async (id: string) => {
+    setRetryLoading(true);
+    setRetryResult(null);
+    try {
+      const { data } = await apiClient.post('/mail/retry', { ids: [id] });
+      fetchLogs(logsMeta.page, logsFilter, logsModuleFilter);
       fetchStats(logsModuleFilter);
       setRetryResult(data.data);
     } catch { /* ignore */ }
@@ -809,6 +827,26 @@ export default function EmailSettingsPage() {
                     {s ? (s === 'sent' ? '✅ Terkirim' : s === 'failed' ? '❌ Gagal' : '⏭️ Skip') : 'Semua'}
                   </button>
                 ))}
+                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 font-medium">Tanggal:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 w-32"
+                />
+                <span className="text-xs text-gray-400">–</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 w-32"
+                />
+                <button
+                  onClick={() => { fetchLogs(1, logsFilter, logsModuleFilter); fetchStats(logsModuleFilter); }}
+                  className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 transition font-medium"
+                >
+                  Terapkan
+                </button>
                 <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 font-medium">Modul:</span>
                 <select
                   value={logsModuleFilter}
@@ -888,6 +926,7 @@ export default function EmailSettingsPage() {
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">Modul</th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Provider</th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">Waktu</th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -930,6 +969,21 @@ export default function EmailSettingsPage() {
                             <span className="text-xs text-gray-500 dark:text-gray-400" title={formatDate(log.createdAt)}>
                               {formatDateShort(log.createdAt)}
                             </span>
+                          </td>
+                          <td className="px-5 py-3">
+                            {log.status === 'failed' ? (
+                              <button
+                                onClick={() => handleRetrySingle(log.id)}
+                                disabled={retryLoading}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition disabled:opacity-50"
+                                title="Retry email ini"
+                              >
+                                {retryLoading ? <RefreshCw size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                                Retry
+                              </button>
+                            ) : (
+                              <span className="text-xs text-gray-300 dark:text-gray-600">–</span>
+                            )}
                           </td>
                         </tr>
                       ))}

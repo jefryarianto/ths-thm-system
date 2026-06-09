@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RoleBasedThrottlerGuard } from './common/guards/role-throttler.guard';
 import { ConfigModule } from '@nestjs/config';
@@ -38,6 +39,7 @@ import { MailModule } from './mail/mail.module';
       isGlobal: true,
       envFilePath: ['.env', '../../.env', '.env.production'],
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: parseInt(process.env.THROTTLE_TTL || '60', 10),
