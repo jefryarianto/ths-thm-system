@@ -206,10 +206,12 @@ export default function EmailSettingsPage() {
     setLogsLoading(false);
   };
 
-  const fetchStats = async () => {
+  const fetchStats = async (module?: string) => {
     setStatsLoading(true);
     try {
-      const { data } = await apiClient.get('/mail/logs/stats');
+      const params: Record<string, unknown> = {};
+      if (module) params.module = module;
+      const { data } = await apiClient.get('/mail/logs/stats', { params });
       setLogsStats(data.data);
     } catch { /* ignore */ }
     setStatsLoading(false);
@@ -218,7 +220,7 @@ export default function EmailSettingsPage() {
   useEffect(() => {
     if (activeTab === 'logs' || activeTab === 'report') {
       if (activeTab === 'logs') fetchLogs(1, logsFilter, logsModuleFilter);
-      fetchStats();
+      fetchStats(logsModuleFilter);
     }
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -249,6 +251,7 @@ export default function EmailSettingsPage() {
   const handleModuleFilterChange = (module: string) => {
     setLogsModuleFilter(module);
     fetchLogs(1, logsFilter, module);
+    fetchStats(module);
   };
 
   // ─── Render ───
@@ -713,7 +716,7 @@ export default function EmailSettingsPage() {
                 <RefreshCw
                   size={14}
                   className="cursor-pointer hover:text-blue-600 transition"
-                  onClick={() => { fetchLogs(1, logsFilter, logsModuleFilter); fetchStats(); }}
+                  onClick={() => { fetchLogs(1, logsFilter, logsModuleFilter); fetchStats(logsModuleFilter); }}
                 />
                 {logsMeta.total > 0 && <span>{logsMeta.total} total</span>}
               </div>

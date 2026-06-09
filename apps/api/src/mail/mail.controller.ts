@@ -104,14 +104,20 @@ export class MailController {
 
   @Get('logs/stats')
   @Roles('superadmin')
-  async getLogStats() {
+  @ApiQuery({ name: 'module', required: false })
+  async getLogStats(
+    @Query('module') module?: string,
+  ) {
+    const moduleFilter = module ? { metadata: { path: ['module'], equals: module } } : {};
+
     const [total, sent, failed, skipped, topRecipients] = await Promise.all([
-      this.prisma.emailLog.count(),
-      this.prisma.emailLog.count({ where: { status: 'sent' } }),
-      this.prisma.emailLog.count({ where: { status: 'failed' } }),
-      this.prisma.emailLog.count({ where: { status: 'skipped' } }),
+      this.prisma.emailLog.count({ where: moduleFilter }),
+      this.prisma.emailLog.count({ where: { status: 'sent', ...moduleFilter } }),
+      this.prisma.emailLog.count({ where: { status: 'failed', ...moduleFilter } }),
+      this.prisma.emailLog.count({ where: { status: 'skipped', ...moduleFilter } }),
       this.prisma.emailLog.groupBy({
         by: ['to'],
+        where: Object.keys(moduleFilter).length > 0 ? moduleFilter : undefined,
         _count: true,
         orderBy: { _count: { to: 'desc' } },
         take: 10,
@@ -121,7 +127,7 @@ export class MailController {
     // Get status breakdown per recent day (7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const recentLogs = await this.prisma.emailLog.findMany({
-      where: { createdAt: { gte: sevenDaysAgo } },
+      where: { createdAt: { gte: sevenDaysAgo }, ...moduleFilter },
       select: { status: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
