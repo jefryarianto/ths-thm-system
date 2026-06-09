@@ -44,9 +44,12 @@ export class MailService {
 
     // Try Resend first (primary provider — uses native fetch, no packages needed)
     let provider = 'resend';
-    let sent = await this.sendViaResend(to, subject, text, html);
+    let sent: boolean;
+    let resendId: string | undefined;
+    ({ success: sent, resendId } = await this.sendViaResend(to, subject, text, html));
     if (sent) {
-      await this.logToDb(to, subject, 'sent', provider, null, metadata, html || text);
+      const enrichedMetadata = { ...(metadata || {}), ...(resendId ? { resendId } : {}) };
+      await this.logToDb(to, subject, 'sent', provider, null, enrichedMetadata, html || text);
       return true;
     }
 
@@ -121,18 +124,18 @@ export class MailService {
     subject: string,
     text?: string,
     html?: string,
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; resendId?: string }> {
     try {
       const apiKey = process.env.RESEND_API_KEY;
       if (!apiKey) {
         this.logger.warn('RESEND_API_KEY not set — skipping Resend');
-        return false;
+        return { success: false };
       }
 
       const fromDomain = process.env.RESEND_DOMAIN;
       if (!fromDomain) {
         this.logger.warn('RESEND_DOMAIN not set — skipping Resend');
-        return false;
+        return { success: false };
       }
 
       const response = await fetch(this.RESEND_API_URL, {
@@ -153,14 +156,15 @@ export class MailService {
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as ResendResponse;
         this.logger.error(`Resend API error (${response.status}): ${errorData.error?.message || response.statusText}`);
-        return false;
+        return { success: false };
       }
 
-      this.logger.log(`Email sent via Resend to ${to}: "${subject}"`);
-      return true;
+      const responseData = (await response.json().catch(() => ({}))) as ResendResponse;
+      this.logger.log(`Email sent via Resend to ${to}: "${subject}" (id: ${responseData.id || 'unknown'})`);
+      return { success: true, resendId: responseData.id };
     } catch (error) {
       this.logger.error(`Resend request failed: ${(error as Error).message}`);
-      return false;
+      return { success: false };
     }
   }
 

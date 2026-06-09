@@ -150,6 +150,15 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function EngagementCard({ label, value, color }: { label: string; value: string | number; color: string }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className={`text-lg font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
+
 function formatDateShort(dateStr: string) {
   const d = new Date(dateStr);
   const now = new Date();
@@ -187,6 +196,13 @@ export default function EmailSettingsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [engagement, setEngagement] = useState<{
+    totalSent: number;
+    totalEvents: number;
+    events: Record<string, number>;
+    rates: Record<string, number>;
+  } | null>(null);
+  const [engagementLoading, setEngagementLoading] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -201,6 +217,15 @@ export default function EmailSettingsPage() {
     fetchStatus();
     fetchModules();
   }, []);
+
+  const fetchEngagement = async () => {
+    setEngagementLoading(true);
+    try {
+      const { data } = await apiClient.get('/mail/logs/engagement');
+      setEngagement(data.data);
+    } catch { /* ignore */ }
+    setEngagementLoading(false);
+  };
 
   const fetchLogs = async (page: number, status?: string, module?: string) => {
     setLogsLoading(true);
@@ -235,6 +260,7 @@ export default function EmailSettingsPage() {
       if (activeTab === 'logs') fetchLogs(1, logsFilter, logsModuleFilter);
       fetchStats(logsModuleFilter);
     }
+    if (activeTab === 'report') fetchEngagement();
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTestEmail = async () => {
@@ -780,6 +806,70 @@ export default function EmailSettingsPage() {
                   </ResponsiveContainer>
                 </div>
               )}
+
+              {/* Engagement Stats */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">Engagement Email</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Statistik interaksi dari webhook Resend — open, click, bounce rate
+                  </p>
+                </div>
+                {engagementLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {[1,2,3,4,5].map((i) => (
+                      <div key={i} className="bg-gray-100 dark:bg-gray-700 rounded-lg h-20 animate-pulse" />
+                    ))}
+                  </div>
+                ) : engagement && engagement.totalSent > 0 ? (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+                      <EngagementCard label="Dikirim" value={engagement.totalSent} color="text-blue-600" />
+                      <EngagementCard label="Delivered" value={engagement.rates.delivered + '%'} color="text-green-600" />
+                      <EngagementCard label="Open Rate" value={engagement.rates.opened + '%'} color="text-indigo-600" />
+                      <EngagementCard label="Click Rate" value={engagement.rates.clicked + '%'} color="text-purple-600" />
+                      <EngagementCard label="Bounce Rate" value={engagement.rates.bounced + '%'} color={engagement.rates.bounced > 5 ? 'text-red-600' : 'text-yellow-600'} />
+                    </div>
+                    {/* Mini bar chart */}
+                    <ResponsiveContainer width="100%" height={120}>
+                      <BarChart
+                        data={[
+                          { name: 'Delivered', value: engagement.rates.delivered, fill: '#22c55e' },
+                          { name: 'Open', value: engagement.rates.opened, fill: '#6366f1' },
+                          { name: 'Click', value: engagement.rates.clicked, fill: '#a855f7' },
+                          { name: 'Bounce', value: engagement.rates.bounced, fill: '#ef4444' },
+                          { name: 'Complain', value: engagement.rates.complained, fill: '#f59e0b' },
+                        ].filter(d => d.value > 0)}
+                        margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#6b7280' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
+                        <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v}%`} />
+                        <Tooltip
+                          formatter={(value: number) => [`${value}%`, 'Rate']}
+                          contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {[
+                            { name: 'Delivered', value: engagement.rates.delivered, fill: '#22c55e' },
+                            { name: 'Open', value: engagement.rates.opened, fill: '#6366f1' },
+                            { name: 'Click', value: engagement.rates.clicked, fill: '#a855f7' },
+                            { name: 'Bounce', value: engagement.rates.bounced, fill: '#ef4444' },
+                            { name: 'Complain', value: engagement.rates.complained, fill: '#f59e0b' },
+                          ].filter(d => d.value > 0).map((entry, idx) => (
+                            <Cell key={idx} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <div className="text-center py-6 text-sm text-gray-400 dark:text-gray-500">
+                    <Mail size={24} className="mx-auto mb-2 opacity-50" />
+                    <p>Belum ada data engagement. Pasang webhook Resend untuk melacak open/click/bounce.</p>
+                  </div>
+                )}
+              </div>
 
               {/* Top Recipients */}
               {logsStats.topRecipients.length > 0 && (

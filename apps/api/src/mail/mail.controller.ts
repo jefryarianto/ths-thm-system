@@ -256,6 +256,44 @@ export class MailController {
     return { success: true };
   }
 
+  @Get('logs/engagement')
+  @Roles('superadmin')
+  async getEngagement() {
+    // Aggregate EmailEvent counts by event type
+    const events = await this.prisma.emailEvent.groupBy({
+      by: ['event'],
+      _count: true,
+    });
+
+    const totalEvents = events.reduce((sum, e) => sum + e._count, 0);
+
+    // Calculate rates based on sent email count from EmailLog
+    const totalSent = await this.prisma.emailLog.count({
+      where: { status: 'sent' },
+    });
+
+    const eventMap: Record<string, number> = {};
+    for (const e of events) {
+      eventMap[e.event] = e._count;
+    }
+
+    return {
+      success: true,
+      data: {
+        totalSent,
+        totalEvents,
+        events: eventMap,
+        rates: {
+          delivered: totalSent > 0 ? Math.round(((eventMap.delivered || 0) / totalSent) * 100) : 0,
+          opened: totalSent > 0 ? Math.round(((eventMap.opened || 0) / totalSent) * 100) : 0,
+          clicked: totalSent > 0 ? Math.round(((eventMap.clicked || 0) / totalSent) * 100) : 0,
+          bounced: totalSent > 0 ? Math.round(((eventMap.bounced || 0) / totalSent) * 100) : 0,
+          complained: totalSent > 0 ? Math.round(((eventMap.complained || 0) / totalSent) * 100) : 0,
+        },
+      },
+    };
+  }
+
   @Get('modules')
   @Roles('superadmin')
   async getModules() {
