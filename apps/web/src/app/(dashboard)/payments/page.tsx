@@ -3,11 +3,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import {
-  CreditCard, Search, CheckCircle, Clock, ArrowUpRight, RefreshCw,
+  CreditCard, CheckCircle, Clock, ArrowUpRight, RefreshCw,
 } from 'lucide-react';
 import Pagination from '@/components/ui/pagination';
 import TableSkeleton from '@/components/ui/table-skeleton';
 import EmptyState from '@/components/ui/empty-state';
+import SearchBar from '@/components/ui/search-bar';
 
 interface DuesRecord {
   id: string;
@@ -50,11 +51,6 @@ export default function PaymentsPage() {
   }, [page, search]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-  };
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -99,35 +95,12 @@ export default function PaymentsPage() {
         ))}
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Cari pembayaran (nama, no. anggota)..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          >
-            Cari
-          </button>
-          {search && (
-            <button
-              type="button"
-              onClick={() => { setSearch(''); setPage(1); }}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Reset
-            </button>
-          )}
-        </form>
-      </div>
+      <SearchBar
+        search={search}
+        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onReset={() => { setSearch(''); setPage(1); }}
+        placeholder="Cari pembayaran (nama, no. anggota)..."
+      />
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">

@@ -4,12 +4,14 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import {
-  Plus, Search, RefreshCw, FileText,
+  Plus, RefreshCw, FileText,
   Download, Eye, Trash2,
 } from 'lucide-react';
 import Pagination from '@/components/ui/pagination';
 import TableSkeleton from '@/components/ui/table-skeleton';
 import EmptyState from '@/components/ui/empty-state';
+import SummaryBar from '@/components/ui/summary-bar';
+import SearchBar from '@/components/ui/search-bar';
 
 interface DocumentRow {
   id: string;
@@ -97,45 +99,24 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {/* Summary bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileText size={18} className="text-blue-500" />
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Total Dokumen: <strong className="text-gray-900 dark:text-white">{meta.total}</strong>
-          </span>
-        </div>
-      </div>
+      <SummaryBar icon={FileText} label="Total Dokumen" total={meta.total} />
 
-      {/* Filter Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Cari dokumen (no. dokumen, tipe)..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <select
-            value={filterTipe}
-            onChange={e => { setFilterTipe(e.target.value); setPage(1); }}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {TIPE_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <button
-            onClick={() => { setSearch(''); setFilterTipe(''); setPage(1); }}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
+      <SearchBar
+        search={search}
+        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onReset={() => { setSearch(''); setFilterTipe(''); setPage(1); }}
+        placeholder="Cari dokumen (no. dokumen, tipe)..."
+      >
+        <select
+          value={filterTipe}
+          onChange={e => { setFilterTipe(e.target.value); setPage(1); }}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {TIPE_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </SearchBar>
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
