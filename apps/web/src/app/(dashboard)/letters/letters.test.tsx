@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import LettersPage from '@/app/(dashboard)/letters/page';
 
 // Mock apiClient
@@ -103,10 +103,11 @@ describe('LettersPage', () => {
       expect(screen.getByText('Tambah Surat Masuk')).toBeInTheDocument();
     });
 
-    // Fill nomorSurat and perihal but leave pengirim empty
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0], { target: { value: '001/THS/V/2026' } });
-    fireEvent.change(inputs[2], { target: { value: 'Undangan Rapat' } }); // perihal is 3rd textbox
+    // Scope inputs to the modal
+    const modal = screen.getByText('Tambah Surat Masuk').closest('.fixed') as HTMLElement;
+    const modalInputs = within(modal).getAllByRole('textbox');
+    fireEvent.change(modalInputs[0], { target: { value: '001/THS/V/2026' } }); // nomorSurat
+    fireEvent.change(modalInputs[2], { target: { value: 'Undangan Rapat' } }); // perihal
 
     fireEvent.click(screen.getByText('Tambah Surat'));
 
@@ -126,10 +127,11 @@ describe('LettersPage', () => {
     });
 
     // Fill form: nomorSurat, pengirim, perihal
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0], { target: { value: '001/THS/V/2026' } });
-    fireEvent.change(inputs[1], { target: { value: 'Ketua THS' } }); // pengirim
-    fireEvent.change(inputs[2], { target: { value: 'Undangan Rapat' } }); // perihal
+    const modal = screen.getByText('Tambah Surat Masuk').closest('.fixed') as HTMLElement;
+    const modalInputs = within(modal).getAllByRole('textbox');
+    fireEvent.change(modalInputs[0], { target: { value: '001/THS/V/2026' } }); // nomorSurat
+    fireEvent.change(modalInputs[1], { target: { value: 'Ketua THS' } }); // pengirim
+    fireEvent.change(modalInputs[2], { target: { value: 'Undangan Rapat' } }); // perihal
 
     fireEvent.click(screen.getByText('Tambah Surat'));
 
@@ -151,9 +153,10 @@ describe('LettersPage', () => {
     });
 
     // Fill nomorSurat and perihal but leave tujuan empty
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0], { target: { value: '001/THS/V/2026' } });
-    fireEvent.change(inputs[2], { target: { value: 'Laporan' } }); // perihal
+    const modal = screen.getByText('Tambah Surat Keluar').closest('.fixed') as HTMLElement;
+    const modalInputs = within(modal).getAllByRole('textbox');
+    fireEvent.change(modalInputs[0], { target: { value: '001/THS/V/2026' } }); // nomorSurat
+    fireEvent.change(modalInputs[2], { target: { value: 'Laporan' } }); // perihal
 
     fireEvent.click(screen.getByText('Tambah Surat'));
 

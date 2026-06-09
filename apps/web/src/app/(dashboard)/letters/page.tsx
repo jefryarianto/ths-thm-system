@@ -5,6 +5,7 @@ import apiClient from '@/lib/api-client';
 import DataTable from '@/components/tables/data-table';
 import {
   Plus, FileText, Download, X, ChevronRight, Trash2, Edit3,
+  Search, RefreshCw,
 } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
@@ -115,6 +116,8 @@ export default function LettersPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   // Detail panel state
   const [selectedLetter, setSelectedLetter] = useState<LetterRow | null>(null);
@@ -132,7 +135,7 @@ export default function LettersPage() {
   // Delete state
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => { setPage(1); }, [tab]);
+  useEffect(() => { setPage(1); }, [tab, search, filterStatus]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -141,7 +144,10 @@ export default function LettersPage() {
       if (tab === 'all') endpoint = '/letters';
       else if (tab === 'incoming') endpoint = '/letters/incoming';
       else endpoint = '/letters/outgoing';
-      const { data: res } = await apiClient.get(endpoint, { params: { page, limit: 10 } });
+      const params: Record<string, unknown> = { page, limit: 10 };
+      if (search) params.search = search;
+      if (filterStatus) params.status = filterStatus;
+      const { data: res } = await apiClient.get(endpoint, { params });
       setData(res.data || []);
       setMeta(res.meta || { total: 0, totalPages: 0 });
     } catch { /* ignore */ }
@@ -149,6 +155,12 @@ export default function LettersPage() {
   }, [tab, page]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const resetFilters = () => {
+    setSearch('');
+    setFilterStatus('');
+    setPage(1);
+  };
 
   // ─── Open create modal ───
   const openCreate = (type: LetterType) => {
@@ -310,6 +322,53 @@ export default function LettersPage() {
             className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
           >
             <Plus size={14} /> Surat Keluar
+          </button>
+        </div>
+      </div>
+
+      {/* Summary bar */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <FileText size={18} className="text-blue-500" />
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Total Surat: <strong className="text-gray-900 dark:text-white">{meta.total}</strong>
+          </span>
+        </div>
+        <button
+          onClick={() => fetchData()}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <RefreshCw size={12} /> Refresh
+        </button>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Cari surat (no. surat, perihal, pengirim)..."
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Semua Status</option>
+            {Object.keys(statusColors).map(status => (
+              <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+            ))}
+          </select>
+          <button
+            onClick={resetFilters}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Reset
           </button>
         </div>
       </div>
