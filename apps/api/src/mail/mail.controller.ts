@@ -1,18 +1,22 @@
-import { Controller, Get, Post, Query, Body, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, ParseIntPipe, DefaultValuePipe, Logger } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { TestMailDto } from './dto/test-mail.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { env } from '../config/env.validation';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../modules/notifications/notifications.service';
 
 @ApiTags('Mail')
 @Controller('mail')
 @ApiBearerAuth()
 export class MailController {
+  private readonly logger = new Logger(MailController.name);
+
   constructor(
     private readonly mailService: MailService,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Get('status')
@@ -66,11 +70,39 @@ export class MailController {
   @Roles('superadmin')
   async retryFailed(@Body() body: { ids?: string[] }) {
     const result = await this.mailService.retryFailedEmails(body.ids);
+
+    // Send notification to all superadmin users about retry result
+    this.sendRetryNotification(result);
+
     return {
       success: true,
       data: result,
       message: `${result.retried} email gagal dicoba kirim ulang, ${result.succeeded} berhasil, ${result.failed} gagal`,
     };
+  }
+
+  private async sendRetryNotification(result: { retried: number; succeeded: number; failed: number }): Promise<void> {
+    try {
+      const superadmins = await this.prisma.user.findMany({
+        where: { role: 'superadmin', isActive: true },
+        select: { id: true, namaLengkap: true },
+      });
+
+      const statusIcon = result.failed === 0 ? '✅' : '⚠️';
+      const statusText = result.failed === 0 ? 'Semua berhasil' : `${result.failed} masih gagal`;
+
+      for (const admin of superadmins) {
+        await this.notificationsService.send(admin.id, {
+          userId: admin.id,
+          judul: `${statusIcon} Retry Email Selesai`,
+          isi: `${result.retried} email gagal dicoba kirim ulang — ${result.succeeded} berhasil, ${result.failed} gagal. (${statusText})`,
+          tipe: 'umum' as never,
+          data: { type: 'email_retry', retried: result.retried, succeeded: result.succeeded, failed: result.failed },
+        });
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send retry notification: ${(error as Error).message}`);
+    }
   }
 
   // ─── Email Logs ───
