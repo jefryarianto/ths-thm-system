@@ -222,6 +222,7 @@ export default function EmailSettingsPage() {
   const [newSuppressionReason, setNewSuppressionReason] = useState('manual');
   const [addingSuppression, setAddingSuppression] = useState(false);
   const [addSuppressionResult, setAddSuppressionResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [suppressionExportLoading, setSuppressionExportLoading] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -358,6 +359,39 @@ export default function EmailSettingsPage() {
       setAddSuppressionResult({ success: false, message: apiErr || 'Gagal terhubung ke server' });
     }
     setAddingSuppression(false);
+  };
+
+  const handleExportSuppressionsCsv = async () => {
+    setSuppressionExportLoading(true);
+    try {
+      const { data } = await apiClient.get('/mail/suppressions', { params: { limit: 10000 } });
+      const rows = data.data || [];
+
+      const header = 'Email,Alasan,Event Asal,Waktu\n';
+      const csvRows = rows.map((r: Record<string, unknown>) => {
+        const escape = (v: unknown) => {
+          const s = String(v ?? '');
+          return s.includes(',') || s.includes('"') || s.includes('\n')
+            ? `"${s.replace(/"/g, '""')}"`
+            : s;
+        };
+        return [
+          escape(r.email),
+          escape(r.reason),
+          escape((r.event as Record<string, unknown> | null)?.event || 'manual'),
+          escape(r.createdAt),
+        ].join(',');
+      }).join('\n');
+
+      const blob = new Blob([header + csvRows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `email-suppressions-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+    setSuppressionExportLoading(false);
   };
 
   const handleClearSuppressions = async () => {
@@ -1050,6 +1084,16 @@ export default function EmailSettingsPage() {
                 <Mail size={12} />
                 Tambah
               </button>
+              {suppressionMeta.total > 0 && (
+                <button
+                  onClick={handleExportSuppressionsCsv}
+                  disabled={suppressionExportLoading}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition disabled:opacity-40"
+                >
+                  <FileText size={12} />
+                  {suppressionExportLoading ? '...' : 'CSV'}
+                </button>
+              )}
               <button
                 onClick={handleClearSuppressions}
                 disabled={suppressions.length === 0}
