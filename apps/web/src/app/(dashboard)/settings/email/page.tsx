@@ -183,6 +183,7 @@ export default function EmailSettingsPage() {
   const [modulesLoading, setModulesLoading] = useState(false);
   const [retryLoading, setRetryLoading] = useState(false);
   const [retryResult, setRetryResult] = useState<{ retried: number; succeeded: number; failed: number } | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -274,6 +275,47 @@ export default function EmailSettingsPage() {
       setRetryResult(data.data);
     } catch { /* ignore */ }
     setRetryLoading(false);
+  };
+
+  const handleExportCsv = async () => {
+    setExportLoading(true);
+    try {
+      const params: Record<string, unknown> = {};
+      if (logsFilter) params.status = logsFilter;
+      if (logsModuleFilter) params.module = logsModuleFilter;
+      const { data } = await apiClient.get('/mail/logs/export', { params });
+      const rows = data.data || [];
+
+      // Generate CSV
+      const header = 'ID,Tujuan,Subjek,Status,Provider,Error,Modul,Waktu\n';
+      const csvRows = rows.map((r: Record<string, unknown>) => {
+        const escape = (v: unknown) => {
+          const s = String(v ?? '');
+          return s.includes(',') || s.includes('"') || s.includes('\n')
+            ? `"${s.replace(/"/g, '""')}"`
+            : s;
+        };
+        return [
+          escape(r.id),
+          escape(r.to),
+          escape(r.subject),
+          escape(r.status),
+          escape(r.provider),
+          escape(r.error),
+          escape(r.module),
+          escape(r.createdAt),
+        ].join(',');
+      }).join('\n');
+
+      const blob = new Blob([header + csvRows], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `email-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+    setExportLoading(false);
   };
 
   const handleModuleFilterChange = (module: string) => {
@@ -794,6 +836,16 @@ export default function EmailSettingsPage() {
                   className="cursor-pointer hover:text-blue-600 transition"
                   onClick={() => { fetchLogs(1, logsFilter, logsModuleFilter); fetchStats(logsModuleFilter); }}
                 />
+                {logsMeta.total > 0 && (
+                  <button
+                    onClick={handleExportCsv}
+                    disabled={exportLoading}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition disabled:opacity-50 text-xs font-medium"
+                  >
+                    <FileText size={12} />
+                    {exportLoading ? 'Menyiapkan...' : 'CSV'}
+                  </button>
+                )}
                 {logsStats && logsStats.failed > 0 && (
                   <button
                     onClick={handleRetry}

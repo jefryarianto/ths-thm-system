@@ -113,6 +113,41 @@ export class MailController {
     };
   }
 
+  @Get('logs/export')
+  @Roles('superadmin')
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'module', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async exportLogs(
+    @Query('limit', new DefaultValuePipe(5000), ParseIntPipe) limit: number,
+    @Query('status') status?: string,
+    @Query('module') module?: string,
+  ) {
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (module) where.metadata = { path: ['module'], equals: module };
+
+    const data = await this.prisma.emailLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return {
+      success: true,
+      data: data.map((log) => ({
+        id: log.id,
+        to: log.to,
+        subject: log.subject,
+        status: log.status,
+        provider: log.provider || '-',
+        error: log.error || '',
+        module: ((log.metadata as Record<string, unknown> | null)?.module as string) || '',
+        createdAt: log.createdAt.toISOString(),
+      })),
+    };
+  }
+
   @Get('modules')
   @Roles('superadmin')
   async getModules() {
