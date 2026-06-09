@@ -644,6 +644,44 @@ export default function EmailSettingsPage() {
                 </div>
               </div>
 
+              {/* Module Comparison Bar Chart */}
+              {usedModules.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                  <div className="mb-4">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">Perbandingan per Modul</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jumlah pengiriman email per modul (total keseluruhan)</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={Math.max(200, usedModules.length * 36)}>
+                    <BarChart
+                      data={[...usedModules]
+                        .map((m) => ({
+                          name: MODULES.find(sm => sm.value === m.module)?.label || m.module,
+                          count: m.count,
+                        }))
+                        .sort((a, b) => b.count - a.count)}
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        tick={{ fontSize: 11, fill: '#6b7280' }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={75}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [value.toLocaleString('id-ID'), 'Email']}
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
               {/* Top Recipients */}
               {logsStats.topRecipients.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
