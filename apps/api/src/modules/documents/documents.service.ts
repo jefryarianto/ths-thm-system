@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { documentReadyEmail } from '../../mail/email-templates';
 import { GenerateDocumentDto, BatchGenerateDocumentDto, DocumentFilterDto } from './dto/document.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -11,6 +13,7 @@ import * as fs from 'fs';
 
 @Injectable()
 export class DocumentsService {
+  private readonly logger = new Logger(DocumentsService.name);
   private readonly outputDir: string;
   private readonly CACHE_PREFIX = 'documents:';
 
@@ -18,6 +21,7 @@ export class DocumentsService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    private readonly mailService: MailService,
   ) {
     this.outputDir = path.resolve('storage', 'documents');
     fs.mkdirSync(this.outputDir, { recursive: true });
@@ -111,6 +115,11 @@ export class DocumentsService {
       console.warn('PDF generation skipped (react-pdf renderer may need setup):', (pdfError as Error).message);
     }
 
+    // Send notification email if member has email (method handles errors internally)
+    if (dto.memberId) {
+      this.sendDocumentReadyEmail(dto.memberId, dto.type, nomorDokumen);
+    }
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: doc, message: 'Dokumen berhasil digenerate' };
   }
@@ -136,6 +145,21 @@ export class DocumentsService {
     await this.prisma.dokumen.update({ where: { id }, data: { status: 'revoked' } });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Dokumen berhasil dihapus' };
+  }
+
+  private async sendDocumentReadyEmail(memberId: string, docType: string, nomorDokumen: string): Promise<void> {
+    try {
+      const member = await this.prisma.anggota.findUnique({
+        where: { id: memberId },
+        select: { email: true, namaLengkap: true },
+      });
+      if (!member?.email) return;
+
+      const tpl = documentReadyEmail(member.namaLengkap, docType, nomorDokumen);
+      await this.mailService.sendMail({ to: member.email, ...tpl });
+    } catch (error) {
+      this.logger.error(`sendDocumentReadyEmail failed for member ${memberId}: ${(error as Error).message}`);
+    }
   }
 
   async getTypes() {

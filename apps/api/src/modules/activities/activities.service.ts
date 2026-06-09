@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { activityInvitationEmail } from '../../mail/email-templates';
 import { CreateActivityDto, UpdateActivityDto, ActivityFilterDto, AddParticipantDto, RecordPresenceDto, UploadActivityDocumentDto } from './dto/activity.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -7,12 +9,14 @@ import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class ActivitiesService {
+  private readonly logger = new Logger(ActivitiesService.name);
   private readonly CACHE_PREFIX = 'activities:';
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(query: ActivityFilterDto, scope?: UserScope) {
@@ -131,6 +135,10 @@ export class ActivitiesService {
     const participant = await this.prisma.kegiatanPeserta.create({
       data: { kegiatanId: activityId, anggotaId: dto.anggotaId },
     });
+
+    // Send invitation email to participant (method handles errors internally)
+    this.sendActivityInvitation(dto.anggotaId, kegiatan.nama, kegiatan.tanggalMulai, kegiatan.lokasi);
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: participant, message: 'Peserta berhasil ditambahkan' };
   }
@@ -157,6 +165,9 @@ export class ActivitiesService {
           data: { kegiatanId: activityId, anggotaId },
         });
         imported++;
+
+        // Send invitation email to each new participant (method handles errors internally)
+        this.sendActivityInvitation(anggotaId, kegiatan.nama, kegiatan.tanggalMulai, kegiatan.lokasi);
       }
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -197,5 +208,24 @@ export class ActivitiesService {
     });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: doc, message: 'Dokumen berhasil diupload' };
+  }
+
+  private async sendActivityInvitation(anggotaId: string, activityName: string, tanggalMulai: Date, lokasi: string | null): Promise<void> {
+    try {
+      const member = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { email: true, namaLengkap: true },
+      });
+      if (!member?.email) return;
+
+      const tanggal = tanggalMulai.toLocaleDateString('id-ID', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      });
+
+      const tpl = activityInvitationEmail(member.namaLengkap, activityName, tanggal, lokasi || '-');
+      await this.mailService.sendMail({ to: member.email, ...tpl });
+    } catch (error) {
+      this.logger.error(`sendActivityInvitation failed for member ${anggotaId}: ${(error as Error).message}`);
+    }
   }
 }

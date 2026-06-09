@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { trainingNotificationEmail, attendanceConfirmationEmail } from '../../mail/email-templates';
 import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -8,12 +10,14 @@ import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class TrainingsService {
+  private readonly logger = new Logger(TrainingsService.name);
   private readonly CACHE_PREFIX = 'trainings:';
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    private readonly mailService: MailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
   ) {}
@@ -137,13 +141,20 @@ export class TrainingsService {
       },
     });
 
+    const hadir = dto.hadir !== false;
+
     // Auto-award gamification points for training attendance
-    if (dto.hadir !== false && dto.anggotaId) {
+    if (hadir && dto.anggotaId) {
       try {
         await this.gamificationService.recordTraining(dto.anggotaId);
       } catch (error) {
         console.warn('Failed to award gamification points for training:', (error as Error).message);
       }
+    }
+
+    // Send attendance confirmation email (method handles errors internally)
+    if (dto.anggotaId) {
+      this.sendAttendanceConfirmation(dto.anggotaId, latihan.jenisMateri || '', hadir);
     }
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -208,5 +219,20 @@ export class TrainingsService {
     await this.prisma.evaluasiLatihan.delete({ where: { id: evaluationId } });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: 'Evaluasi berhasil dihapus' };
+  }
+
+  private async sendAttendanceConfirmation(anggotaId: string, jenisMateri: string, hadir: boolean): Promise<void> {
+    try {
+      const member = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { email: true, namaLengkap: true },
+      });
+      if (!member?.email) return;
+
+      const tpl = attendanceConfirmationEmail(member.namaLengkap, jenisMateri, hadir);
+      await this.mailService.sendMail({ to: member.email, ...tpl });
+    } catch (error) {
+      this.logger.error(`sendAttendanceConfirmation failed for member ${anggotaId}: ${(error as Error).message}`);
+    }
   }
 }

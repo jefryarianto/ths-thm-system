@@ -147,6 +147,84 @@ export function paymentConfirmationEmail(nama: string, jumlah?: number, periode?
   };
 }
 
+// ─── Kegiatan / Activity ───
+
+export function activityInvitationEmail(nama: string, activityName: string, tanggal: string, lokasi: string) {
+  return {
+    subject: `Undangan Kegiatan — ${activityName}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📅 Undangan Kegiatan</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Anda telah didaftarkan sebagai peserta kegiatan:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 100px;">Kegiatan</td><td style="padding: 8px;">${activityName}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Tanggal</td><td style="padding: 8px;">${tanggal}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Lokasi</td><td style="padding: 8px;">${lokasi}</td></tr>
+      </table>
+      <p>Mohon hadir tepat waktu dan persiapkan diri Anda.</p>
+    `),
+  };
+}
+
+// ─── Latihan / Training ───
+
+export function trainingNotificationEmail(nama: string, jenisMateri: string, hariTanggal: string, lokasi: string) {
+  return {
+    subject: `Jadwal Latihan — ${jenisMateri}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">🏋️ Jadwal Latihan</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Latihan rutin telah dijadwalkan:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 100px;">Materi</td><td style="padding: 8px;">${jenisMateri}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Tanggal</td><td style="padding: 8px;">${hariTanggal}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Lokasi</td><td style="padding: 8px;">${lokasi}</td></tr>
+      </table>
+      <p>Hadir dan bawa perlengkapan latihan Anda.</p>
+    `),
+  };
+}
+
+export function attendanceConfirmationEmail(nama: string, jenisMateri: string, hadir: boolean) {
+  return {
+    subject: hadir ? 'Konfirmasi Kehadiran Latihan' : 'Ketidakhadiran Latihan',
+    html: wrap(`
+      <h2 style="color: ${hadir ? '#16a34a' : '#ca8a04'};">
+        ${hadir ? '✅ Kehadiran Tercatat' : '📋 Ketidakhadiran Tercatat'}
+      </h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Kehadiran Anda untuk latihan <strong>${jenisMateri}</strong> telah dicatat sebagai <strong>${hadir ? 'HADIR' : 'TIDAK HADIR'}</strong>.</p>
+    `),
+  };
+}
+
+// ─── Dokumen / Document ───
+
+export function documentReadyEmail(nama: string, docType: string, nomorDokumen: string) {
+  const docTypeLabels: Record<string, string> = {
+    kartu_anggota: 'Kartu Anggota',
+    sertifikat_pendadaran: 'Sertifikat Pendadaran',
+    sertifikat_pelatihan: 'Sertifikat Pelatihan',
+    piagam_prestasi: 'Piagam Prestasi',
+  };
+
+  const label = docTypeLabels[docType] || docType;
+
+  return {
+    subject: `Dokumen Siap — ${label}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📄 Dokumen Siap</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Dokumen Anda telah selesai diproses:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 120px;">Jenis Dokumen</td><td style="padding: 8px;">${label}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Nomor Dokumen</td><td style="padding: 8px;">${nomorDokumen}</td></tr>
+      </table>
+      <p>Silakan hubungi admin untuk mengambil dokumen fisik atau akses dokumen digital Anda melalui aplikasi.</p>
+    `),
+  };
+}
+
 // ─── Notifikasi Umum / General Notification ───
 
 export function generalNotificationEmail(nama: string, judul: string, isi: string) {
