@@ -186,6 +186,7 @@ export default function EmailSettingsPage() {
   const [exportLoading, setExportLoading] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -283,6 +284,40 @@ export default function EmailSettingsPage() {
     setRetryLoading(false);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const failedIds = logs.filter((l) => l.status === 'failed').map((l) => l.id);
+    setSelectedIds((prev) => {
+      // If all failed are already selected, deselect all; otherwise select all failed
+      const allSelected = failedIds.every((id) => prev.has(id));
+      if (allSelected) return new Set();
+      return new Set(failedIds);
+    });
+  };
+
+  const handleBulkRetry = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Kirim ulang ${selectedIds.size} email yang gagal?`)) return;
+    setRetryLoading(true);
+    setRetryResult(null);
+    try {
+      const { data } = await apiClient.post('/mail/retry', { ids: Array.from(selectedIds) });
+      setSelectedIds(new Set());
+      fetchLogs(1, logsFilter, logsModuleFilter);
+      fetchStats(logsModuleFilter);
+      setRetryResult(data.data);
+    } catch { /* ignore */ }
+    setRetryLoading(false);
+  };
+
   const handleRetrySingle = async (id: string) => {
     setRetryLoading(true);
     setRetryResult(null);
@@ -291,11 +326,15 @@ export default function EmailSettingsPage() {
       fetchLogs(logsMeta.page, logsFilter, logsModuleFilter);
       fetchStats(logsModuleFilter);
       setRetryResult(data.data);
-    } catch { /* ignore */ }
-    setRetryLoading(false);
-  };
+    } catch { /* ignore */ }      setRetryLoading(false);
+    };
 
-  const handleExportCsv = async () => {
+    // Clear selection when logs page/filter changes
+    useEffect(() => {
+      setSelectedIds(new Set());
+    }, [logs, logsFilter, logsModuleFilter]);
+
+    const handleExportCsv = async () => {
     setExportLoading(true);
     try {
       const params: Record<string, unknown> = {};
@@ -920,6 +959,14 @@ export default function EmailSettingsPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <th className="px-3 py-3 w-10">
+                          <input
+                            type="checkbox"
+                            checked={logs.filter(l => l.status === 'failed').length > 0 && logs.filter(l => l.status === 'failed').every(l => selectedIds.has(l.id))}
+                            onChange={toggleSelectAll}
+                            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Tujuan</th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Subjek</th>
@@ -931,7 +978,25 @@ export default function EmailSettingsPage() {
                     </thead>
                     <tbody>
                       {logs.map((log) => (
-                        <tr key={log.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
+                        <tr
+                          key={log.id}
+                          className={`border-b border-gray-100 dark:border-gray-800 transition ${
+                            selectedIds.has(log.id)
+                              ? 'bg-blue-50 dark:bg-blue-950/40'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'
+                          }`}
+                        >
+                          <td className="px-3 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(log.id)}
+                              onChange={() => toggleSelect(log.id)}
+                              disabled={log.status !== 'failed'}
+                              className={`rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 ${
+                                log.status === 'failed' ? 'cursor-pointer' : 'opacity-30 cursor-not-allowed'
+                              }`}
+                            />
+                          </td>
                           <td className="px-5 py-3">{statusBadge(log.status)}</td>
                           <td className="px-5 py-3">
                             <span className="text-gray-900 dark:text-white font-medium text-xs">{log.to}</span>
@@ -1018,6 +1083,35 @@ export default function EmailSettingsPage() {
               </>
             )}
           </div>
+
+          {/* Bulk Retry Action Bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center justify-between px-5 py-3 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-xl">
+              <span className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>{selectedIds.size}</strong> email gagal dipilih
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleBulkRetry}
+                  disabled={retryLoading}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+                >
+                  {retryLoading ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <RefreshCw size={14} />
+                  )}
+                  {retryLoading ? 'Mengirim...' : `Retry ${selectedIds.size} Email`}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Retry Result Banner */}
           {retryResult && (
