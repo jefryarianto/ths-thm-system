@@ -123,7 +123,7 @@ export class AuthService {
     const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
 
     const tpl = resetPasswordEmail(user.namaLengkap, resetUrl);
-    await this.mailService.sendMail({ to: user.email, ...tpl });
+    await this.mailService.sendMail({ to: user.email, ...tpl, metadata: { module: 'auth', template: 'resetPasswordEmail' } });
 
     return { success: true, message: 'Link reset password telah dikirim ke email Anda' };
   }

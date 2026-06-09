@@ -69,13 +69,16 @@ export class MailController {
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'module', required: false })
   async getLogs(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('status') status?: string,
+    @Query('module') module?: string,
   ) {
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
+    if (module) where.metadata = { path: ['module'], equals: module };
 
     const [data, total] = await Promise.all([
       this.prisma.emailLog.findMany({

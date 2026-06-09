@@ -134,7 +134,7 @@ export class DuesService {
 
       const isPaid = status === 'lunas';
       const tpl = paymentConfirmationEmail(member.namaLengkap, jumlah, periode, isPaid);
-      await this.mailService.sendMail({ to: member.email, ...tpl });
+      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'dues', template: 'paymentConfirmationEmail' } });
     } catch (error) {
       this.logger.error(`sendPaymentEmail failed for member ${anggotaId}: ${(error as Error).message}`);
     }

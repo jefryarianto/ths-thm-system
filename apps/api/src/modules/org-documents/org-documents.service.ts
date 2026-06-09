@@ -105,6 +105,7 @@ export class OrgDocumentsService {
               </p>
             </div>
           `,
+          metadata: { module: 'org-documents', template: 'orgDocumentNotificationEmail' },
         });
       }
     } catch (error) {

@@ -101,7 +101,7 @@ export class ClaimsService {
   private sendClaimStatusEmail(anggota: { namaLengkap?: string; email?: string } | null | undefined, status: string, reason?: string): void {
     if (!anggota?.email) return;
     const tpl = claimStatusEmail(anggota.namaLengkap || 'Anggota', status, reason);
-    this.mailService.sendMail({ to: anggota.email, ...tpl }).catch((err) =>
+    this.mailService.sendMail({ to: anggota.email, ...tpl, metadata: { module: 'claims', template: 'claimStatusEmail' } }).catch((err) =>
       this.logger.error(`Claim status email failed for ${anggota.email}: ${err.message}`),
     );
   }

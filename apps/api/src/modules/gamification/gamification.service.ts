@@ -436,14 +436,13 @@ export class GamificationService {
 
       // Also send personal email to the member
       if (anggota.email) {
-        const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
-        const { subject, html } = levelUpEmail(
+        const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });          const { subject, html } = levelUpEmail(
           anggota.namaLengkap,
           oldLevel.name,
           newLevel.name,
           profile?.points ?? 0,
         );
-        await this.mailService.sendMail({ to: anggota.email, subject, html });
+        await this.mailService.sendMail({ to: anggota.email, subject, html, metadata: { module: 'gamification', template: 'levelUpEmail' } });
       }
     } catch (error) {
       this.logger.warn('Failed to send level-up notification:', (error as Error).message);
@@ -509,7 +508,7 @@ export class GamificationService {
             badge.icon,
             badge.description,
           );
-          await this.mailService.sendMail({ to: anggota.email, subject, html });
+          await this.mailService.sendMail({ to: anggota.email, subject, html, metadata: { module: 'gamification', template: 'badgeEarnedEmail' } });
         }
       }
     } catch (error) {

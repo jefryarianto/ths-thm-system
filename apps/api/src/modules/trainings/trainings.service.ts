@@ -230,7 +230,7 @@ export class TrainingsService {
       if (!member?.email) return;
 
       const tpl = attendanceConfirmationEmail(member.namaLengkap, jenisMateri, hadir);
-      await this.mailService.sendMail({ to: member.email, ...tpl });
+      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'trainings', template: 'attendanceConfirmationEmail' } });
     } catch (error) {
       this.logger.error(`sendAttendanceConfirmation failed for member ${anggotaId}: ${(error as Error).message}`);
     }

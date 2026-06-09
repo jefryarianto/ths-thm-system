@@ -156,7 +156,7 @@ export class DocumentsService {
       if (!member?.email) return;
 
       const tpl = documentReadyEmail(member.namaLengkap, docType, nomorDokumen);
-      await this.mailService.sendMail({ to: member.email, ...tpl });
+      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'documents', template: 'documentReadyEmail' } });
     } catch (error) {
       this.logger.error(`sendDocumentReadyEmail failed for member ${memberId}: ${(error as Error).message}`);
     }

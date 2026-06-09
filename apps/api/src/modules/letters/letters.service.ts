@@ -180,7 +180,7 @@ export class LettersService {
         dto.isi,
       );
 
-      await this.mailService.sendMail({ to: penerima.email, subject, html });
+      await this.mailService.sendMail({ to: penerima.email, subject, html, metadata: { module: 'letters', template: 'dispositionNotificationEmail' } });
     } catch (error) {
       this.logger.warn(`Failed to send disposition email: ${(error as Error).message}`);
     }

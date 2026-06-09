@@ -78,6 +78,27 @@ const EMAIL_TEMPLATES = [
   },
 ];
 
+// ─── Module Filter ───
+
+const MODULES = [
+  { value: '', label: 'Semua Modul' },
+  { value: 'members', label: 'Anggota' },
+  { value: 'candidates', label: 'Calon' },
+  { value: 'registrations', label: 'Registrasi' },
+  { value: 'examiners', label: 'Penguji' },
+  { value: 'users', label: 'User' },
+  { value: 'activities', label: 'Kegiatan' },
+  { value: 'claims', label: 'Klaim' },
+  { value: 'auth', label: 'Auth' },
+  { value: 'trainings', label: 'Latihan' },
+  { value: 'dues', label: 'Iuran' },
+  { value: 'letters', label: 'Surat' },
+  { value: 'graduations', label: 'Pendadaran' },
+  { value: 'documents', label: 'Dokumen' },
+  { value: 'gamification', label: 'Gamifikasi' },
+  { value: 'org-documents', label: 'Dok. Organisasi' },
+];
+
 // ─── Types ───
 
 interface MailStatus {
@@ -155,6 +176,7 @@ export default function EmailSettingsPage() {
   const [logsMeta, setLogsMeta] = useState({ total: 0, totalPages: 0, page: 1, limit: 20 });
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsFilter, setLogsFilter] = useState('');
+  const [logsModuleFilter, setLogsModuleFilter] = useState('');
   const [logsStats, setLogsStats] = useState<LogStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -171,11 +193,12 @@ export default function EmailSettingsPage() {
     fetchStatus();
   }, []);
 
-  const fetchLogs = async (page: number, status?: string) => {
+  const fetchLogs = async (page: number, status?: string, module?: string) => {
     setLogsLoading(true);
     try {
       const params: Record<string, unknown> = { page, limit: 20 };
       if (status) params.status = status;
+      if (module) params.module = module;
       const { data } = await apiClient.get('/mail/logs', { params });
       setLogs(data.data || []);
       setLogsMeta(data.meta || { total: 0, totalPages: 0, page, limit: 20 });
@@ -194,7 +217,7 @@ export default function EmailSettingsPage() {
 
   useEffect(() => {
     if (activeTab === 'logs' || activeTab === 'report') {
-      if (activeTab === 'logs') fetchLogs(1, logsFilter);
+      if (activeTab === 'logs') fetchLogs(1, logsFilter, logsModuleFilter);
       fetchStats();
     }
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -220,7 +243,12 @@ export default function EmailSettingsPage() {
 
   const handleFilterChange = (status: string) => {
     setLogsFilter(status);
-    fetchLogs(1, status);
+    fetchLogs(1, status, logsModuleFilter);
+  };
+
+  const handleModuleFilterChange = (module: string) => {
+    setLogsModuleFilter(module);
+    fetchLogs(1, logsFilter, module);
   };
 
   // ─── Render ───
@@ -655,8 +683,8 @@ export default function EmailSettingsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
             {/* Filter + Header */}
             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Filter status:</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Status:</span>
                 {['', 'sent', 'failed', 'skipped'].map((s) => (
                   <button
                     key={s}
@@ -670,12 +698,22 @@ export default function EmailSettingsPage() {
                     {s ? (s === 'sent' ? '✅ Terkirim' : s === 'failed' ? '❌ Gagal' : '⏭️ Skip') : 'Semua'}
                   </button>
                 ))}
+                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 font-medium">Modul:</span>
+                <select
+                  value={logsModuleFilter}
+                  onChange={(e) => handleModuleFilterChange(e.target.value)}
+                  className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500"
+                >
+                  {MODULES.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <RefreshCw
                   size={14}
                   className="cursor-pointer hover:text-blue-600 transition"
-                  onClick={() => { fetchLogs(1, logsFilter); fetchStats(); }}
+                  onClick={() => { fetchLogs(1, logsFilter, logsModuleFilter); fetchStats(); }}
                 />
                 {logsMeta.total > 0 && <span>{logsMeta.total} total</span>}
               </div>
@@ -702,8 +740,9 @@ export default function EmailSettingsPage() {
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Tujuan</th>
                         <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Subjek</th>
-                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">Provider</th>
-                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Waktu</th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">Modul</th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Provider</th>
+                        <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">Waktu</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -724,13 +763,25 @@ export default function EmailSettingsPage() {
                             </div>
                           </td>
                           <td className="px-5 py-3 hidden sm:table-cell">
+                            {(() => {
+                              const moduleVal = log.metadata?.module;
+                              if (!moduleVal) return <span className="text-xs text-gray-400">-</span>;
+                              const label = MODULES.find(m => m.value === moduleVal)?.label || String(moduleVal);
+                              return (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 font-medium">
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td className="px-5 py-3 hidden md:table-cell">
                             {log.provider ? (
                               <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">{log.provider}</span>
                             ) : (
                               <span className="text-xs text-gray-400">-</span>
                             )}
                           </td>
-                          <td className="px-5 py-3 hidden md:table-cell">
+                          <td className="px-5 py-3 hidden lg:table-cell">
                             <span className="text-xs text-gray-500 dark:text-gray-400" title={formatDate(log.createdAt)}>
                               {formatDateShort(log.createdAt)}
                             </span>

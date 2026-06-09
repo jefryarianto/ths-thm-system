@@ -184,7 +184,7 @@ export class GraduationsService {
         ? graduation.tanggalMulai.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
         : '-';
       const tpl = graduationRegisteredEmail(nama, namaPendadaran, tanggal);
-      await this.mailService.sendMail({ to: email, ...tpl });
+      await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'graduations', template: 'graduationRegisteredEmail' } });
     } catch (error) {
       this.logger.error(`sendGraduationRegisteredEmail failed: ${(error as Error).message}`);
     }
@@ -193,7 +193,7 @@ export class GraduationsService {
   private async sendGraduationResultEmail(nama: string, email: string, lulus: boolean, skor?: number): Promise<void> {
     try {
       const tpl = graduationResultEmail(nama, lulus, skor);
-      await this.mailService.sendMail({ to: email, ...tpl });
+      await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'graduations', template: 'graduationResultEmail' } });
     } catch (error) {
       this.logger.error(`sendGraduationResultEmail failed for ${email}: ${(error as Error).message}`);
     }

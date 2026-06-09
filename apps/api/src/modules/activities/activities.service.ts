@@ -223,7 +223,7 @@ export class ActivitiesService {
       });
 
       const tpl = activityInvitationEmail(member.namaLengkap, activityName, tanggal, lokasi || '-');
-      await this.mailService.sendMail({ to: member.email, ...tpl });
+      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'activities', template: 'activityInvitationEmail' } });
     } catch (error) {
       this.logger.error(`sendActivityInvitation failed for member ${anggotaId}: ${(error as Error).message}`);
     }
