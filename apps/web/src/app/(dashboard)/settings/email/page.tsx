@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api-client';
 import {
   Mail, Send, CheckCircle2, XCircle, AlertCircle, Info,
-  RefreshCw, FileText, Server, History, ChevronLeft, ChevronRight,
+  RefreshCw, FileText, Server, History, ChevronLeft, ChevronRight, BarChart3,
 } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+} from 'recharts';
 
 // ─── Email Template Directory ───
 
@@ -139,7 +143,7 @@ function formatDateShort(dateStr: string) {
 // ─── Page Component ───
 
 export default function EmailSettingsPage() {
-  const [activeTab, setActiveTab] = useState<'test' | 'templates' | 'logs'>('test');
+  const [activeTab, setActiveTab] = useState<'test' | 'templates' | 'logs' | 'report'>('test');
   const [testEmail, setTestEmail] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -189,8 +193,8 @@ export default function EmailSettingsPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'logs') {
-      fetchLogs(1, logsFilter);
+    if (activeTab === 'logs' || activeTab === 'report') {
+      if (activeTab === 'logs') fetchLogs(1, logsFilter);
       fetchStats();
     }
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -351,7 +355,18 @@ export default function EmailSettingsPage() {
           }`}
         >
           <History size={16} className="inline mr-1.5" />
-          Riwayat Email
+          Riwayat
+        </button>
+        <button
+          onClick={() => setActiveTab('report')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'report'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <BarChart3 size={16} className="inline mr-1.5" />
+          Laporan
         </button>
       </div>
 
@@ -431,6 +446,171 @@ export default function EmailSettingsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── Tab: Report ── */}
+      {activeTab === 'report' && (
+        <div className="space-y-6">
+          {statsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[1,2,3].map((i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse h-80" />
+              ))}
+            </div>
+          ) : logsStats ? (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Dikirim</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{logsStats.total}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-green-200 dark:border-green-800 shadow-sm p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Berhasil</p>
+                  <p className="text-2xl font-bold text-green-600">{logsStats.sent}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-800 shadow-sm p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Gagal</p>
+                  <p className="text-2xl font-bold text-red-600">{logsStats.failed}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Success Rate</p>
+                  <p className={`text-2xl font-bold ${logsStats.successRate >= 90 ? 'text-green-600' : logsStats.successRate >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {logsStats.successRate}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Daily Trend Bar Chart */}
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                  <div className="mb-4">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">Tren Pengiriman 7 Hari</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jumlah email terkirim, gagal, dan skip per hari</p>
+                  </div>
+                  {logsStats.dailyStats.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={logsStats.dailyStats} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 11, fill: '#6b7280' }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#e5e7eb' }}
+                          tickFormatter={(val) => {
+                            const d = new Date(val + 'T00:00:00');
+                            return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
+                          }}
+                        />
+                        <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                        <Tooltip
+                          formatter={(value: number, name: string) => {
+                            const labels: Record<string, string> = { sent: 'Terkirim', failed: 'Gagal', skipped: 'Skip' };
+                            return [value, labels[name] || name];
+                          }}
+                          labelFormatter={(label) => {
+                            const d = new Date(label + 'T00:00:00');
+                            return d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                          }}
+                          contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Bar dataKey="sent" name="sent" fill="#22c55e" stackId="a" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="failed" name="failed" fill="#ef4444" stackId="a" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="skipped" name="skipped" fill="#eab308" stackId="a" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500 text-sm">
+                      Belum ada data pengiriman 7 hari terakhir
+                    </div>
+                  )}
+                  {/* Legend */}
+                  <div className="flex items-center justify-center gap-6 mt-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-green-500" /> Terkirim</span>
+                    <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-red-500" /> Gagal</span>
+                    <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-yellow-500" /> Skip</span>
+                  </div>
+                </div>
+
+                {/* Pie Chart - Status Distribution */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                  <div className="mb-4">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">Distribusi Status</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perbandingan keseluruhan</p>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Terkirim', value: logsStats.sent, color: '#22c55e' },
+                          { name: 'Gagal', value: logsStats.failed, color: '#ef4444' },
+                          { name: 'Skip', value: logsStats.skipped, color: '#eab308' },
+                        ].filter(d => d.value > 0)}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'Terkirim', value: logsStats.sent, color: '#22c55e' },
+                          { name: 'Gagal', value: logsStats.failed, color: '#ef4444' },
+                          { name: 'Skip', value: logsStats.skipped, color: '#eab308' },
+                        ].filter(d => d.value > 0).map((entry, idx) => (
+                          <Cell key={idx} fill={entry.color} stroke="white" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number, name: string) => [value.toLocaleString('id-ID'), name]}
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Legend
+                        verticalAlign="bottom"
+                        height={30}
+                        iconType="circle"
+                        iconSize={8}
+                        formatter={(value) => <span className="text-xs text-gray-600 dark:text-gray-400">{value}</span>}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+                    {logsStats.total > 0
+                      ? `${logsStats.sent} dari ${logsStats.total} berhasil (${logsStats.successRate}%)`
+                      : 'Belum ada data'
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Recipients */}
+              {logsStats.topRecipients.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Penerima Terbanyak</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {logsStats.topRecipients.map((r, i) => (
+                      <div key={r.email} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs text-gray-400 w-5 flex-shrink-0">{i + 1}.</span>
+                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{r.email}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full flex-shrink-0 ml-2">
+                          {r.count} email
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 text-sm text-yellow-700 dark:text-yellow-400 text-center">
+              <BarChart3 size={32} className="mx-auto mb-2 opacity-50" />
+              <p>Belum ada data laporan. Kirim email terlebih dahulu.</p>
+            </div>
+          )}
         </div>
       )}
 
