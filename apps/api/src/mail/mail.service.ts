@@ -36,6 +36,16 @@ export class MailService {
   async sendMail(options: SendMailOptions): Promise<boolean> {
     const { to, subject, text, html, metadata } = options;
 
+    // Check if recipient is suppressed (bounced/complained)
+    const suppressed = await this.prisma.suppressedEmail.findUnique({
+      where: { email: to },
+    });
+    if (suppressed) {
+      this.logger.log(`[SUPPRESSED] Email to ${to} skipped — previously ${suppressed.reason}`);
+      await this.logToDb(to, subject, 'skipped', null, `Suppressed: ${suppressed.reason} at ${suppressed.createdAt.toISOString()}`, metadata, html || text);
+      return true;
+    }
+
     if (env.nodeEnv === 'development') {
       this.logger.log(`[DEV] Email would be sent to ${to}: "${subject}"`);
       await this.logToDb(to, subject, 'skipped', 'dev', null, metadata, html || text);

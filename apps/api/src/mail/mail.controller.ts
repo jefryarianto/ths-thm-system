@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Body, ParseIntPipe, DefaultValuePipe, Logger, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, Body, Param, ParseIntPipe, DefaultValuePipe, Logger, Headers } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { TestMailDto } from './dto/test-mail.dto';
@@ -244,7 +244,7 @@ export class MailController {
     };
     const mappedEvent = eventMap[eventType] || eventType;
 
-    await this.prisma.emailEvent.create({
+    const createdEvent = await this.prisma.emailEvent.create({
       data: {
         emailLogId,
         event: mappedEvent,
@@ -252,6 +252,24 @@ export class MailController {
         data: { ...payload, svixId } as never,
       },
     });
+
+    // Auto-suppress on bounce or complaint
+    if ((mappedEvent === 'bounced' || mappedEvent === 'complained') && createdEvent.recipient) {
+      try {
+        await this.prisma.suppressedEmail.upsert({
+          where: { email: createdEvent.recipient },
+          create: {
+            email: createdEvent.recipient,
+            reason: mappedEvent,
+            eventId: createdEvent.id,
+          },
+          update: { reason: mappedEvent, eventId: createdEvent.id },
+        });
+        this.logger.log(`Auto-suppressed ${createdEvent.recipient} (${mappedEvent})`);
+      } catch (err) {
+        this.logger.error(`Failed to auto-suppress ${createdEvent.recipient}: ${(err as Error).message}`);
+      }
+    }
 
     return { success: true };
   }
@@ -356,6 +374,54 @@ export class MailController {
         dailyTrend,
       },
     };
+  }
+
+  @Get('suppressions')
+  @Roles('superadmin')
+  async getSuppressions(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    const [data, total] = await Promise.all([
+      this.prisma.suppressedEmail.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { event: { select: { event: true, timestamp: true } } },
+      }),
+      this.prisma.suppressedEmail.count(),
+    ]);
+
+    return {
+      success: true,
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  @Delete('suppressions/:id')
+  @Roles('superadmin')
+  async removeSuppression(@Param('id') id: string) {
+    try {
+      await this.prisma.suppressedEmail.delete({ where: { id } });
+      return { success: true, message: 'Suppressed email removed' };
+    } catch (err) {
+      return { success: false, message: (err as Error).message };
+    }
+  }
+
+  @Post('suppressions/clear')
+  @Roles('superadmin')
+  async clearSuppressions(@Body() body: { ids?: string[] }) {
+    if (body.ids && body.ids.length > 0) {
+      await this.prisma.suppressedEmail.deleteMany({
+        where: { id: { in: body.ids } },
+      });
+      return { success: true, message: `${body.ids.length} alamat dihapus dari supresi` };
+    }
+    // Clear all
+    const { count } = await this.prisma.suppressedEmail.deleteMany();
+    return { success: true, message: `Semua ${count} alamat dihapus dari supresi` };
   }
 
   @Get('modules')

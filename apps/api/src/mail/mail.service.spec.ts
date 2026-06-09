@@ -22,6 +22,9 @@ describe('MailService', () => {
       count: jest.fn(),
       create: jest.fn(),
     },
+    suppressedEmail: {
+      findUnique: jest.fn(),
+    },
   };
 
   const originalResendKey = process.env.RESEND_API_KEY;
@@ -43,6 +46,8 @@ describe('MailService', () => {
     service = moduleRef.get<MailService>(MailService);
     Object.defineProperty(service, 'logger', { value: loggerSpy, writable: false });
 
+    // By default, suppression check returns null (email not suppressed)
+    mockPrisma.suppressedEmail.findUnique.mockResolvedValue(null);
     jest.clearAllMocks();
   });
 
@@ -60,6 +65,7 @@ describe('MailService', () => {
 
   describe('sendMail', () => {
     it('should warn when RESEND_API_KEY is not set (production, no SMTP)', async () => {
+      mockPrisma.suppressedEmail.findUnique.mockResolvedValue(null);
       mockPrisma.emailLog.create.mockResolvedValue({ id: 'log1' });
 
       await service.sendMail({ to: 'user@test.com', subject: 'Test', text: 'Body' });
@@ -77,6 +83,39 @@ describe('MailService', () => {
             subject: 'Test',
           }),
         }),
+      );
+    });
+
+    it('should skip sending to suppressed (bounced) recipients', async () => {
+      mockPrisma.suppressedEmail.findUnique.mockResolvedValue({
+        id: 'sup-1',
+        email: 'bounced@test.com',
+        reason: 'bounced',
+        createdAt: new Date(),
+      });
+      mockPrisma.emailLog.create.mockResolvedValue({ id: 'log1' });
+
+      const result = await service.sendMail({
+        to: 'bounced@test.com',
+        subject: 'Test',
+        text: 'Body',
+      });
+
+      // Should return true (skipped, not an error)
+      expect(result).toBe(true);
+      // Should log as skipped
+      expect(mockPrisma.emailLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'skipped',
+            to: 'bounced@test.com',
+            subject: 'Test',
+          }),
+        }),
+      );
+      // Should NOT attempt to send via Resend
+      expect(loggerSpy.warn).not.toHaveBeenCalledWith(
+        expect.stringContaining('RESEND_API_KEY'),
       );
     });
   });

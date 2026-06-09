@@ -762,6 +762,19 @@ model DeviceToken {
 
 // ── Email Logs ───────────────────────────────────────────
 
+model SuppressedEmail {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  reason    String   // 'bounced' | 'complained' | 'manual'
+  eventId   String?  @map("event_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event     EmailEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@map("suppressed_emails")
+}
+
 model EmailEvent {
   id        String   @id @default(uuid())
   emailLogId String?  @map("email_log_id")
@@ -771,7 +784,8 @@ model EmailEvent {
   data      Json?    // Raw webhook payload for the event
   createdAt DateTime @default(now()) @map("created_at")
 
-  emailLog  EmailLog? @relation(fields: [emailLogId], references: [id], onDelete: SetNull)
+  emailLog        EmailLog?        @relation(fields: [emailLogId], references: [id], onDelete: SetNull)
+  suppressions    SuppressedEmail[]
 
   @@index([emailLogId])
   @@index([event])

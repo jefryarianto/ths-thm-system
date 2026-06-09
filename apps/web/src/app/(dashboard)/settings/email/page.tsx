@@ -5,6 +5,7 @@ import apiClient from '@/lib/api-client';
 import {
   Mail, Send, CheckCircle2, XCircle, AlertCircle, Info,
   RefreshCw, FileText, Server, History, ChevronLeft, ChevronRight, BarChart3,
+  Ban, Trash2, ShieldAlert, RotateCcw,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -173,7 +174,7 @@ function formatDateShort(dateStr: string) {
 // ─── Page Component ───
 
 export default function EmailSettingsPage() {
-  const [activeTab, setActiveTab] = useState<'test' | 'templates' | 'logs' | 'report'>('test');
+  const [activeTab, setActiveTab] = useState<'test' | 'templates' | 'logs' | 'report' | 'suppressed'>('test');
   const [testEmail, setTestEmail] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -204,6 +205,18 @@ export default function EmailSettingsPage() {
     dailyTrend?: Array<{ date: string; sent: number; opened: number; clicked: number; bounced: number; openRate: number; clickRate: number; bounceRate: number }>;
   } | null>(null);
   const [engagementLoading, setEngagementLoading] = useState(false);
+
+  // Suppressions state
+  const [suppressions, setSuppressions] = useState<Array<{
+    id: string;
+    email: string;
+    reason: string;
+    event: { event: string; timestamp: string } | null;
+    createdAt: string;
+  }>>([]);
+  const [suppressionMeta, setSuppressionMeta] = useState({ total: 0, totalPages: 0, page: 1, limit: 20 });
+  const [suppressionsLoading, setSuppressionsLoading] = useState(false);
+  const [suppressionRemoving, setSuppressionRemoving] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -262,6 +275,7 @@ export default function EmailSettingsPage() {
       fetchStats(logsModuleFilter);
     }
     if (activeTab === 'report') fetchEngagement();
+    if (activeTab === 'suppressed') fetchSuppressions();
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTestEmail = async () => {
@@ -295,6 +309,34 @@ export default function EmailSettingsPage() {
       setUsedModules(data.data || []);
     } catch { /* ignore */ }
     setModulesLoading(false);
+  };
+
+  const fetchSuppressions = async (page = 1) => {
+    setSuppressionsLoading(true);
+    try {
+      const { data } = await apiClient.get('/mail/suppressions', { params: { page, limit: 20 } });
+      setSuppressions(data.data || []);
+      setSuppressionMeta(data.meta || { total: 0, totalPages: 0, page, limit: 20 });
+    } catch { /* ignore */ }
+    setSuppressionsLoading(false);
+  };
+
+  const handleRemoveSuppression = async (id: string) => {
+    if (!confirm('Hapus alamat email ini dari daftar supresi?')) return;
+    setSuppressionRemoving(id);
+    try {
+      await apiClient.delete(`/mail/suppressions/${id}`);
+      fetchSuppressions(suppressionMeta.page);
+    } catch { /* ignore */ }
+    setSuppressionRemoving(null);
+  };
+
+  const handleClearSuppressions = async () => {
+    if (!confirm('Bersihkan semua alamat email dari daftar supresi? Email akan tetap dikirim ke alamat-alamat ini.')) return;
+    try {
+      await apiClient.post('/mail/suppressions/clear', {});
+      fetchSuppressions(1);
+    } catch { /* ignore */ }
   };
 
   const handleRetry = async () => {
@@ -552,6 +594,17 @@ export default function EmailSettingsPage() {
         >
           <BarChart3 size={16} className="inline mr-1.5" />
           Laporan
+        </button>
+        <button
+          onClick={() => setActiveTab('suppressed')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'suppressed'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <Ban size={16} className="inline mr-1.5" />
+          Supresi
         </button>
       </div>
 
@@ -940,6 +993,154 @@ export default function EmailSettingsPage() {
               <p>Belum ada data laporan. Kirim email terlebih dahulu.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Tab: Suppressed Emails ── */}
+      {activeTab === 'suppressed' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Ban size={18} className="text-red-500" />
+                Daftar Supresi Email
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Alamat email yang otomatis ditekan pengirimannya karena bounce atau complaint
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClearSuppressions}
+                disabled={suppressions.length === 0}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 transition disabled:opacity-40"
+              >
+                <Trash2 size={12} />
+                Bersihkan Semua
+              </button>
+              <button
+                onClick={() => fetchSuppressions(suppressionMeta.page)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                <RefreshCw size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          {suppressionsLoading ? (
+            <div className="p-8 text-center text-sm text-gray-400">
+              <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
+              Memuat daftar supresi...
+            </div>
+          ) : suppressions.length === 0 ? (
+            <div className="p-8 text-center">
+              <ShieldAlert size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada alamat email yang disupresi</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Alamat email akan otomatis masuk daftar ini saat terjadi bounce atau complaint
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Email</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Alasan</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">Event</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">Waktu</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suppressions.map((s) => (
+                      <tr key={s.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-red-50/30 dark:hover:bg-red-950/20 transition">
+                        <td className="px-5 py-3">
+                          <span className="text-gray-900 dark:text-white font-medium text-xs">{s.email}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            s.reason === 'bounced'
+                              ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400'
+                              : 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400'
+                          }`}>
+                            {s.reason === 'bounced' ? '❌ Bounce' : s.reason === 'complained' ? '⚠️ Complaint' : s.reason}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 hidden sm:table-cell">
+                          {s.event ? (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {s.event.event}
+                              <span className="text-gray-300 dark:text-gray-600"> &middot; </span>
+                              {formatDateShort(s.event.timestamp)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">Manual</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 hidden md:table-cell">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{formatDateShort(s.createdAt)}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <button
+                            onClick={() => handleRemoveSuppression(s.id)}
+                            disabled={suppressionRemoving === s.id}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400 transition disabled:opacity-50"
+                            title="Hapus dari supresi"
+                          >
+                            {suppressionRemoving === s.id ? (
+                              <RefreshCw size={10} className="animate-spin" />
+                            ) : (
+                              <RotateCcw size={10} />
+                            )}
+                            Pulihkan
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {suppressionMeta.totalPages > 1 && (
+                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-700">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Halaman {suppressionMeta.page} dari {suppressionMeta.totalPages}
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => fetchSuppressions(suppressionMeta.page - 1)}
+                      disabled={suppressionMeta.page <= 1}
+                      className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
+                    >
+                      <ChevronLeft size={16} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => fetchSuppressions(suppressionMeta.page + 1)}
+                      disabled={suppressionMeta.page >= suppressionMeta.totalPages}
+                      className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
+                    >
+                      <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Info */}
+          <div className="px-5 py-4 bg-yellow-50 dark:bg-yellow-950/50 border-t border-yellow-200 dark:border-yellow-800 flex items-start gap-2">
+            <Info size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-yellow-700 dark:text-yellow-400">
+              Alamat email otomatis masuk daftar supresi saat terjadi <strong>bounce</strong> (email tidak terkirim) atau <strong>complaint</strong> (dilaporkan spam).
+              Email ke alamat di daftar ini akan dicatat sebagai <strong>skipped</strong> dan tidak dikirim.
+              Klik <strong>Pulihkan</strong> untuk mengizinkan pengiriman kembali.
+            </p>
+          </div>
         </div>
       )}
 
