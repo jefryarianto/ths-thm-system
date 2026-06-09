@@ -1,14 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { claimStatusEmail } from '../../mail/email-templates';
 import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class ClaimsService {
+  private readonly logger = new Logger(ClaimsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -73,20 +78,31 @@ export class ClaimsService {
   }
 
   async approve(id: string, scope?: UserScope) {
-    await this.verifyClaimAccess(id, scope);
+    const claim = await this.verifyClaimAccess(id, scope);
     await this.prisma.klaim.update({ where: { id }, data: { status: 'disetujui' } });
+    this.sendClaimStatusEmail(claim.anggota, 'disetujui');
     return { success: true, message: 'Klaim disetujui, dokumen dalam antrian generate' };
   }
 
   async reject(id: string, reason?: string, scope?: UserScope) {
-    await this.verifyClaimAccess(id, scope);
+    const claim = await this.verifyClaimAccess(id, scope);
     await this.prisma.klaim.update({ where: { id }, data: { status: 'ditolak', catatan: reason } });
+    this.sendClaimStatusEmail(claim.anggota, 'ditolak', reason);
     return { success: true, message: reason || 'Klaim ditolak' };
   }
 
   async process(id: string, scope?: UserScope) {
-    await this.verifyClaimAccess(id, scope);
-    const claim = await this.prisma.klaim.update({ where: { id }, data: { status: 'diproses' } });
-    return { success: true, data: claim, message: 'Klaim sedang diproses' };
+    const claim = await this.verifyClaimAccess(id, scope);
+    const updated = await this.prisma.klaim.update({ where: { id }, data: { status: 'diproses' } });
+    this.sendClaimStatusEmail(claim.anggota, 'diproses');
+    return { success: true, data: updated, message: 'Klaim sedang diproses' };
+  }
+
+  private sendClaimStatusEmail(anggota: { namaLengkap?: string; email?: string } | null | undefined, status: string, reason?: string): void {
+    if (!anggota?.email) return;
+    const tpl = claimStatusEmail(anggota.namaLengkap || 'Anggota', status, reason);
+    this.mailService.sendMail({ to: anggota.email, ...tpl }).catch((err) =>
+      this.logger.error(`Claim status email failed for ${anggota.email}: ${err.message}`),
+    );
   }
 }

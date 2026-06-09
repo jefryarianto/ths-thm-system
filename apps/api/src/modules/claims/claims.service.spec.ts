@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ClaimsService } from './claims.service';
+import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 
@@ -27,12 +28,17 @@ describe('ClaimsService', () => {
     verifyKegiatanScope: jest.fn(),
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ClaimsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -112,28 +118,45 @@ describe('ClaimsService', () => {
   });
 
   describe('approve', () => {
-    it('should approve a claim', async () => {
+    it('should approve a claim and send email', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1', status: 'pending',
+        anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
+      });
       await service.approve('cl1');
       expect(mockPrisma.klaim.update).toHaveBeenCalledWith({
         where: { id: 'cl1' },
         data: { status: 'disetujui' },
       });
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
     });
   });
 
   describe('reject', () => {
-    it('should reject a claim with reason', async () => {
+    it('should reject a claim and send rejection email', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1', status: 'pending',
+        anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
+      });
       await service.reject('cl1', 'Tidak memenuhi syarat');
       expect(mockPrisma.klaim.update).toHaveBeenCalled();
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
     });
   });
 
   describe('process', () => {
-    it('should set claim status to diproses', async () => {
+    it('should set claim status to diproses and send email', async () => {
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1', status: 'pending',
+        anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
+      });
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', status: 'diproses' });
       const result = await service.process('cl1');
       expect(result.success).toBe(true);
       expect(result.data.status).toBe('diproses');
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
     });
   });
 });

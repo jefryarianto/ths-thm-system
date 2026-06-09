@@ -1,14 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
 import { CreateGraduationDto, GraduationFilterDto, RegisterParticipantDto, GraduateDto } from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 @Injectable()
 export class GraduationsService {
+  private readonly logger = new Logger(GraduationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(query: GraduationFilterDto, scope?: UserScope) {
@@ -79,6 +84,12 @@ export class GraduationsService {
       where: { id: dto.candidateId },
       data: { status: 'mengikuti_pendadaran' },
     });
+
+    // Send registration email (method handles errors internally)
+    if (candidate.email) {
+      this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
+    }
+
     return { success: true, data: candidate, message: 'Peserta berhasil didaftarkan' };
   }
 
@@ -137,10 +148,15 @@ export class GraduationsService {
         },
       });
 
-      await this.prisma.calonAnggota.update({
+      const candidate = await this.prisma.calonAnggota.update({
         where: { id: result.candidateId },
         data: { status: result.lulus ? 'lulus' : 'gagal' },
       });
+
+      // Send result email (method handles errors internally)
+      if (candidate.email) {
+        this.sendGraduationResultEmail(candidate.namaLengkap, candidate.email, result.lulus, result.totalSkor);
+      }
     }
 
     return { success: true, message: 'Hasil pendadaran berhasil disimpan' };
@@ -155,5 +171,31 @@ export class GraduationsService {
       success: true,
       data: { totalGraduates: graduates.length, message: 'Dokumen dalam antrian generate' },
     };
+  }
+
+  private async sendGraduationRegisteredEmail(nama: string, email: string, graduationId: string): Promise<void> {
+    try {
+      const graduation = await this.prisma.kegiatan.findUnique({
+        where: { id: graduationId },
+        select: { nama: true, tanggalMulai: true },
+      });
+      const namaPendadaran = graduation?.nama || 'Pendadaran';
+      const tanggal = graduation?.tanggalMulai
+        ? graduation.tanggalMulai.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        : '-';
+      const tpl = graduationRegisteredEmail(nama, namaPendadaran, tanggal);
+      await this.mailService.sendMail({ to: email, ...tpl });
+    } catch (error) {
+      this.logger.error(`sendGraduationRegisteredEmail failed: ${(error as Error).message}`);
+    }
+  }
+
+  private async sendGraduationResultEmail(nama: string, email: string, lulus: boolean, skor?: number): Promise<void> {
+    try {
+      const tpl = graduationResultEmail(nama, lulus, skor);
+      await this.mailService.sendMail({ to: email, ...tpl });
+    } catch (error) {
+      this.logger.error(`sendGraduationResultEmail failed for ${email}: ${(error as Error).message}`);
+    }
   }
 }

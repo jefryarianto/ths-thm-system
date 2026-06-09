@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { CreateOrgDocumentDto, UpdateOrgDocumentDto, OrgDocumentFilterDto, CreateCategoryDto, UpdateCategoryDto } from './dto/org-document.dto';
 
 @Injectable()
 export class OrgDocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(OrgDocumentsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async findAll(query: OrgDocumentFilterDto) {
     const page = query.page || 1;
@@ -28,6 +34,10 @@ export class OrgDocumentsService {
 
   async create(dto: CreateOrgDocumentDto) {
     const doc = await this.prisma.dokumenOrganisasi.create({ data: dto as never });
+
+    // Notify admins about new org document (method handles errors internally)
+    this.notifyAdminsNewDocument(dto.judul || 'Dokumen Baru');
+
     return { success: true, data: doc, message: 'Dokumen berhasil diupload' };
   }
 
@@ -65,5 +75,40 @@ export class OrgDocumentsService {
   async deleteCategory(id: string) {
     await this.prisma.kategoriDokumen.delete({ where: { id } });
     return { success: true, message: 'Kategori berhasil dihapus' };
+  }
+
+  private async notifyAdminsNewDocument(judul: string): Promise<void> {
+    try {
+      const admins = await this.prisma.user.findMany({
+        where: {
+          role: { in: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'] },
+          isActive: true,
+        },
+        select: { email: true, namaLengkap: true },
+      });
+
+      for (const admin of admins) {
+        if (!admin.email) continue;
+        await this.mailService.sendMail({
+          to: admin.email,
+          subject: `Dokumen Organisasi Baru — ${judul}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #1a56db;">📁 Dokumen Organisasi Baru</h2>
+              <p>Halo <strong>${admin.namaLengkap}</strong>,</p>
+              <p>Dokumen organisasi baru telah diupload:</p>
+              <p style="font-size: 16px; font-weight: bold; margin: 16px 0;">${judul}</p>
+              <p>Silakan login ke aplikasi untuk melihat dan mengelola dokumen.</p>
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+              <p style="color: #6b7280; font-size: 12px;">
+                THS-THM System &mdash; Notifikasi dokumen organisasi
+              </p>
+            </div>
+          `,
+        });
+      }
+    } catch (error) {
+      this.logger.error(`notifyAdminsNewDocument failed: ${(error as Error).message}`);
+    }
   }
 }

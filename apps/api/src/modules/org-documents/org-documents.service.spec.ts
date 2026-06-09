@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { OrgDocumentsService } from './org-documents.service';
+import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 describe('OrgDocumentsService', () => {
@@ -23,6 +24,13 @@ describe('OrgDocumentsService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
+    user: {
+      findMany: jest.fn(),
+    },
+  };
+
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
   };
 
   beforeEach(async () => {
@@ -30,6 +38,7 @@ describe('OrgDocumentsService', () => {
       providers: [
         OrgDocumentsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -83,13 +92,16 @@ describe('OrgDocumentsService', () => {
   });
 
   describe('create', () => {
-    it('should create a document', async () => {
+    it('should create a document and notify admins', async () => {
       const dto = { judul: 'AD/ART', kategoriId: 'cat1' };
       mockPrisma.dokumenOrganisasi.create.mockResolvedValue({ id: '1', ...dto });
+      mockPrisma.user.findMany.mockResolvedValue([{ email: 'admin@test.com', namaLengkap: 'Admin' }]);
 
       const result = await service.create(dto);
       expect(result.success).toBe(true);
       expect(result.data.judul).toBe('AD/ART');
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'admin@test.com' }));
     });
   });
 

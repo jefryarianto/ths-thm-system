@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { GraduationsService } from './graduations.service';
+import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 
@@ -35,12 +36,17 @@ describe('GraduationsService', () => {
     verifyKegiatanScope: jest.fn(),
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GraduationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -94,11 +100,13 @@ describe('GraduationsService', () => {
   });
 
   describe('graduate', () => {
-    it('should process graduation results', async () => {
+    it('should process graduation results and send email', async () => {
       mockPrisma.hasilPendadaran.create.mockResolvedValue({ id: 'h1' });
-      mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1' });
+      mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', email: 'candidate@test.com', namaLengkap: 'Budi' });
       const result = await service.graduate('g1', { results: [{ candidateId: 'c1', totalSkor: 85, ranking: 1, lulus: true }] } as any);
       expect(result.success).toBe(true);
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'candidate@test.com' }));
     });
   });
 });

@@ -225,6 +225,74 @@ export function documentReadyEmail(nama: string, docType: string, nomorDokumen: 
   };
 }
 
+// ─── Klaim / Claim ───
+
+export function claimStatusEmail(nama: string, status: string, reason?: string) {
+  const statusLabels: Record<string, { icon: string; color: string; title: string; message: string }> = {
+    disetujui: {
+      icon: '✅', color: '#16a34a',
+      title: 'Klaim Disetujui',
+      message: 'Pengajuan klaim Anda telah <strong>disetujui</strong>. Dokumen akan segera diproses.',
+    },
+    ditolak: {
+      icon: '❌', color: '#dc2626',
+      title: 'Klaim Ditolak',
+      message: 'Pengajuan klaim Anda <strong>tidak dapat disetujui</strong>.',
+    },
+    diproses: {
+      icon: '⚙️', color: '#ca8a04',
+      title: 'Klaim Diproses',
+      message: 'Pengajuan klaim Anda sedang <strong>diproses</strong>. Silakan tunggu informasi selanjutnya.',
+    },
+  };
+
+  const info = statusLabels[status] || { icon: '📋', color: '#1a56db', title: 'Update Klaim', message: `Status klaim Anda: ${status}` };
+
+  return {
+    subject: `${info.icon} ${info.title} — THS-THM`,
+    html: wrap(`
+      <h2 style="color: ${info.color};">${info.icon} ${info.title}</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>${info.message}</p>
+      ${reason ? `<p>Alasan: <em>${reason}</em></p>` : ''}
+    `),
+  };
+}
+
+// ─── Pendadaran / Graduation ───
+
+export function graduationResultEmail(nama: string, lulus: boolean, skor?: number) {
+  return {
+    subject: lulus ? '🎉 Selamat! Anda Lulus Pendadaran' : 'Hasil Pendadaran — THS-THM',
+    html: wrap(`
+      <h2 style="color: ${lulus ? '#16a34a' : '#ca8a04'};">
+        ${lulus ? '🎉 Selamat! Anda Lulus Pendadaran' : '📋 Hasil Pendadaran'}
+      </h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      ${lulus
+        ? `<p>Anda telah dinyatakan <strong style="color: #16a34a;">LULUS</strong> dalam ujian pendadaran THS-THM.${skor !== undefined ? ` Total skor: <strong>${skor}</strong>` : ''}</p><p>Selamat atas pencapaian ini! Dokumen sertifikat akan segera diproses.</p>`
+        : `<p>Hasil ujian pendadaran Anda: <strong style="color: #ca8a04;">BELUM LULUS</strong>.${skor !== undefined ? ` Total skor: <strong>${skor}</strong>` : ''}</p><p>Jangan menyerah! Silakan berkoordinasi dengan pelatih untuk persiapan pendadaran ulang.</p>`
+      }
+    `),
+  };
+}
+
+export function graduationRegisteredEmail(nama: string, namaPendadaran: string, tanggal: string) {
+  return {
+    subject: 'Pendaftaran Pendadaran — THS-THM',
+    html: wrap(`
+      <h2 style="color: #1a56db;">📝 Pendaftaran Pendadaran</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Anda telah terdaftar sebagai peserta pendadaran:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 120px;">Pendadaran</td><td style="padding: 8px;">${namaPendadaran}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Tanggal</td><td style="padding: 8px;">${tanggal}</td></tr>
+      </table>
+      <p>Persiapkan diri Anda dengan baik. Semoga sukses!</p>
+    `),
+  };
+}
+
 // ─── Notifikasi Umum / General Notification ───
 
 export function generalNotificationEmail(nama: string, judul: string, isi: string) {
