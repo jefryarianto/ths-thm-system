@@ -355,18 +355,18 @@ describe('NotificationsService', () => {
       mockPrisma.setting.findUnique.mockResolvedValue(null);
       const result = await service.getPreferences('u1');
       expect(result.success).toBe(true);
-      // All default to true
-      expect(result.data.welcome).toBe(true);
-      expect(result.data.umum).toBe(true);
+      // All default to { inApp: true, email: true }
+      expect(result.data.welcome).toEqual({ inApp: true, email: true });
+      expect(result.data.umum).toEqual({ inApp: true, email: true });
     });
 
     it('should return saved preferences', async () => {
       mockPrisma.setting.findUnique.mockResolvedValue({
-        value: { umum: false, welcome: true },
+        value: { umum: { inApp: false, email: true }, welcome: { inApp: true, email: true } },
       });
       const result = await service.getPreferences('u1');
-      expect(result.data.umum).toBe(false);
-      expect(result.data.welcome).toBe(true);
+      expect(result.data.umum).toEqual({ inApp: false, email: true });
+      expect(result.data.welcome).toEqual({ inApp: true, email: true });
     });
   });
 

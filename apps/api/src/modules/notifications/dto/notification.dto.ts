@@ -79,6 +79,11 @@ export class NotificationFilterDto {
   @IsOptional()
   @IsString()
   tipe?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
 
 export class RegisterDeviceTokenDto {

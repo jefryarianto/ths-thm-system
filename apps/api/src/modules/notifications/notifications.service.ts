@@ -139,11 +139,17 @@ export class NotificationsService {
   async findAll(userId: string, query: NotificationFilterDto) {
     const page = query.page || 1;
     const limit = query.limit || 20;
-    const cacheKey = `${this.CACHE_PREFIX}${userId}:list:${page}:${limit}:${query.tipe || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}${userId}:list:${page}:${limit}:${query.tipe || ''}:${query.search || ''}`;
 
     return this.cache?.getOrSet(cacheKey, async () => {
       const where: Record<string, unknown> = { userId };
       if (query.tipe) where.tipe = query.tipe;
+      if (query.search) {
+        where.OR = [
+          { judul: { contains: query.search, mode: 'insensitive' } },
+          { isi: { contains: query.search, mode: 'insensitive' } },
+        ];
+      }
 
       const [data, total, unreadCount] = await Promise.all([
         this.prisma.notifikasi.findMany({
@@ -163,6 +169,12 @@ export class NotificationsService {
     const limit = query.limit || 20;
     const where: Record<string, unknown> = { userId };
     if (query.tipe) where.tipe = query.tipe;
+    if (query.search) {
+      where.OR = [
+        { judul: { contains: query.search, mode: 'insensitive' } },
+        { isi: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
 
     const [data, total, unreadCount] = await Promise.all([
       this.prisma.notifikasi.findMany({
