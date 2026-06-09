@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import {
-  Plus, Search, RefreshCw,
-  ChevronLeft, ChevronRight, Calendar,
+  Plus, Search, RefreshCw, Calendar,
   Eye, MapPin,
 } from 'lucide-react';
+import Pagination from '@/components/ui/pagination';
+import TableSkeleton from '@/components/ui/table-skeleton';
+import EmptyState from '@/components/ui/empty-state';
 
 interface ActivityRow {
   id: string;
@@ -80,25 +82,6 @@ export default function ActivitiesPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-  };
-
-  const renderPageNumbers = () => {
-    const pages: number[] = [];
-    const start = Math.max(1, page - 2);
-    const end = Math.min(meta.totalPages, page + 2);
-    for (let i = start; i <= end; i++) pages.push(i);
-    return pages.map(p => (
-      <button
-        key={p}
-        onClick={() => handlePageChange(p)}
-        className={`px-2.5 py-1 text-sm rounded-md ${p === page
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-        }`}
-      >
-        {p}
-      </button>
-    ));
   };
 
   return (
@@ -191,32 +174,14 @@ export default function ActivitiesPage() {
             </thead>
             <tbody>
               {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-100 dark:border-gray-700/50">
-                    {Array.from({ length: 7 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" style={{ width: `${60 + Math.random() * 40}%` }} />
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                <TableSkeleton rows={5} columns={7} />
               ) : data.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
-                    <Calendar size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                    <p className="text-gray-500 dark:text-gray-400">
-                      {search || filterStatus || filterTipe ? 'Tidak ada kegiatan yang cocok dengan filter' : 'Belum ada kegiatan'}
-                    </p>
-                    {(search || filterStatus || filterTipe) && (
-                      <button
-                        onClick={() => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); }}
-                        className="mt-2 text-sm text-blue-600 hover:underline"
-                      >
-                        Reset filter
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                <EmptyState
+                  icon={Calendar}
+                  message={search || filterStatus || filterTipe ? 'Tidak ada kegiatan yang cocok dengan filter' : 'Belum ada kegiatan'}
+                  action={(search || filterStatus || filterTipe) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); } } : undefined}
+                  colSpan={7}
+                />
               ) : (
                 data.map((row) => (
                   <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
@@ -262,31 +227,7 @@ export default function ActivitiesPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {meta.total} total
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page <= 1}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              {renderPageNumbers()}
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= meta.totalPages}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination page={page} totalPages={meta.totalPages} total={meta.total} onPageChange={handlePageChange} />
       </div>
     </div>
   );
