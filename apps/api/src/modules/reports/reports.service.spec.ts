@@ -33,6 +33,27 @@ describe('ReportsService', () => {
     kegiatan: {
       count: jest.fn(),
     },
+    latihan: {
+      count: jest.fn(),
+    },
+    klaim: {
+      count: jest.fn(),
+    },
+    pendaftaran: {
+      count: jest.fn(),
+    },
+    user: {
+      count: jest.fn(),
+    },
+    notifikasi: {
+      findMany: jest.fn(),
+    },
+    emailLog: {
+      count: jest.fn(),
+    },
+    suppressedEmail: {
+      count: jest.fn(),
+    },
     $queryRawUnsafe: jest.fn(),
   };
 

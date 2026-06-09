@@ -82,7 +82,12 @@ export class ReportsService {
       iuranWhere.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
     }
 
-    const [totalMembers, totalCandidates, totalGraduated, totalDuesCollected, pendingValidasi, incompleteData, byStatus, monthlyDues] = await Promise.all([
+    const [
+      totalMembers, totalCandidates, totalGraduated, totalDuesCollected,
+      pendingValidasi, incompleteData, byStatus, monthlyDues,
+      totalKegiatan, totalLatihan, totalKlaim, totalDokumen,
+      totalPendaftaran, totalUsers, recentNotifications, emailSummary,
+    ] = await Promise.all([
       this.prisma.anggota.count({ where: anggotaWhere }),
       this.prisma.calonAnggota.count(),
       this.prisma.calonAnggota.count({ where: { status: 'lulus' } }),
@@ -91,6 +96,14 @@ export class ReportsService {
       this.prisma.anggota.count({ where: { ...anggotaWhere, statusData: 'incomplete' } }),
       this.prisma.anggota.groupBy({ by: ['statusKeanggotaan'], _count: true, where: anggotaWhere }),
       this.getMonthlyDues(scope),
+      this.prisma.kegiatan.count({ where: { status: 'published' } }),
+      this.prisma.latihan.count(),
+      this.prisma.klaim.count({ where: { status: { in: ['pending', 'diproses'] } } }),
+      this.prisma.dokumen.count({ where: { status: 'generated' } }),
+      this.prisma.pendaftaran.count({ where: { status: 'pending' } }),
+      this.prisma.user.count({ where: { isActive: true } }),
+      this.getRecentNotifications(),
+      this.getEmailSummary(),
     ]);
 
     return {
@@ -99,10 +112,44 @@ export class ReportsService {
         totalMembers, totalCandidates, totalGraduated,
         totalDuesCollected: totalDuesCollected._sum.jumlah || 0,
         pendingValidasi, incompleteData,
+        totalKegiatan: Number(totalKegiatan),
+        totalLatihan: Number(totalLatihan),
+        totalKlaim: Number(totalKlaim),
+        totalDokumen: Number(totalDokumen),
+        totalPendaftaran: Number(totalPendaftaran),
+        totalUsers: Number(totalUsers),
         memberStatus: byStatus.map(s => ({ status: s.statusKeanggotaan, count: s._count })),
         monthlyDues,
+        recentNotifications,
+        emailSummary,
       },
     };
+  }
+
+  private async getRecentNotifications(): Promise<Array<{ id: string; judul: string; isi: string; tipe: string; isRead: boolean; createdAt: Date }>> {
+    try {
+      return await this.prisma.notifikasi.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { id: true, judul: true, isi: true, tipe: true, isRead: true, createdAt: true },
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  private async getEmailSummary() {
+    try {
+      const [totalSent, totalFailed, totalSkipped, totalSuppressed] = await Promise.all([
+        this.prisma.emailLog.count({ where: { status: 'sent' } }),
+        this.prisma.emailLog.count({ where: { status: 'failed' } }),
+        this.prisma.emailLog.count({ where: { status: 'skipped' } }),
+        this.prisma.suppressedEmail.count(),
+      ]);
+      return { totalSent, totalFailed, totalSkipped, totalSuppressed };
+    } catch {
+      return null;
+    }
   }
 
   private async getMonthlyDues(scope?: UserScope) {
