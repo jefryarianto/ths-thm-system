@@ -308,19 +308,23 @@ export function generalNotificationEmail(nama: string, judul: string, isi: strin
 
 // ─── Penguji / Examiner ───
 
-export function examinerWelcomeEmail(nama: string, email: string, password: string) {
+export function examinerWelcomeEmail(nama: string, email: string, setPasswordUrl: string) {
   return {
-    subject: 'Akun Penguji THS-THM — Credentials Login',
+    subject: 'Akun Penguji THS-THM — Selamat Datang',
     html: wrap(`
       <h2 style="color: #1a56db;">👋 Selamat Datang, ${nama}!</h2>
       <p>Akun <strong>Penguji</strong> Anda telah berhasil dibuat di sistem <strong>THS-THM</strong>.</p>
-      <p>Berikut adalah credentials login Anda:</p>
-      <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f9fafb;">
-        <tr><td style="padding: 10px; font-weight: bold; width: 100px;">Email</td><td style="padding: 10px; font-family: monospace;">${email}</td></tr>
-        <tr><td style="padding: 10px; font-weight: bold;">Password</td><td style="padding: 10px; font-family: monospace;">${password}</td></tr>
-      </table>
-      <p style="color: #dc2626; font-size: 13px;">⚠️ Segera ganti password Anda setelah login pertama.</p>
-      <p>Silakan login melalui aplikasi untuk melihat jadwal penugasan Anda.</p>
+      <p>Email login Anda: <strong>${email}</strong></p>
+      <p>Klik tombol di bawah untuk membuat password dan mengaktifkan akun Anda:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${setPasswordUrl}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          Buat Password
+        </a>
+      </div>
+      <p style="color: #6b7280; font-size: 13px;">
+        Link ini akan membawa Anda ke halaman reset password. Masukkan email Anda untuk menerima link reset password.
+      </p>
+      <p>Silakan login melalui aplikasi setelah password berhasil dibuat untuk melihat jadwal penugasan Anda.</p>
     `),
   };
 }
@@ -362,7 +366,7 @@ export function dispositionNotificationEmail(namaPenerima: string, pengirim: str
 
 // ─── User (Admin) ───
 
-export function userWelcomeEmail(nama: string, email: string, role: string, password: string) {
+export function userWelcomeEmail(nama: string, email: string, role: string, setPasswordUrl: string) {
   const roleLabels: Record<string, string> = {
     superadmin: 'Super Admin',
     admin_distrik: 'Admin Distrik',
@@ -374,18 +378,21 @@ export function userWelcomeEmail(nama: string, email: string, role: string, pass
   const roleLabel = roleLabels[role] || role;
 
   return {
-    subject: `Akun ${roleLabel} THS-THM — Credentials Login`,
+    subject: `Akun ${roleLabel} THS-THM — Selamat Datang`,
     html: wrap(`
       <h2 style="color: #1a56db;">👋 Selamat Datang, ${nama}!</h2>
       <p>Akun <strong>${roleLabel}</strong> Anda telah berhasil dibuat di sistem <strong>THS-THM</strong>.</p>
-      <p>Berikut adalah credentials login Anda:</p>
-      <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f9fafb;">
-        <tr><td style="padding: 10px; font-weight: bold; width: 100px;">Email</td><td style="padding: 10px; font-family: monospace;">${email}</td></tr>
-        <tr><td style="padding: 10px; font-weight: bold;">Password</td><td style="padding: 10px; font-family: monospace;">${password}</td></tr>
-        <tr><td style="padding: 10px; font-weight: bold;">Role</td><td style="padding: 10px;">${roleLabel}</td></tr>
-      </table>
-      <p style="color: #dc2626; font-size: 13px;">⚠️ Segera ganti password Anda setelah login pertama.</p>
-      <p>Silakan login melalui aplikasi web untuk mengelola sistem.</p>
+      <p>Email login Anda: <strong>${email}</strong></p>
+      <p>Klik tombol di bawah untuk membuat password dan mengaktifkan akun Anda:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${setPasswordUrl}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          Buat Password
+        </a>
+      </div>
+      <p style="color: #6b7280; font-size: 13px;">
+        Link ini akan membawa Anda ke halaman reset password. Masukkan email Anda untuk menerima link reset password.
+      </p>
+      <p>Silakan login melalui aplikasi web untuk mengelola sistem setelah password berhasil dibuat.</p>
     `),
   };
 }

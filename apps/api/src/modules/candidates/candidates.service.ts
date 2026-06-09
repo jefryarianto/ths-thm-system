@@ -225,12 +225,12 @@ export class CandidatesService {
 
   private async sendApprovedEmail(nama: string, email: string, nomorAnggota: string): Promise<void> {
     const tpl = approvedMemberEmail(nama, nomorAnggota);
-    await this.mailService.sendMail({ to: email, ...tpl });
+    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'candidates', template: 'approvedMemberEmail', email } });
   }
 
   private async sendRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
     const tpl = candidateRejectedEmail(nama, reason);
-    await this.mailService.sendMail({ to: email, ...tpl });
+    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'candidates', template: 'candidateRejectedEmail', email } });
   }
 
   async exportCsv(filter: CandidateFilterDto) {

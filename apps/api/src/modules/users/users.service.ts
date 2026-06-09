@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { env } from '../../config/env.validation';
 import { userWelcomeEmail } from '../../mail/email-templates';
 import { CreateUserDto, UpdateUserDto, UserFilterDto } from './dto/user.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -60,14 +61,18 @@ export class UsersService {
     const user = await this.prisma.user.create({ data: { email: dto.email, namaLengkap: dto.namaLengkap, role: dto.role as never, rantingId, passwordHash } });
     const { passwordHash: _, ...result } = user;
 
-    this.sendWelcomeEmail(result.email, result.namaLengkap, result.role, defaultPassword);
+    const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(result.email)}`;
+    this.sendWelcomeEmail(result.email, result.namaLengkap, result.role, setPasswordUrl);
 
     return { success: true, data: result, message: 'User berhasil dibuat' };
   }
 
-  private sendWelcomeEmail(email: string, nama: string, role: string, password: string) {
-    const { subject, html } = userWelcomeEmail(nama, email, role, password);
-    this.mailService.sendMail({ to: email, subject, html }).catch(() => {
+  private sendWelcomeEmail(email: string, nama: string, role: string, setPasswordUrl: string) {
+    const { subject, html } = userWelcomeEmail(nama, email, role, setPasswordUrl);
+    this.mailService.sendMail({
+      to: email, subject, html,
+      metadata: { module: 'users', template: 'userWelcomeEmail', email, role },
+    }).catch(() => {
       this.logger.warn(`Failed to send welcome email to user ${email}`);
     });
   }

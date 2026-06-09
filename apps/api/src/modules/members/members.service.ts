@@ -286,7 +286,7 @@ export class MembersService {
 
   private async sendWelcomeEmail(nama: string, email: string): Promise<void> {
     const tpl = welcomeMemberEmail(nama);
-    await this.mailService.sendMail({ to: email, ...tpl });
+    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'members', template: 'welcomeMemberEmail', email } });
   }
 
   private async generateMemberNumber(): Promise<string> {

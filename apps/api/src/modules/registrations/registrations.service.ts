@@ -106,12 +106,12 @@ export class RegistrationsService {
 
   private async sendRegistrationApprovedEmail(nama: string, email: string): Promise<void> {
     const tpl = registrationApprovedEmail(nama);
-    await this.mailService.sendMail({ to: email, ...tpl });
+    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'registrations', template: 'registrationApprovedEmail', email } });
   }
 
   private async sendRegistrationRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
     const tpl = registrationRejectedEmail(nama, reason);
-    await this.mailService.sendMail({ to: email, ...tpl });
+    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'registrations', template: 'registrationRejectedEmail', email } });
   }
 
 

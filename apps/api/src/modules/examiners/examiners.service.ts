@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { env } from '../../config/env.validation';
 import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
 import { CreateExaminerDto, UpdateExaminerDto, ExaminerFilterDto, AssignExaminerDto } from './dto/examiner.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -40,7 +41,8 @@ export class ExaminersService {
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
     const examiner = await this.prisma.user.create({ data: { email: dto.email, namaLengkap: dto.namaLengkap, role: 'penguji', passwordHash } });
-    this.sendWelcomeEmail(examiner.email, examiner.namaLengkap, defaultPassword);
+    const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(examiner.email)}`;
+    this.sendWelcomeEmail(examiner.email, examiner.namaLengkap, setPasswordUrl);
     return { success: true, data: examiner, message: 'Penguji berhasil ditambahkan' };
   }
 
@@ -68,7 +70,8 @@ export class ExaminersService {
         const email = row.email as string;
         const nama = (row.nama || row.name) as string;
         await this.prisma.user.create({ data: { email, namaLengkap: nama, role: 'penguji', passwordHash } });
-        this.sendWelcomeEmail(email, nama, defaultPassword);
+        const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(email)}`;
+        this.sendWelcomeEmail(email, nama, setPasswordUrl);
         imported++;
       } catch { /* skip duplicate email */ }
     }
@@ -97,9 +100,12 @@ export class ExaminersService {
     return { success: true, data: assignment, message: 'Penguji berhasil ditugaskan' };
   }
 
-  private sendWelcomeEmail(email: string, nama: string, password: string) {
-    const { subject, html } = examinerWelcomeEmail(nama, email, password);
-    this.mailService.sendMail({ to: email, subject, html }).catch(() => {
+  private sendWelcomeEmail(email: string, nama: string, setPasswordUrl: string) {
+    const { subject, html } = examinerWelcomeEmail(nama, email, setPasswordUrl);
+    this.mailService.sendMail({
+      to: email, subject, html,
+      metadata: { module: 'examiners', template: 'examinerWelcomeEmail', email },
+    }).catch(() => {
       this.logger.warn(`Failed to send welcome email to examiner ${email}`);
     });
   }
@@ -114,7 +120,10 @@ export class ExaminersService {
       : 'Akan ditentukan';
 
     const { subject, html } = examinerAssignmentEmail(examiner.namaLengkap, kegiatan.nama, tanggal, peran);
-    this.mailService.sendMail({ to: examiner.email, subject, html }).catch(() => {
+    this.mailService.sendMail({
+      to: examiner.email, subject, html,
+      metadata: { module: 'examiners', template: 'examinerAssignmentEmail', examinerId: examiner.id },
+    }).catch(() => {
       this.logger.warn(`Failed to send assignment email to ${examiner.email}`);
     });
   }
