@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { resetPasswordEmail } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
 import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto, ChangePasswordDto } from './dto/auth.dto';
 
@@ -121,29 +122,8 @@ export class AuthService {
 
     const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
 
-    await this.mailService.sendMail({
-      to: user.email,
-      subject: 'Reset Password — THS-THM System',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #1a56db;">Reset Password</h1>
-          <p>Halo <strong>${user.namaLengkap}</strong>,</p>
-          <p>Kami menerima permintaan reset password untuk akun Anda.</p>
-          <p>Klik tombol di bawah ini untuk mereset password Anda. Link ini berlaku selama <strong>1 jam</strong>.</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-              Reset Password
-            </a>
-          </div>
-          <p>Atau copy link berikut ke browser:</p>
-          <p style="color: #6b7280; font-size: 14px;">${resetUrl}</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            Jika Anda tidak meminta reset password, abaikan email ini.
-          </p>
-        </div>
-      `,
-    });
+    const tpl = resetPasswordEmail(user.namaLengkap, resetUrl);
+    await this.mailService.sendMail({ to: user.email, ...tpl });
 
     return { success: true, message: 'Link reset password telah dikirim ke email Anda' };
   }

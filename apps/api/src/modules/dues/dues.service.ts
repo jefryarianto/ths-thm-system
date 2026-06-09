@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { paymentConfirmationEmail } from '../../mail/email-templates';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -132,29 +133,8 @@ export class DuesService {
       if (!member?.email) return;
 
       const isPaid = status === 'lunas';
-      const jumlahStr = jumlah ? `Rp ${Number(jumlah).toLocaleString('id-ID')}` : '';
-      const periodeStr = periode || '';
-
-      await this.mailService.sendMail({
-        to: member.email,
-        subject: isPaid ? 'Konfirmasi Pembayaran Iuran — THS-THM' : 'Informasi Iuran — THS-THM',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: ${isPaid ? '#16a34a' : '#ca8a04'};">
-              ${isPaid ? '✅ Pembayaran Iuran Diterima' : '📋 Informasi Iuran'}
-            </h2>
-            <p>Halo <strong>${member.namaLengkap}</strong>,</p>
-            ${isPaid
-              ? `<p>Pembayaran iuran Anda${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} telah <strong>diterima</strong>.</p>`
-              : `<p>Iuran${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} sedang diproses.</p>`
-            }
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-            <p style="color: #6b7280; font-size: 12px;">
-              THS-THM System &mdash; Notifikasi iuran otomatis
-            </p>
-          </div>
-        `,
-      });
+      const tpl = paymentConfirmationEmail(member.namaLengkap, jumlah, periode, isPaid);
+      await this.mailService.sendMail({ to: member.email, ...tpl });
     } catch (error) {
       this.logger.error(`sendPaymentEmail failed for member ${anggotaId}: ${(error as Error).message}`);
     }

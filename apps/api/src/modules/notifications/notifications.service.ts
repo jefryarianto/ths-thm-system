@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Optional, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { generalNotificationEmail } from '../../mail/email-templates';
 import { EventsGateway } from './events.gateway';
 import { SendNotificationDto, BroadcastNotificationDto, SendToRoleDto, NotificationFilterDto } from './dto/notification.dto';
 import { Role } from '@prisma/client';
@@ -358,21 +359,8 @@ export class NotificationsService {
 
       if (!user?.email) return;
 
-      await this.mailService.sendMail({
-        to: user.email,
-        subject: `[THS-THM] ${judul}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #1a56db;">${judul}</h2>
-            <p>Halo <strong>${user.namaLengkap}</strong>,</p>
-            <p>${isi}</p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-            <p style="color: #6b7280; font-size: 12px;">
-              THS-THM System &mdash; Notifikasi otomatis
-            </p>
-          </div>
-        `,
-      });
+      const tpl = generalNotificationEmail(user.namaLengkap, judul, isi);
+      await this.mailService.sendMail({ to: user.email, ...tpl });
     } catch (error) {
       this.logger.error(`sendEmailNotification failed for user ${userId}: ${(error as Error).message}`);
     }

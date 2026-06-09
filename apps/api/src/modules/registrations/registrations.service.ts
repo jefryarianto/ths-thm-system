@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { registrationApprovedEmail, registrationRejectedEmail } from '../../mail/email-templates';
 import { CreateRegistrationDto, UpdateRegistrationDto, RegistrationFilterDto } from './dto/registration.dto';
 
 @Injectable()
@@ -104,42 +105,13 @@ export class RegistrationsService {
   }
 
   private async sendRegistrationApprovedEmail(nama: string, email: string): Promise<void> {
-    await this.mailService.sendMail({
-      to: email,
-      subject: 'Pendaftaran Anda Disetujui — THS-THM',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #1a56db;">Selamat, ${nama}!</h1>
-          <p>Pendaftaran Anda di <strong>THS-THM</strong> telah <strong>disetujui</strong>.</p>
-          <p>Anda sekarang terdaftar sebagai calon anggota. Silakan menunggu proses selanjutnya untuk menjadi anggota resmi.</p>
-          <p>Jika ada pertanyaan, silakan hubungi admin ranting terdekat.</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
-          </p>
-        </div>
-      `,
-    });
+    const tpl = registrationApprovedEmail(nama);
+    await this.mailService.sendMail({ to: email, ...tpl });
   }
 
   private async sendRegistrationRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
-    await this.mailService.sendMail({
-      to: email,
-      subject: 'Status Pendaftaran — THS-THM',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #dc2626;">Pemberitahuan</h1>
-          <p>Halo <strong>${nama}</strong>,</p>
-          <p>Pendaftaran Anda di <strong>THS-THM</strong> <strong>tidak dapat diproses</strong>.</p>
-          ${reason ? `<p>Alasan: <em>${reason}</em></p>` : ''}
-          <p>Silakan hubungi admin untuk informasi lebih lanjut atau mengajukan pendaftaran ulang.</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
-          </p>
-        </div>
-      `,
-    });
+    const tpl = registrationRejectedEmail(nama, reason);
+    await this.mailService.sendMail({ to: email, ...tpl });
   }
 
 

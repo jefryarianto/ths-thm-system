@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -223,48 +224,13 @@ export class CandidatesService {
   }
 
   private async sendApprovedEmail(nama: string, email: string, nomorAnggota: string): Promise<void> {
-    await this.mailService.sendMail({
-      to: email,
-      subject: 'Selamat! Anda Telah Menjadi Anggota THS-THM',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #1a56db;">Selamat, ${nama}!</h1>
-          <p>Anda telah resmi menjadi anggota <strong>THS-THM</strong>.</p>
-          <p>Nomor Anggota Anda: <strong style="font-size: 18px; color: #1a56db;">${nomorAnggota}</strong></p>
-          <p>Berikut adalah beberapa hal yang bisa Anda lakukan sebagai anggota:</p>
-          <ul style="line-height: 1.8; color: #374151;">
-            <li>Login ke aplikasi untuk melihat data keanggotaan</li>
-            <li>Mengikuti kegiatan dan latihan rutin</li>
-            <li>Mendapatkan kartu anggota digital</li>
-            <li>Mengakses dokumen organisasi</li>
-          </ul>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
-          </p>
-        </div>
-      `,
-    });
+    const tpl = approvedMemberEmail(nama, nomorAnggota);
+    await this.mailService.sendMail({ to: email, ...tpl });
   }
 
   private async sendRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
-    await this.mailService.sendMail({
-      to: email,
-      subject: 'Status Calon Anggota — THS-THM',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #dc2626;">Pemberitahuan</h1>
-          <p>Halo <strong>${nama}</strong>,</p>
-          <p>Pengajuan calon anggota Anda di <strong>THS-THM</strong> <strong>tidak dapat dilanjutkan</strong>.</p>
-          ${reason ? `<p>Alasan: <em>${reason}</em></p>` : ''}
-          <p>Silakan hubungi admin untuk informasi lebih lanjut.</p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #6b7280; font-size: 12px;">
-            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
-          </p>
-        </div>
-      `,
-    });
+    const tpl = candidateRejectedEmail(nama, reason);
+    await this.mailService.sendMail({ to: email, ...tpl });
   }
 
   async exportCsv(filter: CandidateFilterDto) {
