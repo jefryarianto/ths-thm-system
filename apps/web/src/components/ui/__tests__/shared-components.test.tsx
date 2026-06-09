@@ -7,6 +7,7 @@ import TableSkeleton from '@/components/ui/table-skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import FilterSelect from '@/components/ui/filter-select';
 
 describe('Pagination', () => {
   it('renders total count', () => {
@@ -194,5 +195,44 @@ describe('SearchBar', () => {
       </SearchBar>
     );
     expect(screen.getByLabelText('Filter')).toBeInTheDocument();
+  });
+});
+
+describe('FilterSelect', () => {
+  const options = [
+    { value: 'a', label: 'Option A' },
+    { value: 'b', label: 'Option B' },
+    { value: 'c', label: 'Option C' },
+  ];
+
+  it('renders placeholder option', () => {
+    render(<FilterSelect value="" onChange={() => {}} options={options} placeholder="Pilih..." />);
+    expect(screen.getByText('Pilih...')).toBeInTheDocument();
+  });
+
+  it('renders all options', () => {
+    render(<FilterSelect value="" onChange={() => {}} options={options} />);
+    expect(screen.getByText('Option A')).toBeInTheDocument();
+    expect(screen.getByText('Option B')).toBeInTheDocument();
+    expect(screen.getByText('Option C')).toBeInTheDocument();
+  });
+
+  it('shows selected value', () => {
+    render(<FilterSelect value="b" onChange={() => {}} options={options} />);
+    const select = screen.getByRole('combobox') as HTMLSelectElement;
+    expect(select.value).toBe('b');
+  });
+
+  it('calls onChange when selection changes', () => {
+    const onChange = vi.fn();
+    render(<FilterSelect value="" onChange={onChange} options={options} />);
+    const select = screen.getByRole('combobox');
+    fireEvent.change(select, { target: { value: 'c' } });
+    expect(onChange).toHaveBeenCalledWith('c');
+  });
+
+  it('uses default placeholder', () => {
+    render(<FilterSelect value="" onChange={() => {}} options={options} />);
+    expect(screen.getByText('Semua')).toBeInTheDocument();
   });
 });

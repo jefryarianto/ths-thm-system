@@ -12,6 +12,7 @@ import TableSkeleton from '@/components/ui/table-skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import FilterSelect from '@/components/ui/filter-select';
 
 interface ActivityRow {
   id: string;
@@ -107,24 +108,18 @@ export default function ActivitiesPage() {
         onReset={() => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); }}
         placeholder="Cari kegiatan..."
       >
-        <select
+        <FilterSelect
           value={filterTipe}
-          onChange={e => { setFilterTipe(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {TIPE_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        <select
+          onChange={v => { setFilterTipe(v); setPage(1); }}
+          options={TIPE_OPTIONS}
+          placeholder="Semua Tipe"
+        />
+        <FilterSelect
           value={filterStatus}
-          onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {STATUS_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          onChange={v => { setFilterStatus(v); setPage(1); }}
+          options={STATUS_OPTIONS}
+          placeholder="Semua Status"
+        />
       </SearchBar>
 
       {/* Table */}

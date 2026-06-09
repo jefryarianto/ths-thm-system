@@ -11,6 +11,7 @@ import TableSkeleton from '@/components/ui/table-skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import FilterSelect from '@/components/ui/filter-select';
 
 const ROLE_OPTIONS = [
   { value: '', label: 'Semua Role' },
@@ -99,24 +100,21 @@ export default function UsersPage() {
         onReset={() => { setSearch(''); setFilterRole(''); setFilterActive(''); setPage(1); }}
         placeholder="Cari nama, email..."
       >
-        <select
+        <FilterSelect
           value={filterRole}
-          onChange={e => { setFilterRole(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {ROLE_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        <select
+          onChange={v => { setFilterRole(v); setPage(1); }}
+          options={ROLE_OPTIONS}
+          placeholder="Semua Role"
+        />
+        <FilterSelect
           value={filterActive}
-          onChange={e => { setFilterActive(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Semua Status</option>
-          <option value="active">Aktif</option>
-          <option value="inactive">Nonaktif</option>
-        </select>
+          onChange={v => { setFilterActive(v); setPage(1); }}
+          options={[
+            { value: 'active', label: 'Aktif' },
+            { value: 'inactive', label: 'Nonaktif' },
+          ]}
+          placeholder="Semua Status"
+        />
       </SearchBar>
 
       {/* Table */}
