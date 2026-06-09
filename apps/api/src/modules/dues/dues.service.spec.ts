@@ -97,10 +97,20 @@ describe('DuesService', () => {
   });
 
   describe('create', () => {
-    it('should create a due record', async () => {
+    it('should create a due record and send payment email', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'anggota@test.com', namaLengkap: 'Budi' });
       mockPrisma.iuran.create.mockResolvedValue({ id: 'd1', jumlah: 100000 });
       const result = await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' });
       expect(result.success).toBe(true);
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anggota@test.com' }));
+    });
+
+    it('should not send email when member has no email', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: null, namaLengkap: 'Budi' });
+      mockPrisma.iuran.create.mockResolvedValue({ id: 'd1', jumlah: 100000 });
+      await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' });
+      expect(mockMailService.sendMail).not.toHaveBeenCalled();
     });
   });
 

@@ -111,12 +111,22 @@ describe('MembersService', () => {
   });
 
   describe('create', () => {
-    it('should create a member with generated member number', async () => {
+    it('should create a member and send welcome email', async () => {
+      mockPrisma.anggota.count.mockResolvedValue(10);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0011', email: 'budi@test.com', namaLengkap: 'Budi' });
+      const result = await service.create({ namaLengkap: 'Budi' });
+      expect(result.success).toBe(true);
+      expect(result.data.nomorAnggota).toBe('THS-2026-0011');
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
+    });
+
+    it('should not send welcome email when email is missing', async () => {
       mockPrisma.anggota.count.mockResolvedValue(10);
       mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0011' });
       const result = await service.create({ namaLengkap: 'Budi' });
       expect(result.success).toBe(true);
-      expect(result.data.nomorAnggota).toBe('THS-2026-0011');
+      expect(mockMailService.sendMail).not.toHaveBeenCalled();
     });
   });
 

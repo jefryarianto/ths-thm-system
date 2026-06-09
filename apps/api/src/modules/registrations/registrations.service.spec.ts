@@ -145,7 +145,7 @@ describe('RegistrationsService', () => {
   });
 
   describe('approve', () => {
-    it('should approve registration and create candidate', async () => {
+    it('should approve registration, create candidate, and send email', async () => {
       mockPrisma.pendaftaran.findUnique.mockResolvedValue({
         id: '1',
         namaLengkap: 'Budi',
@@ -168,6 +168,8 @@ describe('RegistrationsService', () => {
         where: { id: '1' },
         data: { status: 'approved' },
       });
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
     });
 
     it('should throw NotFoundException when registration not found', async () => {
@@ -177,7 +179,7 @@ describe('RegistrationsService', () => {
   });
 
   describe('reject', () => {
-    it('should reject registration with reason', async () => {
+    it('should reject registration with reason and send email', async () => {
       mockPrisma.pendaftaran.findUnique.mockResolvedValue({ id: '1', namaLengkap: 'Budi', email: 'budi@test.com' });
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
@@ -188,6 +190,8 @@ describe('RegistrationsService', () => {
         where: { id: '1' },
         data: { status: 'rejected', catatan: 'Data tidak lengkap' },
       });
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
     });
 
     it('should reject registration with default message', async () => {
@@ -196,6 +200,7 @@ describe('RegistrationsService', () => {
 
       const result = await service.reject('1');
       expect(result.message).toBe('Pendaftaran ditolak');
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
     });
   });
 

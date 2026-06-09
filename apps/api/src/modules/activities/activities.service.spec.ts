@@ -31,6 +31,9 @@ describe('ActivitiesService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    anggota: {
+      findUnique: jest.fn(),
+    },
   };
 
   const mockScopeHelper = {
@@ -116,11 +119,14 @@ describe('ActivitiesService', () => {
   });
 
   describe('addParticipant', () => {
-    it('should add a participant', async () => {
-      mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1' });
+    it('should add a participant and send invitation email', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1', nama: 'Latihan Bareng', tanggalMulai: new Date('2026-06-15'), lokasi: 'Gedung A' });
       mockPrisma.kegiatanPeserta.create.mockResolvedValue({ id: 'p1' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'peserta@test.com', namaLengkap: 'Budi' });
       const result = await service.addParticipant('k1', { anggotaId: 'a1' });
       expect(result.success).toBe(true);
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'peserta@test.com' }));
     });
 
     it('should throw NotFoundException when activity not found', async () => {

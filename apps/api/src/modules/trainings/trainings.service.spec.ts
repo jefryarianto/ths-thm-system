@@ -32,6 +32,9 @@ describe('TrainingsService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
+    anggota: {
+      findUnique: jest.fn(),
+    },
   };
 
   const mockScopeHelper = {
@@ -147,11 +150,14 @@ describe('TrainingsService', () => {
   });
 
   describe('recordAttendance', () => {
-    it('should upsert attendance record', async () => {
-      mockPrisma.latihan.findUnique.mockResolvedValue({ id: 't1' });
+    it('should upsert attendance record and send confirmation email', async () => {
+      mockPrisma.latihan.findUnique.mockResolvedValue({ id: 't1', jenisMateri: 'Tendangan' });
       mockPrisma.absensiLatihan.upsert.mockResolvedValue({ id: 'a1', hadir: true });
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'anggota@test.com', namaLengkap: 'Budi' });
       const result = await service.recordAttendance('t1', { anggotaId: 'ang1', hadir: true });
       expect(result.success).toBe(true);
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anggota@test.com' }));
     });
 
     it('should throw NotFoundException when training not found', async () => {

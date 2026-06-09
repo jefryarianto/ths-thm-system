@@ -103,4 +103,17 @@ describe('DocumentsService', () => {
       expect(result.data.length).toBeGreaterThan(0);
     });
   });
+
+  describe('generate', () => {
+    it('should generate document and send notification email', async () => {
+      mockPrisma.dokumen.create.mockResolvedValue({ id: 'd1', nomorDokumen: 'DOC-2026-ABCD1234' });
+      mockPrisma.qRValidation.create.mockResolvedValue({});
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'anggota@test.com', namaLengkap: 'Budi' });
+
+      const result = await service.generate({ memberId: 'm1', type: 'kartu_anggota' });
+      expect(result.success).toBe(true);
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anggota@test.com' }));
+    });
+  });
 });

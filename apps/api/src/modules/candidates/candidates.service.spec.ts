@@ -119,17 +119,19 @@ describe('CandidatesService', () => {
   });
 
   describe('approve', () => {
-    it('should approve candidate and create member', async () => {
+    it('should approve candidate, create member, and send email', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({
         id: 'c1', namaLengkap: 'Budi', jenisKelamin: 'L',
         tempatLahir: 'Jakarta', tanggalLahir: new Date('1990-01-01'),
         alamat: 'Jl. A', noHp: '0812', email: 'budi@test.com', rantingId: 'r1',
       });
       mockPrisma.anggota.count.mockResolvedValue(10);
-      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1' });
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0001' });
       mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', status: 'lulus' });
       const result = await service.approve('c1');
       expect(result.success).toBe(true);
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -139,10 +141,18 @@ describe('CandidatesService', () => {
   });
 
   describe('reject', () => {
-    it('should reject candidate', async () => {
+    it('should reject candidate without email', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c1' });
       await service.reject('c1', 'Tidak memenuhi syarat');
       expect(mockPrisma.calonAnggota.update).toHaveBeenCalled();
+      expect(mockMailService.sendMail).not.toHaveBeenCalled();
+    });
+
+    it('should reject candidate and send rejection email', async () => {
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c2', namaLengkap: 'Siti', email: 'siti@test.com' });
+      await service.reject('c2', 'Berkas tidak lengkap');
+      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'siti@test.com' }));
     });
   });
 
