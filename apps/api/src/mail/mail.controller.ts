@@ -472,6 +472,27 @@ export class MailController {
     }
   }
 
+  @Post('suppressions')
+  @Roles('superadmin')
+  async addSuppression(@Body() body: { email: string; reason?: string }) {
+    if (!body.email || !body.email.includes('@')) {
+      return { success: false, message: 'Email tidak valid' };
+    }
+    try {
+      const suppressed = await this.prisma.suppressedEmail.upsert({
+        where: { email: body.email.trim().toLowerCase() },
+        create: {
+          email: body.email.trim().toLowerCase(),
+          reason: body.reason || 'manual',
+        },
+        update: { reason: body.reason || 'manual' },
+      });
+      return { success: true, data: suppressed, message: 'Email ditambahkan ke daftar supresi' };
+    } catch (err) {
+      return { success: false, message: (err as Error).message };
+    }
+  }
+
   @Post('suppressions/clear')
   @Roles('superadmin')
   async clearSuppressions(@Body() body: { ids?: string[] }) {

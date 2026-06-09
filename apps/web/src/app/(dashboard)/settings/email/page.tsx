@@ -217,6 +217,11 @@ export default function EmailSettingsPage() {
   const [suppressionMeta, setSuppressionMeta] = useState({ total: 0, totalPages: 0, page: 1, limit: 20 });
   const [suppressionsLoading, setSuppressionsLoading] = useState(false);
   const [suppressionRemoving, setSuppressionRemoving] = useState<string | null>(null);
+  const [showAddSuppression, setShowAddSuppression] = useState(false);
+  const [newSuppressionEmail, setNewSuppressionEmail] = useState('');
+  const [newSuppressionReason, setNewSuppressionReason] = useState('manual');
+  const [addingSuppression, setAddingSuppression] = useState(false);
+  const [addSuppressionResult, setAddSuppressionResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -329,6 +334,30 @@ export default function EmailSettingsPage() {
       fetchSuppressions(suppressionMeta.page);
     } catch { /* ignore */ }
     setSuppressionRemoving(null);
+  };
+
+  const handleAddSuppression = async () => {
+    if (!newSuppressionEmail.trim() || !newSuppressionEmail.includes('@')) return;
+    setAddingSuppression(true);
+    setAddSuppressionResult(null);
+    try {
+      const { data } = await apiClient.post('/mail/suppressions', {
+        email: newSuppressionEmail.trim(),
+        reason: newSuppressionReason,
+      });
+      if (data.success) {
+        setShowAddSuppression(false);
+        setNewSuppressionEmail('');
+        setNewSuppressionReason('manual');
+        fetchSuppressions(1);
+      } else {
+        setAddSuppressionResult({ success: false, message: data.message || 'Gagal menambahkan supresi' });
+      }
+    } catch (err: unknown) {
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setAddSuppressionResult({ success: false, message: apiErr || 'Gagal terhubung ke server' });
+    }
+    setAddingSuppression(false);
   };
 
   const handleClearSuppressions = async () => {
@@ -1007,10 +1036,20 @@ export default function EmailSettingsPage() {
                 Daftar Supresi Email
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Alamat email yang otomatis ditekan pengirimannya karena bounce atau complaint
+                Alamat email yang ditekan pengirimannya — otomatis (bounce/complaint) atau manual
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setAddSuppressionResult(null);
+                  setShowAddSuppression(true);
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 transition"
+              >
+                <Mail size={12} />
+                Tambah
+              </button>
               <button
                 onClick={handleClearSuppressions}
                 disabled={suppressions.length === 0}
@@ -1140,6 +1179,77 @@ export default function EmailSettingsPage() {
               Email ke alamat di daftar ini akan dicatat sebagai <strong>skipped</strong> dan tidak dikirim.
               Klik <strong>Pulihkan</strong> untuk mengizinkan pengiriman kembali.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Tambah Supresi Manual ── */}
+      {showAddSuppression && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddSuppression(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Tambah Supresi Manual</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Tambahkan alamat email ke daftar supresi secara manual. Email ke alamat ini akan ditekan pengirimannya.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat Email</label>
+                <input
+                  type="email"
+                  value={newSuppressionEmail}
+                  onChange={(e) => setNewSuppressionEmail(e.target.value)}
+                  placeholder="contoh@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Alasan</label>
+                <select
+                  value={newSuppressionReason}
+                  onChange={(e) => setNewSuppressionReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="manual">Manual</option>
+                  <option value="bounced">Bounce</option>
+                  <option value="complained">Complaint (Spam)</option>
+                </select>
+              </div>
+              {addSuppressionResult && (
+                <div className={`px-3 py-2 rounded-lg text-xs flex items-start gap-1.5 ${
+                  addSuppressionResult.success
+                    ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400'
+                    : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400'
+                }`}>
+                  {addSuppressionResult.success ? <CheckCircle2 size={12} className="flex-shrink-0 mt-0.5" /> : <AlertCircle size={12} className="flex-shrink-0 mt-0.5" />}
+                  <span>{addSuppressionResult.message}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <button
+                onClick={() => {
+                  setShowAddSuppression(false);
+                  setNewSuppressionEmail('');
+                  setNewSuppressionReason('manual');
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAddSuppression}
+                disabled={addingSuppression || !newSuppressionEmail.trim() || !newSuppressionEmail.includes('@')}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {addingSuppression ? (
+                  <RefreshCw size={12} className="animate-spin" />
+                ) : (
+                  <Ban size={12} />
+                )}
+                {addingSuppression ? 'Menambahkan...' : 'Supresi Email'}
+              </button>
+            </div>
           </div>
         </div>
       )}
