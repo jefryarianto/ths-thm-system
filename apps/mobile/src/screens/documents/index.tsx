@@ -1,28 +1,91 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Linking, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  RefreshControl,
+  TextInput,
+  Alert,
+  Linking,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 
+interface DocumentItem {
+  id: string;
+  nomorDokumen: string;
+  tipe: string;
+  anggota?: { namaLengkap: string };
+  status: string;
+  filePath?: string;
+  createdAt: string;
+}
+
+const TIPE_LABELS: Record<string, string> = {
+  kartu_anggota: 'Kartu Anggota',
+  sertifikat_pendadaran: 'Sertifikat Pendadaran',
+  sertifikat_pelatihan: 'Sertifikat Pelatihan',
+  piagam_prestasi: 'Piagam Prestasi',
+  surat_keterangan: 'Surat Keterangan',
+};
+
+const TIPE_ICONS: Record<string, string> = {
+  kartu_anggota: 'card',
+  sertifikat_pendadaran: 'school',
+  sertifikat_pelatihan: 'ribbon',
+  piagam_prestasi: 'trophy',
+  surat_keterangan: 'document-text',
+};
+
+const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  draft: { label: 'Draft', color: '#6b7280', bg: '#f3f4f6' },
+  published: { label: 'Published', color: '#16a34a', bg: '#ecfdf5' },
+  archived: { label: 'Diarsipkan', color: '#d97706', bg: '#fef3c7' },
+};
+
+const TIPE_FILTERS = [
+  { value: '', label: 'Semua' },
+  { value: 'kartu_anggota', label: 'Kartu Anggota' },
+  { value: 'sertifikat_pendadaran', label: 'Sertifikat' },
+  { value: 'piagam_prestasi', label: 'Piagam' },
+  { value: 'surat_keterangan', label: 'Surat Ket.' },
+];
+
 export default function DocumentsScreen() {
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterTipe, setFilterTipe] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await apiClient.get('/documents', { params: { limit: 50 } });
-        setDocuments(res.data.data || []);
-      } catch { /* ignore */ }
-      setLoading(false);
-    })();
-  }, []);
-
-  const tipeLabel: Record<string, string> = {
-    kartu_anggota: 'Kartu Anggota', sertifikat_pendadaran: 'Sertifikat Pendadaran',
-    sertifikat_pelatihan: 'Sertifikat Pelatihan', piagam_prestasi: 'Piagam Prestasi',
+  const fetchData = async (query?: string, tipe?: string) => {
+    try {
+      const params: Record<string, unknown> = { limit: 50 };
+      if (query?.trim()) params.search = query.trim();
+      if (tipe) params.tipe = tipe;
+      const res = await apiClient.get('/documents', { params });
+      setDocuments(res.data.data || []);
+    } catch {
+      /* ignore */
+    }
+    setLoading(false);
   };
 
-  const handleDownload = async (item: any) => {
+  useEffect(() => {
+    const timer = setTimeout(() => fetchData(search, filterTipe), 300);
+    return () => clearTimeout(timer);
+  }, [search, filterTipe]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData(search, filterTipe);
+    setRefreshing(false);
+  };
+
+  const handleDownload = async (item: DocumentItem) => {
     if (item.filePath) {
       try {
         const url = `${apiClient.defaults.baseURL}${item.filePath}`;
@@ -33,25 +96,107 @@ export default function DocumentsScreen() {
     }
   };
 
-  if (loading) return <View style={styles.container}><ActivityIndicator size="large" /></View>;
+  if (loading)
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Dokumen</Text>
+        <Text style={styles.headerSub}>{documents.length} dokumen</Text>
+      </View>
+
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={16} color="#9ca3af" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Cari dokumen..."
+          placeholderTextColor="#9ca3af"
+          value={search}
+          onChangeText={setSearch}
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Tipe Filter */}
+      <View style={styles.filterRow}>
+        {TIPE_FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.value}
+            style={[styles.filterChip, filterTipe === f.value && styles.filterChipActive]}
+            onPress={() => {
+              setFilterTipe(f.value);
+              setLoading(true);
+            }}
+          >
+            <Text style={[styles.filterText, filterTipe === f.value && styles.filterTextActive]}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
         data={documents}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', color: '#6b7280', marginTop: 40 }}>Belum ada dokumen</Text>}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => handleDownload(item)}>
-            <Ionicons name="document-text" size={28} color="#2563eb" />
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardTitle}>{tipeLabel[item.tipe] || item.tipe}</Text>
-              <Text style={styles.cardDate}>{item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}</Text>
-            </View>
-            <Ionicons name={item.filePath ? "download-outline" : "time-outline"} size={22} color="#6b7280" />
-          </TouchableOpacity>
-        )}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Ionicons name="document-text" size={48} color="#d1d5db" />
+            <Text style={styles.emptyText}>
+              {search || filterTipe ? 'Tidak ada dokumen yang cocok' : 'Belum ada dokumen'}
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          const ss = STATUS_STYLES[item.status] || {
+            label: item.status,
+            color: '#6b7280',
+            bg: '#f3f4f6',
+          };
+          const iconName = TIPE_ICONS[item.tipe] || 'document-text';
+          const tipeLabel = TIPE_LABELS[item.tipe] || item.tipe;
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => handleDownload(item)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconCircle}>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Ionicons name={iconName as any} size={22} color="#2563eb" />
+              </View>
+              <View style={styles.cardInfo}>
+                <Text style={styles.cardTitle}>{tipeLabel}</Text>
+                <Text style={styles.cardMember}>{item.anggota?.namaLengkap || '-'}</Text>
+                <Text style={styles.cardDate}>
+                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}
+                </Text>
+              </View>
+              <View style={styles.cardRight}>
+                <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
+                  <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
+                </View>
+                <Ionicons
+                  name={item.filePath ? 'download-outline' : 'time-outline'}
+                  size={18}
+                  color={item.filePath ? '#2563eb' : '#9ca3af'}
+                  style={{ marginTop: 6 }}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -59,8 +204,71 @@ export default function DocumentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1 },
-  cardInfo: { flex: 1, marginLeft: 12 },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  cardDate: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
+  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
+  filterTextActive: { color: '#fff' },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  cardInfo: { flex: 1 },
+  cardTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  cardMember: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  cardDate: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+  cardRight: { alignItems: 'center', marginLeft: 8 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
+  statusText: { fontSize: 10, fontWeight: '600' },
+  empty: { alignItems: 'center', paddingTop: 60 },
+  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
 });
