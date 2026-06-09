@@ -46,4 +46,5 @@ export const env = {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
   },
+  resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET || '',
 };

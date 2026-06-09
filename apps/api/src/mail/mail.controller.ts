@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Delete, Query, Body, Param, ParseIntPipe, DefaultValuePipe, Logger, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, Body, Param, Req, ParseIntPipe, DefaultValuePipe, Logger, Headers } from '@nestjs/common';
+import { Request } from 'express';
+import * as crypto from 'crypto';
 import { ApiTags, ApiBearerAuth, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { TestMailDto } from './dto/test-mail.dto';
@@ -205,7 +207,67 @@ export class MailController {
   async handleWebhook(
     @Body() payload: Record<string, unknown>,
     @Headers('svix-id') svixId?: string,
+    @Headers('svix-timestamp') svixTimestamp?: string,
+    @Headers('svix-signature') svixSignature?: string,
+    @Req() req?: Request,
   ) {
+    // ── Verify webhook signature ──
+    const secret = env.resendWebhookSecret;
+    // Access rawBody via NestJS rawBody:true option (type-asserted as not all Express types include it)
+    const rawBodyBuffer = (req as unknown as { rawBody?: Buffer })?.rawBody;
+    if (secret && svixId && svixTimestamp && svixSignature && rawBodyBuffer) {
+      try {
+        // Timestamp check: reject if older than 5 minutes (replay protection)
+        const timestampSec = parseInt(svixTimestamp, 10);
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (Math.abs(nowSec - timestampSec) > 300) {
+          this.logger.warn(`Webhook timestamp rejected: ${svixTimestamp} (now: ${nowSec})`);
+          return { success: false, message: 'Timestamp too old' };
+        }
+
+        // Decode the signing secret (strip whsec_ prefix, base64 decode)
+        const rawSecret = secret.startsWith('whsec_')
+          ? Buffer.from(secret.slice(6), 'base64')
+          : Buffer.from(secret, 'utf-8');
+
+        // Build signed content: svix-id + '.' + svix-timestamp + '.' + rawBody
+        const rawBody = rawBodyBuffer instanceof Buffer
+          ? rawBodyBuffer.toString('utf-8')
+          : JSON.stringify(payload);
+        const signedContent = `${svixId}.${svixTimestamp}.${rawBody}`;
+
+        // Compute expected HMAC SHA-256 signature
+        const expectedSig = crypto
+          .createHmac('sha256', rawSecret)
+          .update(signedContent, 'utf-8')
+          .digest('base64');
+
+        // Extract signatures from header (format: v1,sig1 v1,sig2 ...)
+        const signatures = svixSignature.split(' ');
+        const isValid = signatures.some((sig) => {
+          const [version, sigValue] = sig.split(',');
+          if (version !== 'v1') return false;
+          // Constant-time comparison to prevent timing attacks
+          const sigBuffer = Buffer.from(sigValue || '', 'base64');
+          const expectedBuffer = Buffer.from(expectedSig, 'base64');
+          if (sigBuffer.length !== expectedBuffer.length) return false;
+          return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
+        });
+
+        if (!isValid) {
+          this.logger.warn(`Webhook signature verification failed for ${svixId}`);
+          return { success: false, message: 'Invalid signature' };
+        }
+
+        this.logger.log(`Webhook signature verified for ${svixId}`);
+      } catch (err) {
+        this.logger.error(`Webhook signature verification error: ${(err as Error).message}`);
+        return { success: false, message: 'Signature verification error' };
+      }
+    } else if (secret && (!svixId || !svixTimestamp || !svixSignature)) {
+      this.logger.warn('Webhook missing required Svix headers — signature skipped');
+    }
+
     // Idempotency: check if we already processed this webhook (by svix-id)
     if (svixId) {
       const exists = await this.prisma.emailEvent.findFirst({
