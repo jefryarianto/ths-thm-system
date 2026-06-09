@@ -43,6 +43,7 @@ const menuItems = [
   { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp },
   { href: '/users', label: 'Users', icon: Shield },
   { href: '/settings', label: 'Pengaturan', icon: Settings },
+  { href: '/settings/email', label: 'Email Admin', icon: Mail },
 ];
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {

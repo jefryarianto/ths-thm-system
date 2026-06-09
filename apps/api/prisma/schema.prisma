@@ -760,6 +760,24 @@ model DeviceToken {
   @@map("device_tokens")
 }
 
+// ── Email Logs ───────────────────────────────────────────
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  to        String
+  subject   String
+  status    String   // 'sent' | 'failed' | 'skipped'
+  provider  String?  // 'resend' | 'smtp' | 'dev'
+  error     String?
+  metadata  Json?    // { module?: string, template?: string, userId?: string }
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@index([status])
+  @@index([to])
+  @@map("email_logs")
+}
+
 // ── Settings ──────────────────────────────────────────────
 
 model Setting {

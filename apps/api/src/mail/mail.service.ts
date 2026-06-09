@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { env } from '../config/env.validation';
 
 export interface SendMailOptions {
@@ -6,6 +7,13 @@ export interface SendMailOptions {
   subject: string;
   text?: string;
   html?: string;
+  /** Optional metadata for logging: which module, template, userId triggered this email */
+  metadata?: {
+    module?: string;
+    template?: string;
+    userId?: string;
+    [key: string]: unknown;
+  };
 }
 
 interface ResendResponse {
@@ -18,24 +26,65 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly RESEND_API_URL = 'https://api.resend.com/emails';
 
+  constructor(private readonly prisma: PrismaService) {}
+
   /**
    * Send email via Resend (primary) or SMTP (fallback).
+   * Always logs the result to the email_logs table.
    * @returns true if email was sent successfully, false if skipped/failed
    */
   async sendMail(options: SendMailOptions): Promise<boolean> {
-    const { to, subject, text, html } = options;
+    const { to, subject, text, html, metadata } = options;
 
     if (env.nodeEnv === 'development') {
       this.logger.log(`[DEV] Email would be sent to ${to}: "${subject}"`);
+      await this.logToDb(to, subject, 'skipped', 'dev', null, metadata);
       return true;
     }
 
     // Try Resend first (primary provider — uses native fetch, no packages needed)
-    const sent = await this.sendViaResend(to, subject, text, html);
-    if (sent) return true;
+    let provider = 'resend';
+    let sent = await this.sendViaResend(to, subject, text, html);
+    if (sent) {
+      await this.logToDb(to, subject, 'sent', provider, null, metadata);
+      return true;
+    }
 
-    // Fallback to SMTP (requires nodemailer package to be installed)
-    return await this.sendViaSmtp(to, subject, text, html);
+    // Fallback to SMTP
+    provider = 'smtp';
+    sent = await this.sendViaSmtp(to, subject, text, html);
+    if (sent) {
+      await this.logToDb(to, subject, 'sent', provider, null, metadata);
+      return true;
+    }
+
+    // All providers failed — log as failed
+    await this.logToDb(to, subject, 'failed', null, 'All email providers failed (Resend + SMTP)', metadata);
+    return false;
+  }
+
+  private async logToDb(
+    to: string,
+    subject: string,
+    status: 'sent' | 'failed' | 'skipped',
+    provider: string | null,
+    error: string | null,
+    metadata?: Record<string, unknown> | null,
+  ): Promise<void> {
+    try {
+      await this.prisma.emailLog.create({
+        data: {
+          to,
+          subject,
+          status,
+          provider,
+          error,
+          metadata: (metadata as never) || undefined,
+        },
+      });
+    } catch (err) {
+      this.logger.error(`Failed to write email log: ${(err as Error).message}`);
+    }
   }
 
   private async sendViaResend(
