@@ -305,3 +305,135 @@ export function generalNotificationEmail(nama: string, judul: string, isi: strin
     `),
   };
 }
+
+// ─── Penguji / Examiner ───
+
+export function examinerWelcomeEmail(nama: string, email: string, password: string) {
+  return {
+    subject: 'Akun Penguji THS-THM — Credentials Login',
+    html: wrap(`
+      <h2 style="color: #1a56db;">👋 Selamat Datang, ${nama}!</h2>
+      <p>Akun <strong>Penguji</strong> Anda telah berhasil dibuat di sistem <strong>THS-THM</strong>.</p>
+      <p>Berikut adalah credentials login Anda:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f9fafb;">
+        <tr><td style="padding: 10px; font-weight: bold; width: 100px;">Email</td><td style="padding: 10px; font-family: monospace;">${email}</td></tr>
+        <tr><td style="padding: 10px; font-weight: bold;">Password</td><td style="padding: 10px; font-family: monospace;">${password}</td></tr>
+      </table>
+      <p style="color: #dc2626; font-size: 13px;">⚠️ Segera ganti password Anda setelah login pertama.</p>
+      <p>Silakan login melalui aplikasi untuk melihat jadwal penugasan Anda.</p>
+    `),
+  };
+}
+
+export function examinerAssignmentEmail(nama: string, kegiatanNama: string, tanggal: string, peran: string) {
+  return {
+    subject: `Penugasan Penguji — ${kegiatanNama}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📋 Penugasan Penguji</h2>
+      <p>Halo <strong>${nama}</strong>,</p>
+      <p>Anda telah ditugaskan sebagai <strong>${peran}</strong> untuk kegiatan:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 100px;">Kegiatan</td><td style="padding: 8px;">${kegiatanNama}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Tanggal</td><td style="padding: 8px;">${tanggal}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Peran</td><td style="padding: 8px;">${peran}</td></tr>
+      </table>
+      <p>Silakan persiapkan diri untuk melaksanakan tugas sebagai penguji.</p>
+    `),
+  };
+}
+
+// ─── Surat / Letter ───
+
+export function dispositionNotificationEmail(namaPenerima: string, pengirim: string, perihalSurat: string, isiDisposisi: string) {
+  return {
+    subject: `Disposisi Surat — ${perihalSurat}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📨 Disposisi Surat</h2>
+      <p>Halo <strong>${namaPenerima}</strong>,</p>
+      <p>Anda menerima disposisi surat dari <strong>${pengirim}</strong>:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px; font-weight: bold; width: 100px;">Perihal</td><td style="padding: 8px;">${perihalSurat}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold; vertical-align: top;">Isi</td><td style="padding: 8px;">${isiDisposisi}</td></tr>
+      </table>
+      <p>Silakan tindak lanjuti disposisi ini sesuai arahan.</p>
+    `),
+  };
+}
+
+// ─── User (Admin) ───
+
+export function userWelcomeEmail(nama: string, email: string, role: string, password: string) {
+  const roleLabels: Record<string, string> = {
+    superadmin: 'Super Admin',
+    admin_distrik: 'Admin Distrik',
+    admin_wilayah: 'Admin Wilayah',
+    admin_ranting: 'Admin Ranting',
+    admin_kegiatan: 'Admin Kegiatan',
+  };
+
+  const roleLabel = roleLabels[role] || role;
+
+  return {
+    subject: `Akun ${roleLabel} THS-THM — Credentials Login`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">👋 Selamat Datang, ${nama}!</h2>
+      <p>Akun <strong>${roleLabel}</strong> Anda telah berhasil dibuat di sistem <strong>THS-THM</strong>.</p>
+      <p>Berikut adalah credentials login Anda:</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f9fafb;">
+        <tr><td style="padding: 10px; font-weight: bold; width: 100px;">Email</td><td style="padding: 10px; font-family: monospace;">${email}</td></tr>
+        <tr><td style="padding: 10px; font-weight: bold;">Password</td><td style="padding: 10px; font-family: monospace;">${password}</td></tr>
+        <tr><td style="padding: 10px; font-weight: bold;">Role</td><td style="padding: 10px;">${roleLabel}</td></tr>
+      </table>
+      <p style="color: #dc2626; font-size: 13px;">⚠️ Segera ganti password Anda setelah login pertama.</p>
+      <p>Silakan login melalui aplikasi web untuk mengelola sistem.</p>
+    `),
+  };
+}
+
+// ─── Gamifikasi / Gamification ───
+
+export function badgeEarnedEmail(nama: string, badgeName: string, badgeIcon: string, description: string) {
+  return {
+    subject: `${badgeIcon} Badge Baru Diraih! — ${badgeName}`,
+    html: wrap(`
+      <h2 style="color: #a855f7;">${badgeIcon} Badge Baru!</h2>
+      <p>Selamat <strong>${nama}</strong>!</p>
+      <p>Anda telah mendapatkan badge baru:</p>
+      <div style="text-align: center; margin: 24px 0; padding: 20px; background: #faf5ff; border-radius: 12px;">
+        <div style="font-size: 64px; line-height: 1;">${badgeIcon}</div>
+        <h3 style="color: #7c3aed; margin: 12px 0 4px;">${badgeName}</h3>
+        <p style="color: #6b7280; margin: 0;">${description}</p>
+      </div>
+      <p>Terus aktif berlatih dan berkontribusi untuk mendapatkan lebih banyak badge!</p>
+    `),
+  };
+}
+
+export function levelUpEmail(nama: string, oldLevel: string, newLevel: string, points: number) {
+  const levelEmojis: Record<string, string> = {
+    Bronze: '🥉',
+    Silver: '🥈',
+    Gold: '🥇',
+    Platinum: '💎',
+    Diamond: '🔥',
+  };
+
+  const oldEmoji = levelEmojis[oldLevel] || '⭐';
+  const newEmoji = levelEmojis[newLevel] || '⭐';
+
+  return {
+    subject: `🎉 Level Up! ${nama} naik ke ${newLevel}`,
+    html: wrap(`
+      <h2 style="color: #f59e0b;">🎉 Level Up!</h2>
+      <p>Selamat <strong>${nama}</strong>!</p>
+      <p>Anda telah naik level!</p>
+      <div style="text-align: center; margin: 24px 0; padding: 20px; background: #fffbeb; border-radius: 12px;">
+        <div style="font-size: 32px; margin-bottom: 12px;">
+          ${oldEmoji} ${oldLevel} → ${newEmoji} ${newLevel}
+        </div>
+        <p style="color: #6b7280; font-size: 18px;">Total Poin: <strong>${points.toLocaleString('id-ID')}</strong></p>
+      </div>
+      <p>Terus semangat dan kumpulkan lebih banyak poin untuk mencapai level berikutnya!</p>
+    `),
+  };
+}

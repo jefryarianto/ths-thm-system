@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { dispositionNotificationEmail } from '../../mail/email-templates';
 import { LetterFilterDto, CreateIncomingLetterDto, UpdateIncomingLetterDto, CreateOutgoingLetterDto, UpdateOutgoingLetterDto, CreateDispositionDto } from './dto/letter.dto';
 
 @Injectable()
 export class LettersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(LettersService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async findAllCombined(query: LetterFilterDto) {
     const page = query.page || 1;
@@ -87,6 +94,10 @@ export class LettersService {
         isi: dto.isi,
       },
     });
+
+    // Send disposition notification email
+    this.sendDispositionEmail(suratMasukId, dto);
+
     return { success: true, data: disposition, message: 'Disposisi berhasil dicatat' };
   }
 
@@ -150,6 +161,29 @@ export class LettersService {
   async incomingExport() {
     const letters = await this.prisma.suratMasuk.findMany();
     return { success: true, data: letters };
+  }
+
+  private async sendDispositionEmail(suratMasukId: string, dto: CreateDispositionDto) {
+    try {
+      const [surat, penerima, pengirim] = await Promise.all([
+        this.prisma.suratMasuk.findUnique({ where: { id: suratMasukId }, select: { perihal: true } }),
+        this.prisma.user.findUnique({ where: { id: dto.kepadaUserId }, select: { email: true, namaLengkap: true } }),
+        this.prisma.user.findUnique({ where: { id: dto.dariUserId }, select: { namaLengkap: true } }),
+      ]);
+
+      if (!penerima?.email || !surat) return;
+
+      const { subject, html } = dispositionNotificationEmail(
+        penerima.namaLengkap,
+        pengirim?.namaLengkap || 'Admin',
+        surat.perihal,
+        dto.isi,
+      );
+
+      await this.mailService.sendMail({ to: penerima.email, subject, html });
+    } catch (error) {
+      this.logger.warn(`Failed to send disposition email: ${(error as Error).message}`);
+    }
   }
 
   async outgoingExport() {

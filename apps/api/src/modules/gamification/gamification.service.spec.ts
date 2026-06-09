@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GamificationService } from './gamification.service';
+import { MailService } from '../../mail/mail.service';
 
 /** Minimal Prisma mock — uses non-Once methods for findUnique since it's called multiple times */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,6 +35,10 @@ const prismaMock: any = {
 
 const notificationsServiceMock = {
   send: jest.fn(),
+};
+
+const mailServiceMock = {
+  sendMail: jest.fn().mockResolvedValue(true),
 };
 
 const PROFILE_TEMPLATE = {
@@ -80,6 +85,7 @@ describe('GamificationService', () => {
         GamificationService,
         { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
         { provide: require('../notifications/notifications.service').NotificationsService, useValue: notificationsServiceMock },
+        { provide: MailService, useValue: mailServiceMock },
       ],
     }).compile();
 

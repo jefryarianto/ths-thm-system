@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ExaminersService } from './examiners.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 
 jest.mock('bcryptjs', () => ({
@@ -29,6 +30,10 @@ describe('ExaminersService', () => {
     },
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   const mockScopeHelper = {
     buildScopeFilter: jest.fn().mockReturnValue({}),
     buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
@@ -42,6 +47,7 @@ describe('ExaminersService', () => {
       providers: [
         ExaminersService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: MailService, useValue: mockMailService },
         { provide: ScopeHelper, useValue: mockScopeHelper },
       ],
     }).compile();

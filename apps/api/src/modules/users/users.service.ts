@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { userWelcomeEmail } from '../../mail/email-templates';
 import { CreateUserDto, UpdateUserDto, UserFilterDto } from './dto/user.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -7,9 +9,12 @@ import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(query: UserFilterDto, scope?: UserScope) {
@@ -50,10 +55,21 @@ export class UsersService {
   async create(dto: CreateUserDto, scope?: UserScope) {
     // Auto-assign rantingId from scope if not provided
     const rantingId = dto.rantingId || scope?.rantingId;
-    const passwordHash = await bcrypt.hash(dto.password || 'password123', 12);
+    const defaultPassword = dto.password || 'password123';
+    const passwordHash = await bcrypt.hash(defaultPassword, 12);
     const user = await this.prisma.user.create({ data: { email: dto.email, namaLengkap: dto.namaLengkap, role: dto.role as never, rantingId, passwordHash } });
     const { passwordHash: _, ...result } = user;
+
+    this.sendWelcomeEmail(result.email, result.namaLengkap, result.role, defaultPassword);
+
     return { success: true, data: result, message: 'User berhasil dibuat' };
+  }
+
+  private sendWelcomeEmail(email: string, nama: string, role: string, password: string) {
+    const { subject, html } = userWelcomeEmail(nama, email, role, password);
+    this.mailService.sendMail({ to: email, subject, html }).catch(() => {
+      this.logger.warn(`Failed to send welcome email to user ${email}`);
+    });
   }
 
   async update(id: string, dto: UpdateUserDto, scope?: UserScope) {

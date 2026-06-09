@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
 import { CreateExaminerDto, UpdateExaminerDto, ExaminerFilterDto, AssignExaminerDto } from './dto/examiner.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -7,9 +9,12 @@ import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ExaminersService {
+  private readonly logger = new Logger(ExaminersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(query: ExaminerFilterDto) {
@@ -32,8 +37,10 @@ export class ExaminersService {
   }
 
   async create(dto: CreateExaminerDto) {
-    const passwordHash = await bcrypt.hash(dto.password || 'password123', 12);
+    const defaultPassword = dto.password || 'password123';
+    const passwordHash = await bcrypt.hash(defaultPassword, 12);
     const examiner = await this.prisma.user.create({ data: { email: dto.email, namaLengkap: dto.namaLengkap, role: 'penguji', passwordHash } });
+    this.sendWelcomeEmail(examiner.email, examiner.namaLengkap, defaultPassword);
     return { success: true, data: examiner, message: 'Penguji berhasil ditambahkan' };
   }
 
@@ -54,10 +61,14 @@ export class ExaminersService {
 
   async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;
-    const passwordHash = await bcrypt.hash('password123', 12);
+    const defaultPassword = 'password123';
+    const passwordHash = await bcrypt.hash(defaultPassword, 12);
     for (const row of data) {
       try {
-        await this.prisma.user.create({ data: { email: row.email as string, namaLengkap: (row.nama || row.name) as string, role: 'penguji', passwordHash } });
+        const email = row.email as string;
+        const nama = (row.nama || row.name) as string;
+        await this.prisma.user.create({ data: { email, namaLengkap: nama, role: 'penguji', passwordHash } });
+        this.sendWelcomeEmail(email, nama, defaultPassword);
         imported++;
       } catch { /* skip duplicate email */ }
     }
@@ -79,7 +90,33 @@ export class ExaminersService {
     const assignment = await this.prisma.penugasanPenguji.create({
       data: { pengujiUserId: id, kegiatanId: kegiatanId!, peran: dto.peran || 'penguji', catatan: dto.catatan },
     });
+
+    // Send assignment notification
+    this.sendAssignmentEmail(examiner, kegiatan, dto.peran || 'penguji');
+
     return { success: true, data: assignment, message: 'Penguji berhasil ditugaskan' };
+  }
+
+  private sendWelcomeEmail(email: string, nama: string, password: string) {
+    const { subject, html } = examinerWelcomeEmail(nama, email, password);
+    this.mailService.sendMail({ to: email, subject, html }).catch(() => {
+      this.logger.warn(`Failed to send welcome email to examiner ${email}`);
+    });
+  }
+
+  private sendAssignmentEmail(
+    examiner: { id: string; email: string; namaLengkap: string },
+    kegiatan: { nama: string; tanggalMulai: Date | null },
+    peran: string,
+  ) {
+    const tanggal = kegiatan.tanggalMulai
+      ? kegiatan.tanggalMulai.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      : 'Akan ditentukan';
+
+    const { subject, html } = examinerAssignmentEmail(examiner.namaLengkap, kegiatan.nama, tanggal, peran);
+    this.mailService.sendMail({ to: examiner.email, subject, html }).catch(() => {
+      this.logger.warn(`Failed to send assignment email to ${examiner.email}`);
+    });
   }
 
   async getAssignments(id: string) {

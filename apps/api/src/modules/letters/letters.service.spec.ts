@@ -3,9 +3,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { LettersService } from './letters.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 
 describe('LettersService', () => {
   let service: LettersService;
+
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
 
   const mockPrisma = {
     suratMasuk: {
@@ -34,6 +39,7 @@ describe('LettersService', () => {
       providers: [
         LettersService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 

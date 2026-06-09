@@ -1,5 +1,7 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
+import { badgeEarnedEmail, levelUpEmail } from '../../mail/email-templates';
 import { NotificationsService } from '../notifications/notifications.service';
 
 /**
@@ -82,10 +84,13 @@ const BADGES: Badge[] = [
  */
 @Injectable()
 export class GamificationService {
+  private readonly logger = new Logger(GamificationService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => NotificationsService))
     private readonly notificationsService: NotificationsService,
+    private readonly mailService: MailService,
   ) {}
 
   /** Get or create a member's gamification profile */
@@ -410,7 +415,7 @@ export class GamificationService {
     try {
       const anggota = await this.prisma.anggota.findUnique({
         where: { id: anggotaId },
-        select: { namaLengkap: true, rantingId: true },
+        select: { namaLengkap: true, rantingId: true, email: true },
       });
       if (!anggota) return;
 
@@ -428,8 +433,20 @@ export class GamificationService {
           data: { anggotaId, oldLevel: oldLevel.name, newLevel: newLevel.name, type: 'level_up' },
         });
       }
+
+      // Also send personal email to the member
+      if (anggota.email) {
+        const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
+        const { subject, html } = levelUpEmail(
+          anggota.namaLengkap,
+          oldLevel.name,
+          newLevel.name,
+          profile?.points ?? 0,
+        );
+        await this.mailService.sendMail({ to: anggota.email, subject, html });
+      }
     } catch (error) {
-      console.warn('Failed to send level-up notification:', (error as Error).message);
+      this.logger.warn('Failed to send level-up notification:', (error as Error).message);
     }
   }
 
@@ -465,8 +482,9 @@ export class GamificationService {
         }
       }
 
-      // Also send personal notification to the member who earned the badge
+      // Also send personal notification + email to the member who earned the badge
       if (anggota.email) {
+        // In-app notification
         const memberUser = await this.prisma.user.findFirst({
           where: { email: anggota.email, isActive: true },
           select: { id: true },
@@ -482,9 +500,20 @@ export class GamificationService {
             });
           }
         }
+
+        // Email for each badge
+        for (const badge of badges) {
+          const { subject, html } = badgeEarnedEmail(
+            anggota.namaLengkap,
+            badge.name,
+            badge.icon,
+            badge.description,
+          );
+          await this.mailService.sendMail({ to: anggota.email, subject, html });
+        }
       }
     } catch (error) {
-      console.warn('Failed to send badge notification:', (error as Error).message);
+      this.logger.warn('Failed to send badge notification:', (error as Error).message);
     }
   }
 
@@ -804,7 +833,7 @@ export class GamificationService {
         });
       }
     } catch (error) {
-      console.warn('Failed to send config update notification:', (error as Error).message);
+      this.logger.warn('Failed to send config update notification:', (error as Error).message);
     }
   }
 
@@ -882,7 +911,7 @@ export class GamificationService {
         }
       }
     } catch (error) {
-      console.warn('Failed to send weekly summary notification:', (error as Error).message);
+      this.logger.warn('Failed to send weekly summary notification:', (error as Error).message);
     }
 
     return { sent, summary };
