@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { CreateRegistrationDto, UpdateRegistrationDto, RegistrationFilterDto } from './dto/registration.dto';
 
 @Injectable()
 export class RegistrationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(RegistrationsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async findAll(query: RegistrationFilterDto) {
     const page = query.page || 1;
@@ -70,13 +76,73 @@ export class RegistrationsService {
     });
 
     await this.prisma.pendaftaran.update({ where: { id }, data: { status: 'approved' } });
+
+    // Send confirmation email if email address is provided
+    if (reg.email) {
+      this.sendRegistrationApprovedEmail(reg.namaLengkap, reg.email).catch((err) =>
+        this.logger.error(`Registration approved email failed for ${reg.email}: ${err.message}`),
+      );
+    }
+
     return { success: true, data: candidate, message: 'Pendaftaran disetujui, calon anggota berhasil dibuat' };
   }
 
   async reject(id: string, reason?: string) {
+    const reg = await this.prisma.pendaftaran.findUnique({ where: { id } });
+    if (!reg) throw new NotFoundException('Pendaftaran tidak ditemukan');
+
     await this.prisma.pendaftaran.update({ where: { id }, data: { status: 'rejected', catatan: reason } });
+
+    // Send rejection email if email address is provided
+    if (reg.email) {
+      this.sendRegistrationRejectedEmail(reg.namaLengkap, reg.email, reason).catch((err) =>
+        this.logger.error(`Registration rejected email failed for ${reg.email}: ${err.message}`),
+      );
+    }
+
     return { success: true, message: reason || 'Pendaftaran ditolak' };
   }
+
+  private async sendRegistrationApprovedEmail(nama: string, email: string): Promise<void> {
+    await this.mailService.sendMail({
+      to: email,
+      subject: 'Pendaftaran Anda Disetujui — THS-THM',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #1a56db;">Selamat, ${nama}!</h1>
+          <p>Pendaftaran Anda di <strong>THS-THM</strong> telah <strong>disetujui</strong>.</p>
+          <p>Anda sekarang terdaftar sebagai calon anggota. Silakan menunggu proses selanjutnya untuk menjadi anggota resmi.</p>
+          <p>Jika ada pertanyaan, silakan hubungi admin ranting terdekat.</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+          <p style="color: #6b7280; font-size: 12px;">
+            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
+          </p>
+        </div>
+      `,
+    });
+  }
+
+  private async sendRegistrationRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
+    await this.mailService.sendMail({
+      to: email,
+      subject: 'Status Pendaftaran — THS-THM',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #dc2626;">Pemberitahuan</h1>
+          <p>Halo <strong>${nama}</strong>,</p>
+          <p>Pendaftaran Anda di <strong>THS-THM</strong> <strong>tidak dapat diproses</strong>.</p>
+          ${reason ? `<p>Alasan: <em>${reason}</em></p>` : ''}
+          <p>Silakan hubungi admin untuk informasi lebih lanjut atau mengajukan pendaftaran ulang.</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+          <p style="color: #6b7280; font-size: 12px;">
+            THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
+          </p>
+        </div>
+      `,
+    });
+  }
+
+
 
   async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;

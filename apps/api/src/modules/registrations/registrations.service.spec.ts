@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { RegistrationsService } from './registrations.service';
+import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 describe('RegistrationsService', () => {
@@ -21,11 +22,16 @@ describe('RegistrationsService', () => {
     },
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RegistrationsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -172,6 +178,7 @@ describe('RegistrationsService', () => {
 
   describe('reject', () => {
     it('should reject registration with reason', async () => {
+      mockPrisma.pendaftaran.findUnique.mockResolvedValue({ id: '1', namaLengkap: 'Budi', email: 'budi@test.com' });
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
       const result = await service.reject('1', 'Data tidak lengkap');
@@ -184,6 +191,7 @@ describe('RegistrationsService', () => {
     });
 
     it('should reject registration with default message', async () => {
+      mockPrisma.pendaftaran.findUnique.mockResolvedValue({ id: '1', namaLengkap: 'Budi', email: 'budi@test.com' });
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
       const result = await service.reject('1');

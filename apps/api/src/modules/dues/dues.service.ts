@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../mail/mail.service';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -8,6 +9,7 @@ import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class DuesService {
+  private readonly logger = new Logger(DuesService.name);
   private readonly CACHE_PREFIX = 'dues:';
   private readonly CACHE_TTL = 30_000;
 
@@ -15,6 +17,7 @@ export class DuesService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    private readonly mailService: MailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
   ) {}
@@ -53,6 +56,11 @@ export class DuesService {
       } catch (error) {
         console.warn('Failed to award gamification points for dues:', (error as Error).message);
       }
+    }
+
+    // Send payment confirmation email (fire-and-forget, method handles errors internally)
+    if (dto.anggotaId) {
+      this.sendPaymentEmail(dto.anggotaId, dto.jumlah, dto.periode, dto.status);
     }
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -101,6 +109,8 @@ export class DuesService {
         });
         if (existingDue?.anggotaId) {
           await this.gamificationService.recordDuesPayment(existingDue.anggotaId, true);
+          // Send payment confirmation email for status change
+          this.sendPaymentEmail(existingDue.anggotaId, dto.jumlah, dto.periode, 'lunas');
         }
       } catch (error) {
         console.warn('Failed to award gamification points for dues update:', (error as Error).message);
@@ -110,6 +120,44 @@ export class DuesService {
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
     return { success: true, data: due, message: 'Data iuran berhasil diperbarui' };
+  }
+
+  private async sendPaymentEmail(anggotaId: string, jumlah?: number, periode?: string, status?: string): Promise<void> {
+    try {
+      const member = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { email: true, namaLengkap: true },
+      });
+
+      if (!member?.email) return;
+
+      const isPaid = status === 'lunas';
+      const jumlahStr = jumlah ? `Rp ${Number(jumlah).toLocaleString('id-ID')}` : '';
+      const periodeStr = periode || '';
+
+      await this.mailService.sendMail({
+        to: member.email,
+        subject: isPaid ? 'Konfirmasi Pembayaran Iuran — THS-THM' : 'Informasi Iuran — THS-THM',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: ${isPaid ? '#16a34a' : '#ca8a04'};">
+              ${isPaid ? '✅ Pembayaran Iuran Diterima' : '📋 Informasi Iuran'}
+            </h2>
+            <p>Halo <strong>${member.namaLengkap}</strong>,</p>
+            ${isPaid
+              ? `<p>Pembayaran iuran Anda${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} telah <strong>diterima</strong>.</p>`
+              : `<p>Iuran${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} sedang diproses.</p>`
+            }
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+            <p style="color: #6b7280; font-size: 12px;">
+              THS-THM System &mdash; Notifikasi iuran otomatis
+            </p>
+          </div>
+        `,
+      });
+    } catch (error) {
+      this.logger.error(`sendPaymentEmail failed for member ${anggotaId}: ${(error as Error).message}`);
+    }
   }
 
   async remove(id: string, scope?: UserScope) {

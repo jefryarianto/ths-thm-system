@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { DuesService } from './dues.service';
+import { MailService } from '../../mail/mail.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -23,6 +24,7 @@ describe('DuesService', () => {
     },
     anggota: {
       count: jest.fn(),
+      findUnique: jest.fn(),
     },
   };
 
@@ -49,6 +51,10 @@ describe('DuesService', () => {
     recordDuesPayment: jest.fn().mockResolvedValue({ profile: { points: 20 }, newBadges: [] }),
   };
 
+  const mockMailService = {
+    sendMail: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -57,6 +63,7 @@ describe('DuesService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
         { provide: GamificationService, useValue: mockGamification },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
