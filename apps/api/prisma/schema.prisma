@@ -762,6 +762,23 @@ model DeviceToken {
 
 // ── Email Logs ───────────────────────────────────────────
 
+model EmailEvent {
+  id        String   @id @default(uuid())
+  emailLogId String?  @map("email_log_id")
+  event     String   // 'delivered' | 'opened' | 'clicked' | 'bounced' | 'complained'
+  recipient String?
+  timestamp DateTime @default(now())
+  data      Json?    // Raw webhook payload for the event
+  createdAt DateTime @default(now()) @map("created_at")
+
+  emailLog  EmailLog? @relation(fields: [emailLogId], references: [id], onDelete: SetNull)
+
+  @@index([emailLogId])
+  @@index([event])
+  @@index([timestamp(sort: Desc)])
+  @@map("email_events")
+}
+
 model EmailLog {
   id        String   @id @default(uuid())
   to        String
@@ -772,6 +789,8 @@ model EmailLog {
   content   String?  // HTML/text body for retry capability
   metadata  Json?    // { module?: string, template?: string, userId?: string }
   createdAt DateTime @default(now()) @map("created_at")
+
+  events EmailEvent[]
 
   @@index([createdAt(sort: Desc)])
   @@index([status])
