@@ -38,7 +38,7 @@ export class MailService {
 
     if (env.nodeEnv === 'development') {
       this.logger.log(`[DEV] Email would be sent to ${to}: "${subject}"`);
-      await this.logToDb(to, subject, 'skipped', 'dev', null, metadata);
+      await this.logToDb(to, subject, 'skipped', 'dev', null, metadata, html || text);
       return true;
     }
 
@@ -46,7 +46,7 @@ export class MailService {
     let provider = 'resend';
     let sent = await this.sendViaResend(to, subject, text, html);
     if (sent) {
-      await this.logToDb(to, subject, 'sent', provider, null, metadata);
+      await this.logToDb(to, subject, 'sent', provider, null, metadata, html || text);
       return true;
     }
 
@@ -54,13 +54,40 @@ export class MailService {
     provider = 'smtp';
     sent = await this.sendViaSmtp(to, subject, text, html);
     if (sent) {
-      await this.logToDb(to, subject, 'sent', provider, null, metadata);
+      await this.logToDb(to, subject, 'sent', provider, null, metadata, html || text);
       return true;
     }
 
     // All providers failed — log as failed
-    await this.logToDb(to, subject, 'failed', null, 'All email providers failed (Resend + SMTP)', metadata);
+    await this.logToDb(to, subject, 'failed', null, 'All email providers failed (Resend + SMTP)', metadata, html || text);
     return false;
+  }
+
+  /**
+   * Retry all failed emails (or specific ones by id).
+   * Tries to resend each failed email, creates a new log entry for the retry.
+   */
+  async retryFailedEmails(ids?: string[]): Promise<{ retried: number; succeeded: number; failed: number }> {
+    const where: Record<string, unknown> = { status: 'failed' };
+    if (ids && ids.length > 0) where.id = { in: ids };
+
+    const failedLogs = await this.prisma.emailLog.findMany({ where });
+    let succeeded = 0;
+    let retried = 0;
+
+    for (const log of failedLogs) {
+      retried++;
+      const metadata = (log.metadata as Record<string, unknown> | null) || undefined;
+      const sent = await this.sendMail({
+        to: log.to,
+        subject: log.subject,
+        html: log.content || undefined,
+        metadata,
+      });
+      if (sent) succeeded++;
+    }
+
+    return { retried, succeeded, failed: retried - succeeded };
   }
 
   private async logToDb(
@@ -70,6 +97,7 @@ export class MailService {
     provider: string | null,
     error: string | null,
     metadata?: Record<string, unknown> | null,
+    content?: string | null,
   ): Promise<void> {
     try {
       await this.prisma.emailLog.create({
@@ -79,6 +107,7 @@ export class MailService {
           status,
           provider,
           error,
+          content: content || undefined,
           metadata: (metadata as never) || undefined,
         },
       });

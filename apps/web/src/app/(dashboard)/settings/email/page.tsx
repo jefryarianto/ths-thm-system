@@ -181,6 +181,8 @@ export default function EmailSettingsPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [usedModules, setUsedModules] = useState<Array<{ module: string; label: string; count: number }>>([]);
   const [modulesLoading, setModulesLoading] = useState(false);
+  const [retryLoading, setRetryLoading] = useState(false);
+  const [retryResult, setRetryResult] = useState<{ retried: number; succeeded: number; failed: number } | null>(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -258,6 +260,20 @@ export default function EmailSettingsPage() {
       setUsedModules(data.data || []);
     } catch { /* ignore */ }
     setModulesLoading(false);
+  };
+
+  const handleRetry = async () => {
+    if (!confirm('Kirim ulang semua email yang gagal?')) return;
+    setRetryLoading(true);
+    setRetryResult(null);
+    try {
+      const { data } = await apiClient.post('/mail/retry');
+      // Refresh logs and stats after retry
+      fetchLogs(1, logsFilter, logsModuleFilter);
+      fetchStats(logsModuleFilter);
+      setRetryResult(data.data);
+    } catch { /* ignore */ }
+    setRetryLoading(false);
   };
 
   const handleModuleFilterChange = (module: string) => {
@@ -740,6 +756,20 @@ export default function EmailSettingsPage() {
                   className="cursor-pointer hover:text-blue-600 transition"
                   onClick={() => { fetchLogs(1, logsFilter, logsModuleFilter); fetchStats(logsModuleFilter); }}
                 />
+                {logsStats && logsStats.failed > 0 && (
+                  <button
+                    onClick={handleRetry}
+                    disabled={retryLoading}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition disabled:opacity-50 text-xs font-medium"
+                  >
+                    {retryLoading ? (
+                      <RefreshCw size={12} className="animate-spin" />
+                    ) : (
+                      <AlertCircle size={12} />
+                    )}
+                    {retryLoading ? 'Mengirim ulang...' : `Retry ${logsStats.failed} Gagal`}
+                  </button>
+                )}
                 {logsMeta.total > 0 && <span>{logsMeta.total} total</span>}
               </div>
             </div>
@@ -844,6 +874,26 @@ export default function EmailSettingsPage() {
               </>
             )}
           </div>
+
+          {/* Retry Result Banner */}
+          {retryResult && (
+            <div className={`px-4 py-3 rounded-xl text-sm flex items-center gap-2 ${
+              retryResult.failed === 0
+                ? 'bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                : 'bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400'
+            }`}>
+              {retryResult.failed === 0 ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              <span>
+                <strong>Retry selesai:</strong> {retryResult.retried} dicoba, {retryResult.succeeded} berhasil, {retryResult.failed} gagal
+              </span>
+              <button
+                onClick={() => setRetryResult(null)}
+                className="ml-auto text-xs hover:underline"
+              >
+                Tutup
+              </button>
+            </div>
+          )}
 
           {/* Top Recipients */}
           {logsStats && logsStats.topRecipients.length > 0 && (

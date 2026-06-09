@@ -769,6 +769,7 @@ model EmailLog {
   status    String   // 'sent' | 'failed' | 'skipped'
   provider  String?  // 'resend' | 'smtp' | 'dev'
   error     String?
+  content   String?  // HTML/text body for retry capability
   metadata  Json?    // { module?: string, template?: string, userId?: string }
   createdAt DateTime @default(now()) @map("created_at")
 

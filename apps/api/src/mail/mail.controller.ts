@@ -62,6 +62,17 @@ export class MailController {
     return { success: false, message: 'Test email failed. Check API logs for details.' };
   }
 
+  @Post('retry')
+  @Roles('superadmin')
+  async retryFailed(@Body() body: { ids?: string[] }) {
+    const result = await this.mailService.retryFailedEmails(body.ids);
+    return {
+      success: true,
+      data: result,
+      message: `${result.retried} email gagal dicoba kirim ulang, ${result.succeeded} berhasil, ${result.failed} gagal`,
+    };
+  }
+
   // ─── Email Logs ───
 
   @Get('logs')
