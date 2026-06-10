@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -50,16 +50,16 @@ export default function ScoreboardPage() {
     try {
       const [statsRes, distRes, weeklyRes, monthlyRes, breakdownRes] = await Promise.all([
         apiClient.get('/gamification/stats'),
-        apiClient.get('/gamification/admin/points-distribution').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/gamification/admin/points-distribution').catch(() => ({ data: { success: true, data: [] as DistributionEntry[] } })),
         apiClient.get('/gamification/admin/points-report?period=weekly&limit=10'),
         apiClient.get('/gamification/admin/points-report?period=monthly&limit=10'),
         apiClient.get('/gamification/scoreboard/breakdown'),
       ]);
-      setStats(statsRes.data.data);
-      setDistribution(distRes.data.data || []);
-      setWeeklyReport(weeklyRes.data.data || []);
-      setMonthlyReport(monthlyRes.data.data || []);
-      setModuleBreakdown(breakdownRes.data.data || []);
+      setStats(unwrap(statsRes));
+      setDistribution(unwrap(distRes) || []);
+      setWeeklyReport(unwrap(weeklyRes) || []);
+      setMonthlyReport(unwrap(monthlyRes) || []);
+      setModuleBreakdown(unwrap(breakdownRes) || []);
     } catch (err) {
       console.error('Failed to fetch scoreboard data:', err);
     }

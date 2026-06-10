@@ -84,16 +84,34 @@ export interface PaginatedResponse<T> {
 /**
  * Unwrap `r.data.data` from an Axios response.
  *
- * Before: `apiClient.get('/foo').then(r => r.data.data)`
- * After:  `apiClient.get('/foo').then(unwrap)`
+ * @example
+ * ```tsx
+ * // Before:
+ * apiClient.get('/settings').then(r => setOrg(r.data.data))
+ *
+ * // After:
+ * apiClient.get('/settings').then(res => setOrg(unwrap(res)))
+ *
+ * // With useApi:
+ * const { data, loading } = useApi(() => apiClient.get('/foo').then(unwrap))
+ * ```
  */
 export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
 
 /**
  * Unwrap a paginated response.
  *
- * Before: `apiClient.get('/foo').then(r => r.data)`  // { data: T[], meta: ... }
- * After:  `apiClient.get('/foo').then(unwrapPaginated)`
+ * @example
+ * ```tsx
+ * // Before:
+ * apiClient.get('/items').then(r => ({ data: r.data.data, meta: r.data.meta }))
+ *
+ * // After:
+ * apiClient.get('/items').then(unwrapPaginated)
+ *
+ * // With usePaginatedList:
+ * usePaginatedList(() => apiClient.get('/items').then(unwrapPaginated), [page])
+ * ```
  */
 export const unwrapPaginated = <T>(response: { data: ApiResponse<PaginatedResponse<T>> }): PaginatedResponse<T> =>
   response.data.data;

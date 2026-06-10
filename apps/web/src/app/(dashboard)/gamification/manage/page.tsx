@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Zap, Plus, Edit3, Trash2, AlertCircle, CheckCircle, XCircle,
   Loader2, Save, X,
@@ -63,9 +63,9 @@ export default function ManageRewardsPage() {
         apiClient.get('/gamification/rewards'),
         apiClient.get('/gamification/redemptions'),
       ]);
-      setRewards(rewardsRes.data.data);
-      setRedemptions(redemptionsRes.data.data);
-    } catch (_err) {
+      setRewards(unwrap(rewardsRes));
+      setRedemptions(unwrap(redemptionsRes));
+    } catch {
       setError('Gagal memuat data');
     } finally { setLoading(false); }
   };
@@ -82,8 +82,9 @@ export default function ManageRewardsPage() {
       setShowForm(false);
       setEditingReward(null);
       setForm({ name: '', description: '', icon: '🎁', pointCost: 100, stock: 10 });
-      await fetchData();      } catch (_err: any) {
-        alert(_err.response?.data?.message || 'Gagal menyimpan');
+      await fetchData();      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        alert(msg || 'Gagal menyimpan');
       } finally { setSaving(false); }
   };
 
@@ -93,7 +94,8 @@ export default function ManageRewardsPage() {
       await apiClient.delete(`/gamification/rewards/${id}`);
       await fetchData();
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Gagal menghapus');
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      alert(msg || 'Gagal menghapus');
     }
   };
 
@@ -102,7 +104,8 @@ export default function ManageRewardsPage() {
       await apiClient.patch(`/gamification/redemptions/${id}/status`, { status });
       await fetchData();
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Gagal update status');
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      alert(msg || 'Gagal update status');
     }
   };
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { Settings, Save, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function GamificationSettingsPage() {
@@ -19,7 +19,7 @@ export default function GamificationSettingsPage() {
     setLoading(true);
     try {
       const res = await apiClient.get('/gamification/admin/config');
-      setConfig(res.data.data || {});
+      setConfig(unwrap(res) || {});
     } catch (err) {
       console.error('Failed to fetch gamification config:', err);
       setError('Gagal memuat konfigurasi');

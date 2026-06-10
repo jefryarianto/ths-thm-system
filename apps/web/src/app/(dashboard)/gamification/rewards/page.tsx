@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Gift, Zap, AlertCircle, CheckCircle, Clock, XCircle,
   ShoppingBag, Loader2,
@@ -82,12 +82,13 @@ export default function RewardsPage() {
       const res = await apiClient.post(`/gamification/rewards/${rewardId}/redeem`, {
         anggotaId: userAnggotaId,
       });
-      setRedemptions((prev) => [res.data.data, ...prev]);
+      setRedemptions((prev) => [unwrap(res), ...prev]);
       // Refresh rewards to update stock
       const rewardsRes = await apiClient.get('/gamification/rewards');
-      setRewards(rewardsRes.data.data);
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal redeem reward');
+      setRewards(unwrap(rewardsRes));
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      alert(msg || 'Gagal redeem reward');
     } finally {
       setRedeemingId(null);
     }

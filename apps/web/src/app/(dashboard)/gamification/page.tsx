@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useDebounce } from '@/lib/use-debounce';
 import {
   Trophy, Award, Medal, Star, Zap,
@@ -145,15 +145,15 @@ export default function GamificationPage() {
         apiClient.get('/gamification/stats'),
         apiClient.get('/gamification/events?limit=10'),
       ]);
-      const newData = leaderboardRes.data.data;
+      const newData = unwrap<LeaderboardEntry[]>(leaderboardRes);
       if (loadMore) {
         setLeaderboard((prev) => [...prev, ...newData]);
       } else {
         setLeaderboard(newData);
       }
       setHasMore(newData.length >= pageSize);
-      setStats(statsRes.data.data);
-      setEvents(eventsRes.data.data);
+      setStats(unwrap<GamificationStats>(statsRes));
+      setEvents(unwrap<PointEvent[]>(eventsRes));
     } catch (err) {
       console.error('Failed to fetch gamification data:', err);
       setError('Gagal memuat data gamifikasi');
@@ -165,7 +165,7 @@ export default function GamificationPage() {
   const fetchOrgStructure = async () => {
     try {
       const res = await apiClient.get('/gamification/org-structure');
-      setOrgTree(res.data.data || []);
+      setOrgTree(unwrap<OrgNode[]>(res) || []);
     } catch { /* ignore */ }
   };
 
@@ -253,7 +253,7 @@ export default function GamificationPage() {
           <span>Gamification System</span>
           <button
             onClick={async () => {
-              const text = `🏆 THS-THM Leaderboard 🏆\n\n${leaderboard.slice(0, 5).map((e, i) => `${RANK_ICONS[e.rank] || `#${e.rank}`} ${e.namaLengkap || 'Member'} — ${e.points.toLocaleString('id-ID')} pts`).join('\n')}\n\nLihat selengkapnya di: ${window.location.origin}/public/leaderboard`;
+              const text = `🏆 THS-THM Leaderboard 🏆\n\n${leaderboard.slice(0, 5).map((e) => `${RANK_ICONS[e.rank] || `#${e.rank}`} ${e.namaLengkap || 'Member'} — ${e.points.toLocaleString('id-ID')} pts`).join('\n')}\n\nLihat selengkapnya di: ${window.location.origin}/public/leaderboard`;
               if (navigator.share) {
                 await navigator.share({ title: 'THS-THM Leaderboard', text });
               } else {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   ArrowLeft, Zap, Flame, Star, Award,
   AlertCircle, Activity, TrendingUp,
@@ -84,9 +84,9 @@ export default function GamificationProfilePage() {
         apiClient.get(`/gamification/profile/${anggotaId}/events?limit=20`),
         apiClient.get(`/gamification/profile/${anggotaId}/points-history`),
       ]);
-      setProfile(profileRes.data.data);
-      setEvents(eventsRes.data.data);
-      setPointsHistory(historyRes.data.data || []);
+      setProfile(unwrap(profileRes));
+      setEvents(unwrap(eventsRes));
+      setPointsHistory(unwrap(historyRes) || []);
     } catch (err) {
       console.error('Failed to fetch gamification profile:', err);
       setError('Gagal memuat profil gamifikasi');

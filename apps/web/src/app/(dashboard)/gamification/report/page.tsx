@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Trophy, Zap, AlertCircle, Download, Calendar,
 } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function PointsReportPage() {
     setLoading(true);
     try {
       const res = await apiClient.get(`/gamification/admin/points-report?period=${period}&limit=20`);
-      setReport(res.data.data || []);
+      setReport(unwrap(res) || []);
     } catch {
       setError('Gagal memuat laporan');
     } finally {

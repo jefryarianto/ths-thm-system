@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Trophy, Zap, AlertCircle, Gift, Users,
 } from 'lucide-react';
@@ -51,8 +51,8 @@ export default function GamificationAdminPage() {
         apiClient.get('/gamification/admin/points-distribution'),
         apiClient.get('/gamification/admin/top-redemptions?limit=20'),
       ]);
-      setDistribution(distRes.data.data || []);
-      setRedemptions(redeemRes.data.data || []);
+      setDistribution(unwrap(distRes) || []);
+      setRedemptions(unwrap(redeemRes) || []);
     } catch (err) {
       console.error('Failed to fetch gamification admin data:', err);
       setError('Gagal memuat data admin gamifikasi');
@@ -127,6 +127,7 @@ export default function GamificationAdminPage() {
               />
               <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
               <Tooltip
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formatter={(value: number, _name: string, props: any) => [
                   `${value} anggota`,
                   `${props.payload.icon} ${props.payload.level}`,
