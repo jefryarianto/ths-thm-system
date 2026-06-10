@@ -114,6 +114,88 @@ jobs:
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
 
+  e2e-web:
+    name: E2E (Web - Playwright)
+    runs-on: ubuntu-latest
+    needs: [test]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ths_thm
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: ths_thm_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ths-thm/api prisma:generate
+      - name: Run migrations
+        run: cd apps/api && npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
+      - name: Seed test data
+        run: cd apps/api && npx ts-node prisma/seed.ts
+        env:
+          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
+          JWT_SECRET: test-jwt-secret
+      - name: Build API
+        run: cd apps/api && npx nest build
+        env:
+          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
+      - name: Start API server
+        run: |
+          cd apps/api && node dist/main.js &
+          echo "Waiting for API to be ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+              echo "✅ API is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ API failed to start"
+          exit 1
+        env:
+          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
+          JWT_SECRET: test-jwt-secret
+          JWT_REFRESH_SECRET: test-jwt-refresh-secret
+      - name: Start Web app
+        run: |
+          cd apps/web && npx next dev -p 3002 &
+          echo "Waiting for Web to be ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3002/login > /dev/null 2>&1; then
+              echo "✅ Web is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ Web failed to start"
+          exit 1
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+      - name: Install Playwright browsers
+        run: cd apps/web && npx playwright install chromium
+      - name: Run Playwright e2e tests
+        run: cd apps/web && npx playwright test
+        env:
+          E2E_BASE_URL: http://localhost:3002
+        timeout-minutes: 10
+
   e2e:
     name: E2E Test (API)
     runs-on: ubuntu-latest

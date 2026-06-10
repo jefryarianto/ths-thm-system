@@ -46,7 +46,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400 text-sm">
+          <div data-testid="login-error" className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400 text-sm">
             {error}
           </div>
         )}
@@ -58,6 +58,7 @@ export default function LoginPage() {
             </label>
             <input
               id="email"
+              data-testid="email-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -73,6 +74,7 @@ export default function LoginPage() {
             </label>
             <input
               id="password"
+              data-testid="password-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -84,6 +86,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
+            data-testid="login-submit"
             disabled={loading}
             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
