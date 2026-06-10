@@ -19,9 +19,10 @@ export default function DigitalCardScreen() {
     (async () => {
       try {
         const res = await apiClient.get('/auth/me');
-        const me = unwrap(res);
+        const me = unwrap<{ namaLengkap: string }>(res);
         const memberRes = await apiClient.get('/members', { params: { limit: 1 } });
-        setMember(unwrap(memberRes)?.[0] || { namaLengkap: me.namaLengkap, nomorAnggota: '-', tingkat: '-', ranting: { nama: '-' } });
+        const members = unwrap<MemberInfo[]>(memberRes);
+        setMember(members?.[0] || { namaLengkap: me.namaLengkap, nomorAnggota: '-', tingkat: '-', ranting: { nama: '-' } });
       } catch { /* ignore */ }
       setLoading(false);
     })();

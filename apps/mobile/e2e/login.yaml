@@ -1,0 +1,16 @@
+appId: org.thsthm.mobile
+tags:
+  - smoke
+  - auth
+---
+- launchApp
+- assertVisible: "THS-THM"
+- assertVisible: "Sistem Manajemen"
+- tapOn:
+    text: "Email"
+- inputText: "admin@ths-thm.org"
+- tapOn:
+    text: "Password"
+- inputText: "password123"
+- tapOn: "Masuk"
+- assertVisible: "Selamat Datang"

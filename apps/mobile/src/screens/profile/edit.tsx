@@ -31,7 +31,14 @@ export default function EditProfileScreen() {
   const fetchProfile = async () => {
     try {
       const res = await apiClient.get('/auth/me');
-      const p = unwrap(res);
+      const p = unwrap<{
+        namaLengkap: string;
+        email?: string;
+        noHp?: string;
+        alamat?: string;
+        tempatLahir?: string;
+        tanggalLahir?: string;
+      }>(res);
       setForm({
         namaLengkap: p.namaLengkap || '',
         email: p.email || '',
