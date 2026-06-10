@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, FileText,
@@ -109,8 +109,7 @@ export default function ClaimsPage() {
         loading={loading}
         empty={{
           icon: FileText,
-          message: search || filterStatus ? 'Tidak ada klaim yang cocok dengan filter' : 'Belum ada klaim',
-          action: (search || filterStatus) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('klaim', !!(search || filterStatus), () => { setSearch(''); setFilterStatus(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

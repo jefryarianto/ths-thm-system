@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, FolderOpen,
@@ -92,8 +92,7 @@ export default function OrgDocumentsPage() {
         loading={loading}
         empty={{
           icon: FolderOpen,
-          message: search || filterCategory ? 'Tidak ada dokumen yang cocok dengan filter' : 'Belum ada dokumen organisasi',
-          action: (search || filterCategory) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterCategory(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('dokumen organisasi', !!(search || filterCategory), () => { setSearch(''); setFilterCategory(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

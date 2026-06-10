@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import {
   Plus, MoreVertical, UserCheck, Users,
 } from 'lucide-react';
@@ -66,8 +66,7 @@ export default function ExaminersPage() {
         loading={loading}
         empty={{
           icon: Users,
-          message: search ? 'Tidak ada penguji yang cocok dengan pencarian' : 'Belum ada penguji',
-          action: search ? { label: 'Reset pencarian', onClick: () => { setSearch(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('penguji', !!search, () => { setSearch(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

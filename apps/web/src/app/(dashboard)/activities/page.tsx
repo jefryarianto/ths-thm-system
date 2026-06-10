@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, Calendar,
@@ -119,8 +119,7 @@ export default function ActivitiesPage() {
         loading={loading}
         empty={{
           icon: Calendar,
-          message: search || filterStatus || filterTipe ? 'Tidak ada kegiatan yang cocok dengan filter' : 'Belum ada kegiatan',
-          action: (search || filterStatus || filterTipe) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('kegiatan', !!(search || filterStatus || filterTipe), () => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

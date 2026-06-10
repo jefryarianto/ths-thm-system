@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, ClipboardList,
@@ -70,8 +70,7 @@ export default function AssessmentsPage() {
         loading={loading}
         empty={{
           icon: ClipboardList,
-          message: search ? 'Tidak ada aspek yang cocok dengan filter' : 'Belum ada aspek penilaian',
-          action: search ? { label: 'Reset filter', onClick: () => { setSearch(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('aspek penilaian', !!search, () => { setSearch(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, Calendar,
@@ -95,8 +95,7 @@ export default function TrainingsPage() {
         loading={loading}
         empty={{
           icon: Calendar,
-          message: search || filterMateri ? 'Tidak ada latihan yang cocok dengan filter' : 'Belum ada jadwal latihan',
-          action: (search || filterMateri) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterMateri(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('jadwal latihan', !!(search || filterMateri), () => { setSearch(''); setFilterMateri(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

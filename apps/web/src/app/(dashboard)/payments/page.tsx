@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   CreditCard, CheckCircle, Clock, ArrowUpRight,
@@ -102,8 +102,7 @@ export default function PaymentsPage() {
         loading={loading}
         empty={{
           icon: CreditCard,
-          message: search ? 'Tidak ada pembayaran yang cocok dengan pencarian' : 'Belum ada data pembayaran',
-          action: search ? { label: 'Reset pencarian', onClick: () => { setSearch(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('data pembayaran', !!search, () => { setSearch(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

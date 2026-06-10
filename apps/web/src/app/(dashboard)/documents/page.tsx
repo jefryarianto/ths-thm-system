@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, FileText,
@@ -112,8 +112,7 @@ export default function DocumentsPage() {
         loading={loading}
         empty={{
           icon: FileText,
-          message: search || filterTipe ? 'Tidak ada dokumen yang cocok dengan filter' : 'Belum ada dokumen',
-          action: (search || filterTipe) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterTipe(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('dokumen', !!(search || filterTipe), () => { setSearch(''); setFilterTipe(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

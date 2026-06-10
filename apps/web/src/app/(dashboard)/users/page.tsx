@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { User } from '@/types';
 import {
@@ -116,8 +116,7 @@ export default function UsersPage() {
         loading={loading}
         empty={{
           icon: Users,
-          message: search || filterRole || filterActive ? 'Tidak ada user yang cocok dengan filter' : 'Belum ada user',
-          action: (search || filterRole || filterActive) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterRole(''); setFilterActive(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('user', !!(search || filterRole || filterActive), () => { setSearch(''); setFilterRole(''); setFilterActive(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

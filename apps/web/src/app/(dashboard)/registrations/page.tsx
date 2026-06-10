@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, CheckCircle, XCircle, Users,
@@ -133,8 +133,7 @@ export default function RegistrationsPage() {
         loading={loading}
         empty={{
           icon: Users,
-          message: search || filterStatus ? 'Tidak ada pendaftar yang cocok dengan filter' : 'Belum ada pendaftaran',
-          action: (search || filterStatus) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('pendaftar', !!(search || filterStatus), () => { setSearch(''); setFilterStatus(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { usePaginatedList } from '@/lib/hooks/use-api';
+import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, GraduationCap,
@@ -100,8 +100,7 @@ export default function GraduationsPage() {
         loading={loading}
         empty={{
           icon: GraduationCap,
-          message: search || filterStatus ? 'Tidak ada pendadaran yang cocok dengan filter' : 'Belum ada jadwal pendadaran',
-          action: (search || filterStatus) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setPage(1); } } : undefined,
+          ...buildEmptyMessage('jadwal pendadaran', !!(search || filterStatus), () => { setSearch(''); setFilterStatus(''); setPage(1); }),
         }}
         page={page}
         totalPages={meta.totalPages}

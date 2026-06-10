@@ -96,3 +96,32 @@ export function usePaginatedList<T>(
 
   return { data, meta, loading, error, refetch: execute };
 }
+
+/**
+ * Build the empty state config for a DataTable.
+ * Standardizes the "Tidak ada X yang cocok dengan filter" / "Belum ada X" pattern.
+ *
+ * @example
+ * ```tsx
+ * <DataTable
+ *   empty={{
+ *     icon: Users,
+ *     ...buildEmptyMessage('user', !!(search || filterRole || filterActive), () => { setSearch(''); setFilterRole(''); setFilterActive(''); setPage(1); }),
+ *   }}
+ *   ...
+ * />
+ * ```
+ */
+export function buildEmptyMessage(
+  itemName: string,
+  hasActiveFilters: boolean,
+  onReset: () => void,
+): { message: string; action?: { label: string; onClick: () => void } } {
+  if (hasActiveFilters) {
+    return {
+      message: `Tidak ada ${itemName} yang cocok dengan filter`,
+      action: { label: 'Reset filter', onClick: onReset },
+    };
+  }
+  return { message: `Belum ada ${itemName}` };
+}
