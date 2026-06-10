@@ -1,0 +1,35 @@
+appId: org.thsthm.mobile
+tags:
+  - full
+---
+# ─── Login ───
+- launchApp
+- assertVisible: "THS-THM"
+- tapOn: "email@ths-thm.org"
+- inputText: "admin@ths-thm.org"
+- tapOn: "Password"
+- inputText: "password123"
+- tapOn: "Masuk"
+- assertVisible: "Selamat Datang"
+- assertVisible: "Status Keanggotaan"
+
+# ─── Gamification ───
+- tapOn: "Poin"
+- assertVisible: "Total Poin"
+- assertVisible: "Peringkat"
+
+# ─── Dokumen ───
+- tapOn: "Dokumen"
+- assertVisible: "dokumen"
+
+# ─── Iuran ───
+- tapOn: "Iuran"
+- assertVisible: "Total Pembayaran"
+
+# ─── Notifikasi ───
+- tapOn: "Notifikasi"
+- assertVisible: "Notifikasi"
+
+# ─── Kartu Digital ───
+- tapOn: "Kartu"
+- assertVisible: "Kartu Anggota Digital"

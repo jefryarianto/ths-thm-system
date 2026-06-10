@@ -6,11 +6,9 @@ tags:
 - launchApp
 - assertVisible: "THS-THM"
 - assertVisible: "Sistem Manajemen"
-- tapOn:
-    text: "Email"
+- tapOn: "email@ths-thm.org"
 - inputText: "admin@ths-thm.org"
-- tapOn:
-    text: "Password"
+- tapOn: "Password"
 - inputText: "password123"
 - tapOn: "Masuk"
 - assertVisible: "Selamat Datang"
