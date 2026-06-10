@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import {
   Plus, Edit3, Trash2, X, RefreshCw, Save,
 } from 'lucide-react';
@@ -64,10 +64,10 @@ export default function SettingsPage() {
         apiClient.get('/settings/signatures'),
         apiClient.get('/settings/stamp'),
       ]);
-      setOrg(orgRes.data.data);
-      setPeriods(periodsRes.data.data || []);
-      setSignatures(sigRes.data.data || []);
-      setStamp(stampRes.data.data);
+      setOrg(unwrap(orgRes));
+      setPeriods(unwrap(periodsRes) || []);
+      setSignatures(unwrap(sigRes) || []);
+      setStamp(unwrap(stampRes));
     } catch { /* ignore */ }
     setLoading(false);
   };

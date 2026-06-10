@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
+import { useApi } from '@/lib/hooks/use-api';
 import { type LucideIcon,
   BarChart3, Users, GraduationCap, CreditCard, AlertCircle,
   FileText, Download, RefreshCw, ChevronLeft, ChevronRight,
@@ -101,10 +102,12 @@ const tabs: Array<{ key: ReportTab; label: string; icon: LucideIcon }> = [
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportTab>('overview');
-  const [loading, setLoading] = useState(true);
 
   // Overview data
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const { data: dashboard, loading } = useApi<DashboardData>(
+    () => apiClient.get('/reports/dashboard').then(r => r.data),
+    []
+  );
 
   // Members data
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -120,17 +123,6 @@ export default function ReportsPage() {
   // Export
   const [exportType, setExportType] = useState('members');
   const [exportLoading, setExportLoading] = useState(false);
-
-  // Fetch overview on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: res } = await apiClient.get('/reports/dashboard');
-        setDashboard(res.data);
-      } catch { /* ignore */ }
-      setLoading(false);
-    })();
-  }, []);
 
   // Fetch members
   const fetchMembers = useCallback(async () => {

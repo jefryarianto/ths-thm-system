@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { Trophy, Zap, Flame, Star, Award } from 'lucide-react';
 
 interface LeaderboardEntry {
@@ -20,7 +20,7 @@ export default function PublicLeaderboardPage() {
 
   useEffect(() => {
     apiClient.get('/gamification/public/leaderboard?limit=50')
-      .then((res) => setLeaderboard(res.data.data || []))
+      .then(res => setLeaderboard(unwrap<LeaderboardEntry[]>(res) || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
