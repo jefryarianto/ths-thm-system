@@ -125,12 +125,14 @@ export default function ReportsPage() {
       return apiClient.get('/members', { params }).then(r => r.data);
     },
     [memberPage, memberSearch],
+    activeTab === 'members',
   );
 
   // Scan data
   const { data: scanStats, loading: scanLoading, refetch: fetchScanStats } = useApi<ScanStats>(
     () => apiClient.get('/reports/scan-stats').then(r => r.data),
     [],
+    activeTab === 'scan',
   );
 
   // Export

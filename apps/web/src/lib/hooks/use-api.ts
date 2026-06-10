@@ -13,9 +13,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  * );
  * ```
  */
-export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList) {
+export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList, enabled = true) {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -39,9 +39,14 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList)
 
   useEffect(() => {
     mountedRef.current = true;
-    execute();
+    if (enabled) {
+      execute();
+    } else {
+      setLoading(false);
+    }
     return () => { mountedRef.current = false; };
-  }, [execute]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [execute, enabled]);
 
   return { data, loading, error, refetch: execute };
 }
@@ -61,10 +66,11 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList)
 export function usePaginatedList<T>(
   fetcher: () => Promise<{ data: T[]; meta: { total: number; totalPages: number } }>,
   deps: React.DependencyList,
+  enabled = true,
 ) {
   const [data, setData] = useState<T[]>([]);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -90,9 +96,14 @@ export function usePaginatedList<T>(
 
   useEffect(() => {
     mountedRef.current = true;
-    execute();
+    if (enabled) {
+      execute();
+    } else {
+      setLoading(false);
+    }
     return () => { mountedRef.current = false; };
-  }, [execute]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [execute, enabled]);
 
   return { data, meta, loading, error, refetch: execute };
 }
