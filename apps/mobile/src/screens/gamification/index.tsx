@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { router } from 'expo-router';
-import { useGamificationProfile, usePointsHistory, useBadges, useRecentEvents, useRewards, useOrgStructure, useLeaderboard, useGamificationData } from '../../hooks/use-gamification';
+import { useGamificationProfile, usePointsHistory, useBadges, useRecentEvents, useRewards, useOrgStructure, useLeaderboard } from '../../hooks/use-gamification';
 import type { Reward, LeaderboardEntry, PointEvent } from '../../hooks/use-gamification';
 import Confetti from './confetti';
 import GamificationTour from './tour';
@@ -183,12 +183,7 @@ export default function GamificationScreen() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [page, setPage] = useState(0);
   const pageSize = 10;
-  const [hasMore, setHasMore] = useState(true);
-
-  // Leaderboard data (manual pagination)
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   // Load anggotaId from AsyncStorage once
   useEffect(() => {
@@ -210,7 +205,7 @@ export default function GamificationScreen() {
   // Confetti on first profile load
   const previousBadgeCount = useRef(0);
   useEffect(() => {
-    if (profile?.badges?.length > 0 && previousBadgeCount.current === 0) {
+    if ((profile?.badges?.length ?? 0) > 0 && previousBadgeCount.current === 0) {
       setShowConfetti(true);
     }
     previousBadgeCount.current = profile?.badges?.length ?? 0;
@@ -222,43 +217,15 @@ export default function GamificationScreen() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Reset page on search/filter change
-  useEffect(() => { setPage(0); }, [debouncedSearch, selectedDistrik, selectedWilayah, selectedRanting]);
-
-  // Fetch leaderboard when filters or search change
-  const fetchLeaderboard = useCallback(async (isLoadMore = false) => {
-    try {
-      let url = `/gamification/leaderboard?limit=${pageSize}`;
-      if (selectedRanting) url += `&rantingId=${selectedRanting}`;
-      else if (selectedWilayah) url += `&wilayahId=${selectedWilayah}`;
-      else if (selectedDistrik) url += `&distrikId=${selectedDistrik}`;
-      if (debouncedSearch.trim()) url += `&search=${encodeURIComponent(debouncedSearch.trim())}`;
-      if (isLoadMore) url += `&skip=${(page + 1) * pageSize}`;
-
-      const res = await apiClient.get(url);
-      const newData = res.data.data || [];
-      if (isLoadMore) {
-        setLeaderboard((prev) => [...prev, ...newData]);
-      } else {
-        setLeaderboard(newData);
-      }
-      setHasMore(newData.length >= pageSize);
-    } catch { /* ignore */ }
-  }, [page, pageSize, selectedDistrik, selectedWilayah, selectedRanting, debouncedSearch]);
-
-  // Load leaderboard on mount and when filters change
-  useEffect(() => {
-    if (!debouncedSearch || debouncedSearch === '') {
-      fetchLeaderboard(false);
-    } else {
-      fetchLeaderboard(false);
-    }
-  }, [fetchLeaderboard]);
-
-  const loadMore = async () => {
-    setPage((p) => p + 1);
-    await fetchLeaderboard(true);
+  // Leaderboard hook — auto-refetches when filters change
+  const filters: Parameters<typeof useLeaderboard>[0] = {
+    limit: pageSize,
+    search: debouncedSearch.trim() || undefined,
+    rantingId: selectedRanting || undefined,
+    wilayahId: selectedWilayah || undefined,
+    distrikId: selectedDistrik || undefined,
   };
+  const { data: leaderboard, loading: leaderboardLoading, refetch: refetchLeaderboard } = useLeaderboard(filters);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -267,7 +234,7 @@ export default function GamificationScreen() {
     refetchEvents();
     refetchRewards();
     refetchOrgTree();
-    fetchLeaderboard(false);
+    refetchLeaderboard();
     setRefreshing(false);
   }, []);
 
@@ -347,7 +314,7 @@ export default function GamificationScreen() {
                   <Text style={styles.streakLabel}>Streak Iuran</Text>
                 </TouchableOpacity>
               </View>
-              {profile.badges.length > 0 && (
+              {profile.badges && profile.badges.length > 0 && (
                 <View style={styles.subSection}>
                   <Text style={styles.subTitle}>Badge Diraih ({profile.badges.length})</Text>
                   <View style={styles.badgeGrid}>
@@ -444,7 +411,7 @@ export default function GamificationScreen() {
               </TouchableOpacity>
             )}
           </View>
-          {leaderboard.length > 0 ? leaderboard.map((entry) => (
+          {leaderboard && leaderboard.length > 0 ? leaderboard.map((entry) => (
             <TouchableOpacity key={entry.anggotaId} style={[styles.leaderboardItem, entry.rank <= 3 && styles.topThree]} activeOpacity={0.7}>
               <Text style={styles.rankIcon}>{RANK_ICONS[entry.rank] || `#${entry.rank}`}</Text>
               <View style={styles.leaderboardInfo}>
@@ -459,12 +426,10 @@ export default function GamificationScreen() {
                 <Text style={styles.pointsText}>{entry.points.toLocaleString('id-ID')}</Text>
               </View>
             </TouchableOpacity>
-          )) : <Text style={styles.emptyText}>Belum ada data leaderboard</Text>}
-          {hasMore && leaderboard.length > 0 && (
-            <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore}>
-              <Ionicons name={'arrow-down' as any} size={16} color="#3b82f6" />
-              <Text style={styles.loadMoreText}>Muat Lainnya</Text>
-            </TouchableOpacity>
+          )) : leaderboardLoading ? (
+            <ActivityIndicator size="small" color="#3b82f6" style={{ padding: 20 }} />
+          ) : (
+            <Text style={styles.emptyText}>Belum ada data leaderboard</Text>
           )}
         </View>
       </AnimatedTabContent>
