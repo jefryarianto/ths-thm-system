@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 interface Activity {
   id: string;
@@ -30,33 +32,29 @@ const TIPE_ICONS: Record<string, string> = {
   lainnya: 'ellipsis-horizontal',
 };
 
+const FILTER_OPTIONS = [
+  { value: '', label: 'Semua' },
+  { value: 'published', label: 'Berlangsung' },
+  { value: 'closed', label: 'Selesai' },
+  { value: 'draft', label: 'Draft' },
+];
+
 export default function ActivitiesScreen() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<string>('');
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (filter) params.status = filter;
-      const res = await apiClient.get('/activities', { params });
-      setActivities(res.data.data || []);
-    } catch { /* ignore */ }
-    setLoading(false);
-  };
+  const { data: activities, loading, refetch } = useApi<Activity[]>(
+    () => apiClient.get('/activities', { params: { limit: 50, status: filter || undefined } }).then(r => r.data.data || []),
+    [filter]
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await refetch();
     setRefreshing(false);
   };
 
-  const filters = ['', 'published', 'closed', 'draft'];
-
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <LoadingView message="Memuat kegiatan..." />;
 
   return (
     <View style={styles.container}>
@@ -66,19 +64,7 @@ export default function ActivitiesScreen() {
       </View>
 
       {/* Filter Chips */}
-      <View style={styles.filterRow}>
-        {filters.map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterChip, filter === f && styles.filterChipActive]}
-            onPress={() => { setFilter(f); setLoading(true); }}
-          >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f ? (STATUS_STYLES[f]?.label || f) : 'Semua'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={FILTER_OPTIONS} selected={filter} onChange={setFilter} />
 
       <FlatList
         data={activities}
@@ -128,15 +114,10 @@ export default function ActivitiesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
-  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  filterChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: '#f3f4f6' },
-  filterChipActive: { backgroundColor: '#2563eb' },
-  filterText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
-  filterTextActive: { color: '#fff' },
+
   card: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 14, padding: 14, marginBottom: 8,

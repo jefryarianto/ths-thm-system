@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
   TextInput,
@@ -12,25 +11,25 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 type LetterTab = 'incoming' | 'outgoing';
 
-interface IncomingLetter {
+interface BaseLetter {
   id: string;
   nomorSurat: string;
-  pengirim: string;
   perihal: string;
   tanggalSurat: string;
   status: string;
 }
 
-interface OutgoingLetter {
-  id: string;
-  nomorSurat: string;
+interface IncomingLetter extends BaseLetter {
+  pengirim: string;
+}
+
+interface OutgoingLetter extends BaseLetter {
   tujuan: string;
-  perihal: string;
-  tanggalSurat: string;
-  status: string;
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
@@ -41,40 +40,37 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }
   diarsipkan: { label: 'Diarsipkan', bg: '#f3f4f6', color: '#6b7280' },
 };
 
+const STATUS_FILTERS = [
+  { value: '', label: 'Semua' },
+  { value: 'diterima', label: 'Diterima' },
+  { value: 'diproses', label: 'Diproses' },
+  { value: 'terkirim', label: 'Terkirim' },
+  { value: 'draft', label: 'Draft' },
+];
+
 export default function LettersScreen() {
   const [tab, setTab] = useState<LetterTab>('incoming');
-  const [incoming, setIncoming] = useState<IncomingLetter[]>([]);
-  const [outgoing, setOutgoing] = useState<OutgoingLetter[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, [tab, search, filterStatus]);
+  const { data: incoming, loading: loadingIncoming, refetch: refetchIncoming } = useApi<IncomingLetter[]>(
+    () => apiClient.get('/letters/incoming', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    [search, filterStatus]
+  );
 
-  const fetchData = async () => {
-    try {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (search.trim()) params.search = search.trim();
-      if (filterStatus) params.status = filterStatus;
-      if (tab === 'incoming') {
-        const res = await apiClient.get('/letters/incoming', { params });
-        setIncoming(res.data.data || []);
-      } else {
-        const res = await apiClient.get('/letters/outgoing', { params });
-        setOutgoing(res.data.data || []);
-      }
-    } catch {
-      /* ignore */
-    }
-    setLoading(false);
-  };
+  const { data: outgoing, loading: loadingOutgoing, refetch: refetchOutgoing } = useApi<OutgoingLetter[]>(
+    () => apiClient.get('/letters/outgoing', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    [search, filterStatus]
+  );
+
+  const loading = tab === 'incoming' ? loadingIncoming : loadingOutgoing;
+  const refetch = tab === 'incoming' ? refetchIncoming : refetchOutgoing;
+  const currentData = (tab === 'incoming' ? incoming : outgoing) || [];
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await refetch();
     setRefreshing(false);
   };
 
@@ -86,14 +82,7 @@ export default function LettersScreen() {
     });
   };
 
-  const currentData: IncomingLetter[] | OutgoingLetter[] = tab === 'incoming' ? incoming : outgoing;
-
-  if (loading)
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
+  if (loading) return <LoadingView message="Memuat surat..." />;
 
   return (
     <View style={styles.container}>
@@ -120,22 +109,7 @@ export default function LettersScreen() {
       </View>
 
       {/* Status Filter Chips */}
-      <View style={styles.filterRow}>
-        {['', 'diterima', 'diproses', 'terkirim', 'draft'].map((sf) => (
-          <TouchableOpacity
-            key={sf}
-            style={[styles.filterChip, filterStatus === sf && styles.filterChipActive]}
-            onPress={() => {
-              setFilterStatus(sf);
-              setLoading(true);
-            }}
-          >
-            <Text style={[styles.filterText, filterStatus === sf && styles.filterTextActive]}>
-              {sf ? STATUS_STYLES[sf]?.label || sf : 'Semua'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={STATUS_FILTERS} selected={filterStatus} onChange={setFilterStatus} />
 
       {/* Tab Selector */}
       <View style={styles.tabContainer}>
@@ -279,22 +253,7 @@ const styles = StyleSheet.create({
   perihal: { fontSize: 14, fontWeight: '600', color: '#111827' },
   nomorSurat: { fontSize: 11, color: '#6b7280', marginTop: 2 },
   partner: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexWrap: 'wrap',
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: '#f3f4f6',
-  },
-  filterChipActive: { backgroundColor: '#2563eb' },
-  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
-  filterTextActive: { color: '#fff' },
+
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
   statusText: { fontSize: 11, fontWeight: '600' },
   date: { fontSize: 11, color: '#9ca3af', marginTop: 8 },

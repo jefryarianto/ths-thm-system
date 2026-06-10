@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 interface Candidate {
   id: string;
@@ -20,38 +22,31 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }
   dibatalkan: { label: 'Dibatalkan', bg: '#f3f4f6', color: '#6b7280' },
 };
 
+const STATUS_FILTERS = [
+  { value: '', label: 'Semua' },
+  { value: 'diusulkan', label: 'Diusulkan' },
+  { value: 'mengikuti_pendadaran', label: 'Pendadaran' },
+  { value: 'lulus', label: 'Lulus' },
+  { value: 'gagal', label: 'Gagal' },
+];
+
 export default function CandidatesScreen() {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const fetchData = async () => {
-    try {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (search.trim()) params.search = search.trim();
-      if (filterStatus) params.status = filterStatus;
-      const res = await apiClient.get('/candidates', { params });
-      setCandidates(res.data.data || []);
-    } catch { /* ignore */ }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(fetchData, 300);
-    return () => clearTimeout(timer);
-  }, [search, filterStatus]);
+  const { data: candidates, loading, refetch } = useApi<Candidate[]>(
+    () => apiClient.get('/candidates', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    [search, filterStatus]
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await refetch();
     setRefreshing(false);
   };
 
-  const statusFilters = ['', 'diusulkan', 'mengikuti_pendadaran', 'lulus', 'gagal'];
-
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <LoadingView message="Memuat calon anggota..." />;
 
   return (
     <View style={styles.container}>
@@ -78,19 +73,7 @@ export default function CandidatesScreen() {
       </View>
 
       {/* Status Filter */}
-      <View style={styles.filterRow}>
-        {statusFilters.map((sf) => (
-          <TouchableOpacity
-            key={sf}
-            style={[styles.filterChip, filterStatus === sf && styles.filterChipActive]}
-            onPress={() => setFilterStatus(sf)}
-          >
-            <Text style={[styles.filterText, filterStatus === sf && styles.filterTextActive]}>
-              {sf ? (STATUS_STYLES[sf]?.label || sf) : 'Semua'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={STATUS_FILTERS} selected={filterStatus} onChange={setFilterStatus} />
 
       <FlatList
         data={candidates}
@@ -144,11 +127,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 12, paddingVertical: 8,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
-  filterRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 10, flexWrap: 'wrap' },
-  filterChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb' },
-  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
-  filterTextActive: { color: '#fff' },
+
   card: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 14, padding: 14, marginBottom: 8,

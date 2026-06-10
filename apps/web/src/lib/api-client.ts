@@ -60,3 +60,40 @@ export const clearTokens = () => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
 };
+
+// ─── Response Helpers ───
+
+/** Standard API response wrapper from the backend */
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+/** Paginated list envelope */
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    totalPages: number;
+    page?: number;
+    limit?: number;
+  };
+}
+
+/**
+ * Unwrap `r.data.data` from an Axios response.
+ *
+ * Before: `apiClient.get('/foo').then(r => r.data.data)`
+ * After:  `apiClient.get('/foo').then(unwrap)`
+ */
+export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
+
+/**
+ * Unwrap a paginated response.
+ *
+ * Before: `apiClient.get('/foo').then(r => r.data)`  // { data: T[], meta: ... }
+ * After:  `apiClient.get('/foo').then(unwrapPaginated)`
+ */
+export const unwrapPaginated = <T>(response: { data: ApiResponse<PaginatedResponse<T>> }): PaginatedResponse<T> =>
+  response.data.data;
