@@ -46,4 +46,15 @@ export const clearTokens = async () => {
   await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
 };
 
+// ─── Response Helpers ───
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+/** Unwrap `r.data.data` from an Axios response. Use with `.then(unwrap)` */
+export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
+
 export default apiClient;

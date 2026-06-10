@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
 import DataTable from '@/components/tables/data-table';
 import {
   Plus, CreditCard, TrendingUp, AlertTriangle, CheckCircle,
@@ -80,28 +81,21 @@ const columns = [
 
 export default function DuesPage() {
   const [stats, setStats] = useState<DuesStats | null>(null);
-  const [data, setData] = useState<DuesRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
 
-  useEffect(() => {
-    apiClient.get('/dues/dashboard/stats').then(({ data: res }) => {
+  const { data, meta, loading, refetch } = usePaginatedList<DuesRow>(
+    () => apiClient.get('/dues', { params: { page, limit: 10 } }).then(r => r.data),
+    [page]
+  );
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const { data: res } = await apiClient.get('/dues/dashboard/stats');
       setStats(res.data);
-    }).catch(() => {});
+    } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const { data: res } = await apiClient.get('/dues', { params: { page, limit: 10 } });
-        setData(res.data);
-        setMeta(res.meta);
-      } catch { /* skip */ }
-      setLoading(false);
-    })();
-  }, [page]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const pieData = stats ? [
     { name: 'Lunas', value: Math.max(0, stats.totalTransaksi - stats.totalMenunggak - stats.belumBayarBulanIni), color: STATUS_COLORS.lunas },

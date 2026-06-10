@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView } from '../../components/ui/shared';
 
 interface DashboardStats {
   totalMembers: number;
@@ -15,28 +17,25 @@ interface DashboardStats {
 }
 
 export default function ReportsScreen() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
-    try {
-      const res = await apiClient.get('/reports/dashboard');
-      setStats(res.data.data);
-    } catch { /* ignore */ }
-    setLoading(false);
-  };
+  const { data: stats, loading, refetch } = useApi<DashboardStats>(
+    () => apiClient.get('/reports/dashboard').then(r => r.data.data),
+    []
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await refetch();
     setRefreshing(false);
   };
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
-  if (!stats) return <View style={styles.center}><Text style={styles.errorText}>Gagal memuat laporan</Text></View>;
+  if (loading) return <LoadingView message="Memuat laporan..." />;
+  if (!stats) return (
+    <View style={styles.center}>
+      <Text style={styles.errorText}>Gagal memuat laporan</Text>
+    </View>
+  );
 
   const statCards = [
     { icon: 'people', label: 'Total Anggota', value: stats.totalMembers, color: '#2563eb', bg: '#eff6ff' },

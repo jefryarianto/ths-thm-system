@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 interface Graduation {
   id: string;
@@ -36,42 +37,22 @@ const FILTERS = [
 ];
 
 export default function GraduationsScreen() {
-  const [data, setData] = useState<Graduation[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const fetchData = async (query?: string, status?: string) => {
-    try {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (query?.trim()) params.search = query.trim();
-      if (status) params.status = status;
-      const res = await apiClient.get('/graduations', { params });
-      setData(res.data.data || []);
-    } catch {
-      /* ignore */
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => fetchData(search, filterStatus), 300);
-    return () => clearTimeout(timer);
-  }, [search, filterStatus]);
+  const { data, loading, refetch } = useApi<Graduation[]>(
+    () => apiClient.get('/graduations', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    [search, filterStatus]
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData(search, filterStatus);
+    await refetch();
     setRefreshing(false);
   };
 
-  if (loading)
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
+  if (loading) return <LoadingView message="Memuat pendadaran..." />;
 
   return (
     <View style={styles.container}>
@@ -103,22 +84,7 @@ export default function GraduationsScreen() {
       </View>
 
       {/* Status Filter */}
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.value}
-            style={[styles.filterChip, filterStatus === f.value && styles.filterChipActive]}
-            onPress={() => {
-              setFilterStatus(f.value);
-              setLoading(true);
-            }}
-          >
-            <Text style={[styles.filterText, filterStatus === f.value && styles.filterTextActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={FILTERS} selected={filterStatus} onChange={setFilterStatus} />
 
       <FlatList
         data={data}
@@ -196,7 +162,6 @@ export default function GraduationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
@@ -214,24 +179,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexWrap: 'wrap',
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
-  filterTextActive: { color: '#fff' },
+
   card: {
     flexDirection: 'row',
     alignItems: 'center',
