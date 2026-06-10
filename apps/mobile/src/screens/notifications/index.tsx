@@ -1,55 +1,62 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView } from '../../components/ui/shared';
 
 const typeIcons: Record<string, string> = { reminder_latihan: '🏋️', reminder_iuran: '💰', reminder_pendadaran: '🎓', dokumen_ready: '📄', data_incomplete: '⚠️', status_klaim: '📋', welcome: '👋', umum: '📢' };
 
+interface NotificationItem {
+  id: string;
+  judul: string;
+  isi: string;
+  tipe: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+const typeIcons: Record<string, string> = { reminder_latihan: '🏋️', reminder_iuran: '💰', reminder_pendadaran: '🎓', dokumen_ready: '📄', data_incomplete: '⚠️', status_klaim: '📋', welcome: '👋', umum: '📢' };
+
+function formatTime(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} menit lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  return new Date(dateStr).toLocaleDateString('id-ID');
+}
+
 export default function NotificationsScreen() {
-  const [notifs, setNotifs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const unreadCount = notifs.filter(n => !n.isRead).length;
 
-  const fetchNotifs = async () => {
-    try {
-      const res = await apiClient.get('/notifications', { params: { limit: 50 } });
-      setNotifs(res.data.data || []);
-    } catch { /* ignore */ }
-    setLoading(false);
-  };
+  const { data: notifs, loading, refetch } = useApi<NotificationItem[]>(
+    () => apiClient.get('/notifications', { params: { limit: 50 } }).then(r => r.data.data || []),
+    []
+  );
 
-  useEffect(() => { fetchNotifs(); }, []);
+  const unreadCount = (notifs || []).filter(n => !n.isRead).length;
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchNotifs();
+    await refetch();
     setRefreshing(false);
   };
 
   const markAllAsRead = async () => {
     try {
       await apiClient.patch('/notifications/read-all');
-      setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      refetch();
     } catch { /* ignore */ }
   };
 
   const markAsRead = async (id: string) => {
     try {
       await apiClient.patch(`/notifications/${id}/read`);
-      setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+      refetch();
     } catch { /* ignore */ }
   };
 
-  const formatTime = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins} menit lalu`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} jam lalu`;
-    return new Date(dateStr).toLocaleDateString('id-ID');
-  };
-
-  if (loading) return <View style={styles.container}><ActivityIndicator size="large" /></View>;
+  if (loading) return <LoadingView message="Memuat notifikasi..." />;
 
   return (
     <View style={styles.container}>

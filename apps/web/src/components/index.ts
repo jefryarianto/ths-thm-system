@@ -14,3 +14,4 @@ export { default as SearchBar } from './ui/search-bar';
 export { default as FilterSelect } from './ui/filter-select';
 export { default as DataTable } from './ui/data-table';
 export { default as PageHeader } from './ui/page-header';
+export { default as PageContainer } from './ui/page-container';

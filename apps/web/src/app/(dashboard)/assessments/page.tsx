@@ -9,6 +9,7 @@ import {
   Eye, CheckCircle, XCircle,
 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
+import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
@@ -40,7 +41,7 @@ export default function AssessmentsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <PageContainer>
       <PageHeader title="Aspek & Item Penilaian" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Tambah
@@ -105,6 +106,6 @@ export default function AssessmentsPage() {
           </tr>
         )}
       />
-    </div>
+    </PageContainer>
   );
 }

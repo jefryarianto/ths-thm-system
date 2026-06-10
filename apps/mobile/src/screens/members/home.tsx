@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { LoadingView } from '../../components/ui/shared';
+import { useApi } from '../../hooks/use-api';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
@@ -24,18 +26,13 @@ const menuItems = [
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
-  const [member, setMember] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await apiClient.get('/members', { params: { limit: 1 } });
-        if (res.data.data?.length > 0) setMember(res.data.data[0]);
-      } catch { /* ignore */ }
-      setLoading(false);
-    })();
-  }, []);
+  const { data: memberData, loading } = useApi<{ namaLengkap: string; statusKeanggotaan: string; nomorAnggota: string; tingkat: string }>(
+    () => apiClient.get('/members', { params: { limit: 1 } }).then(r => r.data.data?.[0] || null),
+    []
+  );
+
+  const member = memberData as any;
 
 
   return (
@@ -57,7 +54,7 @@ export default function HomeScreen() {
       <View style={styles.infoSection}>
         <Text style={styles.sectionTitle}>Status Keanggotaan</Text>
         {loading ? (
-          <ActivityIndicator style={{ padding: 20 }} />
+          <LoadingView message="Memuat data anggota..." />
         ) : (
           <View style={styles.statusCard}>
             <View style={styles.statusRow}>

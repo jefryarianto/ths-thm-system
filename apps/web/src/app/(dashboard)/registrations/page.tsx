@@ -10,6 +10,7 @@ import {
   Download, Eye, FileText,
 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
+import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
@@ -91,7 +92,7 @@ export default function RegistrationsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <PageContainer>
       <PageHeader title="Pendaftaran Baru">
         <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
           <Download size={14} /> Export
@@ -202,6 +203,6 @@ export default function RegistrationsPage() {
           </tr>
         )}
       />
-    </div>
+    </PageContainer>
   );
 }

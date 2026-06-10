@@ -8,6 +8,7 @@ import {
   CreditCard, CheckCircle, Clock, ArrowUpRight,
 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
+import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 
@@ -56,7 +57,7 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <PageContainer>
       <PageHeader title="Manajemen Pembayaran" onRefresh={refetch} />
 
       {/* Stat Cards */}
@@ -131,6 +132,6 @@ export default function PaymentsPage() {
           </tr>
         )}
       />
-    </div>
+    </PageContainer>
   );
 }
