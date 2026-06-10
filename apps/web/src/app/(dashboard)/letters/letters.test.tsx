@@ -288,9 +288,17 @@ describe('LettersPage', () => {
       expect(screen.getByText('Edit Surat Masuk')).toBeInTheDocument();
     });
 
-    // Check form is pre-filled
-    // Check modal title confirms edit mode
-    expect(screen.getByText('Edit Surat Masuk')).toBeInTheDocument();
+    // Verify form fields are pre-filled from letter data
+    const modal = screen.getByText('Edit Surat Masuk').closest('.fixed') as HTMLElement;
+    const modalInputs = within(modal).getAllByRole('textbox');
+
+    // Input order in the form: nomorSurat (0), pengirim (1), perihal (2), tanggalSurat (3), tanggalTerima (4), fileScanPath (5)
+    expect(modalInputs[0]).toHaveValue('001/THS/V/2026');
+    expect(modalInputs[1]).toHaveValue('Ketua THS');
+    expect(modalInputs[2]).toHaveValue('Undangan Rapat');
+
+    // Verify save button text is "Simpan Perubahan" (edit mode), not "Tambah Surat"
+    expect(screen.getByText('Simpan Perubahan')).toBeInTheDocument();
   });
 
   it('calls PATCH when editing a letter', async () => {
