@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 
 interface CandidateDetail {
   id: string;
@@ -35,7 +35,7 @@ export default function CandidateDetailScreen() {
     (async () => {
       try {
         const res = await apiClient.get(`/candidates/${id}`);
-        setCandidate(res.data.data);
+        setCandidate(unwrap(res));
       } catch { /* ignore */ }
       setLoading(false);
     })();
@@ -55,7 +55,7 @@ export default function CandidateDetailScreen() {
               await apiClient.post(`/candidates/${id}/approve`);
               Alert.alert('✅ Berhasil', 'Calon anggota telah disetujui');
               const res = await apiClient.get(`/candidates/${id}`);
-              setCandidate(res.data.data);
+              setCandidate(unwrap(res));
             } catch (err: any) {
               Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
             }
@@ -82,7 +82,7 @@ export default function CandidateDetailScreen() {
                   await apiClient.post(`/candidates/${id}/reject`, { reason });
                   Alert.alert('Ditolak', 'Calon anggota telah ditolak');
                   const res = await apiClient.get(`/candidates/${id}`);
-                  setCandidate(res.data.data);
+                  setCandidate(unwrap(res));
                 } catch (err: any) {
                   Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
                 }
@@ -110,7 +110,7 @@ export default function CandidateDetailScreen() {
               await apiClient.post(`/candidates/${id}/reject`, {});
               Alert.alert('Ditolak', 'Calon anggota telah ditolak');
               const res = await apiClient.get(`/candidates/${id}`);
-              setCandidate(res.data.data);
+              setCandidate(unwrap(res));
             } catch (err: any) {
               Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
             }

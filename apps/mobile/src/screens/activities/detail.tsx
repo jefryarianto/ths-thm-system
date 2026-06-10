@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 
 interface ActivityDetail {
   id: string;
@@ -58,15 +59,15 @@ export default function ActivityDetailScreen() {
           apiClient.get(`/activities/${id}/presence`).catch(() => ({ data: { data: [] } })),
           apiClient.get(`/activities/${id}/documents`).catch(() => ({ data: { data: [] } })),
         ]);
-        setActivity(actRes.data.data);
-        setParticipants(partRes.data.data || []);
-        setDocuments(docRes.data.data || []);
+        setActivity(unwrap(actRes));
+        setParticipants(unwrap(partRes) || []);
+        setDocuments(unwrap(docRes) || []);
       } catch { /* ignore */ }
       setLoading(false);
     })();
   }, [id]);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <LoadingView message="Memuat detail kegiatan..." />;
   if (!activity) return <View style={styles.center}><Text style={styles.errorText}>Kegiatan tidak ditemukan</Text></View>;
 
   const icon = TIPE_ICONS[activity.tipe] || 'ellipsis-horizontal';

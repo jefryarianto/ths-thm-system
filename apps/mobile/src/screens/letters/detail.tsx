@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 
 interface LetterDetail {
   id: string;
@@ -41,13 +42,13 @@ export default function LetterDetailScreen() {
       try {
         const endpoint = isIncoming ? `/letters/incoming/${id}` : `/letters/outgoing/${id}`;
         const res = await apiClient.get(endpoint);
-        setLetter(res.data.data);
+        setLetter(unwrap(res));
       } catch { /* ignore */ }
       setLoading(false);
     })();
   }, [id, type]);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <LoadingView message="Memuat detail surat..." />;
   if (!letter) return <View style={styles.center}><Text style={styles.errorText}>Surat tidak ditemukan</Text></View>;
 
   const statusStyle = STATUS_STYLES[letter.status] || { label: letter.status, bg: '#f3f4f6', color: '#6b7280' };
