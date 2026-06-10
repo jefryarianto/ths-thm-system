@@ -56,12 +56,14 @@ export default function ActivityDetailScreen() {
       try {
         const [actRes, partRes, docRes] = await Promise.all([
           apiClient.get(`/activities/${id}`),
-          apiClient.get(`/activities/${id}/presence`).catch(() => ({ data: { data: [] } })),
-          apiClient.get(`/activities/${id}/documents`).catch(() => ({ data: { data: [] } })),
+          apiClient.get(`/activities/${id}/presence`).catch(() => ({ data: { data: { data: [] as Participant[] } } })),
+          apiClient.get(`/activities/${id}/documents`).catch(() => ({ data: { data: { data: [] as ActivityDocument[] } } })),
         ]);
         setActivity(unwrap(actRes));
-        setParticipants(unwrap(partRes) || []);
-        setDocuments(unwrap(docRes) || []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setParticipants((partRes as any)?.data?.data ?? []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setDocuments((docRes as any)?.data?.data ?? []);
       } catch { /* ignore */ }
       setLoading(false);
     })();

@@ -1,17 +1,20 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 /**
  * Shared hook for pull-to-refresh pattern.
- * Eliminates duplicate `refreshing` + `onRefresh` boilerplate across screens.
+ * Uses `useRef` to keep the refetch function stable,
+ * so `onRefresh` doesn't change on every render.
  */
 export function useRefresh(refetch: () => Promise<void>) {
   const [refreshing, setRefreshing] = useState(false);
+  const refetchRef = useRef(refetch);
+  refetchRef.current = refetch;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await refetchRef.current();
     setRefreshing(false);
-  }, [refetch]);
+  }, []);
 
   return { refreshing, onRefresh };
 }

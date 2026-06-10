@@ -19,7 +19,7 @@ interface DashboardStats {
 
 export default function ReportsScreen() {
   const { data: stats, loading, refetch } = useApi<DashboardStats>(
-    () => apiClient.get('/reports/dashboard').then(unwrap),
+    () => apiClient.get('/reports/dashboard').then((r) => unwrap<DashboardStats>(r)),
     []
   );
   const { refreshing, onRefresh } = useRefresh(refetch);

@@ -55,12 +55,12 @@ export default function LettersScreen() {
   const [filterStatus, setFilterStatus] = useState('');
 
   const { data: incoming, loading: loadingIncoming, refetch: refetchIncoming } = useApi<IncomingLetter[]>(
-    () => apiClient.get('/letters/incoming', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
+    () => apiClient.get('/letters/incoming', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => (unwrap(r) ?? []) as IncomingLetter[]),
     [search, filterStatus]
   );
 
   const { data: outgoing, loading: loadingOutgoing, refetch: refetchOutgoing } = useApi<OutgoingLetter[]>(
-    () => apiClient.get('/letters/outgoing', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
+    () => apiClient.get('/letters/outgoing', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => (unwrap(r) ?? []) as OutgoingLetter[]),
     [search, filterStatus]
   );
 
@@ -113,7 +113,6 @@ export default function LettersScreen() {
           style={[styles.tab, tab === 'incoming' && styles.tabActive]}
           onPress={() => {
             setTab('incoming');
-            setLoading(true);
           }}
         >
           <Ionicons name="mail-open" size={16} color={tab === 'incoming' ? '#fff' : '#6b7280'} />
@@ -123,7 +122,6 @@ export default function LettersScreen() {
           style={[styles.tab, tab === 'outgoing' && styles.tabActive]}
           onPress={() => {
             setTab('outgoing');
-            setLoading(true);
           }}
         >
           <Ionicons name="mail" size={16} color={tab === 'outgoing' ? '#fff' : '#6b7280'} />

@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { LoadingView } from '../../components/ui/shared';
-import { useApi } from '../../hooks/use-api';
+import { useRefresh } from '../../hooks/use-refresh';
+import { useMemberProfile } from '../../hooks/use-member-profile';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import apiClient, { unwrap } from '../../lib/api-client';
 import { useAuthStore } from '../../store/auth-store';
-
 
 const menuItems = [
   { icon: 'person', label: 'Profil Saya', route: '/profile' },
@@ -26,17 +25,14 @@ const menuItems = [
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
-
-  const { data: memberData, loading } = useApi<{ namaLengkap: string; statusKeanggotaan: string; nomorAnggota: string; tingkat: string }>(
-    () => apiClient.get('/members', { params: { limit: 1 } }).then(unwrap).then(d => d?.[0] || null),
-    []
-  );
-
-  const member = memberData as any;
-
+  const { data: member, loading, refetch } = useMemberProfile();
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.header}>
         <Text style={styles.greeting}>Selamat Datang,</Text>
         <Text style={styles.name}>{member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}</Text>
