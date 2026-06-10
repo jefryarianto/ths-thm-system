@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
+import { useApi } from '@/lib/hooks/use-api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import {
   BarChart3, CheckCircle, FileText, Activity, Download,
@@ -24,8 +25,6 @@ interface ScanStats {
 }
 
 export default function ScanStatsPage() {
-  const [stats, setStats] = useState<ScanStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
   // Filters
@@ -34,16 +33,10 @@ export default function ScanStatsPage() {
   const [dateRangeEnd, setDateRangeEnd] = useState('');
   const [filterHadir, setFilterHadir] = useState('');
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: res } = await apiClient.get('/reports/scan-stats');
-      setStats(res.data);
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data: stats, loading, refetch: fetchData } = useApi<ScanStats>(
+    () => apiClient.get('/reports/scan-stats').then(r => r.data.data),
+    []
+  );
 
   // Filter recent absensi
   const filteredAbsensi = stats?.recentAbsensi?.filter((a) => {
@@ -129,7 +122,7 @@ export default function ScanStatsPage() {
       </div>
 
       {/* Stat Cards */}
-      {loading && !stats ? (
+      {(loading && !stats) ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 animate-pulse">

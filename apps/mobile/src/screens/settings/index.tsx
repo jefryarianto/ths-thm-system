@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  TouchableOpacity, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
+import { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
 import { router } from 'expo-router';
 
@@ -33,8 +35,7 @@ export default function SettingsScreen() {
   const fetchProfile = async () => {
     setLoadingProfile(true);
     try {
-      const { data } = await apiClient.get('/auth/me');
-      const p = data.data;
+      const p = await apiClient.get('/auth/me').then(unwrap);
       setProfile(p);
       setProfileForm({ namaLengkap: p.namaLengkap || '', email: p.email || '' });
     } catch { /* ignore */ }
@@ -48,8 +49,8 @@ export default function SettingsScreen() {
     }
     setSavingProfile(true);
     try {
-      const { data } = await apiClient.patch('/auth/me', { namaLengkap: profileForm.namaLengkap });
-      setProfile(data.data);
+      const updated = await apiClient.patch('/auth/me', { namaLengkap: profileForm.namaLengkap }).then(unwrap);
+      setProfile(updated);
       setEditingProfile(false);
       Alert.alert('Berhasil', 'Profil berhasil diperbarui');
     } catch (err: any) {
@@ -118,7 +119,7 @@ export default function SettingsScreen() {
           </View>
 
           {loadingProfile ? (
-            <ActivityIndicator style={{ padding: 20 }} />
+            <LoadingView />
           ) : (
             <View style={styles.card}>
               {/* Avatar */}
