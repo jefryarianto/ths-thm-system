@@ -1,44 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient, { unwrap } from '../../lib/api-client';
-import { useApi } from '../../hooks/use-api';
+import { useCandidates, STATUS_STYLES, STATUS_FILTERS } from '../../hooks/use-candidates';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
-
-interface Candidate {
-  id: string;
-  namaLengkap: string;
-  jenisKelamin: string;
-  status: string;
-  createdAt: string;
-  ranting?: { nama: string };
-}
-
-const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  diusulkan: { label: 'Diusulkan', bg: '#eff6ff', color: '#2563eb' },
-  mengikuti_pendadaran: { label: 'Pendadaran', bg: '#fef3c7', color: '#d97706' },
-  lulus: { label: 'Lulus', bg: '#ecfdf5', color: '#16a34a' },
-  gagal: { label: 'Gagal', bg: '#fef2f2', color: '#dc2626' },
-  dibatalkan: { label: 'Dibatalkan', bg: '#f3f4f6', color: '#6b7280' },
-};
-
-const STATUS_FILTERS = [
-  { value: '', label: 'Semua' },
-  { value: 'diusulkan', label: 'Diusulkan' },
-  { value: 'mengikuti_pendadaran', label: 'Pendadaran' },
-  { value: 'lulus', label: 'Lulus' },
-  { value: 'gagal', label: 'Gagal' },
-];
 
 export default function CandidatesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const { data: candidates, loading, refetch } = useApi<Candidate[]>(
-    () => apiClient.get('/candidates', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
-    [search, filterStatus]
-  );
+  const { data: candidates, loading, refetch } = useCandidates(search, filterStatus);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -52,7 +23,7 @@ export default function CandidatesScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Calon Anggota</Text>
-        <Text style={styles.headerSub}>{candidates.length} calon</Text>
+        <Text style={styles.headerSub}>{(candidates ?? []).length} calon</Text>
       </View>
 
       {/* Search */}
@@ -72,7 +43,6 @@ export default function CandidatesScreen() {
         )}
       </View>
 
-      {/* Status Filter */}
       <FilterChips options={STATUS_FILTERS} selected={filterStatus} onChange={setFilterStatus} />
 
       <FlatList
@@ -89,7 +59,14 @@ export default function CandidatesScreen() {
         renderItem={({ item }) => {
           const ss = STATUS_STYLES[item.status] || { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/candidates/${item.id}`); }}>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.7}
+              onPress={() => {
+                const { router: r } = require('expo-router');
+                r.push(`/candidates/${item.id}`);
+              }}
+            >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{item.namaLengkap.charAt(0)}</Text>
               </View>
@@ -118,7 +95,6 @@ export default function CandidatesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },

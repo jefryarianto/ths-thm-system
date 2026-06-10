@@ -11,59 +11,16 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient, { unwrap } from '../../lib/api-client';
-import { useApi } from '../../hooks/use-api';
+import apiClient from '../../lib/api-client';
+import { useDocuments, TIPE_LABELS, TIPE_ICONS, STATUS_STYLES, TIPE_FILTERS, DocumentItem } from '../../hooks/use-documents';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
-
-interface DocumentItem {
-  id: string;
-  nomorDokumen: string;
-  tipe: string;
-  anggota?: { namaLengkap: string };
-  status: string;
-  filePath?: string;
-  createdAt: string;
-}
-
-const TIPE_LABELS: Record<string, string> = {
-  kartu_anggota: 'Kartu Anggota',
-  sertifikat_pendadaran: 'Sertifikat Pendadaran',
-  sertifikat_pelatihan: 'Sertifikat Pelatihan',
-  piagam_prestasi: 'Piagam Prestasi',
-  surat_keterangan: 'Surat Keterangan',
-};
-
-const TIPE_ICONS: Record<string, string> = {
-  kartu_anggota: 'card',
-  sertifikat_pendadaran: 'school',
-  sertifikat_pelatihan: 'ribbon',
-  piagam_prestasi: 'trophy',
-  surat_keterangan: 'document-text',
-};
-
-const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: 'Draft', color: '#6b7280', bg: '#f3f4f6' },
-  published: { label: 'Published', color: '#16a34a', bg: '#ecfdf5' },
-  archived: { label: 'Diarsipkan', color: '#d97706', bg: '#fef3c7' },
-};
-
-const TIPE_FILTERS = [
-  { value: '', label: 'Semua' },
-  { value: 'kartu_anggota', label: 'Kartu Anggota' },
-  { value: 'sertifikat_pendadaran', label: 'Sertifikat' },
-  { value: 'piagam_prestasi', label: 'Piagam' },
-  { value: 'surat_keterangan', label: 'Surat Ket.' },
-];
 
 export default function DocumentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterTipe, setFilterTipe] = useState('');
 
-  const { data: documents, loading, refetch } = useApi<DocumentItem[]>(
-    () => apiClient.get('/documents', { params: { limit: 50, search: search.trim() || undefined, tipe: filterTipe || undefined } }).then(unwrap).then(d => d || []),
-    [search, filterTipe]
-  );
+  const { data: documents, loading, refetch } = useDocuments(search, filterTipe);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -88,7 +45,7 @@ export default function DocumentsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dokumen</Text>
-        <Text style={styles.headerSub}>{documents.length} dokumen</Text>
+        <Text style={styles.headerSub}>{(documents ?? []).length} dokumen</Text>
       </View>
 
       {/* Search */}
@@ -108,7 +65,6 @@ export default function DocumentsScreen() {
         )}
       </View>
 
-      {/* Tipe Filter */}
       <FilterChips options={TIPE_FILTERS} selected={filterTipe} onChange={setFilterTipe} />
 
       <FlatList
@@ -125,21 +81,12 @@ export default function DocumentsScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const ss = STATUS_STYLES[item.status] || {
-            label: item.status,
-            color: '#6b7280',
-            bg: '#f3f4f6',
-          };
+          const ss = STATUS_STYLES[item.status] || { label: item.status, color: '#6b7280', bg: '#f3f4f6' };
           const iconName = TIPE_ICONS[item.tipe] || 'document-text';
           const tipeLabel = TIPE_LABELS[item.tipe] || item.tipe;
           return (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => handleDownload(item)}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.card} onPress={() => handleDownload(item)} activeOpacity={0.7}>
               <View style={styles.iconCircle}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Ionicons name={iconName as any} size={22} color="#2563eb" />
               </View>
               <View style={styles.cardInfo}>
@@ -174,41 +121,19 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: 16,
-    marginBottom: 0,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', margin: 16, marginBottom: 0,
+    borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 12, paddingVertical: 8,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
 
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14,
+    padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#f3f4f6',
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#eff6ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
+    width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff',
+    alignItems: 'center', justifyContent: 'center', marginRight: 10,
   },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },

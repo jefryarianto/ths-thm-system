@@ -1,52 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient, { unwrap } from '../../lib/api-client';
-import { useApi } from '../../hooks/use-api';
+import { useActivities, STATUS_STYLES, TIPE_ICONS, FILTER_OPTIONS } from '../../hooks/use-activities';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
-
-interface Activity {
-  id: string;
-  nama: string;
-  tipe: string;
-  lokasi?: string;
-  tanggalMulai: string;
-  status: string;
-  scopeType?: string;
-}
-
-const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  draft: { label: 'Draft', bg: '#f3f4f6', color: '#6b7280' },
-  published: { label: 'Berlangsung', bg: '#ecfdf5', color: '#16a34a' },
-  closed: { label: 'Selesai', bg: '#eff6ff', color: '#2563eb' },
-  cancelled: { label: 'Dibatalkan', bg: '#fef2f2', color: '#dc2626' },
-};
-
-const TIPE_ICONS: Record<string, string> = {
-  latihan: 'fitness',
-  pendadaran: 'school',
-  ujian_tingkat: 'trending-up',
-  rapat: 'people',
-  retret: 'sunny',
-  pelantikan: 'ribbon',
-  lainnya: 'ellipsis-horizontal',
-};
-
-const FILTER_OPTIONS = [
-  { value: '', label: 'Semua' },
-  { value: 'published', label: 'Berlangsung' },
-  { value: 'closed', label: 'Selesai' },
-  { value: 'draft', label: 'Draft' },
-];
 
 export default function ActivitiesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<string>('');
 
-  const { data: activities, loading, refetch } = useApi<Activity[]>(
-    () => apiClient.get('/activities', { params: { limit: 50, status: filter || undefined } }).then(unwrap).then(d => d || []),
-    [filter]
-  );
+  const { data: activities, loading, refetch } = useActivities(filter);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -60,10 +22,9 @@ export default function ActivitiesScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Kegiatan</Text>
-        <Text style={styles.headerSub}>{activities.length} kegiatan</Text>
+        <Text style={styles.headerSub}>{(activities ?? []).length} kegiatan</Text>
       </View>
 
-      {/* Filter Chips */}
       <FilterChips options={FILTER_OPTIONS} selected={filter} onChange={setFilter} />
 
       <FlatList
@@ -83,7 +44,14 @@ export default function ActivitiesScreen() {
           const d = new Date(item.tanggalMulai);
           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => { const { router: r } = require('expo-router'); r.push(`/activities/${item.id}`); }}>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.7}
+              onPress={() => {
+                const { router: r } = require('expo-router');
+                r.push(`/activities/${item.id}`);
+              }}
+            >
               <View style={styles.dateBox}>
                 <Text style={styles.dateDay}>{d.getDate()}</Text>
                 <Text style={styles.dateMonth}>{months[d.getMonth()]}</Text>
