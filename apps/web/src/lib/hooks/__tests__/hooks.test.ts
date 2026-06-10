@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useDebounce } from '../use-debounce';
-import { buildEmptyMessage } from '../use-api';
+import { useApi, usePaginatedList, buildEmptyMessage } from '../use-api';
 
 describe('useDebounce', () => {
   beforeEach(() => {
@@ -109,5 +109,164 @@ describe('buildEmptyMessage', () => {
     const myReset = () => { /* custom reset */ };
     const result = buildEmptyMessage('test', true, myReset);
     expect(result.action?.onClick).toBe(myReset);
+  });
+});
+
+describe('useApi', () => {
+  it('fetches on mount when enabled is true (default)', async () => {
+    const fetcher = vi.fn().mockResolvedValue('data');
+    const { result } = renderHook(() => useApi(fetcher, []));
+    expect(result.current.loading).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toBe('data');
+  });
+
+  it('does NOT fetch on mount when enabled is false', () => {
+    const fetcher = vi.fn().mockResolvedValue('data');
+    const { result } = renderHook(() => useApi(fetcher, [], false));
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data).toBeNull();
+  });
+
+  it('fetches when enabled changes from false to true', async () => {
+    const fetcher = vi.fn().mockResolvedValue('data');
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useApi(fetcher, [], enabled),
+      { initialProps: { enabled: false } }
+    );
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(false);
+
+    rerender({ enabled: true });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result.current.loading).toBe(true);
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toBe('data');
+  });
+
+  it('stops loading when enabled changes from true to false', () => {
+    const fetcher = vi.fn().mockResolvedValue('data');
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useApi(fetcher, [], enabled),
+      { initialProps: { enabled: true } }
+    );
+    // Should have started fetching
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result.current.loading).toBe(true);
+
+    // Disable - should set loading to false
+    rerender({ enabled: false });
+    expect(result.current.loading).toBe(false);
+    // Fetcher shouldn't be called again
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('refetch works regardless of enabled state', async () => {
+    const fetcher = vi.fn().mockResolvedValue('data');
+    const { result } = renderHook(() => useApi(fetcher, [], false));
+    expect(fetcher).not.toHaveBeenCalled();
+
+    result.current.refetch();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toBe('data');
+  });
+
+  it('handles errors correctly', async () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+    const { result } = renderHook(() => useApi(fetcher, []));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBe('Network error');
+    expect(result.current.data).toBeNull();
+  });
+});
+
+describe('usePaginatedList', () => {
+  it('fetches on mount when enabled is true (default)', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      data: [{ id: '1', name: 'Item 1' }],
+      meta: { total: 1, totalPages: 1 },
+    });
+    const { result } = renderHook(() => usePaginatedList(fetcher, []));
+    expect(result.current.loading).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toEqual([{ id: '1', name: 'Item 1' }]);
+    expect(result.current.meta.total).toBe(1);
+    expect(result.current.meta.totalPages).toBe(1);
+  });
+
+  it('does NOT fetch on mount when enabled is false', () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      data: [{ id: '1' }],
+      meta: { total: 1, totalPages: 1 },
+    });
+    const { result } = renderHook(() => usePaginatedList(fetcher, [], false));
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data).toEqual([]);
+  });
+
+  it('fetches when enabled changes from false to true', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      data: [{ id: '1' }],
+      meta: { total: 1, totalPages: 1 },
+    });
+    const { result, rerender } = renderHook(
+      ({ enabled }) => usePaginatedList(fetcher, [], enabled),
+      { initialProps: { enabled: false } }
+    );
+    expect(fetcher).not.toHaveBeenCalled();
+
+    rerender({ enabled: true });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toEqual([{ id: '1' }]);
+  });
+
+  it('stops loading when enabled changes from true to false', () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      data: [{ id: '1' }],
+      meta: { total: 1, totalPages: 1 },
+    });
+    const { result, rerender } = renderHook(
+      ({ enabled }) => usePaginatedList(fetcher, [], enabled),
+      { initialProps: { enabled: true } }
+    );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result.current.loading).toBe(true);
+
+    rerender({ enabled: false });
+    expect(result.current.loading).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('refetch works regardless of enabled state', async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      data: [{ id: '1' }],
+      meta: { total: 1, totalPages: 1 },
+    });
+    const { result } = renderHook(() => usePaginatedList(fetcher, [], false));
+    expect(fetcher).not.toHaveBeenCalled();
+
+    result.current.refetch();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data).toEqual([{ id: '1' }]);
+  });
+
+  it('handles errors by setting empty data', async () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+    const { result } = renderHook(() => usePaginatedList(fetcher, []));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBe('Gagal memuat data');
+    expect(result.current.data).toEqual([]);
+    expect(result.current.meta.total).toBe(0);
   });
 });

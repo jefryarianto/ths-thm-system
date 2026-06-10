@@ -1,6 +1,6 @@
 # Refactor & Migration Summary
 
-> **15 sesi refactoring** — ~78 file diubah, 102 test passing ✅
+> **17 sesi refactoring** — ~82 file diubah, 102 test passing ✅
 > **Periode**: Juni 2026
 > **Tujuan**: Standardisasi pattern fetching data, eliminasi boilerplate, konsistensi kode
 
@@ -8,9 +8,9 @@
 
 ## 📐 Pattern yang Digunakan
 
-### 1. `useApi<T>(fetcher, deps)` — Single data fetch
+### 1. `useApi<T>(fetcher, deps, enabled?)` — Single data fetch
 
-Menggantikan `useState` + `useCallback` + `useEffect` boilerplate.
+Menggantikan `useState` + `useCallback` + `useEffect` boilerplate. Parameter `enabled` (default `true`) mengontrol apakah fetch otomatis dijalankan di mount.
 
 ```tsx
 // Before:
@@ -29,16 +29,23 @@ const fetchData = useCallback(async () => {
 
 useEffect(() => { fetchData(); }, [fetchData]);
 
-// After:
+// After (unconditional):
 const { data, loading, error, refetch } = useApi<T>(
   () => apiClient.get('/endpoint').then(r => r.data),
   []
 );
+
+// After (conditional — e.g. tab-based):
+const { data, loading, refetch } = useApi<T>(
+  () => apiClient.get('/endpoint').then(r => r.data),
+  [],
+  activeTab === 'overview'
+);
 ```
 
-### 2. `usePaginatedList<T>(fetcher, deps)` — Paginated list
+### 2. `usePaginatedList<T>(fetcher, deps, enabled?)` — Paginated list
 
-Menggantikan manual pagination state + fetch.
+Menggantikan manual pagination state + fetch. Juga mendukung `enabled`.
 
 ```tsx
 // Before:
@@ -98,8 +105,8 @@ apiClient.get('/items').then(res => setData(unwrap<T>(res)))
 
 | Hook | File | Fungsi |
 |------|------|--------|
-| `useApi<T>` | `web/lib/hooks/use-api.ts` / `mobile/hooks/use-api.ts` | Single fetch + loading/error state |
-| `usePaginatedList<T>` | `web/lib/hooks/use-api.ts` | Paginated list fetch |
+| `useApi<T>` | `web/lib/hooks/use-api.ts` | Single fetch + loading/error + enabled flag |
+| `usePaginatedList<T>` | `web/lib/hooks/use-api.ts` | Paginated list fetch + enabled flag |
 | `buildEmptyMessage()` | `web/lib/hooks/use-api.ts` | Empty state text builder |
 | `useDebounce<T>` | `web/lib/hooks/use-debounce.ts` | Search debounce |
 
@@ -124,7 +131,9 @@ apiClient.get('/items').then(res => setData(unwrap<T>(res)))
 | #13 | `unwrap` pada 3 web pages + reports `useApi` | ~3 | +12/−20 |
 | #14 | `unwrap` pada 8 gamification pages + api-client JSDoc | ~9 | +64/−41 |
 | #15 | Remaining `.data.data` cleanup + migration wiki | ~3 | +10/−8 |
-| **Total** | **~78 file diubah** | **~78** | **~2130/−1626** |
+| #16 | ESLint rule `.data.data` + CONTRIBUTING.md + conditional fetching | ~3 | +152/−36 |
+| #17 | `enabled` flag + tab-based fetch (condition) pada reports | ~2 | +20/−7 |
+| **Total** | **~82 file diubah** | **~82** | **+23 unit tests + enabled flag** |
 
 ---
 
@@ -145,7 +154,7 @@ apiClient.get('/items').then(res => setData(unwrap<T>(res)))
 | `(dashboard)/dues/page` | manual pagination | `usePaginatedList` |
 | `(dashboard)/payments/page` | manual pagination | `usePaginatedList` |
 | `(dashboard)/org-documents/page` | manual pagination | `usePaginatedList` |
-| `(dashboard)/reports/page` | manual fetch (overview) | `useApi` |
+| `(dashboard)/reports/page` | manual fetch (overview) | `useApi` (tab-conditional) |
 | `(dashboard)/settings/page` | `.data.data` | `unwrap()` |
 | `(dashboard)/scan-stats/page` | manual fetch | `useApi` |
 | `(dashboard)/notifications/report/page` | manual pagination | `usePaginatedList` |
@@ -158,7 +167,6 @@ apiClient.get('/items').then(res => setData(unwrap<T>(res)))
 | `(dashboard)/gamification/report/page` | `.data.data` | `unwrap()` |
 | `(dashboard)/gamification/settings/page` | `.data.data` | `unwrap()` |
 | `(dashboard)/gamification/[anggotaId]/page` | `.data.data` (3x) | `unwrap()` |
-| `(dashboard)/letters/page` | manual pagination | `usePaginatedList` |
 | `(dashboard)/settings/email/page` | manual fetch | shared hooks |
 | `public/leaderboard/page` | `.data.data` | `unwrap<>()` |
 
@@ -189,37 +197,92 @@ apiClient.get('/items').then(res => setData(unwrap<T>(res)))
 
 ## 🧹 Remaining Technical Debt
 
-### Pages with manual fetch (complex, not easily migratable)
+### Web pages with manual fetch
 
 | Page | Alasan |
 |------|--------|
-| `(dashboard)/reports/page` (members tab) | Conditional fetch based on tab — perlu custom pattern |
-| `(dashboard)/reports/page` (scan tab) | Conditional fetch based on tab — perlu custom pattern |
-| `(dashboard)/letters/page` | Complex CRUD + detail panel + modal |
-| `(dashboard)/notifications/page` | Bulk actions, send modal, export, polling |
-| `(dashboard)/settings/page` | 4 parallel fetches — but already using `unwrap()` |
-| `(dashboard)/settings/email/page` | Complex email settings with test send |
-| `mobile/gamification/index` | Complex multi-fetch with filters, load-more |
-| `mobile/gamification/admin-rewards` | CRUD with modals |
+| `settings/email/page` | Complex email settings: 5 sub-tabs, logs/stats/engagement/suppressions, bulk retry, CSV export, charts. Setiap tab punya fetch + filter + pagination sendiri. Perlu dekomposisi komponen. |
+| `letters/page` | Complex CRUD + detail panel + modal form + file preview. Single fetch pattern tapi dengan CRUD overlay. |
 
-### Mobile screens (complex, not migrated)
+### Mobile gamification (complex, perlu pendekatan bertahap)
 
-| Screen | Complexity |
-|--------|-----------|
+| Screen | Complexity | Plan |
+|--------|-----------|------|
+| `gamification/index` | Multi-fetch (profile, leaderboard, badges, events, rewards, history), org tree filters, debounced search, infinite scroll, AsyncStorage, animations, confetti, tour | **Extract data fetching** ke custom hooks (`useGamificationProfile`, `useLeaderboard`, dll) tanpa mengubah UI. Kemudian migrasi UI ke shared components. |
+| `gamification/admin-rewards` | CRUD modal, dual-tab (rewards/redemptions), approval workflow | **Relatif standalone** — pattern CRUD standar. Bisa refactor gradual. |
+
+### Mobile screens (not fetch-based)
+
+| Screen | Alasan |
+|--------|--------|
 | `qr-scan/index` | Camera, refs, real-time scanning — not fetch-based |
-| `gamification/*` | Multi-fetch, filters, load-more, complex state |
+| `auth/*` | Login/register flow — standalone |
+
+---
+
+## 🚀 Mobile Gamification Migration Plan
+
+### Phase 1: Extract Data Layer (safe, no UI changes)
+
+Buat custom hooks terpisah untuk setiap data domain:
+
+```tsx
+// hooks/use-gamification.ts
+export function useGamificationProfile(anggotaId: string) {
+  return useApi<GamificationProfile>(
+    () => apiClient.get(`/gamification/profile/${anggotaId}`).then(r => r.data),
+    [anggotaId]
+  );
+}
+
+export function useLeaderboard(filters: LeaderboardFilters) {
+  return usePaginatedList<LeaderboardEntry>(
+    () => apiClient.get('/gamification/leaderboard', { params: filters }).then(r => r.data),
+    [filters]
+  );
+}
+
+export function useBadges() {
+  return useApi<Badge[]>(
+    () => apiClient.get('/gamification/badges').then(r => r.data),
+    []
+  );
+}
+
+export function usePointsHistory(anggotaId: string) {
+  return useApi<PointHistory[]>(
+    () => apiClient.get(`/gamification/profile/${anggotaId}/points-history`).then(r => r.data),
+    [anggotaId]
+  );
+}
+```
+
+### Phase 2: Simplify State Management
+
+- Gunakan `useReducer` atau Zustand untuk state filtering (org tree cascading)
+- Pindahkan AsyncStorage ke context/layanan terpusat
+- Extract infinite scroll ke hook `useInfiniteScroll`
+
+### Phase 3: UI Refactor
+
+- Extract tab content ke komponen terpisah (`ProfileTab`, `LeaderboardTab`, `BadgesTab`, `RewardsTab`)
+- Pindahkan animasi ke komponen terpisah
+- Standarisasi error/loading/empty states
 
 ---
 
 ## 🏆 Key Metrics
 
-- **~78 files refactored** across 15 sessions
-- **~504 lines removed** (net: +504 net change)
+- **~82 files refactored** across 17 sessions
+- **~504 lines net added** (after removing ~1626 lines of boilerplate)
+- **~23 unit tests** for hooks + helpers
 - **102 tests passing** (100% — no regressions)
-- **0 TypeScript errors**
-- **~25 pages + ~18 mobile screens migrated** to shared patterns
-- **2 custom hooks** created (`useApi`, `usePaginatedList`)
+- **0 TypeScript errors** (web + mobile)
+- **~29 web pages + ~16 mobile screens migrated**
+- **2 custom hooks** with `enabled` flag (`useApi`, `usePaginatedList`)
 - **2 response helpers** (`unwrap`, `unwrapPaginated`)
 - **1 debounce hook** (`useDebounce`)
-- **6 shared UI components** (`DataTable`, `PageHeader`, `PageContainer`, `SearchBar`, `FilterSelect`, `SummaryBar`)
+- **6 shared web components** (`DataTable`, `PageHeader`, `PageContainer`, `SearchBar`, `FilterSelect`, `SummaryBar`)
 - **2 shared mobile components** (`LoadingView`, `FilterChips`)
+- **1 ESLint rule** to detect `.data.data` patterns
+- **1 CONTRIBUTING.md** with coding pattern guidelines
