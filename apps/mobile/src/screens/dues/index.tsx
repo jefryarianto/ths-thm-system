@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, StatusBadge, FilterChips } from '../../components/ui/shared';
 
 interface DuesItem {
@@ -36,7 +37,6 @@ const FILTERS = [
 
 export default function DuesScreen() {
   const [total, setTotal] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
 
   const { data: dues, loading, refetch } = usePaginatedList<DuesItem>(
@@ -58,11 +58,7 @@ export default function DuesScreen() {
     }
   }, [dues]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (loading) return <LoadingView message="Memuat iuran..." />;
 

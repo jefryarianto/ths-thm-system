@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 type LetterTab = 'incoming' | 'outgoing';
@@ -50,7 +51,6 @@ const STATUS_FILTERS = [
 
 export default function LettersScreen() {
   const [tab, setTab] = useState<LetterTab>('incoming');
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -68,11 +68,7 @@ export default function LettersScreen() {
   const refetch = tab === 'incoming' ? refetchIncoming : refetchOutgoing;
   const currentData = (tab === 'incoming' ? incoming : outgoing) || [];
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('id-ID', {

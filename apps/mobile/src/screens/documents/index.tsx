@@ -13,20 +13,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 import { useDocuments, TIPE_LABELS, TIPE_ICONS, STATUS_STYLES, TIPE_FILTERS, DocumentItem } from '../../hooks/use-documents';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 export default function DocumentsScreen() {
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterTipe, setFilterTipe] = useState('');
 
   const { data: documents, loading, refetch } = useDocuments(search, filterTipe);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const handleDownload = async (item: DocumentItem) => {
     if (item.filePath) {

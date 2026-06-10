@@ -2,19 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useActivities, STATUS_STYLES, TIPE_ICONS, FILTER_OPTIONS } from '../../hooks/use-activities';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 export default function ActivitiesScreen() {
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<string>('');
 
   const { data: activities, loading, refetch } = useActivities(filter);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (loading) return <LoadingView message="Memuat kegiatan..." />;
 

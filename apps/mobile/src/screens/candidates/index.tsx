@@ -2,20 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCandidates, STATUS_STYLES, STATUS_FILTERS } from '../../hooks/use-candidates';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 export default function CandidatesScreen() {
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
   const { data: candidates, loading, refetch } = useCandidates(search, filterStatus);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (loading) return <LoadingView message="Memuat calon anggota..." />;
 

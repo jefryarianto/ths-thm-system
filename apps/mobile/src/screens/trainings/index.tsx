@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 interface Training {
@@ -34,7 +35,6 @@ const MATERI_FILTERS = [
 ];
 
 export default function TrainingsScreen() {
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterMateri, setFilterMateri] = useState('');
 
@@ -48,11 +48,7 @@ export default function TrainingsScreen() {
     [search, filterMateri]
   );
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);

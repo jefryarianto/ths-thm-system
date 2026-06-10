@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } 
 import { Ionicons } from '@expo/vector-icons';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
+import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
 
 interface DashboardStats {
@@ -17,18 +18,11 @@ interface DashboardStats {
 }
 
 export default function ReportsScreen() {
-  const [refreshing, setRefreshing] = useState(false);
-
   const { data: stats, loading, refetch } = useApi<DashboardStats>(
     () => apiClient.get('/reports/dashboard').then(unwrap),
     []
   );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (loading) return <LoadingView message="Memuat laporan..." />;
   if (!stats) return (
