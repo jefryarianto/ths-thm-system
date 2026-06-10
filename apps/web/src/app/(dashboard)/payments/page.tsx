@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   CreditCard, CheckCircle, Clock, ArrowUpRight,
 } from 'lucide-react';
@@ -26,30 +28,24 @@ interface StatsData {
 }
 
 export default function PaymentsPage() {
-  const [dues, setDues] = useState<DuesRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<StatsData>({ totalCollected: 0, pendingCount: 0, paidCount: 0, totalDues: 0 });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: dues, meta, loading, refetch } = usePaginatedList<DuesRecord>(
+    async () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       const [duesRes, statsRes] = await Promise.all([
         apiClient.get('/dues', { params }),
         apiClient.get('/dues/dashboard/stats'),
       ]);
-      setDues(duesRes.data.data || []);
-      setMeta(duesRes.data.meta || { total: 0, totalPages: 0 });
       if (statsRes.data.success) setStats(statsRes.data.data);
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, [page, search]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return duesRes.data;
+    },
+    [page, debouncedSearch]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -61,7 +57,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Manajemen Pembayaran" onRefresh={fetchData} />
+      <PageHeader title="Manajemen Pembayaran" onRefresh={refetch} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -87,9 +83,11 @@ export default function PaymentsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setPage(1); }}
         placeholder="Cari pembayaran (nama, no. anggota)..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       />
 
       <DataTable

@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, FileText,
   Download, Eye, Trash2,
@@ -39,30 +41,20 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function DocumentsPage() {
   const router = useRouter();
-  const [data, setData] = useState<DocumentRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [filterTipe, setFilterTipe] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<DocumentRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterTipe) params.tipe = filterTipe;
-      const { data: res } = await apiClient.get('/documents', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, filterTipe]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return apiClient.get('/documents', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterTipe]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -72,7 +64,7 @@ export default function DocumentsPage() {
     if (!confirm('Hapus dokumen ini?')) return;
     try {
       await apiClient.delete(`/documents/${id}`);
-      await fetchData();
+      await refetch();
     } catch {
       alert('Gagal menghapus dokumen');
     }
@@ -80,7 +72,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Generate Dokumen" onRefresh={fetchData}>
+      <PageHeader title="Generate Dokumen" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors">
           <Download size={14} /> Generate
         </button>
@@ -93,9 +85,11 @@ export default function DocumentsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterTipe(''); setPage(1); }}
         placeholder="Cari dokumen (no. dokumen, tipe)..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterTipe}

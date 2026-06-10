@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, GraduationCap,
   Eye, MapPin, Users, Calendar,
@@ -40,30 +42,20 @@ const STATUS_OPTIONS = [
 
 export default function GraduationsPage() {
   const router = useRouter();
-  const [data, setData] = useState<GraduationRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<GraduationRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterStatus) params.status = filterStatus;
-      const { data: res } = await apiClient.get('/graduations', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, filterStatus]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return apiClient.get('/graduations', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterStatus]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -71,7 +63,7 @@ export default function GraduationsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Manajemen Pendadaran" onRefresh={fetchData}>
+      <PageHeader title="Manajemen Pendadaran" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Jadwal Pendadaran
         </button>
@@ -81,9 +73,11 @@ export default function GraduationsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterStatus(''); setPage(1); }}
         placeholder="Cari pendadaran..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterStatus}

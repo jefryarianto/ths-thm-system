@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, ClipboardList,
   Eye, CheckCircle, XCircle,
@@ -20,28 +22,18 @@ interface AssessmentRow {
 }
 
 export default function AssessmentsPage() {
-  const [data, setData] = useState<AssessmentRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<AssessmentRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
-      const { data: res } = await apiClient.get('/assessments/aspects', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      if (debouncedSearch) params.search = debouncedSearch;
+      return apiClient.get('/assessments/aspects', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -49,7 +41,7 @@ export default function AssessmentsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Aspek & Item Penilaian" onRefresh={fetchData}>
+      <PageHeader title="Aspek & Item Penilaian" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Tambah
         </button>
@@ -59,9 +51,11 @@ export default function AssessmentsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setPage(1); }}
         placeholder="Cari aspek penilaian..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       />
 
       <DataTable

@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
-import type { User, PaginatedResponse } from '@/types';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
+import type { User } from '@/types';
 import {
   Plus, MoreVertical, UserCheck, UserX, Users,
 } from 'lucide-react';
@@ -44,30 +46,23 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterActive, setFilterActive] = useState('');
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: users, meta, loading, refetch } = usePaginatedList<User>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterRole) params.role = filterRole;
       if (filterActive === 'active') params.isActive = true;
       else if (filterActive === 'inactive') params.isActive = false;
-      const { data } = await apiClient.get<PaginatedResponse<User>>('/users', { params });
-      setUsers(data.data);
-      setMeta(data.meta);
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, [page, search, filterRole, filterActive]);
-
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+      return apiClient.get('/users', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterRole, filterActive]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -75,7 +70,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Manajemen User" onRefresh={fetchUsers}>
+      <PageHeader title="Manajemen User" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Tambah User
         </button>
@@ -85,9 +80,11 @@ export default function UsersPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterRole(''); setFilterActive(''); setPage(1); }}
         placeholder="Cari nama, email..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterRole}

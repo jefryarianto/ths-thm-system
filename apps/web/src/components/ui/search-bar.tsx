@@ -1,6 +1,8 @@
 'use client';
 
 import { Search } from 'lucide-react';
+import { useDebounce } from '@/lib/hooks/use-debounce';
+import { useEffect } from 'react';
 
 interface SearchBarProps {
   search: string;
@@ -8,9 +10,20 @@ interface SearchBarProps {
   onReset: () => void;
   placeholder?: string;
   children?: React.ReactNode;
+  /** Debounce delay in ms. Default 0 (no debounce). Set to e.g. 300 for debounced API search. */
+  debounceMs?: number;
+  /** Called with the debounced search value (only when debounceMs > 0). */
+  onDebouncedSearch?: (value: string) => void;
 }
 
-export default function SearchBar({ search, onSearchChange, onReset, placeholder = 'Cari...', children }: SearchBarProps) {
+export default function SearchBar({ search, onSearchChange, onReset, placeholder = 'Cari...', children, debounceMs, onDebouncedSearch }: SearchBarProps) {
+  const debouncedSearch = useDebounce(search, debounceMs ?? 0);
+
+  useEffect(() => {
+    if (debounceMs && debounceMs > 0 && onDebouncedSearch) {
+      onDebouncedSearch(debouncedSearch);
+    }
+  }, [debouncedSearch, debounceMs, onDebouncedSearch]);
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
       <div className="flex flex-col sm:flex-row gap-3">

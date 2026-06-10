@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, FileText,
   CheckCircle, XCircle, Clock,
@@ -36,38 +38,28 @@ const STATUS_OPTIONS = [
 ];
 
 export default function ClaimsPage() {
-  const [data, setData] = useState<ClaimRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<ClaimRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterStatus) params.status = filterStatus;
-      const { data: res } = await apiClient.get('/claims', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, filterStatus]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return apiClient.get('/claims', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterStatus]
+  );
 
   const handleAction = async (id: string, action: string) => {
     setActionLoading(`${id}-${action}`);
     try {
       const body = action === 'reject' ? { reason: 'Ditolak oleh admin' } : {};
       await apiClient.post(`/claims/${id}/${action}`, body);
-      await fetchData();
+      await refetch();
     } catch {
       alert(`Gagal ${action} klaim`);
     } finally {
@@ -81,7 +73,7 @@ export default function ClaimsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Manajemen Klaim" onRefresh={fetchData}>
+      <PageHeader title="Manajemen Klaim" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Tambah
         </button>
@@ -91,9 +83,11 @@ export default function ClaimsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterStatus(''); setPage(1); }}
         placeholder="Cari klaim..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterStatus}

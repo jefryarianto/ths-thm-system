@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, FolderOpen,
   Eye, Download,
@@ -21,29 +23,21 @@ interface OrgDocumentRow {
 }
 
 export default function OrgDocumentsPage() {
-  const [data, setData] = useState<OrgDocumentRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [categories, setCategories] = useState<{ id: string; nama: string }[]>([]);
   const [filterCategory, setFilterCategory] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<OrgDocumentRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterCategory) params.kategoriId = filterCategory;
-      const { data: res } = await apiClient.get('/org-documents', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, filterCategory]);
+      return apiClient.get('/org-documents', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterCategory]
+  );
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -54,7 +48,6 @@ export default function OrgDocumentsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const handlePageChange = (p: number) => {
@@ -63,7 +56,7 @@ export default function OrgDocumentsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Dokumen Organisasi" onRefresh={fetchData}>
+      <PageHeader title="Dokumen Organisasi" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Tambah
         </button>
@@ -73,9 +66,11 @@ export default function OrgDocumentsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterCategory(''); setPage(1); }}
         placeholder="Cari dokumen..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterCategory}

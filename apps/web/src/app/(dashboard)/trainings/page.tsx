@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, Calendar,
   Eye, MapPin, User, BookOpen,
@@ -35,30 +37,20 @@ const MATERI_OPTIONS = [
 
 export default function TrainingsPage() {
   const router = useRouter();
-  const [data, setData] = useState<TrainingRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [filterMateri, setFilterMateri] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<TrainingRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterMateri) params.jenisMateri = filterMateri;
-      const { data: res } = await apiClient.get('/trainings', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, filterMateri]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return apiClient.get('/trainings', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterMateri]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -66,7 +58,7 @@ export default function TrainingsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Manajemen Latihan" onRefresh={fetchData}>
+      <PageHeader title="Manajemen Latihan" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Jadwal Latihan
         </button>
@@ -76,9 +68,11 @@ export default function TrainingsPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterMateri(''); setPage(1); }}
         placeholder="Cari latihan..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterMateri}

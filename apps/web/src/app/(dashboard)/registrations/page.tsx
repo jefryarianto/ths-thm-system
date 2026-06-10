@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
   Plus, CheckCircle, XCircle, Users,
   Download, Eye, FileText,
@@ -56,37 +58,27 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function RegistrationsPage() {
   const router = useRouter();
-  const [data, setData] = useState<RegistrationRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data, meta, loading, refetch } = usePaginatedList<RegistrationRow>(
+    () => {
       const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (filterStatus) params.status = filterStatus;
-      const { data: res } = await apiClient.get('/registrations', { params });
-      setData(res.data || []);
-      setMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, filterStatus]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return apiClient.get('/registrations', { params }).then(r => r.data);
+    },
+    [page, debouncedSearch, filterStatus]
+  );
 
   const handleAction = async (id: string, action: string) => {
     setActionLoading(`${id}-${action}`);
     try {
       await apiClient.post(`/registrations/${id}/${action}`, { reason: action === 'reject' ? 'Ditolak oleh admin' : undefined });
-      await fetchData();
+      await refetch();
     } catch {
       alert(`Gagal ${action} pendaftaran`);
     } finally {
@@ -109,13 +101,15 @@ export default function RegistrationsPage() {
         </button>
       </PageHeader>
 
-      <SummaryBar icon={Users} label="Total Pendaftar" total={meta.total} onRefresh={fetchData} />
+      <SummaryBar icon={Users} label="Total Pendaftar" total={meta.total} onRefresh={refetch} />
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
+        onSearchChange={setSearch}
         onReset={() => { setSearch(''); setFilterStatus(''); setPage(1); }}
         placeholder="Cari nama, email, no. HP..."
+        debounceMs={300}
+        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
           value={filterStatus}
