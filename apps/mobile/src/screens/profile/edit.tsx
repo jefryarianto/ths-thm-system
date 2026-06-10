@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
 
 export default function EditProfileScreen() {
@@ -30,7 +31,7 @@ export default function EditProfileScreen() {
   const fetchProfile = async () => {
     try {
       const res = await apiClient.get('/auth/me');
-      const p = res.data.data;
+      const p = unwrap(res);
       setForm({
         namaLengkap: p.namaLengkap || '',
         email: p.email || '',
@@ -117,7 +118,7 @@ export default function EditProfileScreen() {
   );
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+    return <LoadingView message="Memuat profil..." />;
   }
 
   return (

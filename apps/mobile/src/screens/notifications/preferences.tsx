@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Switch, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 
 interface NotificationType {
   key: string;
@@ -37,7 +38,7 @@ export default function NotificationPreferencesScreen() {
     (async () => {
       try {
         const res = await apiClient.get('/notifications/preferences');
-        setPreferences(res.data.data || {});
+        setPreferences(unwrap(res) || {});
         setTypes(res.data.types || []);
       } catch { /* ignore */ }
       setLoading(false);
@@ -78,7 +79,7 @@ export default function NotificationPreferencesScreen() {
     setSaving(null);
   };
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <LoadingView message="Memuat pengaturan..." />;
 
   const inAppCount = Object.values(preferences).filter((p) => p?.inApp !== false).length;
   const emailCount = Object.values(preferences).filter((p) => p?.email !== false).length;

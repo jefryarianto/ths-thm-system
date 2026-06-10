@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 
 interface MemberInfo {
   nomorAnggota: string;
@@ -18,15 +19,15 @@ export default function DigitalCardScreen() {
     (async () => {
       try {
         const res = await apiClient.get('/auth/me');
-        const me = res.data.data;
+        const me = unwrap(res);
         const memberRes = await apiClient.get('/members', { params: { limit: 1 } });
-        setMember(memberRes.data.data?.[0] || { namaLengkap: me.namaLengkap, nomorAnggota: '-', tingkat: '-', ranting: { nama: '-' } });
+        setMember(unwrap(memberRes)?.[0] || { namaLengkap: me.namaLengkap, nomorAnggota: '-', tingkat: '-', ranting: { nama: '-' } });
       } catch { /* ignore */ }
       setLoading(false);
     })();
   }, []);
 
-  if (loading) return <View style={styles.container}><ActivityIndicator size="large" /></View>;
+  if (loading) return <LoadingView />;
 
   const qrValue = JSON.stringify({
     nomorAnggota: member?.nomorAnggota,
