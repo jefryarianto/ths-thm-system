@@ -6,13 +6,8 @@ import {
   CheckCircle2, AlertCircle, Info, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
-import { useApi } from '@/lib/hooks/use-api';
-import { type SuppressionEntry, type SuppressionMeta, formatDateShort } from './shared';
-
-interface SuppressionsResponse {
-  data: SuppressionEntry[];
-  meta: SuppressionMeta;
-}
+import { useMailSuppressions } from '@/lib/hooks/use-mail';
+import { type SuppressionEntry, formatDateShort } from './shared';
 
 export default function EmailSuppressedTab() {
   const [page, setPage] = useState(1);
@@ -24,13 +19,9 @@ export default function EmailSuppressedTab() {
   const [addResult, setAddResult] = useState<{ success: boolean; message: string } | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
 
-  const fetcher = () =>
-    apiClient.get('/mail/suppressions', { params: { page, limit: 20 } })
-      .then(r => r.data as SuppressionsResponse);
-
-  const { data: response, loading, refetch } = useApi<SuppressionsResponse>(fetcher, [page]);
-  const suppressions = response?.data ?? [];
-  const meta = response?.meta;
+  const { data: suppressionsResponse, loading, refetch } = useMailSuppressions(page);
+  const suppressions = suppressionsResponse?.data ?? [];
+  const meta = suppressionsResponse?.meta;
   const totalPages = meta?.totalPages ?? 0;
   const total = meta?.total ?? 0;
 

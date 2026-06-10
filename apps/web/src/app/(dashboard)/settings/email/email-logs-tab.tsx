@@ -6,9 +6,9 @@ import {
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
-import { useApi, usePaginatedList } from '@/lib/hooks/use-api';
+import { useMailLogs, useMailStats, useMailModules } from '@/lib/hooks/use-mail';
 import {
-  type EmailLogEntry, type LogStats, type UsedModule, MODULES,
+  type EmailLogEntry, MODULES,
   statusBadge, formatDateShort, formatDate,
 } from './shared';
 
@@ -23,39 +23,21 @@ export default function EmailLogsTab() {
   const [retryResult, setRetryResult] = useState<{ retried: number; succeeded: number; failed: number } | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
 
-  const paramsKey = JSON.stringify({ page, status: logsFilter, module: logsModuleFilter, startDate, endDate });
+  const { data: logs, meta, loading: logsLoading, refetch: refetchLogs } = useMailLogs({
+    page,
+    status: logsFilter || undefined,
+    module: logsModuleFilter || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
 
-  const { data: logs, meta, loading: logsLoading, refetch: refetchLogs } = usePaginatedList<EmailLogEntry>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 20 };
-      if (logsFilter) params.status = logsFilter;
-      if (logsModuleFilter) params.module = logsModuleFilter;
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-      return apiClient.get('/mail/logs', { params }).then(r => r.data);
-    },
-    [paramsKey],
-    true,
-  );
+  const { data: logsStats, loading: statsLoading, refetch: refetchStats } = useMailStats({
+    module: logsModuleFilter || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
 
-  const statsFilteredKey = JSON.stringify({ module: logsModuleFilter, startDate, endDate });
-  const { data: logsStats, loading: statsLoading, refetch: refetchStats } = useApi<LogStats>(
-    () => {
-      const params: Record<string, unknown> = {};
-      if (logsModuleFilter) params.module = logsModuleFilter;
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-      return apiClient.get('/mail/logs/stats', { params }).then(r => r.data.data);
-    },
-    [statsFilteredKey],
-    true,
-  );
-
-  const { data: usedModules } = useApi<UsedModule[]>(
-    () => apiClient.get('/mail/modules').then(r => r.data.data),
-    [],
-    true,
-  );
+  const { data: usedModules } = useMailModules();
 
   // Clear selection when logs change
   useEffect(() => { setSelectedIds(new Set()); }, [logs, logsFilter, logsModuleFilter]);

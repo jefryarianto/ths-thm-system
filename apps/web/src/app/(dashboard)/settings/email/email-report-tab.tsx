@@ -2,38 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { BarChart3, Mail } from 'lucide-react';
-import apiClient from '@/lib/api-client';
-import { useApi } from '@/lib/hooks/use-api';
+import { useMailStats, useMailEngagement, useMailModules } from '@/lib/hooks/use-mail';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line,
 } from 'recharts';
 import {
-  type LogStats, type UsedModule, type Engagement, MODULES,
+  MODULES,
   EngagementCard,
 } from './shared';
 
 export default function EmailReportTab() {
   const [logsModuleFilter, setLogsModuleFilter] = useState('');
 
-  const statsFilteredKey = JSON.stringify({ module: logsModuleFilter });
-  const { data: logsStats, loading: statsLoading, refetch: refetchStats } = useApi<LogStats>(
-    () => apiClient.get('/mail/logs/stats', { params: logsModuleFilter ? { module: logsModuleFilter } : {} }).then(r => r.data.data),
-    [statsFilteredKey],
-    true,
-  );
+  const { data: logsStats, loading: statsLoading, refetch: refetchStats } = useMailStats({
+    module: logsModuleFilter || undefined,
+  });
 
-  const { data: engagement, loading: engagementLoading } = useApi<Engagement>(
-    () => apiClient.get('/mail/logs/engagement').then(r => r.data.data),
-    [],
-    true,
-  );
+  const { data: engagement, loading: engagementLoading } = useMailEngagement();
 
-  const { data: usedModules } = useApi<UsedModule[]>(
-    () => apiClient.get('/mail/modules').then(r => r.data.data),
-    [],
-    true,
-  );
+  const { data: usedModules } = useMailModules();
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
