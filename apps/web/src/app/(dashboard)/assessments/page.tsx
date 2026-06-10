@@ -3,12 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import {
-  Plus, RefreshCw, ClipboardList,
+  Plus, ClipboardList,
   Eye, CheckCircle, XCircle,
 } from 'lucide-react';
-import Pagination from '@/components/ui/pagination';
-import TableSkeleton from '@/components/ui/table-skeleton';
-import EmptyState from '@/components/ui/empty-state';
+import PageHeader from '@/components/ui/page-header';
+import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 
@@ -50,21 +49,11 @@ export default function AssessmentsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Aspek & Item Penilaian</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={() => fetchData()}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            <RefreshCw size={14} /> Refresh
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
-            <Plus size={14} /> Tambah
-          </button>
-        </div>
-      </div>
+      <PageHeader title="Aspek & Item Penilaian" onRefresh={fetchData}>
+        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+          <Plus size={14} /> Tambah
+        </button>
+      </PageHeader>
 
       <SummaryBar icon={ClipboardList} label="Total Aspek" total={meta.total} />
 
@@ -75,64 +64,54 @@ export default function AssessmentsPage() {
         placeholder="Cari aspek penilaian..."
       />
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Kode</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Aspek</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden sm:table-cell">Bobot</th>
-                <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Aktif</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden md:table-cell">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeleton rows={5} columns={5} />
-              ) : data.length === 0 ? (
-                <EmptyState
-                  icon={ClipboardList}
-                  message={search ? 'Tidak ada aspek yang cocok dengan filter' : 'Belum ada aspek penilaian'}
-                  action={search ? { label: 'Reset filter', onClick: () => { setSearch(''); setPage(1); } } : undefined}
-                  colSpan={5}
-                />
-              ) : (
-                data.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{row.kodeAspek}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900 dark:text-white">{row.namaAspek}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right hidden sm:table-cell">
-                      <span className="text-gray-600 dark:text-gray-400">{Number(row.bobot) * 100}%</span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {row.isActive
-                        ? <CheckCircle size={16} className="text-green-500 mx-auto" />
-                        : <XCircle size={16} className="text-red-500 mx-auto" />
-                      }
-                    </td>
-                    <td className="px-4 py-3 text-right hidden md:table-cell">
-                      <button
-                        className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                        title="Detail"
-                      >
-                        <Eye size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <Pagination page={page} totalPages={meta.totalPages} total={meta.total} onPageChange={handlePageChange} />
-      </div>
+      <DataTable
+        columns={[
+          { label: 'Kode' },
+          { label: 'Aspek' },
+          { label: 'Bobot', align: 'right', hidden: 'hidden sm:table-cell' },
+          { label: 'Aktif', align: 'center' },
+          { label: 'Aksi', align: 'right', hidden: 'hidden md:table-cell' },
+        ]}
+        data={data}
+        loading={loading}
+        empty={{
+          icon: ClipboardList,
+          message: search ? 'Tidak ada aspek yang cocok dengan filter' : 'Belum ada aspek penilaian',
+          action: search ? { label: 'Reset filter', onClick: () => { setSearch(''); setPage(1); } } : undefined,
+        }}
+        page={page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        onPageChange={handlePageChange}
+        colSpan={5}
+        renderRow={(row: AssessmentRow) => (
+          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <td className="px-4 py-3">
+              <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{row.kodeAspek}</span>
+            </td>
+            <td className="px-4 py-3">
+              <span className="font-medium text-gray-900 dark:text-white">{row.namaAspek}</span>
+            </td>
+            <td className="px-4 py-3 text-right hidden sm:table-cell">
+              <span className="text-gray-600 dark:text-gray-400">{Number(row.bobot) * 100}%</span>
+            </td>
+            <td className="px-4 py-3 text-center">
+              {row.isActive
+                ? <CheckCircle size={16} className="text-green-500 mx-auto" />
+                : <XCircle size={16} className="text-red-500 mx-auto" />
+              }
+            </td>
+            <td className="px-4 py-3 text-right hidden md:table-cell">
+              <button
+                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                title="Detail"
+              >
+                <Eye size={15} />
+              </button>
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 }

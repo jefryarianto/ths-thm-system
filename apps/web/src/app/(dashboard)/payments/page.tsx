@@ -3,11 +3,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import {
-  CreditCard, CheckCircle, Clock, ArrowUpRight, RefreshCw,
+  CreditCard, CheckCircle, Clock, ArrowUpRight,
 } from 'lucide-react';
-import Pagination from '@/components/ui/pagination';
-import TableSkeleton from '@/components/ui/table-skeleton';
-import EmptyState from '@/components/ui/empty-state';
+import PageHeader from '@/components/ui/page-header';
+import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 
 interface DuesRecord {
@@ -62,16 +61,7 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Manajemen Pembayaran</h1>
-        <button
-          onClick={() => fetchData()}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-        >
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
+      <PageHeader title="Manajemen Pembayaran" onRefresh={fetchData} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -102,58 +92,48 @@ export default function PaymentsPage() {
         placeholder="Cari pembayaran (nama, no. anggota)..."
       />
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Anggota</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden sm:table-cell">No. Anggota</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Jumlah</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden md:table-cell">Tanggal Bayar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeleton rows={5} columns={5} />
-              ) : dues.length === 0 ? (
-                <EmptyState
-                  icon={CreditCard}
-                  message={search ? 'Tidak ada pembayaran yang cocok dengan pencarian' : 'Belum ada data pembayaran'}
-                  action={search ? { label: 'Reset pencarian', onClick: () => { setSearch(''); setPage(1); } } : undefined}
-                  colSpan={5}
-                />
+      <DataTable
+        columns={[
+          { label: 'Anggota' },
+          { label: 'No. Anggota', hidden: 'hidden sm:table-cell' },
+          { label: 'Jumlah', align: 'right' },
+          { label: 'Status' },
+          { label: 'Tanggal Bayar', hidden: 'hidden md:table-cell' },
+        ]}
+        data={dues}
+        loading={loading}
+        empty={{
+          icon: CreditCard,
+          message: search ? 'Tidak ada pembayaran yang cocok dengan pencarian' : 'Belum ada data pembayaran',
+          action: search ? { label: 'Reset pencarian', onClick: () => { setSearch(''); setPage(1); } } : undefined,
+        }}
+        page={page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        onPageChange={handlePageChange}
+        colSpan={5}
+        renderRow={(due: DuesRecord) => (
+          <tr key={due.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{due.anggota?.namaLengkap || '-'}</td>
+            <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 hidden sm:table-cell">{due.anggota?.nomorAnggota || '-'}</td>
+            <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{formatRupiah(due.jumlah)}</td>
+            <td className="px-4 py-3">
+              {due.status === 'lunas' ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+                  <CheckCircle size={12} /> Lunas
+                </span>
               ) : (
-                dues.map((due) => (
-                  <tr key={due.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{due.anggota?.namaLengkap || '-'}</td>
-                    <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 hidden sm:table-cell">{due.anggota?.nomorAnggota || '-'}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{formatRupiah(due.jumlah)}</td>
-                    <td className="px-4 py-3">
-                      {due.status === 'lunas' ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
-                          <CheckCircle size={12} /> Lunas
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
-                          <Clock size={12} /> Belum Lunas
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                      {due.tanggalBayar ? new Date(due.tanggalBayar).toLocaleDateString('id-ID') : '-'}
-                    </td>
-                  </tr>
-                ))
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
+                  <Clock size={12} /> Belum Lunas
+                </span>
               )}
-            </tbody>
-          </table>
-        </div>
-
-        <Pagination page={page} totalPages={meta.totalPages} total={meta.total} onPageChange={handlePageChange} />
-      </div>
+            </td>
+            <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
+              {due.tanggalBayar ? new Date(due.tanggalBayar).toLocaleDateString('id-ID') : '-'}
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 }

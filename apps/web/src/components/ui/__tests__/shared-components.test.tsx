@@ -8,6 +8,8 @@ import EmptyState from '@/components/ui/empty-state';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import PageHeader from '@/components/ui/page-header';
+import DataTable from '@/components/ui/data-table';
 
 describe('Pagination', () => {
   it('renders total count', () => {
@@ -234,5 +236,134 @@ describe('FilterSelect', () => {
   it('uses default placeholder', () => {
     render(<FilterSelect value="" onChange={() => {}} options={options} />);
     expect(screen.getByText('Semua')).toBeInTheDocument();
+  });
+});
+
+describe('PageHeader', () => {
+  it('renders title', () => {
+    render(<PageHeader title="Manajemen User" />);
+    expect(screen.getByText('Manajemen User')).toBeInTheDocument();
+  });
+
+  it('renders refresh button when onRefresh provided', () => {
+    render(<PageHeader title="Test" onRefresh={() => {}} />);
+    expect(screen.getByText('Refresh')).toBeInTheDocument();
+  });
+
+  it('does not render refresh button without onRefresh', () => {
+    render(<PageHeader title="Test" />);
+    expect(screen.queryByText('Refresh')).not.toBeInTheDocument();
+  });
+
+  it('calls onRefresh when refresh clicked', () => {
+    const onRefresh = vi.fn();
+    render(<PageHeader title="Test" onRefresh={onRefresh} />);
+    fireEvent.click(screen.getByText('Refresh'));
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
+
+  it('renders children (action buttons)', () => {
+    render(
+      <PageHeader title="Test" onRefresh={() => {}}>
+        <button>Tambah</button>
+      </PageHeader>
+    );
+    expect(screen.getByText('Tambah')).toBeInTheDocument();
+  });
+
+  it('renders children without refresh', () => {
+    render(
+      <PageHeader title="Test">
+        <button>Export</button>
+      </PageHeader>
+    );
+    expect(screen.getByText('Export')).toBeInTheDocument();
+    expect(screen.queryByText('Refresh')).not.toBeInTheDocument();
+  });
+});
+
+describe('DataTable', () => {
+  interface TestItem {
+    id: string;
+    name: string;
+  }
+
+  const columns = [
+    { label: 'Name' },
+    { label: 'Actions', align: 'right' as const },
+  ];
+
+  const data: TestItem[] = [
+    { id: '1', name: 'Alice' },
+    { id: '2', name: 'Bob' },
+  ];
+
+  it('renders column headers', () => {
+    render(
+      <DataTable columns={columns} data={data} loading={false} empty={{ icon: Users, message: 'Empty' }} page={1} totalPages={1} total={2} onPageChange={() => {}} colSpan={2} renderRow={(item: TestItem) => <tr key={item.id}><td>{item.name}</td><td><button>Edit</button></td></tr>} />
+    );
+    expect(screen.getByText('Name')).toBeInTheDocument();
+    expect(screen.getByText('Actions')).toBeInTheDocument();
+  });
+
+  it('renders data rows when not loading', () => {
+    render(
+      <DataTable columns={columns} data={data} loading={false} empty={{ icon: Users, message: 'Empty' }} page={1} totalPages={1} total={2} onPageChange={() => {}} colSpan={2} renderRow={(item: TestItem) => <tr key={item.id}><td>{item.name}</td><td><button>Edit</button></td></tr>} />
+    );
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('Bob')).toBeInTheDocument();
+  });
+
+  it('renders loading skeleton when loading', () => {
+    const { container } = render(
+      <DataTable columns={columns} data={[]} loading={true} empty={{ icon: Users, message: 'Empty' }} page={1} totalPages={1} total={0} onPageChange={() => {}} colSpan={2} renderRow={() => null} />
+    );
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+  });
+
+  it('renders empty state when no data and not loading', () => {
+    render(
+      <DataTable columns={columns} data={[]} loading={false} empty={{ icon: Users, message: 'No records found', title: 'Oops' }} page={1} totalPages={1} total={0} onPageChange={() => {}} colSpan={2} renderRow={() => null} />
+    );
+    expect(screen.getByText('Oops')).toBeInTheDocument();
+    expect(screen.getByText('No records found')).toBeInTheDocument();
+  });
+
+  it('renders empty state with action', () => {
+    const onAction = vi.fn();
+    render(
+      <DataTable columns={columns} data={[]} loading={false} empty={{ icon: Users, message: 'Empty', action: { label: 'Retry', onClick: onAction } }} page={1} totalPages={1} total={0} onPageChange={() => {}} colSpan={2} renderRow={() => null} />
+    );
+    const btn = screen.getByText('Retry');
+    expect(btn).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onAction).toHaveBeenCalledOnce();
+  });
+
+  it('renders pagination', () => {
+    render(
+      <DataTable columns={columns} data={data} loading={false} empty={{ icon: Users, message: 'Empty' }} page={1} totalPages={3} total={10} onPageChange={() => {}} colSpan={2} renderRow={(item: TestItem) => <tr key={item.id}><td>{item.name}</td><td><button>Edit</button></td></tr>} />
+    );
+    expect(screen.getByText('10 total')).toBeInTheDocument();
+  });
+
+  it('does not render pagination when 1 page', () => {
+    const { container } = render(
+      <DataTable columns={columns} data={data} loading={false} empty={{ icon: Users, message: 'Empty' }} page={1} totalPages={1} total={2} onPageChange={() => {}} colSpan={2} renderRow={(item: TestItem) => <tr key={item.id}><td>{item.name}</td><td><button>Edit</button></td></tr>} />
+    );
+    // Pagination returns null when totalPages <= 1
+    expect(container.querySelector('.justify-between')).toBeNull();
+  });
+
+  it('includes hidden classes on column headers', () => {
+    const cols = [
+      { label: 'Name' },
+      { label: 'Email', hidden: 'hidden sm:table-cell' },
+    ];
+    const { container } = render(
+      <DataTable columns={cols} data={data} loading={false} empty={{ icon: Users, message: 'Empty' }} page={1} totalPages={1} total={2} onPageChange={() => {}} colSpan={2} renderRow={(item: TestItem) => <tr key={item.id}><td>{item.name}</td><td>-</td></tr>} />
+    );
+    const headers = container.querySelectorAll('th');
+    expect(headers[1].className).toContain('hidden sm:table-cell');
   });
 });

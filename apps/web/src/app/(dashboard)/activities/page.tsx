@@ -4,12 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import {
-  Plus, RefreshCw, Calendar,
+  Plus, Calendar,
   Eye, MapPin,
 } from 'lucide-react';
-import Pagination from '@/components/ui/pagination';
-import TableSkeleton from '@/components/ui/table-skeleton';
-import EmptyState from '@/components/ui/empty-state';
+import PageHeader from '@/components/ui/page-header';
+import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
@@ -84,21 +83,11 @@ export default function ActivitiesPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Manajemen Kegiatan</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={() => fetchData()}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            <RefreshCw size={14} /> Refresh
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
-            <Plus size={14} /> Tambah
-          </button>
-        </div>
-      </div>
+      <PageHeader title="Manajemen Kegiatan">
+        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+          <Plus size={14} /> Tambah
+        </button>
+      </PageHeader>
 
       <SummaryBar icon={Calendar} label="Total Kegiatan" total={meta.total} onRefresh={fetchData} />
 
@@ -122,78 +111,68 @@ export default function ActivitiesPage() {
         />
       </SearchBar>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Nama Kegiatan</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden sm:table-cell">Tipe</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden md:table-cell">Tanggal</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden lg:table-cell">Lokasi</th>
-                <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap hidden xl:table-cell">Peserta</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Status</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <TableSkeleton rows={5} columns={7} />
-              ) : data.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  message={search || filterStatus || filterTipe ? 'Tidak ada kegiatan yang cocok dengan filter' : 'Belum ada kegiatan'}
-                  action={(search || filterStatus || filterTipe) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); } } : undefined}
-                  colSpan={7}
-                />
-              ) : (
-                data.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
-                        {row.tipe}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell whitespace-nowrap">
-                      {new Date(row.tanggalMulai).toLocaleDateString('id-ID')}
-                      {row.tanggalSelesai && ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={12} className="text-gray-400" />
-                        {row.lokasi || '-'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center hidden xl:table-cell">
-                      <span className="text-gray-600 dark:text-gray-400">{row.pesertaCount ?? '-'}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => router.push(`/activities/${row.id}`)}
-                        className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                        title="Detail"
-                      >
-                        <Eye size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <Pagination page={page} totalPages={meta.totalPages} total={meta.total} onPageChange={handlePageChange} />
-      </div>
+      <DataTable
+        columns={[
+          { label: 'Nama Kegiatan' },
+          { label: 'Tipe', hidden: 'hidden sm:table-cell' },
+          { label: 'Tanggal', hidden: 'hidden md:table-cell' },
+          { label: 'Lokasi', hidden: 'hidden lg:table-cell' },
+          { label: 'Peserta', align: 'center', hidden: 'hidden xl:table-cell' },
+          { label: 'Status' },
+          { label: 'Aksi', align: 'right' },
+        ]}
+        data={data}
+        loading={loading}
+        empty={{
+          icon: Calendar,
+          message: search || filterStatus || filterTipe ? 'Tidak ada kegiatan yang cocok dengan filter' : 'Belum ada kegiatan',
+          action: (search || filterStatus || filterTipe) ? { label: 'Reset filter', onClick: () => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); } } : undefined,
+        }}
+        page={page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        onPageChange={handlePageChange}
+        colSpan={7}
+        renderRow={(row: ActivityRow) => (
+          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <td className="px-4 py-3">
+              <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
+            </td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+              <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                {row.tipe}
+              </span>
+            </td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell whitespace-nowrap">
+              {new Date(row.tanggalMulai).toLocaleDateString('id-ID')}
+              {row.tanggalSelesai && ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
+            </td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+              <div className="flex items-center gap-1">
+                <MapPin size={12} className="text-gray-400" />
+                {row.lokasi || '-'}
+              </div>
+            </td>
+            <td className="px-4 py-3 text-center hidden xl:table-cell">
+              <span className="text-gray-600 dark:text-gray-400">{row.pesertaCount ?? '-'}</span>
+            </td>
+            <td className="px-4 py-3">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}>
+                {row.status}
+              </span>
+            </td>
+            <td className="px-4 py-3 text-right">
+              <button
+                onClick={() => router.push(`/activities/${row.id}`)}
+                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                title="Detail"
+              >
+                <Eye size={15} />
+              </button>
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 }

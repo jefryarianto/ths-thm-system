@@ -12,3 +12,5 @@ export { default as EmptyState } from './ui/empty-state';
 export { default as SummaryBar } from './ui/summary-bar';
 export { default as SearchBar } from './ui/search-bar';
 export { default as FilterSelect } from './ui/filter-select';
+export { default as DataTable } from './ui/data-table';
+export { default as PageHeader } from './ui/page-header';
