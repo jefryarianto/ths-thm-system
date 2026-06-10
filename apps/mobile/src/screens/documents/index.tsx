@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
   TextInput,
@@ -13,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
+import { useApi } from '../../hooks/use-api';
+import { LoadingView, FilterChips } from '../../components/ui/shared';
 
 interface DocumentItem {
   id: string;
@@ -55,33 +56,18 @@ const TIPE_FILTERS = [
 ];
 
 export default function DocumentsScreen() {
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filterTipe, setFilterTipe] = useState('');
 
-  const fetchData = async (query?: string, tipe?: string) => {
-    try {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (query?.trim()) params.search = query.trim();
-      if (tipe) params.tipe = tipe;
-      const res = await apiClient.get('/documents', { params });
-      setDocuments(res.data.data || []);
-    } catch {
-      /* ignore */
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => fetchData(search, filterTipe), 300);
-    return () => clearTimeout(timer);
-  }, [search, filterTipe]);
+  const { data: documents, loading, refetch } = useApi<DocumentItem[]>(
+    () => apiClient.get('/documents', { params: { limit: 50, search: search.trim() || undefined, tipe: filterTipe || undefined } }).then(r => r.data.data || []),
+    [search, filterTipe]
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData(search, filterTipe);
+    await refetch();
     setRefreshing(false);
   };
 
@@ -96,12 +82,7 @@ export default function DocumentsScreen() {
     }
   };
 
-  if (loading)
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
+  if (loading) return <LoadingView message="Memuat dokumen..." />;
 
   return (
     <View style={styles.container}>
@@ -128,22 +109,7 @@ export default function DocumentsScreen() {
       </View>
 
       {/* Tipe Filter */}
-      <View style={styles.filterRow}>
-        {TIPE_FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.value}
-            style={[styles.filterChip, filterTipe === f.value && styles.filterChipActive]}
-            onPress={() => {
-              setFilterTipe(f.value);
-              setLoading(true);
-            }}
-          >
-            <Text style={[styles.filterText, filterTipe === f.value && styles.filterTextActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={TIPE_FILTERS} selected={filterTipe} onChange={setFilterTipe} />
 
       <FlatList
         data={documents}
@@ -204,7 +170,6 @@ export default function DocumentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
@@ -221,24 +186,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexWrap: 'wrap',
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
-  filterTextActive: { color: '#fff' },
+
   card: {
     flexDirection: 'row',
     alignItems: 'center',
