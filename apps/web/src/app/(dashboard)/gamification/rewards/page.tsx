@@ -63,7 +63,7 @@ export default function RewardsPage() {
       const [rewardsRes] = await Promise.all([
         apiClient.get('/gamification/rewards'),
       ]);
-      setRewards(rewardsRes.data.data);
+      setRewards(unwrap(rewardsRes));
     } catch (err) {
       console.error('Failed to fetch rewards:', err);
       setError('Gagal memuat data reward');

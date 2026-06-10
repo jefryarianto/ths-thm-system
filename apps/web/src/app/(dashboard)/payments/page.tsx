@@ -42,7 +42,8 @@ export default function PaymentsPage() {
         apiClient.get('/dues', { params }),
         apiClient.get('/dues/dashboard/stats'),
       ]);
-      if (statsRes.data.success) setStats(statsRes.data.data);
+      const { success, data: statsData } = statsRes.data;
+      if (success) setStats(statsData);
       return duesRes.data;
     },
     [page, debouncedSearch]
