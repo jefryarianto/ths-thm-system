@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import apiClient from '@/lib/api-client';
+import { useApi } from '@/lib/hooks/use-api';
 import {
   Users, UserPlus, GraduationCap, CreditCard,
   AlertCircle, TrendingUp, Calendar, Dumbbell,
@@ -131,78 +132,69 @@ function StatCardSkeleton() {
   );
 }
 
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse mb-1" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 12 }).map((_, i) => <StatCardSkeleton key={i} />)}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse h-80" />
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse h-80" />
+      </div>
+    </div>
+  );
+}
+
+function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-center">
+        <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
+        <p className="text-red-600 font-medium">{message}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Periksa koneksi ke server API</p>
+        <button
+          onClick={onRetry}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page Component ───
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const { data: res } = await apiClient.get('/reports/dashboard');
-      setData(res.data);
+  const fetchDashboard = useCallback(
+    () => apiClient.get('/reports/dashboard').then(({ data }) => {
       setLastUpdated(new Date());
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch dashboard:', err);
-      setError('Gagal memuat data dashboard');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return data.data as DashboardData;
+    }),
+    []
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data, loading, error, refetch } = useApi<DashboardData>(fetchDashboard, []);
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(fetchData, 60000);
+    const interval = setInterval(refetch, 60000);
     return () => clearInterval(interval);
-  }, [autoRefresh, fetchData]);
+  }, [autoRefresh, refetch]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse mb-1" />
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 12 }).map((_, i) => <StatCardSkeleton key={i} />)}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse h-80" />
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse h-80" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
-          <p className="text-red-600 font-medium">{error}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Periksa koneksi ke server API</p>
-          <button
-            onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
-          >
-            Coba Lagi
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  if (loading) return <DashboardSkeleton />;
+  if (error) return <DashboardError message={error} onRetry={refetch} />;
   if (!data) return null;
 
   const pieData = (data.memberStatus || []).map((s) => ({
@@ -245,11 +237,11 @@ export default function DashboardPage() {
             {autoRefresh ? '🔄 Auto' : '⏸ Manual'}
           </button>
           <button
-            onClick={fetchData}
+            onClick={refetch}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400 hover:text-blue-600"
             title="Refresh data"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={16} />
           </button>
         </div>
       </div>

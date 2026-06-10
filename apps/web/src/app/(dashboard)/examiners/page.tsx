@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
+import { usePaginatedList } from '@/lib/hooks/use-api';
 import {
   Plus, MoreVertical, UserCheck, Users,
 } from 'lucide-react';
@@ -18,25 +19,20 @@ interface Examiner {
 }
 
 export default function ExaminersPage() {
-  const [examiners, setExaminers] = useState<Examiner[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
 
-  const fetchExaminers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (search) params.search = search;
-      const { data } = await apiClient.get('/examiners', { params });
-      setExaminers(data.data || []);
-      setMeta(data.meta || { total: 0, totalPages: 0 });
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, [page, search]);
-
-  useEffect(() => { fetchExaminers(); }, [fetchExaminers]);
+  const { data: examiners, meta, loading, refetch } = usePaginatedList<Examiner>(
+    useCallback(
+      () => {
+        const params: Record<string, unknown> = { page, limit: 10 };
+        if (search) params.search = search;
+        return apiClient.get('/examiners', { params }).then(r => r.data);
+      },
+      [page, search]
+    ),
+    [page, search]
+  );
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -44,7 +40,7 @@ export default function ExaminersPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Manajemen Penguji" onRefresh={fetchExaminers}>
+      <PageHeader title="Manajemen Penguji" onRefresh={refetch}>
         <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
           <Plus size={14} /> Tambah Penguji
         </button>
