@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { useApi } from '@/lib/hooks/use-api';
+import { useApi, usePaginatedList } from '@/lib/hooks/use-api';
 import { type LucideIcon,
   BarChart3, Users, GraduationCap, CreditCard, AlertCircle,
   FileText, Download, RefreshCw, ChevronLeft, ChevronRight,
@@ -110,48 +110,32 @@ export default function ReportsPage() {
   );
 
   // Members data
-  const [members, setMembers] = useState<MemberRow[]>([]);
-  const [membersLoading, setMembersLoading] = useState(false);
   const [memberPage, setMemberPage] = useState(1);
-  const [memberMeta, setMemberMeta] = useState({ total: 0, totalPages: 0 });
   const [memberSearch, setMemberSearch] = useState('');
 
+  const {
+    data: members,
+    meta: memberMeta,
+    loading: membersLoading,
+    refetch: fetchMembers,
+  } = usePaginatedList<MemberRow>(
+    () => {
+      const params: Record<string, unknown> = { page: memberPage, limit: 15 };
+      if (memberSearch) params.search = memberSearch;
+      return apiClient.get('/members', { params }).then(r => r.data);
+    },
+    [memberPage, memberSearch],
+  );
+
   // Scan data
-  const [scanStats, setScanStats] = useState<ScanStats | null>(null);
-  const [scanLoading, setScanLoading] = useState(false);
+  const { data: scanStats, loading: scanLoading, refetch: fetchScanStats } = useApi<ScanStats>(
+    () => apiClient.get('/reports/scan-stats').then(r => r.data),
+    [],
+  );
 
   // Export
   const [exportType, setExportType] = useState('members');
   const [exportLoading, setExportLoading] = useState(false);
-
-  // Fetch members
-  const fetchMembers = useCallback(async () => {
-    setMembersLoading(true);
-    try {
-      const params: Record<string, unknown> = { page: memberPage, limit: 15 };
-      if (memberSearch) params.search = memberSearch;
-      const { data: res } = await apiClient.get('/members', { params });
-      setMembers(res.data || []);
-      setMemberMeta(res.meta || { total: 0, totalPages: 0 });
-    } catch { /* ignore */ }
-    setMembersLoading(false);
-  }, [memberPage, memberSearch]);
-
-  // Fetch scan stats
-  const fetchScanStats = useCallback(async () => {
-    setScanLoading(true);
-    try {
-      const { data: res } = await apiClient.get('/reports/scan-stats');
-      setScanStats(res.data);
-    } catch { /* ignore */ }
-    setScanLoading(false);
-  }, []);
-
-  // Auto-fetch when tab changes
-  useEffect(() => {
-    if (activeTab === 'members') fetchMembers();
-    if (activeTab === 'scan') fetchScanStats();
-  }, [activeTab, fetchMembers, fetchScanStats]);
 
   // Export handler
   const handleExport = async () => {
