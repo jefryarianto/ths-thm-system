@@ -1,0 +1,7 @@
+appId: com.ths_thm.mobile
+tags:
+  - smoke
+---
+- launchApp
+- assertVisible: "Selamat Datang"
+- assertVisible: "Status Keanggotaan"

@@ -1,0 +1,7 @@
+appId: com.ths_thm.mobile
+tags:
+  - smoke
+---
+- launchApp
+- tapOn: "Dokumen"
+- assertVisible: "dokumen"

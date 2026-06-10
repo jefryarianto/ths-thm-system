@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import apiClient from '../../lib/api-client';
 import {
   View,
@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { router } from 'expo-router';
+import { useRefresh } from '../../hooks/use-refresh';
 import { useGamificationProfile, usePointsHistory, useBadges, useRecentEvents, useRewards, useOrgStructure, useLeaderboard } from '../../hooks/use-gamification';
 import type { Reward, LeaderboardEntry, PointEvent } from '../../hooks/use-gamification';
 import Confetti from './confetti';
@@ -170,7 +171,6 @@ function getTimeAgo(dateStr: string) {
 export default function GamificationScreen() {
   const [anggotaId, setAnggotaId] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [showConfetti, setShowConfetti] = useState(false);
   const [tourVisible, setTourVisible] = useState(false);
@@ -227,16 +227,16 @@ export default function GamificationScreen() {
   };
   const { data: leaderboard, loading: leaderboardLoading, refetch: refetchLeaderboard } = useLeaderboard(filters);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    refetchProfile();
-    refetchHistory();
-    refetchEvents();
-    refetchRewards();
-    refetchOrgTree();
-    refetchLeaderboard();
-    setRefreshing(false);
-  }, []);
+  const { refreshing, onRefresh } = useRefresh(async () => {
+    await Promise.all([
+      refetchProfile(),
+      refetchHistory(),
+      refetchEvents(),
+      refetchRewards(),
+      refetchOrgTree(),
+      refetchLeaderboard(),
+    ]);
+  });
 
   const animateTab = (tab: TabType) => {
     setActiveTab(tab);

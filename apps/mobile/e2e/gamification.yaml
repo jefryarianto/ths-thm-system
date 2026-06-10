@@ -1,0 +1,10 @@
+appId: com.ths_thm.mobile
+tags:
+  - smoke
+---
+- launchApp
+- tapOn: "Gamifikasi"
+- assertVisible: "Total Poin"
+- assertVisible: "Peringkat"
+- tapOn: "Peringkat"
+- assertVisible: "Cari anggota"
