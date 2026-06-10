@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
   RefreshControl,
 } from 'react-native';
 import apiClient from '../../lib/api-client';
+import { usePaginatedList } from '../../hooks/use-api';
+import { LoadingView, StatusBadge, FilterChips } from '../../components/ui/shared';
 
 interface DuesItem {
   id: string;
@@ -35,46 +35,36 @@ const FILTERS = [
 ];
 
 export default function DuesScreen() {
-  const [dues, setDues] = useState<DuesItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
 
-  const fetchData = useCallback(async () => {
-    try {
+  const { data: dues, loading, refetch } = usePaginatedList<DuesItem>(
+    () => {
       const params: Record<string, unknown> = { limit: 50 };
       if (filterStatus) params.status = filterStatus;
-      const res = await apiClient.get('/dues', { params });
-      const data = res.data.data || [];
-      setDues(data);
-      setTotal(
-        data
-          .filter((d: DuesItem) => d.status === 'lunas')
-          .reduce((s: number, d: DuesItem) => s + Number(d.jumlah), 0),
-      );
-    } catch {
-      /* ignore */
-    }
-    setLoading(false);
-  }, [filterStatus]);
+      return apiClient.get('/dues', { params }).then(r => r.data);
+    },
+    [filterStatus]
+  );
 
+  // Calculate total from fetched data
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (dues.length > 0) {
+      const paid = dues
+        .filter((d) => d.status === 'lunas')
+        .reduce((s, d) => s + Number(d.jumlah), 0);
+      setTotal(paid);
+    }
+  }, [dues]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    await refetch();
     setRefreshing(false);
   };
 
-  if (loading)
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
+  if (loading) return <LoadingView message="Memuat iuran..." />;
 
   return (
     <View style={styles.container}>
@@ -84,23 +74,7 @@ export default function DuesScreen() {
         <Text style={styles.countLabel}>{dues.length} transaksi</Text>
       </View>
 
-      {/* Filter Chips */}
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.value}
-            style={[styles.filterChip, filterStatus === f.value && styles.filterChipActive]}
-            onPress={() => {
-              setFilterStatus(f.value);
-              setLoading(true);
-            }}
-          >
-            <Text style={[styles.filterText, filterStatus === f.value && styles.filterTextActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <FilterChips options={FILTERS} selected={filterStatus} onChange={(v) => { setFilterStatus(v); }} />
 
       <FlatList
         data={dues}
@@ -132,9 +106,7 @@ export default function DuesScreen() {
               </View>
               <View style={styles.cardRight}>
                 <Text style={styles.jumlah}>Rp {Number(item.jumlah).toLocaleString('id-ID')}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
-                  <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
-                </View>
+                <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
               </View>
             </View>
           );
@@ -151,25 +123,6 @@ const styles = StyleSheet.create({
   totalLabel: { color: '#bfdbfe', fontSize: 13 },
   totalAmount: { color: '#fff', fontSize: 28, fontWeight: '700', marginTop: 4 },
   countLabel: { color: '#bfdbfe', fontSize: 12, marginTop: 6 },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    flexWrap: 'wrap',
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: '#f3f4f6',
-  },
-  filterChipActive: { backgroundColor: '#2563eb' },
-  filterText: { fontSize: 12, color: '#6b7280', fontWeight: '500' },
-  filterTextActive: { color: '#fff' },
   card: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -190,8 +143,6 @@ const styles = StyleSheet.create({
   tanggal: { fontSize: 12, color: '#6b7280', marginTop: 2 },
   cardRight: { alignItems: 'flex-end' },
   jumlah: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginTop: 4 },
-  statusText: { fontSize: 11, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
 });
