@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingView } from '../../components/ui/shared';
 
 interface TrainingDetail {
   id: string;
@@ -44,15 +45,15 @@ export default function TrainingDetailScreen() {
           apiClient.get(`/trainings/${id}/attendances`),
           apiClient.get(`/trainings/${id}/evaluations`),
         ]);
-        setTraining(trainRes.data.data);
-        setAttendances(attRes.data.data || []);
-        setEvaluations(evalRes.data.data || []);
+        setTraining(unwrap(trainRes));
+        setAttendances(unwrap(attRes) || []);
+        setEvaluations(unwrap(evalRes) || []);
       } catch { /* ignore */ }
       setLoading(false);
     })();
   }, [id]);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (loading) return <LoadingView message="Memuat detail latihan..." />;
   if (!training) return <View style={styles.center}><Text style={styles.errorText}>Latihan tidak ditemukan</Text></View>;
 
   const formatDate = (dateStr: string) => {

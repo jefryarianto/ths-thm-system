@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -55,12 +55,12 @@ export default function LettersScreen() {
   const [filterStatus, setFilterStatus] = useState('');
 
   const { data: incoming, loading: loadingIncoming, refetch: refetchIncoming } = useApi<IncomingLetter[]>(
-    () => apiClient.get('/letters/incoming', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    () => apiClient.get('/letters/incoming', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
     [search, filterStatus]
   );
 
   const { data: outgoing, loading: loadingOutgoing, refetch: refetchOutgoing } = useApi<OutgoingLetter[]>(
-    () => apiClient.get('/letters/outgoing', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    () => apiClient.get('/letters/outgoing', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
     [search, filterStatus]
   );
 

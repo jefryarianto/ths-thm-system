@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -36,7 +36,7 @@ export default function CandidatesScreen() {
   const [filterStatus, setFilterStatus] = useState('');
 
   const { data: candidates, loading, refetch } = useApi<Candidate[]>(
-    () => apiClient.get('/candidates', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    () => apiClient.get('/candidates', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
     [search, filterStatus]
   );
 

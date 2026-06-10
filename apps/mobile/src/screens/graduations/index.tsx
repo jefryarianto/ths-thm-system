@@ -9,7 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -42,7 +42,7 @@ export default function GraduationsScreen() {
   const [filterStatus, setFilterStatus] = useState('');
 
   const { data, loading, refetch } = useApi<Graduation[]>(
-    () => apiClient.get('/graduations', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => r.data.data || []),
+    () => apiClient.get('/graduations', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(unwrap).then(d => d || []),
     [search, filterStatus]
   );
 

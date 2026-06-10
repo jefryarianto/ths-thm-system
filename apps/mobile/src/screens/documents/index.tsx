@@ -11,7 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -61,7 +61,7 @@ export default function DocumentsScreen() {
   const [filterTipe, setFilterTipe] = useState('');
 
   const { data: documents, loading, refetch } = useApi<DocumentItem[]>(
-    () => apiClient.get('/documents', { params: { limit: 50, search: search.trim() || undefined, tipe: filterTipe || undefined } }).then(r => r.data.data || []),
+    () => apiClient.get('/documents', { params: { limit: 50, search: search.trim() || undefined, tipe: filterTipe || undefined } }).then(unwrap).then(d => d || []),
     [search, filterTipe]
   );
 

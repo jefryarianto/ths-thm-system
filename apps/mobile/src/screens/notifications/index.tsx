@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView } from '../../components/ui/shared';
-
-const typeIcons: Record<string, string> = { reminder_latihan: '🏋️', reminder_iuran: '💰', reminder_pendadaran: '🎓', dokumen_ready: '📄', data_incomplete: '⚠️', status_klaim: '📋', welcome: '👋', umum: '📢' };
 
 interface NotificationItem {
   id: string;
@@ -14,8 +12,6 @@ interface NotificationItem {
   isRead: boolean;
   createdAt: string;
 }
-
-const typeIcons: Record<string, string> = { reminder_latihan: '🏋️', reminder_iuran: '💰', reminder_pendadaran: '🎓', dokumen_ready: '📄', data_incomplete: '⚠️', status_klaim: '📋', welcome: '👋', umum: '📢' };
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -30,7 +26,7 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: notifs, loading, refetch } = useApi<NotificationItem[]>(
-    () => apiClient.get('/notifications', { params: { limit: 50 } }).then(r => r.data.data || []),
+    () => apiClient.get('/notifications', { params: { limit: 50 } }).then(unwrap).then(d => d || []),
     []
   );
 

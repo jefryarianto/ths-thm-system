@@ -4,7 +4,7 @@ import { LoadingView } from '../../components/ui/shared';
 import { useApi } from '../../hooks/use-api';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useAuthStore } from '../../store/auth-store';
 
 
@@ -28,7 +28,7 @@ export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
 
   const { data: memberData, loading } = useApi<{ namaLengkap: string; statusKeanggotaan: string; nomorAnggota: string; tingkat: string }>(
-    () => apiClient.get('/members', { params: { limit: 1 } }).then(r => r.data.data?.[0] || null),
+    () => apiClient.get('/members', { params: { limit: 1 } }).then(unwrap).then(d => d?.[0] || null),
     []
   );
 

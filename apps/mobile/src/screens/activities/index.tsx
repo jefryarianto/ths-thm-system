@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -44,7 +44,7 @@ export default function ActivitiesScreen() {
   const [filter, setFilter] = useState<string>('');
 
   const { data: activities, loading, refetch } = useApi<Activity[]>(
-    () => apiClient.get('/activities', { params: { limit: 50, status: filter || undefined } }).then(r => r.data.data || []),
+    () => apiClient.get('/activities', { params: { limit: 50, status: filter || undefined } }).then(unwrap).then(d => d || []),
     [filter]
   );
 

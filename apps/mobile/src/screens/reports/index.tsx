@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { LoadingView } from '../../components/ui/shared';
 
@@ -20,7 +20,7 @@ export default function ReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: stats, loading, refetch } = useApi<DashboardStats>(
-    () => apiClient.get('/reports/dashboard').then(r => r.data.data),
+    () => apiClient.get('/reports/dashboard').then(unwrap),
     []
   );
 
