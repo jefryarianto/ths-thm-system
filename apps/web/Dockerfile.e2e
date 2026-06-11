@@ -1,14 +1,15 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
-# Install all deps
+# Copy all source first (before node_modules exists, avoids symlink conflicts)
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
-COPY apps/web/package.json ./apps/web/package.json
-RUN pnpm install --frozen-lockfile
+COPY apps/web/ ./apps/web/
 
-# Build web app
-COPY . .
+# Install ALL dependencies (including devDeps for build)
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile
+
+# Build web app (uses installed devDeps)
 RUN pnpm --filter @ths-thm/web build
 
 # Production runner
@@ -16,16 +17,18 @@ FROM node:20-alpine
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
-# Install only production deps in a clean layer
+# Copy only runtime dependencies definition
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/package.json
-RUN pnpm install --frozen-lockfile --prod
 
-# Copy built output and public assets
-COPY --from=base /app/apps/web/.next ./apps/web/.next
-COPY --from=base /app/apps/web/public ./apps/web/public
-COPY --from=base /app/apps/web/next.config.js ./apps/web/next.config.js
+# Install only production deps
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# Copy built output and public assets from builder
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/next.config.js ./apps/web/next.config.js
 
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node_modules/.bin/next", "start", "-p", "3000"]
+CMD ["sh", "-c", "cd apps/web && exec npx next start -p 3000"]
