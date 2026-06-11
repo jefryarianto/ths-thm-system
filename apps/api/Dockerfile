@@ -6,8 +6,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copy all source files first (node_modules excluded by .dockerignore)
-COPY . .
+# Copy dependency definition files first for caching
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+COPY packages/templates/package.json ./packages/templates/package.json
 
 # Install all dependencies
 RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile
@@ -17,7 +20,11 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
-# Generate Prisma client
+# Copy source files
+COPY apps/api/ ./apps/api/
+COPY packages/templates/ ./packages/templates/
+
+# Generate Prisma client and build
 RUN cd apps/api && pnpm exec prisma generate
 RUN cd apps/api && pnpm run build
 
