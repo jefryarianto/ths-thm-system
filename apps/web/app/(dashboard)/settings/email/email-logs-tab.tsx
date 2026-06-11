@@ -357,7 +357,7 @@ export default function EmailLogsTab() {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Penerima Terbanyak</h3>
           <div className="space-y-2">
-            {logsStats.topRecipients.map((r, i) => (
+            {logsStats.topRecipients.map((r: { email: string; count: number }, i: number) => (
               <div key={r.email} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400 w-5">{i + 1}.</span>

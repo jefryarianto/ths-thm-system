@@ -197,7 +197,7 @@ export default function EmailReportTab() {
               <EngagementCard label="Click Rate" value={engagement.rates.clicked + '%'} color="text-purple-600" />
               <EngagementCard label="Bounce Rate" value={engagement.rates.bounced + '%'} color={engagement.rates.bounced > 5 ? 'text-red-600' : 'text-yellow-600'} />
             </div>
-            {engagement.dailyTrend && engagement.dailyTrend.some(d => d.sent > 0) && (
+            {engagement.dailyTrend && engagement.dailyTrend.some((d: { date: string; sent: number; openRate?: number; clickRate?: number; bounceRate?: number }) => d.sent > 0) && (
               <>
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Tren 7 Hari (Open, Click, Bounce Rate)</p>
                 <ResponsiveContainer width="100%" height={160}>
@@ -260,7 +260,7 @@ export default function EmailReportTab() {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Penerima Terbanyak</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {logsStats.topRecipients.map((r, i) => (
+            {logsStats.topRecipients.map((r: { email: string; count: number }, i: number) => (
               <div key={r.email} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xs text-gray-400 w-5 flex-shrink-0">{i + 1}.</span>
