@@ -9,8 +9,8 @@ COPY apps/web/ ./apps/web/
 # Install ALL dependencies (including devDeps for build)
 RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile
 
-# Build web app (uses installed devDeps)
-RUN pnpm --filter @ths-thm/web build
+# Verify source files exist then build
+RUN ls -la apps/web/src/app/ && pnpm --filter @ths-thm/web build
 
 # Production runner
 FROM node:20-alpine
