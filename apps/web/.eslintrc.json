@@ -1,8 +1,11 @@
 {
+  "plugins": ["react-hooks"],
+  "extends": ["next/core-web-vitals"],
   "parserOptions": {
     "project": ["../../tsconfig.base.json", "./tsconfig.json"]
   },
   "rules": {
+    "react-hooks/exhaustive-deps": "warn",
     "no-restricted-syntax": ["warn", {
       "selector": "MemberExpression[object.type=\"MemberExpression\"][object.property.name=\"data\"][property.name=\"data\"]",
       "message": "Use `unwrap(response)` instead of `response.data.data`. Import `unwrap` from '@/lib/api-client'."

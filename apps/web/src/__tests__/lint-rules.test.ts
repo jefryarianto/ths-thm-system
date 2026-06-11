@@ -18,8 +18,8 @@ describe('ESLint no-restricted-syntax: .data.data', () => {
 
     const ruleConfig = rule[1];
     expect(ruleConfig.selector).toContain('MemberExpression');
-    expect(ruleConfig.selector).toContain('object.property.name=\"data\"');
-    expect(ruleConfig.selector).toContain('property.name=\"data\"');
+    expect(ruleConfig.selector).toContain('object.property.name="data"');
+    expect(ruleConfig.selector).toContain('property.name="data"');
     expect(ruleConfig.message.toLowerCase()).toContain('unwrap');
   });
 
