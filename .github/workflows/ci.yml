@@ -105,6 +105,7 @@ jobs:
           DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_test
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
+          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
 
   e2e-web:
     name: E2E (Web - Playwright)
@@ -142,6 +143,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
           JWT_SECRET: test-jwt-secret
+          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
       - name: Build API
         run: cd apps/api && npx nest build
         env:
@@ -163,6 +165,7 @@ jobs:
           DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
+          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
       - name: Start Web app
         run: |
           cd apps/web && npx next dev -p 3002 &
@@ -223,6 +226,7 @@ jobs:
           DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
+          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
 
   build-api:
     name: Build API Docker Image
