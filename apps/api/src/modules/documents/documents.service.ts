@@ -84,7 +84,9 @@ export class DocumentsService {
         include: { ranting: { include: { wilayah: { include: { distrik: true } } } } },
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildPdfDocument } = require('./pdf-generator');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
       const PdfDoc = buildPdfDocument({

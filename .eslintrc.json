@@ -15,5 +15,16 @@
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "no-console": ["warn", { "allow": ["warn", "error"] }]
   },
-  "ignorePatterns": ["node_modules", "dist", ".next", ".expo", "coverage"]
+  "ignorePatterns": ["node_modules", "dist", ".next", ".expo", "coverage"],
+  "overrides": [
+    {
+      "files": ["*.spec.ts", "*.e2e-spec.ts", "**/test/**/*.ts", "**/__tests__/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-require-imports": "off"
+      }
+    }
+  ]
 }

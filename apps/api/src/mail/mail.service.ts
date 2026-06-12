@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { env } from '../config/env.validation';
 
@@ -7,7 +7,6 @@ export interface SendMailOptions {
   subject: string;
   text?: string;
   html?: string;
-  /** Optional metadata for logging: which module, template, userId triggered this email */
   metadata?: {
     module?: string;
     template?: string;
@@ -28,15 +27,9 @@ export class MailService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Send email via Resend (primary) or SMTP (fallback).
-   * Always logs the result to the email_logs table.
-   * @returns true if email was sent successfully, false if skipped/failed
-   */
   async sendMail(options: SendMailOptions): Promise<boolean> {
     const { to, subject, text, html, metadata } = options;
 
-    // Check if recipient is suppressed (bounced/complained)
     const suppressed = await this.prisma.suppressedEmail.findUnique({
       where: { email: to },
     });
@@ -55,8 +48,8 @@ export class MailService {
     // Try Resend first (primary provider — uses native fetch, no packages needed)
     let provider = 'resend';
     let sent: boolean;
-    let resendId: string | undefined;
-    ({ success: sent, resendId } = await this.sendViaResend(to, subject, text, html));
+    const { success: resendSent, resendId } = await this.sendViaResend(to, subject, text, html);
+    sent = resendSent;
     if (sent) {
       const enrichedMetadata = { ...(metadata || {}), ...(resendId ? { resendId } : {}) };
       await this.logToDb(to, subject, 'sent', provider, null, enrichedMetadata, html || text);
@@ -76,10 +69,6 @@ export class MailService {
     return false;
   }
 
-  /**
-   * Retry all failed emails (or specific ones by id).
-   * Tries to resend each failed email, creates a new log entry for the retry.
-   */
   async retryFailedEmails(ids?: string[]): Promise<{ retried: number; succeeded: number; failed: number }> {
     const where: Record<string, unknown> = { status: 'failed' };
     if (ids && ids.length > 0) where.id = { in: ids };
@@ -190,7 +179,6 @@ export class MailService {
     }
 
     try {
-      // nodemailer is optional — install with: pnpm add nodemailer
       let nodemailerModule: typeof import('nodemailer');
       try {
         nodemailerModule = await import('nodemailer');
