@@ -18,7 +18,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "  [!] SSH key not configured on VPS yet" -ForegroundColor Red
     Write-Host "`n[STEP 1] Copy SSH public key ke VPS" -ForegroundColor Yellow
     Write-Host "  Copy command ini dan jalankan manual:" -ForegroundColor Gray
-    Write-Host "`n  Get-Content '$SSH_KEY_PATH.pub' | ssh root@$VPS_HOST " mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys ""`n"
+    Write-Host "`n  Get-Content '$SSH_KEY_PATH.pub' | ssh root@$VPS_HOST `"mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys`"`n"
     Write-Host "  Atau jalankan dengan password, lalu paste public key:`n"
     Write-Host "  ssh root@$VPS_HOST" -ForegroundColor White
     Write-Host "  Password: 5tr6w1nG" -ForegroundColor White
@@ -55,7 +55,7 @@ fi
 if [ ! -d "/opt/ths-thm" ]; then
     echo "Cloning repository..."
     cd /opt
-    git clone https://github.com/jefryarianto/ths-thm-project.git ths-thm
+    git clone https://github.com/jefryarianto/ths-thm-system.git ths-thm
 else
     echo "Updating repository..."
     cd /opt/ths-thm

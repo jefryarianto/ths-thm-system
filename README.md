@@ -68,6 +68,8 @@ ths-thm-system/
 
 ## Quick Start
 
+<!-- Deploy trigger: 2026-06-12 12:47 -->
+
 ```bash
 # Setup otomatis (Windows PowerShell)
 .\setup.ps1
