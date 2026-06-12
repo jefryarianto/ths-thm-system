@@ -83,7 +83,7 @@ export default function DuesPage() {
   const [stats, setStats] = useState<DuesStats | null>(null);
   const [page, setPage] = useState(1);
 
-  const { data, meta, loading, refetch } = usePaginatedList<DuesRow>(
+  const { data, meta, loading } = usePaginatedList<DuesRow>(
     () => apiClient.get('/dues', { params: { page, limit: 10 } }).then(r => r.data),
     [page]
   );

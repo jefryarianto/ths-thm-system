@@ -1,6 +1,6 @@
 'use client';
 
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi, usePaginatedList } from './use-api';
 import type { EmailLogEntry, LogStats, UsedModule, Engagement, SuppressionEntry, SuppressionMeta } from '@/app/(dashboard)/settings/email/shared';
 
@@ -48,7 +48,7 @@ export function useMailStats(params: {
       if (params.module) queryParams.module = params.module;
       if (params.startDate) queryParams.startDate = params.startDate;
       if (params.endDate) queryParams.endDate = params.endDate;
-      return apiClient.get('/mail/logs/stats', { params: queryParams }).then(r => r.data.data);
+      return apiClient.get('/mail/logs/stats', { params: queryParams }).then(r => unwrap<LogStats>(r));
     },
     [paramsKey],
   );
@@ -69,7 +69,7 @@ export function useMailSuppressions(page: number) {
  */
 export function useMailEngagement() {
   return useApi<Engagement>(
-    () => apiClient.get('/mail/logs/engagement').then(r => r.data.data),
+    () => apiClient.get('/mail/logs/engagement').then(r => unwrap<Engagement>(r)),
     [],
   );
 }
@@ -79,7 +79,7 @@ export function useMailEngagement() {
  */
 export function useMailModules() {
   return useApi<UsedModule[]>(
-    () => apiClient.get('/mail/modules').then(r => r.data.data),
+    () => apiClient.get('/mail/modules').then(r => unwrap<UsedModule[]>(r)),
     [],
   );
 }
@@ -89,7 +89,7 @@ export function useMailModules() {
  */
 export function useMailStatus() {
   return useApi<{ mode: string; resend: { configured: boolean; hasApiKey: boolean; hasDomain: boolean }; smtp: { configured: boolean; host: string | null; port: number | null; hasCredentials: boolean } }>(
-    () => apiClient.get('/mail/status').then(r => r.data.data),
+    () => apiClient.get('/mail/status').then(r => unwrap(r)),
     [],
   );
 }

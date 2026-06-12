@@ -5,7 +5,7 @@ import {
   Mail, Send, FileText, History, BarChart3, Ban,
   CheckCircle2, XCircle, Server, AlertCircle, Info,
 } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import { type MailStatus } from './shared';
 import EmailTestTab from './email-test-tab';
@@ -29,7 +29,7 @@ export default function EmailSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('test');
 
   const { data: mailStatus, loading: statusLoading } = useApi<MailStatus>(
-    () => apiClient.get('/mail/status').then(r => r.data.data),
+    () => apiClient.get('/mail/status').then(r => unwrap<MailStatus>(r)),
     [],
     true,
   );

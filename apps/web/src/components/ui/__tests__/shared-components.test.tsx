@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Users, RefreshCw } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 import Pagination from '@/components/ui/pagination';
 import TableSkeleton from '@/components/ui/table-skeleton';

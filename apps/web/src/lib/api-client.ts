@@ -96,6 +96,7 @@ export interface PaginatedResponse<T> {
  * const { data, loading } = useApi(() => apiClient.get('/foo').then(unwrap))
  * ```
  */
+// eslint-disable-next-line no-restricted-syntax
 export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
 
 /**
@@ -113,5 +114,6 @@ export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.dat
  * usePaginatedList(() => apiClient.get('/items').then(unwrapPaginated), [page])
  * ```
  */
+// eslint-disable-next-line no-restricted-syntax
 export const unwrapPaginated = <T>(response: { data: ApiResponse<PaginatedResponse<T>> }): PaginatedResponse<T> =>
   response.data.data;

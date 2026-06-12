@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import {
@@ -34,7 +34,7 @@ export default function ScanStatsPage() {
   const [filterHadir, setFilterHadir] = useState('');
 
   const { data: stats, loading, refetch: fetchData } = useApi<ScanStats>(
-    () => apiClient.get('/reports/scan-stats').then(r => r.data.data),
+    () => apiClient.get('/reports/scan-stats').then(r => unwrap<ScanStats>(r)),
     []
   );
 

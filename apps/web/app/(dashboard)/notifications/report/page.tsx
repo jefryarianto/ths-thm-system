@@ -66,7 +66,7 @@ export default function NotificationReportPage() {
       setTotalStats({ total: stats.total, unread: stats.unread, read: stats.read });
 
       // Still fetch paginated data for CSV export (respect filters)
-      const listParams: Record<string, any> = { page: 1, limit: 50 };
+      const listParams: Record<string, string | number> = { page: 1, limit: 50 };
       if (filterTipe) listParams.tipe = filterTipe;
 
       const { data: listRes } = await apiClient.get('/notifications', { params: listParams });
