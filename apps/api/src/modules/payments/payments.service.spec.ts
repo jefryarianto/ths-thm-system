@@ -1,26 +1,9 @@
-// @ts-nocheck
-// Tests written before DTO refactor - testing service logic, not DTO validation
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
-
-const mockConstructEvent = jest.fn();
-const mockCreate = jest.fn();
-
-const mockStripeInstance = {
-  paymentIntents: { create: mockCreate },
-  webhooks: { constructEvent: mockConstructEvent },
-};
-
-jest.mock(
-  'stripe',
-  () => {
-    return jest.fn().mockImplementation(() => mockStripeInstance);
-  },
-  { virtual: true },
-);
+import { CacheService } from '../../common/services/cache.service';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
@@ -33,17 +16,15 @@ describe('PaymentsService', () => {
   };
 
   const mockScopeHelper = {
-    buildScopeFilter: jest.fn().mockReturnValue({}),
-    buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
-    hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
-    verifyKegiatanScope: jest.fn(),
   };
 
-  beforeAll(() => {
-    process.env.STRIPE_SECRET_KEY = 'sk_test_mock';
-    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_mock';
-  });
+  const mockCache = {
+    getOrSet: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    invalidatePrefix: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +32,7 @@ describe('PaymentsService', () => {
         PaymentsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -62,68 +44,72 @@ describe('PaymentsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('createIntent', () => {
-    it('should create a payment intent and update iuran', async () => {
-      mockPrisma.iuran.findUnique.mockResolvedValue({ id: 'iuran1', status: 'belum_lunas' });
-      mockCreate.mockResolvedValue({ id: 'pi_123', client_secret: 'secret_abc' });
-      mockPrisma.iuran.update.mockResolvedValue({});
+  describe('getBankInfo', () => {
+    it('should return bank info from env', () => {
+      process.env.BANK_NAME = 'BCA';
+      process.env.BANK_ACCOUNT_NUMBER = '123456';
+      process.env.BANK_ACCOUNT_NAME = 'THS-THM';
 
-      const result = await service.createIntent({
-        iuranId: 'iuran1',
-        amount: 100000,
-        currency: 'idr',
-      });
-      expect(result.clientSecret).toBe('secret_abc');
-    });
-
-    it('should throw NotFoundException when iuran not found', async () => {
-      mockPrisma.iuran.findUnique.mockResolvedValue(null);
-      await expect(
-        service.createIntent({ iuranId: 'nonexistent', amount: 100000, currency: 'idr' }),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw ForbiddenException for out-of-scope iuran', async () => {
-      mockPrisma.iuran.findUnique.mockResolvedValue({
-        id: 'iuran1',
-        anggota: { rantingId: 'r-other' },
-      });
-      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
-      await expect(
-        service.createIntent(
-          { iuranId: 'iuran1', amount: 100000, currency: 'idr' },
-          { rantingId: 'r1' },
-        ),
-      ).rejects.toThrow(ForbiddenException);
+      const result = service.getBankInfo();
+      expect(result.bankName).toBe('BCA');
+      expect(result.accountNumber).toBe('123456');
+      expect(result.accountName).toBe('THS-THM');
     });
   });
 
-  describe('handleWebhook', () => {
-    it('should process payment_intent.succeeded event', async () => {
-      mockConstructEvent.mockReturnValue({
-        type: 'payment_intent.succeeded',
-        data: { object: { id: 'pi_123', metadata: { iuranId: 'iuran1' } } },
-      });
-      mockPrisma.iuran.update.mockResolvedValue({});
+  describe('uploadProof', () => {
+    it('should upload proof and update iuran status', async () => {
+      const mockIuran = { id: '1', status: 'belum_dibayar', anggota: { rantingId: 'r1' } };
+      mockPrisma.iuran.findUnique.mockResolvedValue(mockIuran);
+      mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'menunggu_verifikasi' });
 
-      const result = await service.handleWebhook('sig', Buffer.from('{}'));
-      expect(result.received).toBe(true);
-      expect(mockPrisma.iuran.update).toHaveBeenCalled();
+      const result = await service.uploadProof('1', { catatan: 'Transfer BCA' });
+      expect(result.success).toBe(true);
+      expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'menunggu_verifikasi' }) }),
+      );
     });
 
-    it('should handle non-payment_intent events', async () => {
-      mockConstructEvent.mockReturnValue({ type: 'charge.succeeded', data: { object: {} } });
-      const result = await service.handleWebhook('sig', Buffer.from('{}'));
-      expect(result.received).toBe(true);
-      expect(mockPrisma.iuran.update).not.toHaveBeenCalled();
+    it('should throw NotFoundException for non-existent iuran', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue(null);
+      await expect(service.uploadProof('1', { catatan: 'test' })).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException on invalid signature', async () => {
-      mockConstructEvent.mockImplementation(() => {
-        throw new Error('Invalid signature');
-      });
-      await expect(service.handleWebhook('bad-sig', Buffer.from('{}'))).rejects.toThrow(
-        BadRequestException,
+    it('should throw ForbiddenException for already paid iuran', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue({ id: '1', status: 'lunas', anggota: { rantingId: 'r1' } });
+      await expect(service.uploadProof('1', { catatan: 'test' })).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('verifyPayment', () => {
+    it('should verify payment and set status to lunas', async () => {
+      const mockIuran = { id: '1', status: 'menunggu_verifikasi', anggota: { id: 'm1', rantingId: 'r1' } };
+      mockPrisma.iuran.findUnique.mockResolvedValue(mockIuran);
+      mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'lunas' });
+
+      const result = await service.verifyPayment('1', 'u1');
+      expect(result.success).toBe(true);
+      expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'lunas' }) }),
+      );
+    });
+
+    it('should throw NotFoundException for non-existent iuran', async () => {
+      mockPrisma.iuran.findUnique.mockResolvedValue(null);
+      await expect(service.verifyPayment('1', 'u1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('rejectPayment', () => {
+    it('should reject payment and reset status', async () => {
+      const mockIuran = { id: '1', status: 'menunggu_verifikasi', anggota: { rantingId: 'r1' } };
+      mockPrisma.iuran.findUnique.mockResolvedValue(mockIuran);
+      mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'belum_dibayar' });
+
+      const result = await service.rejectPayment('1');
+      expect(result.success).toBe(true);
+      expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'belum_dibayar' }) }),
       );
     });
   });
