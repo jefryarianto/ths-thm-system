@@ -10,7 +10,11 @@ describe('ApiKeyManagementController', () => {
   const mockAuditService = { logDataMutation: jest.fn() };
 
   beforeEach(async () => {
+    // Temporarily clear API_KEYS so store doesn't load CI env vars
+    const savedApiKeys = process.env.API_KEYS;
+    process.env.API_KEYS = '';
     store = new ApiKeyStore();
+    process.env.API_KEYS = savedApiKeys;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ApiKeyManagementController],
