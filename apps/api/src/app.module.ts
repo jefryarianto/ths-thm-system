@@ -34,11 +34,13 @@ import { GamificationModule } from './modules/gamification/gamification.module';
 import { MailModule } from './mail/mail.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ForumModule } from './modules/forum/forum.module';
+import { CronTasksModule } from './modules/cron/cron-tasks.module';
 
 @Module({
   imports: [
     ChatModule,
     ForumModule,
+    CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '../../.env', '.env.production'],
