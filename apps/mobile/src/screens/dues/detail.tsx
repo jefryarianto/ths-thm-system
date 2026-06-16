@@ -8,12 +8,12 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, StatusBadge } from '../../components/ui/shared';
-import type { Dues, DuesPayment } from '../../types';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   lunas: { label: 'Lunas', color: '#16a34a', bg: '#ecfdf5' },
@@ -22,23 +22,29 @@ const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }
   menunggu_verifikasi: { label: 'Menunggu', color: '#ca8a04', bg: '#fef3c7' },
 };
 
+interface DuesDetail {
+  id: string;
+  periode: string;
+  jumlah: number;
+  status: string;
+  tanggalBayar?: string;
+  tanggalJatuhTempo?: string;
+  anggota?: { namaLengkap: string };
+}
+
 export default function DuesDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [dues, setDues] = useState<Dues | null>(null);
-  const [payments, setPayments] = useState<DuesPayment[]>([]);
+  const [dues, setDues] = useState<DuesDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPayForm, setShowPayForm] = useState(false);
   const [catatan, setCatatan] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [duesRes, payRes] = await Promise.all([
-        apiClient.get(`/dues/${id}`),
-        apiClient.get(`/dues/${id}/payments`),
-      ]);
-      setDues(unwrap(duesRes));
-      setPayments(unwrap(payRes) || []);
+      const res = await apiClient.get(`/dues/${id}`);
+      setDues(unwrap(res));
     } catch {
       /* ignore */
     }
@@ -49,7 +55,7 @@ export default function DuesDetailScreen() {
     fetchData();
   }, [id]);
 
-  const handlePay = async () => {
+  const handleManualPay = async () => {
     if (!catatan.trim()) {
       Alert.alert('Error', 'Catatan pembayaran harus diisi');
       return;
@@ -57,7 +63,7 @@ export default function DuesDetailScreen() {
     setSubmitting(true);
     try {
       await apiClient.post(`/dues/${id}/payments`, { catatan: catatan.trim() });
-      Alert.alert('Berhasil', 'Konfirmasi pembayaran berhasil dikirim');
+      Alert.alert('Berhasil', 'Konfirmasi pembayaran berhasil dikirim. Menunggu verifikasi admin.');
       setShowPayForm(false);
       setCatatan('');
       setLoading(true);
@@ -66,6 +72,21 @@ export default function DuesDetailScreen() {
       Alert.alert('Gagal', err?.response?.data?.message || 'Terjadi kesalahan');
     }
     setSubmitting(false);
+  };
+
+  const handleOnlinePay = async () => {
+    setPayLoading(true);
+    try {
+      const res = await apiClient.post('/payments/snap-token', { iuranId: id });
+      const data = unwrap(res) as { redirect_url: string };
+      if (data?.redirect_url) {
+        await Linking.openURL(data.redirect_url);
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Gagal memulai pembayaran online';
+      Alert.alert('Error', msg);
+    }
+    setPayLoading(false);
   };
 
   if (loading) return <LoadingView message="Memuat detail iuran..." />;
@@ -81,6 +102,8 @@ export default function DuesDetailScreen() {
     color: '#6b7280',
     bg: '#f3f4f6',
   };
+
+  const canPay = dues.status !== 'lunas';
 
   return (
     <ScrollView style={styles.container}>
@@ -139,11 +162,25 @@ export default function DuesDetailScreen() {
         </View>
       </View>
 
-      {dues.status !== 'lunas' && !showPayForm && (
+      {canPay && !showPayForm && (
         <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.payBtn, styles.onlineBtn]}
+            onPress={handleOnlinePay}
+            disabled={payLoading}
+          >
+            {payLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="card" size={18} color="#fff" />
+                <Text style={styles.payBtnText}>Bayar Online (Midtrans)</Text>
+              </>
+            )}
+          </TouchableOpacity>
           <TouchableOpacity style={styles.payBtn} onPress={() => setShowPayForm(true)}>
-            <Ionicons name="card" size={18} color="#fff" />
-            <Text style={styles.payBtnText}>Konfirmasi Pembayaran</Text>
+            <Ionicons name="receipt" size={18} color="#fff" />
+            <Text style={styles.payBtnText}>Konfirmasi Manual</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -176,7 +213,7 @@ export default function DuesDetailScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.submitPayBtn, submitting && styles.btnDisabled]}
-                onPress={handlePay}
+                onPress={handleManualPay}
                 disabled={submitting}
               >
                 {submitting ? (
@@ -189,39 +226,6 @@ export default function DuesDetailScreen() {
           </View>
         </View>
       )}
-
-      <View style={styles.section}>
-        <Text style={styles.subTitle}>Riwayat Pembayaran ({payments.length})</Text>
-        {payments.length > 0 ? (
-          payments.map((p) => (
-            <View key={p.id} style={styles.payCard}>
-              <View style={styles.payCardLeft}>
-                <Ionicons name="receipt" size={18} color="#2563eb" />
-                <View style={styles.payCardInfo}>
-                  <Text style={styles.payCardAmount}>
-                    Rp {Number(p.jumlah).toLocaleString('id-ID')}
-                  </Text>
-                  <Text style={styles.payCardDate}>
-                    {new Date(p.createdAt).toLocaleDateString('id-ID')}
-                  </Text>
-                  {p.catatan && (
-                    <Text style={styles.payCardNote} numberOfLines={2}>
-                      {p.catatan}
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <StatusBadge
-                label={p.status === 'verified' ? 'Terverifikasi' : 'Menunggu'}
-                color={p.status === 'verified' ? '#16a34a' : '#ca8a04'}
-                bg={p.status === 'verified' ? '#ecfdf5' : '#fef3c7'}
-              />
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>Belum ada riwayat pembayaran</Text>
-        )}
-      </View>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -273,6 +277,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    marginBottom: 8,
+  },
+  onlineBtn: {
+    backgroundColor: '#2563eb',
   },
   payBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
 
@@ -314,25 +322,4 @@ const styles = StyleSheet.create({
   },
   submitPayBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
   btnDisabled: { opacity: 0.5 },
-
-  subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
-
-  payCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-  },
-  payCardLeft: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 },
-  payCardInfo: { flex: 1 },
-  payCardAmount: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  payCardDate: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  payCardNote: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
-
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
 });

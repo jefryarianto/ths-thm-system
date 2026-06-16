@@ -735,9 +735,29 @@ model Iuran {
 
   anggota     Anggota @relation(fields: [anggotaId], references: [id])
   verifikator User?   @relation("IuranVerifikator", fields: [diverifikasiOleh], references: [id])
+  payments    PaymentTransaction[]
 
   @@index([status])
   @@map("iuran")
+}
+
+model PaymentTransaction {
+  id             String       @id @default(uuid())
+  iuranId        String       @map("iuran_id")
+  orderId        String       @unique @map("order_id")
+  amount         Decimal      @db.Decimal(65, 30)
+  status         String       @default("pending")
+  paymentType    String?      @map("payment_type")
+  transactionId  String?      @map("transaction_id")
+  rawResponse    Json?        @map("raw_response")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  iuran Iuran @relation(fields: [iuranId], references: [id])
+
+  @@index([iuranId])
+  @@index([orderId])
+  @@map("payment_transactions")
 }
 
 // ── Notifications ─────────────────────────────────────────

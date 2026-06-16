@@ -119,3 +119,10 @@ export class BatchPaymentDto {
   @Type(() => Number)
   jumlah: number;
 }
+
+export class PaymentConfirmationDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  catatan?: string;
+}

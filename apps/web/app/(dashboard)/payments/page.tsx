@@ -132,6 +132,7 @@ export default function PaymentsPage() {
           { label: 'Jumlah', align: 'right' },
           { label: 'Status' },
           { label: 'Tanggal Bayar', hidden: 'hidden md:table-cell' },
+          { label: 'Aksi' },
         ]}
         data={dues}
         loading={loading}
@@ -143,7 +144,7 @@ export default function PaymentsPage() {
         totalPages={meta.totalPages}
         total={meta.total}
         onPageChange={handlePageChange}
-        colSpan={5}
+        colSpan={6}
         renderRow={(due: DuesRecord) => (
           <tr
             key={due.id}
@@ -171,6 +172,24 @@ export default function PaymentsPage() {
             </td>
             <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
               {due.tanggalBayar ? new Date(due.tanggalBayar).toLocaleDateString('id-ID') : '-'}
+            </td>
+            <td className="px-4 py-3">
+              {due.status !== 'lunas' && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await apiClient.post('/payments/snap-token', { iuranId: due.id });
+                      const { redirect_url } = res.data.data;
+                      if (redirect_url) window.open(redirect_url, '_blank');
+                    } catch (err: any) {
+                      alert(err?.response?.data?.message || 'Gagal memulai pembayaran');
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                >
+                  <CreditCard size={12} /> Bayar
+                </button>
+              )}
             </td>
           </tr>
         )}

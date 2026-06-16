@@ -2,7 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DuesService } from './dues.service';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
+import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto, PaymentConfirmationDto } from './dto/dues.dto';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
@@ -88,5 +88,11 @@ export class DuesController {
   @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
+  }
+
+  @Post(':id/payments')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  submitPaymentConfirmation(@Param('id') id: string, @Body() dto: PaymentConfirmationDto) {
+    return this.service.submitPaymentConfirmation(id, dto);
   }
 }

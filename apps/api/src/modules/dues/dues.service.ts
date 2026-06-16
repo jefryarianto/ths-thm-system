@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { paymentConfirmationEmail } from '../../mail/email-templates';
-import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
+import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto, PaymentConfirmationDto } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -312,6 +312,37 @@ export class DuesService {
     return {
       success: true,
       message: `Pembayaran massal untuk ${memberIds.length} anggota berhasil`,
+    };
+  }
+
+  async submitPaymentConfirmation(id: string, dto: PaymentConfirmationDto) {
+    const iuran = await this.prisma.iuran.findUnique({
+      where: { id },
+      include: { anggota: { select: { id: true, rantingId: true } } },
+    });
+
+    if (!iuran) throw new NotFoundException('Iuran tidak ditemukan');
+
+    if (iuran.status === 'lunas') {
+      throw new ForbiddenException('Iuran ini sudah lunas');
+    }
+
+    const updated = await this.prisma.iuran.update({
+      where: { id },
+      data: {
+        status: 'menunggu_verifikasi',
+        metodeBayar: 'transfer',
+        buktiBayarPath: dto.catatan || null,
+      },
+    });
+
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.cache.invalidatePrefix('reports:');
+
+    return {
+      success: true,
+      data: updated,
+      message: 'Konfirmasi pembayaran berhasil dikirim. Menunggu verifikasi admin.',
     };
   }
 }
