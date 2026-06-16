@@ -23,6 +23,7 @@ import {
   Wallet,
   Trophy,
   TrendingUp,
+  MessageSquare,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -46,6 +47,7 @@ const menuItems = [
   { href: '/letters', label: 'Surat', icon: Mail },
   { href: '/dues', label: 'Iuran', icon: CreditCard },
   { href: '/payments', label: 'Pembayaran', icon: Wallet },
+  { href: '/forum', label: 'Forum', icon: MessageSquare },
   { href: '/notifications', label: 'Notifikasi', icon: Bell },
   { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3 },
   { href: '/reports', label: 'Laporan', icon: BarChart3 },

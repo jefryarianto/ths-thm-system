@@ -94,6 +94,7 @@ export function setupSwagger(app: Parameters<typeof SwaggerModule.createDocument
     )
     .addTag('Health', 'Status sistem — database, cache, audit, memory')
     .addTag('Gamification', 'Points, badges, leaderboard — gamifikasi anggota')
+    .addTag('Forum', 'Forum komunitas — threads, posts, categories')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

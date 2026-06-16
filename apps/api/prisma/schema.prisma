@@ -298,6 +298,8 @@ model Anggota {
   nilaiPendadaranAnggota  NilaiPendadaran[]
   ChatMember              ChatMember[]
   ChatMessage             ChatMessage[]
+  ForumThread             ForumThread[]
+  ForumPost               ForumPost[]
   qrCodes                 QrCode[]
   checkIns                CheckIn[]
   iuranRecurrings         IuranRecurring[]
@@ -1030,6 +1032,61 @@ model ChatMessage {
   @@index([senderId])
   @@index([createdAt(sort: Desc)])
   @@map("chat_messages")
+}
+
+// ── Forum Community ───────────────────────────────────────
+
+model ForumCategory {
+  id          String        @id @default(uuid())
+  nama        String
+  deskripsi   String?
+  order       Int           @default(0)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  threads ForumThread[]
+
+  @@map("forum_categories")
+}
+
+model ForumThread {
+  id          String      @id @default(uuid())
+  categoryId  String      @map("category_id")
+  authorId    String      @map("author_id")
+  judul       String
+  konten      String      @db.Text
+  isPinned    Boolean     @default(false) @map("is_pinned")
+  isLocked    Boolean     @default(false) @map("is_locked")
+  viewCount   Int         @default(0) @map("view_count")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  category ForumCategory @relation(fields: [categoryId], references: [id])
+  author   Anggota       @relation(fields: [authorId], references: [id])
+  posts    ForumPost[]
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+  @@map("forum_threads")
+}
+
+model ForumPost {
+  id          String    @id @default(uuid())
+  threadId    String    @map("thread_id")
+  authorId    String    @map("author_id")
+  konten      String    @db.Text
+  isSolution  Boolean   @default(false) @map("is_solution")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  thread ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author Anggota     @relation(fields: [authorId], references: [id])
+
+  @@index([threadId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("forum_posts")
 }
 
 // ── QR Code & Check-ins ───────────────────────────────────
