@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { useAuthStore } from '../../store/auth-store';
 
 const memberItems = [
-  { icon: 'person', label: 'Profil Saya', route: '/profile' },
+  { icon: 'person', label: 'Profil Saya', route: '/(tabs)/settings' },
   { icon: 'card', label: 'Kartu Digital', route: '/digital-card' },
   { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
   { icon: 'document-text', label: 'Dokumen', route: '/documents' },
@@ -19,6 +19,7 @@ const memberItems = [
 ];
 
 const adminItems = [
+  { icon: 'people', label: 'Anggota', route: '/members' },
   { icon: 'fitness', label: 'Latihan', route: '/trainings' },
   { icon: 'calendar', label: 'Kegiatan', route: '/activities' },
   { icon: 'people', label: 'Calon', route: '/candidates' },

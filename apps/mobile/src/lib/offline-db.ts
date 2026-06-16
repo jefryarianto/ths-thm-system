@@ -121,12 +121,12 @@ export class SyncService {
     const remoteMembers = json.data?.data || [];
 
     const localMembers = await offlineDB.getMembers();
-    const added = remoteMembers.filter((m) => !localMembers.find((l) => l.id === m.id));
-    const updated = remoteMembers.filter((m) => {
-      const local = localMembers.find((l) => l.id === m.id);
+    const added = remoteMembers.filter((m: any) => !localMembers.find((l: any) => l.id === m.id));
+    const updated = remoteMembers.filter((m: any) => {
+      const local = localMembers.find((l: any) => l.id === m.id);
       return local && new Date(m.updatedAt) > new Date(local.updatedAt);
     });
-    const deleted = localMembers.filter((l) => !remoteMembers.find((r) => r.id === l.id));
+    const deleted = localMembers.filter((l: any) => !remoteMembers.find((r: any) => r.id === l.id));
 
     await offlineDB.saveMembers(remoteMembers);
 
@@ -148,9 +148,9 @@ export class SyncService {
     await offlineDB.saveTrainings(remoteTrainings);
 
     return {
-      added: remoteTrainings.filter((t) => !localTrainings.find((l) => l.id === t.id)).length,
+      added: remoteTrainings.filter((t: any) => !localTrainings.find((l: any) => l.id === t.id)).length,
       updated: 0,
-      deleted: localTrainings.filter((l) => !remoteTrainings.find((r) => r.id === t.id)).length,
+      deleted: localTrainings.filter((l: any) => !remoteTrainings.find((r: any) => r.id === l.id)).length,
     };
   }
 
