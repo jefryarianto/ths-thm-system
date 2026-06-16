@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateAspectDto,
@@ -20,7 +20,7 @@ export class AssessmentsService {
     private readonly scopeHelper: ScopeHelper,
   ) {}
 
-  async getAspects(query: AssessmentFilterDto) {
+  async getAspects(_query: AssessmentFilterDto) {
     const data = await this.prisma.aspekPenilaian.findMany({ include: { itemPenilaian: true } });
     return { success: true, data };
   }

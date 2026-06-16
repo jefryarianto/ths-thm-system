@@ -109,7 +109,7 @@ export class AuthService {
       dto.alamat !== undefined ||
       dto.tempatLahir !== undefined ||
       dto.tanggalLahir !== undefined;
-    const hasUserFields = dto.namaLengkap !== undefined || dto.email !== undefined;
+    // hasUserFields not needed here — handled by hasAnggotaFields logic
 
     if (hasAnggotaFields) {
       const anggotaData: Record<string, unknown> = {};

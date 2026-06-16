@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { activityInvitationEmail } from '../../mail/email-templates';
@@ -99,7 +99,9 @@ export class ActivitiesService {
 
   async create(dto: CreateActivityDto, scope?: UserScope, userId?: string) {
     if (scope?.rantingId && !dto.scopeId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).scopeId = scope.rantingId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).scopeType = 'ranting';
     }
     const activity = await this.prisma.kegiatan.create({

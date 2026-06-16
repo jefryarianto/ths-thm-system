@@ -95,6 +95,7 @@ export class AuthController {
   @Public()
   @UseGuards(AuthGuard('google'))
   googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user;
     if (!user) {
       return res.redirect(
@@ -117,6 +118,7 @@ export class AuthController {
   @Public()
   @UseGuards(AuthGuard('linkedin'))
   linkedinAuthCallback(@Req() req: Request, @Res() res: Response) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user;
     if (!user) {
       return res.redirect(
