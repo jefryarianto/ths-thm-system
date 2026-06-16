@@ -33,9 +33,19 @@ export class ReportsService {
     const [total, byStatus, byRanting] = await Promise.all([
       this.prisma.anggota.count({ where: anggotaWhere }),
       this.prisma.anggota.groupBy({ by: ['statusKeanggotaan'], _count: true, where: anggotaWhere }),
-      this.prisma.ranting.findMany({ where: rantingWhere, include: { _count: { select: { anggota: true } } } }),
+      this.prisma.ranting.findMany({
+        where: rantingWhere,
+        include: { _count: { select: { anggota: true } } },
+      }),
     ]);
-    return { success: true, data: { total, byStatus, byRanting: byRanting.map(r => ({ ranting: r.nama, count: r._count.anggota })) } };
+    return {
+      success: true,
+      data: {
+        total,
+        byStatus,
+        byRanting: byRanting.map((r) => ({ ranting: r.nama, count: r._count.anggota })),
+      },
+    };
   }
 
   async assessmentsReport(query: ReportFilterDto, scope?: UserScope) {
@@ -63,7 +73,11 @@ export class ReportsService {
 
   async dashboardStats(scope?: UserScope) {
     const cacheKey = `${this.CACHE_PREFIX}dashboard:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}`;
-    return this.cache.getOrSet(cacheKey, async () => this.computeDashboardStats(scope), this.CACHE_TTL);
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => this.computeDashboardStats(scope),
+      this.CACHE_TTL,
+    );
   }
 
   private async computeDashboardStats(scope?: UserScope) {
@@ -83,10 +97,22 @@ export class ReportsService {
     }
 
     const [
-      totalMembers, totalCandidates, totalGraduated, totalDuesCollected,
-      pendingValidasi, incompleteData, byStatus, monthlyDues,
-      totalKegiatan, totalLatihan, totalKlaim, totalDokumen,
-      totalPendaftaran, totalUsers, recentNotifications, emailSummary,
+      totalMembers,
+      totalCandidates,
+      totalGraduated,
+      totalDuesCollected,
+      pendingValidasi,
+      incompleteData,
+      byStatus,
+      monthlyDues,
+      totalKegiatan,
+      totalLatihan,
+      totalKlaim,
+      totalDokumen,
+      totalPendaftaran,
+      totalUsers,
+      recentNotifications,
+      emailSummary,
     ] = await Promise.all([
       this.prisma.anggota.count({ where: anggotaWhere }),
       this.prisma.calonAnggota.count(),
@@ -109,16 +135,19 @@ export class ReportsService {
     return {
       success: true,
       data: {
-        totalMembers, totalCandidates, totalGraduated,
+        totalMembers,
+        totalCandidates,
+        totalGraduated,
         totalDuesCollected: totalDuesCollected._sum.jumlah || 0,
-        pendingValidasi, incompleteData,
+        pendingValidasi,
+        incompleteData,
         totalKegiatan: Number(totalKegiatan),
         totalLatihan: Number(totalLatihan),
         totalKlaim: Number(totalKlaim),
         totalDokumen: Number(totalDokumen),
         totalPendaftaran: Number(totalPendaftaran),
         totalUsers: Number(totalUsers),
-        memberStatus: byStatus.map(s => ({ status: s.statusKeanggotaan, count: s._count })),
+        memberStatus: byStatus.map((s) => ({ status: s.statusKeanggotaan, count: s._count })),
         monthlyDues,
         recentNotifications,
         emailSummary,
@@ -126,7 +155,16 @@ export class ReportsService {
     };
   }
 
-  private async getRecentNotifications(): Promise<Array<{ id: string; judul: string; isi: string; tipe: string; isRead: boolean; createdAt: Date }>> {
+  private async getRecentNotifications(): Promise<
+    Array<{
+      id: string;
+      judul: string;
+      isi: string;
+      tipe: string;
+      isRead: boolean;
+      createdAt: Date;
+    }>
+  > {
     try {
       return await this.prisma.notifikasi.findMany({
         orderBy: { createdAt: 'desc' },
@@ -171,16 +209,20 @@ export class ReportsService {
       scopeWhere = `AND a."ranting_id" = $${paramIdx++}`;
       params.push(scope.rantingId);
     } else if (scope?.wilayahId) {
-      joinClause = 'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
+      joinClause =
+        'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
       scopeWhere = `AND r."wilayah_id" = $${paramIdx++}`;
       params.push(scope.wilayahId);
     } else if (scope?.distrikId) {
-      joinClause = 'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
+      joinClause =
+        'JOIN "anggota" a ON i."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
       scopeWhere = `AND w."distrik_id" = $${paramIdx++}`;
       params.push(scope.distrikId);
     }
 
     // Parameterized query to prevent SQL injection
+    // Note: Use EXTRACT directly in WHERE/GROUP BY/ORDER BY because column aliases
+    // ("tahun", "bulan") from SELECT cannot be referenced in those clauses.
     const sql = `
       SELECT
         EXTRACT(MONTH FROM i."tanggal_bayar")::int as "bulan",
@@ -191,13 +233,20 @@ export class ReportsService {
       ${joinClause}
       WHERE i."tanggal_bayar" IS NOT NULL
         ${scopeWhere}
-        AND ((i."tahun" = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int >= $${paramIdx++})
-          OR (i."tahun" = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int <= $${paramIdx++})
-          OR (i."tahun" > $${paramIdx++} AND i."tahun" < $${paramIdx++}))
-      GROUP BY i."tahun", i."bulan"
-      ORDER BY i."tahun" ASC, i."bulan" ASC
+        AND ((EXTRACT(YEAR FROM i."tanggal_bayar") = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int >= $${paramIdx++})
+          OR (EXTRACT(YEAR FROM i."tanggal_bayar") = $${paramIdx++} AND EXTRACT(MONTH FROM i."tanggal_bayar")::int <= $${paramIdx++})
+          OR (EXTRACT(YEAR FROM i."tanggal_bayar") > $${paramIdx++} AND EXTRACT(YEAR FROM i."tanggal_bayar") < $${paramIdx++}))
+      GROUP BY EXTRACT(YEAR FROM i."tanggal_bayar"), EXTRACT(MONTH FROM i."tanggal_bayar")
+      ORDER BY EXTRACT(YEAR FROM i."tanggal_bayar") ASC, EXTRACT(MONTH FROM i."tanggal_bayar") ASC
     `;
-    params.push(sixMonthsAgo.getFullYear(), sixMonthsAgo.getMonth() + 1, currentYear, currentMonth, sixMonthsAgo.getFullYear(), currentYear);
+    params.push(
+      sixMonthsAgo.getFullYear(),
+      sixMonthsAgo.getMonth() + 1,
+      currentYear,
+      currentMonth,
+      sixMonthsAgo.getFullYear(),
+      currentYear,
+    );
 
     const rows: Array<{ bulan: number; tahun: number; jumlah: string; count: bigint }> =
       await this.prisma.$queryRawUnsafe(sql, ...params);
@@ -216,11 +265,28 @@ export class ReportsService {
       }
     }
 
-    const bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const bulanNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
 
     return Object.entries(monthMap).map(([key, val]) => {
       const [tahun, bulan] = key.split('-').map(Number);
-      return { bulan: `${bulanNames[bulan - 1]} ${tahun}`, jumlah: val.jumlah, transaksi: val.count };
+      return {
+        bulan: `${bulanNames[bulan - 1]} ${tahun}`,
+        jumlah: val.jumlah,
+        transaksi: val.count,
+      };
     });
   }
 
@@ -240,21 +306,22 @@ export class ReportsService {
       absensiWhere.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
     }
 
-    const [totalAbsensi, absensiHarian, totalDokumen, activeKegiatan, recentAbsensi] = await Promise.all([
-      this.prisma.absensiLatihan.count({ where: absensiWhere }),
-      this.getAbsensiHarian(scope),
-      this.prisma.dokumen.count({ where: { status: 'generated' } }),
-      this.prisma.kegiatan.count({ where: { status: 'published' } }),
-      this.prisma.absensiLatihan.findMany({
-        where: absensiWhere,
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        include: {
-          anggota: { select: { namaLengkap: true, nomorAnggota: true } },
-          latihan: { select: { jenisMateri: true, kegiatan: { select: { nama: true } } } },
-        },
-      }),
-    ]);
+    const [totalAbsensi, absensiHarian, totalDokumen, activeKegiatan, recentAbsensi] =
+      await Promise.all([
+        this.prisma.absensiLatihan.count({ where: absensiWhere }),
+        this.getAbsensiHarian(scope),
+        this.prisma.dokumen.count({ where: { status: 'generated' } }),
+        this.prisma.kegiatan.count({ where: { status: 'published' } }),
+        this.prisma.absensiLatihan.findMany({
+          where: absensiWhere,
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          include: {
+            anggota: { select: { namaLengkap: true, nomorAnggota: true } },
+            latihan: { select: { jenisMateri: true, kegiatan: { select: { nama: true } } } },
+          },
+        }),
+      ]);
 
     return {
       success: true,
@@ -292,11 +359,13 @@ export class ReportsService {
         scopeWhere = `AND a."ranting_id" = $${paramIdx++}`;
         params.push(scope.rantingId);
       } else if (scope?.wilayahId) {
-        joinClause = 'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
+        joinClause =
+          'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id"';
         scopeWhere = `AND r."wilayah_id" = $${paramIdx++}`;
         params.push(scope.wilayahId);
       } else if (scope?.distrikId) {
-        joinClause = 'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
+        joinClause =
+          'JOIN "anggota" a ON al."anggota_id" = a."id" JOIN "ranting" r ON a."ranting_id" = r."id" JOIN "wilayah" w ON r."wilayah_id" = w."id"';
         scopeWhere = `AND w."distrik_id" = $${paramIdx++}`;
         params.push(scope.distrikId);
       }
@@ -314,7 +383,10 @@ export class ReportsService {
       `;
       params.push(thirtyDaysAgo);
 
-      const rows: Array<{ tanggal: string; count: bigint }> = await this.prisma.$queryRawUnsafe(sql, ...params);
+      const rows: Array<{ tanggal: string; count: bigint }> = await this.prisma.$queryRawUnsafe(
+        sql,
+        ...params,
+      );
 
       return rows.map((r) => ({ tanggal: r.tanggal, count: Number(r.count) }));
     } catch {
@@ -338,8 +410,12 @@ export class ReportsService {
         const where: Record<string, unknown> = {};
         if (scope?.rantingId) where.anggota = { rantingId: scope.rantingId };
         else if (scope?.wilayahId) where.anggota = { ranting: { wilayahId: scope.wilayahId } };
-        else if (scope?.distrikId) where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
-        data = await this.prisma.iuran.findMany({ where, include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } } });
+        else if (scope?.distrikId)
+          where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
+        data = await this.prisma.iuran.findMany({
+          where,
+          include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
+        });
         break;
       }
       case 'graduates':

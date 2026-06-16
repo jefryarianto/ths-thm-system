@@ -40,6 +40,8 @@
     "prepare": "pnpm --filter @ths-thm/api prisma:generate"
   },
   "devDependencies": {
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-linkedin-oauth2": "^1.5.6",
     "concurrently": "^9.0.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.0"

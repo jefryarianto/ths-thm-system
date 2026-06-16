@@ -6,6 +6,7 @@ import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('ActivitiesService', () => {
   let service: ActivitiesService;
@@ -45,12 +46,19 @@ describe('ActivitiesService', () => {
   };
 
   const mockCache = {
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     invalidatePrefix: jest.fn(),
   };
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+  };
+
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -61,6 +69,7 @@ describe('ActivitiesService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
         { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -120,18 +129,27 @@ describe('ActivitiesService', () => {
 
   describe('addParticipant', () => {
     it('should add a participant and send invitation email', async () => {
-      mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1', nama: 'Latihan Bareng', tanggalMulai: new Date('2026-06-15'), lokasi: 'Gedung A' });
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        id: 'k1',
+        nama: 'Latihan Bareng',
+        tanggalMulai: new Date('2026-06-15'),
+        lokasi: 'Gedung A',
+      });
       mockPrisma.kegiatanPeserta.create.mockResolvedValue({ id: 'p1' });
-      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'peserta@test.com', namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'peserta@test.com',
+        namaLengkap: 'Budi',
+      });
       const result = await service.addParticipant('k1', { anggotaId: 'a1' });
       expect(result.success).toBe(true);
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'peserta@test.com' }));
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when activity not found', async () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue(null);
-      await expect(service.addParticipant('k1', { anggotaId: 'a1' })).rejects.toThrow(NotFoundException);
+      await expect(service.addParticipant('k1', { anggotaId: 'a1' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

@@ -1,11 +1,7 @@
 import { IsString, IsNumberString, IsOptional } from 'class-validator';
 
 export function validateEnv() {
-  const requiredVars = [
-    'DATABASE_URL',
-    'JWT_SECRET',
-    'JWT_REFRESH_SECRET',
-  ];
+  const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
 
   const missing = requiredVars.filter((key) => !process.env[key]);
 
@@ -16,11 +12,15 @@ export function validateEnv() {
   }
 
   if (process.env.JWT_SECRET === 'change-me-to-random-64-char-string') {
-    console.warn('⚠️  JWT_SECRET masih menggunakan nilai default. Ganti dengan string random yang aman.');
+    console.warn(
+      '⚠️  JWT_SECRET masih menggunakan nilai default. Ganti dengan string random yang aman.',
+    );
   }
 
   if (process.env.JWT_REFRESH_SECRET === 'change-me-to-random-64-char-string') {
-    console.warn('⚠️  JWT_REFRESH_SECRET masih menggunakan nilai default. Ganti dengan string random yang aman.');
+    console.warn(
+      '⚠️  JWT_REFRESH_SECRET masih menggunakan nilai default. Ganti dengan string random yang aman.',
+    );
   }
 
   console.log('✅ Environment variables validated');

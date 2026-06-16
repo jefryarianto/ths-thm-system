@@ -1,13 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, ClipboardList,
-  Eye, CheckCircle, XCircle,
-} from 'lucide-react';
+import { Plus, ClipboardList, Eye, CheckCircle, XCircle } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -23,18 +20,16 @@ interface AssessmentRow {
 }
 
 export default function AssessmentsPage() {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
+    useFilters();
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<AssessmentRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      return apiClient.get('/assessments/aspects', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<AssessmentRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    return apiClient.get('/assessments/aspects', { params }).then((r) => r.data);
+  }, [page, debouncedSearch]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -53,10 +48,9 @@ export default function AssessmentsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari aspek penilaian..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       />
 
       <DataTable
@@ -71,7 +65,7 @@ export default function AssessmentsPage() {
         loading={loading}
         empty={{
           icon: ClipboardList,
-          ...buildEmptyMessage('aspek penilaian', !!search, () => { setSearch(''); setPage(1); }),
+          ...buildEmptyMessage('aspek penilaian', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -79,9 +73,14 @@ export default function AssessmentsPage() {
         onPageChange={handlePageChange}
         colSpan={5}
         renderRow={(row: AssessmentRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
-              <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{row.kodeAspek}</span>
+              <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
+                {row.kodeAspek}
+              </span>
             </td>
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{row.namaAspek}</span>
@@ -90,10 +89,11 @@ export default function AssessmentsPage() {
               <span className="text-gray-600 dark:text-gray-400">{Number(row.bobot) * 100}%</span>
             </td>
             <td className="px-4 py-3 text-center">
-              {row.isActive
-                ? <CheckCircle size={16} className="text-green-500 mx-auto" />
-                : <XCircle size={16} className="text-red-500 mx-auto" />
-              }
+              {row.isActive ? (
+                <CheckCircle size={16} className="text-green-500 mx-auto" />
+              ) : (
+                <XCircle size={16} className="text-red-500 mx-auto" />
+              )}
             </td>
             <td className="px-4 py-3 text-right hidden md:table-cell">
               <button

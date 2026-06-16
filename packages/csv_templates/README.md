@@ -5,16 +5,17 @@ Gunakan file template ini sebagai acuan format kolom saat melakukan import data.
 
 ## Daftar Template
 
-| Folder        | Deskripsi                         |
-| ------------- | --------------------------------- |
-| `members/`    | Template import anggota           |
-| `candidates/` | Template import calon anggota     |
-| `aspects/`    | Template import aspek penilaian   |
-| `assessments/`| Template import item penilaian    |
+| Folder         | Deskripsi                       |
+| -------------- | ------------------------------- |
+| `members/`     | Template import anggota         |
+| `candidates/`  | Template import calon anggota   |
+| `aspects/`     | Template import aspek penilaian |
+| `assessments/` | Template import item penilaian  |
 
 ## Penanganan Data Tidak Lengkap
 
 Saat import CSV, sistem akan:
+
 1. Validasi setiap baris terhadap kolom required
 2. Baris dengan data tidak lengkap → disimpan dengan status `incomplete`
 3. Kirim notifikasi FCM ke anggota yang datanya tidak lengkap

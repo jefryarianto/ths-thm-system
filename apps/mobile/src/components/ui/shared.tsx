@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface LoadingViewProps {
   message?: string;
@@ -67,6 +75,32 @@ export function FilterChips({ options, selected, onChange }: FilterChipProps) {
           </Text>
         </TouchableOpacity>
       ))}
+    </View>
+  );
+}
+
+interface SearchBarProps {
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+}
+
+export function SearchBar({ value, onChangeText, placeholder = 'Cari...' }: SearchBarProps) {
+  return (
+    <View style={styles.searchContainer}>
+      <Ionicons name="search" size={16} color="#9ca3af" />
+      <TextInput
+        style={styles.searchInput}
+        placeholder={placeholder}
+        placeholderTextColor="#9ca3af"
+        value={value}
+        onChangeText={onChangeText}
+      />
+      {value.length > 0 && (
+        <TouchableOpacity onPress={() => onChangeText('')}>
+          <Ionicons name="close-circle" size={16} color="#9ca3af" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -143,5 +177,23 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#111827',
+    marginLeft: 8,
   },
 });

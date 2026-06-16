@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
+// Use relative URL so requests go through Next.js proxy (no CORS issues)
+// Next.js rewrites in next.config.js proxy /api/* to the backend on the server side.
 const apiClient = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {
+        const { data } = await axios.post(`/api/auth/refresh`, {
           refreshToken,
         });
 
@@ -115,5 +115,6 @@ export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.dat
  * ```
  */
 // eslint-disable-next-line no-restricted-syntax
-export const unwrapPaginated = <T>(response: { data: ApiResponse<PaginatedResponse<T>> }): PaginatedResponse<T> =>
-  response.data.data;
+export const unwrapPaginated = <T>(response: {
+  data: ApiResponse<PaginatedResponse<T>>;
+}): PaginatedResponse<T> => response.data.data;

@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
+import DataTable from '@/components/ui/data-table';
+import PageContainer from '@/components/ui/page-container';
+import PageHeader from '@/components/ui/page-header';
+import { Trophy, Zap, AlertCircle, Gift, Users } from 'lucide-react';
 import {
-  Trophy, Zap, AlertCircle, Gift, Users,
-} from 'lucide-react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
 } from 'recharts';
 
 interface PointsDistribution {
@@ -97,15 +104,8 @@ export default function GamificationAdminPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Gamifikasi</h1>
-          <p className="text-sm text-gray-500 mt-1">Distribusi poin dan riwayat redeem reward</p>
-        </div>
-        <Trophy size={20} className="text-yellow-500" />
-      </div>
+    <PageContainer>
+      <PageHeader title="Admin Gamifikasi" onRefresh={fetchData} />
 
       {/* Points Distribution Chart */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -150,7 +150,10 @@ export default function GamificationAdminPage() {
         <div className="flex flex-wrap gap-4 mt-4 justify-center">
           {distribution.map((d) => (
             <div key={d.level} className="flex items-center gap-1.5 text-xs text-gray-600">
-              <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: d.color }} />
+              <span
+                className="inline-block w-3 h-3 rounded-sm"
+                style={{ backgroundColor: d.color }}
+              />
               {d.icon} {d.level}: <span className="font-semibold">{d.count}</span>
             </div>
           ))}
@@ -163,54 +166,63 @@ export default function GamificationAdminPage() {
           <Gift size={20} className="text-purple-500" />
           <h3 className="text-base font-semibold text-gray-900">Riwayat Redeem Reward</h3>
         </div>
-        {redemptions.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Reward</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Anggota</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Poin</th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Waktu</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {redemptions.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50 transition">
-                    <td className="px-3 py-3">
-                      <span className="text-sm font-medium text-gray-900">
-                        {r.rewardIcon} {r.rewardName}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-sm text-gray-700">{r.namaLengkap}</span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                        <Zap size={10} />
-                        {r.pointsSpent.toLocaleString('id-ID')}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGES[r.status]?.class || 'bg-gray-100 text-gray-800'}`}>
-                        {STATUS_BADGES[r.status]?.label || r.status}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right text-xs text-gray-500">
-                      {getTimeAgo(r.createdAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
-            Belum ada redeem reward
-          </div>
-        )}
+        <DataTable
+          columns={[
+            {
+              key: 'reward',
+              label: 'Reward',
+              render: (r: Redemption) => (
+                <span className="text-sm font-medium text-gray-900">
+                  {r.rewardIcon} {r.rewardName}
+                </span>
+              ),
+            },
+            {
+              key: 'anggota',
+              label: 'Anggota',
+              render: (r: Redemption) => (
+                <span className="text-sm text-gray-700">{r.namaLengkap}</span>
+              ),
+            },
+            {
+              key: 'pointsSpent',
+              label: 'Poin',
+              align: 'right' as const,
+              render: (r: Redemption) => (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                  <Zap size={10} /> {r.pointsSpent.toLocaleString('id-ID')}
+                </span>
+              ),
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              align: 'center' as const,
+              render: (r: Redemption) => (
+                <span
+                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGES[r.status]?.class || 'bg-gray-100 text-gray-800'}`}
+                >
+                  {STATUS_BADGES[r.status]?.label || r.status}
+                </span>
+              ),
+            },
+            {
+              key: 'createdAt',
+              label: 'Waktu',
+              align: 'right' as const,
+              render: (r: Redemption) => (
+                <span className="text-xs text-gray-500">{getTimeAgo(r.createdAt)}</span>
+              ),
+            },
+          ]}
+          data={redemptions}
+          loading={false}
+          empty={{ icon: Gift, message: 'Belum ada redeem reward' }}
+          page={1}
+          totalPages={1}
+          total={redemptions.length}
+        />
       </div>
-    </div>
+    </PageContainer>
   );
 }

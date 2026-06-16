@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MailService } from '../../mail/mail.service';
 import { welcomeMemberEmail } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class MembersService {
@@ -17,20 +18,15 @@ export class MembersService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
-    private readonly mailService: MailService,
+    private readonly memberMailService: MemberMailService,
   ) {}
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
-    const page = filter.page || 1;
-    const limit = filter.limit || 10;
-
-    // Build cache key from scope + filter params
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${page}:${limit}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}`;
 
     return this.cache.getOrSet(
       cacheKey,
       async () => {
-        const skip = (page - 1) * limit;
         const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
         const where: any = { deletedAt: null, ...scopeFilter };
 
@@ -45,22 +41,12 @@ export class MembersService {
         if (filter.statusKeanggotaan) where.statusKeanggotaan = filter.statusKeanggotaan;
         if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;
 
-        const [data, total] = await Promise.all([
-          this.prisma.anggota.findMany({
-            where,
-            skip,
-            take: limit,
-            include: { ranting: true },
-            orderBy: { createdAt: 'desc' },
-          }),
-          this.prisma.anggota.count({ where }),
-        ]);
-
-        return {
-          success: true,
-          data,
-          meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-        };
+        return paginate(this.prisma.anggota, where, {
+          page: filter.page,
+          limit: filter.limit,
+          orderBy: { createdAt: 'desc' },
+          include: { ranting: true },
+        });
       },
       this.CACHE_TTL,
     );
@@ -79,7 +65,10 @@ export class MembersService {
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
 
     // Verify scope access (async for region/district hierarchy check)
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
@@ -102,8 +91,11 @@ export class MembersService {
 
     // Send welcome email if email address is provided
     if (member.email) {
-      this.sendWelcomeEmail(member.namaLengkap, member.email).catch((err) =>
-        this.logger.error(`Welcome email failed for ${member.email}: ${err.message}`),
+      this.memberMailService.sendToMember(
+        member.id,
+        (nama) => welcomeMemberEmail(nama),
+        { template: 'welcomeMemberEmail', email: member.email },
+        'members',
       );
     }
 
@@ -112,14 +104,14 @@ export class MembersService {
   }
 
   async update(id: string, dto: UpdateMemberDto, scope?: UserScope) {
-    // Verify scope access before mutation
-    if (scope) {
-      const member = await this.prisma.anggota.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!member) throw new NotFoundException('Anggota tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
+    await this.scopeHelper.verifyResourceAccess(
+      this.prisma,
+      scope,
+      id,
+      (prisma, rid) =>
+        prisma.anggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+      'Anggota tidak ditemukan',
+    );
 
     const updated = await this.prisma.anggota.update({
       where: { id },
@@ -131,14 +123,14 @@ export class MembersService {
   }
 
   async remove(id: string, scope?: UserScope) {
-    // Verify scope access before mutation
-    if (scope) {
-      const member = await this.prisma.anggota.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!member) throw new NotFoundException('Anggota tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
+    await this.scopeHelper.verifyResourceAccess(
+      this.prisma,
+      scope,
+      id,
+      (prisma, rid) =>
+        prisma.anggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+      'Anggota tidak ditemukan',
+    );
 
     await this.prisma.anggota.update({
       where: { id },
@@ -179,8 +171,11 @@ export class MembersService {
 
         // Send welcome email if email is provided
         if (member.email) {
-          this.sendWelcomeEmail(member.namaLengkap, member.email).catch((err) =>
-            this.logger.error(`Welcome email failed for CSV import (${member.email}): ${err.message}`),
+          this.memberMailService.sendToMember(
+            member.id,
+            (nama) => welcomeMemberEmail(nama),
+            { template: 'welcomeMemberEmail', email: member.email },
+            'members',
           );
         }
       } catch (error) {
@@ -282,11 +277,6 @@ export class MembersService {
     });
 
     return { success: true, data: dues };
-  }
-
-  private async sendWelcomeEmail(nama: string, email: string): Promise<void> {
-    const tpl = welcomeMemberEmail(nama);
-    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'members', template: 'welcomeMemberEmail', email } });
   }
 
   private async generateMemberNumber(): Promise<string> {

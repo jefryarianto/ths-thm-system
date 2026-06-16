@@ -1,5 +1,11 @@
 import { Controller, Get, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiOkResponse,
+  ApiCreatedResponse,
+} from '@nestjs/swagger';
 import { Roles } from '../decorators/roles.decorator';
 import { RequireScope } from '../decorators/scope.decorator';
 import { ApiKeyStore } from '../guards/api-key.guard';
@@ -28,7 +34,11 @@ export class ApiKeyManagementController {
   @Get()
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'List all API keys (superadmin only)', description: 'Returns preview of all registered API keys. Full key values are never exposed after creation.' })
+  @ApiOperation({
+    summary: 'List all API keys (superadmin only)',
+    description:
+      'Returns preview of all registered API keys. Full key values are never exposed after creation.',
+  })
   @ApiOkResponse({ description: 'List of API key previews with role and description' })
   findAll() {
     return {
@@ -46,7 +56,10 @@ export class ApiKeyManagementController {
   @RequireScope('national')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new API key (superadmin only)' })
-  @ApiCreatedResponse({ description: 'API key created successfully. Store the key securely — it will not be shown again.' })
+  @ApiCreatedResponse({
+    description:
+      'API key created successfully. Store the key securely — it will not be shown again.',
+  })
   create(@Body() dto: CreateApiKeyDto) {
     const key = this.store.generateKey();
     this.store.register({
@@ -83,7 +96,11 @@ export class ApiKeyManagementController {
   @Roles('superadmin')
   @RequireScope('national')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Revoke an API key (superadmin only)', description: 'Permanently removes an API key. Any integrations using this key will lose access immediately.' })
+  @ApiOperation({
+    summary: 'Revoke an API key (superadmin only)',
+    description:
+      'Permanently removes an API key. Any integrations using this key will lose access immediately.',
+  })
   @ApiOkResponse({ description: 'Revocation result — success indicates key was found and removed' })
   revoke(@Body() dto: RevokeApiKeyDto) {
     const removed = this.store.remove(dto.key);
@@ -99,9 +116,7 @@ export class ApiKeyManagementController {
 
     return {
       success: removed,
-      message: removed
-        ? 'API key berhasil dicabut'
-        : 'API key tidak ditemukan',
+      message: removed ? 'API key berhasil dicabut' : 'API key tidak ditemukan',
     };
   }
 }

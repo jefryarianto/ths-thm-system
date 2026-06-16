@@ -1,6 +1,7 @@
 # Email Setup Guide (Resend)
 
 ## Overview
+
 Email dikirim dari API menggunakan **Resend** sebagai primary provider dan **SMTP** sebagai fallback. MailService sudah terintegrasi dan siap pakai.
 
 ## Architecture
@@ -17,16 +18,19 @@ sendMail()
 ### Opsi 1: Resend (Rekomendasi — Primary)
 
 **1. Daftar Resend**
+
 1. Buka [resend.com](https://resend.com) → Sign up (free tier: **100 email/hari**)
 2. Free tier cukup untuk development dan testing awal
 
 **2. Buat API Key**
+
 1. Buka [resend.com/api-keys](https://resend.com/api-keys)
 2. Klik **"Create API Key"**
 3. Beri nama (contoh: `THS-THM Production`)
 4. Copy API key (format: `re_xxx...`)
 
 **3. Verifikasi Domain**
+
 1. Buka [resend.com/domains](https://resend.com/domains)
 2. Klik **"Add Domain"**
 3. Masukkan domain/subdomain (contoh: `mail.ths-thm.cloud`)
@@ -36,6 +40,7 @@ sendMail()
 6. Tunggu verifikasi (biasanya 1-5 menit)
 
 **4. Set Environment Variables**
+
 ```env
 # Resend (primary)
 RESEND_API_KEY=re_xxx
@@ -45,6 +50,7 @@ RESEND_DOMAIN=mail.ths-thm.cloud
 ### Opsi 2: SMTP (Fallback)
 
 Wajib install nodemailer:
+
 ```bash
 cd apps/api && pnpm add nodemailer
 ```
@@ -63,20 +69,22 @@ SMTP_PASS=your-app-password
 
 ## Di Mana Set Env Vars?
 
-| Cara | Lokasi |
-|------|--------|
-| **Local development** | File `.env` di root project |
-| **Docker** | `docker-compose.yml` → `environment:` section |
-| **Render deployment** | Dashboard Render → Environment Variables |
+| Cara                  | Lokasi                                        |
+| --------------------- | --------------------------------------------- |
+| **Local development** | File `.env` di root project                   |
+| **Docker**            | `docker-compose.yml` → `environment:` section |
+| **Render deployment** | Dashboard Render → Environment Variables      |
 
 ---
 
 ## Endpoint Test
 
 ### `POST /api/mail/test`
+
 Mengirim test email untuk memverifikasi konfigurasi.
 
 **Request:**
+
 ```json
 {
   "email": "admin@ths-thm.org"
@@ -84,6 +92,7 @@ Mengirim test email untuk memverifikasi konfigurasi.
 ```
 
 **Response (sukses):**
+
 ```json
 {
   "success": true,
@@ -92,6 +101,7 @@ Mengirim test email untuk memverifikasi konfigurasi.
 ```
 
 **Response (gagal):**
+
 ```json
 {
   "success": false,
@@ -106,6 +116,7 @@ Mengirim test email untuk memverifikasi konfigurasi.
 ## Flow Pengiriman Email
 
 ### Forgot Password
+
 ```
 User → POST /api/auth/forgot { email }
   ├── Cari user by email
@@ -118,6 +129,7 @@ User → POST /api/auth/forgot { email }
 ```
 
 ### Reset Password
+
 ```
 User → POST /api/auth/reset { token, newPassword }
   ├── Verify JWT token
@@ -130,36 +142,36 @@ User → POST /api/auth/reset { token, newPassword }
 
 ## Testing
 
-| Skenario | Cara Test |
-|----------|-----------|
-| **Dev mode** | `NODE_ENV=development` → email di-log, tidak dikirim |
-| **Resend** | `NODE_ENV=production` + `RESEND_API_KEY` + `RESEND_DOMAIN` |
-| **SMTP** | `NODE_ENV=production` + `SMTP_USER` + `SMTP_PASS` (dan `pnpm add nodemailer`) |
-| **Test endpoint** | `POST /api/mail/test` dengan token superadmin |
+| Skenario          | Cara Test                                                                     |
+| ----------------- | ----------------------------------------------------------------------------- |
+| **Dev mode**      | `NODE_ENV=development` → email di-log, tidak dikirim                          |
+| **Resend**        | `NODE_ENV=production` + `RESEND_API_KEY` + `RESEND_DOMAIN`                    |
+| **SMTP**          | `NODE_ENV=production` + `SMTP_USER` + `SMTP_PASS` (dan `pnpm add nodemailer`) |
+| **Test endpoint** | `POST /api/mail/test` dengan token superadmin                                 |
 
 ---
 
 ## Error Handling
 
-| Masalah | Yang Terjadi |
-|---------|-------------|
-| `RESEND_API_KEY` tidak set | Log warning, fallback ke SMTP |
-| `RESEND_DOMAIN` tidak set | Log warning, fallback ke SMTP |
-| Resend API error (4xx/5xx) | Log error, fallback ke SMTP |
-| SMTP tidak dikonfigurasi | Log warning, email tidak terkirim |
-| Nodemailer tidak terinstall | Log warning, SMTP skip |
-| Network error | Log error, email tidak terkirim |
+| Masalah                     | Yang Terjadi                      |
+| --------------------------- | --------------------------------- |
+| `RESEND_API_KEY` tidak set  | Log warning, fallback ke SMTP     |
+| `RESEND_DOMAIN` tidak set   | Log warning, fallback ke SMTP     |
+| Resend API error (4xx/5xx)  | Log error, fallback ke SMTP       |
+| SMTP tidak dikonfigurasi    | Log warning, email tidak terkirim |
+| Nodemailer tidak terinstall | Log warning, SMTP skip            |
+| Network error               | Log error, email tidak terkirim   |
 
 ---
 
 ## Environment Variables Reference
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `RESEND_API_KEY` | Untuk Resend | - | API key dari resend.com/api-keys |
-| `RESEND_DOMAIN` | Untuk Resend | - | Domain terverifikasi di Resend |
-| `SMTP_HOST` | Untuk SMTP | `smtp.gmail.com` | SMTP server host |
-| `SMTP_PORT` | Untuk SMTP | `587` | SMTP server port |
-| `SMTP_USER` | Untuk SMTP | `''` | SMTP username/email |
-| `SMTP_PASS` | Untuk SMTP | `''` | SMTP password/app password |
-| `NODE_ENV` | Ya | `development` | `development` = log only, `production` = kirim beneran |
+| Variable         | Required     | Default          | Description                                            |
+| ---------------- | ------------ | ---------------- | ------------------------------------------------------ |
+| `RESEND_API_KEY` | Untuk Resend | -                | API key dari resend.com/api-keys                       |
+| `RESEND_DOMAIN`  | Untuk Resend | -                | Domain terverifikasi di Resend                         |
+| `SMTP_HOST`      | Untuk SMTP   | `smtp.gmail.com` | SMTP server host                                       |
+| `SMTP_PORT`      | Untuk SMTP   | `587`            | SMTP server port                                       |
+| `SMTP_USER`      | Untuk SMTP   | `''`             | SMTP username/email                                    |
+| `SMTP_PASS`      | Untuk SMTP   | `''`             | SMTP password/app password                             |
+| `NODE_ENV`       | Ya           | `development`    | `development` = log only, `production` = kirim beneran |

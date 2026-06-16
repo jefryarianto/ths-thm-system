@@ -5,6 +5,7 @@ import { ClaimsService } from './claims.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('ClaimsService', () => {
   let service: ClaimsService;
@@ -32,6 +33,11 @@ describe('ClaimsService', () => {
     sendMail: jest.fn().mockResolvedValue(true),
   };
 
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -39,6 +45,7 @@ describe('ClaimsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -64,7 +71,10 @@ describe('ClaimsService', () => {
       mockPrisma.klaim.count.mockResolvedValue(0);
       mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({ anggota: { rantingId: 'r1' } });
       await service.findAll({ page: 1, limit: 10 }, { rantingId: 'r1' });
-      expect(mockScopeHelper.buildIndirectScopeFilter).toHaveBeenCalledWith({ rantingId: 'r1' }, 'anggota');
+      expect(mockScopeHelper.buildIndirectScopeFilter).toHaveBeenCalledWith(
+        { rantingId: 'r1' },
+        'anggota',
+      );
     });
   });
 
@@ -81,7 +91,10 @@ describe('ClaimsService', () => {
     });
 
     it('should throw ForbiddenException for out-of-scope resource', async () => {
-      mockPrisma.klaim.findUnique.mockResolvedValue({ id: 'cl1', anggota: { rantingId: 'r-other' } });
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1',
+        anggota: { rantingId: 'r-other' },
+      });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(service.findOne('cl1', { rantingId: 'r1' })).rejects.toThrow(ForbiddenException);
     });
@@ -104,9 +117,14 @@ describe('ClaimsService', () => {
     });
 
     it('should throw ForbiddenException for out-of-scope resource', async () => {
-      mockPrisma.klaim.findUnique.mockResolvedValue({ id: 'cl1', anggota: { rantingId: 'r-other' } });
+      mockPrisma.klaim.findUnique.mockResolvedValue({
+        id: 'cl1',
+        anggota: { rantingId: 'r-other' },
+      });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
-      await expect(service.update('cl1', { catatan: 'test' }, { rantingId: 'r1' })).rejects.toThrow(ForbiddenException);
+      await expect(service.update('cl1', { catatan: 'test' }, { rantingId: 'r1' })).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -120,7 +138,8 @@ describe('ClaimsService', () => {
   describe('approve', () => {
     it('should approve a claim and send email', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
-        id: 'cl1', status: 'pending',
+        id: 'cl1',
+        status: 'pending',
         anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
       });
       await service.approve('cl1');
@@ -129,27 +148,33 @@ describe('ClaimsService', () => {
         data: { status: 'disetujui' },
       });
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'budi@test.com' }),
+      );
     });
   });
 
   describe('reject', () => {
     it('should reject a claim and send rejection email', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
-        id: 'cl1', status: 'pending',
+        id: 'cl1',
+        status: 'pending',
         anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
       });
       await service.reject('cl1', 'Tidak memenuhi syarat');
       expect(mockPrisma.klaim.update).toHaveBeenCalled();
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'budi@test.com' }),
+      );
     });
   });
 
   describe('process', () => {
     it('should set claim status to diproses and send email', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
-        id: 'cl1', status: 'pending',
+        id: 'cl1',
+        status: 'pending',
         anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
       });
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', status: 'diproses' });

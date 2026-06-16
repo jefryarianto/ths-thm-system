@@ -1,6 +1,7 @@
 Prompt AI - THS-THM System Manajemen
 
 Tugas AI:
+
 1. Backend:
    - Node.js + NestJS + Prisma
    - Generate CRUD modul untuk anggota, calon anggota, klaim, pendaftaran baru, latihan, pendadaran, penguji

@@ -9,7 +9,13 @@ interface SignatureBlockProps {
   width?: number;
 }
 
-const SignatureBlock: React.FC<SignatureBlockProps> = ({ imageUrl, name, role, date, width = 150 }) => (
+const SignatureBlock: React.FC<SignatureBlockProps> = ({
+  imageUrl,
+  name,
+  role,
+  date,
+  width = 150,
+}) => (
   <View style={{ marginTop: 20, alignItems: 'center' }}>
     {imageUrl ? (
       <Image
@@ -17,7 +23,15 @@ const SignatureBlock: React.FC<SignatureBlockProps> = ({ imageUrl, name, role, d
         style={{ width, height: Math.round(width * 0.4), objectFit: 'contain', marginBottom: 4 }}
       />
     ) : (
-      <View style={{ width, height: Math.round(width * 0.4), marginBottom: 4, borderBottomWidth: 1, borderBottomColor: '#000' }} />
+      <View
+        style={{
+          width,
+          height: Math.round(width * 0.4),
+          marginBottom: 4,
+          borderBottomWidth: 1,
+          borderBottomColor: '#000',
+        }}
+      />
     )}
     <Text style={{ fontSize: 10, fontWeight: 'bold', marginTop: 4 }}>{name}</Text>
     <Text style={{ fontSize: 9, color: '#555' }}>{role}</Text>

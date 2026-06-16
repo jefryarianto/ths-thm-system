@@ -44,7 +44,9 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList,
     } else {
       setLoading(false);
     }
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [execute, enabled]);
 
@@ -101,7 +103,9 @@ export function usePaginatedList<T>(
     } else {
       setLoading(false);
     }
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [execute, enabled]);
 

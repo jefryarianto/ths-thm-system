@@ -2,9 +2,16 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
-import { CreateGraduationDto, GraduationFilterDto, RegisterParticipantDto, GraduateDto } from './dto/graduation.dto';
+import {
+  CreateGraduationDto,
+  GraduationFilterDto,
+  RegisterParticipantDto,
+  GraduateDto,
+} from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { MemberMailService } from '../../common/services/member-mail.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class GraduationsService {
@@ -14,11 +21,10 @@ export class GraduationsService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly mailService: MailService,
+    private readonly memberMailService: MemberMailService,
   ) {}
 
   async findAll(query: GraduationFilterDto, scope?: UserScope) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
     const where: Record<string, unknown> = { tipe: 'pendadaran' };
 
     if (scope?.rantingId) {
@@ -27,10 +33,7 @@ export class GraduationsService {
         { scopeType: 'unit_latihan', scopeId: scope.rantingId },
       ];
     } else if (scope?.wilayahId) {
-      where.OR = [
-        { scopeType: 'wilayah', scopeId: scope.wilayahId },
-        { scopeType: 'ranting' },
-      ];
+      where.OR = [{ scopeType: 'wilayah', scopeId: scope.wilayahId }, { scopeType: 'ranting' }];
     } else if (scope?.distrikId) {
       where.OR = [
         { scopeType: 'distrik', scopeId: scope.distrikId },
@@ -41,15 +44,11 @@ export class GraduationsService {
 
     if (query.status) where.status = query.status;
 
-    const [data, total] = await Promise.all([
-      this.prisma.kegiatan.findMany({
-        where, skip: (page - 1) * limit, take: limit,
-        orderBy: { tanggalMulai: 'desc' },
-      }),
-      this.prisma.kegiatan.count({ where }),
-    ]);
-
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.kegiatan, where, {
+      page: query.page,
+      limit: query.limit,
+      orderBy: { tanggalMulai: 'desc' },
+    });
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -70,7 +69,13 @@ export class GraduationsService {
         lokasi: dto.lokasi,
         tanggalMulai: new Date(dto.tanggalMulai),
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
-        scopeType: dto.scopeType as 'nasional' | 'distrik' | 'wilayah' | 'ranting' | 'unit_latihan' | undefined,
+        scopeType: dto.scopeType as
+          | 'nasional'
+          | 'distrik'
+          | 'wilayah'
+          | 'ranting'
+          | 'unit_latihan'
+          | undefined,
         scopeId: dto.scopeId,
         tipe: 'pendadaran',
         status: 'draft',
@@ -85,7 +90,6 @@ export class GraduationsService {
       data: { status: 'mengikuti_pendadaran' },
     });
 
-    // Send registration email (method handles errors internally)
     if (candidate.email) {
       this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
     }
@@ -109,7 +113,10 @@ export class GraduationsService {
     return { success: true, data: participants };
   }
 
-  async importParticipants(graduationId: string, data: Array<{ candidateId?: string; id?: string }>) {
+  async importParticipants(
+    graduationId: string,
+    data: Array<{ candidateId?: string; id?: string }>,
+  ) {
     const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: graduationId } });
     if (!kegiatan) throw new NotFoundException('Pendadaran tidak ditemukan');
 
@@ -131,7 +138,10 @@ export class GraduationsService {
 
   async graduate(graduationId: string, dto: GraduateDto, scope?: UserScope) {
     if (scope) {
-      const graduation = await this.prisma.kegiatan.findUnique({ where: { id: graduationId }, select: { scopeType: true, scopeId: true } });
+      const graduation = await this.prisma.kegiatan.findUnique({
+        where: { id: graduationId },
+        select: { scopeType: true, scopeId: true },
+      });
       if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
       this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
     }
@@ -153,9 +163,13 @@ export class GraduationsService {
         data: { status: result.lulus ? 'lulus' : 'gagal' },
       });
 
-      // Send result email (method handles errors internally)
       if (candidate.email) {
-        this.sendGraduationResultEmail(candidate.namaLengkap, candidate.email, result.lulus, result.totalSkor);
+        this.sendGraduationResultEmail(
+          candidate.namaLengkap,
+          candidate.email,
+          result.lulus,
+          result.totalSkor,
+        );
       }
     }
 
@@ -173,7 +187,11 @@ export class GraduationsService {
     };
   }
 
-  private async sendGraduationRegisteredEmail(nama: string, email: string, graduationId: string): Promise<void> {
+  private async sendGraduationRegisteredEmail(
+    nama: string,
+    email: string,
+    graduationId: string,
+  ): Promise<void> {
     try {
       const graduation = await this.prisma.kegiatan.findUnique({
         where: { id: graduationId },
@@ -181,21 +199,41 @@ export class GraduationsService {
       });
       const namaPendadaran = graduation?.nama || 'Pendadaran';
       const tanggal = graduation?.tanggalMulai
-        ? graduation.tanggalMulai.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        ? graduation.tanggalMulai.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
         : '-';
       const tpl = graduationRegisteredEmail(nama, namaPendadaran, tanggal);
-      await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'graduations', template: 'graduationRegisteredEmail' } });
+      await this.mailService.sendMail({
+        to: email,
+        ...tpl,
+        metadata: { module: 'graduations', template: 'graduationRegisteredEmail' },
+      });
     } catch (error) {
       this.logger.error(`sendGraduationRegisteredEmail failed: ${(error as Error).message}`);
     }
   }
 
-  private async sendGraduationResultEmail(nama: string, email: string, lulus: boolean, skor?: number): Promise<void> {
+  private async sendGraduationResultEmail(
+    nama: string,
+    email: string,
+    lulus: boolean,
+    skor?: number,
+  ): Promise<void> {
     try {
       const tpl = graduationResultEmail(nama, lulus, skor);
-      await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'graduations', template: 'graduationResultEmail' } });
+      await this.mailService.sendMail({
+        to: email,
+        ...tpl,
+        metadata: { module: 'graduations', template: 'graduationResultEmail' },
+      });
     } catch (error) {
-      this.logger.error(`sendGraduationResultEmail failed for ${email}: ${(error as Error).message}`);
+      this.logger.error(
+        `sendGraduationResultEmail failed for ${email}: ${(error as Error).message}`,
+      );
     }
   }
 }

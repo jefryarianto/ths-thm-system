@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -36,7 +44,9 @@ export default function CandidateDetailScreen() {
       try {
         const res = await apiClient.get(`/candidates/${id}`);
         setCandidate(unwrap(res));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
     })();
   }, [id]);
@@ -96,35 +106,45 @@ export default function CandidateDetailScreen() {
   };
 
   const handleRejectFallback = () => {
-    Alert.alert(
-      'Tolak Calon',
-      'Konfirmasi penolakan calon anggota ini?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Ya, Tolak',
-          style: 'destructive',
-          onPress: async () => {
-            setActionLoading('reject');
-            try {
-              await apiClient.post(`/candidates/${id}/reject`, {});
-              Alert.alert('Ditolak', 'Calon anggota telah ditolak');
-              const res = await apiClient.get(`/candidates/${id}`);
-              setCandidate(unwrap(res));
-            } catch (err: any) {
-              Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
-            }
-            setActionLoading('');
-          },
+    Alert.alert('Tolak Calon', 'Konfirmasi penolakan calon anggota ini?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Ya, Tolak',
+        style: 'destructive',
+        onPress: async () => {
+          setActionLoading('reject');
+          try {
+            await apiClient.post(`/candidates/${id}/reject`, {});
+            Alert.alert('Ditolak', 'Calon anggota telah ditolak');
+            const res = await apiClient.get(`/candidates/${id}`);
+            setCandidate(unwrap(res));
+          } catch (err: any) {
+            Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
+          }
+          setActionLoading('');
         },
-      ],
-    );
+      },
+    ]);
   };
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
-  if (!candidate) return <View style={styles.center}><Text style={styles.errorText}>Calon tidak ditemukan</Text></View>;
+  if (loading)
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  if (!candidate)
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Calon tidak ditemukan</Text>
+      </View>
+    );
 
-  const ss = STATUS_STYLES[candidate.status] || { label: candidate.status, bg: '#f3f4f6', color: '#6b7280' };
+  const ss = STATUS_STYLES[candidate.status] || {
+    label: candidate.status,
+    bg: '#f3f4f6',
+    color: '#6b7280',
+  };
   const isActionable = candidate.status === 'diusulkan';
   const isPending = actionLoading !== '';
 
@@ -134,7 +154,9 @@ export default function CandidateDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>Detail Calon</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          Detail Calon
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -147,9 +169,7 @@ export default function CandidateDetailScreen() {
           <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
             <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
           </View>
-          {candidate.ranting && (
-            <Text style={styles.ranting}>{candidate.ranting.nama}</Text>
-          )}
+          {candidate.ranting && <Text style={styles.ranting}>{candidate.ranting.nama}</Text>}
         </View>
 
         {/* Detail Info */}
@@ -158,7 +178,9 @@ export default function CandidateDetailScreen() {
             <Ionicons name="person" size={18} color="#6b7280" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Jenis Kelamin</Text>
-              <Text style={styles.infoValue}>{candidate.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</Text>
+              <Text style={styles.infoValue}>
+                {candidate.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
+              </Text>
             </View>
           </View>
           {candidate.tempatLahir && (
@@ -175,7 +197,9 @@ export default function CandidateDetailScreen() {
               <Ionicons name="calendar" size={18} color="#6b7280" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tanggal Lahir</Text>
-                <Text style={styles.infoValue}>{new Date(candidate.tanggalLahir).toLocaleDateString('id-ID')}</Text>
+                <Text style={styles.infoValue}>
+                  {new Date(candidate.tanggalLahir).toLocaleDateString('id-ID')}
+                </Text>
               </View>
             </View>
           )}
@@ -202,7 +226,11 @@ export default function CandidateDetailScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Diusulkan Tanggal</Text>
               <Text style={styles.infoValue}>
-                {new Date(candidate.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {new Date(candidate.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </Text>
             </View>
           </View>
@@ -252,27 +280,72 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  header: {
+    backgroundColor: '#2563eb',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   backBtn: { padding: 4 },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
 
   section: { padding: 16 },
-  profileCard: { backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#e5e7eb' },
-  avatarLarge: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  profileCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  avatarLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   avatarText: { fontSize: 24, fontWeight: '700', color: '#2563eb' },
   name: { fontSize: 20, fontWeight: '700', color: '#111827', textAlign: 'center' },
   statusBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, marginTop: 8 },
   statusText: { fontSize: 12, fontWeight: '600' },
   ranting: { fontSize: 13, color: '#6b7280', marginTop: 6 },
 
-  infoCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#e5e7eb' },
-  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
   infoContent: { flex: 1 },
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
 
   actionRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 12 },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
   approveBtn: { backgroundColor: '#16a34a' },
   rejectBtn: { backgroundColor: '#dc2626' },
   actionText: { color: '#fff', fontSize: 15, fontWeight: '600' },

@@ -1,14 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, FileText,
-  Download, Eye, Trash2,
-} from 'lucide-react';
+import { Plus, FileText, Download, Eye, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -42,20 +39,28 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function DocumentsPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [filterTipe, setFilterTipe] = useState('');
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    hasActiveFilters,
+    getApiParams,
+    resetFilters,
+  } = useFilters({
+    filters: [{ key: 'tipe', defaultValue: '' }],
+  });
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<DocumentRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filterTipe) params.tipe = filterTipe;
-      return apiClient.get('/documents', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch, filterTipe]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<DocumentRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (filters.tipe) params.tipe = filters.tipe;
+    return apiClient.get('/documents', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, filters.tipe]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -87,14 +92,13 @@ export default function DocumentsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setFilterTipe(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari dokumen (no. dokumen, tipe)..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
-          value={filterTipe}
-          onChange={v => { setFilterTipe(v); setPage(1); }}
+          value={filters.tipe}
+          onChange={(v) => setFilter('tipe', v)}
           options={TIPE_OPTIONS}
           placeholder="Semua Tipe"
         />
@@ -113,7 +117,7 @@ export default function DocumentsPage() {
         loading={loading}
         empty={{
           icon: FileText,
-          ...buildEmptyMessage('dokumen', !!(search || filterTipe), () => { setSearch(''); setFilterTipe(''); setPage(1); }),
+          ...buildEmptyMessage('dokumen', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -121,9 +125,14 @@ export default function DocumentsPage() {
         onPageChange={handlePageChange}
         colSpan={6}
         renderRow={(row: DocumentRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
-              <span className="font-mono text-sm text-gray-900 dark:text-white">{row.nomorDokumen}</span>
+              <span className="font-mono text-sm text-gray-900 dark:text-white">
+                {row.nomorDokumen}
+              </span>
             </td>
             <td className="px-4 py-3 hidden sm:table-cell">
               <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 capitalize">
@@ -134,7 +143,9 @@ export default function DocumentsPage() {
               {row.anggota?.namaLengkap || '-'}
             </td>
             <td className="px-4 py-3">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}
+              >
                 {row.status}
               </span>
             </td>

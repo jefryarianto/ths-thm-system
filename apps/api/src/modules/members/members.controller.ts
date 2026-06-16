@@ -1,6 +1,4 @@
-import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query, Req,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
@@ -15,14 +13,30 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
   @Get()
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @RequireScope('branch')
   findAll(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
     return this.membersService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'penguji',
+    'anggota',
+  )
   @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.findOne(id, req.scope);

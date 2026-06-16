@@ -99,7 +99,9 @@ export default function PublicLeaderboardScreen() {
                 <Text style={styles.podiumName} numberOfLines={1}>
                   {leaderboard[1]?.namaLengkap || '-'}
                 </Text>
-                <Text style={styles.podiumPoints}>{leaderboard[1]?.points?.toLocaleString('id-ID') || 0}</Text>
+                <Text style={styles.podiumPoints}>
+                  {leaderboard[1]?.points?.toLocaleString('id-ID') || 0}
+                </Text>
                 <View style={[styles.podiumBar, { height: 60, backgroundColor: '#e5e7eb' }]} />
               </View>
               {/* 1st */}
@@ -108,7 +110,9 @@ export default function PublicLeaderboardScreen() {
                 <Text style={styles.podiumNameFirst} numberOfLines={1}>
                   {leaderboard[0]?.namaLengkap || '-'}
                 </Text>
-                <Text style={styles.podiumPointsFirst}>{leaderboard[0]?.points?.toLocaleString('id-ID') || 0}</Text>
+                <Text style={styles.podiumPointsFirst}>
+                  {leaderboard[0]?.points?.toLocaleString('id-ID') || 0}
+                </Text>
                 <View style={[styles.podiumBar, { height: 80, backgroundColor: '#fbbf24' }]} />
               </View>
               {/* 3rd */}
@@ -117,7 +121,9 @@ export default function PublicLeaderboardScreen() {
                 <Text style={styles.podiumName} numberOfLines={1}>
                   {leaderboard[2]?.namaLengkap || '-'}
                 </Text>
-                <Text style={styles.podiumPoints}>{leaderboard[2]?.points?.toLocaleString('id-ID') || 0}</Text>
+                <Text style={styles.podiumPoints}>
+                  {leaderboard[2]?.points?.toLocaleString('id-ID') || 0}
+                </Text>
                 <View style={[styles.podiumBar, { height: 40, backgroundColor: '#fed7aa' }]} />
               </View>
             </View>
@@ -131,15 +137,10 @@ export default function PublicLeaderboardScreen() {
             return (
               <Animated.View
                 key={`${entry.rank}`}
-                style={[
-                  styles.listItem,
-                  entry.rank <= 3 && styles.topThree,
-                ]}
+                style={[styles.listItem, entry.rank <= 3 && styles.topThree]}
               >
                 <View style={styles.rankSection}>
-                  <Text style={styles.rankText}>
-                    {RANK_ICONS[entry.rank] || `#${entry.rank}`}
-                  </Text>
+                  <Text style={styles.rankText}>{RANK_ICONS[entry.rank] || `#${entry.rank}`}</Text>
                 </View>
                 <View style={styles.infoSection}>
                   <Text style={styles.nameText} numberOfLines={1}>
@@ -153,9 +154,7 @@ export default function PublicLeaderboardScreen() {
                 </View>
                 <View style={styles.pointsSection}>
                   <Text style={styles.levelIcon}>{level.icon}</Text>
-                  <Text style={styles.pointsValue}>
-                    {entry.points.toLocaleString('id-ID')}
-                  </Text>
+                  <Text style={styles.pointsValue}>{entry.points.toLocaleString('id-ID')}</Text>
                 </View>
               </Animated.View>
             );
@@ -175,7 +174,15 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
 
   // Header
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#3b82f6', paddingTop: 50, paddingBottom: 16, paddingHorizontal: 16 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#3b82f6',
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
   backButton: { padding: 4 },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
   refreshButton: { padding: 4 },
@@ -187,14 +194,30 @@ const styles = StyleSheet.create({
   podiumIcon: { fontSize: 24 },
   podiumIconFirst: { fontSize: 32 },
   podiumName: { fontSize: 11, color: '#6b7280', marginTop: 4, textAlign: 'center', maxWidth: 80 },
-  podiumNameFirst: { fontSize: 12, fontWeight: '700', color: '#1f2937', marginTop: 4, textAlign: 'center', maxWidth: 90 },
+  podiumNameFirst: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginTop: 4,
+    textAlign: 'center',
+    maxWidth: 90,
+  },
   podiumPoints: { fontSize: 11, color: '#92400e', fontWeight: '600', marginTop: 2 },
   podiumPointsFirst: { fontSize: 13, color: '#92400e', fontWeight: '700', marginTop: 2 },
   podiumBar: { width: 40, borderRadius: 8, marginTop: 8 },
 
   // List
   listContainer: { paddingHorizontal: 16 },
-  listItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
   topThree: { backgroundColor: '#fffbeb', borderColor: '#fde68a' },
   rankSection: { width: 36, alignItems: 'center' },
   rankText: { fontSize: 16 },

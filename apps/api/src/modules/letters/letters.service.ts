@@ -2,7 +2,15 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { dispositionNotificationEmail } from '../../mail/email-templates';
-import { LetterFilterDto, CreateIncomingLetterDto, UpdateIncomingLetterDto, CreateOutgoingLetterDto, UpdateOutgoingLetterDto, CreateDispositionDto } from './dto/letter.dto';
+import {
+  LetterFilterDto,
+  CreateIncomingLetterDto,
+  UpdateIncomingLetterDto,
+  CreateOutgoingLetterDto,
+  UpdateOutgoingLetterDto,
+  CreateDispositionDto,
+} from './dto/letter.dto';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class LettersService {
@@ -33,17 +41,19 @@ export class LettersService {
     const total = totalMasuk + totalKeluar;
     const totalPages = Math.ceil(total / limit);
 
-    return { success: true, data: combined.slice(0, limit), meta: { total, page, limit, totalPages } };
+    return {
+      success: true,
+      data: combined.slice(0, limit),
+      meta: { total, page, limit, totalPages },
+    };
   }
 
   async incomingFindAll(query: LetterFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const [data, total] = await Promise.all([
-      this.prisma.suratMasuk.findMany({ skip: (page - 1) * limit, take: limit, orderBy: { tanggalTerima: 'desc' } }),
-      this.prisma.suratMasuk.count(),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(
+      this.prisma.suratMasuk,
+      {},
+      { page: query.page, limit: query.limit, orderBy: { tanggalTerima: 'desc' } },
+    );
   }
 
   async incomingFindOne(id: string) {
@@ -102,13 +112,11 @@ export class LettersService {
   }
 
   async outgoingFindAll(query: LetterFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const [data, total] = await Promise.all([
-      this.prisma.suratKeluar.findMany({ skip: (page - 1) * limit, take: limit, orderBy: { tanggalSurat: 'desc' } }),
-      this.prisma.suratKeluar.count(),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(
+      this.prisma.suratKeluar,
+      {},
+      { page: query.page, limit: query.limit, orderBy: { tanggalSurat: 'desc' } },
+    );
   }
 
   async outgoingFindOne(id: string) {
@@ -166,9 +174,18 @@ export class LettersService {
   private async sendDispositionEmail(suratMasukId: string, dto: CreateDispositionDto) {
     try {
       const [surat, penerima, pengirim] = await Promise.all([
-        this.prisma.suratMasuk.findUnique({ where: { id: suratMasukId }, select: { perihal: true } }),
-        this.prisma.user.findUnique({ where: { id: dto.kepadaUserId }, select: { email: true, namaLengkap: true } }),
-        this.prisma.user.findUnique({ where: { id: dto.dariUserId }, select: { namaLengkap: true } }),
+        this.prisma.suratMasuk.findUnique({
+          where: { id: suratMasukId },
+          select: { perihal: true },
+        }),
+        this.prisma.user.findUnique({
+          where: { id: dto.kepadaUserId },
+          select: { email: true, namaLengkap: true },
+        }),
+        this.prisma.user.findUnique({
+          where: { id: dto.dariUserId },
+          select: { namaLengkap: true },
+        }),
       ]);
 
       if (!penerima?.email || !surat) return;
@@ -180,7 +197,12 @@ export class LettersService {
         dto.isi,
       );
 
-      await this.mailService.sendMail({ to: penerima.email, subject, html, metadata: { module: 'letters', template: 'dispositionNotificationEmail' } });
+      await this.mailService.sendMail({
+        to: penerima.email,
+        subject,
+        html,
+        metadata: { module: 'letters', template: 'dispositionNotificationEmail' },
+      });
     } catch (error) {
       this.logger.warn(`Failed to send disposition email: ${(error as Error).message}`);
     }

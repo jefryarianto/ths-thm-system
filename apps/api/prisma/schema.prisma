@@ -162,69 +162,69 @@ model Nasional {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  distriks  Distrik[]
+  distriks Distrik[]
 
   @@map("nasional")
 }
 
 model Distrik {
-  id          String    @id @default(uuid())
-  nasionalId  String    @map("nasional_id")
-  kodeDistrik String    @unique @map("kode_distrik")
+  id          String   @id @default(uuid())
+  nasionalId  String   @map("nasional_id")
+  kodeDistrik String   @unique @map("kode_distrik")
   nama        String
   alamat      String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  nasional    Nasional  @relation(fields: [nasionalId], references: [id])
-  wilayahs    Wilayah[]
+  nasional     Nasional      @relation(fields: [nasionalId], references: [id])
+  wilayahs     Wilayah[]
   unitLatihans UnitLatihan[]
 
   @@map("distrik")
 }
 
 model Wilayah {
-  id          String    @id @default(uuid())
-  distrikId   String    @map("distrik_id")
-  kodeWilayah String    @unique @map("kode_wilayah")
+  id          String   @id @default(uuid())
+  distrikId   String   @map("distrik_id")
+  kodeWilayah String   @unique @map("kode_wilayah")
   nama        String
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  distrik     Distrik   @relation(fields: [distrikId], references: [id])
-  rantings    Ranting[]
+  distrik  Distrik   @relation(fields: [distrikId], references: [id])
+  rantings Ranting[]
 
   @@map("wilayah")
 }
 
 model Ranting {
-  id            String    @id @default(uuid())
-  wilayahId     String    @map("wilayah_id")
-  kodeRanting   String    @unique @map("kode_ranting")
+  id            String   @id @default(uuid())
+  wilayahId     String   @map("wilayah_id")
+  kodeRanting   String   @unique @map("kode_ranting")
   nama          String
-  lokasiLatihan String?   @map("lokasi_latihan")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  lokasiLatihan String?  @map("lokasi_latihan")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  wilayah       Wilayah   @relation(fields: [wilayahId], references: [id])
+  wilayah       Wilayah        @relation(fields: [wilayahId], references: [id])
   users         User[]
   anggota       Anggota[]
   calonAnggotas CalonAnggota[]
-  latihans         Latihan[]
+  latihans      Latihan[]
 
   @@map("ranting")
 }
 
 model UnitLatihan {
-  id          String          @id @default(uuid())
-  distrikId   String          @map("distrik_id")
-  nama        String
-  tipe        TipeUnitLatihan
-  lokasi      String?
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id        String          @id @default(uuid())
+  distrikId String          @map("distrik_id")
+  nama      String
+  tipe      TipeUnitLatihan
+  lokasi    String?
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
-  distrik     Distrik         @relation(fields: [distrikId], references: [id])
+  distrik Distrik @relation(fields: [distrikId], references: [id])
 
   @@map("unit_latihan")
 }
@@ -232,91 +232,99 @@ model UnitLatihan {
 // ── Users & Members ───────────────────────────────────────
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  namaLengkap  String    @map("nama_lengkap")
-  role         Role      @default(anggota)
-  rantingId    String?   @map("ranting_id")
-  fcmToken     String?   @map("fcm_token")
-  refreshToken String?   @map("refresh_token")
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  namaLengkap  String   @map("nama_lengkap")
+  role         Role     @default(anggota)
+  rantingId    String?  @map("ranting_id")
+  fcmToken     String?  @map("fcm_token")
+  refreshToken String?  @map("refresh_token")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  ranting      Ranting?  @relation(fields: [rantingId], references: [id])
-  notifikasis  Notifikasi[]
-  deviceTokens DeviceToken[]
-  tandaTangans TandaTangan[]
-  disposisiDari    Disposisi[] @relation("DisposisiDari")
-  disposisiKepada  Disposisi[] @relation("DisposisiKepada")
-  calonAnggotasDiusul CalonAnggota[] @relation("CalonAnggotaUsul")
-  kegiatanDibuat  Kegiatan[] @relation("KegiatanCreatedBy")
-  penugasanPengujis PenugasanPenguji[]
-  latihansDipelatih Latihan[] @relation("LatihanPelatih")
-  nilaiPendadaranPenguji NilaiPendadaran[] @relation("NilaiPendadaranPenguji")
-  hasilPendadaranDivValidated HasilPendadaran[] @relation("HasilPendadaranValidasi")
-  iuranDiverifikasi Iuran[] @relation("IuranVerifikator")
-  dokumenOrgUploaded DokumenOrganisasi[] @relation("DokumenOrgUploader")
+  ranting                     Ranting?            @relation(fields: [rantingId], references: [id])
+  notifikasis                 Notifikasi[]
+  deviceTokens                DeviceToken[]
+  tandaTangans                TandaTangan[]
+  disposisiDari               Disposisi[]         @relation("DisposisiDari")
+  disposisiKepada             Disposisi[]         @relation("DisposisiKepada")
+  calonAnggotasDiusul         CalonAnggota[]      @relation("CalonAnggotaUsul")
+  kegiatanDibuat              Kegiatan[]          @relation("KegiatanCreatedBy")
+  penugasanPengujis           PenugasanPenguji[]
+  latihansDipelatih           Latihan[]           @relation("LatihanPelatih")
+  nilaiPendadaranPenguji      NilaiPendadaran[]   @relation("NilaiPendadaranPenguji")
+  hasilPendadaranDivValidated HasilPendadaran[]   @relation("HasilPendadaranValidasi")
+  iuranDiverifikasi           Iuran[]             @relation("IuranVerifikator")
+  dokumenOrgUploaded          DokumenOrganisasi[] @relation("DokumenOrgUploader")
+  oauthAccounts               OAuthAccount[]
 
   @@map("users")
 }
 
 model Anggota {
-  id                String              @id @default(uuid())
-  rantingId         String              @map("ranting_id")
-  nomorAnggota      String              @unique @map("nomor_anggota")
-  namaLengkap       String              @map("nama_lengkap")
-  jenisKelamin      JenisKelamin        @map("jenis_kelamin")
-  tempatLahir       String?             @map("tempat_lahir")
-  tanggalLahir      DateTime?           @map("tanggal_lahir")
+  id                String            @id @default(uuid())
+  rantingId         String            @map("ranting_id")
+  nomorAnggota      String            @unique @map("nomor_anggota")
+  namaLengkap       String            @map("nama_lengkap")
+  jenisKelamin      JenisKelamin      @map("jenis_kelamin")
+  tempatLahir       String?           @map("tempat_lahir")
+  tanggalLahir      DateTime?         @map("tanggal_lahir")
   alamat            String?
-  noHp              String?             @map("no_hp")
+  noHp              String?           @map("no_hp")
   email             String?
-  fotoPath          String?             @map("foto_path")
-  statusKeanggotaan StatusKeanggotaan   @default(aktif) @map("status_keanggotaan")
+  fotoPath          String?           @map("foto_path")
+  statusKeanggotaan StatusKeanggotaan @default(aktif) @map("status_keanggotaan")
   tingkat           String?
-  statusData        StatusData          @default(complete) @map("status_data")
-  statusValidasi    StatusValidasi      @default(pending) @map("status_validasi")
-  missingFields     Json?               @map("missing_fields")
-  createdAt         DateTime            @default(now()) @map("created_at")
-  updatedAt         DateTime            @updatedAt @map("updated_at")
-  deletedAt         DateTime?           @map("deleted_at")
+  statusData        StatusData        @default(complete) @map("status_data")
+  statusValidasi    StatusValidasi    @default(pending) @map("status_validasi")
+  missingFields     Json?             @map("missing_fields")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  deletedAt         DateTime?         @map("deleted_at")
 
-  ranting           Ranting             @relation(fields: [rantingId], references: [id])
-  klaims            Klaim[]
-  dokumen           Dokumen[]
-  iuran             Iuran[]
-  absensiLatihans   AbsensiLatihan[]
-  evaluasiLatihans  EvaluasiLatihan[]
-  kegiatanPesertas  KegiatanPeserta[]
-  presensiKegiatans PresensiKegiatan[]
-  gamificationProfile    GamificationProfile?
-  gamificationEvents     GamificationEvent[]
+  ranting                 Ranting                  @relation(fields: [rantingId], references: [id])
+  klaims                  Klaim[]
+  dokumen                 Dokumen[]
+  iuran                   Iuran[]
+  absensiLatihans         AbsensiLatihan[]
+  evaluasiLatihans        EvaluasiLatihan[]
+  kegiatanPesertas        KegiatanPeserta[]
+  presensiKegiatans       PresensiKegiatan[]
+  gamificationProfile     GamificationProfile?
+  gamificationEvents      GamificationEvent[]
   gamificationRedemptions GamificationRedemption[]
-  nilaiPendadaranAnggota NilaiPendadaran[]
+  nilaiPendadaranAnggota  NilaiPendadaran[]
+  ChatMember              ChatMember[]
+  ChatMessage             ChatMessage[]
+  qrCodes                 QrCode[]
+  checkIns                CheckIn[]
+  iuranRecurrings         IuranRecurring[]
+  memberReferralsAsReferrer MemberReferral[] @relation("Referrer")
+  memberReferralsAsReferred MemberReferral[] @relation("Referred")
 
   @@index([statusData])
   @@map("anggota")
 }
 
 model CalonAnggota {
-  id               String       @id @default(uuid())
-  rantingId        String       @map("ranting_id")
-  namaLengkap      String       @map("nama_lengkap")
-  jenisKelamin     JenisKelamin @map("jenis_kelamin")
-  tempatLahir      String?      @map("tempat_lahir")
-  tanggalLahir     DateTime?    @map("tanggal_lahir")
-  alamat           String?
-  noHp             String?      @map("no_hp")
-  email            String?
-  status           StatusCalon  @default(diusulkan)
-  usulOlehUserId   String       @map("usul_oleh_user_id")
-  createdAt        DateTime     @default(now()) @map("created_at")
-  updatedAt        DateTime     @updatedAt @map("updated_at")
+  id             String       @id @default(uuid())
+  rantingId      String       @map("ranting_id")
+  namaLengkap    String       @map("nama_lengkap")
+  jenisKelamin   JenisKelamin @map("jenis_kelamin")
+  tempatLahir    String?      @map("tempat_lahir")
+  tanggalLahir   DateTime?    @map("tanggal_lahir")
+  alamat         String?
+  noHp           String?      @map("no_hp")
+  email          String?
+  status         StatusCalon  @default(diusulkan)
+  usulOlehUserId String       @map("usul_oleh_user_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
-  ranting          Ranting      @relation(fields: [rantingId], references: [id])
-  usulOlehUser     User         @relation("CalonAnggotaUsul", fields: [usulOlehUserId], references: [id])
+  ranting          Ranting           @relation(fields: [rantingId], references: [id])
+  usulOlehUser     User              @relation("CalonAnggotaUsul", fields: [usulOlehUserId], references: [id])
   nilaiPendadarans NilaiPendadaran[]
   hasilPendadarans HasilPendadaran[]
 
@@ -324,19 +332,19 @@ model CalonAnggota {
 }
 
 model Pendaftaran {
-  id            String         @id @default(uuid())
-  namaLengkap   String         @map("nama_lengkap")
-  jenisKelamin  JenisKelamin   @map("jenis_kelamin")
-  tempatLahir   String?        @map("tempat_lahir")
-  tanggalLahir  DateTime?      @map("tanggal_lahir")
-  alamat        String?
-  noHp          String?        @map("no_hp")
-  email         String?
-  sumberInfo    String?        @map("sumber_info")
-  status        StatusValidasi @default(pending)
-  catatan       String?
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  id           String         @id @default(uuid())
+  namaLengkap  String         @map("nama_lengkap")
+  jenisKelamin JenisKelamin   @map("jenis_kelamin")
+  tempatLahir  String?        @map("tempat_lahir")
+  tanggalLahir DateTime?      @map("tanggal_lahir")
+  alamat       String?
+  noHp         String?        @map("no_hp")
+  email        String?
+  sumberInfo   String?        @map("sumber_info")
+  status       StatusValidasi @default(pending)
+  catatan      String?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
 
   @@map("pendaftaran")
 }
@@ -352,7 +360,7 @@ model Klaim {
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
-  anggota   Anggota     @relation(fields: [anggotaId], references: [id])
+  anggota Anggota @relation(fields: [anggotaId], references: [id])
 
   @@map("klaim")
 }
@@ -360,78 +368,80 @@ model Klaim {
 // ── Activities & Training ─────────────────────────────────
 
 model Kegiatan {
-  id            String          @id @default(uuid())
-  scopeType     ScopeType       @map("scope_type")
-  scopeId       String          @map("scope_id")
-  nama          String
-  tipe          TipeKegiatan
-  lokasi        String?
-  tanggalMulai  DateTime        @map("tanggal_mulai")
+  id             String         @id @default(uuid())
+  scopeType      ScopeType      @map("scope_type")
+  scopeId        String         @map("scope_id")
+  nama           String
+  tipe           TipeKegiatan
+  lokasi         String?
+  tanggalMulai   DateTime       @map("tanggal_mulai")
   tanggalSelesai DateTime       @map("tanggal_selesai")
-  createdBy     String          @map("created_by")
-  status        StatusKegiatan  @default(draft)
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
+  createdBy      String         @map("created_by")
+  status         StatusKegiatan @default(draft)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
 
-  creator       User            @relation("KegiatanCreatedBy", fields: [createdBy], references: [id])
-  latihans      Latihan[]
-  peserta       KegiatanPeserta[]
-  presensi      PresensiKegiatan[]
-  dokumenKegiatan DokumenKegiatan[]
+  creator           User               @relation("KegiatanCreatedBy", fields: [createdBy], references: [id])
+  latihans          Latihan[]
+  peserta           KegiatanPeserta[]
+  presensi          PresensiKegiatan[]
+  dokumenKegiatan   DokumenKegiatan[]
   penugasanPengujis PenugasanPenguji[]
-  nilaiPendadarans NilaiPendadaran[]
-  hasilPendadarans HasilPendadaran[]
+  nilaiPendadarans  NilaiPendadaran[]
+  hasilPendadarans  HasilPendadaran[]
+  checkIns          CheckIn[]
 
   @@map("kegiatan")
 }
 
 model Latihan {
-  id                       String    @id @default(uuid())
-  rantingId                String    @map("ranting_id")
-  kegiatanId               String?   @map("kegiatan_id")
-  pelatihId                String    @map("pelatih_id")
-  hariTanggal              DateTime  @map("hari_tanggal")
-  lokasi                   String?
-  jenisMateri              String?   @map("jenis_materi")
-  hasilLatihanGlobal       String?   @map("hasil_latihan_global")
-  rekomendasiLatihanBerikutnya String? @map("rekomendasi_latihan_berikutnya")
-  createdAt                DateTime  @default(now()) @map("created_at")
-  updatedAt                DateTime  @updatedAt @map("updated_at")
+  id                           String   @id @default(uuid())
+  rantingId                    String   @map("ranting_id")
+  kegiatanId                   String?  @map("kegiatan_id")
+  pelatihId                    String   @map("pelatih_id")
+  hariTanggal                  DateTime @map("hari_tanggal")
+  lokasi                       String?
+  jenisMateri                  String?  @map("jenis_materi")
+  hasilLatihanGlobal           String?  @map("hasil_latihan_global")
+  rekomendasiLatihanBerikutnya String?  @map("rekomendasi_latihan_berikutnya")
+  createdAt                    DateTime @default(now()) @map("created_at")
+  updatedAt                    DateTime @updatedAt @map("updated_at")
 
-  ranting                  Ranting   @relation(fields: [rantingId], references: [id])
-  kegiatan                 Kegiatan? @relation(fields: [kegiatanId], references: [id])
-  pelatih                  User      @relation("LatihanPelatih", fields: [pelatihId], references: [id])
-  absensi          AbsensiLatihan[]
-  evaluasi         EvaluasiLatihan[]
+  ranting  Ranting           @relation(fields: [rantingId], references: [id])
+  kegiatan Kegiatan?         @relation(fields: [kegiatanId], references: [id])
+  pelatih  User              @relation("LatihanPelatih", fields: [pelatihId], references: [id])
+  absensi  AbsensiLatihan[]
+  evaluasi EvaluasiLatihan[]
+  checkIns CheckIn[]
 
   @@map("latihan")
 }
 
 model AbsensiLatihan {
-  id         String   @id @default(uuid())
-  latihanId  String   @map("latihan_id")
-  anggotaId  String   @map("anggota_id")
-  hadir      Boolean  @default(true)
-  catatan    String?
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  latihanId String   @map("latihan_id")
+  anggotaId String   @map("anggota_id")
+  hadir     Boolean  @default(true)
+  catatan   String?
+  createdAt DateTime @default(now()) @map("created_at")
 
-  latihan    Latihan  @relation(fields: [latihanId], references: [id])
-  anggota    Anggota  @relation(fields: [anggotaId], references: [id])
+  latihan Latihan @relation(fields: [latihanId], references: [id])
+  anggota Anggota @relation(fields: [anggotaId], references: [id])
 
   @@map("absensi_latihan")
 }
 
 model EvaluasiLatihan {
-  id         String   @id @default(uuid())
-  latihanId  String   @map("latihan_id")
-  anggotaId  String   @map("anggota_id")
-  nilai      Decimal  @db.Decimal(65, 30)
-  catatan    String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  latihanId String   @map("latihan_id")
+  anggotaId String   @map("anggota_id")
+  nilai     Decimal  @db.Decimal(65, 30)
+  catatan   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  latihan    Latihan  @relation(fields: [latihanId], references: [id])
-  anggota    Anggota  @relation(fields: [anggotaId], references: [id])
+  latihan Latihan @relation(fields: [latihanId], references: [id])
+  anggota Anggota @relation(fields: [anggotaId], references: [id])
 
   @@map("evaluasi_latihan")
 }
@@ -442,8 +452,8 @@ model KegiatanPeserta {
   anggotaId  String   @map("anggota_id")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id])
-  anggota    Anggota  @relation(fields: [anggotaId], references: [id])
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
+  anggota  Anggota  @relation(fields: [anggotaId], references: [id])
 
   @@map("kegiatan_peserta")
 }
@@ -455,8 +465,8 @@ model PresensiKegiatan {
   hadir      Boolean  @default(true)
   createdAt  DateTime @default(now()) @map("created_at")
 
-  kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id])
-  anggota    Anggota  @relation(fields: [anggotaId], references: [id])
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
+  anggota  Anggota  @relation(fields: [anggotaId], references: [id])
 
   @@map("presensi_kegiatan")
 }
@@ -469,7 +479,7 @@ model DokumenKegiatan {
   tipe       String
   createdAt  DateTime @default(now()) @map("created_at")
 
-  kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id])
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
 
   @@map("dokumen_kegiatan")
 }
@@ -477,14 +487,14 @@ model DokumenKegiatan {
 // ── Assessments ───────────────────────────────────────────
 
 model AspekPenilaian {
-  id         String   @id @default(uuid())
-  kodeAspek  String   @unique @map("kode_aspek")
-  namaAspek  String   @map("nama_aspek")
-  deskripsi  String?
-  bobot      Decimal  @default(0) @db.Decimal(65, 30)
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  kodeAspek String   @unique @map("kode_aspek")
+  namaAspek String   @map("nama_aspek")
+  deskripsi String?
+  bobot     Decimal  @default(0) @db.Decimal(65, 30)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   itemPenilaian ItemPenilaian[]
 
@@ -493,32 +503,32 @@ model AspekPenilaian {
 }
 
 model PenugasanPenguji {
-  id              String   @id @default(uuid())
-  pengujiUserId   String   @map("penguji_user_id")
-  kegiatanId      String   @map("kegiatan_id")
-  peran           String?  @default("penguji")
-  catatan         String?
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  pengujiUser     User     @relation(fields: [pengujiUserId], references: [id])
-  kegiatan        Kegiatan @relation(fields: [kegiatanId], references: [id])
+  id            String   @id @default(uuid())
+  pengujiUserId String   @map("penguji_user_id")
+  kegiatanId    String   @map("kegiatan_id")
+  peran         String?  @default("penguji")
+  catatan       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  pengujiUser   User     @relation(fields: [pengujiUserId], references: [id])
+  kegiatan      Kegiatan @relation(fields: [kegiatanId], references: [id])
 
   @@map("penugasan_penguji")
 }
 
 model ItemPenilaian {
-  id            String   @id @default(uuid())
-  aspekId       String   @map("aspek_id")
-  kodeItem      String   @unique @map("kode_item")
-  namaItem      String   @map("nama_item")
-  skorMaksimal  Decimal  @default(100) @map("skor_maksimal") @db.Decimal(65, 30)
-  bobot         Decimal  @default(1) @db.Decimal(65, 30)
-  urutan        Int
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  aspekId      String   @map("aspek_id")
+  kodeItem     String   @unique @map("kode_item")
+  namaItem     String   @map("nama_item")
+  skorMaksimal Decimal  @default(100) @map("skor_maksimal") @db.Decimal(65, 30)
+  bobot        Decimal  @default(1) @db.Decimal(65, 30)
+  urutan       Int
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  aspek         AspekPenilaian @relation(fields: [aspekId], references: [id])
+  aspek            AspekPenilaian    @relation(fields: [aspekId], references: [id])
   nilaiPendadarans NilaiPendadaran[]
 
   @@index([kodeItem])
@@ -537,31 +547,31 @@ model NilaiPendadaran {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  kegiatan        Kegiatan     @relation(fields: [kegiatanId], references: [id])
-  calonAnggota    CalonAnggota @relation(fields: [calonAnggotaId], references: [id])
-  anggota         Anggota?     @relation(fields: [anggotaId], references: [id])
-  itemPenilaian   ItemPenilaian @relation(fields: [itemPenilaianId], references: [id])
-  penguji         User         @relation("NilaiPendadaranPenguji", fields: [pengujiUserId], references: [id])
+  kegiatan      Kegiatan      @relation(fields: [kegiatanId], references: [id])
+  calonAnggota  CalonAnggota  @relation(fields: [calonAnggotaId], references: [id])
+  anggota       Anggota?      @relation(fields: [anggotaId], references: [id])
+  itemPenilaian ItemPenilaian @relation(fields: [itemPenilaianId], references: [id])
+  penguji       User          @relation("NilaiPendadaranPenguji", fields: [pengujiUserId], references: [id])
 
   @@map("nilai_pendadaran")
 }
 
 model HasilPendadaran {
-  id               String         @id @default(uuid())
-  kegiatanId       String         @map("kegiatan_id")
-  calonAnggotaId   String         @map("calon_anggota_id")
-  totalSkor        Decimal        @map("total_skor") @db.Decimal(65, 30)
-  ranking          Int?
-  statusKelulusan  StatusKelulusan @map("status_kelulusan")
-  statusValidasi   StatusValidasi  @default(pending) @map("status_validasi")
-  divalidasiOleh   String?        @map("divalidasi_oleh")
-  divalidasiAt     DateTime?      @map("divalidasi_at")
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
+  id              String          @id @default(uuid())
+  kegiatanId      String          @map("kegiatan_id")
+  calonAnggotaId  String          @map("calon_anggota_id")
+  totalSkor       Decimal         @map("total_skor") @db.Decimal(65, 30)
+  ranking         Int?
+  statusKelulusan StatusKelulusan @map("status_kelulusan")
+  statusValidasi  StatusValidasi  @default(pending) @map("status_validasi")
+  divalidasiOleh  String?         @map("divalidasi_oleh")
+  divalidasiAt    DateTime?       @map("divalidasi_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
-  kegiatan         Kegiatan       @relation(fields: [kegiatanId], references: [id])
-  calonAnggota     CalonAnggota   @relation(fields: [calonAnggotaId], references: [id])
-  divalidasiUser   User?          @relation("HasilPendadaranValidasi", fields: [divalidasiOleh], references: [id])
+  kegiatan       Kegiatan     @relation(fields: [kegiatanId], references: [id])
+  calonAnggota   CalonAnggota @relation(fields: [calonAnggotaId], references: [id])
+  divalidasiUser User?        @relation("HasilPendadaranValidasi", fields: [divalidasiOleh], references: [id])
 
   @@map("hasil_pendadaran")
 }
@@ -581,22 +591,22 @@ model Dokumen {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
-  anggota         Anggota       @relation(fields: [anggotaId], references: [id])
-  qrValidation    QRValidation?
+  anggota      Anggota       @relation(fields: [anggotaId], references: [id])
+  qrValidation QRValidation?
 
   @@map("dokumen")
 }
 
 model QRValidation {
-  id         String    @id @default(uuid())
-  dokumenId  String    @unique @map("dokumen_id")
-  token      String    @unique
-  isValid    Boolean   @default(true) @map("is_valid")
-  scannedAt  DateTime? @map("scanned_at")
-  scanCount  Int       @default(0) @map("scan_count")
-  createdAt  DateTime  @default(now()) @map("created_at")
+  id        String    @id @default(uuid())
+  dokumenId String    @unique @map("dokumen_id")
+  token     String    @unique
+  isValid   Boolean   @default(true) @map("is_valid")
+  scannedAt DateTime? @map("scanned_at")
+  scanCount Int       @default(0) @map("scan_count")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  dokumen    Dokumen   @relation(fields: [dokumenId], references: [id])
+  dokumen Dokumen @relation(fields: [dokumenId], references: [id])
 
   @@map("qr_validation")
 }
@@ -611,7 +621,7 @@ model TandaTangan {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("tanda_tangan")
 }
@@ -630,17 +640,17 @@ model Stempel {
 // ── Org Documents ─────────────────────────────────────────
 
 model DokumenOrganisasi {
-  id           String    @id @default(uuid())
-  kategoriId   String    @map("kategori_id")
-  judul        String
-  deskripsi    String?
-  filePath     String    @map("file_path")
-  uploadedBy   String    @map("uploaded_by")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id         String   @id @default(uuid())
+  kategoriId String   @map("kategori_id")
+  judul      String
+  deskripsi  String?
+  filePath   String   @map("file_path")
+  uploadedBy String   @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  kategori     KategoriDokumen @relation(fields: [kategoriId], references: [id])
-  uploader     User     @relation("DokumenOrgUploader", fields: [uploadedBy], references: [id])
+  kategori KategoriDokumen @relation(fields: [kategoriId], references: [id])
+  uploader User            @relation("DokumenOrgUploader", fields: [uploadedBy], references: [id])
 
   @@map("dokumen_organisasi")
 }
@@ -652,7 +662,7 @@ model KategoriDokumen {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  dokumen           DokumenOrganisasi[]
+  dokumen DokumenOrganisasi[]
 
   @@map("kategori_dokumen")
 }
@@ -660,49 +670,49 @@ model KategoriDokumen {
 // ── Letters ───────────────────────────────────────────────
 
 model SuratMasuk {
-  id              String     @id @default(uuid())
-  nomorSurat      String     @map("nomor_surat")
-  tanggalSurat    DateTime   @map("tanggal_surat")
-  tanggalTerima   DateTime   @map("tanggal_terima")
-  pengirim        String
-  perihal         String
-  fileScanPath    String?    @map("file_scan_path")
-  status          StatusSurat @default(diterima)
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
+  id            String      @id @default(uuid())
+  nomorSurat    String      @map("nomor_surat")
+  tanggalSurat  DateTime    @map("tanggal_surat")
+  tanggalTerima DateTime    @map("tanggal_terima")
+  pengirim      String
+  perihal       String
+  fileScanPath  String?     @map("file_scan_path")
+  status        StatusSurat @default(diterima)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
-  disposisis      Disposisi[]
+  disposisis Disposisi[]
 
   @@map("surat_masuk")
 }
 
 model SuratKeluar {
-  id           String     @id @default(uuid())
-  nomorSurat   String     @map("nomor_surat")
-  tanggalSurat DateTime   @map("tanggal_surat")
+  id           String      @id @default(uuid())
+  nomorSurat   String      @map("nomor_surat")
+  tanggalSurat DateTime    @map("tanggal_surat")
   tujuan       String
   perihal      String
   isi          String?
-  filePath     String?    @map("file_path")
+  filePath     String?     @map("file_path")
   status       StatusSurat @default(draft)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
   @@map("surat_keluar")
 }
 
 model Disposisi {
-  id             String          @id @default(uuid())
-  suratMasukId   String          @map("surat_masuk_id")
-  dariUserId     String          @map("dari_user_id")
-  kepadaUserId   String          @map("kepada_user_id")
-  isi            String
-  status         StatusDisposisi @default(pending)
-  createdAt      DateTime        @default(now()) @map("created_at")
+  id           String          @id @default(uuid())
+  suratMasukId String          @map("surat_masuk_id")
+  dariUserId   String          @map("dari_user_id")
+  kepadaUserId String          @map("kepada_user_id")
+  isi          String
+  status       StatusDisposisi @default(pending)
+  createdAt    DateTime        @default(now()) @map("created_at")
 
-  suratMasuk     SuratMasuk      @relation(fields: [suratMasukId], references: [id])
-  dariUser       User            @relation("DisposisiDari", fields: [dariUserId], references: [id])
-  kepadaUser     User            @relation("DisposisiKepada", fields: [kepadaUserId], references: [id])
+  suratMasuk SuratMasuk @relation(fields: [suratMasukId], references: [id])
+  dariUser   User       @relation("DisposisiDari", fields: [dariUserId], references: [id])
+  kepadaUser User       @relation("DisposisiKepada", fields: [kepadaUserId], references: [id])
 
   @@map("disposisi")
 }
@@ -710,21 +720,22 @@ model Disposisi {
 // ── Dues & Payments ───────────────────────────────────────
 
 model Iuran {
-  id              String      @id @default(uuid())
-  anggotaId       String      @map("anggota_id")
-  periode         String
-  jumlah          Decimal     @db.Decimal(65, 30)
-  tanggalBayar    DateTime?   @map("tanggal_bayar")
-  metodeBayar     MetodeBayar @default(manual) @map("metode_bayar")
-  status          StatusIuran @default(belum_dibayar)
-  buktiBayarPath  String?     @map("bukti_bayar_path")
-  diverifikasiOleh String?    @map("diverifikasi_oleh")
-  diverifikasiAt  DateTime?   @map("diverifikasi_at")
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  id               String      @id @default(uuid())
+  anggotaId        String      @map("anggota_id")
+  periode          String
+  jumlah           Decimal     @db.Decimal(65, 30)
+  tanggalBayar     DateTime?   @map("tanggal_bayar")
+  metodeBayar      MetodeBayar @default(manual) @map("metode_bayar")
+  status           StatusIuran @default(belum_dibayar)
+  buktiBayarPath   String?     @map("bukti_bayar_path")
+  diverifikasiOleh String?     @map("diverifikasi_oleh")
+  diverifikasiAt   DateTime?   @map("diverifikasi_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
 
-  anggota         Anggota     @relation(fields: [anggotaId], references: [id])
-  verifikator     User?       @relation("IuranVerifikator", fields: [diverifikasiOleh], references: [id])
+  anggota     Anggota @relation(fields: [anggotaId], references: [id])
+  verifikator User?   @relation("IuranVerifikator", fields: [diverifikasiOleh], references: [id])
+
   @@index([status])
   @@map("iuran")
 }
@@ -732,16 +743,16 @@ model Iuran {
 // ── Notifications ─────────────────────────────────────────
 
 model Notifikasi {
-  id        String          @id @default(uuid())
-  userId    String          @map("user_id")
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
   judul     String
   isi       String
   tipe      TipeNotifikasi
-  isRead    Boolean         @default(false) @map("is_read")
+  isRead    Boolean        @default(false) @map("is_read")
   data      Json?
-  createdAt DateTime        @default(now()) @map("created_at")
+  createdAt DateTime       @default(now()) @map("created_at")
 
-  user      User            @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("notifikasi")
 }
@@ -755,7 +766,7 @@ model DeviceToken {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("device_tokens")
 }
@@ -765,27 +776,27 @@ model DeviceToken {
 model SuppressedEmail {
   id        String   @id @default(uuid())
   email     String   @unique
-  reason    String   // 'bounced' | 'complained' | 'manual'
+  reason    String // 'bounced' | 'complained' | 'manual'
   eventId   String?  @map("event_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  event     EmailEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  event EmailEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@map("suppressed_emails")
 }
 
 model EmailEvent {
-  id        String   @id @default(uuid())
+  id         String   @id @default(uuid())
   emailLogId String?  @map("email_log_id")
-  event     String   // 'delivered' | 'opened' | 'clicked' | 'bounced' | 'complained'
-  recipient String?
-  timestamp DateTime @default(now())
-  data      Json?    // Raw webhook payload for the event
-  createdAt DateTime @default(now()) @map("created_at")
+  event      String // 'delivered' | 'opened' | 'clicked' | 'bounced' | 'complained'
+  recipient  String?
+  timestamp  DateTime @default(now())
+  data       Json? // Raw webhook payload for the event
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  emailLog        EmailLog?        @relation(fields: [emailLogId], references: [id], onDelete: SetNull)
-  suppressions    SuppressedEmail[]
+  emailLog     EmailLog?         @relation(fields: [emailLogId], references: [id], onDelete: SetNull)
+  suppressions SuppressedEmail[]
 
   @@index([emailLogId])
   @@index([event])
@@ -797,11 +808,11 @@ model EmailLog {
   id        String   @id @default(uuid())
   to        String
   subject   String
-  status    String   // 'sent' | 'failed' | 'skipped'
-  provider  String?  // 'resend' | 'smtp' | 'dev'
+  status    String // 'sent' | 'failed' | 'skipped'
+  provider  String? // 'resend' | 'smtp' | 'dev'
   error     String?
-  content   String?  // HTML/text body for retry capability
-  metadata  Json?    // { module?: string, template?: string, userId?: string }
+  content   String? // HTML/text body for retry capability
+  metadata  Json? // { module?: string, template?: string, userId?: string }
   createdAt DateTime @default(now()) @map("created_at")
 
   events EmailEvent[]
@@ -810,6 +821,24 @@ model EmailLog {
   @@index([status])
   @@index([to])
   @@map("email_logs")
+}
+
+model OAuthAccount {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  provider   String
+  providerId String   @map("provider_id")
+  email      String?
+  name       String
+  photo      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@map("oauth_accounts")
 }
 
 // ── Settings ──────────────────────────────────────────────
@@ -839,18 +868,18 @@ model Periode {
 // ── Gamification ──────────────────────────────────────────
 
 model GamificationProfile {
-  id             String   @id @default(uuid()) @db.Uuid
-  anggotaId      String   @unique @map("anggota_id")
-  points         Int      @default(0)
-  latihanStreak  Int      @default(0) @map("latihan_streak")
-  iuranStreak    Int      @default(0) @map("iuran_streak")
-  lastActivity   DateTime @default(now()) @map("last_activity")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  anggotaId     String   @unique @map("anggota_id")
+  points        Int      @default(0)
+  latihanStreak Int      @default(0) @map("latihan_streak")
+  iuranStreak   Int      @default(0) @map("iuran_streak")
+  lastActivity  DateTime @default(now()) @map("last_activity")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  anggota        Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
-  badges         GamificationBadge[]
-  events         GamificationEvent[]
+  anggota Anggota             @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  badges  GamificationBadge[]
+  events  GamificationEvent[]
 
   @@index([points(sort: Desc)])
   @@index([anggotaId])
@@ -868,7 +897,7 @@ model GamificationBadge {
   category    String
   earnedAt    DateTime @default(now()) @map("earned_at")
 
-  profile     GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([badgeId])
@@ -885,8 +914,8 @@ model GamificationEvent {
   description String
   timestamp   DateTime @default(now())
 
-  profile     GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  anggota     Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  profile GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  anggota Anggota             @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([anggotaId])
@@ -912,14 +941,14 @@ model GamificationReward {
 }
 
 model GamificationRedemption {
-  id        String   @id @default(uuid()) @db.Uuid
-  rewardId  String   @map("reward_id") @db.Uuid
-  anggotaId String   @map("anggota_id")
-  pointsSpent Int    @map("points_spent")
-  status    String   @default("pending")
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  rewardId    String   @map("reward_id") @db.Uuid
+  anggotaId   String   @map("anggota_id")
+  pointsSpent Int      @map("points_spent")
+  status      String   @default("pending")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   reward  GamificationReward @relation(fields: [rewardId], references: [id])
   anggota Anggota            @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
@@ -927,4 +956,257 @@ model GamificationRedemption {
   @@index([rewardId])
   @@index([anggotaId])
   @@map("gamification_redemptions")
+}
+
+// ── Chat & Messaging ──────────────────────────────────────
+
+model ChatRoom {
+  id        String   @id @default(uuid())
+  name      String?
+  type      String   @default("direct")
+  isGroup   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members  ChatMember[]
+  messages ChatMessage[]
+
+  @@index([type])
+  @@map("chat_rooms")
+}
+
+model ChatMember {
+  id         String    @id @default(uuid())
+  roomId     String    @map("room_id")
+  anggotaId  String    @map("anggota_id")
+  role       String    @default("member")
+  joinedAt   DateTime  @default(now()) @map("joined_at")
+  lastReadAt DateTime? @map("last_read_at")
+
+  room    ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  anggota Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, anggotaId])
+  @@index([roomId])
+  @@index([anggotaId])
+  @@map("chat_members")
+}
+
+model ChatMessage {
+  id        String    @id @default(uuid())
+  roomId    String    @map("room_id")
+  senderId  String    @map("sender_id")
+  content   String    @db.Text
+  type      String    @default("text")
+  status    String    @default("sent")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender Anggota  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([createdAt(sort: Desc)])
+  @@map("chat_messages")
+}
+
+// ── QR Code & Check-ins ───────────────────────────────────
+
+model QrCode {
+  id        String   @id @default(uuid())
+  anggotaId String   @map("anggota_id")
+  token     String   @unique
+  type      String   @default("member")
+  isActive  Boolean  @default(true) @map("is_active")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  anggota Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  checkIns  CheckIn[]
+
+  @@index([token])
+  @@index([anggotaId])
+  @@map("qr_codes")
+}
+
+model CheckIn {
+  id        String   @id @default(uuid())
+  qrCodeId  String   @map("qr_code_id")
+  anggotaId String   @map("anggota_id")
+  latihanId String?  @map("latihan_id")
+  kegiatanId String? @map("kegiatan_id")
+  checkedAt DateTime @default(now()) @map("checked_at")
+  source    String   @default("qr_scan")
+
+  qrCode   QrCode    @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  anggota  Anggota   @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  latihan  Latihan?  @relation(fields: [latihanId], references: [id])
+  kegiatan Kegiatan? @relation(fields: [kegiatanId], references: [id])
+
+  @@index([anggotaId])
+  @@index([checkedAt(sort: Desc)])
+  @@map("check_ins")
+}
+
+// ── Approval Workflow ─────────────────────────────────────
+
+model ApprovalLevel {
+  id       String  @id @default(uuid())
+  name     String
+  roleName String
+  order    Int
+  isActive Boolean @default(true) @map("is_active")
+
+  requests ApprovalRequestLevel[]
+
+  @@index([order])
+  @@map("approval_levels")
+}
+
+model ApprovalRequest {
+  id          String   @id @default(uuid())
+  requestType String
+  itemId      String
+  submittedBy String   @map("submitted_by")
+  status      String   @default("pending")
+  createdAt   DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  levels ApprovalRequestLevel[]
+
+  @@index([requestType])
+  @@index([status])
+  @@map("approval_requests")
+}
+
+model ApprovalRequestLevel {
+  requestId      String        @map("request_id")
+  approvalLevelId String       @map("approval_level_id")
+  status         String        @default("pending")
+  decidedBy      String?       @map("decided_by")
+  decidedAt      DateTime?     @map("decided_at")
+  note           String?
+
+  request       ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  approvalLevel ApprovalLevel   @relation(fields: [approvalLevelId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, approvalLevelId])
+  @@map("approval_request_levels")
+}
+
+// ── Recurring Iuran ───────────────────────────────────────
+
+model IuranRecurring {
+  id          String   @id @default(uuid())
+  anggotaId   String   @map("anggota_id")
+  amount      Decimal  @db.Decimal(65, 30)
+  frequency   String   @default("monthly")
+  nextDueDate DateTime @map("next_due_date")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  anggota Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+
+  @@index([anggotaId])
+  @@map("iuran_recurring")
+}
+
+model IuranReminder {
+  id        String   @id @default(uuid())
+  iuranId   String   @map("iuran_id")
+  sentAt    DateTime @default(now()) @map("sent_at")
+  channel   String   @default("email")
+  status    String   @default("sent")
+
+  @@index([iuranId])
+  @@map("iuran_reminders")
+}
+
+// ── Member Referral ──────────────────────────────────────
+
+model MemberReferral {
+  id           String   @id @default(uuid())
+  referrerId   String   @map("referrer_id")
+  referredId   String   @unique @map("referred_id")
+  status       String   @default("pending")
+  rewardPoints Int      @default(100)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  referrer Anggota @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred Anggota @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@map("member_referrals")
+}
+
+// ── Document Versioning ──────────────────────────────────
+
+model DokumenVersion {
+  id         String   @id @default(uuid())
+  dokumenId  String   @map("dokumen_id")
+  version    Int      @default(1)
+  filePath   String   @map("file_path")
+  changes    String?
+  createdBy  String   @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([dokumenId])
+  @@map("dokumen_versions")
+}
+
+// ── Bulk Notifications ───────────────────────────────────
+
+model BulkNotification {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  targetType  String   @default("all")
+  targetIds   Json?    @map("target_ids")
+  scheduledAt DateTime? @map("scheduled_at")
+  sentAt      DateTime? @map("sent_at")
+  status      String   @default("draft")
+  totalSent   Int      @default(0) @map("total_sent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@map("bulk_notifications")
+}
+
+// ── Member Transfer ──────────────────────────────────────
+
+model TransferRequest {
+  id           String   @id @default(uuid())
+  anggotaId    String   @map("anggota_id")
+  fromRantingId String  @map("from_ranting_id")
+  toRantingId  String   @map("to_ranting_id")
+  reason       String?
+  status       String   @default("pending")
+  approvedBy   String?  @map("approved_by")
+  approvedAt   DateTime? @map("approved_at")
+  rejectedBy   String?  @map("rejected_by")
+  rejectedAt   DateTime? @map("rejected_at")
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("transfer_requests")
+}
+
+// ── Predictive Analytics ─────────────────────────────────
+
+model RiskFlag {
+  id        String   @id @default(uuid())
+  anggotaId String   @map("anggota_id")
+  riskType  String
+  score     Decimal  @db.Decimal(5, 4)
+  factors   Json
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([anggotaId])
+  @@map("risk_flags")
 }

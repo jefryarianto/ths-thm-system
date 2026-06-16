@@ -8,7 +8,12 @@ interface StampOverlayProps {
   position?: 'top-right' | 'bottom-left' | 'center';
 }
 
-const StampOverlay: React.FC<StampOverlayProps> = ({ imageUrl, opacity = 0.35, size = 150, position = 'top-right' }) => {
+const StampOverlay: React.FC<StampOverlayProps> = ({
+  imageUrl,
+  opacity = 0.35,
+  size = 150,
+  position = 'top-right',
+}) => {
   const positionStyles: Record<string, object> = {
     'top-right': { top: 40, right: 40 },
     'bottom-left': { bottom: 40, left: 40 },

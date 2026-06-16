@@ -1,30 +1,30 @@
-import React from "react";
+import React from 'react';
 
 const member = {
-  nama: "APOLONIUS PEKA TAPUN",
-  nomorAnggota: "LRT-0115-017-2023",
-  ranting: "Kristus Raja Semesta Alam - Watobuku",
-  wilayah: "Wilayah Larantuka",
-  distrik: "Keuskupan Larantuka",
-  tanggalLahir: "Waijarang, 20 Juli 2007",
-  dadar: "Waikomo, 2019",
-  status: "Aktif",
-  validUntil: "13 Juli 2030",
+  nama: 'APOLONIUS PEKA TAPUN',
+  nomorAnggota: 'LRT-0115-017-2023',
+  ranting: 'Kristus Raja Semesta Alam - Watobuku',
+  wilayah: 'Wilayah Larantuka',
+  distrik: 'Keuskupan Larantuka',
+  tanggalLahir: 'Waijarang, 20 Juli 2007',
+  dadar: 'Waikomo, 2019',
+  status: 'Aktif',
+  validUntil: '13 Juli 2030',
 };
 
 const cardConfig = {
-  organizationName: "TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA",
+  organizationName: 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA',
   districtHeader: `DISTRIK ${member.distrik.toUpperCase()}`,
-  signerName: "YOSEPH PEHAN BETAN",
-  signerTitle: "Koordinator Distrik",
+  signerName: 'YOSEPH PEHAN BETAN',
+  signerTitle: 'Koordinator Distrik',
 };
 
 const levelVisual = {
-  name: "Tamtama",
-  label: "Balok Biru II",
+  name: 'Tamtama',
+  label: 'Balok Biru II',
   stripCount: 2,
-  stripColorClass: "bg-blue-700",
-  stripBorderClass: "border-blue-900",
+  stripColorClass: 'bg-blue-700',
+  stripBorderClass: 'border-blue-900',
 };
 
 export default function MemberCardPreview() {
@@ -32,7 +32,9 @@ export default function MemberCardPreview() {
     <div className="min-h-screen bg-slate-100 p-8 flex flex-col items-center gap-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-800">Preview Desain Kartu Anggota THS-THM</h1>
-        <p className="text-sm text-slate-500 mt-1">Desain modern CR80 landscape, sisi depan dan belakang</p>
+        <p className="text-sm text-slate-500 mt-1">
+          Desain modern CR80 landscape, sisi depan dan belakang
+        </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
@@ -107,7 +109,9 @@ function CardFront() {
 
       <div className="absolute top-[92px] left-0 right-0 text-center">
         <div className="inline-block px-8 py-2 rounded-full bg-white/90 border border-yellow-500 shadow-sm">
-          <span className="text-[24px] font-black tracking-[0.18em] text-blue-900">KARTU TANDA ANGGOTA</span>
+          <span className="text-[24px] font-black tracking-[0.18em] text-blue-900">
+            KARTU TANDA ANGGOTA
+          </span>
         </div>
       </div>
 
@@ -133,10 +137,16 @@ function CardFront() {
 
       <div className="absolute right-12 bottom-9 text-center text-white">
         <div className="relative h-20 w-48">
-          <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
-          <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
+          <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-900/80">
+            ttd
+          </div>
+          <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">
+            STEMPEL
+          </div>
         </div>
-        <div className="text-[16px] font-black border-t border-white/60 pt-1">{cardConfig.signerName}</div>
+        <div className="text-[16px] font-black border-t border-white/60 pt-1">
+          {cardConfig.signerName}
+        </div>
         <div className="text-[13px] font-semibold opacity-95">{cardConfig.signerTitle}</div>
       </div>
     </CardShell>
@@ -154,7 +164,10 @@ function CardBack() {
       <div className="absolute left-12 top-[145px] w-[210px] h-[210px] bg-white rounded-2xl border-4 border-blue-900 shadow-lg p-4">
         <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1">
           {Array.from({ length: 25 }).map((_, i) => (
-            <div key={i} className={`${i % 3 === 0 || i % 7 === 0 ? "bg-slate-900" : "bg-slate-200"} rounded-sm`} />
+            <div
+              key={i}
+              className={`${i % 3 === 0 || i % 7 === 0 ? 'bg-slate-900' : 'bg-slate-200'} rounded-sm`}
+            />
           ))}
         </div>
       </div>
@@ -162,7 +175,8 @@ function CardBack() {
       <div className="absolute left-[300px] top-[145px] right-12 text-slate-800">
         <div className="bg-white/85 rounded-2xl border border-blue-200 p-6 shadow-sm">
           <p className="text-[18px] leading-relaxed text-slate-700 mb-4">
-            Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.
+            Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan
+            anggota.
           </p>
           <BackRow label="TTL" value={member.tanggalLahir} />
           <BackRow label="DADAR" value={member.dadar} />
@@ -173,7 +187,8 @@ function CardBack() {
 
       <div className="absolute left-12 right-12 bottom-8 text-white flex items-end justify-between gap-6">
         <div className="max-w-[610px] text-[15px] leading-relaxed opacity-95">
-          Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM Distrik Keuskupan Larantuka.
+          Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM Distrik Keuskupan
+          Larantuka.
         </div>
         <div className="text-right">
           <div className="text-[13px] opacity-80">URL Verifikasi</div>
@@ -188,7 +203,11 @@ function InfoRow({ label, value, strong = false }) {
   return (
     <div className="grid grid-cols-[120px_1fr] gap-2 mt-3 items-start">
       <div className="text-[18px] font-bold text-blue-950">{label}</div>
-      <div className={`${strong ? "text-[25px] font-black text-blue-950" : "text-[18px] font-semibold text-slate-800"}`}>: {value}</div>
+      <div
+        className={`${strong ? 'text-[25px] font-black text-blue-950' : 'text-[18px] font-semibold text-slate-800'}`}
+      >
+        : {value}
+      </div>
     </div>
   );
 }

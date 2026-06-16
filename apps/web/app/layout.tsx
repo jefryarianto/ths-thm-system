@@ -8,11 +8,7 @@ export const metadata: Metadata = {
   description: 'Sistem Manajemen THS-THM (Taman Harapan Siswa / Taman Harapan Murid)',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="antialiased">

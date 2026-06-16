@@ -3,9 +3,8 @@
 import { useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
-import {
-  Plus, MoreVertical, UserCheck, Users,
-} from 'lucide-react';
+import { useFilters } from '@/lib/hooks/use-filters';
+import { Plus, MoreVertical, UserCheck, Users } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -20,19 +19,21 @@ interface Examiner {
 }
 
 export default function ExaminersPage() {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
+    useFilters();
 
-  const { data: examiners, meta, loading, refetch } = usePaginatedList<Examiner>(
-    useCallback(
-      () => {
-        const params: Record<string, unknown> = { page, limit: 10 };
-        if (search) params.search = search;
-        return apiClient.get('/examiners', { params }).then(r => r.data);
-      },
-      [page, search]
-    ),
-    [page, search]
+  const {
+    data: examiners,
+    meta,
+    loading,
+    refetch,
+  } = usePaginatedList<Examiner>(
+    useCallback(() => {
+      const params = getApiParams({ limit: 10 });
+      if (search) params.search = search;
+      return apiClient.get('/examiners', { params }).then((r) => r.data);
+    }, [page, search]),
+    [page, search],
   );
 
   const handlePageChange = (p: number) => {
@@ -51,8 +52,8 @@ export default function ExaminersPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
-        onReset={() => { setSearch(''); setPage(1); }}
+        onSearchChange={setSearch}
+        onReset={resetFilters}
         placeholder="Cari penguji..."
       />
 
@@ -67,7 +68,7 @@ export default function ExaminersPage() {
         loading={loading}
         empty={{
           icon: Users,
-          ...buildEmptyMessage('penguji', !!search, () => { setSearch(''); setPage(1); }),
+          ...buildEmptyMessage('penguji', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -75,14 +76,19 @@ export default function ExaminersPage() {
         onPageChange={handlePageChange}
         colSpan={4}
         renderRow={(ex) => (
-          <tr key={ex.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={ex.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
               <span className="inline-flex items-center gap-2 font-medium text-gray-900 dark:text-white">
                 <UserCheck size={16} className="text-green-500" />
                 {ex.namaLengkap}
               </span>
             </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{ex.email}</td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+              {ex.email}
+            </td>
             <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
               {new Date(ex.createdAt).toLocaleDateString('id-ID')}
             </td>

@@ -31,7 +31,11 @@ export function useCandidates(search: string, filterStatus: string) {
     () =>
       apiClient
         .get('/candidates', {
-          params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined },
+          params: {
+            limit: 50,
+            search: search.trim() || undefined,
+            status: filterStatus || undefined,
+          },
         })
         .then((r) => (unwrap(r) ?? []) as Candidate[]),
     [search, filterStatus],

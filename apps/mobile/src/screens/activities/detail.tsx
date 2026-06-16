@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -39,8 +46,13 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }
 };
 
 const TIPE_ICONS: Record<string, string> = {
-  latihan: 'fitness', pendadaran: 'school', ujian_tingkat: 'trending-up',
-  rapat: 'people', retret: 'sunny', pelantikan: 'ribbon', lainnya: 'ellipsis-horizontal',
+  latihan: 'fitness',
+  pendadaran: 'school',
+  ujian_tingkat: 'trending-up',
+  rapat: 'people',
+  retret: 'sunny',
+  pelantikan: 'ribbon',
+  lainnya: 'ellipsis-horizontal',
 };
 
 export default function ActivityDetailScreen() {
@@ -56,33 +68,61 @@ export default function ActivityDetailScreen() {
       try {
         const [actRes, partRes, docRes] = await Promise.all([
           apiClient.get(`/activities/${id}`),
-          apiClient.get(`/activities/${id}/presence`).catch(() => ({ data: { data: { data: [] as Participant[] } } })),
-          apiClient.get(`/activities/${id}/documents`).catch(() => ({ data: { data: { data: [] as ActivityDocument[] } } })),
+          apiClient
+            .get(`/activities/${id}/presence`)
+            .catch(() => ({ data: { data: { data: [] as Participant[] } } })),
+          apiClient
+            .get(`/activities/${id}/documents`)
+            .catch(() => ({ data: { data: { data: [] as ActivityDocument[] } } })),
         ]);
         setActivity(unwrap(actRes));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setParticipants((partRes as any)?.data?.data ?? []);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setDocuments((docRes as any)?.data?.data ?? []);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
     })();
   }, [id]);
 
   if (loading) return <LoadingView message="Memuat detail kegiatan..." />;
-  if (!activity) return <View style={styles.center}><Text style={styles.errorText}>Kegiatan tidak ditemukan</Text></View>;
+  if (!activity)
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Kegiatan tidak ditemukan</Text>
+      </View>
+    );
 
   const icon = TIPE_ICONS[activity.tipe] || 'ellipsis-horizontal';
-  const statusStyle = STATUS_STYLES[activity.status] || { label: activity.status, bg: '#f3f4f6', color: '#6b7280' };
+  const statusStyle = STATUS_STYLES[activity.status] || {
+    label: activity.status,
+    bg: '#f3f4f6',
+    color: '#6b7280',
+  };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   const tabs = [
     { key: 'info' as const, label: 'Info', icon: 'information-circle' as const },
-    { key: 'participants' as const, label: `Peserta (${participants.length})`, icon: 'people' as const },
-    { key: 'documents' as const, label: `Dokumen (${documents.length})`, icon: 'document-text' as const },
+    {
+      key: 'participants' as const,
+      label: `Peserta (${participants.length})`,
+      icon: 'people' as const,
+    },
+    {
+      key: 'documents' as const,
+      label: `Dokumen (${documents.length})`,
+      icon: 'document-text' as const,
+    },
   ];
 
   return (
@@ -92,9 +132,13 @@ export default function ActivityDetailScreen() {
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{activity.nama}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {activity.nama}
+          </Text>
           <View style={[styles.headerBadge, { backgroundColor: statusStyle.bg }]}>
-            <Text style={[styles.headerBadgeText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+            <Text style={[styles.headerBadgeText, { color: statusStyle.color }]}>
+              {statusStyle.label}
+            </Text>
           </View>
         </View>
       </View>
@@ -107,8 +151,14 @@ export default function ActivityDetailScreen() {
             style={[styles.tab, activeTab === tab.key && styles.tabActive]}
             onPress={() => setActiveTab(tab.key)}
           >
-            <Ionicons name={tab.icon} size={14} color={activeTab === tab.key ? '#fff' : '#6b7280'} />
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
+            <Ionicons
+              name={tab.icon}
+              size={14}
+              color={activeTab === tab.key ? '#fff' : '#6b7280'}
+            />
+            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+              {tab.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -175,7 +225,9 @@ export default function ActivityDetailScreen() {
                   </Text>
                 </View>
                 <View style={styles.participantInfo}>
-                  <Text style={styles.participantName}>{p.namaLengkap || p.anggotaId || 'Unknown'}</Text>
+                  <Text style={styles.participantName}>
+                    {p.namaLengkap || p.anggotaId || 'Unknown'}
+                  </Text>
                 </View>
                 {p.hadir !== undefined && (
                   <Ionicons
@@ -207,7 +259,9 @@ export default function ActivityDetailScreen() {
                   />
                 </View>
                 <View style={styles.docInfo}>
-                  <Text style={styles.docName} numberOfLines={1}>{doc.nama}</Text>
+                  <Text style={styles.docName} numberOfLines={1}>
+                    {doc.nama}
+                  </Text>
                   {doc.tipe && <Text style={styles.docType}>{doc.tipe}</Text>}
                 </View>
                 <Ionicons name="download-outline" size={20} color="#6b7280" />
@@ -228,39 +282,101 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  header: {
+    backgroundColor: '#2563eb',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   backBtn: { padding: 4 },
   headerContent: { flex: 1 },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  headerBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginTop: 6 },
+  headerBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 6,
+  },
   headerBadgeText: { fontSize: 11, fontWeight: '600' },
 
-  tabContainer: { flexDirection: 'row', backgroundColor: '#e5e7eb', margin: 16, marginBottom: 0, borderRadius: 10, padding: 3 },
-  tab: { flex: 1, flexDirection: 'row', paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    padding: 3,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
   tabActive: { backgroundColor: '#2563eb' },
   tabText: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
   tabTextActive: { color: '#fff' },
 
   section: { padding: 16 },
-  infoCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#e5e7eb' },
-  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
   infoContent: { flex: 1 },
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
   subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
 
   participantCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12,
-    padding: 14, marginBottom: 6, borderWidth: 1, borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
-  participantAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  participantAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
   participantAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
   participantInfo: { flex: 1 },
   participantName: { fontSize: 14, fontWeight: '500', color: '#111827' },
 
   docCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12,
-    padding: 14, marginBottom: 6, borderWidth: 1, borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   docIcon: { marginRight: 12 },
   docInfo: { flex: 1 },

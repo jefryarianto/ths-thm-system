@@ -3,9 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient, { unwrap } from '@/lib/api-client';
+import DataTable from '@/components/ui/data-table';
 import {
-  Gift, Zap, AlertCircle, CheckCircle, Clock, XCircle,
-  ShoppingBag, Loader2,
+  Gift,
+  Zap,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  XCircle,
+  ShoppingBag,
+  Loader2,
 } from 'lucide-react';
 
 interface Reward {
@@ -60,9 +67,7 @@ export default function RewardsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [rewardsRes] = await Promise.all([
-        apiClient.get('/gamification/rewards'),
-      ]);
+      const [rewardsRes] = await Promise.all([apiClient.get('/gamification/rewards')]);
       setRewards(unwrap(rewardsRes));
     } catch (err) {
       console.error('Failed to fetch rewards:', err);
@@ -142,14 +147,18 @@ export default function RewardsPage() {
             <div className="text-5xl text-center mb-4">{reward.icon}</div>
             <h3 className="text-base font-semibold text-gray-900 text-center">{reward.name}</h3>
             {reward.description && (
-              <p className="text-xs text-gray-500 text-center mt-1 line-clamp-2">{reward.description}</p>
+              <p className="text-xs text-gray-500 text-center mt-1 line-clamp-2">
+                {reward.description}
+              </p>
             )}
             <div className="mt-4 flex items-center justify-between">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
                 <Zap size={12} />
                 {reward.pointCost.toLocaleString('id-ID')} poin
               </span>
-              <span className={`text-xs font-medium ${reward.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+              <span
+                className={`text-xs font-medium ${reward.stock > 0 ? 'text-green-600' : 'text-red-500'}`}
+              >
                 {reward.stock > 0 ? `Stok: ${reward.stock}` : 'Habis'}
               </span>
             </div>
@@ -178,47 +187,60 @@ export default function RewardsPage() {
       {redemptions.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Riwayat Redeem</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Reward</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Poin</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {redemptions.map((r) => {
+          <DataTable
+            columns={[
+              {
+                key: 'reward',
+                label: 'Reward',
+                render: (r: Redemption) => (
+                  <span className="text-sm font-medium text-gray-900">
+                    {r.rewardIcon} {r.rewardName}
+                  </span>
+                ),
+              },
+              {
+                key: 'pointsSpent',
+                label: 'Poin',
+                render: (r: Redemption) => (
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-yellow-700">
+                    <Zap size={12} /> {r.pointsSpent.toLocaleString('id-ID')}
+                  </span>
+                ),
+              },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (r: Redemption) => {
                   const statusStyle = STATUS_STYLES[r.status] || STATUS_STYLES.pending;
                   const StatusIcon = statusStyle.icon;
                   return (
-                    <tr key={r.id} className="hover:bg-gray-50 transition">
-                      <td className="px-3 py-3">
-                        <span className="text-sm font-medium text-gray-900">
-                          {r.rewardIcon} {r.rewardName}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-yellow-700">
-                          <Zap size={12} /> {r.pointsSpent.toLocaleString('id-ID')}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                          <StatusIcon size={12} />
-                          {r.status}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-sm text-gray-500">
-                        {new Date(r.createdAt).toLocaleDateString('id-ID')}
-                      </td>
-                    </tr>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}
+                    >
+                      <StatusIcon size={12} />
+                      {r.status}
+                    </span>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+              {
+                key: 'createdAt',
+                label: 'Tanggal',
+                render: (r: Redemption) => (
+                  <span className="text-sm text-gray-500">
+                    {new Date(r.createdAt).toLocaleDateString('id-ID')}
+                  </span>
+                ),
+              },
+            ]}
+            data={redemptions}
+            loading={false}
+            empty={{ icon: Gift, message: 'Belum ada riwayat redeem' }}
+            page={1}
+            totalPages={1}
+            total={redemptions.length}
+            onPageChange={() => {}}
+          />
         </div>
       )}
     </div>

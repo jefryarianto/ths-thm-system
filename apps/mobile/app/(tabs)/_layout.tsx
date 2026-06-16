@@ -15,7 +15,18 @@ function Badge({ count }: { count: number }) {
 }
 
 const badgeStyles = StyleSheet.create({
-  badge: { position: 'absolute', top: -4, right: -8, backgroundColor: '#ef4444', borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
   text: { color: '#fff', fontSize: 10, fontWeight: '700' },
 });
 
@@ -27,7 +38,9 @@ export default function TabLayout() {
       try {
         const { data } = await apiClient.get('/notifications/count');
         setUnreadCount(data.data?.count || 0);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     fetchCount();
 
@@ -46,7 +59,9 @@ export default function TabLayout() {
           socket.off('notification:new');
           socket.off('notification:count');
         };
-      } catch { /* fallback to polling */ }
+      } catch {
+        /* fallback to polling */
+      }
     })();
 
     // Fallback: poll every 30s
@@ -68,19 +83,33 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="home"
-        options={{ tabBarLabel: 'Beranda', tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Beranda',
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="digital-card"
-        options={{ tabBarLabel: 'Kartu', tabBarIcon: ({ color, size }) => <Ionicons name="card" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Kartu',
+          tabBarIcon: ({ color, size }) => <Ionicons name="card" size={size} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="documents"
-        options={{ tabBarLabel: 'Dokumen', tabBarIcon: ({ color, size }) => <Ionicons name="document-text" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Dokumen',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="document-text" size={size} color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="dues"
-        options={{ tabBarLabel: 'Iuran', tabBarIcon: ({ color, size }) => <Ionicons name="cash" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Iuran',
+          tabBarIcon: ({ color, size }) => <Ionicons name="cash" size={size} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="notifications"
@@ -96,15 +125,26 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="qr-scan"
-        options={{ tabBarLabel: 'Scan QR', tabBarIcon: ({ color, size }) => <Ionicons name="qr-code" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Scan QR',
+          tabBarIcon: ({ color, size }) => <Ionicons name="qr-code" size={size} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="gamification"
-        options={{ tabBarLabel: 'Poin', tabBarIcon: ({ color, size }) => <Ionicons name="trophy" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Poin',
+          tabBarIcon: ({ color, size }) => <Ionicons name="trophy" size={size} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="settings"
-        options={{ tabBarLabel: 'Profil', tabBarIcon: ({ color, size }) => <Ionicons name="person-circle" size={size} color={color} /> }}
+        options={{
+          tabBarLabel: 'Profil',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-circle" size={size} color={color} />
+          ),
+        }}
       />
     </Tabs>
   );

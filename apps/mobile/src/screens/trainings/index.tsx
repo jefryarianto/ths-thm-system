@@ -1,19 +1,11 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
-import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 
 interface Training {
   id: string;
@@ -38,22 +30,36 @@ export default function TrainingsScreen() {
   const [search, setSearch] = useState('');
   const [filterMateri, setFilterMateri] = useState('');
 
-  const { data: trainings, loading, refetch } = usePaginatedList<Training>(
-    () => {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (search.trim()) params.search = search.trim();
-      if (filterMateri) params.jenisMateri = filterMateri;
-      return apiClient.get('/trainings', { params }).then(r => r.data);
-    },
-    [search, filterMateri]
-  );
+  const {
+    data: trainings,
+    loading,
+    refetch,
+  } = usePaginatedList<Training>(() => {
+    const params: Record<string, unknown> = { limit: 50 };
+    if (search.trim()) params.search = search.trim();
+    if (filterMateri) params.jenisMateri = filterMateri;
+    return apiClient.get('/trainings', { params }).then((r) => r.data);
+  }, [search, filterMateri]);
 
   const { refreshing, onRefresh } = useRefresh(refetch);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
@@ -66,24 +72,15 @@ export default function TrainingsScreen() {
         <Text style={styles.headerSub}>{trainings.length} sesi latihan</Text>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color="#9ca3af" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Cari latihan..."
-          placeholderTextColor="#9ca3af"
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color="#9ca3af" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <SearchBar value={search} onChangeText={setSearch} placeholder="Cari latihan..." />
 
-      <FilterChips options={MATERI_FILTERS} selected={filterMateri} onChange={(v) => { setFilterMateri(v); }} />
+      <FilterChips
+        options={MATERI_FILTERS}
+        selected={filterMateri}
+        onChange={(v) => {
+          setFilterMateri(v);
+        }}
+      />
 
       <FlatList
         data={trainings}
@@ -145,19 +142,6 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: 16,
-    marginBottom: 0,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,17 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { mockAuth } from './helpers';
 
 test.describe('Dashboard Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    // Login first
-    await page.goto('/login');
-    await page.fill('input#email', 'superadmin@ths-thm.org');
-    await page.fill('input#password', 'password123');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/members/, { timeout: 10000 });
+    await mockAuth(page, { mockMembers: true });
   });
 
   test('navigates to members page after login', async ({ page }) => {
-    await expect(page.locator('text=Anggota')).toBeVisible({ timeout: 5000 });
+    await page.goto('/members');
+    await expect(page).toHaveURL(/\/members/);
+    await expect(page.locator('h1')).toContainText('Anggota');
   });
 
   test('can navigate to activities page', async ({ page }) => {

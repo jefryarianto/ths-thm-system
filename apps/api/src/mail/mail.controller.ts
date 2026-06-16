@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Delete, Query, Body, Param, Req, ParseIntPipe, DefaultValuePipe, Logger, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Query,
+  Body,
+  Param,
+  Req,
+  ParseIntPipe,
+  DefaultValuePipe,
+  Logger,
+  Headers,
+} from '@nestjs/common';
 import { Request } from 'express';
 import * as crypto from 'crypto';
 import { ApiTags, ApiBearerAuth, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
@@ -84,7 +97,11 @@ export class MailController {
     };
   }
 
-  private async sendRetryNotification(result: { retried: number; succeeded: number; failed: number }): Promise<void> {
+  private async sendRetryNotification(result: {
+    retried: number;
+    succeeded: number;
+    failed: number;
+  }): Promise<void> {
     try {
       const superadmins = await this.prisma.user.findMany({
         where: { role: 'superadmin', isActive: true },
@@ -100,7 +117,12 @@ export class MailController {
           judul: `${statusIcon} Retry Email Selesai`,
           isi: `${result.retried} email gagal dicoba kirim ulang — ${result.succeeded} berhasil, ${result.failed} gagal. (${statusText})`,
           tipe: 'umum' as never,
-          data: { type: 'email_retry', retried: result.retried, succeeded: result.succeeded, failed: result.failed },
+          data: {
+            type: 'email_retry',
+            retried: result.retried,
+            succeeded: result.succeeded,
+            failed: result.failed,
+          },
         });
       }
     } catch (error) {
@@ -231,9 +253,10 @@ export class MailController {
           : Buffer.from(secret, 'utf-8');
 
         // Build signed content: svix-id + '.' + svix-timestamp + '.' + rawBody
-        const rawBody = rawBodyBuffer instanceof Buffer
-          ? rawBodyBuffer.toString('utf-8')
-          : JSON.stringify(payload);
+        const rawBody =
+          rawBodyBuffer instanceof Buffer
+            ? rawBodyBuffer.toString('utf-8')
+            : JSON.stringify(payload);
         const signedContent = `${svixId}.${svixTimestamp}.${rawBody}`;
 
         // Compute expected HMAC SHA-256 signature
@@ -329,7 +352,9 @@ export class MailController {
         });
         this.logger.log(`Auto-suppressed ${createdEvent.recipient} (${mappedEvent})`);
       } catch (err) {
-        this.logger.error(`Failed to auto-suppress ${createdEvent.recipient}: ${(err as Error).message}`);
+        this.logger.error(
+          `Failed to auto-suppress ${createdEvent.recipient}: ${(err as Error).message}`,
+        );
       }
     }
 
@@ -431,7 +456,8 @@ export class MailController {
           opened: totalSent > 0 ? Math.round(((eventMap.opened || 0) / totalSent) * 100) : 0,
           clicked: totalSent > 0 ? Math.round(((eventMap.clicked || 0) / totalSent) * 100) : 0,
           bounced: totalSent > 0 ? Math.round(((eventMap.bounced || 0) / totalSent) * 100) : 0,
-          complained: totalSent > 0 ? Math.round(((eventMap.complained || 0) / totalSent) * 100) : 0,
+          complained:
+            totalSent > 0 ? Math.round(((eventMap.complained || 0) / totalSent) * 100) : 0,
         },
         dailyTrend,
       },
@@ -567,7 +593,10 @@ export class MailController {
 
     // Get status breakdown per recent day (7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const recentWhere: Record<string, unknown> = { createdAt: { gte: sevenDaysAgo }, ...moduleFilter };
+    const recentWhere: Record<string, unknown> = {
+      createdAt: { gte: sevenDaysAgo },
+      ...moduleFilter,
+    };
     if (Object.keys(dateFilter).length > 0) {
       const dateCreatedAt = dateFilter.createdAt as Record<string, Date>;
       const existingCreatedAt = recentWhere.createdAt as Record<string, Date>;

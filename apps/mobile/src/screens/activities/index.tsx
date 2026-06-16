@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useActivities, STATUS_STYLES, TIPE_ICONS, FILTER_OPTIONS } from '../../hooks/use-activities';
+import {
+  useActivities,
+  STATUS_STYLES,
+  TIPE_ICONS,
+  FILTER_OPTIONS,
+} from '../../hooks/use-activities';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -35,9 +40,26 @@ export default function ActivitiesScreen() {
         }
         renderItem={({ item }) => {
           const icon = TIPE_ICONS[item.tipe] || 'ellipsis-horizontal';
-          const statusStyle = STATUS_STYLES[item.status] || { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
+          const statusStyle = STATUS_STYLES[item.status] || {
+            label: item.status,
+            bg: '#f3f4f6',
+            color: '#6b7280',
+          };
           const d = new Date(item.tanggalMulai);
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+          const months = [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'Mei',
+            'Jun',
+            'Jul',
+            'Agu',
+            'Sep',
+            'Okt',
+            'Nov',
+            'Des',
+          ];
           return (
             <TouchableOpacity
               style={styles.card}
@@ -52,7 +74,9 @@ export default function ActivitiesScreen() {
                 <Text style={styles.dateMonth}>{months[d.getMonth()]}</Text>
               </View>
               <View style={styles.cardBody}>
-                <Text style={styles.title} numberOfLines={1}>{item.nama}</Text>
+                <Text style={styles.title} numberOfLines={1}>
+                  {item.nama}
+                </Text>
                 <View style={styles.metaRow}>
                   <Ionicons name={icon as any} size={13} color="#6b7280" />
                   <Text style={styles.metaText}>{item.tipe}</Text>
@@ -65,7 +89,9 @@ export default function ActivitiesScreen() {
                 </View>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-                <Text style={[styles.statusText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+                <Text style={[styles.statusText, { color: statusStyle.color }]}>
+                  {statusStyle.label}
+                </Text>
               </View>
             </TouchableOpacity>
           );
@@ -82,10 +108,18 @@ const styles = StyleSheet.create({
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
 
   card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 14, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: '#f3f4f6',
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   dateBox: { width: 44, alignItems: 'center', marginRight: 12 },
   dateDay: { fontSize: 20, fontWeight: '700', color: '#2563eb' },

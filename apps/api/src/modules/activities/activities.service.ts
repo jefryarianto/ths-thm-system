@@ -2,10 +2,19 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { activityInvitationEmail } from '../../mail/email-templates';
-import { CreateActivityDto, UpdateActivityDto, ActivityFilterDto, AddParticipantDto, RecordPresenceDto, UploadActivityDocumentDto } from './dto/activity.dto';
+import {
+  CreateActivityDto,
+  UpdateActivityDto,
+  ActivityFilterDto,
+  AddParticipantDto,
+  RecordPresenceDto,
+  UploadActivityDocumentDto,
+} from './dto/activity.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class ActivitiesService {
@@ -17,65 +26,78 @@ export class ActivitiesService {
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
     private readonly mailService: MailService,
+    private readonly memberMailService: MemberMailService,
   ) {}
 
   async findAll(query: ActivityFilterDto, scope?: UserScope) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${page}:${limit}:${query.tipe || ''}:${query.status || ''}:${query.scopeType || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.tipe || ''}:${query.status || ''}:${query.scopeType || ''}`;
 
-    return this.cache.getOrSet(cacheKey, async () => {
-      const where: Record<string, unknown> = { tipe: { not: 'pendadaran' } };
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const where: Record<string, unknown> = { tipe: { not: 'pendadaran' } };
 
-      if (scope?.rantingId) {
-        where.OR = [
-          { scopeType: 'ranting', scopeId: scope.rantingId },
-          { scopeType: 'unit_latihan', scopeId: scope.rantingId },
-        ];
-      } else if (scope?.wilayahId) {
-        where.OR = [
-          { scopeType: 'wilayah', scopeId: scope.wilayahId },
-          { scopeType: 'ranting' },
-        ];
-      } else if (scope?.distrikId) {
-        where.OR = [
-          { scopeType: 'distrik', scopeId: scope.distrikId },
-          { scopeType: 'wilayah' },
-          { scopeType: 'ranting' },
-        ];
-      }
+        if (scope?.rantingId) {
+          where.OR = [
+            { scopeType: 'ranting', scopeId: scope.rantingId },
+            { scopeType: 'unit_latihan', scopeId: scope.rantingId },
+          ];
+        } else if (scope?.wilayahId) {
+          where.OR = [{ scopeType: 'wilayah', scopeId: scope.wilayahId }, { scopeType: 'ranting' }];
+        } else if (scope?.distrikId) {
+          where.OR = [
+            { scopeType: 'distrik', scopeId: scope.distrikId },
+            { scopeType: 'wilayah' },
+            { scopeType: 'ranting' },
+          ];
+        }
 
-      if (query.tipe) where.tipe = query.tipe;
-      if (query.status) where.status = query.status;
-      if (query.scopeType) where.scopeType = query.scopeType;
+        if (query.tipe) where.tipe = query.tipe;
+        if (query.status) where.status = query.status;
+        if (query.scopeType) where.scopeType = query.scopeType;
 
-      const [data, total] = await Promise.all([
-        this.prisma.kegiatan.findMany({
-          where, skip: (page - 1) * limit, take: limit,
-          include: { creator: { select: { id: true, namaLengkap: true } }, peserta: true, presensi: true, dokumenKegiatan: true },
+        return paginate(this.prisma.kegiatan, where, {
+          page: query.page,
+          limit: query.limit,
           orderBy: { tanggalMulai: 'desc' },
-        }),
-        this.prisma.kegiatan.count({ where }),
-      ]);
-      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-    }, 30);
+          include: {
+            creator: { select: { id: true, namaLengkap: true } },
+            peserta: true,
+            presensi: true,
+            dokumenKegiatan: true,
+          },
+        });
+      },
+      30,
+    );
   }
 
   async findOne(id: string, scope?: UserScope) {
     const cacheKey = `${this.CACHE_PREFIX}detail:${id}`;
 
-    return this.cache.getOrSet(cacheKey, async () => {
-      const activity = await this.prisma.kegiatan.findUnique({
-        where: { id },
-        include: { creator: { select: { id: true, namaLengkap: true } }, peserta: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } }, presensi: true, dokumenKegiatan: true },
-      });
-      if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
-      this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
-      return { success: true, data: activity };
-    }, 30);
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const activity = await this.prisma.kegiatan.findUnique({
+          where: { id },
+          include: {
+            creator: { select: { id: true, namaLengkap: true } },
+            peserta: {
+              include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+            },
+            presensi: true,
+            dokumenKegiatan: true,
+          },
+        });
+        if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
+        this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
+        return { success: true, data: activity };
+      },
+      30,
+    );
   }
 
-  async create(dto: CreateActivityDto, scope?: UserScope) {
+  async create(dto: CreateActivityDto, scope?: UserScope, userId?: string) {
     if (scope?.rantingId && !dto.scopeId) {
       (dto as any).scopeId = scope.rantingId;
       (dto as any).scopeType = 'ranting';
@@ -87,10 +109,16 @@ export class ActivitiesService {
         lokasi: dto.lokasi,
         tanggalMulai: new Date(dto.tanggalMulai),
         tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
-        scopeType: dto.scopeType as 'nasional' | 'distrik' | 'wilayah' | 'ranting' | 'unit_latihan' | undefined,
+        scopeType: dto.scopeType as
+          | 'nasional'
+          | 'distrik'
+          | 'wilayah'
+          | 'ranting'
+          | 'unit_latihan'
+          | undefined,
         scopeId: dto.scopeId,
         status: dto.status || 'draft',
-        createdById: dto.createdById,
+        createdBy: userId,
       } as never,
     });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -99,7 +127,10 @@ export class ActivitiesService {
 
   async update(id: string, dto: UpdateActivityDto, scope?: UserScope) {
     if (scope) {
-      const activity = await this.prisma.kegiatan.findUnique({ where: { id }, select: { scopeType: true, scopeId: true } });
+      const activity = await this.prisma.kegiatan.findUnique({
+        where: { id },
+        select: { scopeType: true, scopeId: true },
+      });
       if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
       this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
     }
@@ -118,7 +149,10 @@ export class ActivitiesService {
 
   async remove(id: string, scope?: UserScope) {
     if (scope) {
-      const activity = await this.prisma.kegiatan.findUnique({ where: { id }, select: { scopeType: true, scopeId: true } });
+      const activity = await this.prisma.kegiatan.findUnique({
+        where: { id },
+        select: { scopeType: true, scopeId: true },
+      });
       if (!activity) throw new NotFoundException('Kegiatan tidak ditemukan');
       this.scopeHelper.verifyKegiatanScope(scope, activity.scopeType, activity.scopeId);
     }
@@ -137,7 +171,12 @@ export class ActivitiesService {
     });
 
     // Send invitation email to participant (method handles errors internally)
-    this.sendActivityInvitation(dto.anggotaId, kegiatan.nama, kegiatan.tanggalMulai, kegiatan.lokasi);
+    this.sendActivityInvitation(
+      dto.anggotaId,
+      kegiatan.nama,
+      kegiatan.tanggalMulai,
+      kegiatan.lokasi,
+    );
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: participant, message: 'Peserta berhasil ditambahkan' };
@@ -149,7 +188,10 @@ export class ActivitiesService {
     return { success: true, message: 'Peserta berhasil dihapus' };
   }
 
-  async importParticipants(activityId: string, data: Array<{ anggotaId?: string; memberId?: string }>) {
+  async importParticipants(
+    activityId: string,
+    data: Array<{ anggotaId?: string; memberId?: string }>,
+  ) {
     const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: activityId } });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
 
@@ -167,7 +209,12 @@ export class ActivitiesService {
         imported++;
 
         // Send invitation email to each new participant (method handles errors internally)
-        this.sendActivityInvitation(anggotaId, kegiatan.nama, kegiatan.tanggalMulai, kegiatan.lokasi);
+        this.sendActivityInvitation(
+          anggotaId,
+          kegiatan.nama,
+          kegiatan.tanggalMulai,
+          kegiatan.lokasi,
+        );
       }
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -204,28 +251,38 @@ export class ActivitiesService {
 
   async uploadDocument(activityId: string, dto: UploadActivityDocumentDto) {
     const doc = await this.prisma.dokumenKegiatan.create({
-      data: { kegiatanId: activityId, nama: dto.nama, filePath: dto.filePath, tipe: dto.tipe || 'dokumen' },
+      data: {
+        kegiatanId: activityId,
+        nama: dto.nama,
+        filePath: dto.filePath,
+        tipe: dto.tipe || 'dokumen',
+      },
     });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: doc, message: 'Dokumen berhasil diupload' };
   }
 
-  private async sendActivityInvitation(anggotaId: string, activityName: string, tanggalMulai: Date, lokasi: string | null): Promise<void> {
-    try {
-      const member = await this.prisma.anggota.findUnique({
-        where: { id: anggotaId },
-        select: { email: true, namaLengkap: true },
-      });
-      if (!member?.email) return;
-
-      const tanggal = tanggalMulai.toLocaleDateString('id-ID', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-      });
-
-      const tpl = activityInvitationEmail(member.namaLengkap, activityName, tanggal, lokasi || '-');
-      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'activities', template: 'activityInvitationEmail' } });
-    } catch (error) {
-      this.logger.error(`sendActivityInvitation failed for member ${anggotaId}: ${(error as Error).message}`);
-    }
+  private async sendActivityInvitation(
+    anggotaId: string,
+    activityName: string,
+    tanggalMulai: Date,
+    lokasi: string | null,
+  ): Promise<void> {
+    await this.memberMailService.sendToMemberWithArgs(
+      anggotaId,
+      activityInvitationEmail,
+      [
+        activityName,
+        tanggalMulai.toLocaleDateString('id-ID', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        lokasi || '-',
+      ],
+      { template: 'activityInvitationEmail' },
+      'activities',
+    );
   }
 }

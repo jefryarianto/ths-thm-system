@@ -4,17 +4,21 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, CheckCircle, XCircle, Users,
-  Download, Eye, FileText,
-} from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Users, Download, Eye, FileText } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import {
+  STATUS_COLORS,
+  STATUS_LABELS,
+  STATUS_OPTIONS,
+  StatusBadge,
+} from '@/components/registrations/constants';
 
 interface RegistrationRow {
   id: string;
@@ -27,58 +31,38 @@ interface RegistrationRow {
   createdAt?: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
-  verified: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
-  approved: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
-  rejected: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  verified: 'Terverifikasi',
-  approved: 'Disetujui',
-  rejected: 'Ditolak',
-};
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'Semua Status' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'verified', label: 'Terverifikasi' },
-  { value: 'approved', label: 'Disetujui' },
-  { value: 'rejected', label: 'Ditolak' },
-];
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
-      {STATUS_LABELS[status] || status}
-    </span>
-  );
-}
-
 export default function RegistrationsPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    hasActiveFilters,
+    getApiParams,
+    resetFilters,
+  } = useFilters({
+    filters: [{ key: 'status', defaultValue: '' }],
+  });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<RegistrationRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filterStatus) params.status = filterStatus;
-      return apiClient.get('/registrations', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch, filterStatus]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<RegistrationRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (filters.status) params.status = filters.status;
+    return apiClient.get('/registrations', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, filters.status]);
 
   const handleAction = async (id: string, action: string) => {
     setActionLoading(`${id}-${action}`);
     try {
-      await apiClient.post(`/registrations/${id}/${action}`, { reason: action === 'reject' ? 'Ditolak oleh admin' : undefined });
+      await apiClient.post(`/registrations/${id}/${action}`, {
+        reason: action === 'reject' ? 'Ditolak oleh admin' : undefined,
+      });
       await refetch();
     } catch {
       alert(`Gagal ${action} pendaftaran`);
@@ -107,14 +91,13 @@ export default function RegistrationsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setFilterStatus(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari nama, email, no. HP..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
-          value={filterStatus}
-          onChange={v => { setFilterStatus(v); setPage(1); }}
+          value={filters.status}
+          onChange={(v) => setFilter('status', v)}
           options={STATUS_OPTIONS}
           placeholder="Semua Status"
         />
@@ -134,7 +117,7 @@ export default function RegistrationsPage() {
         loading={loading}
         empty={{
           icon: Users,
-          ...buildEmptyMessage('pendaftar', !!(search || filterStatus), () => { setSearch(''); setFilterStatus(''); setPage(1); }),
+          ...buildEmptyMessage('pendaftar', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -142,7 +125,10 @@ export default function RegistrationsPage() {
         onPageChange={handlePageChange}
         colSpan={7}
         renderRow={(row: RegistrationRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{row.namaLengkap}</span>
             </td>

@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput,
-  TouchableOpacity, Alert, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
 
 export default function PasswordSection() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
   const [savingPassword, setSavingPassword] = useState(false);
   const [showOldPass, setShowOldPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
@@ -66,7 +75,10 @@ export default function PasswordSection() {
                 placeholder="Masukkan password lama"
                 secureTextEntry={!showOldPass}
               />
-              <TouchableOpacity style={styles.eyeButton} onPress={() => setShowOldPass(!showOldPass)}>
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowOldPass(!showOldPass)}
+              >
                 <Ionicons name={showOldPass ? 'eye-off' : 'eye'} size={20} color="#6b7280" />
               </TouchableOpacity>
             </View>
@@ -80,7 +92,10 @@ export default function PasswordSection() {
                 placeholder="Minimal 6 karakter"
                 secureTextEntry={!showNewPass}
               />
-              <TouchableOpacity style={styles.eyeButton} onPress={() => setShowNewPass(!showNewPass)}>
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowNewPass(!showNewPass)}
+              >
                 <Ionicons name={showNewPass ? 'eye-off' : 'eye'} size={20} color="#6b7280" />
               </TouchableOpacity>
             </View>
@@ -126,15 +141,43 @@ export default function PasswordSection() {
 const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#111827' },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
-  input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, fontSize: 15, backgroundColor: '#f9fafb' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
+    backgroundColor: '#f9fafb',
+  },
   editButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 },
   editButtonText: { fontSize: 14, fontWeight: '600', color: '#2563eb' },
   buttonRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 16 },
-  saveButton: { backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 20, alignItems: 'center' },
+  saveButton: {
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
   saveButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  cancelButton: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 20, alignItems: 'center' },
+  cancelButton: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
   cancelButtonText: { color: '#374151', fontSize: 14, fontWeight: '600' },
   buttonDisabled: { opacity: 0.5 },
   passwordRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

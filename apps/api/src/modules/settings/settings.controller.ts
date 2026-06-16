@@ -1,74 +1,87 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Res, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { SettingsService } from './settings.service';
-import { CreatePeriodDto, UpdatePeriodDto, CreateSignatureDto, CreateStampDto } from './dto/setting.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { Response } from 'express';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Setting } from '@prisma/client';
 
 @ApiTags('Settings')
 @Controller('settings')
 @ApiBearerAuth()
 export class SettingsController {
-  constructor(private readonly service: SettingsService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  getSettings() { return this.service.getSettings(); }
+  async getAllSettings() {
+    const settings = await this.prisma.setting.findMany();
+    const config = settings.reduce(
+      (acc, s) => {
+        acc[s.key] = s.value;
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
+    return { success: true, data: config };
+  }
 
-  @Patch()
-  @Roles('superadmin')
-  updateSettings(@Body() dto: Record<string, unknown>) { return this.service.updateSettings(dto); }
+  @Get(':key')
+  async getSetting(@Param('key') key: string) {
+    const setting = await this.prisma.setting.findUnique({ where: { key } });
+    if (!setting) {
+      return { success: false, message: 'Setting not found' };
+    }
+    return { success: true, data: setting.value };
+  }
 
-  @Get('periods')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  getPeriods() { return this.service.getPeriods(); }
+  @Post(':key')
+  async updateSetting(@Param('key') key: string, @Body() body: { value: any }) {
+    await this.prisma.setting.upsert({
+      where: { key },
+      create: { key, value: body.value },
+      update: { value: body.value },
+    });
+    return { success: true, message: 'Setting updated' };
+  }
 
-  @Get('periods/:id')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  getPeriod(@Param('id') id: string) { return this.service.getPeriod(id); }
+  @Get('branding/colors')
+  async getBrandingColors() {
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'branding' } });
+    const colors = setting?.value || {
+      primary: '#0066cc',
+      secondary: '#004c99',
+      accent: '#ff6600',
+    };
+    return { success: true, data: colors };
+  }
 
-  @Post('periods')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  createPeriod(@Body() dto: CreatePeriodDto) { return this.service.createPeriod(dto); }
+  @Post('branding/colors')
+  async updateBrandingColors(@Body() body: { primary: string; secondary: string; accent: string }) {
+    await this.prisma.setting.upsert({
+      where: { key: 'branding' },
+      create: { key: 'branding', value: body },
+      update: { value: body },
+    });
+    return { success: true, message: 'Branding updated' };
+  }
 
-  @Patch('periods/:id')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  updatePeriod(@Param('id') id: string, @Body() dto: UpdatePeriodDto) { return this.service.updatePeriod(id, dto); }
+  @Get('export/audit')
+  async exportAudit(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {
+    const logs = await this.prisma.emailLog.findMany({
+      where: { createdAt: { gte: new Date(from), lte: new Date(to) } },
+      orderBy: { createdAt: 'desc' },
+    });
 
-  @Delete('periods/:id')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  deletePeriod(@Param('id') id: string) { return this.service.deletePeriod(id); }
+    const csvRows = [
+      'ID,To,Subject,Status,Provider,CreatedAt',
+      ...logs.map(
+        (log) =>
+          `${log.id},${log.to},${log.subject},${log.status},${log.provider || ''},${log.createdAt.toISOString()}`,
+      ),
+    ];
 
-  @Get('roles')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  getRoles() { return this.service.getRoles(); }
+    const csv = csvRows.join('\n');
 
-  @Post('signatures')
-  @Roles('superadmin', 'admin_distrik')
-  uploadSignature(@Body() dto: CreateSignatureDto) { return this.service.uploadSignature(dto); }
-
-  @Get('signatures')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  getSignatures() { return this.service.getSignatures(); }
-
-  @Delete('signatures/:id')
-  @Roles('superadmin', 'admin_distrik')
-  deleteSignature(@Param('id') id: string) { return this.service.deleteSignature(id); }
-
-  @Post('stamp')
-  @Roles('superadmin', 'admin_distrik')
-  uploadStamp(@Body() dto: CreateStampDto) { return this.service.uploadStamp(dto); }
-
-  @Get('stamp')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  getStamp() { return this.service.getStamp(); }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="audit-${from}-${to}.csv"`);
+    res.send(csv);
+  }
 }

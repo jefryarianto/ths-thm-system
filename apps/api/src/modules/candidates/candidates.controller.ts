@@ -1,6 +1,4 @@
-import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query, Req,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
@@ -32,7 +30,7 @@ export class CandidatesController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   create(@Body() dto: CreateCandidateDto, @Req() req: ScopedRequest) {
-    return this.candidatesService.create(dto, req.scope);
+    return this.candidatesService.create(dto, req.scope, req.user.id);
   }
 
   @Patch(':id')

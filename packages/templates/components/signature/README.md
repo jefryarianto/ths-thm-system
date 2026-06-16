@@ -4,13 +4,13 @@ Komponen JSX untuk merender tanda tangan digital di dokumen PDF.
 
 ## Props
 
-| Prop      | Tipe   | Deskripsi                  |
-| --------- | ------ | -------------------------- |
-| imageUrl  | string | URL gambar tanda tangan    |
-| name      | string | Nama penandatangan         |
-| role      | string | Jabatan                    |
-| date      | string | Tanggal (DD/MM/YYYY)       |
-| width     | number | Lebar gambar (default 150) |
+| Prop     | Tipe   | Deskripsi                  |
+| -------- | ------ | -------------------------- |
+| imageUrl | string | URL gambar tanda tangan    |
+| name     | string | Nama penandatangan         |
+| role     | string | Jabatan                    |
+| date     | string | Tanggal (DD/MM/YYYY)       |
+| width    | number | Lebar gambar (default 150) |
 
 ## Contoh
 

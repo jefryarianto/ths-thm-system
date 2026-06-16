@@ -16,7 +16,15 @@ interface SearchBarProps {
   onDebouncedSearch?: (value: string) => void;
 }
 
-export default function SearchBar({ search, onSearchChange, onReset, placeholder = 'Cari...', children, debounceMs, onDebouncedSearch }: SearchBarProps) {
+export default function SearchBar({
+  search,
+  onSearchChange,
+  onReset,
+  placeholder = 'Cari...',
+  children,
+  debounceMs,
+  onDebouncedSearch,
+}: SearchBarProps) {
   const debouncedSearch = useDebounce(search, debounceMs ?? 0);
 
   useEffect(() => {
@@ -31,7 +39,7 @@ export default function SearchBar({ search, onSearchChange, onReset, placeholder
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
-            onChange={e => onSearchChange(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
             placeholder={placeholder}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

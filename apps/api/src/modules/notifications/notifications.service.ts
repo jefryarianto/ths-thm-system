@@ -3,9 +3,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { generalNotificationEmail } from '../../mail/email-templates';
 import { EventsGateway } from './events.gateway';
-import { SendNotificationDto, BroadcastNotificationDto, SendToRoleDto, NotificationFilterDto } from './dto/notification.dto';
+import {
+  SendNotificationDto,
+  BroadcastNotificationDto,
+  SendToRoleDto,
+  NotificationFilterDto,
+} from './dto/notification.dto';
 import { Role } from '@prisma/client';
 import { CacheService } from '../../common/services/cache.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class NotificationsService {
@@ -24,7 +30,11 @@ export class NotificationsService {
     const tipe = dto.tipe || 'umum';
     const enabled = await this.isPreferenceEnabled(userId, tipe);
     if (!enabled) {
-      return { success: true, data: null, message: 'Notifikasi ditunda (user mematikan notifikasi ini)' };
+      return {
+        success: true,
+        data: null,
+        message: 'Notifikasi ditunda (user mematikan notifikasi ini)',
+      };
     }
 
     const notification = await this.prisma.notifikasi.create({
@@ -56,7 +66,10 @@ export class NotificationsService {
     const users = await this.prisma.user.findMany({ where: { isActive: true } });
 
     // Batch filter users by 'umum' preference (single query)
-    const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), 'umum');
+    const allowedIds = await this.batchCheckPreference(
+      users.map((u) => u.id),
+      'umum',
+    );
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
     // Batch insert all notifications in a single query
@@ -72,7 +85,11 @@ export class NotificationsService {
     }
 
     // Push FCM to filtered users
-    await this.pushBroadcast(dto.judul, dto.isi, allowedUsers.map(u => u.id));
+    await this.pushBroadcast(
+      dto.judul,
+      dto.isi,
+      allowedUsers.map((u) => u.id),
+    );
 
     // Emit real-time via WebSocket — parallelized with Promise.allSettled
     const countResults = await this.prisma.notifikasi.groupBy({
@@ -84,12 +101,20 @@ export class NotificationsService {
 
     await Promise.allSettled(
       allowedUsers.map((user) => {
-        this.eventsGateway?.sendNotification(user.id, { judul: dto.judul, isi: dto.isi, tipe: 'umum' });
+        this.eventsGateway?.sendNotification(user.id, {
+          judul: dto.judul,
+          isi: dto.isi,
+          tipe: 'umum',
+        });
         this.eventsGateway?.sendUnreadCount(user.id, countMap.get(user.id) || 0);
       }),
     );
 
-    return { success: true, data: { sentTo: allowedUsers.length, total: users.length }, message: `Notifikasi broadcast ke ${allowedUsers.length}/${users.length} user` };
+    return {
+      success: true,
+      data: { sentTo: allowedUsers.length, total: users.length },
+      message: `Notifikasi broadcast ke ${allowedUsers.length}/${users.length} user`,
+    };
   }
 
   async sendToRole(dto: SendToRoleDto) {
@@ -100,7 +125,10 @@ export class NotificationsService {
     const tipe = dto.tipe || 'umum';
 
     // Batch filter users by notification preference (single query)
-    const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), tipe);
+    const allowedIds = await this.batchCheckPreference(
+      users.map((u) => u.id),
+      tipe,
+    );
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
     // Batch insert all notifications in a single query
@@ -116,7 +144,11 @@ export class NotificationsService {
     }
 
     // Push FCM to filtered users
-    await this.pushBroadcast(dto.judul, dto.isi, allowedUsers.map(u => u.id));
+    await this.pushBroadcast(
+      dto.judul,
+      dto.isi,
+      allowedUsers.map((u) => u.id),
+    );
 
     // Emit real-time via WebSocket — parallelized with Promise.allSettled
     const countResults = await this.prisma.notifikasi.groupBy({
@@ -133,40 +165,47 @@ export class NotificationsService {
       }),
     );
 
-    return { success: true, data: { sentTo: allowedUsers.length, total: users.length }, message: `Notifikasi ke role ${dto.role} berhasil (${allowedUsers.length}/${users.length} menerima)` };
+    return {
+      success: true,
+      data: { sentTo: allowedUsers.length, total: users.length },
+      message: `Notifikasi ke role ${dto.role} berhasil (${allowedUsers.length}/${users.length} menerima)`,
+    };
   }
 
   async findAll(userId: string, query: NotificationFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const cacheKey = `${this.CACHE_PREFIX}${userId}:list:${page}:${limit}:${query.tipe || ''}:${query.search || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}${userId}:list:${query.page || 1}:${query.limit || 20}:${query.tipe || ''}:${query.search || ''}`;
 
-    return this.cache?.getOrSet(cacheKey, async () => {
-      const where: Record<string, unknown> = { userId };
-      if (query.tipe) where.tipe = query.tipe;
-      if (query.search) {
-        where.OR = [
-          { judul: { contains: query.search, mode: 'insensitive' } },
-          { isi: { contains: query.search, mode: 'insensitive' } },
-        ];
-      }
+    return (
+      this.cache?.getOrSet(
+        cacheKey,
+        async () => {
+          const where: Record<string, unknown> = { userId };
+          if (query.tipe) where.tipe = query.tipe;
+          if (query.search) {
+            where.OR = [
+              { judul: { contains: query.search, mode: 'insensitive' } },
+              { isi: { contains: query.search, mode: 'insensitive' } },
+            ];
+          }
 
-      const [data, total, unreadCount] = await Promise.all([
-        this.prisma.notifikasi.findMany({
-          where, skip: (page - 1) * limit, take: limit,
-          orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.notifikasi.count({ where }),
-        this.prisma.notifikasi.count({ where: { userId, isRead: false } }),
-      ]);
+          const result = await paginate(this.prisma.notifikasi, where, {
+            page: query.page,
+            limit: query.limit || 20,
+            orderBy: { createdAt: 'desc' },
+          });
 
-      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit), unreadCount } };
-    }, 15) ?? this.findAllUncached(userId, query);
+          const unreadCount = await this.prisma.notifikasi.count({
+            where: { userId, isRead: false },
+          });
+
+          return { ...result, meta: { ...result.meta, unreadCount } };
+        },
+        15,
+      ) ?? this.findAllUncached(userId, query)
+    );
   }
 
   private async findAllUncached(userId: string, query: NotificationFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 20;
     const where: Record<string, unknown> = { userId };
     if (query.tipe) where.tipe = query.tipe;
     if (query.search) {
@@ -176,16 +215,15 @@ export class NotificationsService {
       ];
     }
 
-    const [data, total, unreadCount] = await Promise.all([
-      this.prisma.notifikasi.findMany({
-        where, skip: (page - 1) * limit, take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.notifikasi.count({ where }),
-      this.prisma.notifikasi.count({ where: { userId, isRead: false } }),
-    ]);
+    const result = await paginate(this.prisma.notifikasi, where, {
+      page: query.page,
+      limit: query.limit || 20,
+      orderBy: { createdAt: 'desc' },
+    });
 
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit), unreadCount } };
+    const unreadCount = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
+
+    return { ...result, meta: { ...result.meta, unreadCount } };
   }
 
   async getUnreadCount(userId: string) {
@@ -196,7 +234,10 @@ export class NotificationsService {
   }
 
   async markAsRead(id: string, userId?: string) {
-    const notif = await this.prisma.notifikasi.findUnique({ where: { id }, select: { userId: true } });
+    const notif = await this.prisma.notifikasi.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
     if (!notif) throw new NotFoundException('Notifikasi tidak ditemukan');
     if (userId && notif.userId !== userId) {
       throw new NotFoundException('Notifikasi tidak ditemukan');
@@ -225,7 +266,10 @@ export class NotificationsService {
   }
 
   async delete(id: string, userId?: string) {
-    const notif = await this.prisma.notifikasi.findUnique({ where: { id }, select: { userId: true } });
+    const notif = await this.prisma.notifikasi.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
     if (!notif) throw new NotFoundException('Notifikasi tidak ditemukan');
     if (userId && notif.userId !== userId) {
       throw new NotFoundException('Notifikasi tidak ditemukan');
@@ -283,14 +327,42 @@ export class NotificationsService {
    * Backward compatible: nilai boolean lama dianggap sama untuk kedua channel.
    */
   static readonly NOTIFICATION_TYPES = [
-    { key: 'welcome', label: 'Selamat Datang', description: 'Notifikasi saat pertama kali mendaftar' },
-    { key: 'data_incomplete', label: 'Data Tidak Lengkap', description: 'Pengingat untuk melengkapi data diri' },
-    { key: 'reminder_latihan', label: 'Pengingat Latihan', description: 'Pengingat jadwal latihan rutin' },
-    { key: 'reminder_pendadaran', label: 'Pengingat Pendadaran', description: 'Pengingat jadwal ujian pendadaran' },
+    {
+      key: 'welcome',
+      label: 'Selamat Datang',
+      description: 'Notifikasi saat pertama kali mendaftar',
+    },
+    {
+      key: 'data_incomplete',
+      label: 'Data Tidak Lengkap',
+      description: 'Pengingat untuk melengkapi data diri',
+    },
+    {
+      key: 'reminder_latihan',
+      label: 'Pengingat Latihan',
+      description: 'Pengingat jadwal latihan rutin',
+    },
+    {
+      key: 'reminder_pendadaran',
+      label: 'Pengingat Pendadaran',
+      description: 'Pengingat jadwal ujian pendadaran',
+    },
     { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat pembayaran iuran' },
-    { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
-    { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
-    { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
+    {
+      key: 'status_klaim',
+      label: 'Status Klaim',
+      description: 'Update status pengajuan klaim dokumen',
+    },
+    {
+      key: 'dokumen_ready',
+      label: 'Dokumen Siap',
+      description: 'Notifikasi dokumen telah selesai diproses',
+    },
+    {
+      key: 'badge_earned',
+      label: 'Badge Gamifikasi',
+      description: 'Notifikasi saat mendapat badge baru',
+    },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
   ];
 
@@ -321,9 +393,10 @@ export class NotificationsService {
 
     const prefs: Record<string, { inApp: boolean; email: boolean }> = {};
     for (const t of NotificationsService.NOTIFICATION_TYPES) {
-      prefs[t.key] = saved[t.key] !== undefined
-        ? this.normalizePref(saved[t.key])
-        : { inApp: true, email: true };
+      prefs[t.key] =
+        saved[t.key] !== undefined
+          ? this.normalizePref(saved[t.key])
+          : { inApp: true, email: true };
     }
 
     return { success: true, data: prefs, types: NotificationsService.NOTIFICATION_TYPES };
@@ -331,7 +404,9 @@ export class NotificationsService {
 
   async updatePreferences(userId: string, data: Record<string, unknown>) {
     // Fetch existing preferences once — avoid N+1 queries inside the loop
-    const existingSetting = await this.prisma.setting.findUnique({ where: { key: this.prefKey(userId) } });
+    const existingSetting = await this.prisma.setting.findUnique({
+      where: { key: this.prefKey(userId) },
+    });
     const existingData = (existingSetting?.value as Record<string, unknown>) || {};
 
     // Normalize incoming data to the new format
@@ -341,9 +416,10 @@ export class NotificationsService {
         normalized[t.key] = this.normalizePref(data[t.key]);
       } else {
         // Keep existing value for types not sent in the request
-        normalized[t.key] = existingData[t.key] !== undefined
-          ? this.normalizePref(existingData[t.key])
-          : { inApp: true, email: true };
+        normalized[t.key] =
+          existingData[t.key] !== undefined
+            ? this.normalizePref(existingData[t.key])
+            : { inApp: true, email: true };
       }
     }
 
@@ -358,7 +434,11 @@ export class NotificationsService {
   /**
    * Check if a specific notification channel (inApp/email) is enabled for a type.
    */
-  private async isChannelEnabled(userId: string, tipe: string, channel: 'inApp' | 'email'): Promise<boolean> {
+  private async isChannelEnabled(
+    userId: string,
+    tipe: string,
+    channel: 'inApp' | 'email',
+  ): Promise<boolean> {
     const prefs = await this.getPreferences(userId);
     const p = prefs.data as Record<string, { inApp: boolean; email: boolean }>;
     const pref = p[tipe];
@@ -392,7 +472,9 @@ export class NotificationsService {
     return allowed;
   }
 
-  private normalizeSavedPrefs(saved: Record<string, unknown>): Record<string, { inApp: boolean; email: boolean }> {
+  private normalizeSavedPrefs(
+    saved: Record<string, unknown>,
+  ): Record<string, { inApp: boolean; email: boolean }> {
     const result: Record<string, { inApp: boolean; email: boolean }> = {};
     for (const key of Object.keys(saved)) {
       result[key] = this.normalizePref(saved[key]);
@@ -423,7 +505,12 @@ export class NotificationsService {
     return { success: true, message: 'Device token berhasil dihapus' };
   }
 
-  private async sendEmailNotification(userId: string, judul: string, isi: string, tipe?: string): Promise<void> {
+  private async sendEmailNotification(
+    userId: string,
+    judul: string,
+    isi: string,
+    tipe?: string,
+  ): Promise<void> {
     try {
       // Check email preference for this notification type
       if (tipe) {
@@ -445,10 +532,17 @@ export class NotificationsService {
       await this.mailService.sendMail({
         to: user.email,
         ...tpl,
-        metadata: { module: 'notifications', template: 'generalNotificationEmail', userId, notifType: tipe },
+        metadata: {
+          module: 'notifications',
+          template: 'generalNotificationEmail',
+          userId,
+          notifType: tipe,
+        },
       });
     } catch (error) {
-      this.logger.error(`sendEmailNotification failed for user ${userId}: ${(error as Error).message}`);
+      this.logger.error(
+        `sendEmailNotification failed for user ${userId}: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -482,23 +576,32 @@ export class NotificationsService {
       for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
         const batch = tokens.slice(i, i + BATCH_SIZE);
         const message = {
-          tokens: batch.map(t => t.token),
+          tokens: batch.map((t) => t.token),
           notification: { title, body },
           data: { click_action: 'FLUTTER_NOTIFICATION_CLICK' },
         };
 
         const response = await admin.messaging().sendEachForMulticast(message);
-        console.log(`FCM batch ${Math.floor(i / BATCH_SIZE) + 1}: ${response.successCount} success, ${response.failureCount} failures`);
+        console.log(
+          `FCM batch ${Math.floor(i / BATCH_SIZE) + 1}: ${response.successCount} success, ${response.failureCount} failures`,
+        );
 
         if (response.failureCount > 0) {
-          response.responses.forEach((resp: { success: boolean; error?: { code?: string } }, idx: number) => {
-            if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
-              this.prisma.deviceToken.updateMany({
-                where: { token: batch[idx].token },
-                data: { isActive: false },
-              }).catch(() => {});
-            }
-          });
+          response.responses.forEach(
+            (resp: { success: boolean; error?: { code?: string } }, idx: number) => {
+              if (
+                !resp.success &&
+                resp.error?.code === 'messaging/registration-token-not-registered'
+              ) {
+                this.prisma.deviceToken
+                  .updateMany({
+                    where: { token: batch[idx].token },
+                    data: { isActive: false },
+                  })
+                  .catch(() => {});
+              }
+            },
+          );
         }
       }
     } catch (error) {

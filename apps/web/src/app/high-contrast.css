@@ -1,0 +1,62 @@
+/* High Contrast Theme */
+:root[data-theme='high-contrast'] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --primary: #ffff00;
+  --primary-foreground: #000000;
+  --secondary: #00ffff;
+  --secondary-foreground: #000000;
+  --accent: #ff00ff;
+  --accent-foreground: #ffffff;
+  --muted: #333333;
+  --muted-foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --border: #ffffff;
+  --input: #ffffff;
+  --ring: #ffff00;
+}
+
+/* Focus indicators */
+*:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 8px;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Increased text size */
+:root[data-theme='high-contrast'] body {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* High contrast buttons */
+:root[data-theme='high-contrast'] button,
+:root[data-theme='high-contrast'] a {
+  border: 2px solid currentColor;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

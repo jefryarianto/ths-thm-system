@@ -104,7 +104,13 @@ describe('AssessmentsService', () => {
   describe('createScore', () => {
     it('should create a score', async () => {
       mockPrisma.nilaiPendadaran.create.mockResolvedValue({ id: 's1', skor: 85 });
-      const result = await service.createScore({ kegiatanId: 'k1', calonAnggotaId: 'c1', itemPenilaianId: 'i1', pengujiUserId: 'u1', skor: 85 } as any);
+      const result = await service.createScore({
+        kegiatanId: 'k1',
+        calonAnggotaId: 'c1',
+        itemPenilaianId: 'i1',
+        pengujiUserId: 'u1',
+        skor: 85,
+      } as any);
       expect(result.success).toBe(true);
     });
   });

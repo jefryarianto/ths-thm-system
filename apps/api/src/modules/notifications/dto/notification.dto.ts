@@ -15,7 +15,18 @@ export class SendNotificationDto {
   @IsString()
   isi: string;
 
-  @ApiPropertyOptional({ enum: ['welcome', 'data_incomplete', 'reminder_latihan', 'reminder_pendadaran', 'reminder_iuran', 'status_klaim', 'dokumen_ready', 'umum'] })
+  @ApiPropertyOptional({
+    enum: [
+      'welcome',
+      'data_incomplete',
+      'reminder_latihan',
+      'reminder_pendadaran',
+      'reminder_iuran',
+      'status_klaim',
+      'dokumen_ready',
+      'umum',
+    ],
+  })
   @IsOptional()
   @IsString()
   tipe?: string;
@@ -35,14 +46,35 @@ export class BroadcastNotificationDto {
   @IsString()
   isi: string;
 
-  @ApiPropertyOptional({ enum: ['welcome', 'data_incomplete', 'reminder_latihan', 'reminder_pendadaran', 'reminder_iuran', 'status_klaim', 'dokumen_ready', 'umum'] })
+  @ApiPropertyOptional({
+    enum: [
+      'welcome',
+      'data_incomplete',
+      'reminder_latihan',
+      'reminder_pendadaran',
+      'reminder_iuran',
+      'status_klaim',
+      'dokumen_ready',
+      'umum',
+    ],
+  })
   @IsOptional()
   @IsString()
   tipe?: string;
 }
 
 export class SendToRoleDto {
-  @ApiProperty({ enum: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'] })
+  @ApiProperty({
+    enum: [
+      'superadmin',
+      'admin_distrik',
+      'admin_wilayah',
+      'admin_ranting',
+      'admin_kegiatan',
+      'penguji',
+      'anggota',
+    ],
+  })
   @IsString()
   role: string;
 
@@ -54,7 +86,18 @@ export class SendToRoleDto {
   @IsString()
   isi: string;
 
-  @ApiPropertyOptional({ enum: ['welcome', 'data_incomplete', 'reminder_latihan', 'reminder_pendadaran', 'reminder_iuran', 'status_klaim', 'dokumen_ready', 'umum'] })
+  @ApiPropertyOptional({
+    enum: [
+      'welcome',
+      'data_incomplete',
+      'reminder_latihan',
+      'reminder_pendadaran',
+      'reminder_iuran',
+      'status_klaim',
+      'dokumen_ready',
+      'umum',
+    ],
+  })
   @IsOptional()
   @IsString()
   tipe?: string;

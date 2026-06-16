@@ -6,28 +6,30 @@
 
 Always use the shared hooks instead of manual `useEffect` + `useState` + `useCallback`:
 
-| Hook | Use Case | File |
-|------|----------|------|
-| `useApi<T>` | Single data fetch | `web/src/lib/hooks/use-api.ts` |
-| `usePaginatedList<T>` | Paginated list with `data` and `meta` | `web/src/lib/hooks/use-api.ts` |
-| `useDebounce<T>` | Debounce search input | `web/src/lib/hooks/use-debounce.ts` |
+| Hook                  | Use Case                              | File                                |
+| --------------------- | ------------------------------------- | ----------------------------------- |
+| `useApi<T>`           | Single data fetch                     | `web/src/lib/hooks/use-api.ts`      |
+| `usePaginatedList<T>` | Paginated list with `data` and `meta` | `web/src/lib/hooks/use-api.ts`      |
+| `useDebounce<T>`      | Debounce search input                 | `web/src/lib/hooks/use-debounce.ts` |
 
 **✅ DO:** Use hooks for all API data fetching:
+
 ```tsx
 // Single fetch
 const { data, loading, error, refetch } = useApi<Dashboard>(
-  () => apiClient.get('/endpoint').then(r => r.data),
-  []
+  () => apiClient.get('/endpoint').then((r) => r.data),
+  [],
 );
 
 // Paginated list
 const { data, meta, loading, refetch } = usePaginatedList<Item>(
-  () => apiClient.get('/items', { params: { page, limit: 10 } }).then(r => r.data),
-  [page]
+  () => apiClient.get('/items', { params: { page, limit: 10 } }).then((r) => r.data),
+  [page],
 );
 ```
 
 **❌ DON'T:** Use manual `useEffect` + `useState` + `useCallback`:
+
 ```tsx
 const [data, setData] = useState(null);
 const [loading, setLoading] = useState(true);
@@ -53,6 +55,7 @@ setData(response.data.data);
 ```
 
 For API responses with a `.success` check, destructure instead:
+
 ```tsx
 // ✅ DO: Destructure
 const { success, data: result } = response.data;
@@ -64,17 +67,17 @@ if (response.data.success) setStats(response.data.data);
 
 ### Shared UI Components
 
-| Component | Location | Usage |
-|-----------|----------|-------|
-| `PageHeader` | `web/src/components/ui/page-header` | Page title + refresh |
-| `PageContainer` | `web/src/components/ui/page-container` | Standard page wrapper |
-| `DataTable` | `web/src/components/ui/data-table` | Table + pagination + empty states |
-| `SearchBar` | `web/src/components/ui/search-bar` | Search input with debounce |
-| `FilterSelect` | `web/src/components/ui/filter-select` | Dropdown filter |
-| `SummaryBar` | `web/src/components/ui/summary-bar` | Total count display |
-| `buildEmptyMessage()` | `web/src/lib/hooks/use-api` | Empty state text builder |
-| `LoadingView` | `mobile/src/components/ui/shared` | Loading spinner |
-| `FilterChips` | `mobile/src/components/ui/shared` | Horizontal filter chips |
+| Component             | Location                               | Usage                             |
+| --------------------- | -------------------------------------- | --------------------------------- |
+| `PageHeader`          | `web/src/components/ui/page-header`    | Page title + refresh              |
+| `PageContainer`       | `web/src/components/ui/page-container` | Standard page wrapper             |
+| `DataTable`           | `web/src/components/ui/data-table`     | Table + pagination + empty states |
+| `SearchBar`           | `web/src/components/ui/search-bar`     | Search input with debounce        |
+| `FilterSelect`        | `web/src/components/ui/filter-select`  | Dropdown filter                   |
+| `SummaryBar`          | `web/src/components/ui/summary-bar`    | Total count display               |
+| `buildEmptyMessage()` | `web/src/lib/hooks/use-api`            | Empty state text builder          |
+| `LoadingView`         | `mobile/src/components/ui/shared`      | Loading spinner                   |
+| `FilterChips`         | `mobile/src/components/ui/shared`      | Horizontal filter chips           |
 
 ### TypeScript Best Practices
 

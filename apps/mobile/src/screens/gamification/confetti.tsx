@@ -4,7 +4,16 @@ import { Svg, Circle, Rect, Polygon } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const COLORS = ['#f59e0b', '#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
+const COLORS = [
+  '#f59e0b',
+  '#3b82f6',
+  '#22c55e',
+  '#ef4444',
+  '#a855f7',
+  '#ec4899',
+  '#14b8a6',
+  '#f97316',
+];
 
 interface Particle {
   id: number;
@@ -37,18 +46,19 @@ function ParticleShape({ shape, size, color }: { shape: string; size: number; co
     case 'rect':
       return <Rect x={0} y={0} width={size * 0.8} height={size * 0.8} rx={2} fill={color} />;
     case 'triangle':
-      return (
-        <Polygon
-          points={`${size / 2},0 ${size},${size} 0,${size}`}
-          fill={color}
-        />
-      );
+      return <Polygon points={`${size / 2},0 ${size},${size} 0,${size}`} fill={color} />;
     default:
       return <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={color} />;
   }
 }
 
-function ConfettiParticle({ particle, parentOpacity }: { particle: Particle; parentOpacity: Animated.Value }) {
+function ConfettiParticle({
+  particle,
+  parentOpacity,
+}: {
+  particle: Particle;
+  parentOpacity: Animated.Value;
+}) {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-50)).current;
   const rotate = useRef(new Animated.Value(0)).current;

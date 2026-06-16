@@ -88,7 +88,10 @@ export class AuditLogStore {
   /**
    * Query audit log entries with optional filters and pagination.
    */
-  query(filters?: FilterParams & { limit?: number; offset?: number }): { data: AuditLogEntry[]; total: number } {
+  query(filters?: FilterParams & { limit?: number; offset?: number }): {
+    data: AuditLogEntry[];
+    total: number;
+  } {
     const filtered = this.applyFilters(filters);
 
     const total = filtered.length;

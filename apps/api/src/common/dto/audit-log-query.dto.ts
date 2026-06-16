@@ -3,7 +3,10 @@ import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AuditLogQueryDto {
-  @ApiPropertyOptional({ description: 'Filter by event type', enum: ['SCOPE_VIOLATION', 'DATA_ACCESS', 'DATA_MUTATION', 'AUTH_FAILURE'] })
+  @ApiPropertyOptional({
+    description: 'Filter by event type',
+    enum: ['SCOPE_VIOLATION', 'DATA_ACCESS', 'DATA_MUTATION', 'AUTH_FAILURE'],
+  })
   @IsOptional()
   @IsString()
   eventType?: string;

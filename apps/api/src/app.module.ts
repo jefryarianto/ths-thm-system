@@ -32,9 +32,11 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { MailModule } from './mail/mail.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
+    ChatModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '../../.env', '.env.production'],

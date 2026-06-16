@@ -134,7 +134,11 @@ describe('ExaminersService', () => {
     it('should assign examiner to kegiatan', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
       mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1' });
-      mockPrisma.penugasanPenguji.create.mockResolvedValue({ id: 'a1', pengujiUserId: 'u1', kegiatanId: 'k1' });
+      mockPrisma.penugasanPenguji.create.mockResolvedValue({
+        id: 'a1',
+        pengujiUserId: 'u1',
+        kegiatanId: 'k1',
+      });
 
       const result = await service.assign('u1', { kegiatanId: 'k1', peran: 'penguji' });
       expect(result.success).toBe(true);
@@ -154,11 +158,19 @@ describe('ExaminersService', () => {
 
     it('should verify kegiatan scope when scope is provided', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
-      mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1', scopeType: 'ranting', scopeId: 'r1' });
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        id: 'k1',
+        scopeType: 'ranting',
+        scopeId: 'r1',
+      });
       mockPrisma.penugasanPenguji.create.mockResolvedValue({ id: 'a1' });
 
       await service.assign('u1', { kegiatanId: 'k1' }, { rantingId: 'r1' });
-      expect(mockScopeHelper.verifyKegiatanScope).toHaveBeenCalledWith({ rantingId: 'r1' }, 'ranting', 'r1');
+      expect(mockScopeHelper.verifyKegiatanScope).toHaveBeenCalledWith(
+        { rantingId: 'r1' },
+        'ranting',
+        'r1',
+      );
     });
   });
 
@@ -176,7 +188,17 @@ describe('ExaminersService', () => {
       const futureDate = new Date();
       futureDate.setFullYear(futureDate.getFullYear() + 1);
       mockPrisma.penugasanPenguji.findMany.mockResolvedValue([
-        { id: 'a1', kegiatan: { id: 'k1', nama: 'Pendadaran', tipe: 'pendadaran', tanggalMulai: futureDate, tanggalSelesai: futureDate, lokasi: 'Aula' } },
+        {
+          id: 'a1',
+          kegiatan: {
+            id: 'k1',
+            nama: 'Pendadaran',
+            tipe: 'pendadaran',
+            tanggalMulai: futureDate,
+            tanggalSelesai: futureDate,
+            lokasi: 'Aula',
+          },
+        },
       ]);
       const result = await service.getSchedules('u1');
       expect(result.success).toBe(true);
@@ -186,7 +208,17 @@ describe('ExaminersService', () => {
     it('should filter out past schedules', async () => {
       const pastDate = new Date('2020-01-01');
       mockPrisma.penugasanPenguji.findMany.mockResolvedValue([
-        { id: 'a1', kegiatan: { id: 'k1', nama: 'Old', tipe: 'pendadaran', tanggalMulai: pastDate, tanggalSelesai: pastDate, lokasi: 'Aula' } },
+        {
+          id: 'a1',
+          kegiatan: {
+            id: 'k1',
+            nama: 'Old',
+            tipe: 'pendadaran',
+            tanggalMulai: pastDate,
+            tanggalSelesai: pastDate,
+            lokasi: 'Aula',
+          },
+        },
       ]);
       const result = await service.getSchedules('u1');
       expect(result.data).toHaveLength(0);

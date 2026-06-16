@@ -6,7 +6,9 @@ describe('CacheManagementController', () => {
   let controller: CacheManagementController;
 
   const mockCache = {
-    getStats: jest.fn().mockReturnValue({ size: 5, keys: ['members:list:1:10', 'reports:dashboard:all'] }),
+    getStats: jest
+      .fn()
+      .mockReturnValue({ size: 5, keys: ['members:list:1:10', 'reports:dashboard:all'] }),
     invalidatePrefix: jest.fn(),
     clear: jest.fn(),
   };
@@ -14,9 +16,7 @@ describe('CacheManagementController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CacheManagementController],
-      providers: [
-        { provide: CacheService, useValue: mockCache },
-      ],
+      providers: [{ provide: CacheService, useValue: mockCache }],
     }).compile();
 
     controller = module.get<CacheManagementController>(CacheManagementController);

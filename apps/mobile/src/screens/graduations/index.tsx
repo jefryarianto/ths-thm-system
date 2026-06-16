@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGraduations, STATUS_STYLES, FILTERS } from '../../hooks/use-graduations';
 import { useRefresh } from '../../hooks/use-refresh';
-import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -28,22 +28,7 @@ export default function GraduationsScreen() {
         </View>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color="#9ca3af" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Cari pendadaran..."
-          placeholderTextColor="#9ca3af"
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color="#9ca3af" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <SearchBar value={search} onChangeText={setSearch} placeholder="Cari pendadaran..." />
 
       <FilterChips options={FILTERS} selected={filterStatus} onChange={setFilterStatus} />
 
@@ -61,7 +46,12 @@ export default function GraduationsScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const ss = STATUS_STYLES[item.status] || { label: item.status, icon: 'ellipse', bg: '#f3f4f6', color: '#6b7280' };
+          const ss = STATUS_STYLES[item.status] || {
+            label: item.status,
+            icon: 'ellipse',
+            bg: '#f3f4f6',
+            color: '#6b7280',
+          };
           const d = new Date(item.tanggalMulai);
           return (
             <TouchableOpacity style={styles.card} activeOpacity={0.7}>
@@ -71,7 +61,9 @@ export default function GraduationsScreen() {
                 <Text style={styles.dateYear}>{d.getFullYear()}</Text>
               </View>
               <View style={styles.cardBody}>
-                <Text style={styles.title} numberOfLines={1}>{item.nama}</Text>
+                <Text style={styles.title} numberOfLines={1}>
+                  {item.nama}
+                </Text>
                 {item.lokasi && (
                   <View style={styles.metaRow}>
                     <Ionicons name="location" size={13} color="#9ca3af" />
@@ -105,15 +97,19 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
-  searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', margin: 16, marginBottom: 0,
-    borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 12, paddingVertical: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
   card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14,
-    padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#f3f4f6',
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   dateBox: { width: 44, alignItems: 'center', marginRight: 12 },
   dateDay: { fontSize: 20, fontWeight: '700', color: '#2563eb' },
@@ -123,7 +119,15 @@ const styles = StyleSheet.create({
   title: { fontSize: 15, fontWeight: '600', color: '#111827' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   metaText: { fontSize: 12, color: '#6b7280' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
   statusText: { fontSize: 11, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },

@@ -42,7 +42,9 @@ export default function MemberImportScreen() {
   return (
     <View style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
       <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>Import CSV Anggota</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>
+          Import CSV Anggota
+        </Text>
         <View style={{ marginBottom: 12 }}>
           <Button title="Pilih File CSV" onPress={pickFile} disabled={loading} color="#2563eb" />
         </View>
@@ -65,7 +67,9 @@ export default function MemberImportScreen() {
 
 function Button(props: { title: string; onPress: () => void; disabled?: boolean; color?: string }) {
   return (
-    <View style={{ backgroundColor: props.color || '#2563eb', borderRadius: 8, overflow: 'hidden' }}>
+    <View
+      style={{ backgroundColor: props.color || '#2563eb', borderRadius: 8, overflow: 'hidden' }}
+    >
       <Text
         onPress={props.disabled ? undefined : props.onPress}
         style={{

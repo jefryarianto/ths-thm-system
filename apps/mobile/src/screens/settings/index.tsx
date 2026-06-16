@@ -1,7 +1,13 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Alert, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -27,7 +33,10 @@ export default function SettingsScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -46,7 +55,10 @@ export default function SettingsScreen() {
 
         {/* Edit Profile Link */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/profile/edit' as never)}>
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => router.push('/profile/edit' as never)}
+          >
             <Ionicons name="person-circle" size={20} color="#2563eb" />
             <View style={styles.linkContent}>
               <Text style={styles.linkLabel}>Edit Profil</Text>
@@ -58,7 +70,10 @@ export default function SettingsScreen() {
 
         {/* Notification Preferences */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.linkButton} onPress={() => router.push('/notification-preferences' as never)}>
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => router.push('/notification-preferences' as never)}
+          >
             <Ionicons name="notifications" size={20} color="#2563eb" />
             <View style={styles.linkContent}>
               <Text style={styles.linkLabel}>Pengaturan Notifikasi</Text>
@@ -100,10 +115,36 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   section: { padding: 16, paddingBottom: 0 },
-  linkButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#e5e7eb', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  linkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   linkContent: { flex: 1, marginLeft: 10 },
   linkLabel: { fontSize: 15, fontWeight: '600', color: '#111827' },
   linkDesc: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
-  logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#fecaca', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
   logoutText: { fontSize: 16, fontWeight: '600', color: '#dc2626' },
 });

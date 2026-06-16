@@ -4,6 +4,7 @@ Template sertifikat kelulusan / penghargaan THS-THM.
 Format: landscape A4.
 
 ## Variabel Template
+
 - `recipientName` — Nama penerima
 - `title` — Judul sertifikat
 - `description` — Deskripsi penghargaan

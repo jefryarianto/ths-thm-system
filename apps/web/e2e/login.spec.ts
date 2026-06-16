@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockAuth, mockLoginError } from './helpers';
 
 test.describe('Login Flow', () => {
   test('shows login page with title and form', async ({ page }) => {
@@ -10,6 +11,7 @@ test.describe('Login Flow', () => {
   });
 
   test('shows error for invalid credentials', async ({ page }) => {
+    await mockLoginError(page);
     await page.goto('/login');
     await page.fill('[data-testid="email-input"]', 'wrong@email.com');
     await page.fill('[data-testid="password-input"]', 'wrongpassword');
@@ -18,6 +20,8 @@ test.describe('Login Flow', () => {
   });
 
   test('logs in with valid credentials and redirects to dashboard', async ({ page }) => {
+    // Login flow: mockAuth sets up cookies + auth intercept, login form submits via mockLoginError
+    await mockAuth(page);
     await page.goto('/login');
     await page.fill('[data-testid="email-input"]', 'superadmin@ths-thm.org');
     await page.fill('[data-testid="password-input"]', 'password123');

@@ -30,7 +30,7 @@ describe('ESLint no-restricted-syntax: .data.data', () => {
     // The selector should match the AST structure of nested .data.data
     // Outer MemberExpression with property.name="data" and inner object with property.name="data"
     expect(selector).toBe(
-      'MemberExpression[object.type="MemberExpression"][object.property.name="data"][property.name="data"]'
+      'MemberExpression[object.type="MemberExpression"][object.property.name="data"][property.name="data"]',
     );
   });
 

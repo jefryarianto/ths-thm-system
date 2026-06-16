@@ -66,7 +66,10 @@ interface GamificationTourProps {
   onClose?: () => void;
 }
 
-export default function GamificationTour({ show: externalShow, onClose }: GamificationTourProps = {}) {
+export default function GamificationTour({
+  show: externalShow,
+  onClose,
+}: GamificationTourProps = {}) {
   const [visible, setVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;

@@ -25,7 +25,17 @@ export class RegisterDto {
   @IsString()
   namaLengkap: string;
 
-  @ApiProperty({ enum: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'] })
+  @ApiProperty({
+    enum: [
+      'superadmin',
+      'admin_distrik',
+      'admin_wilayah',
+      'admin_ranting',
+      'admin_kegiatan',
+      'penguji',
+      'anggota',
+    ],
+  })
   @IsOptional()
   @IsString()
   role?: string;
@@ -100,4 +110,16 @@ export class ChangePasswordDto {
   @IsString()
   @MinLength(6)
   newPassword: string;
+}
+
+export class MagicLinkDto {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+}
+
+export class MagicLinkVerifyDto {
+  @ApiProperty()
+  @IsString()
+  token: string;
 }

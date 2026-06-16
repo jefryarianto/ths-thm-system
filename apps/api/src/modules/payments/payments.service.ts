@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -26,7 +31,14 @@ export class PaymentsService {
     if (!iuran) throw new NotFoundException('Iuran not found');
 
     // Scope verification: iuran → anggota → ranting
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, (iuran as any).anggota?.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(
+        this.prisma,
+        scope,
+        (iuran as any).anggota?.rantingId,
+      ))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
@@ -53,7 +65,9 @@ export class PaymentsService {
         process.env.STRIPE_WEBHOOK_SECRET || '',
       );
     } catch (err) {
-      throw new BadRequestException(`Webhook signature verification failed: ${(err as Error).message}`);
+      throw new BadRequestException(
+        `Webhook signature verification failed: ${(err as Error).message}`,
+      );
     }
 
     if (event.type === 'payment_intent.succeeded') {

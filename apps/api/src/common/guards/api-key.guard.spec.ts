@@ -62,18 +62,19 @@ describe('ApiKeyGuard', () => {
   let reflector: Reflector;
   let store: ApiKeyStore;
 
-  const createMockContext = (headers: Record<string, string> = {}): ExecutionContext => ({
-    switchToHttp: () => ({
-      getRequest: () => ({
-        headers,
-        ip: '127.0.0.1',
-        user: undefined,
-        scope: undefined,
+  const createMockContext = (headers: Record<string, string> = {}): ExecutionContext =>
+    ({
+      switchToHttp: () => ({
+        getRequest: () => ({
+          headers,
+          ip: '127.0.0.1',
+          user: undefined,
+          scope: undefined,
+        }),
       }),
-    }),
-    getHandler: () => ({}),
-    getClass: () => ({}),
-  } as never);
+      getHandler: () => ({}),
+      getClass: () => ({}),
+    }) as never;
 
   beforeEach(() => {
     reflector = { getAllAndOverride: jest.fn() } as never;
@@ -108,12 +109,17 @@ describe('ApiKeyGuard', () => {
 
     it('should allow access and attach user for valid API key', () => {
       store.register({ key: 'valid-key', role: 'admin_ranting', description: 'Test integration' });
-      const request = { headers: { 'x-api-key': 'valid-key' }, ip: '10.0.0.1', user: undefined, scope: undefined };
-      const ctx = ({
+      const request = {
+        headers: { 'x-api-key': 'valid-key' },
+        ip: '10.0.0.1',
+        user: undefined,
+        scope: undefined,
+      };
+      const ctx = {
         switchToHttp: () => ({ getRequest: () => request }),
         getHandler: () => ({}),
         getClass: () => ({}),
-      } as never);
+      } as never;
 
       expect(guard.canActivate(ctx)).toBe(true);
       expect(request.user).toBeDefined();
@@ -129,12 +135,17 @@ describe('ApiKeyGuard', () => {
         description: 'Branch app',
         scope: { rantingId: 'ranting-123' },
       });
-      const request = { headers: { 'x-api-key': 'scoped-key' }, ip: '10.0.0.1', user: undefined, scope: undefined };
-      const ctx = ({
+      const request = {
+        headers: { 'x-api-key': 'scoped-key' },
+        ip: '10.0.0.1',
+        user: undefined,
+        scope: undefined,
+      };
+      const ctx = {
         switchToHttp: () => ({ getRequest: () => request }),
         getHandler: () => ({}),
         getClass: () => ({}),
-      } as never);
+      } as never;
 
       guard.canActivate(ctx);
       expect(request.scope).toEqual({ rantingId: 'ranting-123' });

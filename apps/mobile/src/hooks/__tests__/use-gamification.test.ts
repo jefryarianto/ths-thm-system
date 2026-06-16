@@ -29,7 +29,16 @@ const mockProfileResponse = {
       namaLengkap: 'Test User',
       points: 500,
       level: { name: 'Gold', icon: '🥇', color: '#ffd700' },
-      badges: [{ id: 'b1', name: 'Rajin', description: 'Rajin latihan', icon: '🏅', threshold: 10, category: 'latihan' }],
+      badges: [
+        {
+          id: 'b1',
+          name: 'Rajin',
+          description: 'Rajin latihan',
+          icon: '🏅',
+          threshold: 10,
+          category: 'latihan',
+        },
+      ],
       streaks: { latihan: 3, iuran: 5 },
       lastActivity: '2026-05-01T00:00:00.000Z',
     },
@@ -48,8 +57,22 @@ const mockPointsHistoryResponse = {
 const mockBadgesResponse = {
   data: {
     data: [
-      { id: 'b1', name: 'Rajin', description: 'Rajin latihan', icon: '🏅', threshold: 10, category: 'latihan' },
-      { id: 'b2', name: 'Teladan', description: 'Teladan iuran', icon: '⭐', threshold: 5, category: 'iuran' },
+      {
+        id: 'b1',
+        name: 'Rajin',
+        description: 'Rajin latihan',
+        icon: '🏅',
+        threshold: 10,
+        category: 'latihan',
+      },
+      {
+        id: 'b2',
+        name: 'Teladan',
+        description: 'Teladan iuran',
+        icon: '⭐',
+        threshold: 5,
+        category: 'iuran',
+      },
     ],
   },
 };
@@ -57,7 +80,14 @@ const mockBadgesResponse = {
 const mockEventsResponse = {
   data: {
     data: [
-      { id: 'e1', anggotaId: '1', type: 'training', points: 10, description: 'Hadir latihan', timestamp: '2026-05-01T10:00:00.000Z' },
+      {
+        id: 'e1',
+        anggotaId: '1',
+        type: 'training',
+        points: 10,
+        description: 'Hadir latihan',
+        timestamp: '2026-05-01T10:00:00.000Z',
+      },
     ],
   },
 };
@@ -65,7 +95,15 @@ const mockEventsResponse = {
 const mockRewardsResponse = {
   data: {
     data: [
-      { id: 'r1', name: 'Pulsa 10K', description: 'Pulsa 10.000', icon: '📱', pointCost: 200, stock: 5, isActive: true },
+      {
+        id: 'r1',
+        name: 'Pulsa 10K',
+        description: 'Pulsa 10.000',
+        icon: '📱',
+        pointCost: 200,
+        stock: 5,
+        isActive: true,
+      },
     ],
   },
 };
@@ -73,7 +111,11 @@ const mockRewardsResponse = {
 const mockOrgResponse = {
   data: {
     data: [
-      { id: 'd1', nama: 'Distrik A', wilayahs: [{ id: 'w1', nama: 'Wilayah A', rantings: [{ id: 'ra1', nama: 'Ranting A' }] }] },
+      {
+        id: 'd1',
+        nama: 'Distrik A',
+        wilayahs: [{ id: 'w1', nama: 'Wilayah A', rantings: [{ id: 'ra1', nama: 'Ranting A' }] }],
+      },
     ],
   },
 };
@@ -81,8 +123,22 @@ const mockOrgResponse = {
 const mockLeaderboardResponse = {
   data: {
     data: [
-      { rank: 1, anggotaId: '1', namaLengkap: 'User 1', points: 500, badges: 3, streaks: { latihan: 10, iuran: 5 } },
-      { rank: 2, anggotaId: '2', namaLengkap: 'User 2', points: 300, badges: 1, streaks: { latihan: 5, iuran: 3 } },
+      {
+        rank: 1,
+        anggotaId: '1',
+        namaLengkap: 'User 1',
+        points: 500,
+        badges: 3,
+        streaks: { latihan: 10, iuran: 5 },
+      },
+      {
+        rank: 2,
+        anggotaId: '2',
+        namaLengkap: 'User 2',
+        points: 300,
+        badges: 1,
+        streaks: { latihan: 5, iuran: 3 },
+      },
     ],
   },
 };
@@ -186,9 +242,7 @@ describe('useLeaderboard', () => {
 
     const { result } = await renderHook(() => useLeaderboard({ limit: 10, search: 'test' }));
 
-    expect(mockApi.get).toHaveBeenCalledWith(
-      expect.stringContaining('/gamification/leaderboard?'),
-    );
+    expect(mockApi.get).toHaveBeenCalledWith(expect.stringContaining('/gamification/leaderboard?'));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.data).toHaveLength(2);
@@ -198,11 +252,13 @@ describe('useLeaderboard', () => {
   it('passes filter params correctly', async () => {
     mockApi.get.mockResolvedValueOnce(mockLeaderboardResponse);
 
-    await renderHook(() => useLeaderboard({
-      limit: 10,
-      rantingId: 'ra1',
-      search: 'test',
-    }));
+    await renderHook(() =>
+      useLeaderboard({
+        limit: 10,
+        rantingId: 'ra1',
+        search: 'test',
+      }),
+    );
 
     const callUrl = mockApi.get.mock.calls[0][0] as string;
     expect(callUrl).toContain('limit=10');

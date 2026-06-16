@@ -1,5 +1,9 @@
 'use client';
 
+// Force dynamic rendering to prevent React useContext(null) during static generation
+// The page depends on auth context and API calls that aren't available during prerender
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { Bell, Settings, ArrowLeft, Save, Check, Mail, Smartphone } from 'lucide-react';
@@ -37,7 +41,9 @@ export default function NotificationPreferencesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchPreferences(); }, [fetchPreferences]);
+  useEffect(() => {
+    fetchPreferences();
+  }, [fetchPreferences]);
 
   const handleToggleInApp = (key: string) => {
     setPrefs((prev) => ({
@@ -101,7 +107,8 @@ export default function NotificationPreferencesPage() {
             Pengaturan Notifikasi
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Pilih channel notifikasi per jenis — {inAppCount}/{types.length} in-app, {emailCount}/{types.length} email
+            Pilih channel notifikasi per jenis — {inAppCount}/{types.length} in-app, {emailCount}/
+            {types.length} email
           </p>
         </div>
       </div>
@@ -123,8 +130,8 @@ export default function NotificationPreferencesPage() {
                 {inAppCount === 0 && emailCount === 0
                   ? 'Semua notifikasi nonaktif'
                   : inAppCount === types.length && emailCount === types.length
-                  ? 'Semua notifikasi aktif (kedua channel)'
-                  : 'Beberapa channel dinonaktifkan'}
+                    ? 'Semua notifikasi aktif (kedua channel)'
+                    : 'Beberapa channel dinonaktifkan'}
               </p>
             </div>
           </div>
@@ -158,7 +165,10 @@ export default function NotificationPreferencesPage() {
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+            <div
+              key={i}
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40 mb-2" />
@@ -184,10 +194,16 @@ export default function NotificationPreferencesPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{type.label}</h3>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">({type.key})</span>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {type.label}
+                      </h3>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                        ({type.key})
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{type.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {type.description}
+                    </p>
                   </div>
                 </div>
 

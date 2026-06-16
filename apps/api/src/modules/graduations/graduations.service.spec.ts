@@ -5,6 +5,7 @@ import { GraduationsService } from './graduations.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('GraduationsService', () => {
   let service: GraduationsService;
@@ -40,6 +41,11 @@ describe('GraduationsService', () => {
     sendMail: jest.fn().mockResolvedValue(true),
   };
 
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,6 +53,7 @@ describe('GraduationsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -86,14 +93,20 @@ describe('GraduationsService', () => {
   describe('create', () => {
     it('should create a graduation', async () => {
       mockPrisma.kegiatan.create.mockResolvedValue({ id: 'g1', tipe: 'pendadaran' });
-      const result = await service.create({ nama: 'Pendadaran 1', lokasi: 'Jakarta', tanggalMulai: '2026-01-01' } as any);
+      const result = await service.create({
+        nama: 'Pendadaran 1',
+        lokasi: 'Jakarta',
+        tanggalMulai: '2026-01-01',
+      } as any);
       expect(result.success).toBe(true);
     });
   });
 
   describe('getParticipants', () => {
     it('should return participants', async () => {
-      mockPrisma.calonAnggota.findMany.mockResolvedValue([{ id: 'c1', status: 'mengikuti_pendadaran' }]);
+      mockPrisma.calonAnggota.findMany.mockResolvedValue([
+        { id: 'c1', status: 'mengikuti_pendadaran' },
+      ]);
       const result = await service.getParticipants('g1');
       expect(result.success).toBe(true);
     });
@@ -102,11 +115,19 @@ describe('GraduationsService', () => {
   describe('graduate', () => {
     it('should process graduation results and send email', async () => {
       mockPrisma.hasilPendadaran.create.mockResolvedValue({ id: 'h1' });
-      mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', email: 'candidate@test.com', namaLengkap: 'Budi' });
-      const result = await service.graduate('g1', { results: [{ candidateId: 'c1', totalSkor: 85, ranking: 1, lulus: true }] } as any);
+      mockPrisma.calonAnggota.update.mockResolvedValue({
+        id: 'c1',
+        email: 'candidate@test.com',
+        namaLengkap: 'Budi',
+      });
+      const result = await service.graduate('g1', {
+        results: [{ candidateId: 'c1', totalSkor: 85, ranking: 1, lulus: true }],
+      } as any);
       expect(result.success).toBe(true);
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'candidate@test.com' }));
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'candidate@test.com' }),
+      );
     });
   });
 });

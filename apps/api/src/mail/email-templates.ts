@@ -54,14 +54,21 @@ export function approvedMemberEmail(nama: string, nomorAnggota: string) {
   };
 }
 
-export function rejectedMemberEmail(nama: string, reason?: string, context: 'pendaftaran' | 'calon_anggota' = 'pendaftaran') {
+export function rejectedMemberEmail(
+  nama: string,
+  reason?: string,
+  context: 'pendaftaran' | 'calon_anggota' = 'pendaftaran',
+) {
   const messages: Record<string, string> = {
-    pendaftaran: 'Pendaftaran Anda di <strong>THS-THM</strong> <strong>tidak dapat diproses</strong>.',
-    calon_anggota: 'Pengajuan calon anggota Anda di <strong>THS-THM</strong> <strong>tidak dapat dilanjutkan</strong>.',
+    pendaftaran:
+      'Pendaftaran Anda di <strong>THS-THM</strong> <strong>tidak dapat diproses</strong>.',
+    calon_anggota:
+      'Pengajuan calon anggota Anda di <strong>THS-THM</strong> <strong>tidak dapat dilanjutkan</strong>.',
   };
 
   const nextSteps: Record<string, string> = {
-    pendaftaran: 'Silakan hubungi admin untuk informasi lebih lanjut atau mengajukan pendaftaran ulang.',
+    pendaftaran:
+      'Silakan hubungi admin untuk informasi lebih lanjut atau mengajukan pendaftaran ulang.',
     calon_anggota: 'Silakan hubungi admin untuk informasi lebih lanjut.',
   };
 
@@ -125,7 +132,12 @@ export function resetPasswordEmail(nama: string, resetUrl: string) {
 
 // ─── Iuran / Dues ───
 
-export function paymentConfirmationEmail(nama: string, jumlah?: number, periode?: string, isPaid: boolean = true) {
+export function paymentConfirmationEmail(
+  nama: string,
+  jumlah?: number,
+  periode?: string,
+  isPaid: boolean = true,
+) {
   const jumlahStr = jumlah ? `Rp ${Number(jumlah).toLocaleString('id-ID')}` : '';
   const periodeStr = periode || '';
 
@@ -136,9 +148,10 @@ export function paymentConfirmationEmail(nama: string, jumlah?: number, periode?
         ${isPaid ? '✅ Pembayaran Iuran Diterima' : '📋 Informasi Iuran'}
       </h2>
       <p>Halo <strong>${nama}</strong>,</p>
-      ${isPaid
-        ? `<p>Pembayaran iuran Anda${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} telah <strong>diterima</strong>.</p>`
-        : `<p>Iuran${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} sedang diproses.</p>`
+      ${
+        isPaid
+          ? `<p>Pembayaran iuran Anda${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} telah <strong>diterima</strong>.</p>`
+          : `<p>Iuran${periodeStr ? ` untuk periode <strong>${periodeStr}</strong>` : ''}${jumlahStr ? ` sebesar <strong>${jumlahStr}</strong>` : ''} sedang diproses.</p>`
       }
       <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
         THS-THM System &mdash; Notifikasi iuran otomatis
@@ -149,7 +162,12 @@ export function paymentConfirmationEmail(nama: string, jumlah?: number, periode?
 
 // ─── Kegiatan / Activity ───
 
-export function activityInvitationEmail(nama: string, activityName: string, tanggal: string, lokasi: string) {
+export function activityInvitationEmail(
+  nama: string,
+  activityName: string,
+  tanggal: string,
+  lokasi: string,
+) {
   return {
     subject: `Undangan Kegiatan — ${activityName}`,
     html: wrap(`
@@ -168,7 +186,12 @@ export function activityInvitationEmail(nama: string, activityName: string, tang
 
 // ─── Latihan / Training ───
 
-export function trainingNotificationEmail(nama: string, jenisMateri: string, hariTanggal: string, lokasi: string) {
+export function trainingNotificationEmail(
+  nama: string,
+  jenisMateri: string,
+  hariTanggal: string,
+  lokasi: string,
+) {
   return {
     subject: `Jadwal Latihan — ${jenisMateri}`,
     html: wrap(`
@@ -228,25 +251,38 @@ export function documentReadyEmail(nama: string, docType: string, nomorDokumen: 
 // ─── Klaim / Claim ───
 
 export function claimStatusEmail(nama: string, status: string, reason?: string) {
-  const statusLabels: Record<string, { icon: string; color: string; title: string; message: string }> = {
+  const statusLabels: Record<
+    string,
+    { icon: string; color: string; title: string; message: string }
+  > = {
     disetujui: {
-      icon: '✅', color: '#16a34a',
+      icon: '✅',
+      color: '#16a34a',
       title: 'Klaim Disetujui',
-      message: 'Pengajuan klaim Anda telah <strong>disetujui</strong>. Dokumen akan segera diproses.',
+      message:
+        'Pengajuan klaim Anda telah <strong>disetujui</strong>. Dokumen akan segera diproses.',
     },
     ditolak: {
-      icon: '❌', color: '#dc2626',
+      icon: '❌',
+      color: '#dc2626',
       title: 'Klaim Ditolak',
       message: 'Pengajuan klaim Anda <strong>tidak dapat disetujui</strong>.',
     },
     diproses: {
-      icon: '⚙️', color: '#ca8a04',
+      icon: '⚙️',
+      color: '#ca8a04',
       title: 'Klaim Diproses',
-      message: 'Pengajuan klaim Anda sedang <strong>diproses</strong>. Silakan tunggu informasi selanjutnya.',
+      message:
+        'Pengajuan klaim Anda sedang <strong>diproses</strong>. Silakan tunggu informasi selanjutnya.',
     },
   };
 
-  const info = statusLabels[status] || { icon: '📋', color: '#1a56db', title: 'Update Klaim', message: `Status klaim Anda: ${status}` };
+  const info = statusLabels[status] || {
+    icon: '📋',
+    color: '#1a56db',
+    title: 'Update Klaim',
+    message: `Status klaim Anda: ${status}`,
+  };
 
   return {
     subject: `${info.icon} ${info.title} — THS-THM`,
@@ -269,9 +305,10 @@ export function graduationResultEmail(nama: string, lulus: boolean, skor?: numbe
         ${lulus ? '🎉 Selamat! Anda Lulus Pendadaran' : '📋 Hasil Pendadaran'}
       </h2>
       <p>Halo <strong>${nama}</strong>,</p>
-      ${lulus
-        ? `<p>Anda telah dinyatakan <strong style="color: #16a34a;">LULUS</strong> dalam ujian pendadaran THS-THM.${skor !== undefined ? ` Total skor: <strong>${skor}</strong>` : ''}</p><p>Selamat atas pencapaian ini! Dokumen sertifikat akan segera diproses.</p>`
-        : `<p>Hasil ujian pendadaran Anda: <strong style="color: #ca8a04;">BELUM LULUS</strong>.${skor !== undefined ? ` Total skor: <strong>${skor}</strong>` : ''}</p><p>Jangan menyerah! Silakan berkoordinasi dengan pelatih untuk persiapan pendadaran ulang.</p>`
+      ${
+        lulus
+          ? `<p>Anda telah dinyatakan <strong style="color: #16a34a;">LULUS</strong> dalam ujian pendadaran THS-THM.${skor !== undefined ? ` Total skor: <strong>${skor}</strong>` : ''}</p><p>Selamat atas pencapaian ini! Dokumen sertifikat akan segera diproses.</p>`
+          : `<p>Hasil ujian pendadaran Anda: <strong style="color: #ca8a04;">BELUM LULUS</strong>.${skor !== undefined ? ` Total skor: <strong>${skor}</strong>` : ''}</p><p>Jangan menyerah! Silakan berkoordinasi dengan pelatih untuk persiapan pendadaran ulang.</p>`
       }
     `),
   };
@@ -329,7 +366,12 @@ export function examinerWelcomeEmail(nama: string, email: string, setPasswordUrl
   };
 }
 
-export function examinerAssignmentEmail(nama: string, kegiatanNama: string, tanggal: string, peran: string) {
+export function examinerAssignmentEmail(
+  nama: string,
+  kegiatanNama: string,
+  tanggal: string,
+  peran: string,
+) {
   return {
     subject: `Penugasan Penguji — ${kegiatanNama}`,
     html: wrap(`
@@ -348,7 +390,12 @@ export function examinerAssignmentEmail(nama: string, kegiatanNama: string, tang
 
 // ─── Surat / Letter ───
 
-export function dispositionNotificationEmail(namaPenerima: string, pengirim: string, perihalSurat: string, isiDisposisi: string) {
+export function dispositionNotificationEmail(
+  namaPenerima: string,
+  pengirim: string,
+  perihalSurat: string,
+  isiDisposisi: string,
+) {
   return {
     subject: `Disposisi Surat — ${perihalSurat}`,
     html: wrap(`
@@ -366,7 +413,12 @@ export function dispositionNotificationEmail(namaPenerima: string, pengirim: str
 
 // ─── User (Admin) ───
 
-export function userWelcomeEmail(nama: string, email: string, role: string, setPasswordUrl: string) {
+export function userWelcomeEmail(
+  nama: string,
+  email: string,
+  role: string,
+  setPasswordUrl: string,
+) {
   const roleLabels: Record<string, string> = {
     superadmin: 'Super Admin',
     admin_distrik: 'Admin Distrik',
@@ -399,7 +451,12 @@ export function userWelcomeEmail(nama: string, email: string, role: string, setP
 
 // ─── Gamifikasi / Gamification ───
 
-export function badgeEarnedEmail(nama: string, badgeName: string, badgeIcon: string, description: string) {
+export function badgeEarnedEmail(
+  nama: string,
+  badgeName: string,
+  badgeIcon: string,
+  description: string,
+) {
   return {
     subject: `${badgeIcon} Badge Baru Diraih! — ${badgeName}`,
     html: wrap(`

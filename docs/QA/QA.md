@@ -1,6 +1,7 @@
 # Quality Assurance Document (QA) - THS-THM System Manajemen
 
 ## 1. Test Plan
+
 - Test login untuk semua role: superadmin, admin distrik/wilayah/ranting, admin kegiatan, penguji, anggota
 - Test CRUD anggota dan calon anggota
 - Test import CSV anggota, calon anggota, aspek, item penilaian
@@ -16,25 +17,28 @@
 - Test notifikasi FCM
 
 ## 2. Test Cases
-| Modul | Test Case | Expected Result |
-|-------|-----------|----------------|
-| Login | Login dengan setiap role | Login berhasil sesuai role, menu sesuai role muncul |
-| Anggota | Create anggota | Anggota berhasil ditambahkan di database |
-| CSV Import | Import CSV dengan data lengkap | Data masuk ke database, status_data=complete |
-| CSV Import | Import CSV dengan data tidak lengkap | Data masuk ke database, status_data=incomplete, notifikasi dikirim ke anggota |
-| Update Data | Anggota update data | status_data=complete, status_validasi=pending |
-| Validasi | Admin approve data | status_validasi=approved, anggota aktif |
-| Pendadaran | Input nilai oleh penguji | Nilai tersimpan, laporan tersedia untuk admin |
-| Dokumen | Generate sertifikat / kartu / piagam | PDF/kartu digital berhasil dibuat dengan QR valid |
-| Notifikasi | FCM push | Notifikasi diterima anggota/admin sesuai event |
+
+| Modul       | Test Case                            | Expected Result                                                               |
+| ----------- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| Login       | Login dengan setiap role             | Login berhasil sesuai role, menu sesuai role muncul                           |
+| Anggota     | Create anggota                       | Anggota berhasil ditambahkan di database                                      |
+| CSV Import  | Import CSV dengan data lengkap       | Data masuk ke database, status_data=complete                                  |
+| CSV Import  | Import CSV dengan data tidak lengkap | Data masuk ke database, status_data=incomplete, notifikasi dikirim ke anggota |
+| Update Data | Anggota update data                  | status_data=complete, status_validasi=pending                                 |
+| Validasi    | Admin approve data                   | status_validasi=approved, anggota aktif                                       |
+| Pendadaran  | Input nilai oleh penguji             | Nilai tersimpan, laporan tersedia untuk admin                                 |
+| Dokumen     | Generate sertifikat / kartu / piagam | PDF/kartu digital berhasil dibuat dengan QR valid                             |
+| Notifikasi  | FCM push                             | Notifikasi diterima anggota/admin sesuai event                                |
 
 ## 3. Test Reports
+
 - Log hasil test
 - Bug report dengan severity
 - Status Pass/Fail untuk setiap test case
 - Dokumentasi screenshot / video jika perlu
 
 ## 4. Tools & Environment
+
 - Backend: Node.js + NestJS + Prisma + PostgreSQL
 - Frontend: Next.js + Tailwind
 - Mobile: React Native

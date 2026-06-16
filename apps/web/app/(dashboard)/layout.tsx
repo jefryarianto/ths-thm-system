@@ -6,9 +6,23 @@ import { usePathname, useRouter } from 'next/navigation';
 import apiClient, { clearTokens } from '@/lib/api-client';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import {
-  Users, UserPlus, GraduationCap, Dumbbell, Calendar,
-  FileText, Mail, CreditCard, Bell, BarChart3, Settings, LogOut,
-  Shield, ClipboardCheck, Wallet, Trophy, TrendingUp,
+  Users,
+  UserPlus,
+  GraduationCap,
+  Dumbbell,
+  Calendar,
+  FileText,
+  Mail,
+  CreditCard,
+  Bell,
+  BarChart3,
+  Settings,
+  LogOut,
+  Shield,
+  ClipboardCheck,
+  Wallet,
+  Trophy,
+  TrendingUp,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -49,7 +63,12 @@ const menuItems = [
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Initial fetch
@@ -57,7 +76,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       try {
         const { data } = await apiClient.get('/notifications/count');
         setUnreadCount(data.data?.count || 0);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     fetchCount();
 
@@ -78,7 +99,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           socket.off('notification:count');
         };
       }
-    } catch { /* fallback to polling below */ }
+    } catch {
+      /* fallback to polling below */
+    }
 
     // Fallback: poll every 30s if WebSocket unavailable
     const interval = setInterval(fetchCount, 30000);
@@ -155,14 +178,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               )}
             </Link>
             <span className="text-sm text-gray-600 dark:text-gray-300">
-              {typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}')?.namaLengkap : ''}
+              {mounted ? JSON.parse(localStorage.getItem('user') || '{}')?.namaLengkap : ''}
             </span>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
   );

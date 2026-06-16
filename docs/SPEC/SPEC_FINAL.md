@@ -1,7 +1,7 @@
-
 # SPEC FINAL - THS-THM System Manajemen
 
 ## Modul Utama
+
 1. Anggota & Calon Anggota (CRUD, nomor anggota resmi, update request)
 2. Klaim Anggota & Pendaftaran Baru
 3. Kegiatan & Absensi QR
@@ -13,6 +13,7 @@
 9. Role/Tingkatan akses anggota
 
 ## Roadmap Implementasi
+
 Fase 1: MVP Pilot Larantuka (CRUD, Kegiatan, Latihan, Pendadaran, Iuran, Dashboard, Mobile Template, FCM)
 Fase 2: Pengembangan Lanjutan (Kartu Digital, Sertifikat Otomatis, Form Update Data, FCM Notification)
 Fase 3: Scale Nasional (Multi-tenant, Pembayaran Online, Dokumentasi Media, Dashboard Nasional)

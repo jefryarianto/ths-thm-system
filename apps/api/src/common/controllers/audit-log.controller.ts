@@ -26,7 +26,11 @@ export class AuditLogController {
   @Get()
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Query audit log entries (superadmin only)', description: 'Returns paginated audit log entries with optional filters (eventType, userId, role, method, path, date range). Newest entries first.' })
+  @ApiOperation({
+    summary: 'Query audit log entries (superadmin only)',
+    description:
+      'Returns paginated audit log entries with optional filters (eventType, userId, role, method, path, date range). Newest entries first.',
+  })
   @ApiOkResponse({ description: 'Paginated audit log entries with total count' })
   findAll(@Query() query: AuditLogQueryDto) {
     return this.store.query({
@@ -48,7 +52,11 @@ export class AuditLogController {
   @Get('stats')
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Get audit log statistics (superadmin only)', description: 'Returns total entry count, breakdown by event type and role, plus recent scope violation count (last hour).' })
+  @ApiOperation({
+    summary: 'Get audit log statistics (superadmin only)',
+    description:
+      'Returns total entry count, breakdown by event type and role, plus recent scope violation count (last hour).',
+  })
   @ApiOkResponse({ description: 'Audit log statistics with event type and role breakdowns' })
   getStats() {
     return this.store.getStats();
@@ -62,7 +70,11 @@ export class AuditLogController {
   @Get('export')
   @Roles('superadmin')
   @RequireScope('national')
-  @ApiOperation({ summary: 'Export audit logs as CSV (superadmin only)', description: 'Downloads all matching entries as a CSV file (max 5000 entries). Supports the same filters as the query endpoint.' })
+  @ApiOperation({
+    summary: 'Export audit logs as CSV (superadmin only)',
+    description:
+      'Downloads all matching entries as a CSV file (max 5000 entries). Supports the same filters as the query endpoint.',
+  })
   exportCsv(@Query() query: AuditLogQueryDto, @Res() res: Response) {
     const entries = this.store.queryAll({
       eventType: query.eventType,
@@ -103,14 +115,16 @@ export class AuditLogController {
     const csvContent = [
       headers.join(','),
       ...rows.map((row) =>
-        row.map((cell) => {
-          // Escape CSV cells that contain commas, quotes, or newlines
-          const str = String(cell);
-          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            return `"${str.replace(/"/g, '""')}"`;
-          }
-          return str;
-        }).join(','),
+        row
+          .map((cell) => {
+            // Escape CSV cells that contain commas, quotes, or newlines
+            const str = String(cell);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          })
+          .join(','),
       ),
     ].join('\n');
 

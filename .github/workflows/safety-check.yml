@@ -1,0 +1,66 @@
+name: Safety Check
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [develop]
+
+jobs:
+  pre-merge:
+    name: Pre-Merge Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: 🔍 1. TypeScript Compilation
+        run: pnpm run typecheck
+
+      - name: 🧹 2. Lint & Format
+        run: |
+          pnpm run lint
+          pnpm run format:check
+
+      - name: 📋 3. Check for test .only / .skip
+        run: |
+          echo "Checking for it.only / describe.only in test files..."
+          FOUND_ONLY=$(grep -rn 'it\.only\|describe\.only' --include='*.spec.ts' --include='*.test.ts' . || true)
+          if [ -n "$FOUND_ONLY" ]; then echo "$FOUND_ONLY"; echo "❌ Found .only in test files"; exit 1; fi
+          echo "Checking for it.skip / describe.skip in test files..."
+          FOUND_SKIP=$(grep -rn 'it\.skip\|describe\.skip' --include='*.spec.ts' --include='*.test.ts' . || true)
+          if [ -n "$FOUND_SKIP" ]; then echo "$FOUND_SKIP"; echo "⚠️  Found .skip in test files (non-fatal)"; fi
+
+      - name: 🏗️ 4. Build (dry-run)
+        run: pnpm run build
+
+  deployment-gate:
+    name: Deployment Gate
+    runs-on: ubuntu-latest
+    needs: [pre-merge]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📄 Verify checklist
+        run: |
+          echo "✅ Pre-merge checks passed"
+          echo ""
+          echo "=== Deployment Safety Gate ==="
+          echo ""
+          echo "Before deploying, verify:"
+          echo "  • All CI jobs pass (typecheck, lint, test, e2e, smoke-test)"
+          echo "  • Database migrations are backward-compatible"
+          echo "  • Rollback plan exists"
+          echo "  • Health checks are configured"
+          echo "  • Monitoring is active"
+          echo ""
+          echo "See docs/DEPLOYMENT_SAFETY.md for the full checklist."
+          echo ""
+          echo "✅ Gate passed — proceeding will respect the pipeline order in ci.yml"

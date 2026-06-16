@@ -3,6 +3,7 @@
 Aplikasi mobile THS-THM untuk anggota dan penguji.
 
 ## Stack
+
 - **Framework**: React Native (Expo SDK 50+)
 - **Navigation**: Expo Router
 - **State**: Zustand + React Query
@@ -40,6 +41,7 @@ assets/
 ```
 
 ## Fitur Utama
+
 - Kartu anggota digital dengan QR code
 - Scan QR untuk validasi keaslian dokumen fisik
 - Sertifikat & piagam digital

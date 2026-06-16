@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
-import { CreateOrgDocumentDto, UpdateOrgDocumentDto, OrgDocumentFilterDto, CreateCategoryDto, UpdateCategoryDto } from './dto/org-document.dto';
+import {
+  CreateOrgDocumentDto,
+  UpdateOrgDocumentDto,
+  OrgDocumentFilterDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from './dto/org-document.dto';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class OrgDocumentsService {
@@ -13,21 +20,23 @@ export class OrgDocumentsService {
   ) {}
 
   async findAll(query: OrgDocumentFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
     const where: Record<string, unknown> = {};
     if (query.kategoriId) where.kategoriId = query.kategoriId;
     if (query.search) where.judul = { contains: query.search };
 
-    const [data, total] = await Promise.all([
-      this.prisma.dokumenOrganisasi.findMany({ where, skip: (page - 1) * limit, take: limit, include: { kategori: true, uploader: { select: { id: true, namaLengkap: true } } }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.dokumenOrganisasi.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.dokumenOrganisasi, where, {
+      page: query.page,
+      limit: query.limit,
+      orderBy: { createdAt: 'desc' },
+      include: { kategori: true, uploader: { select: { id: true, namaLengkap: true } } },
+    });
   }
 
   async findOne(id: string) {
-    const doc = await this.prisma.dokumenOrganisasi.findUnique({ where: { id }, include: { kategori: true } });
+    const doc = await this.prisma.dokumenOrganisasi.findUnique({
+      where: { id },
+      include: { kategori: true },
+    });
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
     return { success: true, data: doc };
   }
@@ -52,7 +61,9 @@ export class OrgDocumentsService {
   }
 
   async getCategories() {
-    const categories = await this.prisma.kategoriDokumen.findMany({ include: { _count: { select: { dokumen: true } } } });
+    const categories = await this.prisma.kategoriDokumen.findMany({
+      include: { _count: { select: { dokumen: true } } },
+    });
     return { success: true, data: categories };
   }
 

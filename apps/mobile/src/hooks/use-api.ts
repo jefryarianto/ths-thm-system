@@ -38,7 +38,9 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList)
   useEffect(() => {
     mountedRef.current = true;
     execute();
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [execute]);
 
   return { data, loading, error, refetch: execute };
@@ -88,7 +90,9 @@ export function usePaginatedList<T>(
   useEffect(() => {
     mountedRef.current = true;
     execute();
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [execute]);
 
   return { data, meta, loading, error, refetch: execute };

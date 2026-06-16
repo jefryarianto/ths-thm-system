@@ -12,7 +12,9 @@ const variantClasses = {
 };
 
 const Badge = ({ variant = 'default', label }: BadgeProps) => (
-  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]}`}>
+  <span
+    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]}`}
+  >
     {label}
   </span>
 );

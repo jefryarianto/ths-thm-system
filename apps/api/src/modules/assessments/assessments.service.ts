@@ -1,8 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateAspectDto, UpdateAspectDto, CreateItemDto, UpdateItemDto, CreateScoreDto, ScoreFilterDto, AssessmentFilterDto } from './dto/assessment.dto';
+import {
+  CreateAspectDto,
+  UpdateAspectDto,
+  CreateItemDto,
+  UpdateItemDto,
+  CreateScoreDto,
+  ScoreFilterDto,
+  AssessmentFilterDto,
+} from './dto/assessment.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class AssessmentsService {
@@ -17,7 +26,10 @@ export class AssessmentsService {
   }
 
   async getAspect(id: string) {
-    const aspect = await this.prisma.aspekPenilaian.findUnique({ where: { id }, include: { itemPenilaian: true } });
+    const aspect = await this.prisma.aspekPenilaian.findUnique({
+      where: { id },
+      include: { itemPenilaian: true },
+    });
     if (!aspect) throw new NotFoundException('Aspek tidak ditemukan');
     return { success: true, data: aspect };
   }
@@ -40,12 +52,19 @@ export class AssessmentsService {
   async getItems(query: AssessmentFilterDto) {
     const where: Record<string, unknown> = {};
     if (query.aspekId) where.aspekId = query.aspekId;
-    const data = await this.prisma.itemPenilaian.findMany({ where, include: { aspek: true }, orderBy: { urutan: 'asc' } });
+    const data = await this.prisma.itemPenilaian.findMany({
+      where,
+      include: { aspek: true },
+      orderBy: { urutan: 'asc' },
+    });
     return { success: true, data };
   }
 
   async getItem(id: string) {
-    const item = await this.prisma.itemPenilaian.findUnique({ where: { id }, include: { aspek: true } });
+    const item = await this.prisma.itemPenilaian.findUnique({
+      where: { id },
+      include: { aspek: true },
+    });
     if (!item) throw new NotFoundException('Item tidak ditemukan');
     return { success: true, data: item };
   }
@@ -66,8 +85,6 @@ export class AssessmentsService {
   }
 
   async getScores(query: ScoreFilterDto, scope?: UserScope) {
-    const page = query.page || 1;
-    const limit = query.limit || 20;
     const where: Record<string, unknown> = {};
     if (query.calonAnggotaId) where.calonAnggotaId = query.calonAnggotaId;
 
@@ -75,7 +92,11 @@ export class AssessmentsService {
     if (query.kegiatanId) {
       const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: query.kegiatanId } });
       if (kegiatan) {
-        this.scopeHelper.verifyKegiatanScope(scope, kegiatan.scopeType ?? undefined, kegiatan.scopeId ?? undefined);
+        this.scopeHelper.verifyKegiatanScope(
+          scope,
+          kegiatan.scopeType ?? undefined,
+          kegiatan.scopeId ?? undefined,
+        );
       }
       where.kegiatanId = query.kegiatanId;
     } else if (scope) {
@@ -89,11 +110,12 @@ export class AssessmentsService {
       }
     }
 
-    const [data, total] = await Promise.all([
-      this.prisma.nilaiPendadaran.findMany({ where, skip: (page - 1) * limit, take: limit, include: { itemPenilaian: true, penguji: { select: { id: true, namaLengkap: true } } }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.nilaiPendadaran.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.nilaiPendadaran, where, {
+      page: query.page,
+      limit: query.limit || 20,
+      orderBy: { createdAt: 'desc' },
+      include: { itemPenilaian: true, penguji: { select: { id: true, namaLengkap: true } } },
+    });
   }
 
   async createScore(dto: CreateScoreDto, scope?: UserScope) {
@@ -101,7 +123,11 @@ export class AssessmentsService {
     if (dto.kegiatanId && scope) {
       const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: dto.kegiatanId } });
       if (kegiatan) {
-        this.scopeHelper.verifyKegiatanScope(scope, kegiatan.scopeType ?? undefined, kegiatan.scopeId ?? undefined);
+        this.scopeHelper.verifyKegiatanScope(
+          scope,
+          kegiatan.scopeType ?? undefined,
+          kegiatan.scopeId ?? undefined,
+        );
       }
     }
 
@@ -133,7 +159,9 @@ export class AssessmentsService {
           },
         });
         imported++;
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     return { success: true, data: { imported, total: data.length } };
   }

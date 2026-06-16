@@ -7,7 +7,9 @@ export class CreateActivityDto {
   @IsString()
   nama: string;
 
-  @ApiPropertyOptional({ enum: ['latihan', 'pendadaran', 'ujian_tingkat', 'rapat', 'retret', 'pelantikan', 'lainnya'] })
+  @ApiPropertyOptional({
+    enum: ['latihan', 'pendadaran', 'ujian_tingkat', 'rapat', 'retret', 'pelantikan', 'lainnya'],
+  })
   @IsOptional()
   @IsString()
   tipe?: string;

@@ -2,10 +2,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { CandidatesService } from './candidates.service';
-import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('CandidatesService', () => {
   let service: CandidatesService;
@@ -22,6 +22,7 @@ describe('CandidatesService', () => {
     anggota: {
       count: jest.fn(),
       create: jest.fn(),
+      findUnique: jest.fn(),
     },
   };
 
@@ -31,6 +32,7 @@ describe('CandidatesService', () => {
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     verifyKegiatanScope: jest.fn(),
+    verifyResourceAccess: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockCache = {
@@ -38,14 +40,22 @@ describe('CandidatesService', () => {
     set: jest.fn(),
     del: jest.fn(),
     invalidatePrefix: jest.fn(),
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     clear: jest.fn(),
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
 
-  const mockMailService = {
-    sendMail: jest.fn().mockResolvedValue(true),
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
+
+  // Reset sendToMemberWithArgs to track calls properly
+  beforeEach(() => {
+    mockMemberMailService.sendToMemberWithArgs.mockClear();
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,7 +64,7 @@ describe('CandidatesService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
-        { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -121,17 +131,26 @@ describe('CandidatesService', () => {
   describe('approve', () => {
     it('should approve candidate, create member, and send email', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({
-        id: 'c1', namaLengkap: 'Budi', jenisKelamin: 'L',
-        tempatLahir: 'Jakarta', tanggalLahir: new Date('1990-01-01'),
-        alamat: 'Jl. A', noHp: '0812', email: 'budi@test.com', rantingId: 'r1',
+        id: 'c1',
+        namaLengkap: 'Budi',
+        jenisKelamin: 'L',
+        tempatLahir: 'Jakarta',
+        tanggalLahir: new Date('1990-01-01'),
+        alamat: 'Jl. A',
+        noHp: '0812',
+        email: 'budi@test.com',
+        rantingId: 'r1',
       });
       mockPrisma.anggota.count.mockResolvedValue(10);
       mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0001' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'budi@test.com',
+        namaLengkap: 'Budi',
+      });
       mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', status: 'lulus' });
       const result = await service.approve('c1');
       expect(result.success).toBe(true);
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -143,16 +162,24 @@ describe('CandidatesService', () => {
   describe('reject', () => {
     it('should reject candidate without email', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c1' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: null, namaLengkap: 'Budi' });
       await service.reject('c1', 'Tidak memenuhi syarat');
       expect(mockPrisma.calonAnggota.update).toHaveBeenCalled();
-      expect(mockMailService.sendMail).not.toHaveBeenCalled();
+      expect(mockMemberMailService.sendToMemberWithArgs).not.toHaveBeenCalled();
     });
 
     it('should reject candidate and send rejection email', async () => {
-      mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c2', namaLengkap: 'Siti', email: 'siti@test.com' });
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue({
+        id: 'c2',
+        namaLengkap: 'Siti',
+        email: 'siti@test.com',
+      });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'siti@test.com',
+        namaLengkap: 'Siti',
+      });
       await service.reject('c2', 'Berkas tidak lengkap');
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'siti@test.com' }));
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
   });
 

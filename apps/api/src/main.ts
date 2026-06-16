@@ -13,14 +13,16 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(',')
-      : ['http://localhost:3000'],
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(compression());
 
   app.useGlobalPipes(

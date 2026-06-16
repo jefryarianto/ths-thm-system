@@ -22,7 +22,16 @@ export class RewardsController {
   @Roles('superadmin', 'admin_distrik')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Create a new reward (admin)' })
-  async createReward(@Body() body: { name: string; description?: string; icon?: string; pointCost: number; stock?: number }) {
+  async createReward(
+    @Body()
+    body: {
+      name: string;
+      description?: string;
+      icon?: string;
+      pointCost: number;
+      stock?: number;
+    },
+  ) {
     return { success: true, data: await this.rewardsService.createReward(body) };
   }
 
@@ -32,7 +41,15 @@ export class RewardsController {
   @ApiOperation({ summary: 'Update a reward (admin)' })
   async updateReward(
     @Param('id') id: string,
-    @Body() body: { name?: string; description?: string; icon?: string; pointCost?: number; stock?: number; isActive?: boolean },
+    @Body()
+    body: {
+      name?: string;
+      description?: string;
+      icon?: string;
+      pointCost?: number;
+      stock?: number;
+      isActive?: boolean;
+    },
   ) {
     return { success: true, data: await this.rewardsService.updateReward(id, body) };
   }
@@ -50,10 +67,7 @@ export class RewardsController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
   @ApiOperation({ summary: 'Redeem a reward with points' })
-  async redeemReward(
-    @Param('rewardId') rewardId: string,
-    @Body() body: { anggotaId: string },
-  ) {
+  async redeemReward(@Param('rewardId') rewardId: string, @Body() body: { anggotaId: string }) {
     const result = await this.rewardsService.redeemReward(body.anggotaId, rewardId);
     return { success: true, data: result, message: 'Reward berhasil diredeem' };
   }
@@ -82,6 +96,9 @@ export class RewardsController {
     @Param('id') id: string,
     @Body() body: { status: string; notes?: string },
   ) {
-    return { success: true, data: await this.rewardsService.updateRedemptionStatus(id, body.status, body.notes) };
+    return {
+      success: true,
+      data: await this.rewardsService.updateRedemptionStatus(id, body.status, body.notes),
+    };
   }
 }

@@ -24,7 +24,8 @@ export default function ForgotPasswordPage() {
         setSuccess(data.message || 'Link reset password telah dikirim ke email Anda');
       }
     } catch (err: unknown) {
-      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       setError(apiError || 'Gagal mengirim email reset password');
     } finally {
       setLoading(false);
@@ -56,7 +57,10 @@ export default function ForgotPasswordPage() {
         {!success && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Email
               </label>
               <input

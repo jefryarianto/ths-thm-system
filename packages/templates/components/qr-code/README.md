@@ -4,11 +4,11 @@ Komponen JSX untuk merender QR code di dokumen PDF yang bisa di-scan untuk verif
 
 ## Props
 
-| Prop             | Tipe    | Deskripsi                              |
-| ---------------- | ------- | -------------------------------------- |
-| verificationUrl  | string  | URL endpoint verifikasi                |
-| size             | number  | Ukuran QR dalam px (default 100)       |
-| label            | string  | Teks di bawah QR (default "Scan QR")   |
+| Prop            | Tipe   | Deskripsi                            |
+| --------------- | ------ | ------------------------------------ |
+| verificationUrl | string | URL endpoint verifikasi              |
+| size            | number | Ukuran QR dalam px (default 100)     |
+| label           | string | Teks di bawah QR (default "Scan QR") |
 
 ## Alur Validasi
 

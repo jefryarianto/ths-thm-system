@@ -34,6 +34,7 @@ npx prisma migrate resolve --rolled-back MIGRATION_NAME
 ```
 
 ## Schema Guidelines
+
 - Semua tabel harus memiliki `id`, `createdAt`, `updatedAt`
 - Soft delete: gunakan kolom `deletedAt` (nullable)
 - Enum untuk status (pending, active, rejected, dll)

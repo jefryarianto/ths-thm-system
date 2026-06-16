@@ -95,13 +95,17 @@ describe('OrgDocumentsService', () => {
     it('should create a document and notify admins', async () => {
       const dto = { judul: 'AD/ART', kategoriId: 'cat1' };
       mockPrisma.dokumenOrganisasi.create.mockResolvedValue({ id: '1', ...dto });
-      mockPrisma.user.findMany.mockResolvedValue([{ email: 'admin@test.com', namaLengkap: 'Admin' }]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        { email: 'admin@test.com', namaLengkap: 'Admin' },
+      ]);
 
       const result = await service.create(dto);
       expect(result.success).toBe(true);
       expect(result.data.judul).toBe('AD/ART');
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'admin@test.com' }));
+      expect(mockMailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'admin@test.com' }),
+      );
     });
   });
 

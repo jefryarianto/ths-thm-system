@@ -19,9 +19,12 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Link Tidak Valid</h1>
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
+            Link Tidak Valid
+          </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Token reset password tidak ditemukan. Link reset password mungkin sudah kadaluarsa atau tidak valid.
+            Token reset password tidak ditemukan. Link reset password mungkin sudah kadaluarsa atau
+            tidak valid.
           </p>
           <button
             onClick={() => router.push('/login')}
@@ -59,7 +62,8 @@ function ResetPasswordForm() {
         setTimeout(() => router.push('/login'), 3000);
       }
     } catch (err: unknown) {
-      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       setError(apiError || 'Gagal mereset password. Token mungkin sudah kadaluarsa.');
     } finally {
       setLoading(false);
@@ -71,7 +75,9 @@ function ResetPasswordForm() {
       <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Buat password baru untuk akun Anda</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Buat password baru untuk akun Anda
+          </p>
         </div>
 
         {error && (
@@ -90,7 +96,10 @@ function ResetPasswordForm() {
         {!success && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Password Baru
               </label>
               <input
@@ -106,7 +115,10 @@ function ResetPasswordForm() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Konfirmasi Password
               </label>
               <input
@@ -145,11 +157,13 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
-        <div className="text-gray-500">Memuat...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
+          <div className="text-gray-500">Memuat...</div>
+        </div>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
   );

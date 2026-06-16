@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const publicPaths = ['/login', '/public', '/daftar', '/reset-password', '/forgot-password'];
+const publicPaths = [
+  '/login',
+  '/public',
+  '/verify',
+  '/daftar',
+  '/reset-password',
+  '/forgot-password',
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -11,6 +18,13 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
+  // E2E test bypass: when the Playwright route interceptor injects this header,
+  // skip the auth check so tests can mock auth at the API level.
+  // Only active in development/test mode — never in production.
+  if (process.env.NODE_ENV !== 'production' && request.headers.get('x-e2e-bypass') === 'true') {
     return NextResponse.next();
   }
 

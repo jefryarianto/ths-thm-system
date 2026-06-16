@@ -48,24 +48,48 @@ export default function TrainingDetailScreen() {
         setTraining(unwrap(trainRes));
         setAttendances(unwrap(attRes) || []);
         setEvaluations(unwrap(evalRes) || []);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
     })();
   }, [id]);
 
   if (loading) return <LoadingView message="Memuat detail latihan..." />;
-  if (!training) return <View style={styles.center}><Text style={styles.errorText}>Latihan tidak ditemukan</Text></View>;
+  if (!training)
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Latihan tidak ditemukan</Text>
+      </View>
+    );
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const tabs = [
     { key: 'info', label: 'Info', icon: 'information-circle' as const },
-    { key: 'attendance', label: `Hadir (${attendances.filter(a => a.hadir).length})`, icon: 'checkmark-circle' as const },
+    {
+      key: 'attendance',
+      label: `Hadir (${attendances.filter((a) => a.hadir).length})`,
+      icon: 'checkmark-circle' as const,
+    },
     { key: 'evaluation', label: `Nilai (${evaluations.length})`, icon: 'school' as const },
   ];
 
@@ -75,7 +99,9 @@ export default function TrainingDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{training.jenisMateri || 'Detail Latihan'}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {training.jenisMateri || 'Detail Latihan'}
+        </Text>
       </View>
 
       {/* Tab Selector */}
@@ -86,8 +112,14 @@ export default function TrainingDetailScreen() {
             style={[styles.tab, activeTab === tab.key && styles.tabActive]}
             onPress={() => setActiveTab(tab.key as any)}
           >
-            <Ionicons name={tab.icon} size={14} color={activeTab === tab.key ? '#fff' : '#6b7280'} />
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
+            <Ionicons
+              name={tab.icon}
+              size={14}
+              color={activeTab === tab.key ? '#fff' : '#6b7280'}
+            />
+            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+              {tab.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -151,7 +183,9 @@ export default function TrainingDetailScreen() {
             attendances.map((att) => (
               <View key={att.id} style={styles.attCard}>
                 <View style={styles.attLeft}>
-                  <View style={[styles.attDot, { backgroundColor: att.hadir ? '#22c55e' : '#ef4444' }]} />
+                  <View
+                    style={[styles.attDot, { backgroundColor: att.hadir ? '#22c55e' : '#ef4444' }]}
+                  />
                   <Text style={styles.attName}>{att.anggota?.namaLengkap || 'Unknown'}</Text>
                 </View>
                 <Text style={[styles.attStatus, { color: att.hadir ? '#16a34a' : '#dc2626' }]}>
@@ -179,9 +213,13 @@ export default function TrainingDetailScreen() {
                     </Text>
                   </View>
                   <View style={styles.evalInfo}>
-                    <Text style={styles.evalName}>{evalItem.anggota?.namaLengkap || 'Unknown'}</Text>
+                    <Text style={styles.evalName}>
+                      {evalItem.anggota?.namaLengkap || 'Unknown'}
+                    </Text>
                     {evalItem.catatan && (
-                      <Text style={styles.evalNote} numberOfLines={2}>{evalItem.catatan}</Text>
+                      <Text style={styles.evalNote} numberOfLines={2}>
+                        {evalItem.catatan}
+                      </Text>
                     )}
                   </View>
                 </View>
@@ -207,13 +245,36 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  header: {
+    backgroundColor: '#2563eb',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   backBtn: { padding: 4 },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
 
   // Tabs
-  tabContainer: { flexDirection: 'row', backgroundColor: '#e5e7eb', margin: 16, marginBottom: 0, borderRadius: 10, padding: 3 },
-  tab: { flex: 1, flexDirection: 'row', paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    padding: 3,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
   tabActive: { backgroundColor: '#2563eb' },
   tabText: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
   tabTextActive: { color: '#fff' },
@@ -221,8 +282,21 @@ const styles = StyleSheet.create({
   section: { padding: 16 },
 
   // Info
-  infoCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#e5e7eb' },
-  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
   infoContent: { flex: 1 },
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
@@ -230,9 +304,15 @@ const styles = StyleSheet.create({
 
   // Attendance
   attCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 6,
-    borderWidth: 1, borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   attLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   attDot: { width: 8, height: 8, borderRadius: 4 },
@@ -241,17 +321,35 @@ const styles = StyleSheet.create({
 
   // Evaluation
   evalCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 6,
-    borderWidth: 1, borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
   },
   evalLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  evalAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center' },
+  evalAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   evalAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
   evalInfo: { flex: 1 },
   evalName: { fontSize: 14, fontWeight: '500', color: '#111827' },
   evalNote: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  evalScore: { backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  evalScore: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
   evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
 
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },

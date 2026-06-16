@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -83,7 +89,14 @@ export class RewardsService {
   /** Update a reward (admin) */
   async updateReward(
     id: string,
-    data: Partial<{ name: string; description: string; icon: string; pointCost: number; stock: number; isActive: boolean }>,
+    data: Partial<{
+      name: string;
+      description: string;
+      icon: string;
+      pointCost: number;
+      stock: number;
+      isActive: boolean;
+    }>,
   ): Promise<Reward> {
     const existing = await this.prisma.gamificationReward.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Reward tidak ditemukan');
@@ -112,10 +125,7 @@ export class RewardsService {
   }
 
   /** Redeem a reward with points */
-  async redeemReward(
-    anggotaId: string,
-    rewardId: string,
-  ): Promise<Redemption> {
+  async redeemReward(anggotaId: string, rewardId: string): Promise<Redemption> {
     const reward = await this.prisma.gamificationReward.findUnique({ where: { id: rewardId } });
     if (!reward) throw new NotFoundException('Reward tidak ditemukan');
     if (!reward.isActive) throw new BadRequestException('Reward tidak aktif');
@@ -224,11 +234,7 @@ export class RewardsService {
   }
 
   /** Update redemption status (admin) */
-  async updateRedemptionStatus(
-    id: string,
-    status: string,
-    notes?: string,
-  ): Promise<Redemption> {
+  async updateRedemptionStatus(id: string, status: string, notes?: string): Promise<Redemption> {
     const existing = await this.prisma.gamificationRedemption.findUnique({
       where: { id },
       include: { reward: { select: { name: true, icon: true } } },
@@ -248,7 +254,14 @@ export class RewardsService {
 
     // Send notification on status change
     if (status === 'approved' || status === 'rejected' || status === 'completed') {
-      await this.sendRedemptionNotification(existing.anggotaId, updated.reward.name, updated.reward.icon, status, anggota?.namaLengkap, notes);
+      await this.sendRedemptionNotification(
+        existing.anggotaId,
+        updated.reward.name,
+        updated.reward.icon,
+        status,
+        anggota?.namaLengkap,
+        notes,
+      );
     }
 
     return {
@@ -319,7 +332,9 @@ export class RewardsService {
           await this.notificationsService.send(memberUser.id, {
             userId: memberUser.id,
             judul: `${rewardIcon} Redemption ${memberLabels[status] || status}`,
-            isi: `Redemption "${rewardName}" Anda telah ${memberLabels[status] || status}.` + (notes ? ` Catatan: ${notes}` : ''),
+            isi:
+              `Redemption "${rewardName}" Anda telah ${memberLabels[status] || status}.` +
+              (notes ? ` Catatan: ${notes}` : ''),
             tipe: 'umum',
             data: { anggotaId, rewardName, status, notes, type: 'redemption_personal' },
           });

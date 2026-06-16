@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -39,14 +33,15 @@ export default function DuesScreen() {
   const [total, setTotal] = useState(0);
   const [filterStatus, setFilterStatus] = useState('');
 
-  const { data: dues, loading, refetch } = usePaginatedList<DuesItem>(
-    () => {
-      const params: Record<string, unknown> = { limit: 50 };
-      if (filterStatus) params.status = filterStatus;
-      return apiClient.get('/dues', { params }).then(r => r.data);
-    },
-    [filterStatus]
-  );
+  const {
+    data: dues,
+    loading,
+    refetch,
+  } = usePaginatedList<DuesItem>(() => {
+    const params: Record<string, unknown> = { limit: 50 };
+    if (filterStatus) params.status = filterStatus;
+    return apiClient.get('/dues', { params }).then((r) => r.data);
+  }, [filterStatus]);
 
   // Calculate total from fetched data
   useEffect(() => {
@@ -70,7 +65,13 @@ export default function DuesScreen() {
         <Text style={styles.countLabel}>{dues.length} transaksi</Text>
       </View>
 
-      <FilterChips options={FILTERS} selected={filterStatus} onChange={(v) => { setFilterStatus(v); }} />
+      <FilterChips
+        options={FILTERS}
+        selected={filterStatus}
+        onChange={(v) => {
+          setFilterStatus(v);
+        }}
+      />
 
       <FlatList
         data={dues}

@@ -5,7 +5,11 @@ describe('RoleBasedThrottlerGuard', () => {
   let guard: RoleBasedThrottlerGuard;
 
   beforeEach(() => {
-    guard = new RoleBasedThrottlerGuard({} as never, {} as never, { getAllAndOverride: jest.fn() } as never);
+    guard = new RoleBasedThrottlerGuard(
+      {} as never,
+      {} as never,
+      { getAllAndOverride: jest.fn() } as never,
+    );
   });
 
   it('should be defined', () => {
@@ -14,7 +18,11 @@ describe('RoleBasedThrottlerGuard', () => {
 
   // Access protected methods for unit testing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getGuard = (g: RoleBasedThrottlerGuard) => g as unknown as { getTracker(req: unknown): Promise<string>; handleRequest(props: unknown): Promise<void> };
+  const getGuard = (g: RoleBasedThrottlerGuard) =>
+    g as unknown as {
+      getTracker(req: unknown): Promise<string>;
+      handleRequest(props: unknown): Promise<void>;
+    };
 
   describe('getTracker', () => {
     it('should return user ID for authenticated requests', async () => {
@@ -43,17 +51,18 @@ describe('RoleBasedThrottlerGuard', () => {
   });
 
   describe('handleRequest - role-based limits', () => {
-    const createMockContext = (role?: string): ExecutionContext => ({
-      switchToHttp: () => ({
-        getRequest: () => ({
-          user: role ? { role } : undefined,
-          ip: '127.0.0.1',
+    const createMockContext = (role?: string): ExecutionContext =>
+      ({
+        switchToHttp: () => ({
+          getRequest: () => ({
+            user: role ? { role } : undefined,
+            ip: '127.0.0.1',
+          }),
+          getResponse: () => ({}),
         }),
-        getResponse: () => ({}),
-      }),
-      getHandler: () => ({}),
-      getClass: () => ({}),
-    } as never);
+        getHandler: () => ({}),
+        getClass: () => ({}),
+      }) as never;
 
     const createRequestProps = (context: ExecutionContext, limit = 100, ttl = 60) => ({
       context,
@@ -67,10 +76,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should use anonymous limits for unauthenticated users', async () => {
       const context = createMockContext(undefined);
-      const superSpy = jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      const superSpy = jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
@@ -83,10 +91,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should use anggota limits for anggota role', async () => {
       const context = createMockContext('anggota');
-      jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
@@ -96,10 +103,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should use superadmin limits for superadmin role', async () => {
       const context = createMockContext('superadmin');
-      jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
@@ -109,10 +115,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should use admin_ranting limits for admin_ranting role', async () => {
       const context = createMockContext('admin_ranting');
-      jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
@@ -122,10 +127,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should use admin_wilayah limits for admin_wilayah role', async () => {
       const context = createMockContext('admin_wilayah');
-      jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
@@ -135,10 +139,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should use admin_distrik limits for admin_distrik role', async () => {
       const context = createMockContext('admin_distrik');
-      jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
@@ -148,10 +151,9 @@ describe('RoleBasedThrottlerGuard', () => {
 
     it('should fall back to default limit for unknown roles', async () => {
       const context = createMockContext('unknown_role');
-      jest.spyOn(
-        Object.getPrototypeOf(Object.getPrototypeOf(guard)),
-        'handleRequest',
-      ).mockResolvedValue(true);
+      jest
+        .spyOn(Object.getPrototypeOf(Object.getPrototypeOf(guard)), 'handleRequest')
+        .mockResolvedValue(true);
 
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);

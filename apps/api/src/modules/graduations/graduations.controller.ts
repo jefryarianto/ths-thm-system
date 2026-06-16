@@ -1,7 +1,12 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { GraduationsService } from './graduations.service';
-import { CreateGraduationDto, GraduationFilterDto, RegisterParticipantDto, GraduateDto } from './dto/graduation.dto';
+import {
+  CreateGraduationDto,
+  GraduationFilterDto,
+  RegisterParticipantDto,
+  GraduateDto,
+} from './dto/graduation.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
@@ -15,45 +20,66 @@ export class GraduationsController {
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  findAll(@Query() query: GraduationFilterDto, @Req() req: ScopedRequest) { return this.service.findAll(query, req.scope); }
+  findAll(@Query() query: GraduationFilterDto, @Req() req: ScopedRequest) {
+    return this.service.findAll(query, req.scope);
+  }
 
   @Get(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.findOne(id, req.scope);
+  }
 
   @Post()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  create(@Body() dto: CreateGraduationDto, @Req() req: ScopedRequest) { return this.service.create(dto, req.scope); }
+  create(@Body() dto: CreateGraduationDto, @Req() req: ScopedRequest) {
+    return this.service.create(dto, req.scope);
+  }
 
   @Post(':id/register')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  register(@Param('id') id: string, @Body() dto: RegisterParticipantDto) { return this.service.registerParticipant(id, dto); }
+  register(@Param('id') id: string, @Body() dto: RegisterParticipantDto) {
+    return this.service.registerParticipant(id, dto);
+  }
 
   @Post(':id/unregister')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  unregister(@Param('id') id: string, @Body() dto: RegisterParticipantDto) { return this.service.unregisterParticipant(id, dto); }
+  unregister(@Param('id') id: string, @Body() dto: RegisterParticipantDto) {
+    return this.service.unregisterParticipant(id, dto);
+  }
 
   @Get(':id/participants')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  getParticipants(@Param('id') id: string) { return this.service.getParticipants(id); }
+  getParticipants(@Param('id') id: string) {
+    return this.service.getParticipants(id);
+  }
 
   @Post(':id/participants/import')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
-  importParticipants(@Param('id') id: string, @Body() importDto: { data: Array<{ candidateId?: string; id?: string }> }) { return this.service.importParticipants(id, importDto.data); }
+  importParticipants(
+    @Param('id') id: string,
+    @Body() importDto: { data: Array<{ candidateId?: string; id?: string }> },
+  ) {
+    return this.service.importParticipants(id, importDto.data);
+  }
 
   @Post(':id/graduate')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  graduate(@Param('id') id: string, @Body() dto: GraduateDto, @Req() req: ScopedRequest) { return this.service.graduate(id, dto, req.scope); }
+  graduate(@Param('id') id: string, @Body() dto: GraduateDto, @Req() req: ScopedRequest) {
+    return this.service.graduate(id, dto, req.scope);
+  }
 
   @Post(':id/generate-docs')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  generateDocs(@Param('id') id: string) { return this.service.generateDocuments(id); }
+  generateDocs(@Param('id') id: string) {
+    return this.service.generateDocuments(id);
+  }
 }

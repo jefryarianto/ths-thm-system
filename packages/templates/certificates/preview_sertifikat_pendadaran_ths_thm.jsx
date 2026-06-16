@@ -1,77 +1,84 @@
-import React from "react";
+import React from 'react';
 
 const certificate = {
-  organizationName: "TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA",
-  districtName: "KOORDINATORAT DISTRIK LARANTUKA",
-  certificateNumber: "PD-LRT-2026-0001",
-  recipientName: "NAMA CALON ANGGOTA",
-  eventTitle: "Pendadaran Calon Anggota Gelombang I",
-  location: "Aula Paroki Waikomo",
-  ranting: "Kristus Raja Semesta Alam - Watobuku",
-  wilayah: "Wilayah Larantuka",
-  distrik: "Keuskupan Larantuka",
-  issuedPlaceDate: "Larantuka, 20 Juli 2026",
-  finalScore: "77.58",
-  predicate: "Baik Sekali",
-  status: "Lulus",
+  organizationName: 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA',
+  districtName: 'KOORDINATORAT DISTRIK LARANTUKA',
+  certificateNumber: 'PD-LRT-2026-0001',
+  recipientName: 'NAMA CALON ANGGOTA',
+  eventTitle: 'Pendadaran Calon Anggota Gelombang I',
+  location: 'Aula Paroki Waikomo',
+  ranting: 'Kristus Raja Semesta Alam - Watobuku',
+  wilayah: 'Wilayah Larantuka',
+  distrik: 'Keuskupan Larantuka',
+  issuedPlaceDate: 'Larantuka, 20 Juli 2026',
+  finalScore: '77.58',
+  predicate: 'Baik Sekali',
+  status: 'Lulus',
 };
 
 const signers = {
   pastor: {
-    name: "RD. YOAKIM D. B. H. ODEL",
-    title: "Pastor Moderator",
+    name: 'RD. YOAKIM D. B. H. ODEL',
+    title: 'Pastor Moderator',
   },
   koordinator: {
-    name: "YOSEPH PEHAN BETAN",
-    title: "Koordinator Distrik",
+    name: 'YOSEPH PEHAN BETAN',
+    title: 'Koordinator Distrik',
   },
 };
 
 const aspects = [
   {
-    name: "Wawasan Kebangsaan",
-    score: "82.50",
-    items: ["Pancasila", "Indonesia Raya"],
+    name: 'Wawasan Kebangsaan',
+    score: '82.50',
+    items: ['Pancasila', 'Indonesia Raya'],
   },
   {
-    name: "Spiritual",
-    score: "78.00",
-    items: ["7 Sakramen Gereja", "Santo-Santa Pelindung"],
+    name: 'Spiritual',
+    score: '78.00',
+    items: ['7 Sakramen Gereja', 'Santo-Santa Pelindung'],
   },
   {
-    name: "Organisasi",
-    score: "75.00",
+    name: 'Organisasi',
+    score: '75.00',
     items: [
-      "Hormat Organisasi dan Makna",
-      "Sejarah Pendirian",
-      "Janji Prasetya",
-      "Struktur Umum Organisasi",
-      "Doa Spontan",
-      "Menghitung Aba-aba",
+      'Hormat Organisasi dan Makna',
+      'Sejarah Pendirian',
+      'Janji Prasetya',
+      'Struktur Umum Organisasi',
+      'Doa Spontan',
+      'Menghitung Aba-aba',
     ],
   },
   {
-    name: "Rekreasi",
-    score: "80.00",
-    items: ["Mars THS-THM", "Yel-yel dan Viva Organisasi", "Yel-yel kreasi pribadi"],
+    name: 'Rekreasi',
+    score: '80.00',
+    items: ['Mars THS-THM', 'Yel-yel dan Viva Organisasi', 'Yel-yel kreasi pribadi'],
   },
   {
-    name: "Praktek Pencak Silat",
-    score: "76.00",
+    name: 'Praktek Pencak Silat',
+    score: '76.00',
     items: [
-      "Kuda-kuda Tinggi/Rendah",
-      "Langkah Maju/Mundur",
-      "Pola Langkah Segitiga/Segiempat",
-      "Pukulan 1, 3, 9",
-      "Tangkisan 1, 3, 7",
-      "Tendangan Depan/Samping/Sabitan",
-      "Kombinasi Gerakan Dasar",
+      'Kuda-kuda Tinggi/Rendah',
+      'Langkah Maju/Mundur',
+      'Pola Langkah Segitiga/Segiempat',
+      'Pukulan 1, 3, 9',
+      'Tangkisan 1, 3, 7',
+      'Tendangan Depan/Samping/Sabitan',
+      'Kombinasi Gerakan Dasar',
     ],
   },
   {
-    name: "Praktek Non Pencak Silat",
-    score: "74.00",
-    items: ["Lari + Lompat + Sprint 500 m", "Sit Up 10x", "Kayang 40 Detik", "Roll Depan 3x", "Roll Belakang 3x", "Push Up 10x"],
+    name: 'Praktek Non Pencak Silat',
+    score: '74.00',
+    items: [
+      'Lari + Lompat + Sprint 500 m',
+      'Sit Up 10x',
+      'Kayang 40 Detik',
+      'Roll Depan 3x',
+      'Roll Belakang 3x',
+      'Push Up 10x',
+    ],
   },
 ];
 
@@ -133,7 +140,10 @@ function QrMini() {
     <div className="w-24 h-24 bg-white rounded-lg p-2 border-2 border-blue-900 shadow-sm">
       <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1">
         {Array.from({ length: 25 }).map((_, i) => (
-          <div key={i} className={`${i % 2 === 0 || i % 7 === 0 ? "bg-slate-900" : "bg-slate-200"} rounded-sm`} />
+          <div
+            key={i}
+            className={`${i % 2 === 0 || i % 7 === 0 ? 'bg-slate-900' : 'bg-slate-200'} rounded-sm`}
+          />
         ))}
       </div>
     </div>
@@ -146,7 +156,9 @@ function CertificateFront() {
       <div className="absolute top-14 left-20 right-20 flex items-center justify-between">
         <Logo />
         <div className="text-center flex-1">
-          <div className="text-[30px] font-black tracking-wide text-blue-950">{certificate.organizationName}</div>
+          <div className="text-[30px] font-black tracking-wide text-blue-950">
+            {certificate.organizationName}
+          </div>
           <div className="text-[24px] font-bold text-blue-800 mt-1">{certificate.districtName}</div>
         </div>
         <QrMini />
@@ -154,17 +166,24 @@ function CertificateFront() {
 
       <div className="absolute top-[180px] left-0 right-0 text-center">
         <div className="text-[62px] font-black tracking-[0.14em] text-blue-950">SERTIFIKAT</div>
-        <div className="mt-1 text-[34px] font-black tracking-[0.18em] text-yellow-600">PENDADARAN</div>
-        <div className="mt-4 text-[17px] text-slate-600">Nomor Sertifikat: {certificate.certificateNumber}</div>
+        <div className="mt-1 text-[34px] font-black tracking-[0.18em] text-yellow-600">
+          PENDADARAN
+        </div>
+        <div className="mt-4 text-[17px] text-slate-600">
+          Nomor Sertifikat: {certificate.certificateNumber}
+        </div>
       </div>
 
       <div className="absolute top-[345px] left-24 right-24 text-center text-slate-700">
         <div className="text-[22px]">Diberikan kepada</div>
         <div className="mt-4 inline-block px-16 py-4 rounded-2xl bg-white/90 border border-blue-200 shadow-sm">
-          <div className="text-[48px] font-black text-blue-950 tracking-wide">{certificate.recipientName}</div>
+          <div className="text-[48px] font-black text-blue-950 tracking-wide">
+            {certificate.recipientName}
+          </div>
         </div>
         <div className="mt-7 text-[24px] leading-relaxed">
-          atas kelulusan dalam kegiatan Pendadaran di <span className="font-black text-blue-900">{certificate.location}</span>
+          atas kelulusan dalam kegiatan Pendadaran di{' '}
+          <span className="font-black text-blue-900">{certificate.location}</span>
         </div>
       </div>
 
@@ -182,7 +201,9 @@ function CertificateFront() {
 
       <div className="absolute left-24 right-24 bottom-20 flex justify-between items-end text-center text-slate-800">
         <SignerBlock title={signers.pastor.title} name={signers.pastor.name} />
-        <div className="text-[18px] font-semibold text-slate-700 pb-4">{certificate.issuedPlaceDate}</div>
+        <div className="text-[18px] font-semibold text-slate-700 pb-4">
+          {certificate.issuedPlaceDate}
+        </div>
         <SignerBlock title={signers.koordinator.title} name={signers.koordinator.name} />
       </div>
     </CertificateShell>
@@ -193,20 +214,31 @@ function CertificateBack() {
   return (
     <CertificateShell title="Sisi Belakang Sertifikat">
       <div className="absolute top-16 left-0 right-0 text-center">
-        <div className="text-[40px] font-black text-blue-950 tracking-[0.12em]">RINCIAN PENILAIAN PENDADARAN</div>
-        <div className="text-[16px] text-slate-500 mt-2">Nilai item 55–90, nilai aspek dihitung dari rata-rata item</div>
+        <div className="text-[40px] font-black text-blue-950 tracking-[0.12em]">
+          RINCIAN PENILAIAN PENDADARAN
+        </div>
+        <div className="text-[16px] text-slate-500 mt-2">
+          Nilai item 55–90, nilai aspek dihitung dari rata-rata item
+        </div>
       </div>
 
       <div className="absolute top-[145px] left-20 right-20 grid grid-cols-2 gap-5">
         {aspects.map((aspect) => (
-          <div key={aspect.name} className="bg-white/85 border border-blue-200 rounded-2xl p-4 shadow-sm min-h-[136px]">
+          <div
+            key={aspect.name}
+            className="bg-white/85 border border-blue-200 rounded-2xl p-4 shadow-sm min-h-[136px]"
+          >
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="text-[19px] font-black text-blue-950">{aspect.name}</div>
-              <div className="px-3 py-1 rounded-full bg-blue-900 text-white text-[14px] font-bold">Nilai: {aspect.score}</div>
+              <div className="px-3 py-1 rounded-full bg-blue-900 text-white text-[14px] font-bold">
+                Nilai: {aspect.score}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[13px] text-slate-700">
               {aspect.items.map((item) => (
-                <div key={item} className="truncate">• {item}</div>
+                <div key={item} className="truncate">
+                  • {item}
+                </div>
               ))}
             </div>
           </div>
@@ -216,8 +248,12 @@ function CertificateBack() {
       <div className="absolute left-20 right-20 bottom-20 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between">
         <div>
           <div className="text-[16px] opacity-90">Ringkasan Hasil</div>
-          <div className="text-[26px] font-black mt-1">Nilai Akhir {certificate.finalScore} · {certificate.predicate} · {certificate.status}</div>
-          <div className="text-[14px] opacity-90 mt-2">Predikat: 55–65 Cukup, 66–75 Baik, 76–90 Baik Sekali</div>
+          <div className="text-[26px] font-black mt-1">
+            Nilai Akhir {certificate.finalScore} · {certificate.predicate} · {certificate.status}
+          </div>
+          <div className="text-[14px] opacity-90 mt-2">
+            Predikat: 55–65 Cukup, 66–75 Baik, 76–90 Baik Sekali
+          </div>
         </div>
         <div className="flex items-center gap-5">
           <div className="text-right text-[14px] opacity-95">
@@ -235,7 +271,9 @@ function InfoBox({ label, value, highlight = false }) {
   return (
     <div className="rounded-2xl bg-white/80 border border-blue-200 px-5 py-3 shadow-sm">
       <div className="text-[13px] uppercase tracking-wide text-slate-500 font-bold">{label}</div>
-      <div className={`${highlight ? "text-[28px]" : "text-[17px]"} font-black text-blue-950 mt-1`}>{value}</div>
+      <div className={`${highlight ? 'text-[28px]' : 'text-[17px]'} font-black text-blue-950 mt-1`}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -244,8 +282,12 @@ function SignerBlock({ title, name }) {
   return (
     <div className="w-[280px]">
       <div className="relative h-[86px]">
-        <div className="absolute left-10 top-1 text-[52px] font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
-        <div className="absolute right-8 top-0 w-20 h-20 rounded-full border-4 border-blue-400/70 flex items-center justify-center text-[10px] font-black text-blue-600/80 rotate-[-12deg]">STEMPEL</div>
+        <div className="absolute left-10 top-1 text-[52px] font-[cursive] rotate-[-8deg] text-slate-900/80">
+          ttd
+        </div>
+        <div className="absolute right-8 top-0 w-20 h-20 rounded-full border-4 border-blue-400/70 flex items-center justify-center text-[10px] font-black text-blue-600/80 rotate-[-12deg]">
+          STEMPEL
+        </div>
       </div>
       <div className="border-t border-slate-500 pt-2">
         <div className="text-[17px] font-black text-blue-950">{name}</div>

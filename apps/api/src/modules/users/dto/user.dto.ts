@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsEmail, IsEnum, IsInt, Min, IsBoolean, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  Min,
+  IsBoolean,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -17,7 +26,17 @@ export class CreateUserDto {
   @IsString()
   namaLengkap: string;
 
-  @ApiProperty({ enum: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'] })
+  @ApiProperty({
+    enum: [
+      'superadmin',
+      'admin_distrik',
+      'admin_wilayah',
+      'admin_ranting',
+      'admin_kegiatan',
+      'penguji',
+      'anggota',
+    ],
+  })
   @IsString()
   role: string;
 
@@ -49,7 +68,17 @@ export class UpdateUserDto {
   @IsString()
   namaLengkap?: string;
 
-  @ApiPropertyOptional({ enum: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'] })
+  @ApiPropertyOptional({
+    enum: [
+      'superadmin',
+      'admin_distrik',
+      'admin_wilayah',
+      'admin_ranting',
+      'admin_kegiatan',
+      'penguji',
+      'anggota',
+    ],
+  })
   @IsOptional()
   @IsString()
   role?: string;

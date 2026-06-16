@@ -200,9 +200,27 @@ async function main() {
       bobot: 0.3,
       itemPenilaian: {
         create: [
-          { kodeItem: 'ITM-FIS-01', namaItem: 'Kebugaran Jasmani', skorMaksimal: 100, bobot: 1, urutan: 1 },
-          { kodeItem: 'ITM-FIS-02', namaItem: 'Postur Tubuh', skorMaksimal: 100, bobot: 0.5, urutan: 2 },
-          { kodeItem: 'ITM-FIS-03', namaItem: 'Ketahanan Fisik', skorMaksimal: 100, bobot: 1, urutan: 3 },
+          {
+            kodeItem: 'ITM-FIS-01',
+            namaItem: 'Kebugaran Jasmani',
+            skorMaksimal: 100,
+            bobot: 1,
+            urutan: 1,
+          },
+          {
+            kodeItem: 'ITM-FIS-02',
+            namaItem: 'Postur Tubuh',
+            skorMaksimal: 100,
+            bobot: 0.5,
+            urutan: 2,
+          },
+          {
+            kodeItem: 'ITM-FIS-03',
+            namaItem: 'Ketahanan Fisik',
+            skorMaksimal: 100,
+            bobot: 1,
+            urutan: 3,
+          },
         ],
       },
     },
@@ -216,9 +234,27 @@ async function main() {
       bobot: 0.4,
       itemPenilaian: {
         create: [
-          { kodeItem: 'ITM-MEN-01', namaItem: 'Kedisiplinan', skorMaksimal: 100, bobot: 1.5, urutan: 1 },
-          { kodeItem: 'ITM-MEN-02', namaItem: 'Tanggung Jawab', skorMaksimal: 100, bobot: 1, urutan: 2 },
-          { kodeItem: 'ITM-MEN-03', namaItem: 'Leadership', skorMaksimal: 100, bobot: 1, urutan: 3 },
+          {
+            kodeItem: 'ITM-MEN-01',
+            namaItem: 'Kedisiplinan',
+            skorMaksimal: 100,
+            bobot: 1.5,
+            urutan: 1,
+          },
+          {
+            kodeItem: 'ITM-MEN-02',
+            namaItem: 'Tanggung Jawab',
+            skorMaksimal: 100,
+            bobot: 1,
+            urutan: 2,
+          },
+          {
+            kodeItem: 'ITM-MEN-03',
+            namaItem: 'Leadership',
+            skorMaksimal: 100,
+            bobot: 1,
+            urutan: 3,
+          },
         ],
       },
     },
@@ -232,9 +268,21 @@ async function main() {
       bobot: 0.3,
       itemPenilaian: {
         create: [
-          { kodeItem: 'ITM-AKA-01', namaItem: 'Pengetahuan Teori', skorMaksimal: 100, bobot: 1, urutan: 1 },
+          {
+            kodeItem: 'ITM-AKA-01',
+            namaItem: 'Pengetahuan Teori',
+            skorMaksimal: 100,
+            bobot: 1,
+            urutan: 1,
+          },
           { kodeItem: 'ITM-AKA-02', namaItem: 'Hafalan', skorMaksimal: 100, bobot: 1, urutan: 2 },
-          { kodeItem: 'ITM-AKA-03', namaItem: 'Ujian Tulis', skorMaksimal: 100, bobot: 1.5, urutan: 3 },
+          {
+            kodeItem: 'ITM-AKA-03',
+            namaItem: 'Ujian Tulis',
+            skorMaksimal: 100,
+            bobot: 1.5,
+            urutan: 3,
+          },
         ],
       },
     },

@@ -36,6 +36,7 @@ npm-debug.log*
 
 # Testing
 coverage/
+blob-report/
 
 # Prisma
 apps/api/prisma/migrations/

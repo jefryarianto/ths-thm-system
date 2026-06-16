@@ -10,10 +10,10 @@ import { ThrottlerGuard } from '@nestjs/throttler';
  */
 const ROLE_RATE_LIMITS: Record<string, { limit: number; ttl: number }> = {
   // Unauthenticated — strict limit by IP
-  anonymous:  { limit: 20,  ttl: 60 },
+  anonymous: { limit: 20, ttl: 60 },
   // Low-privilege roles — standard limits
-  anggota:    { limit: 60,  ttl: 60 },
-  penguji:    { limit: 80,  ttl: 60 },
+  anggota: { limit: 60, ttl: 60 },
+  penguji: { limit: 80, ttl: 60 },
   admin_kegiatan: { limit: 80, ttl: 60 },
   // Mid-level admin — slightly tighter
   admin_ranting: { limit: 100, ttl: 60 },
@@ -53,7 +53,14 @@ export class RoleBasedThrottlerGuard extends ThrottlerGuard {
     context: ExecutionContext;
     limit: number;
     ttl: number;
-    throttler: { name: string; ttl: number; limit: number; blockDuration?: number; skipIf?: (context: ExecutionContext) => boolean; storage?: unknown };
+    throttler: {
+      name: string;
+      ttl: number;
+      limit: number;
+      blockDuration?: number;
+      skipIf?: (context: ExecutionContext) => boolean;
+      storage?: unknown;
+    };
     blockDuration: number;
     getTracker: () => Promise<string>;
     generateKey: () => string;

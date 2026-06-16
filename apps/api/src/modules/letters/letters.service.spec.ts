@@ -55,12 +55,8 @@ describe('LettersService', () => {
     it('should return combined masuk and keluar letters', async () => {
       const now = new Date();
       const later = new Date(now.getTime() + 1000);
-      mockPrisma.suratMasuk.findMany.mockResolvedValue([
-        { id: 'sm1', createdAt: now },
-      ]);
-      mockPrisma.suratKeluar.findMany.mockResolvedValue([
-        { id: 'sk1', createdAt: later },
-      ]);
+      mockPrisma.suratMasuk.findMany.mockResolvedValue([{ id: 'sm1', createdAt: now }]);
+      mockPrisma.suratKeluar.findMany.mockResolvedValue([{ id: 'sk1', createdAt: later }]);
       mockPrisma.suratMasuk.count.mockResolvedValue(1);
       mockPrisma.suratKeluar.count.mockResolvedValue(1);
 

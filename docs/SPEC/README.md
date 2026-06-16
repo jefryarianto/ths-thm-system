@@ -1,6 +1,7 @@
 # SPEC — Spesifikasi Teknis
 
 ## Tech Stack
+
 - **Backend**: NestJS 10+, Prisma ORM, PostgreSQL 15+
 - **Frontend**: Next.js 14+ (App Router), Tailwind CSS 3+, shadcn/ui
 - **Mobile**: React Native 0.74+, Expo SDK 50+
@@ -11,6 +12,7 @@
 - **PDF**: @react-pdf/renderer
 
 ## Arsitektur
+
 - Monorepo dengan shared packages (`templates`, `csv_templates`)
 - REST API dengan modular NestJS (19 modul)
 - Role-based access control (7 roles)
@@ -20,12 +22,14 @@
 - FCM push notification dengan scheduling
 
 ## Deployment
-| Environment | Backend                     | Frontend                  | Database         |
-| ----------- | --------------------------- | ------------------------- | ---------------- |
-| Development | localhost:3001              | localhost:3000            | localhost:5432   |
-| Production  | Render Web Service          | Render Static Site        | Render PostgreSQL |
+
+| Environment | Backend            | Frontend           | Database          |
+| ----------- | ------------------ | ------------------ | ----------------- |
+| Development | localhost:3001     | localhost:3000     | localhost:5432    |
+| Production  | Render Web Service | Render Static Site | Render PostgreSQL |
 
 ## Module List (19)
+
 1. Auth — Autentikasi & RBAC
 2. Users — Manajemen user
 3. Members — Anggota

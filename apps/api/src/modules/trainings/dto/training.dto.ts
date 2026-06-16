@@ -1,20 +1,31 @@
-import { IsString, IsOptional, IsBoolean, IsInt, Min, IsNumber, IsDateString, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  Min,
+  IsNumber,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateTrainingDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  rantingId: string;
+  rantingId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   kegiatanId?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  pelatihId: string;
+  pelatihId?: string;
 
   @ApiProperty()
   @IsDateString()

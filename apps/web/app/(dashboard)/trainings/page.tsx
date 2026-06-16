@@ -1,20 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, Calendar,
-  Eye, MapPin, User, BookOpen,
-} from 'lucide-react';
+import { Plus, Calendar, Eye, MapPin, User, BookOpen } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import { MATERI_OPTIONS } from '@/components/trainings/constants';
 
 interface TrainingRow {
   id: string;
@@ -26,32 +24,30 @@ interface TrainingRow {
   materi?: string;
 }
 
-const MATERI_OPTIONS = [
-  { value: '', label: 'Semua Materi' },
-  { value: 'teknik_dasar', label: 'Teknik Dasar' },
-  { value: 'kata', label: 'Kata' },
-  { value: 'kumite', label: 'Kumite' },
-  { value: 'fisik', label: 'Fisik' },
-  { value: 'teori', label: 'Teori' },
-  { value: 'lainnya', label: 'Lainnya' },
-];
-
 export default function TrainingsPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [filterMateri, setFilterMateri] = useState('');
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    hasActiveFilters,
+    getApiParams,
+    resetFilters,
+  } = useFilters({
+    filters: [{ key: 'jenisMateri', defaultValue: '' }],
+  });
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<TrainingRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filterMateri) params.jenisMateri = filterMateri;
-      return apiClient.get('/trainings', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch, filterMateri]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<TrainingRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (filters.jenisMateri) params.jenisMateri = filters.jenisMateri;
+    return apiClient.get('/trainings', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, filters.jenisMateri]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -70,14 +66,13 @@ export default function TrainingsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setFilterMateri(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari latihan..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
-          value={filterMateri}
-          onChange={v => { setFilterMateri(v); setPage(1); }}
+          value={filters.jenisMateri}
+          onChange={(v) => setFilter('jenisMateri', v)}
           options={MATERI_OPTIONS}
           placeholder="Semua Materi"
         />
@@ -96,7 +91,7 @@ export default function TrainingsPage() {
         loading={loading}
         empty={{
           icon: Calendar,
-          ...buildEmptyMessage('jadwal latihan', !!(search || filterMateri), () => { setSearch(''); setFilterMateri(''); setPage(1); }),
+          ...buildEmptyMessage('jadwal latihan', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -104,7 +99,10 @@ export default function TrainingsPage() {
         onPageChange={handlePageChange}
         colSpan={6}
         renderRow={(row: TrainingRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3 whitespace-nowrap">
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-gray-400" />
@@ -121,7 +119,9 @@ export default function TrainingsPage() {
             <td className="px-4 py-3">
               <div className="flex items-center gap-1.5">
                 <BookOpen size={14} className="text-gray-400" />
-                <span className="text-gray-900 dark:text-white">{row.jenisMateri || row.materi || '-'}</span>
+                <span className="text-gray-900 dark:text-white">
+                  {row.jenisMateri || row.materi || '-'}
+                </span>
               </div>
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">

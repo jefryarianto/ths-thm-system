@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCandidates, STATUS_STYLES, STATUS_FILTERS } from '../../hooks/use-candidates';
 import { useRefresh } from '../../hooks/use-refresh';
-import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 
 export default function CandidatesScreen() {
   const [search, setSearch] = useState('');
@@ -21,22 +21,7 @@ export default function CandidatesScreen() {
         <Text style={styles.headerSub}>{(candidates ?? []).length} calon</Text>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color="#9ca3af" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Cari calon anggota..."
-          placeholderTextColor="#9ca3af"
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color="#9ca3af" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <SearchBar value={search} onChangeText={setSearch} placeholder="Cari calon anggota..." />
 
       <FilterChips options={STATUS_FILTERS} selected={filterStatus} onChange={setFilterStatus} />
 
@@ -52,7 +37,11 @@ export default function CandidatesScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const ss = STATUS_STYLES[item.status] || { label: item.status, bg: '#f3f4f6', color: '#6b7280' };
+          const ss = STATUS_STYLES[item.status] || {
+            label: item.status,
+            bg: '#f3f4f6',
+            color: '#6b7280',
+          };
           return (
             <TouchableOpacity
               style={styles.card}
@@ -74,7 +63,11 @@ export default function CandidatesScreen() {
                   </View>
                 )}
                 <Text style={styles.date}>
-                  {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {new Date(item.createdAt).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
                 </Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
@@ -93,19 +86,29 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
-  searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', margin: 16, marginBottom: 0,
-    borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 12, paddingVertical: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
-
   card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 14, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: '#f3f4f6',
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   avatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
   cardBody: { flex: 1 },
   name: { fontSize: 15, fontWeight: '600', color: '#111827' },

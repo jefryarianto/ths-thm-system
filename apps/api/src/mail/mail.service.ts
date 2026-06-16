@@ -35,7 +35,15 @@ export class MailService {
     });
     if (suppressed) {
       this.logger.log(`[SUPPRESSED] Email to ${to} skipped — previously ${suppressed.reason}`);
-      await this.logToDb(to, subject, 'skipped', null, `Suppressed: ${suppressed.reason} at ${suppressed.createdAt.toISOString()}`, metadata, html || text);
+      await this.logToDb(
+        to,
+        subject,
+        'skipped',
+        null,
+        `Suppressed: ${suppressed.reason} at ${suppressed.createdAt.toISOString()}`,
+        metadata,
+        html || text,
+      );
       return true;
     }
 
@@ -65,11 +73,21 @@ export class MailService {
     }
 
     // All providers failed — log as failed
-    await this.logToDb(to, subject, 'failed', null, 'All email providers failed (Resend + SMTP)', metadata, html || text);
+    await this.logToDb(
+      to,
+      subject,
+      'failed',
+      null,
+      'All email providers failed (Resend + SMTP)',
+      metadata,
+      html || text,
+    );
     return false;
   }
 
-  async retryFailedEmails(ids?: string[]): Promise<{ retried: number; succeeded: number; failed: number }> {
+  async retryFailedEmails(
+    ids?: string[],
+  ): Promise<{ retried: number; succeeded: number; failed: number }> {
     const where: Record<string, unknown> = { status: 'failed' };
     if (ids && ids.length > 0) where.id = { in: ids };
 
@@ -140,7 +158,7 @@ export class MailService {
       const response = await fetch(this.RESEND_API_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -154,12 +172,16 @@ export class MailService {
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as ResendResponse;
-        this.logger.error(`Resend API error (${response.status}): ${errorData.error?.message || response.statusText}`);
+        this.logger.error(
+          `Resend API error (${response.status}): ${errorData.error?.message || response.statusText}`,
+        );
         return { success: false };
       }
 
       const responseData = (await response.json().catch(() => ({}))) as ResendResponse;
-      this.logger.log(`Email sent via Resend to ${to}: "${subject}" (id: ${responseData.id || 'unknown'})`);
+      this.logger.log(
+        `Email sent via Resend to ${to}: "${subject}" (id: ${responseData.id || 'unknown'})`,
+      );
       return { success: true, resendId: responseData.id };
     } catch (error) {
       this.logger.error(`Resend request failed: ${(error as Error).message}`);
@@ -185,7 +207,7 @@ export class MailService {
       } catch {
         this.logger.warn(
           'nodemailer package not installed — SMTP fallback unavailable. ' +
-          'Install with: cd apps/api && pnpm add nodemailer',
+            'Install with: cd apps/api && pnpm add nodemailer',
         );
         return false;
       }

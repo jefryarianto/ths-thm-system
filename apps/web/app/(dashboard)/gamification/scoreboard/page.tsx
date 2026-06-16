@@ -3,13 +3,32 @@
 import { useEffect, useState, useCallback } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import {
-  Trophy, TrendingUp, Users, Target, Zap, Award, Activity,
-  Calendar, ArrowUp, ArrowDown, Download,
+  Trophy,
+  TrendingUp,
+  Users,
+  Target,
+  Zap,
+  Award,
+  Activity,
+  Calendar,
+  ArrowUp,
+  ArrowDown,
+  Download,
 } from 'lucide-react';
+import DataTable from '@/components/ui/data-table';
 
 interface PointsReportEntry {
   rank: number;
@@ -44,13 +63,17 @@ export default function ScoreboardPage() {
   const [period, setPeriod] = useState<'weekly' | 'monthly'>('weekly');
   const [loading, setLoading] = useState(true);
 
-  const [moduleBreakdown, setModuleBreakdown] = useState<Array<{ module: string; label: string; points: number; percentage: number; color: string }>>([]);
+  const [moduleBreakdown, setModuleBreakdown] = useState<
+    Array<{ module: string; label: string; points: number; percentage: number; color: string }>
+  >([]);
 
   const fetchData = useCallback(async () => {
     try {
       const [statsRes, distRes, weeklyRes, monthlyRes, breakdownRes] = await Promise.all([
         apiClient.get('/gamification/stats'),
-        apiClient.get('/gamification/admin/points-distribution').catch(() => ({ data: { success: true, data: [] as DistributionEntry[] } })),
+        apiClient
+          .get('/gamification/admin/points-distribution')
+          .catch(() => ({ data: { success: true, data: [] as DistributionEntry[] } })),
         apiClient.get('/gamification/admin/points-report?period=weekly&limit=10'),
         apiClient.get('/gamification/admin/points-report?period=monthly&limit=10'),
         apiClient.get('/gamification/scoreboard/breakdown'),
@@ -66,7 +89,9 @@ export default function ScoreboardPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const reportData = period === 'weekly' ? weeklyReport : monthlyReport;
 
@@ -106,13 +131,18 @@ export default function ScoreboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Scoreboard Gamifikasi</h1>
-          <p className="text-sm text-gray-500 mt-1">Breakdown poin per modul dan peringkat anggota</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Breakdown poin per modul dan peringkat anggota
+          </p>
         </div>
         <button
           onClick={() => {
             const csv = [
               'Rank,Nama,Poin,Level,Events,Last Active',
-              ...reportData.map((e) => `${e.rank},"${e.namaLengkap}",${e.points},${e.level},${e.events},${e.lastActive}`),
+              ...reportData.map(
+                (e) =>
+                  `${e.rank},"${e.namaLengkap}",${e.points},${e.level},${e.events},${e.lastActive}`,
+              ),
             ].join('\n');
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -135,7 +165,12 @@ export default function ScoreboardPage() {
           <StatCard icon={Users} label="Peserta Aktif" value={stats.totalMembers} color="blue" />
           <StatCard icon={Zap} label="Total Poin" value={stats.totalPointsAwarded} color="yellow" />
           <StatCard icon={Award} label="Badge Diraih" value={stats.badgesAwarded} color="green" />
-          <StatCard icon={Activity} label="Total Aktivitas" value={stats.totalEvents} color="purple" />
+          <StatCard
+            icon={Activity}
+            label="Total Aktivitas"
+            value={stats.totalEvents}
+            color="purple"
+          />
         </div>
       )}
 
@@ -156,7 +191,7 @@ export default function ScoreboardPage() {
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
               />
               <Bar dataKey="points" radius={[6, 6, 0, 0]}>
-                  {breakdownData.map((entry, idx) => (
+                {breakdownData.map((entry, idx) => (
                   <Cell key={idx} fill={entry.color} />
                 ))}
               </Bar>
@@ -166,11 +201,15 @@ export default function ScoreboardPage() {
             {breakdownData.map((m) => (
               <div key={m.name} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.color }} />
-                <span>{m.name}: {m.percentage}%</span>
+                <span>
+                  {m.name}: {m.percentage}%
+                </span>
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-gray-400 text-center mt-2">* Data real dari seluruh event gamifikasi</p>
+          <p className="text-[10px] text-gray-400 text-center mt-2">
+            * Data real dari seluruh event gamifikasi
+          </p>
         </div>
 
         {/* Level Distribution — Pie Chart */}
@@ -258,75 +297,96 @@ export default function ScoreboardPage() {
             </button>
           </div>
         </div>
-        {reportData.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Rank</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase">Nama</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Poin</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Level</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Events</th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase">Aktivitas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {reportData.map((entry) => (
-                  <tr
-                    key={entry.rank}
-                    className={`hover:bg-blue-50 transition ${entry.rank <= 3 ? 'bg-yellow-50/30' : ''}`}
-                  >
-                    <td className="px-3 py-3">
-                      <span className="text-base font-bold text-gray-700">
-                        {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : `#${entry.rank}`}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="text-sm font-medium text-gray-900">{entry.namaLengkap}</span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                        <Zap size={12} />
-                        {entry.points.toLocaleString('id-ID')}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="text-sm text-gray-600">{entry.level}</span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="text-sm font-medium text-gray-700">{entry.events}</span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <span className="text-xs text-gray-400">
-                        {entry.lastActive
-                          ? new Date(entry.lastActive).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
-                          : '-'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
-            Belum ada data untuk periode ini
+
+        <DataTable
+          columns={[
+            {
+              key: 'rank',
+              label: 'Rank',
+              render: (e: PointsReportEntry) => (
+                <span className={`text-base font-bold ${e.rank <= 3 ? '' : 'text-gray-700'}`}>
+                  {e.rank <= 3 ? ['🥇', '🥈', '🥉'][e.rank - 1] : `#${e.rank}`}
+                </span>
+              ),
+            },
+            {
+              key: 'namaLengkap',
+              label: 'Nama',
+              render: (e: PointsReportEntry) => (
+                <span className="text-sm font-medium text-gray-900">{e.namaLengkap}</span>
+              ),
+            },
+            {
+              key: 'points',
+              label: 'Poin',
+              align: 'right' as const,
+              render: (e: PointsReportEntry) => (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                  <Zap size={12} />
+                  {e.points.toLocaleString('id-ID')}
+                </span>
+              ),
+            },
+            {
+              key: 'level',
+              label: 'Level',
+              align: 'right' as const,
+              render: (e: PointsReportEntry) => (
+                <span className="text-sm text-gray-600">{e.level}</span>
+              ),
+            },
+            {
+              key: 'events',
+              label: 'Events',
+              align: 'right' as const,
+              render: (e: PointsReportEntry) => (
+                <span className="text-sm font-medium text-gray-700">{e.events}</span>
+              ),
+            },
+            {
+              key: 'lastActive',
+              label: 'Aktivitas',
+              align: 'right' as const,
+              render: (e: PointsReportEntry) => (
+                <span className="text-xs text-gray-400">
+                  {e.lastActive
+                    ? new Date(e.lastActive).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                      })
+                    : '-'}
+                </span>
+              ),
+            },
+          ]}
+          data={reportData}
+          loading={false}
+          empty={{ icon: Trophy, message: 'Belum ada data untuk periode ini' }}
+          page={1}
+          totalPages={1}
+          total={reportData.length}
+          onPageChange={() => {}}
+        />
+
+        {reportData.length > 0 && (
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <ArrowUp size={14} className="text-green-500" />
+              <span>Poin tertinggi: {reportData[0]?.points.toLocaleString('id-ID') || 0}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <ArrowDown size={14} className="text-blue-500" />
+              <span>
+                Rata-rata:{' '}
+                {reportData.length > 0
+                  ? Math.round(
+                      reportData.reduce((s, e) => s + e.points, 0) / reportData.length,
+                    ).toLocaleString('id-ID')
+                  : 0}
+              </span>
+            </div>
           </div>
         )}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <ArrowUp size={14} className="text-green-500" />
-            <span>Poin tertinggi: {reportData[0]?.points.toLocaleString('id-ID') || 0}</span>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <ArrowDown size={14} className="text-blue-500" />
-            <span>Rata-rata: {reportData.length > 0
-              ? Math.round(reportData.reduce((s, e) => s + e.points, 0) / reportData.length).toLocaleString('id-ID')
-              : 0}
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Module Comparison Summary */}
@@ -338,7 +398,10 @@ export default function ScoreboardPage() {
           >
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-medium text-gray-500">{mod.name}</p>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${mod.color}15` }}>
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${mod.color}15` }}
+              >
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: mod.color }} />
               </div>
             </div>
@@ -375,9 +438,7 @@ function StatCard({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {value.toLocaleString('id-ID')}
-          </p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value.toLocaleString('id-ID')}</p>
         </div>
         <div className={`p-3 rounded-xl ring-1 ${s.ring} ${s.bg}`}>
           <Icon size={22} className={s.icon} />

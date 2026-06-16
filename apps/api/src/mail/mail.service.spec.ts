@@ -37,10 +37,7 @@ describe('MailService', () => {
     loggerSpy = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
     moduleRef = await Test.createTestingModule({
-      providers: [
-        MailService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [MailService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = moduleRef.get<MailService>(MailService);
@@ -114,9 +111,7 @@ describe('MailService', () => {
         }),
       );
       // Should NOT attempt to send via Resend
-      expect(loggerSpy.warn).not.toHaveBeenCalledWith(
-        expect.stringContaining('RESEND_API_KEY'),
-      );
+      expect(loggerSpy.warn).not.toHaveBeenCalledWith(expect.stringContaining('RESEND_API_KEY'));
     });
   });
 

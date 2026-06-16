@@ -3,11 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, FolderOpen,
-  Eye, Download,
-} from 'lucide-react';
+import { Plus, FolderOpen, Eye, Download } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -24,21 +22,29 @@ interface OrgDocumentRow {
 }
 
 export default function OrgDocumentsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
   const [categories, setCategories] = useState<{ id: string; nama: string }[]>([]);
-  const [filterCategory, setFilterCategory] = useState('');
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    hasActiveFilters,
+    getApiParams,
+    resetFilters,
+  } = useFilters({
+    filters: [{ key: 'kategoriId', defaultValue: '' }],
+  });
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<OrgDocumentRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filterCategory) params.kategoriId = filterCategory;
-      return apiClient.get('/org-documents', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch, filterCategory]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<OrgDocumentRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (filters.kategoriId) params.kategoriId = filters.kategoriId;
+    return apiClient.get('/org-documents', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, filters.kategoriId]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -49,7 +55,9 @@ export default function OrgDocumentsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -68,15 +76,14 @@ export default function OrgDocumentsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setFilterCategory(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari dokumen..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
-          value={filterCategory}
-          onChange={v => { setFilterCategory(v); setPage(1); }}
-          options={categories.map(c => ({ value: c.id, label: c.nama }))}
+          value={filters.kategoriId}
+          onChange={(v) => setFilter('kategoriId', v)}
+          options={categories.map((c) => ({ value: c.id, label: c.nama }))}
           placeholder="Semua Kategori"
         />
       </SearchBar>
@@ -93,7 +100,7 @@ export default function OrgDocumentsPage() {
         loading={loading}
         empty={{
           icon: FolderOpen,
-          ...buildEmptyMessage('dokumen organisasi', !!(search || filterCategory), () => { setSearch(''); setFilterCategory(''); setPage(1); }),
+          ...buildEmptyMessage('dokumen organisasi', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -101,7 +108,10 @@ export default function OrgDocumentsPage() {
         onPageChange={handlePageChange}
         colSpan={5}
         renderRow={(row: OrgDocumentRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{row.judul}</span>
             </td>

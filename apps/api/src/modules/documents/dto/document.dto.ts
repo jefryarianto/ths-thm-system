@@ -7,7 +7,9 @@ export class GenerateDocumentDto {
   @IsString()
   memberId: string;
 
-  @ApiProperty({ enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] })
+  @ApiProperty({
+    enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'],
+  })
   @IsString()
   type: string;
 
@@ -27,7 +29,9 @@ export class BatchGenerateDocumentDto {
   @IsArray()
   memberIds: string[];
 
-  @ApiProperty({ enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] })
+  @ApiProperty({
+    enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'],
+  })
   @IsString()
   type: string;
 

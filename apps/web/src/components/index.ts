@@ -10,6 +10,7 @@ export { default as Pagination } from './ui/pagination';
 export { default as TableSkeleton } from './ui/table-skeleton';
 export { default as EmptyState } from './ui/empty-state';
 export { default as SummaryBar } from './ui/summary-bar';
+export { StatCardSkeleton, StatCardGridSkeleton, ChartSkeleton } from './ui/skeletons';
 export { default as SearchBar } from './ui/search-bar';
 export { default as FilterSelect } from './ui/filter-select';
 export { default as DataTable } from './ui/data-table';

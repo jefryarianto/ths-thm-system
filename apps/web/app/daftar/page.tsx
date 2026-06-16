@@ -63,7 +63,8 @@ export default function DaftarPage() {
             Pendaftaran Berhasil!
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Data Anda telah kami terima. Tim admin akan memproses pendaftaran Anda dan menghubungi melalui nomor HP atau email yang didaftarkan.
+            Data Anda telah kami terima. Tim admin akan memproses pendaftaran Anda dan menghubungi
+            melalui nomor HP atau email yang didaftarkan.
           </p>
           <Link
             href="/login"
@@ -242,7 +243,10 @@ export default function DaftarPage() {
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
           Sudah punya akun?{' '}
-          <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+          <Link
+            href="/login"
+            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          >
             Masuk
           </Link>
         </p>

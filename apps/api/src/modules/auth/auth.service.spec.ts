@@ -95,9 +95,9 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
 
-      await expect(
-        service.login({ email: 'test@ths-thm.org', password: 'wrong' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login({ email: 'test@ths-thm.org', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -324,24 +324,36 @@ describe('AuthService', () => {
       expect(result.success).toBe(true);
       expect(result.message).toContain('reset password');
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'test@ths-thm.org', subject: expect.stringContaining('Reset') }),
+        expect.objectContaining({
+          to: 'test@ths-thm.org',
+          subject: expect.stringContaining('Reset'),
+        }),
       );
     });
   });
 
   describe('resetPassword', () => {
     it('should reset password with valid token', async () => {
-      mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', purpose: 'reset-password' });
+      mockJwt.verify.mockReturnValue({
+        sub: 'u1',
+        email: 'test@ths-thm.org',
+        purpose: 'reset-password',
+      });
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
-      const result = await service.resetPassword({ token: 'valid-token', newPassword: 'newpass123' });
+      const result = await service.resetPassword({
+        token: 'valid-token',
+        newPassword: 'newpass123',
+      });
       expect(result.success).toBe(true);
       expect(result.message).toContain('berhasil direset');
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
-      mockJwt.verify.mockImplementation(() => { throw new Error('invalid'); });
+      mockJwt.verify.mockImplementation(() => {
+        throw new Error('invalid');
+      });
 
       await expect(
         service.resetPassword({ token: 'bad-token', newPassword: 'newpass' }),
@@ -361,11 +373,13 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for invalid refresh token', async () => {
-      mockJwt.verify.mockImplementation(() => { throw new Error('invalid'); });
+      mockJwt.verify.mockImplementation(() => {
+        throw new Error('invalid');
+      });
 
-      await expect(
-        service.refreshToken({ refreshToken: 'invalid-rt' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshToken({ refreshToken: 'invalid-rt' })).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

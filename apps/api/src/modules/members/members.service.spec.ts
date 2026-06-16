@@ -5,7 +5,7 @@ import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
-import { MailService } from '../../mail/mail.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('MembersService', () => {
   let service: MembersService;
@@ -31,6 +31,7 @@ describe('MembersService', () => {
     buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
+    verifyResourceAccess: jest.fn().mockResolvedValue(undefined),
     verifyKegiatanScope: jest.fn(),
   };
 
@@ -39,13 +40,16 @@ describe('MembersService', () => {
     set: jest.fn(),
     del: jest.fn(),
     invalidatePrefix: jest.fn(),
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     clear: jest.fn(),
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
 
-  const mockMailService = {
-    sendMail: jest.fn().mockResolvedValue(true),
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -55,7 +59,7 @@ describe('MembersService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
-        { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -113,20 +117,29 @@ describe('MembersService', () => {
   describe('create', () => {
     it('should create a member and send welcome email', async () => {
       mockPrisma.anggota.count.mockResolvedValue(10);
-      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0011', email: 'budi@test.com', namaLengkap: 'Budi' });
+      mockPrisma.anggota.create.mockResolvedValue({
+        id: 'm1',
+        nomorAnggota: 'THS-2026-0011',
+        email: 'budi@test.com',
+        namaLengkap: 'Budi',
+      });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'budi@test.com',
+        namaLengkap: 'Budi',
+      });
       const result = await service.create({ namaLengkap: 'Budi' });
       expect(result.success).toBe(true);
       expect(result.data.nomorAnggota).toBe('THS-2026-0011');
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'budi@test.com' }));
+      expect(mockMemberMailService.sendToMember).toHaveBeenCalledTimes(1);
     });
 
     it('should not send welcome email when email is missing', async () => {
       mockPrisma.anggota.count.mockResolvedValue(10);
       mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0011' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({ email: null, namaLengkap: 'Budi' });
       const result = await service.create({ namaLengkap: 'Budi' });
       expect(result.success).toBe(true);
-      expect(mockMailService.sendMail).not.toHaveBeenCalled();
+      expect(mockMemberMailService.sendToMember).not.toHaveBeenCalled();
     });
   });
 
@@ -148,7 +161,9 @@ describe('MembersService', () => {
   describe('validate', () => {
     it('should return valid true when member is complete', async () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({
-        id: 'm1', namaLengkap: 'Budi', jenisKelamin: 'L',
+        id: 'm1',
+        namaLengkap: 'Budi',
+        jenisKelamin: 'L',
       });
       mockPrisma.anggota.update.mockResolvedValue({ id: 'm1' });
       const result = await service.validate('m1');

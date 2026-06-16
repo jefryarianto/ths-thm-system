@@ -3,6 +3,7 @@
 Dashboard admin THS-THM System Manajemen dengan role-based access control.
 
 ## Stack
+
 - **Framework**: Next.js 14+ (App Router)
 - **Styling**: Tailwind CSS
 - **Components**: shadcn/ui
@@ -51,15 +52,15 @@ src/
 
 ## Role-Based Menu
 
-| Role              | Menu yang Tampil                                              |
-| ----------------- | ------------------------------------------------------------- |
-| superadmin        | Semua menu                                                    |
-| admin_distrik     | Members, Candidates, Trainings, Graduations, Activities, Reports |
-| admin_wilayah     | Members, Candidates, Trainings, Reports                       |
-| admin_ranting     | Members, Candidates                                           |
-| admin_kegiatan    | Trainings, Graduations, Activities                            |
-| penguji           | Graduations (penilaian)                                       |
-| anggota           | Tidak ada akses dashboard web                                 |
+| Role           | Menu yang Tampil                                                 |
+| -------------- | ---------------------------------------------------------------- |
+| superadmin     | Semua menu                                                       |
+| admin_distrik  | Members, Candidates, Trainings, Graduations, Activities, Reports |
+| admin_wilayah  | Members, Candidates, Trainings, Reports                          |
+| admin_ranting  | Members, Candidates                                              |
+| admin_kegiatan | Trainings, Graduations, Activities                               |
+| penguji        | Graduations (penilaian)                                          |
+| anggota        | Tidak ada akses dashboard web                                    |
 
 ## Quick Start
 

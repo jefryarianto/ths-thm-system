@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  CreditCard, CheckCircle, Clock, ArrowUpRight,
-} from 'lucide-react';
+import { CreditCard, CheckCircle, Clock, ArrowUpRight } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -29,25 +28,33 @@ interface StatsData {
 }
 
 export default function PaymentsPage() {
-  const [stats, setStats] = useState<StatsData>({ totalCollected: 0, pendingCount: 0, paidCount: 0, totalDues: 0 });
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const [stats, setStats] = useState<StatsData>({
+    totalCollected: 0,
+    pendingCount: 0,
+    paidCount: 0,
+    totalDues: 0,
+  });
+  const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
+    useFilters();
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: dues, meta, loading, refetch } = usePaginatedList<DuesRecord>(
-    async () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      const [duesRes, statsRes] = await Promise.all([
-        apiClient.get('/dues', { params }),
-        apiClient.get('/dues/dashboard/stats'),
-      ]);
-      const { success, data: statsData } = statsRes.data;
-      if (success) setStats(statsData);
-      return duesRes.data;
-    },
-    [page, debouncedSearch]
-  );
+  const {
+    data: dues,
+    meta,
+    loading,
+    refetch,
+  } = usePaginatedList<DuesRecord>(async () => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    const [duesRes, statsRes] = await Promise.all([
+      apiClient.get('/dues', { params }),
+      apiClient.get('/dues/dashboard/stats'),
+    ]);
+    const { success, data: statsData } = statsRes.data;
+    if (success) setStats(statsData);
+    return duesRes.data;
+  }, [page, debouncedSearch]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -64,12 +71,39 @@ export default function PaymentsPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Terkumpul', value: formatRupiah(stats.totalCollected), icon: CreditCard, bg: 'bg-blue-100 dark:bg-blue-950', iconColor: 'text-blue-600 dark:text-blue-400' },
-          { label: 'Lunas', value: stats.paidCount, icon: CheckCircle, bg: 'bg-green-100 dark:bg-green-950', iconColor: 'text-green-600 dark:text-green-400' },
-          { label: 'Belum Lunas', value: stats.pendingCount, icon: Clock, bg: 'bg-yellow-100 dark:bg-yellow-950', iconColor: 'text-yellow-600 dark:text-yellow-400' },
-          { label: 'Total Iuran', value: stats.totalDues, icon: ArrowUpRight, bg: 'bg-purple-100 dark:bg-purple-950', iconColor: 'text-purple-600 dark:text-purple-400' },
+          {
+            label: 'Total Terkumpul',
+            value: formatRupiah(stats.totalCollected),
+            icon: CreditCard,
+            bg: 'bg-blue-100 dark:bg-blue-950',
+            iconColor: 'text-blue-600 dark:text-blue-400',
+          },
+          {
+            label: 'Lunas',
+            value: stats.paidCount,
+            icon: CheckCircle,
+            bg: 'bg-green-100 dark:bg-green-950',
+            iconColor: 'text-green-600 dark:text-green-400',
+          },
+          {
+            label: 'Belum Lunas',
+            value: stats.pendingCount,
+            icon: Clock,
+            bg: 'bg-yellow-100 dark:bg-yellow-950',
+            iconColor: 'text-yellow-600 dark:text-yellow-400',
+          },
+          {
+            label: 'Total Iuran',
+            value: stats.totalDues,
+            icon: ArrowUpRight,
+            bg: 'bg-purple-100 dark:bg-purple-950',
+            iconColor: 'text-purple-600 dark:text-purple-400',
+          },
         ].map((s) => (
-          <div key={s.label} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div
+            key={s.label}
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+          >
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-lg ${s.bg}`}>
                 <s.icon size={20} className={s.iconColor} />
@@ -86,10 +120,9 @@ export default function PaymentsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari pembayaran (nama, no. anggota)..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       />
 
       <DataTable
@@ -104,7 +137,7 @@ export default function PaymentsPage() {
         loading={loading}
         empty={{
           icon: CreditCard,
-          ...buildEmptyMessage('data pembayaran', !!search, () => { setSearch(''); setPage(1); }),
+          ...buildEmptyMessage('data pembayaran', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -112,10 +145,19 @@ export default function PaymentsPage() {
         onPageChange={handlePageChange}
         colSpan={5}
         renderRow={(due: DuesRecord) => (
-          <tr key={due.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{due.anggota?.namaLengkap || '-'}</td>
-            <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 hidden sm:table-cell">{due.anggota?.nomorAnggota || '-'}</td>
-            <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">{formatRupiah(due.jumlah)}</td>
+          <tr
+            key={due.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
+            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+              {due.anggota?.namaLengkap || '-'}
+            </td>
+            <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+              {due.anggota?.nomorAnggota || '-'}
+            </td>
+            <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
+              {formatRupiah(due.jumlah)}
+            </td>
             <td className="px-4 py-3">
               {due.status === 'lunas' ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">

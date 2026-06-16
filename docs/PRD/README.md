@@ -21,6 +21,7 @@
 17. **CSV Import** — Anggota, calon, aspek, penilaian; data tidak lengkap → notifikasi
 
 ## Non-Functional Requirements
+
 - Role-based menu di frontend (conditional rendering)
 - Multi-level data scoping (distrik → wilayah → ranting)
 - QR validation untuk dokumen fisik

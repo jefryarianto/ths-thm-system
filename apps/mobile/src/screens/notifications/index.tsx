@@ -15,14 +15,18 @@ export default function NotificationsScreen() {
     try {
       await apiClient.patch('/notifications/read-all');
       refetch();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const markAsRead = async (id: string) => {
     try {
       await apiClient.patch(`/notifications/${id}/read`);
       refetch();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   if (loading) return <LoadingView message="Memuat notifikasi..." />;
@@ -44,7 +48,11 @@ export default function NotificationsScreen() {
         contentContainerStyle={{ padding: 16 }}
         refreshing={refreshing}
         onRefresh={onRefresh}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', color: '#6b7280', marginTop: 40 }}>Belum ada notifikasi</Text>}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center', color: '#6b7280', marginTop: 40 }}>
+            Belum ada notifikasi
+          </Text>
+        }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.card, !item.isRead && styles.unread]}
@@ -53,7 +61,9 @@ export default function NotificationsScreen() {
             <Text style={styles.icon}>{TYPE_ICONS[item.tipe] || '📢'}</Text>
             <View style={styles.content}>
               <Text style={styles.title}>{item.judul}</Text>
-              <Text style={styles.body} numberOfLines={2}>{item.isi}</Text>
+              <Text style={styles.body} numberOfLines={2}>
+                {item.isi}
+              </Text>
               <Text style={styles.time}>{formatTime(item.createdAt)}</Text>
             </View>
             {!item.isRead && <View style={styles.dot} />}
@@ -67,16 +77,29 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
   markAllRead: { fontSize: 13, color: '#2563eb', fontWeight: '500' },
   card: {
-    flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff',
-    borderRadius: 12, padding: 14, marginBottom: 8,
-    shadowColor: '#000', shadowOpacity: 0.02, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
   },
   unread: { borderLeftWidth: 3, borderLeftColor: '#2563eb' },
   icon: { fontSize: 24, marginRight: 12, marginTop: 2 },
@@ -84,5 +107,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 14, fontWeight: '600', color: '#111827' },
   body: { fontSize: 13, color: '#6b7280', marginTop: 4, lineHeight: 18 },
   time: { fontSize: 11, color: '#9ca3af', marginTop: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2563eb', marginTop: 6, marginLeft: 8 },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#2563eb',
+    marginTop: 6,
+    marginLeft: 8,
+  },
 });

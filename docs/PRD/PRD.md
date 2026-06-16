@@ -1,7 +1,9 @@
 # Product Requirements Document (PRD) - THS-THM System Manajemen
 
 ## Latar Belakang
+
 Organisasi THS-THM memerlukan sistem manajemen terpusat untuk:
+
 - Data anggota dan calon anggota
 - Kegiatan, latihan, dan pendadaran
 - Dokumen resmi, sertifikat, piagam, kartu anggota
@@ -10,6 +12,7 @@ Organisasi THS-THM memerlukan sistem manajemen terpusat untuk:
 - Notifikasi dan workflow validasi
 
 ## Tujuan Produk
+
 - Mengelola data anggota secara akurat
 - Mempermudah administrasi kegiatan dan dokumen
 - Menyediakan akses role-based untuk admin, penguji, anggota
@@ -17,6 +20,7 @@ Organisasi THS-THM memerlukan sistem manajemen terpusat untuk:
 - Mendukung import CSV dan template dokumen `.jsx`
 
 ## Modul Utama
+
 1. **Anggota & Calon Anggota**
    - CRUD, update request, validasi admin
 2. **Klaim & Pendaftaran Baru**
@@ -39,6 +43,7 @@ Organisasi THS-THM memerlukan sistem manajemen terpusat untuk:
     - Superadmin, admin distrik/wilayah/ranting, admin kegiatan, penguji, anggota
 
 ## Fitur Prioritas
+
 - Must have:
   - CRUD anggota
   - Import CSV
@@ -55,6 +60,7 @@ Organisasi THS-THM memerlukan sistem manajemen terpusat untuk:
   - AI automation (tidak perlu)
 
 ## Alur Data
+
 1. Import CSV anggota lama
 2. Anggota dengan data incomplete mendapat notifikasi
 3. Anggota update data → status pending
@@ -62,16 +68,19 @@ Organisasi THS-THM memerlukan sistem manajemen terpusat untuk:
 5. Nomor anggota & dokumen diterbitkan
 
 ## Alur Pendadaran & Ujian
+
 1. Admin buat kegiatan pendadaran
 2. Penguji input nilai untuk calon anggota
 3. Admin validasi nilai
 4. Sertifikat/piagam diterbitkan, anggota mendapatkan nomor anggota
 
 ## Template Dokumen & CSV
+
 - Template dokumen `.jsx` untuk kartu anggota, sertifikat, piagam
 - Template CSV untuk import anggota, calon anggota, aspek & item penilaian
 
 ## Deployment
+
 - Lokal: pnpm install, prisma migrate, run backend/web/mobile
 - Production: Render Web Service / Static Site
 - PostgreSQL production

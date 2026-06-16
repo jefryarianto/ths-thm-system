@@ -6,7 +6,9 @@ import { useAuthStore, AuthState } from '../src/store/auth-store';
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
 
-  useEffect(() => { loadUser(); }, []);
+  useEffect(() => {
+    loadUser();
+  }, []);
 
   return (
     <>

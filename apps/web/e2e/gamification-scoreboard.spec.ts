@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { mockAuth } from './helpers';
 
 test.describe('Gamification Scoreboard Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to scoreboard page
+    await mockAuth(page, { mockGamification: true });
     await page.goto('/gamification/scoreboard');
   });
 
@@ -16,8 +17,8 @@ test.describe('Gamification Scoreboard Page', () => {
     await expect(page.locator('text=Badge Diraih')).toBeVisible();
     await expect(page.locator('text=Total Aktivitas')).toBeVisible();
 
-    // Check breakdown chart title
-    await expect(page.locator('text=Breakdown Poin per Modul')).toBeVisible();
+    // Check breakdown chart title (use first() to avoid strict mode with multiple matches)
+    await expect(page.locator('text=Breakdown Poin per Modul').first()).toBeVisible();
   });
 
   test('should show module breakdown chart with real data', async ({ page }) => {
@@ -39,7 +40,7 @@ test.describe('Gamification Scoreboard Page', () => {
     await expect(page.locator('text=Distribusi Level')).toBeVisible();
 
     // Level badges should be present (Bronze, Silver, etc.)
-    await expect(page.locator('text=Bronze').or(page.locator('text=Silver'))).toBeVisible();
+    await expect(page.locator('text=Bronze').first()).toBeVisible();
   });
 
   test('should show top earners table with period toggle', async ({ page }) => {

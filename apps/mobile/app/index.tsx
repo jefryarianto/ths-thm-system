@@ -8,11 +8,22 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111827' }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#111827',
+        }}
+      >
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
 
-  return isAuthenticated ? <Redirect href={"/(tabs)/home" as any} /> : <Redirect href={"/login" as any} />;
+  return isAuthenticated ? (
+    <Redirect href={'/(tabs)/home' as any} />
+  ) : (
+    <Redirect href={'/login' as any} />
+  );
 }

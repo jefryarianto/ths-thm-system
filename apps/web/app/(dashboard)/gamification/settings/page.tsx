@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
-import { Settings, Save, AlertCircle, RefreshCw } from 'lucide-react';
+import { Save, AlertCircle, Settings } from 'lucide-react';
+import PageContainer from '@/components/ui/page-container';
+import PageHeader from '@/components/ui/page-header';
 
 export default function GamificationSettingsPage() {
   const [config, setConfig] = useState<Record<string, unknown>>({});
@@ -44,26 +46,43 @@ export default function GamificationSettingsPage() {
     }
   };
 
-  const detectType = (value: unknown): { type: 'string' | 'number' | 'boolean' | 'json'; parsed: unknown } => {
+  const detectType = (
+    value: unknown,
+  ): { type: 'string' | 'number' | 'boolean' | 'json'; parsed: unknown } => {
     if (value === null || value === undefined) return { type: 'string', parsed: '' };
     const str = String(value);
     // Try number
-    if (/^-?\d+(\.\d+)?$/.test(str) && !isNaN(Number(str))) return { type: 'number', parsed: Number(str) };
+    if (/^-?\d+(\.\d+)?$/.test(str) && !isNaN(Number(str)))
+      return { type: 'number', parsed: Number(str) };
     // Try boolean
     if (str === 'true') return { type: 'boolean', parsed: true };
     if (str === 'false') return { type: 'boolean', parsed: false };
     // Try JSON object/array
     if ((str.startsWith('{') && str.endsWith('}')) || (str.startsWith('[') && str.endsWith(']'))) {
-      try { return { type: 'json', parsed: JSON.parse(str) }; } catch { /* fall through */ }
+      try {
+        return { type: 'json', parsed: JSON.parse(str) };
+      } catch {
+        /* fall through */
+      }
     }
     return { type: 'string', parsed: str };
   };
 
-  const handleChange = (key: string, rawValue: string, detectedType: 'string' | 'number' | 'boolean' | 'json') => {
+  const handleChange = (
+    key: string,
+    rawValue: string,
+    detectedType: 'string' | 'number' | 'boolean' | 'json',
+  ) => {
     let parsed: unknown = rawValue;
     if (detectedType === 'number') parsed = rawValue === '' ? '' : Number(rawValue);
     else if (detectedType === 'boolean') parsed = rawValue === 'true';
-    else if (detectedType === 'json') { try { parsed = JSON.parse(rawValue); } catch { parsed = rawValue; } }
+    else if (detectedType === 'json') {
+      try {
+        parsed = JSON.parse(rawValue);
+      } catch {
+        parsed = rawValue;
+      }
+    }
     setConfig((prev) => ({ ...prev, [key]: parsed }));
   };
 
@@ -81,40 +100,21 @@ export default function GamificationSettingsPage() {
   const configKeys = Object.keys(config);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-blue-50">
-            <Settings size={22} className="text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Pengaturan Gamifikasi</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Konfigurasi poin, level, dan badge</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchConfig}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
-          >
-            <RefreshCw size={14} />
-            Refresh
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition shadow-sm"
-          >
-            {saving ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-            ) : (
-              <Save size={14} />
-            )}
-            Simpan
-          </button>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader title="Pengaturan Gamifikasi" onRefresh={fetchConfig}>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition shadow-sm"
+        >
+          {saving ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+          ) : (
+            <Save size={14} />
+          )}
+          Simpan
+        </button>
+      </PageHeader>
 
       {/* Messages */}
       {error && (
@@ -134,7 +134,8 @@ export default function GamificationSettingsPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         <div className="mb-4">
           <p className="text-sm text-gray-500">
-            Kelola pengaturan gamifikasi. Nilai-nilai ini akan digunakan oleh sistem untuk menghitung poin, level, dan badge.
+            Kelola pengaturan gamifikasi. Nilai-nilai ini akan digunakan oleh sistem untuk
+            menghitung poin, level, dan badge.
           </p>
         </div>
 
@@ -144,7 +145,10 @@ export default function GamificationSettingsPage() {
               const detected = detectType(config[key]);
               const strValue = String(config[key] ?? '');
               return (
-                <div key={key} className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition bg-gray-50/30">
+                <div
+                  key={key}
+                  className="flex items-start gap-4 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition bg-gray-50/30"
+                >
                   <div className="flex-1 min-w-0">
                     <label className="block text-sm font-medium text-gray-700 mb-1.5 capitalize">
                       {key.replace(/_/g, ' ')}
@@ -152,7 +156,9 @@ export default function GamificationSettingsPage() {
                     {detected.type === 'boolean' ? (
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => handleChange(key, config[key] === true ? 'false' : 'true', 'boolean')}
+                          onClick={() =>
+                            handleChange(key, config[key] === true ? 'false' : 'true', 'boolean')
+                          }
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                             config[key] === true ? 'bg-blue-600' : 'bg-gray-300'
                           }`}
@@ -163,7 +169,9 @@ export default function GamificationSettingsPage() {
                             }`}
                           />
                         </button>
-                        <span className={`text-sm font-medium ${config[key] === true ? 'text-green-600' : 'text-gray-400'}`}>
+                        <span
+                          className={`text-sm font-medium ${config[key] === true ? 'text-green-600' : 'text-gray-400'}`}
+                        >
                           {config[key] === true ? 'Aktif' : 'Nonaktif'}
                         </span>
                       </div>
@@ -199,14 +207,19 @@ export default function GamificationSettingsPage() {
           <div className="flex flex-col items-center justify-center py-16 text-gray-400">
             <Settings size={40} className="mb-3 opacity-50" />
             <p className="text-sm font-medium">Belum ada pengaturan</p>
-            <p className="text-xs mt-1">Pengaturan gamifikasi akan muncul di sini setelah ditambahkan melalui API atau database.</p>
+            <p className="text-xs mt-1">
+              Pengaturan gamifikasi akan muncul di sini setelah ditambahkan melalui API atau
+              database.
+            </p>
           </div>
         )}
       </div>
 
       {/* Info Card */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-5">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">💡 Tentang Pengaturan Gamifikasi</h3>
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">
+          💡 Tentang Pengaturan Gamifikasi
+        </h3>
         <ul className="text-xs text-blue-700 space-y-1.5 list-disc list-inside">
           <li>Setiap perubahan akan langsung diterapkan pada sistem gamifikasi</li>
           <li>Gunakan format yang sesuai dengan tipe data (angka, teks, atau JSON)</li>
@@ -214,6 +227,6 @@ export default function GamificationSettingsPage() {
           <li>Beberapa pengaturan mungkin memerlukan refresh halaman untuk efek penuh</li>
         </ul>
       </div>
-    </div>
+    </PageContainer>
   );
 }

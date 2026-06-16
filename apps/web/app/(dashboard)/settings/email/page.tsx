@@ -2,8 +2,17 @@
 
 import { useState } from 'react';
 import {
-  Mail, Send, FileText, History, BarChart3, Ban,
-  CheckCircle2, XCircle, Server, AlertCircle, Info,
+  Mail,
+  Send,
+  FileText,
+  History,
+  BarChart3,
+  Ban,
+  CheckCircle2,
+  XCircle,
+  Server,
+  AlertCircle,
+  Info,
 } from 'lucide-react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
@@ -19,7 +28,11 @@ type TabId = 'test' | 'templates' | 'logs' | 'report' | 'suppressed';
 
 const TABS: Array<{ id: TabId; label: string; icon: typeof Send }> = [
   { id: 'test', label: 'Test Email', icon: Send },
-  { id: 'templates', label: `Template (${EMAIL_TEMPLATES.reduce((c, g) => c + g.items.length, 0)})`, icon: FileText },
+  {
+    id: 'templates',
+    label: `Template (${EMAIL_TEMPLATES.reduce((c, g) => c + g.items.length, 0)})`,
+    icon: FileText,
+  },
   { id: 'logs', label: 'Riwayat', icon: History },
   { id: 'report', label: 'Laporan', icon: BarChart3 },
   { id: 'suppressed', label: 'Supresi', icon: Ban },
@@ -29,7 +42,7 @@ export default function EmailSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('test');
 
   const { data: mailStatus, loading: statusLoading } = useApi<MailStatus>(
-    () => apiClient.get('/mail/status').then(r => unwrap<MailStatus>(r)),
+    () => apiClient.get('/mail/status').then((r) => unwrap<MailStatus>(r)),
     [],
     true,
   );
@@ -53,7 +66,10 @@ export default function EmailSettingsPage() {
       {statusLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 animate-pulse">
+            <div
+              key={i}
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 animate-pulse"
+            >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
                 <div className="flex-1">
@@ -67,10 +83,14 @@ export default function EmailSettingsPage() {
       ) : mailStatus ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${mailStatus.mode === 'development' ? 'bg-yellow-50 dark:bg-yellow-950' : 'bg-blue-50 dark:bg-blue-950'}`}>
-              {mailStatus.mode === 'development'
-                ? <Server size={18} className="text-yellow-600 dark:text-yellow-400" />
-                : <CheckCircle2 size={18} className="text-blue-600 dark:text-blue-400" />}
+            <div
+              className={`p-2.5 rounded-lg ${mailStatus.mode === 'development' ? 'bg-yellow-50 dark:bg-yellow-950' : 'bg-blue-50 dark:bg-blue-950'}`}
+            >
+              {mailStatus.mode === 'development' ? (
+                <Server size={18} className="text-yellow-600 dark:text-yellow-400" />
+              ) : (
+                <CheckCircle2 size={18} className="text-blue-600 dark:text-blue-400" />
+              )}
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Mode</p>
@@ -80,30 +100,48 @@ export default function EmailSettingsPage() {
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${mailStatus.resend.configured ? 'bg-green-50 dark:bg-green-950' : 'bg-gray-100 dark:bg-gray-700'}`}>
-              {mailStatus.resend.configured ? <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" /> : <XCircle size={18} className="text-gray-400" />}
+            <div
+              className={`p-2.5 rounded-lg ${mailStatus.resend.configured ? 'bg-green-50 dark:bg-green-950' : 'bg-gray-100 dark:bg-gray-700'}`}
+            >
+              {mailStatus.resend.configured ? (
+                <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+              ) : (
+                <XCircle size={18} className="text-gray-400" />
+              )}
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Resend API</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{mailStatus.resend.configured ? 'Terkonfigurasi' : 'Belum dikonfigurasi'}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">
+                {mailStatus.resend.configured ? 'Terkonfigurasi' : 'Belum dikonfigurasi'}
+              </p>
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 {mailStatus.resend.hasApiKey && mailStatus.resend.hasDomain
                   ? '✅ API Key + Domain siap'
                   : mailStatus.resend.hasApiKey
-                  ? '⚠️ Domain belum diatur'
-                  : 'Butuh RESEND_API_KEY + RESEND_DOMAIN'}
+                    ? '⚠️ Domain belum diatur'
+                    : 'Butuh RESEND_API_KEY + RESEND_DOMAIN'}
               </p>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
-            <div className={`p-2.5 rounded-lg ${mailStatus.smtp.configured ? 'bg-green-50 dark:bg-green-950' : 'bg-gray-100 dark:bg-gray-700'}`}>
-              {mailStatus.smtp.configured ? <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" /> : <XCircle size={18} className="text-gray-400" />}
+            <div
+              className={`p-2.5 rounded-lg ${mailStatus.smtp.configured ? 'bg-green-50 dark:bg-green-950' : 'bg-gray-100 dark:bg-gray-700'}`}
+            >
+              {mailStatus.smtp.configured ? (
+                <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+              ) : (
+                <XCircle size={18} className="text-gray-400" />
+              )}
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">SMTP Fallback</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{mailStatus.smtp.configured ? 'Terkonfigurasi' : 'Belum dikonfigurasi'}</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">
+                {mailStatus.smtp.configured ? 'Terkonfigurasi' : 'Belum dikonfigurasi'}
+              </p>
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                {mailStatus.smtp.configured ? `${mailStatus.smtp.host}:${mailStatus.smtp.port}` : 'Butuh SMTP_USER + SMTP_PASS'}
+                {mailStatus.smtp.configured
+                  ? `${mailStatus.smtp.host}:${mailStatus.smtp.port}`
+                  : 'Butuh SMTP_USER + SMTP_PASS'}
               </p>
             </div>
           </div>

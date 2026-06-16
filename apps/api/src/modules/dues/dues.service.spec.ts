@@ -2,11 +2,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { DuesService } from './dues.service';
-import { MailService } from '../../mail/mail.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('DuesService', () => {
   let service: DuesService;
@@ -41,7 +41,9 @@ describe('DuesService', () => {
     set: jest.fn(),
     del: jest.fn(),
     invalidatePrefix: jest.fn(),
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     clear: jest.fn(),
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
@@ -51,8 +53,9 @@ describe('DuesService', () => {
     recordDuesPayment: jest.fn().mockResolvedValue({ profile: { points: 20 }, newBadges: [] }),
   };
 
-  const mockMailService = {
-    sendMail: jest.fn().mockResolvedValue(true),
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -63,7 +66,7 @@ describe('DuesService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
         { provide: GamificationService, useValue: mockGamification },
-        { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -98,19 +101,21 @@ describe('DuesService', () => {
 
   describe('create', () => {
     it('should create a due record and send payment email', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'anggota@test.com', namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'anggota@test.com',
+        namaLengkap: 'Budi',
+      });
       mockPrisma.iuran.create.mockResolvedValue({ id: 'd1', jumlah: 100000 });
       const result = await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' });
       expect(result.success).toBe(true);
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anggota@test.com' }));
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
     it('should not send email when member has no email', async () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({ email: null, namaLengkap: 'Budi' });
       mockPrisma.iuran.create.mockResolvedValue({ id: 'd1', jumlah: 100000 });
       await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' });
-      expect(mockMailService.sendMail).not.toHaveBeenCalled();
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -194,7 +199,9 @@ describe('DuesService', () => {
 
     it('should count failures on error', async () => {
       mockPrisma.iuran.create.mockRejectedValue(new Error('DB error'));
-      const result = await service.importDues([{ anggota_id: 'a1', periode: '2026-01', jumlah: '100000' }]);
+      const result = await service.importDues([
+        { anggota_id: 'a1', periode: '2026-01', jumlah: '100000' },
+      ]);
       expect(result.data.imported).toBe(0);
       expect(result.data.failed).toBe(1);
     });
@@ -203,7 +210,11 @@ describe('DuesService', () => {
   describe('batchPayment', () => {
     it('should process batch payment', async () => {
       mockPrisma.iuran.create.mockResolvedValue({ id: 'd1' });
-      const result = await service.batchPayment({ memberIds: ['a1', 'a2'], periode: '2026-01', jumlah: 100000 });
+      const result = await service.batchPayment({
+        memberIds: ['a1', 'a2'],
+        periode: '2026-01',
+        jumlah: 100000,
+      });
       expect(result.success).toBe(true);
       expect(mockPrisma.iuran.create).toHaveBeenCalledTimes(2);
     });

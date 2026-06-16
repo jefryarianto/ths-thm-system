@@ -19,8 +19,9 @@ export default function PublicLeaderboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiClient.get('/gamification/public/leaderboard?limit=50')
-      .then(res => setLeaderboard(unwrap<LeaderboardEntry[]>(res) || []))
+    apiClient
+      .get('/gamification/public/leaderboard?limit=50')
+      .then((res) => setLeaderboard(unwrap<LeaderboardEntry[]>(res) || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -54,8 +55,13 @@ export default function PublicLeaderboardPage() {
                       <p className="text-sm font-semibold text-gray-900 max-w-[100px] truncate">
                         {leaderboard[1].namaLengkap || 'Member'}
                       </p>
-                      <p className="text-xs text-yellow-600 font-bold">{leaderboard[1].points.toLocaleString('id-ID')} pts</p>
-                      <div className="w-16 h-16 bg-gray-200 rounded-t-lg mt-2 mx-auto" style={{ height: 60 }} />
+                      <p className="text-xs text-yellow-600 font-bold">
+                        {leaderboard[1].points.toLocaleString('id-ID')} pts
+                      </p>
+                      <div
+                        className="w-16 h-16 bg-gray-200 rounded-t-lg mt-2 mx-auto"
+                        style={{ height: 60 }}
+                      />
                     </div>
                   )}
                   {leaderboard[0] && (
@@ -64,8 +70,13 @@ export default function PublicLeaderboardPage() {
                       <p className="text-sm font-bold text-gray-900 max-w-[100px] truncate">
                         {leaderboard[0].namaLengkap || 'Member'}
                       </p>
-                      <p className="text-sm text-yellow-600 font-bold">{leaderboard[0].points.toLocaleString('id-ID')} pts</p>
-                      <div className="w-20 h-20 bg-yellow-100 rounded-t-lg mt-2 mx-auto" style={{ height: 80 }} />
+                      <p className="text-sm text-yellow-600 font-bold">
+                        {leaderboard[0].points.toLocaleString('id-ID')} pts
+                      </p>
+                      <div
+                        className="w-20 h-20 bg-yellow-100 rounded-t-lg mt-2 mx-auto"
+                        style={{ height: 80 }}
+                      />
                     </div>
                   )}
                   {leaderboard[2] && (
@@ -74,8 +85,13 @@ export default function PublicLeaderboardPage() {
                       <p className="text-sm font-semibold text-gray-900 max-w-[100px] truncate">
                         {leaderboard[2].namaLengkap || 'Member'}
                       </p>
-                      <p className="text-xs text-yellow-600 font-bold">{leaderboard[2].points.toLocaleString('id-ID')} pts</p>
-                      <div className="w-16 h-16 bg-orange-100 rounded-t-lg mt-2 mx-auto" style={{ height: 40 }} />
+                      <p className="text-xs text-yellow-600 font-bold">
+                        {leaderboard[2].points.toLocaleString('id-ID')} pts
+                      </p>
+                      <div
+                        className="w-16 h-16 bg-orange-100 rounded-t-lg mt-2 mx-auto"
+                        style={{ height: 40 }}
+                      />
                     </div>
                   )}
                 </div>
@@ -94,7 +110,9 @@ export default function PublicLeaderboardPage() {
                       <span className="text-lg">{RANK_ICONS[entry.rank] || `#${entry.rank}`}</span>
                     </div>
                     <div className="flex-1 ml-3">
-                      <p className="text-sm font-medium text-gray-900">{entry.namaLengkap || 'Anonymous'}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {entry.namaLengkap || 'Anonymous'}
+                      </p>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="flex items-center gap-1 text-xs text-blue-600">
                           <Flame size={10} /> {entry.streaks.latihan}

@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MailService } from '../../mail/mail.service';
 import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class CandidatesService {
@@ -17,45 +18,36 @@ export class CandidatesService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
-    private readonly mailService: MailService,
+    private readonly memberMailService: MemberMailService,
   ) {}
 
   async findAll(filter: CandidateFilterDto, scope?: UserScope) {
-    const page = filter.page || 1;
-    const limit = filter.limit || 10;
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${page}:${limit}:${filter.search || ''}:${filter.rantingId || ''}:${filter.status || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.status || ''}`;
 
-    return this.cache.getOrSet(cacheKey, async () => {
-      const skip = (page - 1) * limit;
-      const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
-      const where: any = { ...scopeFilter };
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+        const where: any = { ...scopeFilter };
 
-      if (filter.search) {
-        where.OR = [
-          { namaLengkap: { contains: filter.search } },
-          { email: { contains: filter.search } },
-        ];
-      }
-      if (filter.rantingId) where.rantingId = filter.rantingId;
-      if (filter.status) where.status = filter.status;
+        if (filter.search) {
+          where.OR = [
+            { namaLengkap: { contains: filter.search } },
+            { email: { contains: filter.search } },
+          ];
+        }
+        if (filter.rantingId) where.rantingId = filter.rantingId;
+        if (filter.status) where.status = filter.status;
 
-      const [data, total] = await Promise.all([
-        this.prisma.calonAnggota.findMany({
-          where,
-          skip,
-          take: limit,
-          include: { ranting: true },
+        return paginate(this.prisma.calonAnggota, where, {
+          page: filter.page,
+          limit: filter.limit,
           orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.calonAnggota.count({ where }),
-      ]);
-
-      return {
-        success: true,
-        data,
-        meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      };
-    }, this.CACHE_TTL);
+          include: { ranting: true },
+        });
+      },
+      this.CACHE_TTL,
+    );
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -66,14 +58,17 @@ export class CandidatesService {
 
     if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
 
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
     return { success: true, data: candidate };
   }
 
-  async create(dto: CreateCandidateDto, scope?: UserScope) {
+  async create(dto: CreateCandidateDto, scope?: UserScope, userId?: string) {
     if (scope?.rantingId && !dto.rantingId) {
       (dto as any).rantingId = scope.rantingId;
     }
@@ -87,7 +82,7 @@ export class CandidatesService {
         noHp: dto.noHp,
         email: dto.email,
         rantingId: dto.rantingId,
-        usulOlehUserId: dto.usulOlehId,
+        usulOlehUserId: userId || dto.usulOlehId,
         status: 'diusulkan',
       } as never,
     });
@@ -97,13 +92,14 @@ export class CandidatesService {
   }
 
   async update(id: string, dto: UpdateCandidateDto, scope?: UserScope) {
-    if (scope) {
-      const candidate = await this.prisma.calonAnggota.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
+    await this.scopeHelper.verifyResourceAccess(
+      this.prisma,
+      scope,
+      id,
+      (prisma, rid) =>
+        prisma.calonAnggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+      'Calon anggota tidak ditemukan',
+    );
 
     const updated = await this.prisma.calonAnggota.update({
       where: { id },
@@ -115,13 +111,14 @@ export class CandidatesService {
   }
 
   async remove(id: string, scope?: UserScope) {
-    if (scope) {
-      const candidate = await this.prisma.calonAnggota.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
+    await this.scopeHelper.verifyResourceAccess(
+      this.prisma,
+      scope,
+      id,
+      (prisma, rid) =>
+        prisma.calonAnggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+      'Calon anggota tidak ditemukan',
+    );
 
     await this.prisma.calonAnggota.delete({ where: { id } });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -192,8 +189,12 @@ export class CandidatesService {
 
     // Send welcome email if email address is provided
     if (candidate.email) {
-      this.sendApprovedEmail(candidate.namaLengkap, candidate.email, member.nomorAnggota).catch((err) =>
-        this.logger.error(`Approval email failed for ${candidate.email}: ${err.message}`),
+      this.memberMailService.sendToMemberWithArgs(
+        member.id,
+        approvedMemberEmail,
+        [member.nomorAnggota],
+        { template: 'approvedMemberEmail', email: candidate.email },
+        'candidates',
       );
     }
 
@@ -214,23 +215,17 @@ export class CandidatesService {
 
     // Send rejection email if email address is provided
     if (candidate.email) {
-      this.sendRejectedEmail(candidate.namaLengkap, candidate.email, reason).catch((err) =>
-        this.logger.error(`Rejection email failed for ${candidate.email}: ${err.message}`),
+      this.memberMailService.sendToMemberWithArgs(
+        candidate.id,
+        candidateRejectedEmail,
+        [reason],
+        { template: 'candidateRejectedEmail', email: candidate.email },
+        'candidates',
       );
     }
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, message: reason || 'Calon anggota ditolak' };
-  }
-
-  private async sendApprovedEmail(nama: string, email: string, nomorAnggota: string): Promise<void> {
-    const tpl = approvedMemberEmail(nama, nomorAnggota);
-    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'candidates', template: 'approvedMemberEmail', email } });
-  }
-
-  private async sendRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
-    const tpl = candidateRejectedEmail(nama, reason);
-    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'candidates', template: 'candidateRejectedEmail', email } });
   }
 
   async exportCsv(filter: CandidateFilterDto) {

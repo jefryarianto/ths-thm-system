@@ -1,7 +1,9 @@
 # DFD — Data Flow Diagram
 
 ## Level 0 (Context Diagram)
+
 Sistem THS-THM menerima input dari 6 external entity:
+
 - **Superadmin** — Akses penuh semua modul
 - **Admin (Distrik/Wilayah/Ranting)** — Kelola data sesuai scope
 - **Admin Kegiatan** — Kelola latihan, pendadaran, kegiatan
@@ -10,6 +12,7 @@ Sistem THS-THM menerima input dari 6 external entity:
 - **System** — Trigger otomatis (notifikasi, reminder)
 
 ## Level 1 (Proses Utama)
+
 1. **Auth Process** — Login, register, RBAC (7 roles)
 2. **Member & Candidate Management** — CRUD + validasi + approval + import CSV
 3. **Claim & Registration Management** — Klaim anggota, pendaftaran baru
@@ -23,14 +26,14 @@ Sistem THS-THM menerima input dari 6 external entity:
 
 ## Level 2 (Detail Proses)
 
-| File                                              | Proses                             |
-| ------------------------------------------------- | ---------------------------------- |
-| `DFD_Level2_Anggota_Calon_THSTM.puml`             | Manajemen Anggota & Calon Anggota  |
-| `DFD_Level2_Latihan_Kegiatan_THSTM.puml`          | Latihan & Kegiatan                 |
-| `DFD_Level2_Pendadaran_THSTM.puml`                | Pendadaran & Ujian Praktek         |
-| `DFD_Level2_Generate_Dokumen_THSTM.puml`          | Generate Dokumen (Sertifikat, Piagam, Kartu) |
-| `DFD_Level2_Iuran_THSTM.puml`                     | Iuran Anggota                      |
-| `DFD_Level2_Surat_THSTM.puml`                     | Surat Masuk & Keluar               |
-| `DFD_Level2_Notifikasi_FCM_THSTM.puml`            | Notifikasi FCM                     |
+| File                                     | Proses                                       |
+| ---------------------------------------- | -------------------------------------------- |
+| `DFD_Level2_Anggota_Calon_THSTM.puml`    | Manajemen Anggota & Calon Anggota            |
+| `DFD_Level2_Latihan_Kegiatan_THSTM.puml` | Latihan & Kegiatan                           |
+| `DFD_Level2_Pendadaran_THSTM.puml`       | Pendadaran & Ujian Praktek                   |
+| `DFD_Level2_Generate_Dokumen_THSTM.puml` | Generate Dokumen (Sertifikat, Piagam, Kartu) |
+| `DFD_Level2_Iuran_THSTM.puml`            | Iuran Anggota                                |
+| `DFD_Level2_Surat_THSTM.puml`            | Surat Masuk & Keluar                         |
+| `DFD_Level2_Notifikasi_FCM_THSTM.puml`   | Notifikasi FCM                               |
 
 > Semua diagram ditulis dalam PlantUML (.puml) — render di plantuml.com atau VS Code extension

@@ -35,12 +35,18 @@ export default function HomeScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.greeting}>Selamat Datang,</Text>
-        <Text style={styles.name}>{member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}</Text>
+        <Text style={styles.name}>
+          {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
+        </Text>
       </View>
 
       <View style={styles.cardContainer}>
         {menuItems.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.card} onPress={() => router.push(item.route as any)}>
+          <TouchableOpacity
+            key={index}
+            style={styles.card}
+            onPress={() => router.push(item.route as any)}
+          >
             <Ionicons name={item.icon as any} size={32} color="#2563eb" />
             <Text style={styles.cardLabel}>{item.label}</Text>
           </TouchableOpacity>
@@ -55,7 +61,12 @@ export default function HomeScreen() {
           <View style={styles.statusCard}>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>Status</Text>
-              <Text style={[styles.statusValue, { color: member?.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626' }]}>
+              <Text
+                style={[
+                  styles.statusValue,
+                  { color: member?.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626' },
+                ]}
+              >
                 {member?.statusKeanggotaan || 'Aktif'}
               </Text>
             </View>
@@ -81,14 +92,42 @@ const styles = StyleSheet.create({
   name: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
   cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -20 },
   card: {
-    width: '30%', backgroundColor: '#fff', borderRadius: 12, padding: 14, margin: '1.5%',
-    alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    width: '30%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    margin: '1.5%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardLabel: { fontSize: 12, color: '#374151', marginTop: 8, textAlign: 'center', fontWeight: '500' },
+  cardLabel: {
+    fontSize: 12,
+    color: '#374151',
+    marginTop: 8,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
   infoSection: { padding: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 12 },
-  statusCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  statusRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  statusCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
   statusLabel: { fontSize: 14, color: '#6b7280' },
   statusValue: { fontSize: 14, fontWeight: '600', color: '#111827' },
 });

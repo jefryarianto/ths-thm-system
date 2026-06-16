@@ -9,13 +9,22 @@ describe('HealthController', () => {
   let controller: HealthController;
 
   const mockPrisma = {
-    $queryRaw: jest.fn()
-      .mockResolvedValueOnce([{ '?column?': 1 }])  // SELECT 1
-      .mockResolvedValueOnce([{ state: 'active', count: 3 }, { state: 'idle', count: 2 }]), // pg_stat_activity
+    $queryRaw: jest
+      .fn()
+      .mockResolvedValueOnce([{ '?column?': 1 }]) // SELECT 1
+      .mockResolvedValueOnce([
+        { state: 'active', count: 3 },
+        { state: 'idle', count: 2 },
+      ]), // pg_stat_activity
   };
 
   const mockCache = {
-    getStats: jest.fn().mockReturnValue({ size: 3, keys: ['members:list:1:10', 'reports:dashboard:all', 'dues:list:1:10'] }),
+    getStats: jest
+      .fn()
+      .mockReturnValue({
+        size: 3,
+        keys: ['members:list:1:10', 'reports:dashboard:all', 'dues:list:1:10'],
+      }),
   };
 
   const mockAuditLogStore = {
@@ -25,13 +34,17 @@ describe('HealthController', () => {
       byRole: { superadmin: 30, anggota: 70 },
       recentViolations: 2,
     }),
-    getLatencyPercentiles: jest.fn().mockReturnValue({ p50: 45, p95: 230, p99: 890, avg: 67, count: 150 }),
+    getLatencyPercentiles: jest
+      .fn()
+      .mockReturnValue({ p50: 45, p95: 230, p99: 890, avg: 67, count: 150 }),
   };
 
   const mockApiKeyStore = {
-    getAll: jest.fn().mockReturnValue([
-      { keyPreview: 'abcd1234...efgh', role: 'admin_distrik', description: 'Integration test' },
-    ]),
+    getAll: jest
+      .fn()
+      .mockReturnValue([
+        { keyPreview: 'abcd1234...efgh', role: 'admin_distrik', description: 'Integration test' },
+      ]),
   };
 
   beforeEach(async () => {
@@ -59,7 +72,10 @@ describe('HealthController', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.status).toBe('ok');
-      expect(result.data.database).toEqual({ status: 'connected', pool: { active: 3, idle: 2, total: 5 } });
+      expect(result.data.database).toEqual({
+        status: 'connected',
+        pool: { active: 3, idle: 2, total: 5 },
+      });
       expect(result.data).toHaveProperty('timestamp');
       expect(result.data).toHaveProperty('uptime');
       expect(result.data).toHaveProperty('version');
@@ -75,7 +91,13 @@ describe('HealthController', () => {
       const result = await controller.check();
       expect(result.data.auditLog.totalEntries).toBe(150);
       expect(result.data.auditLog.recentViolations).toBe(2);
-      expect(result.data.auditLog.latency).toEqual({ p50: 45, p95: 230, p99: 890, avg: 67, count: 150 });
+      expect(result.data.auditLog.latency).toEqual({
+        p50: 45,
+        p95: 230,
+        p99: 890,
+        avg: 67,
+        count: 150,
+      });
     });
 
     it('should include active API keys count', async () => {
@@ -92,7 +114,10 @@ describe('HealthController', () => {
     it('should return disconnected when DB fails', async () => {
       mockPrisma.$queryRaw.mockRejectedValueOnce(new Error('Connection refused'));
       const result = await controller.check();
-      expect(result.data.database).toEqual({ status: 'disconnected', pool: { active: 0, idle: 0, total: 0 } });
+      expect(result.data.database).toEqual({
+        status: 'disconnected',
+        pool: { active: 0, idle: 0, total: 0 },
+      });
     });
   });
 });

@@ -15,25 +15,35 @@ export class UsersController {
   @Get()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  findAll(@Query() query: UserFilterDto, @Req() req: ScopedRequest) { return this.service.findAll(query, req.scope); }
+  findAll(@Query() query: UserFilterDto, @Req() req: ScopedRequest) {
+    return this.service.findAll(query, req.scope);
+  }
 
   @Get(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  findOne(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.findOne(id, req.scope); }
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.findOne(id, req.scope);
+  }
 
   @Post()
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  create(@Body() dto: CreateUserDto, @Req() req: ScopedRequest) { return this.service.create(dto, req.scope); }
+  create(@Body() dto: CreateUserDto, @Req() req: ScopedRequest) {
+    return this.service.create(dto, req.scope);
+  }
 
   @Patch(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto, @Req() req: ScopedRequest) { return this.service.update(id, dto, req.scope); }
+  update(@Param('id') id: string, @Body() dto: UpdateUserDto, @Req() req: ScopedRequest) {
+    return this.service.update(id, dto, req.scope);
+  }
 
   @Delete(':id')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
   @RequireScope('branch')
-  remove(@Param('id') id: string, @Req() req: ScopedRequest) { return this.service.remove(id, req.scope); }
+  remove(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.remove(id, req.scope);
+  }
 }

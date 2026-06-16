@@ -101,7 +101,8 @@ describe('CacheService (integration)', () => {
     });
 
     it('should re-compute after TTL expiry', async () => {
-      const factory = jest.fn()
+      const factory = jest
+        .fn()
         .mockResolvedValueOnce('first-call')
         .mockResolvedValueOnce('second-call');
 
@@ -117,7 +118,8 @@ describe('CacheService (integration)', () => {
     });
 
     it('should re-compute after invalidation', async () => {
-      const factory = jest.fn()
+      const factory = jest
+        .fn()
         .mockResolvedValueOnce('before-invalidation')
         .mockResolvedValueOnce('after-invalidation');
 
@@ -130,16 +132,24 @@ describe('CacheService (integration)', () => {
     });
 
     it('should work with async factories', async () => {
-      const result = await cache.getOrSet('async-key', async () => {
-        await new Promise((r) => setTimeout(r, 10));
-        return 'async-result';
-      }, 60_000);
+      const result = await cache.getOrSet(
+        'async-key',
+        async () => {
+          await new Promise((r) => setTimeout(r, 10));
+          return 'async-result';
+        },
+        60_000,
+      );
 
       expect(result).toBe('async-result');
       // Second call should be instant (cached)
-      const result2 = await cache.getOrSet('async-key', async () => {
-        throw new Error('Should not be called');
-      }, 60_000);
+      const result2 = await cache.getOrSet(
+        'async-key',
+        async () => {
+          throw new Error('Should not be called');
+        },
+        60_000,
+      );
       expect(result2).toBe('async-result');
     });
   });

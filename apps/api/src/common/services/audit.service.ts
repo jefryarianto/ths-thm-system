@@ -82,8 +82,8 @@ export class AuditService {
 
     this.logger.warn(
       `[SCOPE_VIOLATION] User ${params.userEmail || 'unknown'} (${params.userRole || 'unknown'}) ` +
-      `denied access to ${params.method} ${params.path} ` +
-      `(required: ${params.requiredScope})`,
+        `denied access to ${params.method} ${params.path} ` +
+        `(required: ${params.requiredScope})`,
     );
 
     this.logger.log(JSON.stringify(entry));
@@ -116,7 +116,7 @@ export class AuditService {
       details: params.details,
     };
 
-    this.logger.debug(JSON.stringify(entry))
+    this.logger.debug(JSON.stringify(entry));
     // Note: DATA_ACCESS events are logged but not stored to avoid
     // flooding the in-memory buffer. Only mutations, violations,
     // and auth failures are stored for querying.
@@ -155,12 +155,7 @@ export class AuditService {
   /**
    * Log an authentication failure.
    */
-  logAuthFailure(params: {
-    method: string;
-    path: string;
-    reason: string;
-    ip?: string;
-  }): void {
+  logAuthFailure(params: { method: string; path: string; reason: string; ip?: string }): void {
     const entry: AuditLogEntry = {
       timestamp: new Date().toISOString(),
       eventType: AuditEventType.AUTH_FAILURE,
@@ -172,9 +167,7 @@ export class AuditService {
       },
     };
 
-    this.logger.warn(
-      `[AUTH_FAILURE] ${params.method} ${params.path} — ${params.reason}`,
-    );
+    this.logger.warn(`[AUTH_FAILURE] ${params.method} ${params.path} — ${params.reason}`);
 
     this.logger.log(JSON.stringify(entry));
     this.store.add(entry);

@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
@@ -6,12 +12,28 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { resetPasswordEmail } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
-import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, UpdateProfileDto, ChangePasswordDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  RefreshDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  UpdateProfileDto,
+  ChangePasswordDto,
+} from './dto/auth.dto';
 
 interface UserPayload {
   id: string;
   email: string;
   role: string;
+}
+
+interface OAuthUserProfile {
+  provider: 'google' | 'linkedin';
+  providerId: string;
+  email?: string;
+  name: string;
+  photo?: string;
 }
 
 @Injectable()
@@ -39,7 +61,13 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const role = (dto.role as Role) || ('anggota' as Role);
     const user = await this.prisma.user.create({
-      data: { email: dto.email, passwordHash, namaLengkap: dto.namaLengkap, role, rantingId: dto.rantingId },
+      data: {
+        email: dto.email,
+        passwordHash,
+        namaLengkap: dto.namaLengkap,
+        role,
+        rantingId: dto.rantingId,
+      },
     });
     const tokens = await this.generateTokens(user);
     return { success: true, data: { user: this.sanitizeUser(user), ...tokens } };
@@ -47,12 +75,17 @@ export class AuthService {
 
   async refreshToken(dto: RefreshDto) {
     try {
-      const payload = this.jwtService.verify(dto.refreshToken, { secret: process.env.JWT_REFRESH_SECRET });
+      const payload = this.jwtService.verify(dto.refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (!user || user.refreshToken !== dto.refreshToken) throw new UnauthorizedException('Token tidak valid');
+      if (!user || user.refreshToken !== dto.refreshToken)
+        throw new UnauthorizedException('Token tidak valid');
       const tokens = await this.generateTokens(user);
       return { success: true, data: tokens };
-    } catch { throw new UnauthorizedException('Token tidak valid atau kadaluarsa'); }
+    } catch {
+      throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
+    }
   }
 
   async getProfile(userId: string) {
@@ -71,7 +104,11 @@ export class AuthService {
 
     // Update Anggota model (profile fields like noHp, alamat, tempatLahir, tanggalLahir)
     // Only triggers when profile-specific fields are provided
-    const hasAnggotaFields = dto.noHp !== undefined || dto.alamat !== undefined || dto.tempatLahir !== undefined || dto.tanggalLahir !== undefined;
+    const hasAnggotaFields =
+      dto.noHp !== undefined ||
+      dto.alamat !== undefined ||
+      dto.tempatLahir !== undefined ||
+      dto.tanggalLahir !== undefined;
     const hasUserFields = dto.namaLengkap !== undefined || dto.email !== undefined;
 
     if (hasAnggotaFields) {
@@ -93,7 +130,9 @@ export class AuthService {
           data: anggotaData,
         });
       } else {
-        console.warn(`updateProfile: No Anggota record found for user ${userId} (email: ${user.email}) — profile fields not synced`);
+        console.warn(
+          `updateProfile: No Anggota record found for user ${userId} (email: ${user.email}) — profile fields not synced`,
+        );
       }
     }
 
@@ -105,7 +144,10 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(dto.currentPassword, user.passwordHash))) {
       throw new UnauthorizedException('Password lama salah');
     }
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(dto.newPassword, 12) } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: await bcrypt.hash(dto.newPassword, 12) },
+    });
     return { success: true, message: 'Password berhasil diubah' };
   }
 
@@ -123,7 +165,11 @@ export class AuthService {
     const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
 
     const tpl = resetPasswordEmail(user.namaLengkap, resetUrl);
-    await this.mailService.sendMail({ to: user.email, ...tpl, metadata: { module: 'auth', template: 'resetPasswordEmail' } });
+    await this.mailService.sendMail({
+      to: user.email,
+      ...tpl,
+      metadata: { module: 'auth', template: 'resetPasswordEmail' },
+    });
 
     return { success: true, message: 'Link reset password telah dikirim ke email Anda' };
   }
@@ -145,17 +191,68 @@ export class AuthService {
         data: { passwordHash: await bcrypt.hash(dto.newPassword, 12) },
       });
 
-      return { success: true, message: 'Password berhasil direset. Silakan login dengan password baru.' };
+      return {
+        success: true,
+        message: 'Password berhasil direset. Silakan login dengan password baru.',
+      };
     } catch (error) {
       this.logger.error(`Reset password failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Token reset password tidak valid atau kadaluarsa');
     }
   }
 
+  async sendMagicLink(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { success: true, message: 'Link login telah dikirim ke email Anda' };
+    }
+
+    const magicToken = this.jwtService.sign(
+      { sub: user.id, email: user.email, purpose: 'magic-link' },
+      { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '15m' },
+    );
+
+    const magicUrl = `${env.frontendUrl}/login?magic=${magicToken}`;
+
+    const tpl = {
+      subject: 'Magic Link Login - THS-THM',
+      html: `<p>Klik link ini untuk login:</p><a href="${magicUrl}">Login</a><p>Link berlaku 15 menit.</p>`,
+      text: `Login: ${magicUrl}`,
+    };
+
+    await this.mailService.sendMail({
+      to: email,
+      ...tpl,
+      metadata: { module: 'auth', template: 'magicLink' },
+    });
+
+    return { success: true, message: 'Link login telah dikirim ke email Anda' };
+  }
+
+  async loginWithMagicLink(token: string) {
+    try {
+      const payload = this.jwtService.verify(token, { secret: process.env.JWT_REFRESH_SECRET });
+      if (payload.purpose !== 'magic-link') {
+        throw new UnauthorizedException('Token tidak valid');
+      }
+
+      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      if (!user) throw new NotFoundException('User tidak ditemukan');
+
+      const tokens = await this.generateTokens(user);
+      return { success: true, data: { user: this.sanitizeUser(user), ...tokens } };
+    } catch {
+      throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
+    }
+  }
+
   private async generateTokens(user: UserPayload & { refreshToken?: string | null }) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { secret: process.env.JWT_REFRESH_SECRET, expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    });
     await this.prisma.user.update({ where: { id: user.id }, data: { refreshToken } });
     return { accessToken, refreshToken };
   }
@@ -163,5 +260,40 @@ export class AuthService {
   private sanitizeUser(user: Record<string, unknown>) {
     const { passwordHash: _, refreshToken: __, ...sanitized } = user;
     return sanitized;
+  }
+
+  async findOrCreateOAuthUser(profile: OAuthUserProfile) {
+    let user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const passwordHash = await bcrypt.hash(randomPassword, 12);
+      user = await this.prisma.user.create({
+        data: {
+          email: profile.email || `${profile.providerId}@oauth.${profile.provider}.com`,
+          passwordHash,
+          namaLengkap: profile.name,
+          role: 'anggota',
+        },
+      });
+    }
+
+    await this.prisma.oAuthAccount.upsert({
+      where: {
+        provider_providerId: { provider: profile.provider, providerId: profile.providerId },
+      },
+      update: { email: profile.email, name: profile.name, photo: profile.photo },
+      create: {
+        userId: user.id,
+        provider: profile.provider,
+        providerId: profile.providerId,
+        email: profile.email,
+        name: profile.name,
+        photo: profile.photo,
+      },
+    });
+
+    const tokens = await this.generateTokens(user);
+    return { ...this.sanitizeUser(user), ...tokens };
   }
 }

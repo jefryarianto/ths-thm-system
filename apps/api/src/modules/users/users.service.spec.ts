@@ -36,6 +36,23 @@ describe('UsersService', () => {
     hasAccessToResource: jest.fn().mockReturnValue(true),
     hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     verifyKegiatanScope: jest.fn(),
+    verifyResourceAccess: jest
+      .fn()
+      .mockImplementation(async (_prisma, scope, id, _findUnique, notFoundMsg) => {
+        if (!scope) return undefined;
+        const resource = await mockPrisma.user.findUnique({
+          where: { id },
+          select: { rantingId: true },
+        });
+        if (!resource) throw new NotFoundException(notFoundMsg || 'User tidak ditemukan');
+        const hasAccess = await mockScopeHelper.hasAccessToResourceAsync(
+          _prisma,
+          scope,
+          resource.rantingId,
+        );
+        if (!hasAccess) throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+        return resource;
+      }),
   };
 
   beforeEach(async () => {
@@ -58,7 +75,15 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('should return paginated users', async () => {
-      const mockUsers = [{ id: '1', email: 'test@test.com', namaLengkap: 'Test', role: 'admin_ranting', isActive: true }];
+      const mockUsers = [
+        {
+          id: '1',
+          email: 'test@test.com',
+          namaLengkap: 'Test',
+          role: 'admin_ranting',
+          isActive: true,
+        },
+      ];
       mockPrisma.user.findMany.mockResolvedValue(mockUsers);
       mockPrisma.user.count.mockResolvedValue(1);
 
@@ -122,7 +147,11 @@ describe('UsersService', () => {
     });
 
     it('should auto-assign rantingId from scope', async () => {
-      mockPrisma.user.create.mockResolvedValue({ id: '1', email: 'new@test.com', passwordHash: 'hashed-password' });
+      mockPrisma.user.create.mockResolvedValue({
+        id: '1',
+        email: 'new@test.com',
+        passwordHash: 'hashed-password',
+      });
       await service.create({ email: 'new@test.com', namaLengkap: 'New User' }, { rantingId: 'r1' });
       expect(mockPrisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ rantingId: 'r1' }) }),
@@ -143,7 +172,9 @@ describe('UsersService', () => {
     it('should throw ForbiddenException for out-of-scope user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ rantingId: 'r-other' });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
-      await expect(service.update('1', { namaLengkap: 'Test' }, { rantingId: 'r1' })).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update('1', { namaLengkap: 'Test' }, { rantingId: 'r1' }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 

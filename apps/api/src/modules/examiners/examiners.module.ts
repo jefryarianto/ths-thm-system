@@ -1,7 +1,7 @@
-import { Module } from "@nestjs/common";
-import { ExaminersController } from "./examiners.controller";
-import { ExaminersService } from "./examiners.service";
-import { ScopeModule } from "../../common/scope.module";
+import { Module } from '@nestjs/common';
+import { ExaminersController } from './examiners.controller';
+import { ExaminersService } from './examiners.service';
+import { ScopeModule } from '../../common/scope.module';
 
 @Module({
   imports: [ScopeModule],

@@ -33,14 +33,37 @@ export default function PiagamPrestasiA4LandscapeTemplate({
   qrCodeUrl = '',
 }) {
   return (
-    <div style={{ width: '297mm', height: '210mm', position: 'relative', backgroundColor: '#fff', fontFamily: 'Georgia, Times New Roman, serif' }}>
+    <div
+      style={{
+        width: '297mm',
+        height: '210mm',
+        position: 'relative',
+        backgroundColor: '#fff',
+        fontFamily: 'Georgia, Times New Roman, serif',
+      }}
+    >
       {/* Logo */}
-      <img src={logoUrl} alt="Logo" style={{ position: 'absolute', left: '20mm', top: '20mm', width: '50mm', height: '50mm' }} />
+      <img
+        src={logoUrl}
+        alt="Logo"
+        style={{ position: 'absolute', left: '20mm', top: '20mm', width: '50mm', height: '50mm' }}
+      />
 
       {/* Judul */}
-      <h1 style={{ textAlign: 'center', fontSize: '48px', marginTop: '20mm' }}>Piagam Penghargaan</h1>
+      <h1 style={{ textAlign: 'center', fontSize: '48px', marginTop: '20mm' }}>
+        Piagam Penghargaan
+      </h1>
       <p style={{ textAlign: 'center', fontSize: '20px', marginTop: '10px' }}>Diberikan Kepada</p>
-      <h2 style={{ textAlign: 'center', fontSize: '36px', textTransform: 'uppercase', marginTop: '5px' }}>{penerima}</h2>
+      <h2
+        style={{
+          textAlign: 'center',
+          fontSize: '36px',
+          textTransform: 'uppercase',
+          marginTop: '5px',
+        }}
+      >
+        {penerima}
+      </h2>
       <p style={{ textAlign: 'center', fontSize: '24px', marginTop: '5px' }}>Sebagai {predikat}</p>
 
       {/* Detail Kegiatan */}
@@ -51,26 +74,66 @@ export default function PiagamPrestasiA4LandscapeTemplate({
       </div>
 
       {/* Tanda tangan dan cap */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', position: 'absolute', bottom: '20mm', width: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          position: 'absolute',
+          bottom: '20mm',
+          width: '100%',
+        }}
+      >
         <div style={{ textAlign: 'center' }}>
-          {ttdKoordinatorUrl ? <img src={ttdKoordinatorUrl} alt="TTD Koordinator" style={{ width: '60mm', height: '20mm' }} /> : <div style={{ height: '20mm' }}>TTD</div>}
+          {ttdKoordinatorUrl ? (
+            <img
+              src={ttdKoordinatorUrl}
+              alt="TTD Koordinator"
+              style={{ width: '60mm', height: '20mm' }}
+            />
+          ) : (
+            <div style={{ height: '20mm' }}>TTD</div>
+          )}
           <div>{koordinatorDistrik}</div>
           <div>Koordinator Distrik</div>
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          {capUrl ? <img src={capUrl} alt="Cap" style={{ width: '40mm', height: '40mm' }} /> : <div style={{ width: '40mm', height: '40mm', border: '1px solid #000' }}>CAP</div>}
+          {capUrl ? (
+            <img src={capUrl} alt="Cap" style={{ width: '40mm', height: '40mm' }} />
+          ) : (
+            <div style={{ width: '40mm', height: '40mm', border: '1px solid #000' }}>CAP</div>
+          )}
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          {ttdTeamLeaderUrl ? <img src={ttdTeamLeaderUrl} alt="TTD Team Leader" style={{ width: '60mm', height: '20mm' }} /> : <div style={{ height: '20mm' }}>TTD</div>}
+          {ttdTeamLeaderUrl ? (
+            <img
+              src={ttdTeamLeaderUrl}
+              alt="TTD Team Leader"
+              style={{ width: '60mm', height: '20mm' }}
+            />
+          ) : (
+            <div style={{ height: '20mm' }}>TTD</div>
+          )}
           <div>{teamLeader}</div>
           <div>Team Leader</div>
         </div>
       </div>
 
       {/* QR Code Optional */}
-      {qrCodeUrl && <img src={qrCodeUrl} alt="QR" style={{ position: 'absolute', right: '20mm', bottom: '20mm', width: '40mm', height: '40mm' }} />}
+      {qrCodeUrl && (
+        <img
+          src={qrCodeUrl}
+          alt="QR"
+          style={{
+            position: 'absolute',
+            right: '20mm',
+            bottom: '20mm',
+            width: '40mm',
+            height: '40mm',
+          }}
+        />
+      )}
     </div>
   );
 }

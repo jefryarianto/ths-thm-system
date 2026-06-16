@@ -33,23 +33,24 @@ templates/
 ## Konfigurasi Tanda Tangan & Stempel
 
 Setiap template menerima props:
+
 ```tsx
 interface SignatureConfig {
-  imageUrl: string;        // URL gambar tanda tangan
-  name: string;            // Nama penandatangan
-  role: string;            // Jabatan
-  date: string;            // Tanggal penandatanganan
+  imageUrl: string; // URL gambar tanda tangan
+  name: string; // Nama penandatangan
+  role: string; // Jabatan
+  date: string; // Tanggal penandatanganan
 }
 
 interface StampConfig {
-  imageUrl: string;        // URL gambar stempel
-  opacity?: number;        // Transparansi (default 0.4)
+  imageUrl: string; // URL gambar stempel
+  opacity?: number; // Transparansi (default 0.4)
   position?: 'top-right' | 'bottom-left';
 }
 
 interface QRConfig {
   verificationUrl: string; // URL endpoint verifikasi
-  size?: number;           // Ukuran QR (default 100)
+  size?: number; // Ukuran QR (default 100)
 }
 ```
 

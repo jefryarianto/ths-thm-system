@@ -2,10 +2,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
-import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('DocumentsService', () => {
   let service: DocumentsService;
@@ -37,12 +37,15 @@ describe('DocumentsService', () => {
   };
 
   const mockCache = {
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     invalidatePrefix: jest.fn(),
   };
 
-  const mockMailService = {
-    sendMail: jest.fn().mockResolvedValue(true),
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -52,7 +55,7 @@ describe('DocumentsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
-        { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -108,12 +111,14 @@ describe('DocumentsService', () => {
     it('should generate document and send notification email', async () => {
       mockPrisma.dokumen.create.mockResolvedValue({ id: 'd1', nomorDokumen: 'DOC-2026-ABCD1234' });
       mockPrisma.qRValidation.create.mockResolvedValue({});
-      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'anggota@test.com', namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'anggota@test.com',
+        namaLengkap: 'Budi',
+      });
 
       const result = await service.generate({ memberId: 'm1', type: 'kartu_anggota' });
       expect(result.success).toBe(true);
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anggota@test.com' }));
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
   });
 });

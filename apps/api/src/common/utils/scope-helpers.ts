@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { UserScope } from '../interfaces/user-scope.interface';
 
 /**
@@ -107,7 +107,14 @@ export class ScopeHelper {
    * Use this in findOne-style service methods for accurate scope checks.
    */
   async hasAccessToResourceAsync(
-    prisma: { ranting: { findUnique: (args: { where: { id: string }; include?: { wilayah?: boolean } }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null> } },
+    prisma: {
+      ranting: {
+        findUnique: (args: {
+          where: { id: string };
+          include?: { wilayah?: boolean };
+        }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null>;
+      };
+    },
     scope: UserScope,
     resourceRantingId?: string,
   ): Promise<boolean> {
@@ -139,5 +146,58 @@ export class ScopeHelper {
     }
 
     return false;
+  }
+
+  /**
+   * Convenience method for the common mutation-guard pattern:
+   * 1. Find the resource and verify it exists (throws NotFoundException if not)
+   * 2. Verify the user's scope has access to the resource's ranting
+   *
+   * @example
+   *   await this.scopeHelper.verifyResourceAccess(
+   *     this.prisma, scope, id,
+   *     (prisma, id) => prisma.anggota.findUnique({ where: { id }, select: { rantingId: true } }),
+   *     'Anggota tidak ditemukan',
+   *   );
+   */
+  async verifyResourceAccess<T extends { rantingId?: string | null }>(
+    prisma: {
+      ranting: {
+        findUnique: (args: {
+          where: { id: string };
+          include?: { wilayah?: boolean };
+        }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null>;
+      };
+    },
+    scope: UserScope | undefined,
+    resourceId: string,
+    findUnique: (prisma: any, id: string) => Promise<T | null>,
+    notFoundMessage: string = 'Sumber daya tidak ditemukan',
+  ): Promise<T> {
+    if (!scope) {
+      // No scope check needed, but still verify existence
+      const resource = await findUnique(prisma, resourceId);
+      if (!resource) {
+        throw new NotFoundException(notFoundMessage);
+      }
+      return resource;
+    }
+
+    const resource = await findUnique(prisma, resourceId);
+    if (!resource) {
+      throw new NotFoundException(notFoundMessage);
+    }
+
+    const hasAccess = await this.hasAccessToResourceAsync(
+      prisma,
+      scope,
+      resource.rantingId ?? undefined,
+    );
+
+    if (!hasAccess) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+
+    return resource;
   }
 }

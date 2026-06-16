@@ -4,6 +4,7 @@ Template piagam penghargaan THS-THM.
 Format: portrait A4.
 
 ## Variabel Template
+
 - `recipientName` — Nama penerima
 - `awardTitle` — Judul penghargaan
 - `category` — Kategori (contoh: Akademik, Non-Akademik)

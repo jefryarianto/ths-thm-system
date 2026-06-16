@@ -7,6 +7,7 @@ import { GamificationService } from '../gamification/gamification.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('TrainingsService', () => {
   let service: TrainingsService;
@@ -46,7 +47,9 @@ describe('TrainingsService', () => {
   };
 
   const mockCache = {
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     invalidatePrefix: jest.fn(),
   };
 
@@ -59,6 +62,11 @@ describe('TrainingsService', () => {
     sendMail: jest.fn().mockResolvedValue(true),
   };
 
+  const mockMemberMailService = {
+    sendToMember: jest.fn().mockResolvedValue(undefined),
+    sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -68,6 +76,7 @@ describe('TrainingsService', () => {
         { provide: CacheService, useValue: mockCache },
         { provide: GamificationService, useValue: mockGamification },
         { provide: MailService, useValue: mockMailService },
+        { provide: MemberMailService, useValue: mockMemberMailService },
       ],
     }).compile();
 
@@ -118,7 +127,12 @@ describe('TrainingsService', () => {
 
   describe('create', () => {
     it('should create a training', async () => {
-      const dto = { jenisMateri: 'Tendangan', rantingId: 'r1', hariTanggal: '2026-01-01' };
+      const dto = {
+        jenisMateri: 'Tendangan',
+        rantingId: 'r1',
+        hariTanggal: '2026-01-01',
+        pelatihId: 'p1',
+      };
       mockPrisma.latihan.create.mockResolvedValue({ id: '1', ...dto });
       const result = await service.create(dto);
       expect(result.success).toBe(true);
@@ -153,18 +167,20 @@ describe('TrainingsService', () => {
     it('should upsert attendance record and send confirmation email', async () => {
       mockPrisma.latihan.findUnique.mockResolvedValue({ id: 't1', jenisMateri: 'Tendangan' });
       mockPrisma.absensiLatihan.upsert.mockResolvedValue({ id: 'a1', hadir: true });
-      mockPrisma.anggota.findUnique.mockResolvedValue({ email: 'anggota@test.com', namaLengkap: 'Budi' });
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'anggota@test.com',
+        namaLengkap: 'Budi',
+      });
       const result = await service.recordAttendance('t1', { anggotaId: 'ang1', hadir: true });
       expect(result.success).toBe(true);
-      expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
-      expect(mockMailService.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anggota@test.com' }));
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when training not found', async () => {
       mockPrisma.latihan.findUnique.mockResolvedValue(null);
-      await expect(
-        service.recordAttendance('nonexistent', { anggotaId: 'ang1' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.recordAttendance('nonexistent', { anggotaId: 'ang1' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

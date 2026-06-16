@@ -84,7 +84,10 @@ describe('GamificationService', () => {
       providers: [
         GamificationService,
         { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
-        { provide: require('../notifications/notifications.service').NotificationsService, useValue: notificationsServiceMock },
+        {
+          provide: require('../notifications/notifications.service').NotificationsService,
+          useValue: notificationsServiceMock,
+        },
         { provide: MailService, useValue: mailServiceMock },
       ],
     }).compile();
@@ -107,9 +110,7 @@ describe('GamificationService', () => {
 
   describe('addPoints', () => {
     it('should add points and create event', async () => {
-      prismaMock.gamificationProfile.update.mockResolvedValueOnce(
-        makeProfile({ points: 50 }),
-      );
+      prismaMock.gamificationProfile.update.mockResolvedValueOnce(makeProfile({ points: 50 }));
 
       const result = await service.addPoints('anggota-1', 'manual', 50, 'Bonus poin');
 
@@ -165,9 +166,7 @@ describe('GamificationService', () => {
     it('should add 20 points on-time and increment iuran streak', async () => {
       prismaMock.gamificationProfile.findUnique.mockResolvedValue(makeProfile());
       // streak increment
-      prismaMock.gamificationProfile.update.mockResolvedValueOnce(
-        makeProfile({ iuranStreak: 1 }),
-      );
+      prismaMock.gamificationProfile.update.mockResolvedValueOnce(makeProfile({ iuranStreak: 1 }));
       // addPoints → update
       prismaMock.gamificationProfile.update.mockResolvedValueOnce(
         makeProfile({ points: 20, iuranStreak: 1 }),
@@ -184,13 +183,9 @@ describe('GamificationService', () => {
     });
 
     it('should reset iuran streak on late payment', async () => {
-      prismaMock.gamificationProfile.findUnique.mockResolvedValue(
-        makeProfile({ iuranStreak: 3 }),
-      );
+      prismaMock.gamificationProfile.findUnique.mockResolvedValue(makeProfile({ iuranStreak: 3 }));
       // streak reset to 0
-      prismaMock.gamificationProfile.update.mockResolvedValueOnce(
-        makeProfile({ iuranStreak: 0 }),
-      );
+      prismaMock.gamificationProfile.update.mockResolvedValueOnce(makeProfile({ iuranStreak: 0 }));
       // addPoints → update
       prismaMock.gamificationProfile.update.mockResolvedValueOnce(
         makeProfile({ points: 5, iuranStreak: 0 }),
@@ -210,9 +205,30 @@ describe('GamificationService', () => {
   describe('getLeaderboard', () => {
     it('should return members sorted by points desc', async () => {
       prismaMock.gamificationProfile.findMany.mockResolvedValue([
-        { anggotaId: 'a-1', points: 200, latihanStreak: 10, iuranStreak: 5, lastActivity: new Date(), badges: [] },
-        { anggotaId: 'a-2', points: 150, latihanStreak: 8, iuranStreak: 3, lastActivity: new Date(), badges: [] },
-        { anggotaId: 'a-3', points: 100, latihanStreak: 5, iuranStreak: 2, lastActivity: new Date(), badges: [] },
+        {
+          anggotaId: 'a-1',
+          points: 200,
+          latihanStreak: 10,
+          iuranStreak: 5,
+          lastActivity: new Date(),
+          badges: [],
+        },
+        {
+          anggotaId: 'a-2',
+          points: 150,
+          latihanStreak: 8,
+          iuranStreak: 3,
+          lastActivity: new Date(),
+          badges: [],
+        },
+        {
+          anggotaId: 'a-3',
+          points: 100,
+          latihanStreak: 5,
+          iuranStreak: 2,
+          lastActivity: new Date(),
+          badges: [],
+        },
       ]);
 
       const leaderboard = await service.getLeaderboard(3);
@@ -225,7 +241,14 @@ describe('GamificationService', () => {
 
     it('should filter by search query', async () => {
       prismaMock.gamificationProfile.findMany.mockResolvedValue([
-        { anggotaId: 'a-1', points: 200, latihanStreak: 10, iuranStreak: 5, lastActivity: new Date(), badges: [] },
+        {
+          anggotaId: 'a-1',
+          points: 200,
+          latihanStreak: 10,
+          iuranStreak: 5,
+          lastActivity: new Date(),
+          badges: [],
+        },
       ]);
 
       const leaderboard = await service.getLeaderboard(10, undefined, 'Test Member');
@@ -244,7 +267,14 @@ describe('GamificationService', () => {
 
     it('should support skip/offset pagination', async () => {
       prismaMock.gamificationProfile.findMany.mockResolvedValue([
-        { anggotaId: 'a-1', points: 200, latihanStreak: 10, iuranStreak: 5, lastActivity: new Date(), badges: [] },
+        {
+          anggotaId: 'a-1',
+          points: 200,
+          latihanStreak: 10,
+          iuranStreak: 5,
+          lastActivity: new Date(),
+          badges: [],
+        },
       ]);
 
       const leaderboard = await service.getLeaderboard(10, undefined, undefined, 5);

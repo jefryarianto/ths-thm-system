@@ -5,8 +5,10 @@ import { Logger } from '@nestjs/common';
 // Mock jsonwebtoken
 jest.mock('jsonwebtoken', () => ({
   verify: jest.fn((token: string) => {
-    if (token === 'valid-token') return { sub: 'user-1', email: 'test@test.com', role: 'admin_distrik' };
-    if (token === 'valid-token-2') return { sub: 'user-2', email: 'test2@test.com', role: 'anggota' };
+    if (token === 'valid-token')
+      return { sub: 'user-1', email: 'test@test.com', role: 'admin_distrik' };
+    if (token === 'valid-token-2')
+      return { sub: 'user-2', email: 'test2@test.com', role: 'anggota' };
     throw new Error('Invalid token');
   }),
 }));

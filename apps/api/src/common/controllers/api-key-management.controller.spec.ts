@@ -36,7 +36,11 @@ describe('ApiKeyManagementController', () => {
     });
 
     it('should return list of registered keys with previews', () => {
-      store.register({ key: 'test-key-12345678abcdefgh', role: 'admin_ranting', description: 'Test' });
+      store.register({
+        key: 'test-key-12345678abcdefgh',
+        role: 'admin_ranting',
+        description: 'Test',
+      });
       const result = controller.findAll();
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);

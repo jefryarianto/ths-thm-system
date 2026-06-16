@@ -49,7 +49,9 @@ describe('NotificationsService', () => {
   };
 
   const mockCache = {
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     invalidatePrefix: jest.fn(),
   };
 
@@ -141,8 +143,20 @@ describe('NotificationsService', () => {
   describe('sendToRole', () => {
     it('should send notification to users with specified role', async () => {
       const mockUsers = [
-        { id: 'u1', email: 'admin@test.com', namaLengkap: 'Admin', role: 'admin_distrik', isActive: true },
-        { id: 'u2', email: 'admin2@test.com', namaLengkap: 'Admin2', role: 'admin_distrik', isActive: true },
+        {
+          id: 'u1',
+          email: 'admin@test.com',
+          namaLengkap: 'Admin',
+          role: 'admin_distrik',
+          isActive: true,
+        },
+        {
+          id: 'u2',
+          email: 'admin2@test.com',
+          namaLengkap: 'Admin2',
+          role: 'admin_distrik',
+          isActive: true,
+        },
       ];
       mockPrisma.user.findMany.mockResolvedValue(mockUsers);
       // No custom preferences — all allowed

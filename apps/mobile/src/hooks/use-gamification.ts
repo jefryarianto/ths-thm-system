@@ -90,7 +90,7 @@ export interface GamificationData {
  */
 export function useGamificationProfile(anggotaId: string | null) {
   return useApi<GamificationProfile>(
-    () => apiClient.get(`/gamification/profile/${anggotaId}`).then(r => r.data.data),
+    () => apiClient.get(`/gamification/profile/${anggotaId}`).then((r) => r.data.data),
     [anggotaId],
   );
 }
@@ -100,7 +100,10 @@ export function useGamificationProfile(anggotaId: string | null) {
  */
 export function usePointsHistory(anggotaId: string | null) {
   return useApi<PointHistory[]>(
-    () => apiClient.get(`/gamification/profile/${anggotaId}/points-history`).then(r => r.data.data || []),
+    () =>
+      apiClient
+        .get(`/gamification/profile/${anggotaId}/points-history`)
+        .then((r) => r.data.data || []),
     [anggotaId],
   );
 }
@@ -109,10 +112,7 @@ export function usePointsHistory(anggotaId: string | null) {
  * Fetch all available badges.
  */
 export function useBadges() {
-  return useApi<Badge[]>(
-    () => apiClient.get('/gamification/badges').then(r => r.data.data),
-    [],
-  );
+  return useApi<Badge[]>(() => apiClient.get('/gamification/badges').then((r) => r.data.data), []);
 }
 
 /**
@@ -120,19 +120,16 @@ export function useBadges() {
  */
 export function useLeaderboard(filters: LeaderboardFilters) {
   const queryKey = JSON.stringify(filters);
-  return useApi<LeaderboardEntry[]>(
-    () => {
-      const params = new URLSearchParams();
-      if (filters.limit) params.set('limit', String(filters.limit));
-      if (filters.skip) params.set('skip', String(filters.skip));
-      if (filters.search) params.set('search', filters.search);
-      if (filters.rantingId) params.set('rantingId', filters.rantingId);
-      if (filters.wilayahId) params.set('wilayahId', filters.wilayahId);
-      if (filters.distrikId) params.set('distrikId', filters.distrikId);
-      return apiClient.get(`/gamification/leaderboard?${params.toString()}`).then(r => r.data.data);
-    },
-    [queryKey],
-  );
+  return useApi<LeaderboardEntry[]>(() => {
+    const params = new URLSearchParams();
+    if (filters.limit) params.set('limit', String(filters.limit));
+    if (filters.skip) params.set('skip', String(filters.skip));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.rantingId) params.set('rantingId', filters.rantingId);
+    if (filters.wilayahId) params.set('wilayahId', filters.wilayahId);
+    if (filters.distrikId) params.set('distrikId', filters.distrikId);
+    return apiClient.get(`/gamification/leaderboard?${params.toString()}`).then((r) => r.data.data);
+  }, [queryKey]);
 }
 
 /**
@@ -140,7 +137,7 @@ export function useLeaderboard(filters: LeaderboardFilters) {
  */
 export function useRecentEvents(limit = 10) {
   return useApi<PointEvent[]>(
-    () => apiClient.get(`/gamification/events?limit=${limit}`).then(r => r.data.data),
+    () => apiClient.get(`/gamification/events?limit=${limit}`).then((r) => r.data.data),
     [],
   );
 }
@@ -150,7 +147,7 @@ export function useRecentEvents(limit = 10) {
  */
 export function useRewards() {
   return useApi<Reward[]>(
-    () => apiClient.get('/gamification/rewards').then(r => r.data.data),
+    () => apiClient.get('/gamification/rewards').then((r) => r.data.data),
     [],
   );
 }
@@ -160,7 +157,7 @@ export function useRewards() {
  */
 export function useOrgStructure() {
   return useApi<OrgNode[]>(
-    () => apiClient.get('/gamification/org-structure').then(r => r.data.data),
+    () => apiClient.get('/gamification/org-structure').then((r) => r.data.data),
     [],
   );
 }

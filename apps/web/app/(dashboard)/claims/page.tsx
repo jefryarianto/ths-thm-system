@@ -3,17 +3,16 @@
 import { useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, FileText,
-  CheckCircle, XCircle, Clock,
-} from 'lucide-react';
+import { Plus, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import { STATUS_COLORS, STATUS_OPTIONS } from '@/components/claims/constants';
 
 interface ClaimRow {
   id: string;
@@ -23,37 +22,30 @@ interface ClaimRow {
   createdAt: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
-  diproses: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
-  disetujui: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
-  ditolak: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
-};
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'Semua Status' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'diproses', label: 'Diproses' },
-  { value: 'disetujui', label: 'Disetujui' },
-  { value: 'ditolak', label: 'Ditolak' },
-];
-
 export default function ClaimsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    hasActiveFilters,
+    getApiParams,
+    resetFilters,
+  } = useFilters({
+    filters: [{ key: 'status', defaultValue: '' }],
+  });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<ClaimRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filterStatus) params.status = filterStatus;
-      return apiClient.get('/claims', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch, filterStatus]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<ClaimRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    if (filters.status) params.status = filters.status;
+    return apiClient.get('/claims', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, filters.status]);
 
   const handleAction = async (id: string, action: string) => {
     setActionLoading(`${id}-${action}`);
@@ -85,14 +77,13 @@ export default function ClaimsPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setFilterStatus(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari klaim..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       >
         <FilterSelect
-          value={filterStatus}
-          onChange={v => { setFilterStatus(v); setPage(1); }}
+          value={filters.status}
+          onChange={(v) => setFilter('status', v)}
           options={STATUS_OPTIONS}
           placeholder="Semua Status"
         />
@@ -110,7 +101,7 @@ export default function ClaimsPage() {
         loading={loading}
         empty={{
           icon: FileText,
-          ...buildEmptyMessage('klaim', !!(search || filterStatus), () => { setSearch(''); setFilterStatus(''); setPage(1); }),
+          ...buildEmptyMessage('klaim', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -118,15 +109,22 @@ export default function ClaimsPage() {
         onPageChange={handlePageChange}
         colSpan={5}
         renderRow={(row: ClaimRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
-              <span className="font-medium text-gray-900 dark:text-white capitalize">{row.tipe}</span>
+              <span className="font-medium text-gray-900 dark:text-white capitalize">
+                {row.tipe}
+              </span>
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
               {row.anggota?.namaLengkap || '-'}
             </td>
             <td className="px-4 py-3">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}
+              >
                 {row.status}
               </span>
             </td>

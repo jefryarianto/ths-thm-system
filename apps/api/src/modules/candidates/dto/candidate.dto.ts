@@ -36,13 +36,15 @@ export class CreateCandidateDto {
   @IsEmail()
   email?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  rantingId: string;
+  rantingId?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  usulOlehId: string;
+  usulOlehId?: string;
 }
 
 export class UpdateCandidateDto {

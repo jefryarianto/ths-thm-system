@@ -2,26 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-} from 'recharts';
-import {
-  Download, Filter, Calendar, BarChart3, Bell, FileText,
-} from 'lucide-react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
-const TIPE_OPTIONS = [
-  { value: '', label: 'Semua Tipe' },
-  { value: 'umum', label: 'Umum' },
-  { value: 'welcome', label: 'Selamat Datang' },
-  { value: 'data_incomplete', label: 'Data Tidak Lengkap' },
-  { value: 'reminder_latihan', label: 'Reminder Latihan' },
-  { value: 'reminder_pendadaran', label: 'Reminder Pendadaran' },
-  { value: 'reminder_iuran', label: 'Reminder Iuran' },
-  { value: 'status_klaim', label: 'Status Klaim' },
-  { value: 'dokumen_ready', label: 'Dokumen Ready' },
-];
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { Download, Filter, Calendar, BarChart3, Bell, FileText } from 'lucide-react';
+import PageContainer from '@/components/ui/page-container';
+import PageHeader from '@/components/ui/page-header';
+import DataTable from '@/components/ui/data-table';
+import { TIPE_OPTIONS } from '@/components/notifications/constants';
 
 interface NotificationItem {
   id: string;
@@ -55,7 +41,7 @@ export default function NotificationReportPage() {
 
       // Build per-type stats from API response
       const byType = stats.byType || {};
-      const statsByTypeArr = TIPE_OPTIONS.filter(t => t.value).map((tipe) => ({
+      const statsByTypeArr = TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
         key: tipe.value,
         label: tipe.label,
         total: byType[tipe.value]?.total || 0,
@@ -78,9 +64,10 @@ export default function NotificationReportPage() {
         const promises = [];
         for (let p = 2; p <= totalPages; p++) {
           promises.push(
-            apiClient.get('/notifications', { params: { ...listParams, page: p } })
+            apiClient
+              .get('/notifications', { params: { ...listParams, page: p } })
               .then((r) => r.data?.data || [])
-              .catch(() => [] as NotificationItem[])
+              .catch(() => [] as NotificationItem[]),
           );
         }
         const remainingPages = await Promise.all(promises);
@@ -107,18 +94,26 @@ export default function NotificationReportPage() {
     setLoading(false);
   }, [filterTipe, startDate, endDate]);
 
-  useEffect(() => { fetchAllData(); }, [fetchAllData]);
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   // Stats from API (computed from server-side aggregation)
-  const [statsByType, setStatsByType] = useState<Array<{ key: string; label: string; total: number; unread: number }>>([]);
+  const [statsByType, setStatsByType] = useState<
+    Array<{ key: string; label: string; total: number; unread: number }>
+  >([]);
   const [totalStats, setTotalStats] = useState({ total: 0, unread: 0, read: 0 });
 
-  const chartData = (statsByType.length > 0 ? statsByType : TIPE_OPTIONS.filter(t => t.value).map((tipe) => ({
-    key: tipe.value,
-    label: tipe.label,
-    total: data.filter((n) => n.tipe === tipe.value).length,
-    unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
-  }))).map((s) => ({
+  const chartData = (
+    statsByType.length > 0
+      ? statsByType
+      : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
+          key: tipe.value,
+          label: tipe.label,
+          total: data.filter((n) => n.tipe === tipe.value).length,
+          unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
+        }))
+  ).map((s) => ({
     name: s.label,
     Total: s.total,
     BelumDibaca: s.unread,
@@ -147,30 +142,68 @@ export default function NotificationReportPage() {
       link.download = `laporan-notifikasi-${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
       URL.revokeObjectURL(url);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setExporting(false);
   };
 
+  const statsColumns = [
+    {
+      key: 'label',
+      label: 'Tipe',
+      render: (s: { label: string }) => (
+        <span className="text-sm font-medium text-gray-900 dark:text-white">{s.label}</span>
+      ),
+    },
+    {
+      key: 'total',
+      label: 'Total',
+      align: 'center' as const,
+      render: (s: { total: number }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">{s.total}</span>
+      ),
+    },
+    {
+      key: 'unread',
+      label: 'Belum Dibaca',
+      align: 'center' as const,
+      render: (s: { unread: number }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">{s.unread}</span>
+      ),
+    },
+    {
+      key: 'read',
+      label: 'Sudah Dibaca',
+      align: 'center' as const,
+      render: (s: { total: number; unread: number }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">{s.total - s.unread}</span>
+      ),
+    },
+    {
+      key: 'percentage',
+      label: '% Dibaca',
+      align: 'center' as const,
+      render: (s: { total: number; unread: number }) => (
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          {s.total > 0 ? `${Math.round(((s.total - s.unread) / s.total) * 100)}%` : '-'}
+        </span>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/notifications"
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-600 dark:text-gray-400"
+    <PageContainer>
+      <PageHeader title="Laporan Notifikasi" onRefresh={fetchAllData}>
+        <button
+          onClick={handleExportCSV}
+          disabled={exporting || data.length === 0}
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
         >
-          <ArrowLeft size={20} />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <FileText size={24} />
-            Laporan Notifikasi
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Statistik dan ekspor data notifikasi
-          </p>
-        </div>
-      </div>
+          <Download size={14} />
+          {exporting ? 'Exporting...' : 'Export CSV'}
+        </button>
+      </PageHeader>
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
@@ -179,11 +212,16 @@ export default function NotificationReportPage() {
             <Filter size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
             <select
               value={filterTipe}
-              onChange={(e) => { setFilterTipe(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setFilterTipe(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
             >
               {TIPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
           </div>
@@ -213,7 +251,11 @@ export default function NotificationReportPage() {
             </button>
             {(filterTipe || startDate || endDate) && (
               <button
-                onClick={() => { setFilterTipe(''); setStartDate(''); setEndDate(''); }}
+                onClick={() => {
+                  setFilterTipe('');
+                  setStartDate('');
+                  setEndDate('');
+                }}
                 className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800"
               >
                 Reset
@@ -227,7 +269,10 @@ export default function NotificationReportPage() {
       {error && (
         <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={fetchAllData} className="text-red-700 dark:text-red-400 underline hover:no-underline text-xs">
+          <button
+            onClick={fetchAllData}
+            className="text-red-700 dark:text-red-400 underline hover:no-underline text-xs"
+          >
             Coba lagi
           </button>
         </div>
@@ -237,7 +282,10 @@ export default function NotificationReportPage() {
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+            <div
+              key={i}
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse"
+            >
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-3" />
               <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16" />
             </div>
@@ -255,7 +303,9 @@ export default function NotificationReportPage() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Total Notifikasi</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{totalStats.total}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {totalStats.total}
+                </p>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
@@ -264,7 +314,9 @@ export default function NotificationReportPage() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Belum Dibaca</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{totalStats.unread}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {totalStats.unread}
+                </p>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
@@ -275,9 +327,19 @@ export default function NotificationReportPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">Rata-rata per Hari</p>
                 <p className="text-lg font-bold text-gray-900 dark:text-white">
                   {totalStats.total > 0
-                    ? (totalStats.total / Math.max(1, Math.ceil(
-                        (new Date(endDate || Date.now()).getTime() - new Date(startDate || Date.now() - 30 * 24 * 60 * 60 * 1000).getTime()) / (1000 * 60 * 60 * 24)
-                      ))).toFixed(1)
+                    ? (
+                        totalStats.total /
+                        Math.max(
+                          1,
+                          Math.ceil(
+                            (new Date(endDate || Date.now()).getTime() -
+                              new Date(
+                                startDate || Date.now() - 30 * 24 * 60 * 60 * 1000,
+                              ).getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          ),
+                        )
+                      ).toFixed(1)
                     : '0'}
                 </p>
               </div>
@@ -286,13 +348,25 @@ export default function NotificationReportPage() {
 
           {/* Chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Notifikasi per Tipe</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+              Notifikasi per Tipe
+            </h2>
             {chartData.some((d) => d.Total > 0) ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                  <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip
                     contentStyle={{
                       borderRadius: '8px',
@@ -300,8 +374,20 @@ export default function NotificationReportPage() {
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                     }}
                   />
-                  <Bar dataKey="Total" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={32} name="Total" />
-                  <Bar dataKey="BelumDibaca" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={32} name="Belum Dibaca" />
+                  <Bar
+                    dataKey="Total"
+                    fill="#3b82f6"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={32}
+                    name="Total"
+                  />
+                  <Bar
+                    dataKey="BelumDibaca"
+                    fill="#f59e0b"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={32}
+                    name="Belum Dibaca"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -312,54 +398,40 @@ export default function NotificationReportPage() {
           </div>
 
           {/* Stats Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Detail per Tipe</h2>
-              <button
-                onClick={handleExportCSV}
-                disabled={exporting || data.length === 0}
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
-              >
-                <Download size={14} />
-                {exporting ? 'Exporting...' : 'Export CSV'}
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="text-left px-5 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipe</th>
-                    <th className="text-center px-5 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
-                    <th className="text-center px-5 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Belum Dibaca</th>
-                    <th className="text-center px-5 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sudah Dibaca</th>
-                    <th className="text-center px-5 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">% Dibaca</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {(statsByType.length > 0 ? statsByType : TIPE_OPTIONS.filter(t => t.value).map((tipe) => ({
+          <DataTable
+            columns={statsColumns}
+            data={
+              statsByType.length > 0
+                ? statsByType
+                : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
                     key: tipe.value,
                     label: tipe.label,
                     total: data.filter((n) => n.tipe === tipe.value).length,
                     unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
-                  }))).map((s) => (
-                    <tr key={s.key} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                      <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{s.label}</td>
-                      <td className="px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-300">{s.total}</td>
-                      <td className="px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-300">{s.unread}</td>
-                      <td className="px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-300">{s.total - s.unread}</td>
-                      <td className="px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
-                        {s.total > 0
-                          ? `${Math.round(((s.total - s.unread) / s.total) * 100)}%`
-                          : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  }))
+            }
+            loading={false}
+            page={1}
+            totalPages={1}
+            total={
+              (statsByType.length > 0
+                ? statsByType
+                : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
+                    key: tipe.value,
+                    label: tipe.label,
+                    total: data.filter((n) => n.tipe === tipe.value).length,
+                    unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
+                  }))
+              ).length
+            }
+            empty={{
+              icon: FileText,
+              message: 'Belum ada data notifikasi',
+              title: 'Detail per Tipe',
+            }}
+          />
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

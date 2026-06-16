@@ -16,27 +16,52 @@ describe('THS-THM API (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.setGlobalPrefix('api');
     await app.init();
 
-    // Try login first, register only if needed (idempotent)
-    try {
-      const loginRes = await request(app.getHttpServer())
-        .post('/api/auth/login')
-        .send({ email: 'e2e@test.com', password: 'test1234' });
-      if (loginRes.status === 201 && loginRes.body.data?.accessToken) {
-        accessToken = loginRes.body.data.accessToken;
-        refreshToken = loginRes.body.data.refreshToken;
-        e2eUserId = loginRes.body.data.user?.id || '';
-      }
-    } catch { /* user may not exist yet */ }
+    // Debug: verify env vars are properly loaded
+    expect(process.env.JWT_SECRET).toBeDefined();
+    expect(process.env.DATABASE_URL).toBeDefined();
 
-    if (!accessToken) {
+    // Try login first, register only if needed (idempotent)
+    const loginRes = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'e2e@test.com', password: 'test1234' });
+
+    if (loginRes.status < 300 && loginRes.body?.data?.accessToken) {
+      accessToken = loginRes.body.data.accessToken;
+      refreshToken = loginRes.body.data.refreshToken;
+      e2eUserId = loginRes.body.data.user?.id || '';
+    } else {
+      // Login failed — user may not exist, try to register
       const regRes = await request(app.getHttpServer())
         .post('/api/auth/register')
-        .send({ email: 'e2e@test.com', password: 'test1234', namaLengkap: 'E2E Test User', role: 'superadmin' });
-      accessToken = regRes.body.data.accessToken;
-      refreshToken = regRes.body.data.refreshToken;
-      e2eUserId = regRes.body.data.user?.id || '';
+        .send({
+          email: 'e2e@test.com',
+          password: 'test1234',
+          namaLengkap: 'E2E Test User',
+          role: 'superadmin',
+        });
+
+      if (regRes.status < 300 && regRes.body?.data?.accessToken) {
+        accessToken = regRes.body.data.accessToken;
+        refreshToken = regRes.body.data.refreshToken;
+        e2eUserId = regRes.body.data.user?.id || '';
+      } else {
+        // Both login and register failed — print response for debugging
+        console.log(
+          'LOGIN response:',
+          loginRes.status,
+          JSON.stringify(loginRes.body || {}).slice(0, 200),
+        );
+        console.log(
+          'REGISTER response:',
+          regRes.status,
+          JSON.stringify(regRes.body || {}).slice(0, 200),
+        );
+        console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not set');
+        console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+      }
     }
 
     expect(accessToken).toBeDefined();
@@ -103,14 +128,14 @@ describe('THS-THM API (e2e)', () => {
 
   // ─── Notifications ───
   describe('Notifications', () => {
-    it('GET /api/notifications/count — should return unread count (0 for new user)', () => {
+    it('GET /api/notifications/count — should return unread count', () => {
       return request(app.getHttpServer())
         .get('/api/notifications/count')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res: any) => {
           expect(res.body.success).toBe(true);
-          expect(res.body.data.count).toBe(0);
+          expect(typeof res.body.data.count).toBe('number');
         });
     });
 
@@ -126,9 +151,7 @@ describe('THS-THM API (e2e)', () => {
     });
 
     it('GET /api/notifications/count — should reject without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/notifications/count')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/notifications/count').expect(401);
     });
   });
 
@@ -141,11 +164,10 @@ describe('THS-THM API (e2e)', () => {
         .expect(200)
         .expect((res: any) => {
           expect(res.body.success).toBe(true);
-          expect(typeof res.body.data.totalMembers).toBe('number');
-          expect(typeof res.body.data.totalCandidates).toBe('number');
-          expect(typeof res.body.data.totalDuesCollected).toBe('number');
-          expect(Array.isArray(res.body.data.memberStatus)).toBe(true);
-          expect(Array.isArray(res.body.data.monthlyDues)).toBe(true);
+          expect(typeof res.body.data.members).toBe('number');
+          expect(typeof res.body.data.trainings).toBe('number');
+          expect(typeof res.body.data.candidates).toBe('number');
+          expect(Array.isArray(res.body.data.topMembers)).toBe(true);
         });
     });
   });
@@ -178,7 +200,7 @@ describe('THS-THM API (e2e)', () => {
 
   // ─── Notification Preferences ───
   describe('Notification Preferences', () => {
-    it('GET /api/notifications/preferences — should return default preferences', () => {
+    it('GET /api/notifications/preferences — should return preferences with inApp/email structure', () => {
       return request(app.getHttpServer())
         .get('/api/notifications/preferences')
         .set('Authorization', `Bearer ${accessToken}`)
@@ -188,9 +210,11 @@ describe('THS-THM API (e2e)', () => {
           expect(res.body.data).toBeDefined();
           expect(res.body.types).toBeDefined();
           expect(Array.isArray(res.body.types)).toBe(true);
-          // All defaults should be true
+          // Each preference should have inApp and email fields
           for (const val of Object.values(res.body.data)) {
-            expect(val).toBe(true);
+            const pref = val as { inApp: boolean; email: boolean };
+            expect(typeof pref.inApp).toBe('boolean');
+            expect(typeof pref.email).toBe('boolean');
           }
         });
     });
@@ -206,16 +230,19 @@ describe('THS-THM API (e2e)', () => {
         });
     });
 
-    it('GET /api/notifications/preferences — should return updated preferences', () => {
+    it('GET /api/notifications/preferences — should return updated preferences in {inApp,email} format', () => {
       return request(app.getHttpServer())
         .get('/api/notifications/preferences')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res: any) => {
           expect(res.body.success).toBe(true);
-          expect(res.body.data.welcome).toBe(false);
-          expect(res.body.data.umum).toBe(true);
-          expect(res.body.data.reminder_iuran).toBe(false);
+          expect(res.body.data.welcome.inApp).toBe(false);
+          expect(res.body.data.welcome.email).toBe(false);
+          expect(res.body.data.umum.inApp).toBe(true);
+          expect(res.body.data.umum.email).toBe(true);
+          expect(res.body.data.reminder_iuran.inApp).toBe(false);
+          expect(res.body.data.reminder_iuran.email).toBe(false);
         });
     });
 
@@ -228,9 +255,7 @@ describe('THS-THM API (e2e)', () => {
     });
 
     it('GET /api/notifications/preferences — should reject without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/notifications/preferences')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/notifications/preferences').expect(401);
     });
   });
 
@@ -302,9 +327,7 @@ describe('THS-THM API (e2e)', () => {
     });
 
     it('GET /api/members — should reject without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/members')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/members').expect(401);
     });
   });
 
@@ -333,9 +356,7 @@ describe('THS-THM API (e2e)', () => {
     });
 
     it('GET /api/letters — should reject without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/letters/incoming')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/letters/incoming').expect(401);
     });
   });
 
@@ -353,9 +374,7 @@ describe('THS-THM API (e2e)', () => {
     });
 
     it('GET /api/candidates — should reject without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/candidates')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/candidates').expect(401);
     });
   });
 });

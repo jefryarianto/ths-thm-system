@@ -25,13 +25,14 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
     const start = Math.max(1, page - 2);
     const end = Math.min(totalPages, page + 2);
     for (let i = start; i <= end; i++) pages.push(i);
-    return pages.map(p => (
+    return pages.map((p) => (
       <button
         key={p}
         onClick={() => onPageChange(p)}
-        className={`px-2.5 py-1 text-sm rounded-md ${p === page
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+        className={`px-2.5 py-1 text-sm rounded-md ${
+          p === page
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
       >
         {p}

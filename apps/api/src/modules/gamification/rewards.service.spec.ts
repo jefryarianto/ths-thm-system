@@ -81,7 +81,10 @@ describe('RewardsService', () => {
       providers: [
         RewardsService,
         { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
-        { provide: require('../notifications/notifications.service').NotificationsService, useValue: { send: jest.fn() } },
+        {
+          provide: require('../notifications/notifications.service').NotificationsService,
+          useValue: { send: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -127,8 +130,9 @@ describe('RewardsService', () => {
     it('should throw NotFoundException if reward does not exist', async () => {
       prismaMock.gamificationReward.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateReward('nonexistent', { name: 'Test' }))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.updateReward('nonexistent', { name: 'Test' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should update reward fields', async () => {
@@ -153,8 +157,7 @@ describe('RewardsService', () => {
     it('should throw NotFoundException if reward does not exist', async () => {
       prismaMock.gamificationReward.findUnique.mockResolvedValue(null);
 
-      await expect(service.deleteReward('nonexistent'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.deleteReward('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it('should delete existing reward', async () => {
@@ -172,8 +175,9 @@ describe('RewardsService', () => {
     it('should throw NotFoundException if reward does not exist', async () => {
       prismaMock.gamificationReward.findUnique.mockResolvedValue(null);
 
-      await expect(service.redeemReward('anggota-1', 'nonexistent'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.redeemReward('anggota-1', 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException if reward is inactive', async () => {
@@ -182,8 +186,9 @@ describe('RewardsService', () => {
         isActive: false,
       });
 
-      await expect(service.redeemReward('anggota-1', 'reward-1'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.redeemReward('anggota-1', 'reward-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if stock is 0', async () => {
@@ -192,24 +197,30 @@ describe('RewardsService', () => {
         stock: 0,
       });
 
-      await expect(service.redeemReward('anggota-1', 'reward-1'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.redeemReward('anggota-1', 'reward-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException if profile does not exist', async () => {
       prismaMock.gamificationReward.findUnique.mockResolvedValue(REWARD_TEMPLATE);
       prismaMock.gamificationProfile.findUnique.mockResolvedValue(null);
 
-      await expect(service.redeemReward('anggota-1', 'reward-1'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.redeemReward('anggota-1', 'reward-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException if insufficient points', async () => {
       prismaMock.gamificationReward.findUnique.mockResolvedValue(REWARD_TEMPLATE);
-      prismaMock.gamificationProfile.findUnique.mockResolvedValue({ ...PROFILE_TEMPLATE, points: 50 });
+      prismaMock.gamificationProfile.findUnique.mockResolvedValue({
+        ...PROFILE_TEMPLATE,
+        points: 50,
+      });
 
-      await expect(service.redeemReward('anggota-1', 'reward-1'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.redeemReward('anggota-1', 'reward-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should create redemption in transaction with sufficient points', async () => {
@@ -268,8 +279,9 @@ describe('RewardsService', () => {
     it('should throw NotFoundException if redemption does not exist', async () => {
       prismaMock.gamificationRedemption.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateRedemptionStatus('nonexistent', 'approved'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.updateRedemptionStatus('nonexistent', 'approved')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should update redemption status', async () => {
@@ -308,7 +320,10 @@ describe('RewardsService', () => {
         providers: [
           RewardsService,
           { provide: require('../../prisma/prisma.service').PrismaService, useValue: prismaMock },
-          { provide: require('../notifications/notifications.service').NotificationsService, useValue: { send: jest.fn() } },
+          {
+            provide: require('../notifications/notifications.service').NotificationsService,
+            useValue: { send: jest.fn() },
+          },
         ],
       }).compile();
       const testService = testServiceModule.get<RewardsService>(RewardsService);

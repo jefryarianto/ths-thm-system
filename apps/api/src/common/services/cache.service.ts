@@ -96,11 +96,7 @@ export class CacheService {
    * Get a value or compute and cache it if not present.
    * Useful for cache-aside pattern.
    */
-  async getOrSet<T>(
-    key: string,
-    factory: () => Promise<T>,
-    ttlMs: number = 60_000,
-  ): Promise<T> {
+  async getOrSet<T>(key: string, factory: () => Promise<T>, ttlMs: number = 60_000): Promise<T> {
     const cached = this.get<T>(key);
     if (cached !== undefined) return cached;
 

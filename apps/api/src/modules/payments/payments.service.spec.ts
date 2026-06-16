@@ -14,9 +14,13 @@ const mockStripeInstance = {
   webhooks: { constructEvent: mockConstructEvent },
 };
 
-jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => mockStripeInstance);
-}, { virtual: true });
+jest.mock(
+  'stripe',
+  () => {
+    return jest.fn().mockImplementation(() => mockStripeInstance);
+  },
+  { virtual: true },
+);
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
@@ -64,7 +68,11 @@ describe('PaymentsService', () => {
       mockCreate.mockResolvedValue({ id: 'pi_123', client_secret: 'secret_abc' });
       mockPrisma.iuran.update.mockResolvedValue({});
 
-      const result = await service.createIntent({ iuranId: 'iuran1', amount: 100000, currency: 'idr' });
+      const result = await service.createIntent({
+        iuranId: 'iuran1',
+        amount: 100000,
+        currency: 'idr',
+      });
       expect(result.clientSecret).toBe('secret_abc');
     });
 
@@ -76,10 +84,16 @@ describe('PaymentsService', () => {
     });
 
     it('should throw ForbiddenException for out-of-scope iuran', async () => {
-      mockPrisma.iuran.findUnique.mockResolvedValue({ id: 'iuran1', anggota: { rantingId: 'r-other' } });
+      mockPrisma.iuran.findUnique.mockResolvedValue({
+        id: 'iuran1',
+        anggota: { rantingId: 'r-other' },
+      });
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
       await expect(
-        service.createIntent({ iuranId: 'iuran1', amount: 100000, currency: 'idr' }, { rantingId: 'r1' }),
+        service.createIntent(
+          { iuranId: 'iuran1', amount: 100000, currency: 'idr' },
+          { rantingId: 'r1' },
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -105,8 +119,12 @@ describe('PaymentsService', () => {
     });
 
     it('should throw BadRequestException on invalid signature', async () => {
-      mockConstructEvent.mockImplementation(() => { throw new Error('Invalid signature'); });
-      await expect(service.handleWebhook('bad-sig', Buffer.from('{}'))).rejects.toThrow(BadRequestException);
+      mockConstructEvent.mockImplementation(() => {
+        throw new Error('Invalid signature');
+      });
+      await expect(service.handleWebhook('bad-sig', Buffer.from('{}'))).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

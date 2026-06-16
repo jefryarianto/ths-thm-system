@@ -6,6 +6,7 @@ import { userWelcomeEmail } from '../../mail/email-templates';
 import { CreateUserDto, UpdateUserDto, UserFilterDto } from './dto/user.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { paginate } from '../../common/utils/pagination';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -19,8 +20,6 @@ export class UsersService {
   ) {}
 
   async findAll(query: UserFilterDto, scope?: UserScope) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
     const where: Record<string, unknown> = {};
     if (query.role) where.role = query.role;
     if (query.search) where.namaLengkap = { contains: query.search };
@@ -34,19 +33,46 @@ export class UsersService {
       where.ranting = { wilayah: { distrikId: scope.distrikId } };
     }
 
-    const [data, total] = await Promise.all([
-      this.prisma.user.findMany({ where, skip: (page - 1) * limit, take: limit, select: { id: true, email: true, namaLengkap: true, role: true, rantingId: true, isActive: true, createdAt: true }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.user.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.user, where, {
+      page: query.page,
+      limit: query.limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        namaLengkap: true,
+        role: true,
+        rantingId: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
   }
 
   async findOne(id: string, scope?: UserScope) {
-    const user = await this.prisma.user.findUnique({ where: { id }, select: { id: true, email: true, namaLengkap: true, role: true, rantingId: true, isActive: true, createdAt: true } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        namaLengkap: true,
+        role: true,
+        rantingId: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
     // Scope verification
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, user.rantingId ?? undefined))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(
+        this.prisma,
+        scope,
+        user.rantingId ?? undefined,
+      ))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
@@ -58,7 +84,15 @@ export class UsersService {
     const rantingId = dto.rantingId || scope?.rantingId;
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
-    const user = await this.prisma.user.create({ data: { email: dto.email, namaLengkap: dto.namaLengkap, role: dto.role as never, rantingId, passwordHash } });
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        namaLengkap: dto.namaLengkap,
+        role: dto.role as never,
+        rantingId,
+        passwordHash,
+      },
+    });
     const { passwordHash: _, ...result } = user;
 
     const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(result.email)}`;
@@ -69,22 +103,28 @@ export class UsersService {
 
   private sendWelcomeEmail(email: string, nama: string, role: string, setPasswordUrl: string) {
     const { subject, html } = userWelcomeEmail(nama, email, role, setPasswordUrl);
-    this.mailService.sendMail({
-      to: email, subject, html,
-      metadata: { module: 'users', template: 'userWelcomeEmail', email, role },
-    }).catch(() => {
-      this.logger.warn(`Failed to send welcome email to user ${email}`);
-    });
+    this.mailService
+      .sendMail({
+        to: email,
+        subject,
+        html,
+        metadata: { module: 'users', template: 'userWelcomeEmail', email, role },
+      })
+      .catch(() => {
+        this.logger.warn(`Failed to send welcome email to user ${email}`);
+      });
   }
 
   async update(id: string, dto: UpdateUserDto, scope?: UserScope) {
-    // Scope verification
     if (scope) {
-      const existing = await this.prisma.user.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!existing) throw new NotFoundException('User tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.rantingId ?? undefined))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
+      await this.scopeHelper.verifyResourceAccess(
+        this.prisma,
+        scope,
+        id,
+        (prisma, rid) =>
+          prisma.user.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+        'User tidak ditemukan',
+      );
     }
 
     const data: Record<string, unknown> = {};
@@ -95,18 +135,24 @@ export class UsersService {
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const user = await this.prisma.user.update({ where: { id }, data, select: { id: true, email: true, namaLengkap: true, role: true, isActive: true } });
+    const user = await this.prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, email: true, namaLengkap: true, role: true, isActive: true },
+    });
     return { success: true, data: user, message: 'User berhasil diperbarui' };
   }
 
   async remove(id: string, scope?: UserScope) {
-    // Scope verification
     if (scope) {
-      const existing = await this.prisma.user.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!existing) throw new NotFoundException('User tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.rantingId ?? undefined))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
+      await this.scopeHelper.verifyResourceAccess(
+        this.prisma,
+        scope,
+        id,
+        (prisma, rid) =>
+          prisma.user.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+        'User tidak ditemukan',
+      );
     }
 
     await this.prisma.user.update({ where: { id }, data: { isActive: false } });

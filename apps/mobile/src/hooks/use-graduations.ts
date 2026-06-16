@@ -10,7 +10,10 @@ export interface Graduation {
   status: string;
 }
 
-export const STATUS_STYLES: Record<string, { label: string; icon: string; bg: string; color: string }> = {
+export const STATUS_STYLES: Record<
+  string,
+  { label: string; icon: string; bg: string; color: string }
+> = {
   draft: { label: 'Draft', icon: 'create', bg: '#f3f4f6', color: '#6b7280' },
   published: { label: 'Berlangsung', icon: 'checkmark-circle', bg: '#ecfdf5', color: '#16a34a' },
   closed: { label: 'Selesai', icon: 'flag', bg: '#eff6ff', color: '#2563eb' },
@@ -29,7 +32,11 @@ export function useGraduations(search: string, filterStatus: string) {
     () =>
       apiClient
         .get('/graduations', {
-          params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined },
+          params: {
+            limit: 50,
+            search: search.trim() || undefined,
+            status: filterStatus || undefined,
+          },
         })
         .then((r) => (unwrap(r) ?? []) as Graduation[]),
     [search, filterStatus],

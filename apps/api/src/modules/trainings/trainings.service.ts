@@ -1,12 +1,29 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { trainingNotificationEmail, attendanceConfirmationEmail } from '../../mail/email-templates';
-import { CreateTrainingDto, UpdateTrainingDto, TrainingFilterDto, RecordAttendanceDto, CreateEvaluationDto, UpdateEvaluationDto } from './dto/training.dto';
+import {
+  CreateTrainingDto,
+  UpdateTrainingDto,
+  TrainingFilterDto,
+  RecordAttendanceDto,
+  CreateEvaluationDto,
+  UpdateEvaluationDto,
+} from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class TrainingsService {
@@ -18,31 +35,30 @@ export class TrainingsService {
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
     private readonly mailService: MailService,
+    private readonly memberMailService: MemberMailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
   ) {}
 
   async findAll(query: TrainingFilterDto, scope?: UserScope) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${page}:${limit}:${query.rantingId || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.rantingId || ''}`;
 
-    return this.cache.getOrSet(cacheKey, async () => {
-      const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
-      const where: Record<string, unknown> = { ...scopeFilter };
-      if (query.rantingId) where.rantingId = query.rantingId;
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+        const where: Record<string, unknown> = { ...scopeFilter };
+        if (query.rantingId) where.rantingId = query.rantingId;
 
-      const [data, total] = await Promise.all([
-        this.prisma.latihan.findMany({
-          where, skip: (page - 1) * limit, take: limit,
-          include: { ranting: true, pelatih: { select: { id: true, namaLengkap: true } } },
+        return paginate(this.prisma.latihan, where, {
+          page: query.page,
+          limit: query.limit,
           orderBy: { hariTanggal: 'desc' },
-        }),
-        this.prisma.latihan.count({ where }),
-      ]);
-
-      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-    }, 30);
+          include: { ranting: true, pelatih: { select: { id: true, namaLengkap: true } } },
+        });
+      },
+      30,
+    );
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -51,26 +67,39 @@ export class TrainingsService {
       include: {
         ranting: true,
         pelatih: { select: { id: true, namaLengkap: true } },
-        absensi: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } },
-        evaluasi: { include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } } },
+        absensi: {
+          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+        },
+        evaluasi: {
+          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+        },
       },
     });
     if (!training) throw new NotFoundException('Latihan tidak ditemukan');
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))
+    ) {
       throw new NotFoundException('Latihan tidak ditemukan');
     }
     return { success: true, data: training };
   }
 
-  async create(dto: CreateTrainingDto, scope?: UserScope) {
+  async create(dto: CreateTrainingDto, scope?: UserScope, userId?: string) {
     if (scope?.rantingId && !dto.rantingId) {
       (dto as any).rantingId = scope.rantingId;
     }
+    // Resolve rantingId and pelatihId with runtime validation
+    const rantingId = dto.rantingId || scope?.rantingId;
+    if (!rantingId) throw new BadRequestException('rantingId diperlukan');
+    const pelatihId = userId || dto.pelatihId;
+    if (!pelatihId) throw new BadRequestException('pelatihId diperlukan');
+
     const training = await this.prisma.latihan.create({
       data: {
-        rantingId: dto.rantingId,
+        rantingId,
         kegiatanId: dto.kegiatanId,
-        pelatihId: dto.pelatihId,
+        pelatihId,
         hariTanggal: new Date(dto.hariTanggal),
         lokasi: dto.lokasi,
         jenisMateri: dto.jenisMateri,
@@ -84,18 +113,22 @@ export class TrainingsService {
 
   async update(id: string, dto: UpdateTrainingDto, scope?: UserScope) {
     if (scope) {
-      const training = await this.prisma.latihan.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!training) throw new NotFoundException('Latihan tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
+      await this.scopeHelper.verifyResourceAccess(
+        this.prisma,
+        scope,
+        id,
+        (prisma, rid) =>
+          prisma.latihan.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+        'Latihan tidak ditemukan',
+      );
     }
 
     const data: Record<string, unknown> = {};
     if (dto.lokasi) data.lokasi = dto.lokasi;
     if (dto.jenisMateri) data.jenisMateri = dto.jenisMateri;
     if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
-    if (dto.rekomendasiBerikutnya !== undefined) data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
+    if (dto.rekomendasiBerikutnya !== undefined)
+      data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
     if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
 
     const training = await this.prisma.latihan.update({ where: { id }, data });
@@ -105,11 +138,14 @@ export class TrainingsService {
 
   async remove(id: string, scope?: UserScope) {
     if (scope) {
-      const training = await this.prisma.latihan.findUnique({ where: { id }, select: { rantingId: true } });
-      if (!training) throw new NotFoundException('Latihan tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
+      await this.scopeHelper.verifyResourceAccess(
+        this.prisma,
+        scope,
+        id,
+        (prisma, rid) =>
+          prisma.latihan.findUnique({ where: { id: rid }, select: { rantingId: true } }),
+        'Latihan tidak ditemukan',
+      );
     }
 
     await this.prisma.latihan.delete({ where: { id } });
@@ -161,7 +197,10 @@ export class TrainingsService {
     return { success: true, data: attendance, message: 'Kehadiran tercatat' };
   }
 
-  async importAttendance(trainingId: string, data: Array<{ anggotaId?: string; memberId?: string; hadir?: boolean; catatan?: string }>) {
+  async importAttendance(
+    trainingId: string,
+    data: Array<{ anggotaId?: string; memberId?: string; hadir?: boolean; catatan?: string }>,
+  ) {
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
@@ -174,7 +213,12 @@ export class TrainingsService {
       });
       if (!existing) {
         await this.prisma.absensiLatihan.create({
-          data: { latihanId: trainingId, anggotaId, hadir: row.hadir !== false, catatan: row.catatan },
+          data: {
+            latihanId: trainingId,
+            anggotaId,
+            hadir: row.hadir !== false,
+            catatan: row.catatan,
+          },
         });
         imported++;
       }
@@ -196,7 +240,12 @@ export class TrainingsService {
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
     const evaluation = await this.prisma.evaluasiLatihan.create({
-      data: { latihanId: trainingId, anggotaId: dto.anggotaId, nilai: dto.nilai, catatan: dto.catatan },
+      data: {
+        latihanId: trainingId,
+        anggotaId: dto.anggotaId,
+        nilai: dto.nilai,
+        catatan: dto.catatan,
+      },
     });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     return { success: true, data: evaluation, message: 'Evaluasi berhasil disimpan' };
@@ -221,18 +270,13 @@ export class TrainingsService {
     return { success: true, message: 'Evaluasi berhasil dihapus' };
   }
 
-  private async sendAttendanceConfirmation(anggotaId: string, jenisMateri: string, hadir: boolean): Promise<void> {
-    try {
-      const member = await this.prisma.anggota.findUnique({
-        where: { id: anggotaId },
-        select: { email: true, namaLengkap: true },
-      });
-      if (!member?.email) return;
-
-      const tpl = attendanceConfirmationEmail(member.namaLengkap, jenisMateri, hadir);
-      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'trainings', template: 'attendanceConfirmationEmail' } });
-    } catch (error) {
-      this.logger.error(`sendAttendanceConfirmation failed for member ${anggotaId}: ${(error as Error).message}`);
-    }
+  private sendAttendanceConfirmation(anggotaId: string, jenisMateri: string, hadir: boolean): void {
+    this.memberMailService.sendToMemberWithArgs(
+      anggotaId,
+      attendanceConfirmationEmail,
+      [jenisMateri, hadir],
+      { template: 'attendanceConfirmationEmail' },
+      'trainings',
+    );
   }
 }

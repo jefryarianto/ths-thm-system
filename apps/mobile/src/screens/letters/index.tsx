@@ -54,14 +54,40 @@ export default function LettersScreen() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const { data: incoming, loading: loadingIncoming, refetch: refetchIncoming } = useApi<IncomingLetter[]>(
-    () => apiClient.get('/letters/incoming', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => (unwrap(r) ?? []) as IncomingLetter[]),
-    [search, filterStatus]
+  const {
+    data: incoming,
+    loading: loadingIncoming,
+    refetch: refetchIncoming,
+  } = useApi<IncomingLetter[]>(
+    () =>
+      apiClient
+        .get('/letters/incoming', {
+          params: {
+            limit: 50,
+            search: search.trim() || undefined,
+            status: filterStatus || undefined,
+          },
+        })
+        .then((r) => (unwrap(r) ?? []) as IncomingLetter[]),
+    [search, filterStatus],
   );
 
-  const { data: outgoing, loading: loadingOutgoing, refetch: refetchOutgoing } = useApi<OutgoingLetter[]>(
-    () => apiClient.get('/letters/outgoing', { params: { limit: 50, search: search.trim() || undefined, status: filterStatus || undefined } }).then(r => (unwrap(r) ?? []) as OutgoingLetter[]),
-    [search, filterStatus]
+  const {
+    data: outgoing,
+    loading: loadingOutgoing,
+    refetch: refetchOutgoing,
+  } = useApi<OutgoingLetter[]>(
+    () =>
+      apiClient
+        .get('/letters/outgoing', {
+          params: {
+            limit: 50,
+            search: search.trim() || undefined,
+            status: filterStatus || undefined,
+          },
+        })
+        .then((r) => (unwrap(r) ?? []) as OutgoingLetter[]),
+    [search, filterStatus],
   );
 
   const loading = tab === 'incoming' ? loadingIncoming : loadingOutgoing;

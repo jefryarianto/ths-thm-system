@@ -18,6 +18,7 @@ Kumpulan prompt untuk membantu pengembangan dengan AI (Claude, GPT, GitHub Copil
 ## Format Prompt
 
 Setiap prompt mengikuti format:
+
 ```
 ## Context
 [Deskripsi singkat fitur/modul]

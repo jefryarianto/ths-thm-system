@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -97,7 +106,12 @@ export default function EditProfileScreen() {
   const renderField = (
     label: string,
     key: string,
-    options?: { placeholder?: string; multiline?: boolean; keyboardType?: 'default' | 'email-address' | 'phone-pad'; editable?: boolean },
+    options?: {
+      placeholder?: string;
+      multiline?: boolean;
+      keyboardType?: 'default' | 'email-address' | 'phone-pad';
+      editable?: boolean;
+    },
   ) => (
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -129,7 +143,10 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -184,10 +201,7 @@ export default function EditProfileScreen() {
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => router.back()}
-            >
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
               <Text style={styles.cancelBtnText}>Batal</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -225,7 +239,15 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  header: {
+    backgroundColor: '#2563eb',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   backBtn: { padding: 4 },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
 
@@ -235,23 +257,44 @@ const styles = StyleSheet.create({
   photoContainer: { position: 'relative', marginBottom: 8 },
   photo: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: '#fff' },
   photoPlaceholder: {
-    width: 96, height: 96, borderRadius: 48, backgroundColor: '#dbeafe',
-    alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff',
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 4,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#dbeafe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   photoBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    width: 28, height: 28, borderRadius: 14, backgroundColor: '#2563eb',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: '#fff',
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   photoHint: { fontSize: 12, color: '#9ca3af' },
 
   fieldGroup: { marginBottom: 16 },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6 },
   input: {
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#d1d5db',
-    borderRadius: 10, padding: 12, fontSize: 15, color: '#111827',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#111827',
   },
   inputError: { borderColor: '#ef4444', borderWidth: 2 },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
@@ -260,18 +303,36 @@ const styles = StyleSheet.create({
 
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cancelBtn: {
-    flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 10,
-    paddingVertical: 14, alignItems: 'center',
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
   },
   cancelBtnText: { fontSize: 15, fontWeight: '600', color: '#374151' },
   saveBtn: {
-    flex: 1, backgroundColor: '#2563eb', borderRadius: 10,
-    paddingVertical: 14, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 6,
+    flex: 1,
+    backgroundColor: '#2563eb',
+    borderRadius: 10,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   saveBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
   btnDisabled: { opacity: 0.5 },
 
-  infoBox: { flexDirection: 'row', gap: 10, backgroundColor: '#eff6ff', borderRadius: 12, padding: 14, marginTop: 20, borderWidth: 1, borderColor: '#bfdbfe' },
+  infoBox: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
   infoText: { flex: 1, fontSize: 12, color: '#1e40af', lineHeight: 18 },
 });

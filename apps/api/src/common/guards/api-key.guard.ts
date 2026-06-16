@@ -12,14 +12,15 @@ export const API_KEY_AUTH_KEY = 'apiKeyAuth';
  * When applied, the endpoint will accept X-API-Key header
  * as an alternative to JWT authentication.
  */
-export const ApiKeyAuth = () => (target: object, propertyKey?: string, descriptor?: PropertyDescriptor) => {
-  if (descriptor) {
-    Reflect.defineMetadata(API_KEY_AUTH_KEY, true, descriptor.value);
-    return descriptor;
-  }
-  Reflect.defineMetadata(API_KEY_AUTH_KEY, true, target);
-  return target;
-};
+export const ApiKeyAuth =
+  () => (target: object, propertyKey?: string, descriptor?: PropertyDescriptor) => {
+    if (descriptor) {
+      Reflect.defineMetadata(API_KEY_AUTH_KEY, true, descriptor.value);
+      return descriptor;
+    }
+    Reflect.defineMetadata(API_KEY_AUTH_KEY, true, target);
+    return target;
+  };
 
 /**
  * API key metadata configuration.
@@ -174,7 +175,9 @@ export class ApiKeyGuard {
       request.scope = config.scope;
     }
 
-    this.logger.debug(`API key authenticated: role=${config.role}, description=${config.description || 'none'}`);
+    this.logger.debug(
+      `API key authenticated: role=${config.role}, description=${config.description || 'none'}`,
+    );
 
     return true;
   }

@@ -5,11 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient, { unwrap } from '@/lib/api-client';
 import {
-  ArrowLeft, Zap, Flame, Star, Award,
-  AlertCircle, Activity, TrendingUp,
+  ArrowLeft,
+  Zap,
+  Flame,
+  Star,
+  Award,
+  AlertCircle,
+  Activity,
+  TrendingUp,
 } from 'lucide-react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
 
@@ -63,7 +74,9 @@ export default function GamificationProfilePage() {
 
   const [profile, setProfile] = useState<GamificationProfile | null>(null);
   const [events, setEvents] = useState<PointEvent[]>([]);
-  const [pointsHistory, setPointsHistory] = useState<Array<{ month: string; points: number; cumulative: number; count: number }>>([]);
+  const [pointsHistory, setPointsHistory] = useState<
+    Array<{ month: string; points: number; cumulative: number; count: number }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,7 +147,10 @@ export default function GamificationProfilePage() {
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
           <p className="text-red-600 font-medium">{error || 'Profil tidak ditemukan'}</p>
-          <Link href="/gamification" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+          <Link
+            href="/gamification"
+            className="text-sm text-blue-600 hover:underline mt-2 inline-block"
+          >
             ← Kembali ke gamifikasi
           </Link>
         </div>
@@ -224,7 +240,20 @@ export default function GamificationProfilePage() {
                 tick={{ fontSize: 11 }}
                 tickFormatter={(val) => {
                   const [y, m] = val.split('-');
-                  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                  const months = [
+                    'Jan',
+                    'Feb',
+                    'Mar',
+                    'Apr',
+                    'Mei',
+                    'Jun',
+                    'Jul',
+                    'Agu',
+                    'Sep',
+                    'Okt',
+                    'Nov',
+                    'Des',
+                  ];
                   return `${months[parseInt(m) - 1]} ${y.slice(2)}`;
                 }}
               />
@@ -236,10 +265,27 @@ export default function GamificationProfilePage() {
                 ]}
                 labelFormatter={(label) => {
                   const [y, m] = label.split('-');
-                  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                  const months = [
+                    'Jan',
+                    'Feb',
+                    'Mar',
+                    'Apr',
+                    'Mei',
+                    'Jun',
+                    'Jul',
+                    'Agu',
+                    'Sep',
+                    'Okt',
+                    'Nov',
+                    'Des',
+                  ];
                   return `${months[parseInt(m) - 1]} ${y}`;
                 }}
-                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '12px',
+                }}
               />
               <Line
                 type="monotone"
@@ -310,8 +356,7 @@ export default function GamificationProfilePage() {
                       <span className="font-medium">{event.description}</span>
                     </p>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                      <Zap size={10} />
-                      +{event.points}
+                      <Zap size={10} />+{event.points}
                     </span>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">{getTimeAgo(event.timestamp)}</p>

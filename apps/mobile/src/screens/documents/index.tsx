@@ -12,7 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../../lib/api-client';
-import { useDocuments, TIPE_LABELS, TIPE_ICONS, STATUS_STYLES, TIPE_FILTERS, DocumentItem } from '../../hooks/use-documents';
+import {
+  useDocuments,
+  TIPE_LABELS,
+  TIPE_ICONS,
+  STATUS_STYLES,
+  TIPE_FILTERS,
+  DocumentItem,
+} from '../../hooks/use-documents';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 
@@ -76,11 +83,19 @@ export default function DocumentsScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const ss = STATUS_STYLES[item.status] || { label: item.status, color: '#6b7280', bg: '#f3f4f6' };
+          const ss = STATUS_STYLES[item.status] || {
+            label: item.status,
+            color: '#6b7280',
+            bg: '#f3f4f6',
+          };
           const iconName = TIPE_ICONS[item.tipe] || 'document-text';
           const tipeLabel = TIPE_LABELS[item.tipe] || item.tipe;
           return (
-            <TouchableOpacity style={styles.card} onPress={() => handleDownload(item)} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => handleDownload(item)}
+              activeOpacity={0.7}
+            >
               <View style={styles.iconCircle}>
                 <Ionicons name={iconName as any} size={22} color="#2563eb" />
               </View>
@@ -116,19 +131,41 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
   searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', margin: 16, marginBottom: 0,
-    borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 12, paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
 
   card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14,
-    padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#f3f4f6',
-    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   iconCircle: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff',
-    alignItems: 'center', justifyContent: 'center', marginRight: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },

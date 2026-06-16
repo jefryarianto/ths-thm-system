@@ -1,3 +1,6 @@
+// Set React Native globals
+global.__DEV__ = true;
+
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(() => Promise.resolve()),

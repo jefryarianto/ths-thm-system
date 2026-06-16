@@ -60,10 +60,7 @@ export class MailCronService {
       });
 
       const statusIcon = result.failed === 0 ? '✅' : '⚠️';
-      const statusText =
-        result.failed === 0
-          ? 'Semua berhasil'
-          : `${result.failed} masih gagal`;
+      const statusText = result.failed === 0 ? 'Semua berhasil' : `${result.failed} masih gagal`;
 
       for (const admin of superadmins) {
         await this.notificationsService.send(admin.id, {

@@ -18,21 +18,33 @@ const mockApi = vi.mocked(apiClient);
 
 const mockLetters = [
   {
-    id: '1', nomorSurat: '001/THS/V/2026', type: 'masuk',
-    pengirim: 'Ketua THS', perihal: 'Undangan Rapat', status: 'diterima',
-    tanggalSurat: '2026-05-01T00:00:00.000Z', createdAt: '2026-05-01T00:00:00.000Z',
+    id: '1',
+    nomorSurat: '001/THS/V/2026',
+    type: 'masuk',
+    pengirim: 'Ketua THS',
+    perihal: 'Undangan Rapat',
+    status: 'diterima',
+    tanggalSurat: '2026-05-01T00:00:00.000Z',
+    createdAt: '2026-05-01T00:00:00.000Z',
   },
   {
-    id: '2', nomorSurat: '002/THS/V/2026', type: 'keluar',
-    tujuan: 'Sekretariat THM', perihal: 'Laporan Bulanan', status: 'draft',
-    tanggalSurat: '2026-05-02T00:00:00.000Z', createdAt: '2026-05-02T00:00:00.000Z',
+    id: '2',
+    nomorSurat: '002/THS/V/2026',
+    type: 'keluar',
+    tujuan: 'Sekretariat THM',
+    perihal: 'Laporan Bulanan',
+    status: 'draft',
+    tanggalSurat: '2026-05-02T00:00:00.000Z',
+    createdAt: '2026-05-02T00:00:00.000Z',
   },
 ];
 
 describe('LettersPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockApi.get.mockResolvedValue({ data: { data: mockLetters, meta: { total: 2, totalPages: 1 } } });
+    mockApi.get.mockResolvedValue({
+      data: { data: mockLetters, meta: { total: 2, totalPages: 1 } },
+    });
     // Suppress confirm/alert
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.spyOn(window, 'alert').mockImplementation(() => {});
@@ -76,7 +88,7 @@ describe('LettersPage', () => {
     // Should NOT have pengirim (only appears in table header if letter has pengirim)
     const pengirimElements = screen.queryAllByText('Pengirim');
     // Modal should not contain pengirim label — check only within the modal
-    expect(pengirimElements.filter(el => el.closest('.fixed')).length).toBe(0);
+    expect(pengirimElements.filter((el) => el.closest('.fixed')).length).toBe(0);
   });
 
   it('shows validation error when required fields are empty', async () => {
@@ -136,11 +148,14 @@ describe('LettersPage', () => {
     fireEvent.click(screen.getByText('Tambah Surat'));
 
     await waitFor(() => {
-      expect(mockApi.post).toHaveBeenCalledWith('/letters/incoming', expect.objectContaining({
-        nomorSurat: '001/THS/V/2026',
-        pengirim: 'Ketua THS',
-        perihal: 'Undangan Rapat',
-      }));
+      expect(mockApi.post).toHaveBeenCalledWith(
+        '/letters/incoming',
+        expect.objectContaining({
+          nomorSurat: '001/THS/V/2026',
+          pengirim: 'Ketua THS',
+          perihal: 'Undangan Rapat',
+        }),
+      );
     });
   });
 
@@ -207,7 +222,9 @@ describe('LettersPage', () => {
     fireEvent.click(screen.getByText('Masuk'));
 
     await waitFor(() => {
-      expect(mockApi.get).toHaveBeenCalledWith('/letters/incoming', { params: { page: 1, limit: 10 } });
+      expect(mockApi.get).toHaveBeenCalledWith('/letters/incoming', {
+        params: { page: 1, limit: 10 },
+      });
     });
   });
 
@@ -332,9 +349,12 @@ describe('LettersPage', () => {
     fireEvent.click(screen.getByText('Simpan Perubahan'));
 
     await waitFor(() => {
-      expect(mockApi.patch).toHaveBeenCalledWith('/letters/incoming/1', expect.objectContaining({
-        nomorSurat: '001/THS/V/2026',
-      }));
+      expect(mockApi.patch).toHaveBeenCalledWith(
+        '/letters/incoming/1',
+        expect.objectContaining({
+          nomorSurat: '001/THS/V/2026',
+        }),
+      );
     });
   });
 
@@ -393,7 +413,7 @@ describe('LettersPage', () => {
     fireEvent.click(screen.getByText('Hapus'));
 
     // Wait a tick and verify DELETE was NOT called
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
     expect(mockApi.delete).not.toHaveBeenCalled();
   });
 });

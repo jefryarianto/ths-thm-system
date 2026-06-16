@@ -18,60 +18,69 @@ describe('useDebounce', () => {
   });
 
   it('does not update before delay', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 300),
-      { initialProps: { value: 'hello' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 300), {
+      initialProps: { value: 'hello' },
+    });
     rerender({ value: 'world' });
     // Should still be 'hello' before timer fires
     expect(result.current).toBe('hello');
   });
 
   it('updates after delay', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 300),
-      { initialProps: { value: 'hello' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 300), {
+      initialProps: { value: 'hello' },
+    });
     rerender({ value: 'world' });
-    act(() => { vi.advanceTimersByTime(300); });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(result.current).toBe('world');
   });
 
   it('cancels previous timeout on rapid changes', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 300),
-      { initialProps: { value: 'a' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 300), {
+      initialProps: { value: 'a' },
+    });
     rerender({ value: 'b' });
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
     rerender({ value: 'c' });
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
     // Should still be 'a' (original) since timer was cancelled twice
     expect(result.current).toBe('a');
-    act(() => { vi.advanceTimersByTime(200); });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
     // Now the latest timer (for 'c') should fire
     expect(result.current).toBe('c');
   });
 
   it('uses default delay of 300ms', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value),
-      { initialProps: { value: 'a' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value), {
+      initialProps: { value: 'a' },
+    });
     rerender({ value: 'b' });
-    act(() => { vi.advanceTimersByTime(299); });
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
     expect(result.current).toBe('a');
-    act(() => { vi.advanceTimersByTime(1); });
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     expect(result.current).toBe('b');
   });
 
   it('handles number values', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 100),
-      { initialProps: { value: 0 } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 100), {
+      initialProps: { value: 0 },
+    });
     rerender({ value: 42 });
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
     expect(result.current).toBe(42);
   });
 });
@@ -106,7 +115,9 @@ describe('buildEmptyMessage', () => {
   });
 
   it('passes the onReset callback in the action', () => {
-    const myReset = () => { /* custom reset */ };
+    const myReset = () => {
+      /* custom reset */
+    };
     const result = buildEmptyMessage('test', true, myReset);
     expect(result.action?.onClick).toBe(myReset);
   });
@@ -132,10 +143,9 @@ describe('useApi', () => {
 
   it('fetches when enabled changes from false to true', async () => {
     const fetcher = vi.fn().mockResolvedValue('data');
-    const { result, rerender } = renderHook(
-      ({ enabled }) => useApi(fetcher, [], enabled),
-      { initialProps: { enabled: false } }
-    );
+    const { result, rerender } = renderHook(({ enabled }) => useApi(fetcher, [], enabled), {
+      initialProps: { enabled: false },
+    });
     expect(fetcher).not.toHaveBeenCalled();
     expect(result.current.loading).toBe(false);
 
@@ -149,10 +159,9 @@ describe('useApi', () => {
 
   it('stops loading when enabled changes from true to false', () => {
     const fetcher = vi.fn().mockResolvedValue('data');
-    const { result, rerender } = renderHook(
-      ({ enabled }) => useApi(fetcher, [], enabled),
-      { initialProps: { enabled: true } }
-    );
+    const { result, rerender } = renderHook(({ enabled }) => useApi(fetcher, [], enabled), {
+      initialProps: { enabled: true },
+    });
     // Should have started fetching
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(result.current.loading).toBe(true);
@@ -169,11 +178,15 @@ describe('useApi', () => {
     const { result } = renderHook(() => useApi(fetcher, [], false));
     expect(fetcher).not.toHaveBeenCalled();
 
-    result.current.refetch();
+    await act(async () => {
+      result.current.refetch();
+    });
     expect(fetcher).toHaveBeenCalledTimes(1);
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.data).toBe('data');
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.data).toBe('data');
+    });
   });
 
   it('handles errors correctly', async () => {
@@ -218,7 +231,7 @@ describe('usePaginatedList', () => {
     });
     const { result, rerender } = renderHook(
       ({ enabled }) => usePaginatedList(fetcher, [], enabled),
-      { initialProps: { enabled: false } }
+      { initialProps: { enabled: false } },
     );
     expect(fetcher).not.toHaveBeenCalled();
 
@@ -236,7 +249,7 @@ describe('usePaginatedList', () => {
     });
     const { result, rerender } = renderHook(
       ({ enabled }) => usePaginatedList(fetcher, [], enabled),
-      { initialProps: { enabled: true } }
+      { initialProps: { enabled: true } },
     );
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(result.current.loading).toBe(true);
@@ -254,11 +267,15 @@ describe('usePaginatedList', () => {
     const { result } = renderHook(() => usePaginatedList(fetcher, [], false));
     expect(fetcher).not.toHaveBeenCalled();
 
-    result.current.refetch();
+    await act(async () => {
+      result.current.refetch();
+    });
     expect(fetcher).toHaveBeenCalledTimes(1);
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.data).toEqual([{ id: '1' }]);
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.data).toEqual([{ id: '1' }]);
+    });
   });
 
   it('handles errors by setting empty data', async () => {

@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreatePeriodDto, UpdatePeriodDto, CreateSignatureDto, CreateStampDto } from './dto/setting.dto';
+import {
+  CreatePeriodDto,
+  UpdatePeriodDto,
+  CreateSignatureDto,
+  CreateStampDto,
+} from './dto/setting.dto';
 
 @Injectable()
 export class SettingsService {
@@ -13,7 +18,11 @@ export class SettingsService {
 
   async updateSettings(dto: Record<string, unknown>) {
     for (const [key, value] of Object.entries(dto)) {
-      await this.prisma.setting.upsert({ where: { key }, update: { value: value as never }, create: { key, value: value as never } });
+      await this.prisma.setting.upsert({
+        where: { key },
+        update: { value: value as never },
+        create: { key, value: value as never },
+      });
     }
     return { success: true, message: 'Konfigurasi berhasil diperbarui' };
   }
@@ -55,10 +64,22 @@ export class SettingsService {
       success: true,
       data: [
         { role: 'superadmin', label: 'Super Admin', permissions: ['*'] },
-        { role: 'admin_distrik', label: 'Admin Distrik', permissions: ['members', 'candidates', 'trainings', 'graduations', 'reports'] },
-        { role: 'admin_wilayah', label: 'Admin Wilayah', permissions: ['members', 'candidates', 'trainings', 'reports'] },
+        {
+          role: 'admin_distrik',
+          label: 'Admin Distrik',
+          permissions: ['members', 'candidates', 'trainings', 'graduations', 'reports'],
+        },
+        {
+          role: 'admin_wilayah',
+          label: 'Admin Wilayah',
+          permissions: ['members', 'candidates', 'trainings', 'reports'],
+        },
         { role: 'admin_ranting', label: 'Admin Ranting', permissions: ['members', 'candidates'] },
-        { role: 'admin_kegiatan', label: 'Admin Kegiatan', permissions: ['trainings', 'graduations', 'activities'] },
+        {
+          role: 'admin_kegiatan',
+          label: 'Admin Kegiatan',
+          permissions: ['trainings', 'graduations', 'activities'],
+        },
         { role: 'penguji', label: 'Penguji', permissions: ['assessments'] },
         { role: 'anggota', label: 'Anggota', permissions: ['profile', 'documents', 'dues'] },
       ],
@@ -71,7 +92,9 @@ export class SettingsService {
   }
 
   async getSignatures() {
-    const sigs = await this.prisma.tandaTangan.findMany({ include: { user: { select: { namaLengkap: true } } } });
+    const sigs = await this.prisma.tandaTangan.findMany({
+      include: { user: { select: { namaLengkap: true } } },
+    });
     return { success: true, data: sigs };
   }
 

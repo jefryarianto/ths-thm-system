@@ -2,7 +2,12 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { registrationApprovedEmail, registrationRejectedEmail } from '../../mail/email-templates';
-import { CreateRegistrationDto, UpdateRegistrationDto, RegistrationFilterDto } from './dto/registration.dto';
+import {
+  CreateRegistrationDto,
+  UpdateRegistrationDto,
+  RegistrationFilterDto,
+} from './dto/registration.dto';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class RegistrationsService {
@@ -14,16 +19,14 @@ export class RegistrationsService {
   ) {}
 
   async findAll(query: RegistrationFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
     const where: Record<string, unknown> = {};
     if (query.status) where.status = query.status;
 
-    const [data, total] = await Promise.all([
-      this.prisma.pendaftaran.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.prisma.pendaftaran.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.pendaftaran, where, {
+      page: query.page,
+      limit: query.limit,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findOne(id: string) {
@@ -33,7 +36,9 @@ export class RegistrationsService {
   }
 
   async create(dto: CreateRegistrationDto) {
-    const reg = await this.prisma.pendaftaran.create({ data: { ...dto, status: 'pending', jenisKelamin: dto.jenisKelamin as never } });
+    const reg = await this.prisma.pendaftaran.create({
+      data: { ...dto, status: 'pending', jenisKelamin: dto.jenisKelamin as never },
+    });
     return { success: true, data: reg, message: 'Pendaftaran berhasil dibuat' };
   }
 
@@ -53,7 +58,8 @@ export class RegistrationsService {
     const missing: string[] = [];
     if (!reg.namaLengkap) missing.push('nama_lengkap');
     if (!reg.jenisKelamin) missing.push('jenis_kelamin');
-    if (missing.length > 0) return { success: true, data: { valid: false, missingFields: missing } };
+    if (missing.length > 0)
+      return { success: true, data: { valid: false, missingFields: missing } };
     return { success: true, data: { valid: true } };
   }
 
@@ -85,14 +91,21 @@ export class RegistrationsService {
       );
     }
 
-    return { success: true, data: candidate, message: 'Pendaftaran disetujui, calon anggota berhasil dibuat' };
+    return {
+      success: true,
+      data: candidate,
+      message: 'Pendaftaran disetujui, calon anggota berhasil dibuat',
+    };
   }
 
   async reject(id: string, reason?: string) {
     const reg = await this.prisma.pendaftaran.findUnique({ where: { id } });
     if (!reg) throw new NotFoundException('Pendaftaran tidak ditemukan');
 
-    await this.prisma.pendaftaran.update({ where: { id }, data: { status: 'rejected', catatan: reason } });
+    await this.prisma.pendaftaran.update({
+      where: { id },
+      data: { status: 'rejected', catatan: reason },
+    });
 
     // Send rejection email if email address is provided
     if (reg.email) {
@@ -106,15 +119,25 @@ export class RegistrationsService {
 
   private async sendRegistrationApprovedEmail(nama: string, email: string): Promise<void> {
     const tpl = registrationApprovedEmail(nama);
-    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'registrations', template: 'registrationApprovedEmail', email } });
+    await this.mailService.sendMail({
+      to: email,
+      ...tpl,
+      metadata: { module: 'registrations', template: 'registrationApprovedEmail', email },
+    });
   }
 
-  private async sendRegistrationRejectedEmail(nama: string, email: string, reason?: string): Promise<void> {
+  private async sendRegistrationRejectedEmail(
+    nama: string,
+    email: string,
+    reason?: string,
+  ): Promise<void> {
     const tpl = registrationRejectedEmail(nama, reason);
-    await this.mailService.sendMail({ to: email, ...tpl, metadata: { module: 'registrations', template: 'registrationRejectedEmail', email } });
+    await this.mailService.sendMail({
+      to: email,
+      ...tpl,
+      metadata: { module: 'registrations', template: 'registrationRejectedEmail', email },
+    });
   }
-
-
 
   async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;
@@ -132,7 +155,9 @@ export class RegistrationsService {
           },
         });
         imported++;
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     return { success: true, data: { imported, total: data.length } };
   }

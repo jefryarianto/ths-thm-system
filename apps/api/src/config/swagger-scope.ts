@@ -56,14 +56,12 @@ export function setupSwagger(app: Parameters<typeof SwaggerModule.createDocument
     .setTitle('THS-THM API')
     .setDescription(description)
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description: 'JWT token dari login endpoint',
-      },
-    )
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'JWT token dari login endpoint',
+    })
     .addServer('http://localhost:3001', 'Development')
     .addServer('https://ths-thm-api.onrender.com', 'Production')
     .addTag('Auth', 'Autentikasi dan manajemen session')
@@ -86,8 +84,14 @@ export function setupSwagger(app: Parameters<typeof SwaggerModule.createDocument
     .addTag('Settings', 'Pengaturan sistem — global')
     .addTag('Registrations', 'Pendaftaran baru — admin-level access')
     .addTag('API Key Management', 'Manajemen API key untuk integrasi eksternal (superadmin only)')
-    .addTag('Cache Management', 'Manajemen in-memory cache — statistik dan invalidasi (superadmin only)')
-    .addTag('Audit Logs', 'Log audit dan compliance — query, export CSV, statistik (superadmin only)')
+    .addTag(
+      'Cache Management',
+      'Manajemen in-memory cache — statistik dan invalidasi (superadmin only)',
+    )
+    .addTag(
+      'Audit Logs',
+      'Log audit dan compliance — query, export CSV, statistik (superadmin only)',
+    )
     .addTag('Health', 'Status sistem — database, cache, audit, memory')
     .addTag('Gamification', 'Points, badges, leaderboard — gamifikasi anggota')
     .build();

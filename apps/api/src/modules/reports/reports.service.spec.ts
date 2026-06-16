@@ -62,7 +62,9 @@ describe('ReportsService', () => {
     set: jest.fn(),
     del: jest.fn(),
     invalidatePrefix: jest.fn(),
-    getOrSet: jest.fn().mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
+    getOrSet: jest
+      .fn()
+      .mockImplementation((_key: string, factory: () => Promise<unknown>) => factory()),
     clear: jest.fn(),
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
@@ -125,15 +127,13 @@ describe('ReportsService', () => {
     it('should return comprehensive dashboard data', async () => {
       mockPrisma.anggota.count
         .mockResolvedValueOnce(100) // totalMembers
-        .mockResolvedValueOnce(5)  // pendingValidasi
+        .mockResolvedValueOnce(5) // pendingValidasi
         .mockResolvedValueOnce(3); // incompleteData
       mockPrisma.calonAnggota.count
         .mockResolvedValueOnce(20) // totalCandidates
         .mockResolvedValueOnce(12); // totalGraduated
       mockPrisma.iuran.aggregate.mockResolvedValue({ _sum: { jumlah: 5000000 } });
-      mockPrisma.anggota.groupBy.mockResolvedValue([
-        { statusKeanggotaan: 'aktif', _count: 90 },
-      ]);
+      mockPrisma.anggota.groupBy.mockResolvedValue([{ statusKeanggotaan: 'aktif', _count: 90 }]);
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 

@@ -6,6 +6,7 @@ vi.mock('@/lib/api-client', () => ({
   default: {
     get: vi.fn(),
   },
+  unwrap: <T>(response: { data: { data: T } }): T => response.data.data,
 }));
 
 import apiClient from '@/lib/api-client';
@@ -23,7 +24,16 @@ const mockApi = vi.mocked(apiClient);
 const mockLogsResponse = {
   data: {
     data: [
-      { id: '1', to: 'a@b.com', subject: 'Test', status: 'sent', provider: 'resend', error: null, metadata: { module: 'members' }, createdAt: '2026-05-01T00:00:00.000Z' },
+      {
+        id: '1',
+        to: 'a@b.com',
+        subject: 'Test',
+        status: 'sent',
+        provider: 'resend',
+        error: null,
+        metadata: { module: 'members' },
+        createdAt: '2026-05-01T00:00:00.000Z',
+      },
     ],
     meta: { total: 1, totalPages: 1, page: 1, limit: 20 },
   },
@@ -32,7 +42,11 @@ const mockLogsResponse = {
 const mockStatsResponse = {
   data: {
     data: {
-      total: 10, sent: 8, failed: 1, skipped: 1, successRate: 80,
+      total: 10,
+      sent: 8,
+      failed: 1,
+      skipped: 1,
+      successRate: 80,
       dailyStats: [{ date: '2026-05-01', sent: 5, failed: 0, skipped: 1 }],
       topRecipients: [{ email: 'a@b.com', count: 3 }],
     },
@@ -42,7 +56,13 @@ const mockStatsResponse = {
 const mockSuppressionsResponse = {
   data: {
     data: [
-      { id: '1', email: 'bounce@b.com', reason: 'bounced', event: { event: 'bounce', timestamp: '2026-05-01T00:00:00.000Z' }, createdAt: '2026-05-01T00:00:00.000Z' },
+      {
+        id: '1',
+        email: 'bounce@b.com',
+        reason: 'bounced',
+        event: { event: 'bounce', timestamp: '2026-05-01T00:00:00.000Z' },
+        createdAt: '2026-05-01T00:00:00.000Z',
+      },
     ],
     meta: { total: 1, totalPages: 1, page: 1, limit: 20 },
   },
@@ -51,9 +71,22 @@ const mockSuppressionsResponse = {
 const mockEngagementResponse = {
   data: {
     data: {
-      totalSent: 100, totalEvents: 50, events: { opened: 30, clicked: 10 },
+      totalSent: 100,
+      totalEvents: 50,
+      events: { opened: 30, clicked: 10 },
       rates: { delivered: 95, opened: 30, clicked: 10, bounced: 5, complained: 0 },
-      dailyTrend: [{ date: '2026-05-01', sent: 20, opened: 6, clicked: 2, bounced: 1, openRate: 30, clickRate: 10, bounceRate: 5 }],
+      dailyTrend: [
+        {
+          date: '2026-05-01',
+          sent: 20,
+          opened: 6,
+          clicked: 2,
+          bounced: 1,
+          openRate: 30,
+          clickRate: 10,
+          bounceRate: 5,
+        },
+      ],
     },
   },
 };
@@ -102,16 +135,25 @@ describe('useMailLogs', () => {
   it('passes optional filter params', async () => {
     mockApi.get.mockResolvedValue(mockLogsResponse);
 
-    renderHook(() => useMailLogs({
-      page: 1,
-      status: 'failed',
-      module: 'members',
-      startDate: '2026-05-01',
-      endDate: '2026-05-31',
-    }));
+    renderHook(() =>
+      useMailLogs({
+        page: 1,
+        status: 'failed',
+        module: 'members',
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+      }),
+    );
 
     expect(mockApi.get).toHaveBeenCalledWith('/mail/logs', {
-      params: { page: 1, limit: 20, status: 'failed', module: 'members', startDate: '2026-05-01', endDate: '2026-05-31' },
+      params: {
+        page: 1,
+        limit: 20,
+        status: 'failed',
+        module: 'members',
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+      },
     });
   });
 
@@ -191,10 +233,9 @@ describe('useMailSuppressions', () => {
   it('re-fetches when page changes', async () => {
     mockApi.get.mockResolvedValue(mockSuppressionsResponse);
 
-    const { result, rerender } = renderHook(
-      (page: number) => useMailSuppressions(page),
-      { initialProps: 1 },
-    );
+    const { result, rerender } = renderHook((page: number) => useMailSuppressions(page), {
+      initialProps: 1,
+    });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockApi.get).toHaveBeenCalledTimes(1);

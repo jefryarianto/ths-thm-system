@@ -55,9 +55,16 @@ export interface LetterFormData {
 export type LetterType = 'masuk' | 'keluar';
 
 export const emptyForm: LetterFormData = {
-  nomorSurat: '', tanggalSurat: '', pengirim: '', tujuan: '',
-  perihal: '', isi: '', fileScanPath: '', filePath: '',
-  tanggalTerima: '', status: 'draft',
+  nomorSurat: '',
+  tanggalSurat: '',
+  pengirim: '',
+  tujuan: '',
+  perihal: '',
+  isi: '',
+  fileScanPath: '',
+  filePath: '',
+  tanggalTerima: '',
+  status: 'draft',
 };
 
 export const statusColors: Record<string, string> = {
@@ -75,7 +82,15 @@ export type TabValue = (typeof TAB_VALUES)[number];
 
 // ─── Helper Components ───
 
-export function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+export function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -108,20 +123,31 @@ export function FilePreview({ fileUrl, fileName }: { fileUrl: string; fileName: 
       >
         <FileText size={16} className="text-blue-600 flex-shrink-0" />
         <span className="text-sm text-gray-700 truncate flex-1">{fileName}</span>
-        <ChevronRight size={14} className={`text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+        <ChevronRight
+          size={14}
+          className={`text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
+        />
       </button>
       {expanded && (
         <div className="rounded-lg overflow-hidden border border-gray-200">
           {isPdf ? (
             <iframe src={fileUrl} className="w-full h-80" title={`Preview: ${fileName}`} />
           ) : isImage ? (
-            <img src={fileUrl} alt={fileName} className="w-full h-auto max-h-80 object-contain bg-gray-50" />
+            <img
+              src={fileUrl}
+              alt={fileName}
+              className="w-full h-auto max-h-80 object-contain bg-gray-50"
+            />
           ) : (
             <div className="p-4 text-center text-sm text-gray-500">
               <FileText size={32} className="mx-auto mb-2 text-gray-400" />
               <p>Preview tidak tersedia untuk file ini</p>
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium">
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
                 <Download size={12} /> Download
               </a>
             </div>

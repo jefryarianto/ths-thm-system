@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject, forwardRef, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Inject,
+  forwardRef,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MailService } from '../../mail/mail.service';
 import { paymentConfirmationEmail } from '../../mail/email-templates';
 import { CreateDueDto, UpdateDueDto, DueFilterDto, BatchPaymentDto } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class DuesService {
@@ -18,39 +26,36 @@ export class DuesService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
-    private readonly mailService: MailService,
+    private readonly memberMailService: MemberMailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
   ) {}
 
   async findAll(query: DueFilterDto, scope?: UserScope) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${page}:${limit}:${query.status || ''}:${query.periode || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
 
-    return this.cache.getOrSet(cacheKey, async () => {
-      const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
-      const where: Record<string, unknown> = { ...scopeFilter };
-      if (query.status) where.status = query.status;
-      if (query.periode) where.periode = query.periode;
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
+        const where: Record<string, unknown> = { ...scopeFilter };
+        if (query.status) where.status = query.status;
+        if (query.periode) where.periode = query.periode;
 
-      const [data, total] = await Promise.all([
-        this.prisma.iuran.findMany({
-          where, skip: (page - 1) * limit, take: limit,
-          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+        return paginate(this.prisma.iuran, where, {
+          page: query.page,
+          limit: query.limit,
           orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.iuran.count({ where }),
-      ]);
-
-      return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-    }, this.CACHE_TTL);
+          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+        });
+      },
+      this.CACHE_TTL,
+    );
   }
 
   async create(dto: CreateDueDto) {
     const due = await this.prisma.iuran.create({ data: dto as never });
 
-    // Auto-award gamification points for on-time dues payment
     if (dto.status === 'lunas' && dto.anggotaId) {
       try {
         await this.gamificationService.recordDuesPayment(dto.anggotaId, true);
@@ -59,7 +64,6 @@ export class DuesService {
       }
     }
 
-    // Send payment confirmation email (fire-and-forget, method handles errors internally)
     if (dto.anggotaId) {
       this.sendPaymentEmail(dto.anggotaId, dto.jumlah, dto.periode, dto.status);
     }
@@ -70,9 +74,17 @@ export class DuesService {
   }
 
   async findOne(id: string, scope?: UserScope) {
-    const due = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } } } });
+    const due = await this.prisma.iuran.findUnique({
+      where: { id },
+      include: {
+        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
+      },
+    });
     if (!due) throw new NotFoundException('Iuran tidak ditemukan');
-    if (scope && !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.rantingId))) {
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.rantingId))
+    ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
     return { success: true, data: due };
@@ -80,9 +92,18 @@ export class DuesService {
 
   async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
     if (scope) {
-      const existing = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      const existing = await this.prisma.iuran.findUnique({
+        where: { id },
+        include: { anggota: { select: { rantingId: true } } },
+      });
       if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.anggota?.rantingId))) {
+      if (
+        !(await this.scopeHelper.hasAccessToResourceAsync(
+          this.prisma,
+          scope,
+          existing.anggota?.rantingId,
+        ))
+      ) {
         throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
       }
     }
@@ -101,7 +122,6 @@ export class DuesService {
 
     const due = await this.prisma.iuran.update({ where: { id }, data });
 
-    // Auto-award gamification points when status changes to 'lunas'
     if (statusChangedToLunas) {
       try {
         const existingDue = await this.prisma.iuran.findUnique({
@@ -110,11 +130,13 @@ export class DuesService {
         });
         if (existingDue?.anggotaId) {
           await this.gamificationService.recordDuesPayment(existingDue.anggotaId, true);
-          // Send payment confirmation email for status change
           this.sendPaymentEmail(existingDue.anggotaId, dto.jumlah, dto.periode, 'lunas');
         }
       } catch (error) {
-        console.warn('Failed to award gamification points for dues update:', (error as Error).message);
+        console.warn(
+          'Failed to award gamification points for dues update:',
+          (error as Error).message,
+        );
       }
     }
 
@@ -123,28 +145,35 @@ export class DuesService {
     return { success: true, data: due, message: 'Data iuran berhasil diperbarui' };
   }
 
-  private async sendPaymentEmail(anggotaId: string, jumlah?: number, periode?: string, status?: string): Promise<void> {
-    try {
-      const member = await this.prisma.anggota.findUnique({
-        where: { id: anggotaId },
-        select: { email: true, namaLengkap: true },
-      });
-
-      if (!member?.email) return;
-
-      const isPaid = status === 'lunas';
-      const tpl = paymentConfirmationEmail(member.namaLengkap, jumlah, periode, isPaid);
-      await this.mailService.sendMail({ to: member.email, ...tpl, metadata: { module: 'dues', template: 'paymentConfirmationEmail' } });
-    } catch (error) {
-      this.logger.error(`sendPaymentEmail failed for member ${anggotaId}: ${(error as Error).message}`);
-    }
+  private sendPaymentEmail(
+    anggotaId: string,
+    jumlah?: number,
+    periode?: string,
+    status?: string,
+  ): void {
+    this.memberMailService.sendToMemberWithArgs(
+      anggotaId,
+      paymentConfirmationEmail,
+      [jumlah, periode, status === 'lunas'],
+      { template: 'paymentConfirmationEmail' },
+      'dues',
+    );
   }
 
   async remove(id: string, scope?: UserScope) {
     if (scope) {
-      const existing = await this.prisma.iuran.findUnique({ where: { id }, include: { anggota: { select: { rantingId: true } } } });
+      const existing = await this.prisma.iuran.findUnique({
+        where: { id },
+        include: { anggota: { select: { rantingId: true } } },
+      });
       if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
-      if (!(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, existing.anggota?.rantingId))) {
+      if (
+        !(await this.scopeHelper.hasAccessToResourceAsync(
+          this.prisma,
+          scope,
+          existing.anggota?.rantingId,
+        ))
+      ) {
         throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
       }
     }
@@ -166,7 +195,9 @@ export class DuesService {
   async getArrears(_query: Record<string, unknown>) {
     const arrears = await this.prisma.iuran.findMany({
       where: { status: 'menunggak' },
-      include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } } },
+      include: {
+        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } },
+      },
       orderBy: { periode: 'asc' },
     });
 
@@ -177,39 +208,46 @@ export class DuesService {
 
   async getDashboardStats() {
     const cacheKey = `${this.CACHE_PREFIX}dashboard`;
-    return this.cache.getOrSet(cacheKey, async () => {
-      const now = new Date();
-      const currentMonth = now.getMonth() + 1;
-      const currentYear = now.getFullYear();
-      const periode = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
+        const periode = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
 
-      const [totalIuran, totalLunas, totalMenunggak, iuranBulanIni, anggotaAktif] =
-        await Promise.all([
-          this.prisma.iuran.aggregate({ _sum: { jumlah: true }, _count: true }),
-          this.prisma.iuran.aggregate({ _sum: { jumlah: true }, where: { status: 'lunas' } }),
-          this.prisma.iuran.aggregate({ _sum: { jumlah: true }, where: { status: 'menunggak' } }),
-          this.prisma.iuran.findMany({ where: { periode }, select: { jumlah: true, status: true } }),
-          this.prisma.anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
-        ]);
+        const [totalIuran, totalLunas, totalMenunggak, iuranBulanIni, anggotaAktif] =
+          await Promise.all([
+            this.prisma.iuran.aggregate({ _sum: { jumlah: true }, _count: true }),
+            this.prisma.iuran.aggregate({ _sum: { jumlah: true }, where: { status: 'lunas' } }),
+            this.prisma.iuran.aggregate({ _sum: { jumlah: true }, where: { status: 'menunggak' } }),
+            this.prisma.iuran.findMany({
+              where: { periode },
+              select: { jumlah: true, status: true },
+            }),
+            this.prisma.anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
+          ]);
 
-      const iuranBulanIniTotal = iuranBulanIni.reduce((sum, i) => sum + Number(i.jumlah), 0);
-      const lunasBulanIni = iuranBulanIni.filter(i => i.status === 'lunas').length;
-      const belumBayarBulanIni = anggotaAktif - iuranBulanIni.length;
+        const iuranBulanIniTotal = iuranBulanIni.reduce((sum, i) => sum + Number(i.jumlah), 0);
+        const lunasBulanIni = iuranBulanIni.filter((i) => i.status === 'lunas').length;
+        const belumBayarBulanIni = anggotaAktif - iuranBulanIni.length;
 
-      return {
-        success: true,
-        data: {
-          totalIuran: Number(totalIuran._sum.jumlah || 0),
-          totalTransaksi: totalIuran._count,
-          totalLunas: Number(totalLunas._sum.jumlah || 0),
-          totalMenunggak: Number(totalMenunggak._sum.jumlah || 0),
-          iuranBulanIni: iuranBulanIniTotal,
-          lunasBulanIni,
-          belumBayarBulanIni,
-          anggotaAktif,
-        },
-      };
-    }, this.CACHE_TTL);
+        return {
+          success: true,
+          data: {
+            totalIuran: Number(totalIuran._sum.jumlah || 0),
+            totalTransaksi: totalIuran._count,
+            totalLunas: Number(totalLunas._sum.jumlah || 0),
+            totalMenunggak: Number(totalMenunggak._sum.jumlah || 0),
+            iuranBulanIni: iuranBulanIniTotal,
+            lunasBulanIni,
+            belumBayarBulanIni,
+            anggotaAktif,
+          },
+        };
+      },
+      this.CACHE_TTL,
+    );
   }
 
   async getReport(_query: Record<string, unknown>) {
@@ -240,11 +278,15 @@ export class DuesService {
             jumlah: parseFloat(row.jumlah as string),
             tanggalBayar: row.tanggal_bayar ? new Date(row.tanggal_bayar as string) : null,
             metodeBayar: (row.metode_bayar as 'manual' | 'transfer' | 'online') || 'manual',
-            status: (row.status as 'belum_dibayar' | 'menunggu_verifikasi' | 'lunas' | 'menunggak') || 'lunas',
+            status:
+              (row.status as 'belum_dibayar' | 'menunggu_verifikasi' | 'lunas' | 'menunggak') ||
+              'lunas',
           },
         });
         success++;
-      } catch { /* skip errors */ }
+      } catch {
+        /* skip errors */
+      }
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
@@ -255,11 +297,21 @@ export class DuesService {
     const { memberIds, periode, jumlah } = dto;
     for (const memberId of memberIds) {
       await this.prisma.iuran.create({
-        data: { anggotaId: memberId, periode, jumlah, status: 'lunas', tanggalBayar: new Date(), metodeBayar: 'manual' },
+        data: {
+          anggotaId: memberId,
+          periode,
+          jumlah,
+          status: 'lunas',
+          tanggalBayar: new Date(),
+          metodeBayar: 'manual',
+        },
       });
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    return { success: true, message: `Pembayaran massal untuk ${memberIds.length} anggota berhasil` };
+    return {
+      success: true,
+      message: `Pembayaran massal untuk ${memberIds.length} anggota berhasil`,
+    };
   }
 }

@@ -3,9 +3,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
-import { CreateExaminerDto, UpdateExaminerDto, ExaminerFilterDto, AssignExaminerDto } from './dto/examiner.dto';
+import {
+  CreateExaminerDto,
+  UpdateExaminerDto,
+  ExaminerFilterDto,
+  AssignExaminerDto,
+} from './dto/examiner.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { paginate } from '../../common/utils/pagination';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -19,16 +25,15 @@ export class ExaminersService {
   ) {}
 
   async findAll(query: ExaminerFilterDto) {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
     const where: Record<string, unknown> = { role: 'penguji', isActive: true };
     if (query.search) where.namaLengkap = { contains: query.search };
 
-    const [data, total] = await Promise.all([
-      this.prisma.user.findMany({ where, skip: (page - 1) * limit, take: limit, select: { id: true, email: true, namaLengkap: true, createdAt: true } }),
-      this.prisma.user.count({ where }),
-    ]);
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.user, where, {
+      page: query.page,
+      limit: query.limit,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, email: true, namaLengkap: true, createdAt: true },
+    });
   }
 
   async findOne(id: string) {
@@ -40,7 +45,9 @@ export class ExaminersService {
   async create(dto: CreateExaminerDto) {
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
-    const examiner = await this.prisma.user.create({ data: { email: dto.email, namaLengkap: dto.namaLengkap, role: 'penguji', passwordHash } });
+    const examiner = await this.prisma.user.create({
+      data: { email: dto.email, namaLengkap: dto.namaLengkap, role: 'penguji', passwordHash },
+    });
     const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(examiner.email)}`;
     this.sendWelcomeEmail(examiner.email, examiner.namaLengkap, setPasswordUrl);
     return { success: true, data: examiner, message: 'Penguji berhasil ditambahkan' };
@@ -69,11 +76,15 @@ export class ExaminersService {
       try {
         const email = row.email as string;
         const nama = (row.nama || row.name) as string;
-        await this.prisma.user.create({ data: { email, namaLengkap: nama, role: 'penguji', passwordHash } });
+        await this.prisma.user.create({
+          data: { email, namaLengkap: nama, role: 'penguji', passwordHash },
+        });
         const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(email)}`;
         this.sendWelcomeEmail(email, nama, setPasswordUrl);
         imported++;
-      } catch { /* skip duplicate email */ }
+      } catch {
+        /* skip duplicate email */
+      }
     }
     return { success: true, data: { imported, total: data.length } };
   }
@@ -87,11 +98,20 @@ export class ExaminersService {
 
     // Scope verification: verify kegiatan is within scope
     if (scope) {
-      this.scopeHelper.verifyKegiatanScope(scope, kegiatan.scopeType ?? undefined, kegiatan.scopeId ?? undefined);
+      this.scopeHelper.verifyKegiatanScope(
+        scope,
+        kegiatan.scopeType ?? undefined,
+        kegiatan.scopeId ?? undefined,
+      );
     }
 
     const assignment = await this.prisma.penugasanPenguji.create({
-      data: { pengujiUserId: id, kegiatanId: kegiatanId!, peran: dto.peran || 'penguji', catatan: dto.catatan },
+      data: {
+        pengujiUserId: id,
+        kegiatanId: kegiatanId!,
+        peran: dto.peran || 'penguji',
+        catatan: dto.catatan,
+      },
     });
 
     // Send assignment notification
@@ -102,12 +122,16 @@ export class ExaminersService {
 
   private sendWelcomeEmail(email: string, nama: string, setPasswordUrl: string) {
     const { subject, html } = examinerWelcomeEmail(nama, email, setPasswordUrl);
-    this.mailService.sendMail({
-      to: email, subject, html,
-      metadata: { module: 'examiners', template: 'examinerWelcomeEmail', email },
-    }).catch(() => {
-      this.logger.warn(`Failed to send welcome email to examiner ${email}`);
-    });
+    this.mailService
+      .sendMail({
+        to: email,
+        subject,
+        html,
+        metadata: { module: 'examiners', template: 'examinerWelcomeEmail', email },
+      })
+      .catch(() => {
+        this.logger.warn(`Failed to send welcome email to examiner ${email}`);
+      });
   }
 
   private sendAssignmentEmail(
@@ -116,22 +140,44 @@ export class ExaminersService {
     peran: string,
   ) {
     const tanggal = kegiatan.tanggalMulai
-      ? kegiatan.tanggalMulai.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      ? kegiatan.tanggalMulai.toLocaleDateString('id-ID', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
       : 'Akan ditentukan';
 
-    const { subject, html } = examinerAssignmentEmail(examiner.namaLengkap, kegiatan.nama, tanggal, peran);
-    this.mailService.sendMail({
-      to: examiner.email, subject, html,
-      metadata: { module: 'examiners', template: 'examinerAssignmentEmail', examinerId: examiner.id },
-    }).catch(() => {
-      this.logger.warn(`Failed to send assignment email to ${examiner.email}`);
-    });
+    const { subject, html } = examinerAssignmentEmail(
+      examiner.namaLengkap,
+      kegiatan.nama,
+      tanggal,
+      peran,
+    );
+    this.mailService
+      .sendMail({
+        to: examiner.email,
+        subject,
+        html,
+        metadata: {
+          module: 'examiners',
+          template: 'examinerAssignmentEmail',
+          examinerId: examiner.id,
+        },
+      })
+      .catch(() => {
+        this.logger.warn(`Failed to send assignment email to ${examiner.email}`);
+      });
   }
 
   async getAssignments(id: string) {
     const assignments = await this.prisma.penugasanPenguji.findMany({
       where: { pengujiUserId: id },
-      include: { kegiatan: { select: { id: true, nama: true, tipe: true, tanggalMulai: true, status: true } } },
+      include: {
+        kegiatan: {
+          select: { id: true, nama: true, tipe: true, tanggalMulai: true, status: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
     return { success: true, data: assignments };
@@ -140,10 +186,21 @@ export class ExaminersService {
   async getSchedules(id: string) {
     const assignments = await this.prisma.penugasanPenguji.findMany({
       where: { pengujiUserId: id },
-      include: { kegiatan: { select: { id: true, nama: true, tipe: true, tanggalMulai: true, tanggalSelesai: true, lokasi: true } } },
+      include: {
+        kegiatan: {
+          select: {
+            id: true,
+            nama: true,
+            tipe: true,
+            tanggalMulai: true,
+            tanggalSelesai: true,
+            lokasi: true,
+          },
+        },
+      },
       orderBy: { kegiatan: { tanggalMulai: 'asc' } },
     });
-    const schedules = assignments.filter(a => a.kegiatan.tanggalMulai >= new Date());
+    const schedules = assignments.filter((a) => a.kegiatan.tanggalMulai >= new Date());
     return { success: true, data: schedules };
   }
 }

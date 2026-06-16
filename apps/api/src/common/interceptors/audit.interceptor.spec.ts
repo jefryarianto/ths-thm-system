@@ -25,18 +25,20 @@ describe('AuditInterceptor', () => {
   const createMockContext = (
     request: ReturnType<typeof createMockRequest>,
     response: ReturnType<typeof createMockResponse>,
-  ): ExecutionContext => ({
-    switchToHttp: () => ({
-      getRequest: () => request,
-      getResponse: () => response,
-    }),
-    getHandler: () => ({}),
-    getClass: () => ({}),
-  } as never);
+  ): ExecutionContext =>
+    ({
+      switchToHttp: () => ({
+        getRequest: () => request,
+        getResponse: () => response,
+      }),
+      getHandler: () => ({}),
+      getClass: () => ({}),
+    }) as never;
 
-  const createMockCallHandler = (result?: unknown): CallHandler => ({
-    handle: () => of(result ?? { success: true }),
-  } as never);
+  const createMockCallHandler = (result?: unknown): CallHandler =>
+    ({
+      handle: () => of(result ?? { success: true }),
+    }) as never;
 
   beforeEach(() => {
     mockAuditService = {
@@ -93,26 +95,29 @@ describe('AuditInterceptor', () => {
   });
 
   describe('Mutation requests (POST/PUT/PATCH/DELETE)', () => {
-    it.each(['POST', 'PUT', 'PATCH', 'DELETE'])('should log data mutation for %s requests', (method, done) => {
-      const request = createMockRequest({ method, url: '/api/members' });
-      const response = createMockResponse(method === 'POST' ? 201 : 200);
-      const context = createMockContext(request, response);
+    it.each(['POST', 'PUT', 'PATCH', 'DELETE'])(
+      'should log data mutation for %s requests',
+      (method, done) => {
+        const request = createMockRequest({ method, url: '/api/members' });
+        const response = createMockResponse(method === 'POST' ? 201 : 200);
+        const context = createMockContext(request, response);
 
-      interceptor.intercept(context, createMockCallHandler()).subscribe({
-        next: () => {
-          expect(mockAuditService.logDataMutation).toHaveBeenCalledTimes(1);
-          expect(mockAuditService.logDataMutation).toHaveBeenCalledWith(
-            expect.objectContaining({
-              method,
-              path: '/api/members',
-              statusCode: method === 'POST' ? 201 : 200,
-            }),
-          );
-          expect(mockAuditService.logDataAccess).not.toHaveBeenCalled();
-          done();
-        },
-      });
-    });
+        interceptor.intercept(context, createMockCallHandler()).subscribe({
+          next: () => {
+            expect(mockAuditService.logDataMutation).toHaveBeenCalledTimes(1);
+            expect(mockAuditService.logDataMutation).toHaveBeenCalledWith(
+              expect.objectContaining({
+                method,
+                path: '/api/members',
+                statusCode: method === 'POST' ? 201 : 200,
+              }),
+            );
+            expect(mockAuditService.logDataAccess).not.toHaveBeenCalled();
+            done();
+          },
+        });
+      },
+    );
   });
 
   describe('Excluded paths', () => {

@@ -1,20 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import {
-  Plus, Calendar,
-  Eye, MapPin,
-} from 'lucide-react';
+import { useFilters } from '@/lib/hooks/use-filters';
+import { Plus, Calendar, Eye, MapPin } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import {
+  ACTIVITY_STATUS_COLORS,
+  ACTIVITY_STATUS_OPTIONS,
+  ACTIVITY_TIPE_OPTIONS,
+} from '@/components/activities/constants';
 
 interface ActivityRow {
   id: string;
@@ -27,48 +29,33 @@ interface ActivityRow {
   pesertaCount?: number;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
-  published: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
-  closed: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
-  cancelled: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
-};
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'Semua Status' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'published', label: 'Published' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
-
-const TIPE_OPTIONS = [
-  { value: '', label: 'Semua Tipe' },
-  { value: 'latihan', label: 'Latihan' },
-  { value: 'pendadaran', label: 'Pendadaran' },
-  { value: 'sosialisasi', label: 'Sosialisasi' },
-  { value: 'rapat', label: 'Rapat' },
-  { value: 'lainnya', label: 'Lainnya' },
-];
-
 export default function ActivitiesPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterTipe, setFilterTipe] = useState('');
+
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    resetFilters,
+    hasActiveFilters,
+    getApiParams,
+  } = useFilters({
+    filters: [
+      { key: 'status', defaultValue: '' },
+      { key: 'tipe', defaultValue: '' },
+    ],
+  });
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, meta, loading, refetch } = usePaginatedList<ActivityRow>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (filterStatus) params.status = filterStatus;
-      if (filterTipe) params.tipe = filterTipe;
-      return apiClient.get('/activities', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch, filterStatus, filterTipe]
-  );
+  const { data, meta, loading, refetch } = usePaginatedList<ActivityRow>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    return apiClient.get('/activities', { params }).then((r) => r.data);
+  }, [page, debouncedSearch, filters.status, filters.tipe]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -87,21 +74,21 @@ export default function ActivitiesPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        onReset={() => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); }}
+        onReset={resetFilters}
         placeholder="Cari kegiatan..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
+        onDebouncedSearch={() => {}}
       >
         <FilterSelect
-          value={filterTipe}
-          onChange={v => { setFilterTipe(v); setPage(1); }}
-          options={TIPE_OPTIONS}
+          value={filters.tipe}
+          onChange={(v) => setFilter('tipe', v)}
+          options={ACTIVITY_TIPE_OPTIONS}
           placeholder="Semua Tipe"
         />
         <FilterSelect
-          value={filterStatus}
-          onChange={v => { setFilterStatus(v); setPage(1); }}
-          options={STATUS_OPTIONS}
+          value={filters.status}
+          onChange={(v) => setFilter('status', v)}
+          options={ACTIVITY_STATUS_OPTIONS}
           placeholder="Semua Status"
         />
       </SearchBar>
@@ -120,7 +107,7 @@ export default function ActivitiesPage() {
         loading={loading}
         empty={{
           icon: Calendar,
-          ...buildEmptyMessage('kegiatan', !!(search || filterStatus || filterTipe), () => { setSearch(''); setFilterStatus(''); setFilterTipe(''); setPage(1); }),
+          ...buildEmptyMessage('kegiatan', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -128,7 +115,10 @@ export default function ActivitiesPage() {
         onPageChange={handlePageChange}
         colSpan={7}
         renderRow={(row: ActivityRow) => (
-          <tr key={row.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={row.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
             </td>
@@ -139,7 +129,8 @@ export default function ActivitiesPage() {
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell whitespace-nowrap">
               {new Date(row.tanggalMulai).toLocaleDateString('id-ID')}
-              {row.tanggalSelesai && ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
+              {row.tanggalSelesai &&
+                ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
               <div className="flex items-center gap-1">
@@ -151,7 +142,9 @@ export default function ActivitiesPage() {
               <span className="text-gray-600 dark:text-gray-400">{row.pesertaCount ?? '-'}</span>
             </td>
             <td className="px-4 py-3">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTIVITY_STATUS_COLORS[row.status] || ''}`}
+              >
                 {row.status}
               </span>
             </td>

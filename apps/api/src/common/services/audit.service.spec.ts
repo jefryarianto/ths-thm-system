@@ -16,10 +16,7 @@ describe('AuditService', () => {
     mockStore = { add: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuditService,
-        { provide: AuditLogStore, useValue: mockStore },
-      ],
+      providers: [AuditService, { provide: AuditLogStore, useValue: mockStore }],
     }).compile();
 
     service = module.get<AuditService>(AuditService);
@@ -46,15 +43,9 @@ describe('AuditService', () => {
       });
 
       expect(loggerSpy.warn).toHaveBeenCalledTimes(1);
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('[SCOPE_VIOLATION]'),
-      );
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('admin@test.com'),
-      );
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('admin_ranting'),
-      );
+      expect(loggerSpy.warn).toHaveBeenCalledWith(expect.stringContaining('[SCOPE_VIOLATION]'));
+      expect(loggerSpy.warn).toHaveBeenCalledWith(expect.stringContaining('admin@test.com'));
+      expect(loggerSpy.warn).toHaveBeenCalledWith(expect.stringContaining('admin_ranting'));
     });
 
     it('should log structured JSON with all fields', () => {
@@ -109,9 +100,7 @@ describe('AuditService', () => {
       expect(loggedEntry.userEmail).toBeUndefined();
       expect(loggedEntry.userRole).toBeUndefined();
       expect(loggedEntry.details.ip).toBeUndefined();
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('unknown'),
-      );
+      expect(loggerSpy.warn).toHaveBeenCalledWith(expect.stringContaining('unknown'));
     });
   });
 
@@ -205,12 +194,8 @@ describe('AuditService', () => {
       });
 
       expect(loggerSpy.warn).toHaveBeenCalledTimes(1);
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('[AUTH_FAILURE]'),
-      );
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid credentials'),
-      );
+      expect(loggerSpy.warn).toHaveBeenCalledWith(expect.stringContaining('[AUTH_FAILURE]'));
+      expect(loggerSpy.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid credentials'));
     });
 
     it('should store the entry in AuditLogStore', () => {

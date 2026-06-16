@@ -26,26 +26,28 @@
 
 ### 1. Unit Tests
 
-| App | Framework | Location | Run Command |
-|-----|-----------|----------|-------------|
-| API | Jest | `apps/api/src/` | `pnpm --filter @ths-thm/api test` |
-| Web | Vitest | `apps/web/src/` | `pnpm --filter @ths-thm/web test` |
-| Mobile | Jest | `apps/mobile/src/` | `cd apps/mobile && npx jest` |
+| App    | Framework | Location           | Run Command                       |
+| ------ | --------- | ------------------ | --------------------------------- |
+| API    | Jest      | `apps/api/src/`    | `pnpm --filter @ths-thm/api test` |
+| Web    | Vitest    | `apps/web/src/`    | `pnpm --filter @ths-thm/web test` |
+| Mobile | Jest      | `apps/mobile/src/` | `cd apps/mobile && npx jest`      |
 
 **Mobile tests (15 total):**
+
 - `use-gamification.test.ts` — 9 tests for gamification hooks
 - `use-screen.test.ts` — 6 tests for screen hooks (activities, candidates, documents)
 
 **Web tests (133 total):**
+
 - Component tests for dashboard, letters, mail, etc.
 - Run with: `cd apps/web && npx vitest run`
 
 ### 2. Integration / API Tests
 
-| Type | Framework | Location | Run Command |
-|------|-----------|----------|-------------|
+| Type            | Framework         | Location         | Run Command                           |
+| --------------- | ----------------- | ---------------- | ------------------------------------- |
 | API Integration | Jest (e2e config) | `apps/api/test/` | `pnpm --filter @ths-thm/api test:e2e` |
-| API Coverage | Jest | `apps/api/src/` | `pnpm run test:cov` |
+| API Coverage    | Jest              | `apps/api/src/`  | `pnpm run test:cov`                   |
 
 **Requirements:** PostgreSQL database (see Docker setup below).
 
@@ -53,21 +55,23 @@
 
 #### Web (Playwright)
 
-| Aspect | Detail |
-|--------|--------|
-| **Framework** | Playwright 1.60 |
-| **Location** | `apps/web/e2e/` |
-| **Run command** | `cd apps/web && npx playwright test` |
-| **Tests** | `login.spec.ts` (3 tests), `dashboard.spec.ts` (3 tests), `member-import.spec.ts` (1 test) |
-| **Selectors** | Prefer `data-testid` attributes for robustness |
+| Aspect          | Detail                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| **Framework**   | Playwright 1.60                                                                            |
+| **Location**    | `apps/web/e2e/`                                                                            |
+| **Run command** | `cd apps/web && npx playwright test`                                                       |
+| **Tests**       | `login.spec.ts` (3 tests), `dashboard.spec.ts` (3 tests), `member-import.spec.ts` (1 test) |
+| **Selectors**   | Prefer `data-testid` attributes for robustness                                             |
 
 **Running locally:**
+
 ```bash
 # Start API + DB via Docker Compose
 docker compose -f docker-compose.e2e.yml up --build
 ```
 
 Or manually:
+
 ```bash
 # 1. Start PostgreSQL
 docker run -d --name ths-thm-test-db \
@@ -99,15 +103,16 @@ E2E_BASE_URL=http://localhost:3002 npx playwright test
 
 #### Mobile (Maestro)
 
-| Aspect | Detail |
-|--------|--------|
-| **Framework** | Maestro |
-| **Location** | `apps/mobile/e2e/` |
-| **Run command** | `maestro test apps/mobile/e2e/` |
-| **Flows** | `login.yaml`, `full-flow.yaml`, `home-screen.yaml`, `gamification.yaml`, `documents.yaml` |
-| **Selectors** | Prefer `testID` props in React Native + `tapOn: { id: "..." }` in Maestro |
+| Aspect          | Detail                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| **Framework**   | Maestro                                                                                   |
+| **Location**    | `apps/mobile/e2e/`                                                                        |
+| **Run command** | `maestro test apps/mobile/e2e/`                                                           |
+| **Flows**       | `login.yaml`, `full-flow.yaml`, `home-screen.yaml`, `gamification.yaml`, `documents.yaml` |
+| **Selectors**   | Prefer `testID` props in React Native + `tapOn: { id: "..." }` in Maestro                 |
 
 **Running locally:**
+
 ```bash
 # Install Maestro
 curl -Ls "https://get.maestro.mobile.dev" | bash
@@ -126,18 +131,18 @@ maestro test apps/mobile/e2e/
 
 ### 4. Type Checking
 
-| App | Command |
-|-----|---------|
-| All | `pnpm run typecheck` |
-| API | `cd apps/api && npx tsc --noEmit` |
-| Web | `cd apps/web && npx tsc --noEmit` |
+| App    | Command                              |
+| ------ | ------------------------------------ |
+| All    | `pnpm run typecheck`                 |
+| API    | `cd apps/api && npx tsc --noEmit`    |
+| Web    | `cd apps/web && npx tsc --noEmit`    |
 | Mobile | `cd apps/mobile && npx tsc --noEmit` |
 
 ### 5. Linting
 
-| App | Command |
-|-----|---------|
-| All | `pnpm run lint` |
+| App          | Command                 |
+| ------------ | ----------------------- |
+| All          | `pnpm run lint`         |
 | Format check | `pnpm run format:check` |
 
 ## CI Pipeline Dependencies
@@ -156,6 +161,7 @@ typecheck ──┬── lint
 ```
 
 **Key dependencies:**
+
 - `e2e (API)` waits for `test (API)` — ensures API unit tests pass before E2E
 - `e2e-web` waits for `test (API)` — ensures API is working before web E2E
 - `build-api` waits for `typecheck` + `test (API)` — only build if tests pass
@@ -165,29 +171,29 @@ typecheck ──┬── lint
 
 ## Environment Variables for Testing
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `DATABASE_URL` | Database connection | `postgresql://ths_thm:test_password@localhost:5432/ths_thm_test` |
-| `JWT_SECRET` | JWT signing | `test-jwt-secret` |
-| `JWT_REFRESH_SECRET` | Refresh token signing | `test-jwt-refresh-secret` |
-| `NEXT_PUBLIC_API_URL` | Web → API URL | `http://localhost:3001` |
-| `E2E_BASE_URL` | Playwright base URL | `http://localhost:3002` |
+| Variable              | Purpose               | Example                                                          |
+| --------------------- | --------------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`        | Database connection   | `postgresql://ths_thm:test_password@localhost:5432/ths_thm_test` |
+| `JWT_SECRET`          | JWT signing           | `test-jwt-secret`                                                |
+| `JWT_REFRESH_SECRET`  | Refresh token signing | `test-jwt-refresh-secret`                                        |
+| `NEXT_PUBLIC_API_URL` | Web → API URL         | `http://localhost:3001`                                          |
+| `E2E_BASE_URL`        | Playwright base URL   | `http://localhost:3002`                                          |
 
 ## Test Credentials (Seed Data)
 
-| Role | Email | Password |
-|------|-------|----------|
+| Role       | Email                    | Password      |
+| ---------- | ------------------------ | ------------- |
 | Superadmin | `superadmin@ths-thm.org` | `password123` |
-| Admin | `admin@ths-thm.org` | `password123` |
+| Admin      | `admin@ths-thm.org`      | `password123` |
 
 ## Docker Resources
 
-| File | Purpose |
-|------|---------|
-| `docker-compose.yml` | Development (API + Web + PostgreSQL on port 54321) |
-| `docker-compose.test.yml` | API E2E tests (PostgreSQL on port 5433) |
-| `docker-compose.e2e.yml` | Full Playwright E2E suite (API + Web + PostgreSQL + Playwright) |
-| `apps/api/Dockerfile` | API production image |
-| `apps/api/Dockerfile.test` | API test runner image |
-| `apps/web/Dockerfile` | Web production image |
-| `apps/web/Dockerfile.e2e` | Web E2E test image (pnpm multi-stage) |
+| File                       | Purpose                                                         |
+| -------------------------- | --------------------------------------------------------------- |
+| `docker-compose.yml`       | Development (API + Web + PostgreSQL on port 54321)              |
+| `docker-compose.test.yml`  | API E2E tests (PostgreSQL on port 5433)                         |
+| `docker-compose.e2e.yml`   | Full Playwright E2E suite (API + Web + PostgreSQL + Playwright) |
+| `apps/api/Dockerfile`      | API production image                                            |
+| `apps/api/Dockerfile.test` | API test runner image                                           |
+| `apps/web/Dockerfile`      | Web production image                                            |
+| `apps/web/Dockerfile.e2e`  | Web E2E test image (pnpm multi-stage)                           |

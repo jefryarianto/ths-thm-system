@@ -22,8 +22,17 @@ export default function DigitalCardScreen() {
         const me = unwrap<{ namaLengkap: string }>(res);
         const memberRes = await apiClient.get('/members', { params: { limit: 1 } });
         const members = unwrap<MemberInfo[]>(memberRes);
-        setMember(members?.[0] || { namaLengkap: me.namaLengkap, nomorAnggota: '-', tingkat: '-', ranting: { nama: '-' } });
-      } catch { /* ignore */ }
+        setMember(
+          members?.[0] || {
+            namaLengkap: me.namaLengkap,
+            nomorAnggota: '-',
+            tingkat: '-',
+            ranting: { nama: '-' },
+          },
+        );
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
     })();
   }, []);
@@ -65,18 +74,39 @@ export default function DigitalCardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6', padding: 20, justifyContent: 'center' },
-  card: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, elevation: 5 },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 5,
+  },
   cardHeader: { backgroundColor: '#1d4ed8', padding: 20, alignItems: 'center' },
   orgName: { color: '#bfdbfe', fontSize: 12, fontWeight: '600', letterSpacing: 2 },
   cardTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginTop: 4 },
   cardBody: { flexDirection: 'row', padding: 20 },
-  photoPlaceholder: { width: 80, height: 100, backgroundColor: '#e5e7eb', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  photoPlaceholder: {
+    width: 80,
+    height: 100,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   photoText: { color: '#9ca3af', fontSize: 12 },
   infoBlock: { flex: 1, marginLeft: 16, justifyContent: 'center' },
   memberName: { fontSize: 18, fontWeight: '700', color: '#111827' },
   memberId: { fontSize: 14, color: '#6b7280', marginTop: 4, fontFamily: 'monospace' },
   memberLevel: { fontSize: 13, color: '#374151', marginTop: 8 },
   memberRanting: { fontSize: 13, color: '#374151', marginTop: 2 },
-  qrContainer: { backgroundColor: '#f9fafb', padding: 16, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+  qrContainer: {
+    backgroundColor: '#f9fafb',
+    padding: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
   qrHint: { fontSize: 11, color: '#9ca3af', marginTop: 8 },
 });

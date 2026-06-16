@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
+import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Candidate } from '@/types';
 import { Plus, Upload, UserPlus } from 'lucide-react';
@@ -29,18 +29,21 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function CandidatesPage() {
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
+    useFilters();
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data: candidates, meta, loading, refetch } = usePaginatedList<Candidate>(
-    () => {
-      const params: Record<string, unknown> = { page, limit: 10 };
-      if (debouncedSearch) params.search = debouncedSearch;
-      return apiClient.get('/candidates', { params }).then(r => r.data);
-    },
-    [page, debouncedSearch]
-  );
+  const {
+    data: candidates,
+    meta,
+    loading,
+    refetch,
+  } = usePaginatedList<Candidate>(() => {
+    const params = getApiParams({ limit: 10 });
+    if (debouncedSearch) params.search = debouncedSearch;
+    else delete params.search;
+    return apiClient.get('/candidates', { params }).then((r) => r.data);
+  }, [page, debouncedSearch]);
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -61,11 +64,10 @@ export default function CandidatesPage() {
 
       <SearchBar
         search={search}
-        onSearchChange={v => { setSearch(v); setPage(1); }}
-        onReset={() => { setSearch(''); setPage(1); }}
+        onSearchChange={setSearch}
+        onReset={resetFilters}
         placeholder="Cari calon anggota..."
         debounceMs={300}
-        onDebouncedSearch={() => setPage(1)}
       />
 
       <DataTable
@@ -80,7 +82,7 @@ export default function CandidatesPage() {
         loading={loading}
         empty={{
           icon: UserPlus,
-          ...buildEmptyMessage('calon anggota', !!search, () => { setSearch(''); setPage(1); }),
+          ...buildEmptyMessage('calon anggota', hasActiveFilters, resetFilters),
         }}
         page={page}
         totalPages={meta.totalPages}
@@ -88,15 +90,26 @@ export default function CandidatesPage() {
         onPageChange={handlePageChange}
         colSpan={5}
         renderRow={(c: Candidate) => (
-          <tr key={c.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+          <tr
+            key={c.id}
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{c.namaLengkap}</span>
             </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{c.jenisKelamin}</td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">{c.noHp || '-'}</td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">{c.email || '-'}</td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+              {c.jenisKelamin}
+            </td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+              {c.noHp || '-'}
+            </td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+              {c.email || '-'}
+            </td>
             <td className="px-4 py-3">
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[c.status] || ''}`}>
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[c.status] || ''}`}
+              >
                 {STATUS_LABELS[c.status] || c.status}
               </span>
             </td>
