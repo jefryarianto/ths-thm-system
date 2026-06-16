@@ -6,7 +6,8 @@ Dokumentasi REST API endpoint THS-THM System.
 
 ```
 Development: http://localhost:3001/api
-Production:  https://api.ths-thm.example.com/api
+Staging:     https://staging.ths-thm.cloud/api
+Production:  https://ths-thm.cloud/api
 ```
 
 ## Authentication

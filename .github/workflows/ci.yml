@@ -19,7 +19,7 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ths-thm/api prisma:generate
-      - run: pnpm run typecheck
+      - run: pnpm --filter @ths-thm/api run typecheck && pnpm --filter @ths-thm/web run typecheck
 
   lint:
     name: Lint
@@ -32,7 +32,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
+      - run: pnpm --filter @ths-thm/api run lint && pnpm --filter @ths-thm/web run lint
       - run: pnpm run format:check
 
   test-mobile:
