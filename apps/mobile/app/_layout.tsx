@@ -17,6 +17,12 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="assessments" />
+        <Stack.Screen name="assessments/[id]" />
+        <Stack.Screen name="graduations/[id]" />
+        <Stack.Screen name="dues/[id]" />
+        <Stack.Screen name="documents/[id]" />
+        <Stack.Screen name="member-import" />
       </Stack>
     </>
   );

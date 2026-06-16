@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, StatusBadge, FilterChips } from '../../components/ui/shared';
+import { router } from 'expo-router';
 
 interface DuesItem {
   id: string;
@@ -93,18 +94,24 @@ export default function DuesScreen() {
           };
           return (
             <View style={styles.card}>
-              <View style={styles.cardLeft}>
-                <Text style={styles.periode}>{item.periode}</Text>
-                <Text style={styles.tanggal}>
-                  {item.tanggalBayar
-                    ? new Date(item.tanggalBayar).toLocaleDateString('id-ID')
-                    : '-'}
-                </Text>
-              </View>
-              <View style={styles.cardRight}>
-                <Text style={styles.jumlah}>Rp {Number(item.jumlah).toLocaleString('id-ID')}</Text>
-                <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
-              </View>
+              <TouchableOpacity
+                style={styles.cardTouchable}
+                activeOpacity={0.7}
+                onPress={() => router.push(`/dues/${item.id}` as any)}
+              >
+                <View style={styles.cardLeft}>
+                  <Text style={styles.periode}>{item.periode}</Text>
+                  <Text style={styles.tanggal}>
+                    {item.tanggalBayar
+                      ? new Date(item.tanggalBayar).toLocaleDateString('id-ID')
+                      : '-'}
+                  </Text>
+                </View>
+                <View style={styles.cardRight}>
+                  <Text style={styles.jumlah}>Rp {Number(item.jumlah).toLocaleString('id-ID')}</Text>
+                  <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
+                </View>
+              </TouchableOpacity>
             </View>
           );
         }}
@@ -121,12 +128,8 @@ const styles = StyleSheet.create({
   totalAmount: { color: '#fff', fontSize: 28, fontWeight: '700', marginTop: 4 },
   countLabel: { color: '#bfdbfe', fontSize: 12, marginTop: 6 },
   card: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#f3f4f6',
@@ -134,6 +137,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
+  },
+  cardTouchable: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
   },
   cardLeft: { flex: 1 },
   periode: { fontSize: 15, fontWeight: '600', color: '#111827' },

@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
 import { uploadCsv } from '../services/memberService';
-import { registerForPushNotifications } from '../lib/fcm';
+import { LoadingView, ErrorView } from '../components/ui/shared';
 
 export default function MemberImportScreen() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<{ success: number; incomplete: number; errors: number } | null>(null);
 
   const pickFile = async () => {
     try {
@@ -18,70 +28,127 @@ export default function MemberImportScreen() {
         return;
       }
       setLoading(true);
+      setResult(null);
       const uploadResult = await uploadCsv(res);
       setResult(uploadResult);
+      Alert.alert('Berhasil', 'File CSV berhasil diimport');
     } catch (e) {
       if (DocumentPicker.isCancel(e)) {
         return;
       }
-      Alert.alert('Gagal upload', String(e));
+      Alert.alert('Gagal Upload', String(e));
     } finally {
       setLoading(false);
     }
   };
 
-  const registerToken = async () => {
-    const token = await registerForPushNotifications();
-    if (token) {
-      Alert.alert('Sukses', 'Token FCM terdaftar');
-    } else {
-      Alert.alert('Gagal', 'Tidak bisa mendapatkan token FCM');
-    }
-  };
+  if (loading) return <LoadingView message="Mengupload file CSV..." />;
 
   return (
-    <View style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
-      <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>
-          Import CSV Anggota
-        </Text>
-        <View style={{ marginBottom: 12 }}>
-          <Button title="Pilih File CSV" onPress={pickFile} disabled={loading} color="#2563eb" />
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Import Anggota</Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle" size={20} color="#2563eb" />
+          <Text style={styles.infoText}>
+            Upload file CSV berisi data anggota baru. Format: namaLengkap, email, noHp, alamat, tanggalLahir, tempatLahir
+          </Text>
         </View>
-        {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
+
+        <TouchableOpacity
+          style={styles.uploadBtn}
+          onPress={pickFile}
+          disabled={loading}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="cloud-upload" size={22} color="#fff" />
+          <Text style={styles.uploadBtnText}>Pilih File CSV</Text>
+        </TouchableOpacity>
+
         {result && (
-          <View style={{ marginTop: 20, padding: 16, backgroundColor: '#f0fdf4', borderRadius: 8 }}>
-            <Text style={{ fontWeight: '600' }}>Hasil Import:</Text>
-            <Text>Berhasil: {result.success}</Text>
-            <Text>Incomplete: {result.incomplete}</Text>
-            <Text>Errors: {result.errors}</Text>
+          <View style={styles.resultCard}>
+            <Text style={styles.resultTitle}>Hasil Import</Text>
+            <View style={styles.resultRow}>
+              <View style={[styles.resultBadge, { backgroundColor: '#ecfdf5' }]}>
+                <Text style={[styles.resultBadgeText, { color: '#16a34a' }]}>
+                  Berhasil: {result.success}
+                </Text>
+              </View>
+              <View style={[styles.resultBadge, { backgroundColor: '#fef3c7' }]}>
+                <Text style={[styles.resultBadgeText, { color: '#ca8a04' }]}>
+                  Incomplete: {result.incomplete}
+                </Text>
+              </View>
+              <View style={[styles.resultBadge, { backgroundColor: '#fef2f2' }]}>
+                <Text style={[styles.resultBadgeText, { color: '#dc2626' }]}>
+                  Error: {result.errors}
+                </Text>
+              </View>
+            </View>
           </View>
         )}
       </View>
-      <View style={{ marginTop: 30, paddingTop: 20, borderTopWidth: 1, borderTopColor: '#e5e7eb' }}>
-        <Button title="Daftarkan Token FCM" onPress={registerToken} color="#6b7280" />
-      </View>
-    </View>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
-function Button(props: { title: string; onPress: () => void; disabled?: boolean; color?: string }) {
-  return (
-    <View
-      style={{ backgroundColor: props.color || '#2563eb', borderRadius: 8, overflow: 'hidden' }}
-    >
-      <Text
-        onPress={props.disabled ? undefined : props.onPress}
-        style={{
-          color: '#fff',
-          textAlign: 'center',
-          padding: 14,
-          fontWeight: '600',
-          opacity: props.disabled ? 0.5 : 1,
-        }}
-      >
-        {props.title}
-      </Text>
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  header: {
+    backgroundColor: '#2563eb',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: { padding: 4 },
+  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
+
+  section: { padding: 16 },
+
+  infoCard: {
+    flexDirection: 'row',
+    gap: 10,
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  infoText: { flex: 1, fontSize: 12, color: '#1e40af', lineHeight: 18 },
+
+  uploadBtn: {
+    backgroundColor: '#2563eb',
+    borderRadius: 12,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  uploadBtnText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+
+  resultCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  resultTitle: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 12 },
+  resultRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  resultBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  resultBadgeText: { fontSize: 12, fontWeight: '600' },
+});

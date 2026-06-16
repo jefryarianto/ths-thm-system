@@ -7,18 +7,15 @@ import {
   TouchableOpacity,
   RefreshControl,
   TextInput,
-  Alert,
-  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../../lib/api-client';
+import { router } from 'expo-router';
 import {
   useDocuments,
   TIPE_LABELS,
   TIPE_ICONS,
   STATUS_STYLES,
   TIPE_FILTERS,
-  DocumentItem,
 } from '../../hooks/use-documents';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
@@ -29,17 +26,6 @@ export default function DocumentsScreen() {
 
   const { data: documents, loading, refetch } = useDocuments(search, filterTipe);
   const { refreshing, onRefresh } = useRefresh(refetch);
-
-  const handleDownload = async (item: DocumentItem) => {
-    if (item.filePath) {
-      try {
-        const url = `${apiClient.defaults.baseURL}${item.filePath}`;
-        await Linking.openURL(url);
-      } catch {
-        Alert.alert('Error', 'Tidak bisa membuka dokumen');
-      }
-    }
-  };
 
   if (loading) return <LoadingView message="Memuat dokumen..." />;
 
@@ -93,7 +79,7 @@ export default function DocumentsScreen() {
           return (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => handleDownload(item)}
+              onPress={() => router.push(`/documents/${item.id}` as any)}
               activeOpacity={0.7}
             >
               <View style={styles.iconCircle}>

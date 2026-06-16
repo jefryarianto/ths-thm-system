@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useGraduations, STATUS_STYLES, FILTERS } from '../../hooks/use-graduations';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
@@ -54,7 +55,7 @@ export default function GraduationsScreen() {
           };
           const d = new Date(item.tanggalMulai);
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => router.push(`/graduations/${item.id}` as any)}>
               <View style={styles.dateBox}>
                 <Text style={styles.dateDay}>{d.getDate()}</Text>
                 <Text style={styles.dateMonth}>{months[d.getMonth()]}</Text>

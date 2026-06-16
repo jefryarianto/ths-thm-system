@@ -3,30 +3,39 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { LoadingView } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 import { useMemberProfile } from '../../hooks/use-member-profile';
+import { useRole } from '../../hooks/use-role';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/auth-store';
 
-const menuItems = [
+const memberItems = [
   { icon: 'person', label: 'Profil Saya', route: '/profile' },
   { icon: 'card', label: 'Kartu Digital', route: '/digital-card' },
   { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
   { icon: 'document-text', label: 'Dokumen', route: '/documents' },
   { icon: 'cash', label: 'Iuran', route: '/dues' },
+  { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },
+  { icon: 'settings', label: 'Set. Notifikasi', route: '/notification-preferences' },
+];
+
+const adminItems = [
   { icon: 'fitness', label: 'Latihan', route: '/trainings' },
   { icon: 'calendar', label: 'Kegiatan', route: '/activities' },
   { icon: 'people', label: 'Calon', route: '/candidates' },
   { icon: 'school', label: 'Pendadaran', route: '/graduations' },
   { icon: 'mail', label: 'Surat', route: '/letters' },
   { icon: 'stats-chart', label: 'Laporan', route: '/reports' },
-  { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },
-  { icon: 'settings', label: 'Set. Notifikasi', route: '/notification-preferences' },
+  { icon: 'clipboard', label: 'Aspek', route: '/assessments' },
+  { icon: 'cloud-upload', label: 'Import', route: '/member-import' },
 ];
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
+  const { isAdmin, isPenguji } = useRole();
   const { data: member, loading, refetch } = useMemberProfile();
   const { refreshing, onRefresh } = useRefresh(refetch);
+
+  const menuItems = isAdmin || isPenguji ? [...memberItems, ...adminItems] : memberItems;
 
   return (
     <ScrollView

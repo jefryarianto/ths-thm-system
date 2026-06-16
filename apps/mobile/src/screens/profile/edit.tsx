@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
@@ -96,11 +97,38 @@ export default function EditProfileScreen() {
   };
 
   const pickImage = async () => {
-    // Placeholder: actual image picker + upload requires expo-image-picker + multipart endpoint
-    Alert.alert(
-      'Fitur Foto',
-      'Upload foto akan tersedia setelah endpoint upload diimplementasikan.\n\nUntuk saat ini, Anda dapat mengisi data profil lainnya.',
-    );
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Izin Diperlukan', 'Aplikasi membutuhkan izin akses foto');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const asset = result.assets[0];
+      setPhotoUri(asset.uri);
+
+      const formData = new FormData();
+      formData.append('photo', {
+        uri: asset.uri,
+        name: 'profile-photo.jpg',
+        type: 'image/jpeg',
+      } as any);
+
+      await apiClient.post('/auth/me/photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } catch (err: any) {
+      Alert.alert('Gagal Upload', err?.response?.data?.message || 'Terjadi kesalahan');
+    }
   };
 
   const renderField = (
