@@ -20,7 +20,8 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "swagger:export": "ts-node scripts/generate-swagger.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "typecheck": "nest build"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",
