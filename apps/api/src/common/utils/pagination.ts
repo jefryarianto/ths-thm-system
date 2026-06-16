@@ -31,14 +31,18 @@ export interface PaginatedResult<T> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function paginate<T>(
   delegate: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     findMany: (args: any) => Promise<T[]>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     count: (args: { where: any }) => Promise<number>;
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: any,
   options: PaginationOptions & {
     orderBy?: Record<string, 'asc' | 'desc'>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     include?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     select?: any;
   } = {},
 ): Promise<PaginatedResult<T>> {

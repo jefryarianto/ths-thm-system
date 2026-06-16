@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 
 export function validateEnv() {
   const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
