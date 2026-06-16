@@ -39,6 +39,7 @@ npm-debug.log*
 coverage/
 blob-report/
 
-# Prisma
+# Prisma migrations are tracked in git (needed for CI's prisma migrate deploy)
 apps/api/prisma/migrations/
-!apps/api/prisma/migrations/.gitkeep
+!apps/api/prisma/migrations/**/migration.sql
+!apps/api/prisma/migrations/migration_lock.toml
