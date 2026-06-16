@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import { CacheService } from './services/cache.service';
@@ -18,6 +18,7 @@ export class HealthController {
 
   @Get()
   @Public()
+  @ApiOperation({ summary: 'Cek kesehatan sistem' })
   async check() {
     let dbStatus = 'disconnected';
     const dbPool = { active: 0, idle: 0, total: 0 };
