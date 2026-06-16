@@ -8,7 +8,7 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
-  Linking,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -22,6 +22,13 @@ const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }
   menunggu_verifikasi: { label: 'Menunggu', color: '#ca8a04', bg: '#fef3c7' },
 };
 
+interface BankInfo {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  qrisImageUrl: string | null;
+}
+
 interface DuesDetail {
   id: string;
   periode: string;
@@ -29,22 +36,25 @@ interface DuesDetail {
   status: string;
   tanggalBayar?: string;
   tanggalJatuhTempo?: string;
-  anggota?: { namaLengkap: string };
 }
 
 export default function DuesDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [dues, setDues] = useState<DuesDetail | null>(null);
+  const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPayForm, setShowPayForm] = useState(false);
   const [catatan, setCatatan] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [payLoading, setPayLoading] = useState(false);
 
   const fetchData = async () => {
     try {
-      const res = await apiClient.get(`/dues/${id}`);
-      setDues(unwrap(res));
+      const [duesRes, bankRes] = await Promise.all([
+        apiClient.get(`/dues/${id}`),
+        apiClient.get('/payments/bank-info'),
+      ]);
+      setDues(unwrap(duesRes));
+      setBankInfo(unwrap(bankRes) as BankInfo);
     } catch {
       /* ignore */
     }
@@ -55,15 +65,15 @@ export default function DuesDetailScreen() {
     fetchData();
   }, [id]);
 
-  const handleManualPay = async () => {
+  const handleSubmitProof = async () => {
     if (!catatan.trim()) {
-      Alert.alert('Error', 'Catatan pembayaran harus diisi');
+      Alert.alert('Error', 'Catatan pembayaran harus diisi (misal: nama pengirim, tanggal transfer)');
       return;
     }
     setSubmitting(true);
     try {
-      await apiClient.post(`/dues/${id}/payments`, { catatan: catatan.trim() });
-      Alert.alert('Berhasil', 'Konfirmasi pembayaran berhasil dikirim. Menunggu verifikasi admin.');
+      await apiClient.post(`/payments/${id}/upload-proof`, { catatan: catatan.trim() });
+      Alert.alert('Berhasil', 'Bukti pembayaran berhasil dikirim. Menunggu verifikasi admin.');
       setShowPayForm(false);
       setCatatan('');
       setLoading(true);
@@ -72,21 +82,6 @@ export default function DuesDetailScreen() {
       Alert.alert('Gagal', err?.response?.data?.message || 'Terjadi kesalahan');
     }
     setSubmitting(false);
-  };
-
-  const handleOnlinePay = async () => {
-    setPayLoading(true);
-    try {
-      const res = await apiClient.post('/payments/snap-token', { iuranId: id });
-      const data = unwrap(res) as { redirect_url: string };
-      if (data?.redirect_url) {
-        await Linking.openURL(data.redirect_url);
-      }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Gagal memulai pembayaran online';
-      Alert.alert('Error', msg);
-    }
-    setPayLoading(false);
   };
 
   if (loading) return <LoadingView message="Memuat detail iuran..." />;
@@ -103,7 +98,7 @@ export default function DuesDetailScreen() {
     bg: '#f3f4f6',
   };
 
-  const canPay = dues.status !== 'lunas';
+  const canPay = dues.status !== 'lunas' && dues.status !== 'menunggu_verifikasi';
 
   return (
     <ScrollView style={styles.container}>
@@ -162,39 +157,59 @@ export default function DuesDetailScreen() {
         </View>
       </View>
 
-      {canPay && !showPayForm && (
+      {canPay && bankInfo && !showPayForm && (
         <View style={styles.section}>
-          <TouchableOpacity
-            style={[styles.payBtn, styles.onlineBtn]}
-            onPress={handleOnlinePay}
-            disabled={payLoading}
-          >
-            {payLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="card" size={18} color="#fff" />
-                <Text style={styles.payBtnText}>Bayar Online (Midtrans)</Text>
-              </>
+          <View style={styles.bankCard}>
+            <Text style={styles.bankTitle}>Pembayaran via Transfer</Text>
+
+            {bankInfo.qrisImageUrl && (
+              <View style={styles.qrisContainer}>
+                <Image
+                  source={{ uri: bankInfo.qrisImageUrl }}
+                  style={styles.qrisImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.qrisLabel}>Scan QRIS</Text>
+              </View>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.payBtn} onPress={() => setShowPayForm(true)}>
-            <Ionicons name="receipt" size={18} color="#fff" />
-            <Text style={styles.payBtnText}>Konfirmasi Manual</Text>
-          </TouchableOpacity>
+
+            <View style={styles.bankRow}>
+              <Ionicons name="business" size={16} color="#6b7280" />
+              <Text style={styles.bankLabel}>Bank</Text>
+              <Text style={styles.bankValue}>{bankInfo.bankName}</Text>
+            </View>
+            <View style={styles.bankRow}>
+              <Ionicons name="card" size={16} color="#6b7280" />
+              <Text style={styles.bankLabel}>No. Rekening</Text>
+              <Text style={styles.bankAccNumber}>{bankInfo.accountNumber}</Text>
+            </View>
+            <View style={styles.bankRow}>
+              <Ionicons name="person" size={16} color="#6b7280" />
+              <Text style={styles.bankLabel}>Atas Nama</Text>
+              <Text style={styles.bankValue}>{bankInfo.accountName}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.payBtn}
+              onPress={() => setShowPayForm(true)}
+            >
+              <Ionicons name="cloud-upload" size={18} color="#fff" />
+              <Text style={styles.payBtnText}>Upload Bukti Bayar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {showPayForm && (
         <View style={styles.section}>
           <View style={styles.payForm}>
-            <Text style={styles.payFormTitle}>Konfirmasi Pembayaran Manual</Text>
+            <Text style={styles.payFormTitle}>Konfirmasi Pembayaran</Text>
             <Text style={styles.payFormHint}>
-              Masukkan catatan pembayaran (misal: nomor referensi transfer, bank tujuan, dll)
+              Isi catatan transfer (nama pengirim, bank asal, tanggal transfer) untuk verifikasi admin
             </Text>
             <TextInput
               style={styles.payInput}
-              placeholder="Catatan pembayaran..."
+              placeholder="Contoh: Transfer dari BCA a.n. Budi, 17 Juni 2026"
               placeholderTextColor="#9ca3af"
               value={catatan}
               onChangeText={setCatatan}
@@ -213,7 +228,7 @@ export default function DuesDetailScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.submitPayBtn, submitting && styles.btnDisabled]}
-                onPress={handleManualPay}
+                onPress={handleSubmitProof}
                 disabled={submitting}
               >
                 {submitting ? (
@@ -223,6 +238,17 @@ export default function DuesDetailScreen() {
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      )}
+
+      {dues.status === 'menunggu_verifikasi' && (
+        <View style={styles.section}>
+          <View style={styles.verifyingCard}>
+            <Ionicons name="hourglass" size={24} color="#ca8a04" />
+            <Text style={styles.verifyingText}>
+              Pembayaran sedang diverifikasi oleh admin. Mohon tunggu.
+            </Text>
           </View>
         </View>
       )}
@@ -269,18 +295,44 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
 
+  bankCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  bankTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  qrisContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+  },
+  qrisImage: { width: 180, height: 180 },
+  qrisLabel: { fontSize: 12, color: '#6b7280', marginTop: 8 },
+  bankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  bankLabel: { fontSize: 13, color: '#6b7280', width: 100 },
+  bankValue: { fontSize: 14, fontWeight: '600', color: '#111827', flex: 1 },
+  bankAccNumber: { fontSize: 16, fontWeight: '700', color: '#2563eb', flex: 1, letterSpacing: 1 },
+
   payBtn: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#2563eb',
     borderRadius: 12,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 8,
-  },
-  onlineBtn: {
-    backgroundColor: '#2563eb',
+    marginTop: 16,
   },
   payBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
 
@@ -322,4 +374,16 @@ const styles = StyleSheet.create({
   },
   submitPayBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
   btnDisabled: { opacity: 0.5 },
+
+  verifyingCard: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+  verifyingText: { fontSize: 13, color: '#92400e', flex: 1, lineHeight: 18 },
 });
