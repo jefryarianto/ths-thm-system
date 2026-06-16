@@ -14,6 +14,7 @@ export class GoogleOAuthStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async validate(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback) {
     const { id, emails, displayName, photos } = profile;
     const email = emails?.[0]?.value;

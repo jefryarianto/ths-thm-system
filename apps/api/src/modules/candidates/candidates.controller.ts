@@ -50,6 +50,7 @@ export class CandidatesController {
   @Post('import')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   importCsv(@Body() data: any[]) {
     return this.candidatesService.importCsv(data);
   }

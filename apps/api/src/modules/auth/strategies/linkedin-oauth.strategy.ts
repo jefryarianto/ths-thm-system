@@ -17,7 +17,9 @@ export class LinkedInOAuthStrategy extends PassportStrategy(Strategy, 'linkedin'
   async validate(
     accessToken: string,
     refreshToken: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     profile: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     done: (err: Error | null, user?: any) => void,
   ) {
     const { id, emails, displayName, photos } = profile;

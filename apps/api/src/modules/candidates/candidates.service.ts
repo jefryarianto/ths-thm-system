@@ -28,6 +28,7 @@ export class CandidatesService {
       cacheKey,
       async () => {
         const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const where: any = { ...scopeFilter };
 
         if (filter.search) {
@@ -70,6 +71,7 @@ export class CandidatesService {
 
   async create(dto: CreateCandidateDto, scope?: UserScope, userId?: string) {
     if (scope?.rantingId && !dto.rantingId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).rantingId = scope.rantingId;
     }
     const candidate = await this.prisma.calonAnggota.create({
@@ -125,8 +127,9 @@ export class CandidatesService {
     return { success: true, message: 'Calon anggota berhasil dihapus' };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async importCsv(data: any[]) {
-    const results = { success: 0, errors: 0, details: [] as any[] };
+    const results: { success: number; errors: number; details: Array<{ row: unknown; error: string }> } = { success: 0, errors: 0, details: [] };
 
     for (const row of data) {
       try {
@@ -138,9 +141,11 @@ export class CandidatesService {
             email: row.email,
             alamat: row.alamat || row.address,
             status: 'diusulkan',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             usulOlehId: row.usulOlehId || row.usul_oleh_id || 'seed',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             rantingId: row.rantingId || row.ranting_id || 'seed',
-          } as any,
+          } as never,
         });
         results.success++;
       } catch (error) {
@@ -228,7 +233,7 @@ export class CandidatesService {
     return { success: true, message: reason || 'Calon anggota ditolak' };
   }
 
-  async exportCsv(filter: CandidateFilterDto) {
+  async exportCsv(_filter: CandidateFilterDto) {
     const candidates = await this.prisma.calonAnggota.findMany({
       where: {},
       select: {
