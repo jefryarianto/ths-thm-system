@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { DocumentsService } from './documents.service';
 import { Public } from '../../common/decorators/public.decorator';
 import {
@@ -18,12 +18,14 @@ export class DocumentsController {
 
   @Get('verify/:token')
   @Public()
+  @ApiOperation({ summary: 'Verifikasi dokumen dengan token' })
   verifyByToken(@Param('token') token: string) {
     return this.service.verifyByToken(token);
   }
 
   @Get()
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ambil semua dokumen' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   findAll(@Query() q: DocumentFilterDto, @Req() req: ScopedRequest) {
@@ -32,6 +34,7 @@ export class DocumentsController {
 
   @Get(':id')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ambil detail dokumen' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -47,6 +50,7 @@ export class DocumentsController {
 
   @Post('generate')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate dokumen' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   generate(@Body() dto: GenerateDocumentDto) {
@@ -55,6 +59,7 @@ export class DocumentsController {
 
   @Post('batch')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate dokumen massal' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   batchGenerate(@Body() dto: BatchGenerateDocumentDto) {
@@ -63,6 +68,7 @@ export class DocumentsController {
 
   @Delete(':id')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Hapus dokumen' })
   @Roles('superadmin', 'admin_distrik')
   @RequireScope('branch')
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -71,6 +77,7 @@ export class DocumentsController {
 
   @Get('types/list')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ambil tipe dokumen' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   getTypes() {
@@ -79,6 +86,7 @@ export class DocumentsController {
 
   @Get(':id/verify-qr')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verifikasi QR dokumen' })
   @Roles(
     'superadmin',
     'admin_distrik',

@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { GraduationsService } from './graduations.service';
 import {
   CreateGraduationDto,
@@ -18,6 +18,7 @@ export class GraduationsController {
   constructor(private readonly service: GraduationsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   findAll(@Query() query: GraduationFilterDto, @Req() req: ScopedRequest) {
@@ -25,6 +26,7 @@ export class GraduationsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -32,6 +34,7 @@ export class GraduationsController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Tambah wisuda baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   create(@Body() dto: CreateGraduationDto, @Req() req: ScopedRequest) {
@@ -39,6 +42,7 @@ export class GraduationsController {
   }
 
   @Post(':id/register')
+  @ApiOperation({ summary: 'Daftarkan peserta wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   register(@Param('id') id: string, @Body() dto: RegisterParticipantDto) {
@@ -46,6 +50,7 @@ export class GraduationsController {
   }
 
   @Post(':id/unregister')
+  @ApiOperation({ summary: 'Batalkan pendaftaran wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   unregister(@Param('id') id: string, @Body() dto: RegisterParticipantDto) {
@@ -53,6 +58,7 @@ export class GraduationsController {
   }
 
   @Get(':id/participants')
+  @ApiOperation({ summary: 'Ambil peserta wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   getParticipants(@Param('id') id: string) {
@@ -60,6 +66,7 @@ export class GraduationsController {
   }
 
   @Post(':id/participants/import')
+  @ApiOperation({ summary: 'Impor peserta wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   importParticipants(
@@ -70,6 +77,7 @@ export class GraduationsController {
   }
 
   @Post(':id/graduate')
+  @ApiOperation({ summary: 'Wisuda peserta' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   graduate(@Param('id') id: string, @Body() dto: GraduateDto, @Req() req: ScopedRequest) {
@@ -77,6 +85,7 @@ export class GraduationsController {
   }
 
   @Post(':id/generate-docs')
+  @ApiOperation({ summary: 'Generate dokumen wisuda' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   generateDocs(@Param('id') id: string) {

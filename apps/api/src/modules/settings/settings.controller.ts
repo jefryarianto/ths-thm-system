@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, Res, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Setting } from '@prisma/client';
@@ -11,6 +11,7 @@ export class SettingsController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua pengaturan' })
   async getAllSettings() {
     const settings = await this.prisma.setting.findMany();
     const config = settings.reduce(
@@ -24,6 +25,7 @@ export class SettingsController {
   }
 
   @Get(':key')
+  @ApiOperation({ summary: 'Ambil pengaturan' })
   async getSetting(@Param('key') key: string) {
     const setting = await this.prisma.setting.findUnique({ where: { key } });
     if (!setting) {
@@ -33,6 +35,7 @@ export class SettingsController {
   }
 
   @Post(':key')
+  @ApiOperation({ summary: 'Perbarui pengaturan' })
   async updateSetting(@Param('key') key: string, @Body() body: { value: any }) {
     await this.prisma.setting.upsert({
       where: { key },
@@ -43,6 +46,7 @@ export class SettingsController {
   }
 
   @Get('branding/colors')
+  @ApiOperation({ summary: 'Ambil warna branding' })
   async getBrandingColors() {
     const setting = await this.prisma.setting.findUnique({ where: { key: 'branding' } });
     const colors = setting?.value || {
@@ -54,6 +58,7 @@ export class SettingsController {
   }
 
   @Post('branding/colors')
+  @ApiOperation({ summary: 'Perbarui warna branding' })
   async updateBrandingColors(@Body() body: { primary: string; secondary: string; accent: string }) {
     await this.prisma.setting.upsert({
       where: { key: 'branding' },
@@ -64,6 +69,7 @@ export class SettingsController {
   }
 
   @Get('export/audit')
+  @ApiOperation({ summary: 'Ekspor log audit' })
   async exportAudit(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {
     const logs = await this.prisma.emailLog.findMany({
       where: { createdAt: { gte: new Date(from), lte: new Date(to) } },

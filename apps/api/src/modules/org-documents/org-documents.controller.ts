@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { OrgDocumentsService } from './org-documents.service';
 import {
   CreateOrgDocumentDto,
@@ -19,6 +19,7 @@ export class OrgDocumentsController {
   constructor(private readonly service: OrgDocumentsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua dokumen organisasi' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   findAll(@Query() q: OrgDocumentFilterDto) {
@@ -26,6 +27,7 @@ export class OrgDocumentsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail dokumen organisasi' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   findOne(@Param('id') id: string) {
@@ -33,6 +35,7 @@ export class OrgDocumentsController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Tambah dokumen organisasi baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   create(@Body() dto: CreateOrgDocumentDto) {
@@ -40,6 +43,7 @@ export class OrgDocumentsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Perbarui dokumen organisasi' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   update(@Param('id') id: string, @Body() dto: UpdateOrgDocumentDto) {
@@ -47,6 +51,7 @@ export class OrgDocumentsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Hapus dokumen organisasi' })
   @Roles('superadmin', 'admin_distrik')
   @RequireScope('branch')
   remove(@Param('id') id: string) {
@@ -54,6 +59,7 @@ export class OrgDocumentsController {
   }
 
   @Get('categories/list')
+  @ApiOperation({ summary: 'Ambil semua kategori dokumen' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   getCategories() {
@@ -61,6 +67,7 @@ export class OrgDocumentsController {
   }
 
   @Get('categories/:id')
+  @ApiOperation({ summary: 'Ambil detail kategori dokumen' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   getCategory(@Param('id') id: string) {
@@ -68,6 +75,7 @@ export class OrgDocumentsController {
   }
 
   @Post('categories')
+  @ApiOperation({ summary: 'Tambah kategori dokumen baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   createCategory(@Body() dto: CreateCategoryDto) {
@@ -75,6 +83,7 @@ export class OrgDocumentsController {
   }
 
   @Patch('categories/:id')
+  @ApiOperation({ summary: 'Perbarui kategori dokumen' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
@@ -82,6 +91,7 @@ export class OrgDocumentsController {
   }
 
   @Delete('categories/:id')
+  @ApiOperation({ summary: 'Hapus kategori dokumen' })
   @Roles('superadmin', 'admin_distrik')
   @RequireScope('branch')
   deleteCategory(@Param('id') id: string) {

@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -13,6 +13,7 @@ export class CandidatesController {
   constructor(private readonly candidatesService: CandidatesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   findAll(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest) {
@@ -20,6 +21,7 @@ export class CandidatesController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -27,6 +29,7 @@ export class CandidatesController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Tambah kandidat baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   create(@Body() dto: CreateCandidateDto, @Req() req: ScopedRequest) {
@@ -34,6 +37,7 @@ export class CandidatesController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Perbarui kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   update(@Param('id') id: string, @Body() dto: UpdateCandidateDto, @Req() req: ScopedRequest) {
@@ -41,6 +45,7 @@ export class CandidatesController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Hapus kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -48,6 +53,7 @@ export class CandidatesController {
   }
 
   @Post('import')
+  @ApiOperation({ summary: 'Impor data kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +62,7 @@ export class CandidatesController {
   }
 
   @Post(':id/validate')
+  @ApiOperation({ summary: 'Validasi kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   validate(@Param('id') id: string) {
@@ -63,6 +70,7 @@ export class CandidatesController {
   }
 
   @Post(':id/approve')
+  @ApiOperation({ summary: 'Setujui kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   approve(@Param('id') id: string) {
@@ -70,6 +78,7 @@ export class CandidatesController {
   }
 
   @Post(':id/reject')
+  @ApiOperation({ summary: 'Tolak kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   reject(@Param('id') id: string, @Body() body: { reason?: string }) {
@@ -77,6 +86,7 @@ export class CandidatesController {
   }
 
   @Get('export/csv')
+  @ApiOperation({ summary: 'Ekspor data kandidat' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   exportCsv(@Query() filter: CandidateFilterDto) {

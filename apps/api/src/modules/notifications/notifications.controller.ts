@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, Patch } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -18,24 +18,28 @@ export class NotificationsController {
   constructor(private readonly service: NotificationsService) {}
 
   @Post('send')
+  @ApiOperation({ summary: 'Kirim notifikasi' })
   @Roles('superadmin', 'admin_distrik')
   send(@Body() dto: SendNotificationDto) {
     return this.service.send(dto.userId, dto);
   }
 
   @Post('broadcast')
+  @ApiOperation({ summary: 'Siarkan notifikasi' })
   @Roles('superadmin')
   broadcast(@Body() dto: BroadcastNotificationDto) {
     return this.service.broadcast(dto);
   }
 
   @Post('role')
+  @ApiOperation({ summary: 'Kirim notifikasi ke peran' })
   @Roles('superadmin')
   sendToRole(@Body() dto: SendToRoleDto) {
     return this.service.sendToRole(dto);
   }
 
   @Get('count')
+  @ApiOperation({ summary: 'Hitung notifikasi belum dibaca' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -49,6 +53,7 @@ export class NotificationsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua notifikasi' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -62,6 +67,7 @@ export class NotificationsController {
   }
 
   @Patch(':id/read')
+  @ApiOperation({ summary: 'Tandai notifikasi terbaca' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -75,6 +81,7 @@ export class NotificationsController {
   }
 
   @Patch('read-all')
+  @ApiOperation({ summary: 'Tandai semua notifikasi terbaca' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -88,6 +95,7 @@ export class NotificationsController {
   }
 
   @Get('stats')
+  @ApiOperation({ summary: 'Statistik notifikasi' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -101,6 +109,7 @@ export class NotificationsController {
   }
 
   @Get('preferences')
+  @ApiOperation({ summary: 'Ambil preferensi notifikasi' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -114,6 +123,7 @@ export class NotificationsController {
   }
 
   @Patch('preferences')
+  @ApiOperation({ summary: 'Perbarui preferensi notifikasi' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -127,6 +137,7 @@ export class NotificationsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail notifikasi' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -140,6 +151,7 @@ export class NotificationsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Hapus notifikasi' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -153,6 +165,7 @@ export class NotificationsController {
   }
 
   @Post('fcm-token')
+  @ApiOperation({ summary: 'Daftarkan token FCM' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -166,6 +179,7 @@ export class NotificationsController {
   }
 
   @Delete('fcm-token/:id')
+  @ApiOperation({ summary: 'Hapus token FCM' })
   @Roles(
     'superadmin',
     'admin_distrik',

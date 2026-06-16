@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AssessmentsService } from './assessments.service';
 import {
   CreateAspectDto,
@@ -20,6 +20,7 @@ import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 export class AssessmentsController {
   constructor(private readonly service: AssessmentsService) {}
   @Get('aspects')
+  @ApiOperation({ summary: 'Ambil semua aspek penilaian' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -33,6 +34,7 @@ export class AssessmentsController {
     return this.service.getAspects(q);
   }
   @Get('aspects/:id')
+  @ApiOperation({ summary: 'Ambil detail aspek penilaian' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -46,24 +48,28 @@ export class AssessmentsController {
     return this.service.getAspect(id);
   }
   @Post('aspects')
+  @ApiOperation({ summary: 'Tambah aspek penilaian baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   createAspect(@Body() dto: CreateAspectDto) {
     return this.service.createAspect(dto);
   }
   @Patch('aspects/:id')
+  @ApiOperation({ summary: 'Perbarui aspek penilaian' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   updateAspect(@Param('id') id: string, @Body() dto: UpdateAspectDto) {
     return this.service.updateAspect(id, dto);
   }
   @Delete('aspects/:id')
+  @ApiOperation({ summary: 'Hapus aspek penilaian' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   deleteAspect(@Param('id') id: string) {
     return this.service.deleteAspect(id);
   }
   @Get('items')
+  @ApiOperation({ summary: 'Ambil semua item penilaian' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -77,6 +83,7 @@ export class AssessmentsController {
     return this.service.getItems(q);
   }
   @Get('items/:id')
+  @ApiOperation({ summary: 'Ambil detail item penilaian' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -90,24 +97,28 @@ export class AssessmentsController {
     return this.service.getItem(id);
   }
   @Post('items')
+  @ApiOperation({ summary: 'Tambah item penilaian baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   createItem(@Body() dto: CreateItemDto) {
     return this.service.createItem(dto);
   }
   @Patch('items/:id')
+  @ApiOperation({ summary: 'Perbarui item penilaian' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto) {
     return this.service.updateItem(id, dto);
   }
   @Delete('items/:id')
+  @ApiOperation({ summary: 'Hapus item penilaian' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   deleteItem(@Param('id') id: string) {
     return this.service.deleteItem(id);
   }
   @Get('scores')
+  @ApiOperation({ summary: 'Ambil semua nilai' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -121,6 +132,7 @@ export class AssessmentsController {
     return this.service.getScores(q, req.scope);
   }
   @Post('scores')
+  @ApiOperation({ summary: 'Tambah nilai baru' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -134,6 +146,7 @@ export class AssessmentsController {
     return this.service.createScore(dto);
   }
   @Post('import')
+  @ApiOperation({ summary: 'Impor nilai' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   importScores(@Body() importDto: { data: Record<string, unknown>[] }) {

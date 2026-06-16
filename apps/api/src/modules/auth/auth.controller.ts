@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, Patch, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -24,60 +24,70 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @ApiOperation({ summary: 'Login pengguna' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
   @Post('register')
   @Public()
+  @ApiOperation({ summary: 'Registrasi pengguna baru' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('refresh')
   @Public()
+  @ApiOperation({ summary: 'Refresh token akses' })
   refresh(@Body() dto: RefreshDto) {
     return this.authService.refreshToken(dto);
   }
 
   @Post('forgot')
   @Public()
+  @ApiOperation({ summary: 'Lupa kata sandi' })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
 
   @Post('reset')
   @Public()
+  @ApiOperation({ summary: 'Reset kata sandi' })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
 
   @Get('me')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ambil profil pengguna' })
   getProfile(@CurrentUser() user: { id: string }) {
     return this.authService.getProfile(user.id);
   }
 
   @Patch('me')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Perbarui profil pengguna' })
   updateProfile(@CurrentUser() user: { id: string }, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(user.id, dto);
   }
 
   @Patch('change-password')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ubah kata sandi' })
   changePassword(@CurrentUser() user: { id: string }, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(user.id, dto);
   }
 
   @Post('magic-link')
   @Public()
+  @ApiOperation({ summary: 'Kirim tautan ajaib' })
   sendMagicLink(@Body() dto: MagicLinkDto) {
     return this.authService.sendMagicLink(dto.email);
   }
 
   @Post('magic-link/verify')
   @Public()
+  @ApiOperation({ summary: 'Verifikasi tautan ajaib' })
   verifyMagicLink(@Body() dto: MagicLinkVerifyDto) {
     return this.authService.loginWithMagicLink(dto.token);
   }
@@ -87,6 +97,7 @@ export class AuthController {
   @Get('google')
   @Public()
   @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Login dengan Google' })
   googleAuth() {
     // Guard redirects to Google
   }
@@ -94,6 +105,7 @@ export class AuthController {
   @Get('google/callback')
   @Public()
   @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Callback login Google' })
   googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user;
@@ -110,6 +122,7 @@ export class AuthController {
   @Get('linkedin')
   @Public()
   @UseGuards(AuthGuard('linkedin'))
+  @ApiOperation({ summary: 'Login dengan LinkedIn' })
   linkedinAuth() {
     // Guard redirects to LinkedIn
   }
@@ -117,6 +130,7 @@ export class AuthController {
   @Get('linkedin/callback')
   @Public()
   @UseGuards(AuthGuard('linkedin'))
+  @ApiOperation({ summary: 'Callback login LinkedIn' })
   linkedinAuthCallback(@Req() req: Request, @Res() res: Response) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user;

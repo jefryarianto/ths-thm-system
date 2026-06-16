@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { RequireScope } from '../../common/decorators/scope.decorator';
@@ -13,6 +13,7 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua anggota' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -28,6 +29,7 @@ export class MembersController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail anggota' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -43,6 +45,7 @@ export class MembersController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Tambah anggota baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   create(@Body() dto: CreateMemberDto, @Req() req: ScopedRequest) {
@@ -50,6 +53,7 @@ export class MembersController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Perbarui anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   update(@Param('id') id: string, @Body() dto: UpdateMemberDto, @Req() req: ScopedRequest) {
@@ -57,6 +61,7 @@ export class MembersController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Hapus anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -64,6 +69,7 @@ export class MembersController {
   }
 
   @Post('import')
+  @ApiOperation({ summary: 'Impor data anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
@@ -71,6 +77,7 @@ export class MembersController {
   }
 
   @Get('export/csv')
+  @ApiOperation({ summary: 'Ekspor data anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   exportCsv(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
@@ -78,6 +85,7 @@ export class MembersController {
   }
 
   @Post(':id/validate')
+  @ApiOperation({ summary: 'Validasi anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   validate(@Param('id') id: string) {
@@ -85,6 +93,7 @@ export class MembersController {
   }
 
   @Post(':id/approve')
+  @ApiOperation({ summary: 'Setujui anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   approve(@Param('id') id: string) {
@@ -92,6 +101,7 @@ export class MembersController {
   }
 
   @Patch(':id/suspend')
+  @ApiOperation({ summary: 'Tangguhkan anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   suspend(@Param('id') id: string) {
@@ -99,6 +109,7 @@ export class MembersController {
   }
 
   @Patch(':id/reactivate')
+  @ApiOperation({ summary: 'Aktifkan kembali anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   reactivate(@Param('id') id: string) {
@@ -106,6 +117,7 @@ export class MembersController {
   }
 
   @Get(':id/documents')
+  @ApiOperation({ summary: 'Ambil dokumen anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
   getDocuments(@Param('id') id: string) {
@@ -113,6 +125,7 @@ export class MembersController {
   }
 
   @Get(':id/dues')
+  @ApiOperation({ summary: 'Ambil iuran anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
   getDues(@Param('id') id: string) {

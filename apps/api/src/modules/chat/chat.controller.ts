@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -10,11 +10,13 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get('rooms')
+  @ApiOperation({ summary: 'Ambil ruang chat' })
   getRooms(@CurrentUser() user: { id: string; role: string }) {
     return this.chatService.getUserRooms(user);
   }
 
   @Post('rooms/:roomId/messages')
+  @ApiOperation({ summary: 'Kirim pesan' })
   async sendMessage(
     @Param('roomId') roomId: string,
     @Body() body: { content: string; type?: string },
@@ -30,6 +32,7 @@ export class ChatController {
   }
 
   @Get('rooms/:roomId/messages')
+  @ApiOperation({ summary: 'Ambil pesan' })
   async getMessages(
     @Param('roomId') roomId: string,
     @Query('limit') limit?: string,
@@ -44,6 +47,7 @@ export class ChatController {
   }
 
   @Post('rooms/:roomId/read')
+  @ApiOperation({ summary: 'Tandai pesan terbaca' })
   async markAsRead(@Param('roomId') roomId: string, @CurrentUser() user: { id: string }) {
     return this.chatService.markAsRead(roomId, user.id);
   }

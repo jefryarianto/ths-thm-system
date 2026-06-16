@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { TrainingsService } from './trainings.service';
 import {
   CreateTrainingDto,
@@ -21,6 +21,7 @@ export class TrainingsController {
   constructor(private readonly service: TrainingsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Ambil semua pelatihan' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -36,6 +37,7 @@ export class TrainingsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail pelatihan' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -51,6 +53,7 @@ export class TrainingsController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Tambah pelatihan baru' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   create(@Body() dto: CreateTrainingDto, @Req() req: ScopedRequest) {
@@ -58,6 +61,7 @@ export class TrainingsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Perbarui pelatihan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   update(@Param('id') id: string, @Body() dto: UpdateTrainingDto, @Req() req: ScopedRequest) {
@@ -65,6 +69,7 @@ export class TrainingsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Hapus pelatihan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
@@ -72,6 +77,7 @@ export class TrainingsController {
   }
 
   @Get(':id/attendances')
+  @ApiOperation({ summary: 'Ambil absensi pelatihan' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -86,6 +92,7 @@ export class TrainingsController {
   }
 
   @Post(':id/attendances')
+  @ApiOperation({ summary: 'Catat absensi pelatihan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   recordAttendance(@Param('id') id: string, @Body() dto: RecordAttendanceDto) {
@@ -93,6 +100,7 @@ export class TrainingsController {
   }
 
   @Post(':id/attendances/import')
+  @ApiOperation({ summary: 'Impor absensi pelatihan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   importAttendance(@Param('id') id: string, @Body() importDto: ImportAttendanceDto) {
@@ -100,6 +108,7 @@ export class TrainingsController {
   }
 
   @Get(':id/evaluations')
+  @ApiOperation({ summary: 'Ambil evaluasi pelatihan' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -114,6 +123,7 @@ export class TrainingsController {
   }
 
   @Post(':id/evaluations')
+  @ApiOperation({ summary: 'Tambah evaluasi pelatihan' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -128,6 +138,7 @@ export class TrainingsController {
   }
 
   @Patch(':id/evaluations/:eid')
+  @ApiOperation({ summary: 'Perbarui evaluasi pelatihan' })
   @Roles(
     'superadmin',
     'admin_distrik',
@@ -146,6 +157,7 @@ export class TrainingsController {
   }
 
   @Delete(':id/evaluations/:eid')
+  @ApiOperation({ summary: 'Hapus evaluasi pelatihan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   removeEvaluation(@Param('id') id: string, @Param('eid') eid: string) {
