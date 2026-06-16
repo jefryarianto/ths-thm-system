@@ -14,9 +14,6 @@ export interface PaginatedResult<T> {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyPrismaDelegate = any;
-
 /**
  * Paginate a Prisma query.
  *
@@ -31,11 +28,13 @@ type AnyPrismaDelegate = any;
  *     include: { ranting: true },
  *   });
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function paginate<T>(
   delegate: {
     findMany: (args: any) => Promise<T[]>;
     count: (args: { where: any }) => Promise<number>;
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: any,
   options: PaginationOptions & {
     orderBy?: Record<string, 'asc' | 'desc'>;

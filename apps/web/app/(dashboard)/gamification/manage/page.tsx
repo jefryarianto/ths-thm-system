@@ -150,15 +150,21 @@ export default function ManageRewardsPage() {
   if (loading)
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-blue-600" />
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-gray-900 sr-only">Manage Rewards</h1>
+          <Loader2 size={24} className="animate-spin text-blue-600 mx-auto" />
+        </div>
       </div>
     );
 
   if (error)
     return (
       <div className="flex items-center justify-center h-64">
-        <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
-        <p className="text-red-600 font-medium">{error}</p>
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-gray-900 mb-4">Manage Rewards</h1>
+          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
+          <p className="text-red-600 font-medium">{error}</p>
+        </div>
       </div>
     );
 

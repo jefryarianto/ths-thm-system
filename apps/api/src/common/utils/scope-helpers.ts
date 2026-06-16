@@ -171,6 +171,7 @@ export class ScopeHelper {
     },
     scope: UserScope | undefined,
     resourceId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     findUnique: (prisma: any, id: string) => Promise<T | null>,
     notFoundMessage: string = 'Sumber daya tidak ditemukan',
   ): Promise<T> {

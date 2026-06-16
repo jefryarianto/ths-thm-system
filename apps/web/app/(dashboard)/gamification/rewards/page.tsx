@@ -103,6 +103,7 @@ export default function RewardsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900 sr-only">Reward</h1>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           <p className="text-sm text-gray-500">Memuat reward...</p>
         </div>
@@ -114,6 +115,7 @@ export default function RewardsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Reward</h1>
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
           <p className="text-red-600 font-medium">{error}</p>
         </div>

@@ -1,4 +1,3 @@
-import { IsString, IsNumberString, IsOptional } from 'class-validator';
 
 export function validateEnv() {
   const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
