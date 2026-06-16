@@ -13,7 +13,7 @@ COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY packages/templates/package.json ./packages/templates/package.json
 
 # Install all dependencies
-RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --ignore-scripts
 
 # Skip unnecessary downloads for faster build
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
