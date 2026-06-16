@@ -265,8 +265,8 @@ describe('Scope Filtering E2E', () => {
       'disposisi',
       `dari_user_id IN (SELECT id FROM users WHERE email LIKE 'scope-%') OR kepada_user_id IN (SELECT id FROM users WHERE email LIKE 'scope-%')`,
     );
-    await clean('penugasan_penguji', usersWhere);
-    await clean('nilai_pendadaran', usersWhere);
+    await clean('penugasan_penguji', 'penguji_user_id IN (SELECT id FROM users WHERE email LIKE \'scope-%\')');
+    await clean('nilai_pendadaran', 'penguji_user_id IN (SELECT id FROM users WHERE email LIKE \'scope-%\')');
     await clean(
       'dokumen_organisasi',
       `uploaded_by IN (SELECT id FROM users WHERE email LIKE 'scope-%')`,
@@ -489,8 +489,8 @@ describe('Scope Filtering E2E', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(typeof res.body.data.members).toBe('number');
-      expect(typeof res.body.data.trainings).toBe('number');
+      expect(typeof res.body.data.totalMembers).toBe('number');
+      expect(typeof res.body.data.totalKegiatan).toBe('number');
     });
 
     it('superadmin gets dashboard stats', async () => {
@@ -500,7 +500,7 @@ describe('Scope Filtering E2E', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(typeof res.body.data.members).toBe('number');
+      expect(typeof res.body.data.totalMembers).toBe('number');
     });
 
     it('reports members endpoint returns member stats', async () => {
@@ -510,7 +510,7 @@ describe('Scope Filtering E2E', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.members).toBeGreaterThanOrEqual(0);
+      expect(res.body.data.totalMembers).toBeGreaterThanOrEqual(0);
     });
   });
 

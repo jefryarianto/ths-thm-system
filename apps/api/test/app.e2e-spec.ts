@@ -164,10 +164,10 @@ describe('THS-THM API (e2e)', () => {
         .expect(200)
         .expect((res: any) => {
           expect(res.body.success).toBe(true);
-          expect(typeof res.body.data.members).toBe('number');
-          expect(typeof res.body.data.trainings).toBe('number');
-          expect(typeof res.body.data.candidates).toBe('number');
-          expect(Array.isArray(res.body.data.topMembers)).toBe(true);
+          expect(typeof res.body.data.totalMembers).toBe('number');
+          expect(typeof res.body.data.totalKegiatan).toBe('number');
+          expect(typeof res.body.data.totalCandidates).toBe('number');
+          expect(Array.isArray(res.body.data.memberStatus)).toBe(true);
         });
     });
   });
