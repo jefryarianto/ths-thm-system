@@ -172,6 +172,8 @@ jobs:
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
           API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
+          STRIPE_SECRET_KEY: sk_test_mock
+          STRIPE_WEBHOOK_SECRET: whsec_mock
       - name: Start Web app
         run: |
           cd apps/web && npx next dev -p 3002 &

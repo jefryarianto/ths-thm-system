@@ -16,11 +16,17 @@ const Stripe = require('stripe');
 export class PaymentsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private stripe: any;
+  private readonly stripeEnabled: boolean;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
   ) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    this.stripeEnabled = !!apiKey;
+    if (this.stripeEnabled) {
+      this.stripe = new Stripe(apiKey);
+    }
   }
 
   async createIntent(dto: CreatePaymentIntentDto, scope?: UserScope) {
@@ -42,6 +48,9 @@ export class PaymentsService {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
+    if (!this.stripeEnabled) {
+      throw new BadRequestException('Stripe not configured — payment unavailable');
+    }
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: dto.amount,
       currency: dto.currency,
@@ -57,6 +66,9 @@ export class PaymentsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async handleWebhook(signature: string, rawBody: Buffer) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!this.stripeEnabled) {
+      throw new BadRequestException('Stripe not configured — webhook unavailable');
+    }
     let event: any;
     try {
       event = this.stripe.webhooks.constructEvent(
