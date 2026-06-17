@@ -7,7 +7,7 @@
     "dev": "next dev -p 3002",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
-    "lint": "eslint \"app/**/*.{ts,tsx}\" \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint app/ src/ --ext .ts,.tsx --ignore-pattern .next --ignore-pattern node_modules",
     "typecheck": "tsc --noEmit",
     "test:e2e:web": "playwright test"
   },
