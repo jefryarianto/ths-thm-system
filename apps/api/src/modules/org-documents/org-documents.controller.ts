@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { OrgDocumentsService } from './org-documents.service';
 import {
@@ -10,7 +10,6 @@ import {
 } from './dto/org-document.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
-import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Org-Documents')
 @Controller('org-documents')

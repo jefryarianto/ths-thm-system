@@ -582,7 +582,7 @@ export class NotificationsService {
         };
 
         const response = await admin.messaging().sendEachForMulticast(message);
-        console.log(
+        this.logger.log(
           `FCM batch ${Math.floor(i / BATCH_SIZE) + 1}: ${response.successCount} success, ${response.failureCount} failures`,
         );
 
@@ -605,7 +605,7 @@ export class NotificationsService {
         }
       }
     } catch (error) {
-      console.warn('FCM push failed (firebase-admin not configured):', (error as Error).message);
+      this.logger.warn('FCM push failed (firebase-admin not configured):', (error as Error).message);
     }
   }
 }

@@ -1,8 +1,7 @@
-import { Controller, Get, Post, Body, Param, Query, Res, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Setting } from '@prisma/client';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -19,6 +18,7 @@ export class SettingsController {
         acc[s.key] = s.value;
         return acc;
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {} as Record<string, any>,
     );
     return { success: true, data: config };

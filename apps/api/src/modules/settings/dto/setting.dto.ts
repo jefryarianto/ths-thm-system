@@ -1,14 +1,11 @@
 import {
   IsString,
   IsOptional,
-  IsInt,
-  Min,
   IsDateString,
   IsObject,
   IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 
 export class UpdateSettingsDto {
   @ApiProperty({ example: { organization: { name: 'THS-THM' } } })
