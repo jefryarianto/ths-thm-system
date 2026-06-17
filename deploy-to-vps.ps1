@@ -1,136 +1,267 @@
-﻿# deploy-to-vps.ps1 - Script deployment otomatis ke VPS ths-thm.cloud
-# USAGE: .\deploy-to-vps.ps1 (dengan input password manual)
+# ═══════════════════════════════════════════════════════════════
+# deploy-to-vps.ps1 — THS-THM Local Deploy Script (PowerShell)
+# ═══════════════════════════════════════════════════════════════
+#
+# PRASYARAT:
+#   1. Docker Desktop sudah terinstall dan running
+#   2. Login ke GHCR: echo "TOKEN" | docker login ghcr.io -u jefryarianto --password-stdin
+#      (Buat token di https://github.com/settings/tokens → classic → scope: read:packages, write:packages)
+#   3. SSH key sudah terpasang di VPS
+#   4. .env staging/production sudah diisi di VPS
+#
+# USAGE:
+#   .\deploy-to-vps.ps1 staging          # Deploy ke staging
+#   .\deploy-to-vps.ps1 production       # Deploy ke production
+#   .\deploy-to-vps.ps1 staging -NoBuild # Skip build, push & deploy aja
+#   .\deploy-to-vps.ps1 staging -NoCache # Build tanpa cache
+#
+# ═══════════════════════════════════════════════════════════════
 
+param(
+    [Parameter(Position=0)]
+    [ValidateSet("staging", "production")]
+    [string]$Target = "staging",
+
+    [switch]$NoBuild,
+    [switch]$NoCache
+)
+
+$ErrorActionPreference = "Stop"
+
+# ═══════════════════════════════════════════════════════════════
+# Configuration — sesuaikan dengan VPS Anda
+# ═══════════════════════════════════════════════════════════════
 $VPS_HOST = "202.10.34.209"
-$VPS_USER = "root"
-$SSH_KEY_PATH = "$env:USERPROFILE\.ssh\ths-thm-key-new"
+$VPS_USER = "ths-thm"
+$VPS_SSH_PORT = 22
+$SSH_KEY = "$env:USERPROFILE\.ssh\ths-thm-deploy"
 
-Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "Deploy THS-THM ke VPS ths-thm.cloud" -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
+$GHCR_REGISTRY = "ghcr.io"
+$GHCR_REPO = "jefryarianto/ths-thm-system"
 
-# Check jika SSH key sudah tercopy ke VPS
-Write-Host "[1/4] Testing SSH connection..." -ForegroundColor Yellow
-$testResult = ssh -i $SSH_KEY_PATH -o BatchMode=yes -o ConnectTimeout=5 $VPS_USER@$VPS_HOST "echo 'SSH OK'" 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "  [OK] SSH key authentication works!" -ForegroundColor Green
-} else {
-    Write-Host "  [!] SSH key not configured on VPS yet" -ForegroundColor Red
-    Write-Host "`n[STEP 1] Copy SSH public key ke VPS" -ForegroundColor Yellow
-    Write-Host "  Copy command ini dan jalankan manual:" -ForegroundColor Gray
-    Write-Host "`n  Get-Content '$SSH_KEY_PATH.pub' | ssh root@$VPS_HOST `"mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys`"`n"
-    Write-Host "  Atau jalankan dengan password, lalu paste public key:`n"
-    Write-Host "  ssh root@$VPS_HOST" -ForegroundColor White
-    Write-Host "  Password: 5tr6w1nG" -ForegroundColor White
-    Read-Host "  Tekan Enter setelah SSH key tercopy"
+$PROJECT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# ═══════════════════════════════════════════════════════════════
+# Function helpers
+# ═══════════════════════════════════════════════════════════════
+function Write-Info  { Write-Host "[i] $($args[0])" -ForegroundColor Blue }
+function Write-Step { Write-Host "`n══════════════════════════════════════════════" -ForegroundColor Cyan; Write-Host "  $($args[0])" -ForegroundColor Cyan; Write-Host "══════════════════════════════════════════════`n" -ForegroundColor Cyan }
+function Write-OK   { Write-Host "[✓] $($args[0])" -ForegroundColor Green }
+function Write-Warn { Write-Host "[!] $($args[0])" -ForegroundColor Yellow }
+function Write-Err  { Write-Host "[✗] $($args[0])" -ForegroundColor Red; exit 1 }
+
+# ═══════════════════════════════════════════════════════════════
+# Set target config
+# ═══════════════════════════════════════════════════════════════
+switch ($Target) {
+    "staging" {
+        $VPS_DIR = "/opt/ths-thm-staging"
+        $COMPOSE_FILE = "docker-compose.staging.yml"
+        $DOMAIN = "staging.ths-thm.cloud"
+    }
+    "production" {
+        $VPS_DIR = "/opt/ths-thm"
+        $COMPOSE_FILE = "docker-compose.production.yml"
+        $DOMAIN = "ths-thm.cloud"
+    }
 }
 
-# Verify SSH connection
-Write-Host "`n[2/4] Verifying SSH..." -ForegroundColor Yellow
-$testResult = ssh -i $SSH_KEY_PATH -o BatchMode=yes -o ConnectTimeout=5 $VPS_USER@$VPS_HOST "echo 'OK'" 2>&1
+# ═══════════════════════════════════════════════════════════════
+# Prerequisites Check
+# ═══════════════════════════════════════════════════════════════
+Write-Step "Pre-flight Check"
+
+# Cek Docker
+$dockerVersion = docker --version 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "  [ERROR] SSH connection failed. Pastikan SSH key sudah ditambahkan ke ~/.ssh/authorized_keys di VPS" -ForegroundColor Red
-    exit 1
+    Write-Err "Docker tidak ditemukan. Install Docker Desktop dulu: https://docs.docker.com/desktop/"
 }
-Write-Host "  [OK] SSH connected!" -ForegroundColor Green
+Write-OK "Docker: $dockerVersion"
 
-# Deploy script ke VPS
-Write-Host "`n[3/4] Sending deployment script to VPS..." -ForegroundColor Yellow
-$deployScript = @"
-#!/bin/bash
+# Cek Docker running
+$dockerInfo = docker info 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Err "Docker daemon tidak berjalan. Jalankan Docker Desktop dulu."
+}
+Write-OK "Docker running"
+
+# Cek login GHCR
+$ghcrCheck = docker pull "$GHCR_REGISTRY/$GHCR_REPO/api:latest" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Warn "Belum login ke GHCR. Jalankan perintah berikut:"
+    Write-Host "  echo GITHUB_TOKEN | docker login $GHCR_REGISTRY -u jefryarianto --password-stdin" -ForegroundColor White
+    Write-Host "`n(Buat token di https://github.com/settings/tokens → Generate classic token → scope: read:packages, write:packages)" -ForegroundColor Gray
+    Write-Err "Login GHCR diperlukan"
+}
+Write-OK "GHCR authenticated"
+
+# Cek SSH connection
+$sshTest = ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=5 -p $VPS_SSH_PORT "$VPS_USER@$VPS_HOST" "echo OK" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Warn "SSH key tidak bisa connect. Coba jalankan:"
+    Write-Host "  type `"$SSH_KEY.pub`" | ssh $VPS_USER@$VPS_HOST -p $VPS_SSH_PORT `"mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys`"" -ForegroundColor White
+    Write-Err "SSH connection failed"
+}
+Write-OK "SSH connected to $VPS_USER@$VPS_HOST"
+
+# ═══════════════════════════════════════════════════════════════
+# Step 1: Build Docker Images
+# ═══════════════════════════════════════════════════════════════
+if (-not $NoBuild) {
+    Write-Step "Build Docker Images"
+
+    $buildArgs = @("build")
+    if ($NoCache) { $buildArgs += "--no-cache" }
+
+    $commitHash = git rev-parse --short HEAD
+
+    Write-Info "Building API image..."
+    $apiResult = docker build @buildArgs @("-t", "$GHCR_REGISTRY/$GHCR_REPO/api:latest", "-t", "$GHCR_REGISTRY/$GHCR_REPO/api:$commitHash") "-f" "apps/api/Dockerfile" "." 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Err "API build failed: $apiResult" }
+    Write-OK "API image built"
+
+    Write-Info "Building Web image..."
+    $webResult = docker build @buildArgs @("-t", "$GHCR_REGISTRY/$GHCR_REPO/web:latest", "-t", "$GHCR_REGISTRY/$GHCR_REPO/web:$commitHash") "-f" "apps/web/Dockerfile" "." 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Err "Web build failed: $webResult" }
+    Write-OK "Web image built"
+}
+else {
+    Write-Info "Skipping build (-NoBuild flag)"
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Step 2: Push Images ke GHCR
+# ═══════════════════════════════════════════════════════════════
+Write-Step "Push Images ke GHCR"
+
+$commitHash = git rev-parse --short HEAD
+
+Write-Info "Pushing API image..."
+docker push "$GHCR_REGISTRY/$GHCR_REPO/api:latest" 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Err "API push failed" }
+docker push "$GHCR_REGISTRY/$GHCR_REPO/api:$commitHash" 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Err "API push failed (commit tag)" }
+Write-OK "API image pushed"
+
+Write-Info "Pushing Web image..."
+docker push "$GHCR_REGISTRY/$GHCR_REPO/web:latest" 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Err "Web push failed" }
+docker push "$GHCR_REGISTRY/$GHCR_REPO/web:$commitHash" 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Err "Web push failed (commit tag)" }
+Write-OK "Web image pushed"
+
+# ═══════════════════════════════════════════════════════════════
+# Step 3: Copy Files ke VPS
+# ═══════════════════════════════════════════════════════════════
+Write-Step "Copy Files ke VPS"
+
+Write-Info "Copying docker-compose file: $COMPOSE_FILE"
+scp -i "$SSH_KEY" -P $VPS_SSH_PORT "$PROJECT_DIR\$COMPOSE_FILE" "$VPS_USER@$VPS_HOST`:$VPS_DIR/"
+if ($LASTEXITCODE -ne 0) { Write-Err "SCP compose file failed" }
+
+Write-Info "Creating nginx directory on VPS..."
+ssh -i "$SSH_KEY" -p $VPS_SSH_PORT "$VPS_USER@$VPS_HOST" "mkdir -p $VPS_DIR/nginx" 2>&1 | Out-Null
+
+# Pilih nginx config sesuai target
+$NGINX_CONF = if ($Target -eq "production") { "nginx\production.conf" } else { "nginx\staging.conf" }
+
+Write-Info "Copying nginx config ($NGINX_CONF)..."
+scp -i "$SSH_KEY" -P $VPS_SSH_PORT "$PROJECT_DIR\$NGINX_CONF" "$VPS_USER@$VPS_HOST`:$VPS_DIR/nginx/"
+if ($LASTEXITCODE -ne 0) { Write-Err "SCP nginx config failed" }
+
+Write-OK "Files copied"
+
+# ═══════════════════════════════════════════════════════════════
+# Step 4: Deploy di VPS
+# ═══════════════════════════════════════════════════════════════
+Write-Step "Deploy ke VPS ($Target)"
+
+# ── Buat deploy script ─────────────────────────────────────
+# Gunakan template literal (verbatim) lalu inject variabel PowerShell via -replace
+$deployTemplate = @'
 set -e
 
-echo "=== THS-THM VPS Setup & Deploy ==="
+echo "  ___ ___ _   _ _____ ___ _    ___   __  __"
+echo " |_ _|_ _| | | |_   _|_ _| |  | \ \ / /  \\"
+echo "  | | | || |_| | | |  | || |__| |\ V /  | |"
+echo " |___|___|\___/  |_| |___|____|_| \_/   |_|"
+echo ""
+echo "___TARGET___ deploy to ___DOMAIN___..."
+echo ""
 
-# Update packages
-apt update -qq
+cd ___VPS_DIR___
 
-# Install Docker if not installed
-if ! command -v docker &> /dev/null; then
-    echo "Installing Docker..."
-    apt install -y docker.io docker-compose git
-fi
+# Pull latest images
+echo "  Pulling images..."
+docker compose -f ___COMPOSE_FILE___ pull
 
-# Clone or update repo
-if [ ! -d "/opt/ths-thm" ]; then
-    echo "Cloning repository..."
-    cd /opt
-    git clone https://github.com/jefryarianto/ths-thm-system.git ths-thm
-else
-    echo "Updating repository..."
-    cd /opt/ths-thm
-    git pull origin master
-fi
+# Run database migrations
+echo "  Running migrations..."
+docker compose -f ___COMPOSE_FILE___ run --rm api sh -c "npx prisma migrate deploy" || echo "  (migration skipped — mungkin first deploy)"
 
-cd /opt/ths-thm
+# Restart services
+echo "  Starting services..."
+docker compose -f ___COMPOSE_FILE___ up -d --remove-orphans
 
-# Setup .env if not exists
-if [ ! -f ".env" ]; then
-    echo "Setting up .env..."
-    cp .env.example .env
-    echo "  Edit .env dengan nilai production Anda!"
-fi
-
-# Setup Nginx config
-if [ ! -f "/etc/nginx/sites-available/ths-thm.cloud" ]; then
-    echo "Setting up Nginx..."
-    cp nginx/production.conf /etc/nginx/sites-available/ths-thm.cloud
-    ln -sf /etc/nginx/sites-available/ths-thm.cloud /etc/nginx/sites-enabled/
-fi
-
-# Get SSL certificate
-if [ ! -d "/etc/letsencrypt/live/ths-thm.cloud" ]; then
-    echo "Requesting SSL certificate..."
-    certbot --nginx -d ths-thm.cloud --non-interactive --agree-tos --email admin@ths-thm.cloud
-fi
-
-# Docker deployment
-echo "Deploying with Docker..."
-docker compose -f docker-compose.production.yml pull
-docker compose -f docker-compose.production.yml run --rm api npx prisma migrate deploy
-docker compose -f docker-compose.production.yml up -d
-
-# Health check
-echo "Waiting for API to be healthy..."
-for i in {1..30}; do
-    if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-        echo "  [OK] API is healthy!"
-        break
-    fi
-    echo "  Attempt $i/30..."
-    sleep 2
+# Wait for health
+echo "  Waiting for API to be healthy..."
+for i in $(seq 1 30); do
+  if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+    echo "  API is healthy!"
+    break
+  fi
+  if [ $i -eq 30 ]; then
+    echo "  API health check FAILED. Logs:"
+    docker compose -f ___COMPOSE_FILE___ logs api --tail=50
+    exit 1
+  fi
+  echo "  Attempt $i/30..."
+  sleep 5
 done
 
+# Health check detail
 echo ""
-echo "=== Deployment Complete! ==="
-echo "URL: https://ths-thm.cloud"
-echo "Health: http://localhost:3001/api/health"
-"@
+echo "  Health response:"
+curl -sf http://localhost:3001/api/health | python3 -m json.tool 2>/dev/null || curl -sf http://localhost:3001/api/health
 
-# Send script via SSH
-$deployScript | ssh -i $SSH_KEY_PATH $VPS_USER@$VPS_HOST "cat > /tmp/deploy.sh && chmod +x /tmp/deploy.sh"
+echo ""
+echo "  Running containers:"
+docker compose -f ___COMPOSE_FILE___ ps
+
+echo ""
+echo "Deploy ___TARGET___ selesai!"
+echo "  URL: https://___DOMAIN___"
+echo "  Health: http://localhost:3001/api/health"
+'@
+
+# Inject PowerShell variables into template
+$deployScript = $deployTemplate `
+    -replace '___TARGET___', $Target `
+    -replace '___DOMAIN___', $DOMAIN `
+    -replace '___VPS_DIR___', $VPS_DIR `
+    -replace '___COMPOSE_FILE___', $COMPOSE_FILE
+
+# Pipe via SSH to temp file on VPS (aman dari escaping problem)
+$deployScript | ssh -i "$SSH_KEY" -p $VPS_SSH_PORT "$VPS_USER@$VPS_HOST" "cat > /tmp/deploy.sh && chmod +x /tmp/deploy.sh"
+if ($LASTEXITCODE -ne 0) { Write-Err "Gagal kirim deploy script ke VPS" }
+
+Write-Info "Menjalankan deploy script di VPS..."
+ssh -i "$SSH_KEY" -p $VPS_SSH_PORT "$VPS_USER@$VPS_HOST" "/tmp/deploy.sh"
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "  [OK] Script sent to VPS" -ForegroundColor Green
-} else {
-    Write-Host "  [ERROR] Failed to send script" -ForegroundColor Red
-    exit 1
+    Write-Step "Deploy Complete!"
+    Write-Host ""
+    Write-Host "  Target:   $Target" -ForegroundColor White
+    Write-Host "  Domain:   https://$DOMAIN" -ForegroundColor White
+    Write-Host "  VPS:      $VPS_USER@$VPS_HOST : $VPS_DIR" -ForegroundColor White
+    Write-Host "  Images:   $GHCR_REGISTRY/$GHCR_REPO/{api,web}:latest" -ForegroundColor White
+    Write-Host "  Commit:   $commitHash" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Untuk deploy selanjutnya:" -ForegroundColor Cyan
+    Write-Host "    git push origin master          # Via CI (otomatis)" -ForegroundColor Gray
+    Write-Host "    .\deploy-to-vps.ps1 $Target     # Via lokal (manual)" -ForegroundColor Gray
+    Write-Host "    .\deploy-to-vps.ps1 $Target -NoBuild  # Skip build" -ForegroundColor Gray
 }
-
-# Execute deployment
-Write-Host "`n[4/4] Executing deployment on VPS..." -ForegroundColor Yellow
-Write-Host "  (This will take 5-10 minutes)`n" -ForegroundColor Gray
-
-ssh -i $SSH_KEY_PATH $VPS_USER@$VPS_HOST "/tmp/deploy.sh"
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "`n========================================" -ForegroundColor Green
-    Write-Host "  DEPLOYMENT SUCCESSFUL!" -ForegroundColor Green
-    Write-Host "========================================" -ForegroundColor Green
-    Write-Host "`nProduction URL: https://ths-thm.cloud" -ForegroundColor White
-    Write-Host "API Health: http://localhost:3001/api/health" -ForegroundColor White
-    Write-Host "`nUntuk deploy selanjutnya cukup: git push origin master" -ForegroundColor Cyan
-} else {
-    Write-Host "`n[WARNING] Deployment completed with some errors" -ForegroundColor Yellow
-    Write-Host "Check VPS logs untuk detail" -ForegroundColor Gray
+else {
+    Write-Err "Deploy gagal. Cek log di atas."
 }
