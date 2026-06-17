@@ -1,6 +1,16 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    multiRemove: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 import apiClient from '../../lib/api-client';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react-native';
 
 const mockGet = jest
   .spyOn(apiClient, 'get')

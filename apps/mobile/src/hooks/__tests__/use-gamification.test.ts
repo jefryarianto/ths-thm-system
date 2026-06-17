@@ -1,9 +1,22 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    multiRemove: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 // Mock apiClient
 jest.mock('../../lib/api-client', () => ({
+  __esModule: true,
   default: {
     get: jest.fn(),
+    post: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
   },
   unwrap: jest.fn((r: any) => r.data),
 }));
