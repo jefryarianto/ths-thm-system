@@ -32,6 +32,7 @@ export default function PointsReportPage() {
 
   useEffect(() => {
     fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const fetchReport = async () => {

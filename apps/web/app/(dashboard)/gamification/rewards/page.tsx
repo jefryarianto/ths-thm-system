@@ -62,6 +62,7 @@ export default function RewardsPage() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setUserAnggotaId(user?.anggotaId || null);
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {
