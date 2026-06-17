@@ -11,16 +11,7 @@ import {
   ChevronRight,
   Mail,
   ExternalLink,
-  Users,
-  UserPlus,
-  GraduationCap,
-  CreditCard,
   AlertCircle,
-  Calendar,
-  Dumbbell,
-  ClipboardCheck,
-  FileText,
-  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -36,7 +27,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import DashboardSkeleton, { StatCardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
 import {
   type DashboardData,
   STATUS_COLORS,

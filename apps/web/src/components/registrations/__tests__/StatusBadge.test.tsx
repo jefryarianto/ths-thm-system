@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { StatusBadge, STATUS_LABELS } from '../constants';
+import { StatusBadge } from '../constants';
 
 describe('StatusBadge (registrations)', () => {
   it('renders with label for pending status', () => {

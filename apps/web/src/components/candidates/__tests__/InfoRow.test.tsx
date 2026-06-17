@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { InfoRow } from '../constants';
-import { User, Mail } from 'lucide-react';
+import { User } from 'lucide-react';
 
 describe('InfoRow', () => {
   it('renders label and value', () => {

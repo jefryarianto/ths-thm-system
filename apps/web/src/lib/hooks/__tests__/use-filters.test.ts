@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useFilters } from '../use-filters';
 
@@ -249,6 +249,7 @@ describe('useFilters', () => {
     const firstReset = result.current.resetFilters;
     const firstGetParams = result.current.getApiParams;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     rerender();
 
     expect(result.current.setPage).toBe(firstSetPage);
@@ -296,7 +297,7 @@ describe('useFilters', () => {
   });
 
   it('resets page on debouncedSearch change even when search is unchanged', () => {
-    let debouncedSearch = '';
+    const debouncedSearch = '';
     const { result, rerender } = renderHook(
       ({ ds }: { ds: string }) =>
         useFilters({
@@ -319,7 +320,7 @@ describe('useFilters', () => {
   });
 
   it('works with both debouncedSearch and filters simultaneously', () => {
-    let debouncedSearch = '';
+    const debouncedSearch = '';
     const { result, rerender } = renderHook(
       ({ ds }: { ds: string }) =>
         useFilters({

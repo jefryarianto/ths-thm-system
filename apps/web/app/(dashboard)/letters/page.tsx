@@ -76,7 +76,7 @@ export default function LettersPage() {
     setSearch,
     filters,
     setFilter,
-    hasActiveFilters,
+    hasActiveFilters: _hasActiveFilters,
     getApiParams,
     resetFilters,
   } = useFilters({

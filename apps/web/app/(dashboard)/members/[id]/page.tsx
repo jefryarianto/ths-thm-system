@@ -109,7 +109,8 @@ export default function MemberDetailPage() {
       setMember(res.data);
       setError(null);
     } catch (err: any) {
-      const status = err?.response?.status;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const status = (err as any)?.response?.status;
       if (status === 404) setError('Anggota tidak ditemukan');
       else if (status === 403) setError('Akses ditolak: di luar cakupan wilayah Anda');
       else setError('Gagal memuat data anggota');

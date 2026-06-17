@@ -42,7 +42,8 @@ export default function ScanStatsPage() {
 
   const {
     data: stats,
-    loading,
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    loading: _loading,
     refetch: fetchData,
   } = useApi<ScanStats>(
     () => apiClient.get('/reports/scan-stats').then((r) => unwrap<ScanStats>(r)),

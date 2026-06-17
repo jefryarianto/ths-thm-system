@@ -22,6 +22,7 @@ export const STATUS_LABELS: Record<string, string> = {
   dibatalkan: 'Dibatalkan',
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const STATUS_ICONS: Record<string, any> = {
   diusulkan: UserPlus,
   mengikuti_pendadaran: BookOpen,

@@ -13,7 +13,6 @@ import {
   ClipboardCheck,
   Shield,
   BarChart3,
-  Activity,
 } from 'lucide-react';
 import {
   BarChart,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Pin, Lock, Eye, ArrowLeft, Trash2, Send } from 'lucide-react';
+import { Pin, Lock, Eye, Trash2, Send } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
@@ -53,7 +53,8 @@ export default function ThreadDetailPage() {
       setReply('');
       await fetchThread();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal mengirim balasan');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      alert((err as any)?.response?.data?.message || 'Gagal mengirim balasan');
     }
     setSubmitting(false);
   };

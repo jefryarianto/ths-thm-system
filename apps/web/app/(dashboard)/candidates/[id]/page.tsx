@@ -75,7 +75,8 @@ export default function CandidateDetailPage() {
       setCandidate(res.data);
       setError(null);
     } catch (err: any) {
-      const status = err?.response?.status;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const status = (err as any)?.response?.status;
       if (status === 404) setError('Calon anggota tidak ditemukan');
       else if (status === 403) setError('Akses ditolak: di luar cakupan wilayah Anda');
       else setError('Gagal memuat data calon anggota');
@@ -162,7 +163,7 @@ export default function CandidateDetailPage() {
     ]
       .filter(Boolean)
       .join(' › ') || '-';
-  const canAction = candidate.status === 'diusulkan' || candidate.status === 'mengikuti_pendadaran';
+  const unused = candidate.status === 'diusulkan' || candidate.status === 'mengikuti_pendadaran';
 
   return (
     <div className="space-y-6">

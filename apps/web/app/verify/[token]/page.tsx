@@ -10,13 +10,10 @@ import {
   FileText,
   User,
   Calendar,
-  CheckCircle2,
   XCircle,
-  Clock,
   Building2,
   Hash,
   RefreshCw,
-  Award,
   Fingerprint,
 } from 'lucide-react';
 
@@ -91,7 +88,8 @@ export default function VerifyDocumentPage() {
       const { data: res } = await apiClient.get(`/documents/verify/${token}`);
       setResult(res.data || res);
     } catch (err: any) {
-      const status = err?.response?.status;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const status = (err as any)?.response?.status;
       if (status === 404) {
         setResult({ valid: false, message: 'Dokumen tidak ditemukan atau token tidak valid' });
       } else {

@@ -10,7 +10,7 @@ import PageHeader from '@/components/ui/page-header';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import DuesStatCards from '@/components/dues/DuesStatCards';
 import DuesCharts from '@/components/dues/DuesCharts';
-import { Plus, CreditCard, BarChart3, RefreshCw, Download } from 'lucide-react';
+import { Plus, CreditCard, Download } from 'lucide-react';
 
 // ─── Types ───
 
@@ -41,13 +41,6 @@ interface DuesRow {
 }
 
 // ─── Constants ───
-
-const STATUS_COLORS: Record<string, string> = {
-  lunas: '#22c55e',
-  menunggak: '#ef4444',
-  belum_dibayar: '#9ca3af',
-  menunggu_verifikasi: '#eab308',
-};
 
 const STATUS_LABELS: Record<string, string> = {
   lunas: 'Lunas',
@@ -103,7 +96,6 @@ const columns = [
 export default function DuesPage() {
   const [stats, setStats] = useState<DuesStats | null>(null);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { page, setPage } = useFilters();
 
   const { data, meta, loading, refetch } = usePaginatedList<DuesRow>(
@@ -138,9 +130,7 @@ export default function DuesPage() {
   }, [fetchStats, fetchMonthlyTrend]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
     await Promise.all([fetchStats(), fetchMonthlyTrend(), refetch()]);
-    setIsRefreshing(false);
   };
 
   return (

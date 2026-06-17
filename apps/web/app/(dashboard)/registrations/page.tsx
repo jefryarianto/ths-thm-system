@@ -14,8 +14,6 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import {
-  STATUS_COLORS,
-  STATUS_LABELS,
   STATUS_OPTIONS,
   StatusBadge,
 } from '@/components/registrations/constants';

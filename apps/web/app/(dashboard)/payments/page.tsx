@@ -72,7 +72,8 @@ export default function PaymentsPage() {
       await apiClient.patch(`/payments/${id}/verify`);
       refetch();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal verifikasi');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      alert((err as any)?.response?.data?.message || 'Gagal verifikasi');
     }
   };
 
@@ -82,7 +83,8 @@ export default function PaymentsPage() {
       await apiClient.patch(`/payments/${id}/reject`);
       refetch();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menolak');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      alert((err as any)?.response?.data?.message || 'Gagal menolak');
     }
   };
 

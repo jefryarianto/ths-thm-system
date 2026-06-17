@@ -35,7 +35,7 @@ export default function GamificationPage() {
     error,
     searchQuery,
     setSearchQuery,
-    page,
+    page: _page,
     setPage,
     hasMore,
     fetchData,

@@ -5,7 +5,7 @@ import apiClient, { unwrap } from '@/lib/api-client';
 import DataTable from '@/components/ui/data-table';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
-import { Trophy, Zap, AlertCircle, Gift, Users } from 'lucide-react';
+import { Zap, AlertCircle, Gift, Users } from 'lucide-react';
 import {
   BarChart,
   Bar,

@@ -37,6 +37,7 @@ export default function CategoryThreadsPage() {
         ]);
         if (threadsRes.data.success) setThreads(threadsRes.data.data);
         if (catsRes.data.success) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const cat = catsRes.data.data.find((c: any) => c.id === categoryId);
           if (cat) setCategoryName(cat.nama);
         }
