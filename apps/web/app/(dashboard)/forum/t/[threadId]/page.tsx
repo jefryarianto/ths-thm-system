@@ -54,7 +54,7 @@ export default function ThreadDetailPage() {
       await fetchThread();
     } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      alert((err as any)?.response?.data?.message || 'Gagal mengirim balasan');
+      alert(err?.response?.data?.message || 'Gagal mengirim balasan');
     }
     setSubmitting(false);
   };

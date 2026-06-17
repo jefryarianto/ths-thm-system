@@ -73,7 +73,7 @@ export default function PaymentsPage() {
       refetch();
     } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      alert((err as any)?.response?.data?.message || 'Gagal verifikasi');
+      alert(err?.response?.data?.message || 'Gagal verifikasi');
     }
   };
 
@@ -84,7 +84,7 @@ export default function PaymentsPage() {
       refetch();
     } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      alert((err as any)?.response?.data?.message || 'Gagal menolak');
+      alert(err?.response?.data?.message || 'Gagal menolak');
     }
   };
 

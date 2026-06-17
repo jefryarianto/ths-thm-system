@@ -35,6 +35,7 @@ export default function GamificationPage() {
     error,
     searchQuery,
     setSearchQuery,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     page: _page,
     setPage,
     hasMore,

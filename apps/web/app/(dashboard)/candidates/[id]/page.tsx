@@ -163,8 +163,6 @@ export default function CandidateDetailPage() {
     ]
       .filter(Boolean)
       .join(' › ') || '-';
-  const unused = candidate.status === 'diusulkan' || candidate.status === 'mengikuti_pendadaran';
-
   return (
     <div className="space-y-6">
       {/* Back */}
