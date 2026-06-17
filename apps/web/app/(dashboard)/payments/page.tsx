@@ -154,26 +154,38 @@ export default function PaymentsPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Informasi Rekening</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              Informasi Rekening
+            </h3>
           </div>
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 space-y-2">
               <div className="flex gap-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400 w-28">Bank</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{bankInfo.bankName}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {bankInfo.bankName}
+                </span>
               </div>
               <div className="flex gap-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400 w-28">No. Rekening</span>
-                <span className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">{bankInfo.accountNumber}</span>
+                <span className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">
+                  {bankInfo.accountNumber}
+                </span>
               </div>
               <div className="flex gap-2">
                 <span className="text-sm text-gray-500 dark:text-gray-400 w-28">Atas Nama</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">{bankInfo.accountName}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {bankInfo.accountName}
+                </span>
               </div>
             </div>
             {bankInfo.qrisImageUrl && (
               <div className="flex flex-col items-center">
-                <img src={bankInfo.qrisImageUrl} alt="QRIS" className="w-36 h-36 object-contain border rounded-lg" />
+                <img
+                  src={bankInfo.qrisImageUrl}
+                  alt="QRIS"
+                  className="w-36 h-36 object-contain border rounded-lg"
+                />
                 <span className="text-xs text-gray-500 mt-1">Scan QRIS</span>
               </div>
             )}
@@ -260,8 +272,13 @@ export default function PaymentsPage() {
                   </>
                 )}
                 {due.buktiBayarPath && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]" title={due.buktiBayarPath}>
-                    {due.buktiBayarPath.length > 30 ? due.buktiBayarPath.substring(0, 30) + '...' : due.buktiBayarPath}
+                  <span
+                    className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]"
+                    title={due.buktiBayarPath}
+                  >
+                    {due.buktiBayarPath.length > 30
+                      ? due.buktiBayarPath.substring(0, 30) + '...'
+                      : due.buktiBayarPath}
                   </span>
                 )}
               </div>

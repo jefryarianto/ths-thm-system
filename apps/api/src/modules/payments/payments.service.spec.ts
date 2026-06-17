@@ -66,24 +66,38 @@ describe('PaymentsService', () => {
       const result = await service.uploadProof('1', { catatan: 'Transfer BCA' });
       expect(result.success).toBe(true);
       expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'menunggu_verifikasi' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'menunggu_verifikasi' }),
+        }),
       );
     });
 
     it('should throw NotFoundException for non-existent iuran', async () => {
       mockPrisma.iuran.findUnique.mockResolvedValue(null);
-      await expect(service.uploadProof('1', { catatan: 'test' })).rejects.toThrow(NotFoundException);
+      await expect(service.uploadProof('1', { catatan: 'test' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException for already paid iuran', async () => {
-      mockPrisma.iuran.findUnique.mockResolvedValue({ id: '1', status: 'lunas', anggota: { rantingId: 'r1' } });
-      await expect(service.uploadProof('1', { catatan: 'test' })).rejects.toThrow(ForbiddenException);
+      mockPrisma.iuran.findUnique.mockResolvedValue({
+        id: '1',
+        status: 'lunas',
+        anggota: { rantingId: 'r1' },
+      });
+      await expect(service.uploadProof('1', { catatan: 'test' })).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
   describe('verifyPayment', () => {
     it('should verify payment and set status to lunas', async () => {
-      const mockIuran = { id: '1', status: 'menunggu_verifikasi', anggota: { id: 'm1', rantingId: 'r1' } };
+      const mockIuran = {
+        id: '1',
+        status: 'menunggu_verifikasi',
+        anggota: { id: 'm1', rantingId: 'r1' },
+      };
       mockPrisma.iuran.findUnique.mockResolvedValue(mockIuran);
       mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'lunas' });
 

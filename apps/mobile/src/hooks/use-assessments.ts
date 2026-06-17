@@ -33,10 +33,7 @@ export function useAspects(search?: string, filter?: string) {
 
 export function useAspectDetail(id: string) {
   return useApi<AssessmentsAspect>(
-    () =>
-      apiClient
-        .get(`/assessments/aspects/${id}`)
-        .then((r) => unwrap(r) as AssessmentsAspect),
+    () => apiClient.get(`/assessments/aspects/${id}`).then((r) => unwrap(r) as AssessmentsAspect),
     [id],
   );
 }

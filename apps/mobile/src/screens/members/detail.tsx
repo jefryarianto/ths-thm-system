@@ -124,7 +124,20 @@ export default function MemberDetailScreen() {
   const statusColor = member.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626';
   const statusLabel = member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif';
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
 
   const renderInfo = () => (
     <View style={styles.infoCard}>
@@ -189,7 +202,8 @@ export default function MemberDetailScreen() {
   );
 
   const renderDues = () => {
-    if (duesLoading) return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
+    if (duesLoading)
+      return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
     if (dues.length === 0)
       return (
         <View style={styles.empty}>
@@ -217,7 +231,12 @@ export default function MemberDetailScreen() {
                   {item.tag ? ` · ${item.tag}` : ''}
                 </Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: item.status === 'lunas' ? '#ecfdf5' : '#fef2f2' }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: item.status === 'lunas' ? '#ecfdf5' : '#fef2f2' },
+                ]}
+              >
                 <Text style={[styles.statusText, { color: dueStatus }]}>{dueLabel}</Text>
               </View>
             </View>
@@ -228,7 +247,8 @@ export default function MemberDetailScreen() {
   };
 
   const renderTrainings = () => {
-    if (trainingsLoading) return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
+    if (trainingsLoading)
+      return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
     if (trainings.length === 0)
       return (
         <View style={styles.empty}>
@@ -243,17 +263,43 @@ export default function MemberDetailScreen() {
         scrollEnabled={false}
         contentContainerStyle={{ paddingBottom: 8 }}
         renderItem={({ item }) => {
-          const hadirColor = item.statusKehadiran === 'hadir' ? '#16a34a' : item.statusKehadiran === 'izin' ? '#d97706' : '#dc2626';
-          const hadirLabel = item.statusKehadiran === 'hadir' ? 'Hadir' : item.statusKehadiran === 'izin' ? 'Izin' : 'Absen';
+          const hadirColor =
+            item.statusKehadiran === 'hadir'
+              ? '#16a34a'
+              : item.statusKehadiran === 'izin'
+                ? '#d97706'
+                : '#dc2626';
+          const hadirLabel =
+            item.statusKehadiran === 'hadir'
+              ? 'Hadir'
+              : item.statusKehadiran === 'izin'
+                ? 'Izin'
+                : 'Absen';
           return (
             <View style={styles.listCard}>
               <View style={styles.listCardBody}>
                 <Text style={styles.listCardTitle}>{item.nama}</Text>
                 <Text style={styles.listCardMeta}>
-                  {new Date(item.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {new Date(item.tanggal).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
                 </Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: item.statusKehadiran === 'hadir' ? '#ecfdf5' : item.statusKehadiran === 'izin' ? '#fef3c7' : '#fef2f2' }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor:
+                      item.statusKehadiran === 'hadir'
+                        ? '#ecfdf5'
+                        : item.statusKehadiran === 'izin'
+                          ? '#fef3c7'
+                          : '#fef2f2',
+                  },
+                ]}
+              >
                 <Text style={[styles.statusText, { color: hadirColor }]}>{hadirLabel}</Text>
               </View>
             </View>
@@ -264,7 +310,8 @@ export default function MemberDetailScreen() {
   };
 
   const renderDocuments = () => {
-    if (docsLoading) return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
+    if (docsLoading)
+      return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
     if (documents.length === 0)
       return (
         <View style={styles.empty}>
@@ -284,7 +331,12 @@ export default function MemberDetailScreen() {
             <View style={styles.listCardBody}>
               <Text style={styles.listCardTitle}>{item.nama}</Text>
               <Text style={styles.listCardMeta}>
-                {item.tipe} · {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {item.tipe} ·{' '}
+                {new Date(item.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
               </Text>
             </View>
           </View>
@@ -295,11 +347,16 @@ export default function MemberDetailScreen() {
 
   const tabContent = () => {
     switch (activeTab) {
-      case 'info': return renderInfo();
-      case 'dues': return renderDues();
-      case 'trainings': return renderTrainings();
-      case 'documents': return renderDocuments();
-      default: return null;
+      case 'info':
+        return renderInfo();
+      case 'dues':
+        return renderDues();
+      case 'trainings':
+        return renderTrainings();
+      case 'documents':
+        return renderDocuments();
+      default:
+        return null;
     }
   };
 
@@ -319,7 +376,15 @@ export default function MemberDetailScreen() {
           <Text style={styles.avatarText}>{member.namaLengkap.charAt(0)}</Text>
         </View>
         <Text style={styles.name}>{member.namaLengkap}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2', marginTop: 8 }]}>
+        <View
+          style={[
+            styles.statusBadge,
+            {
+              backgroundColor: member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2',
+              marginTop: 8,
+            },
+          ]}
+        >
           <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
         </View>
         {member.ranting && <Text style={styles.ranting}>{member.ranting.nama}</Text>}

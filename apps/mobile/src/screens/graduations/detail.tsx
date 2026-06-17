@@ -57,8 +57,18 @@ export default function GraduationDetailScreen() {
     const d = new Date(dateStr);
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
@@ -203,9 +213,7 @@ export default function GraduationDetailScreen() {
                   </View>
                   <View style={styles.evalInfo}>
                     <Text style={styles.evalName}>{ev.anggota?.namaLengkap || 'Unknown'}</Text>
-                    {ev.aspek && (
-                      <Text style={styles.evalAspek}>{ev.aspek.nama}</Text>
-                    )}
+                    {ev.aspek && <Text style={styles.evalAspek}>{ev.aspek.nama}</Text>}
                     {ev.catatan && (
                       <Text style={styles.evalNote} numberOfLines={2}>
                         {ev.catatan}
@@ -286,7 +294,12 @@ const styles = StyleSheet.create({
   infoContent: { flex: 1 },
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, alignSelf: 'flex-start' },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
   statusText: { fontSize: 11, fontWeight: '600' },
 
   partCard: {

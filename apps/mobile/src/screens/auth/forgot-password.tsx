@@ -46,9 +46,7 @@ export default function ForgotPasswordScreen() {
 
       <View style={styles.header}>
         <Text style={styles.title}>Lupa Password</Text>
-        <Text style={styles.subtitle}>
-          Masukkan email Anda untuk menerima link reset password
-        </Text>
+        <Text style={styles.subtitle}>Masukkan email Anda untuk menerima link reset password</Text>
       </View>
 
       <View style={styles.form}>
@@ -58,10 +56,7 @@ export default function ForgotPasswordScreen() {
             <Text style={styles.successText}>
               Link reset password telah dikirim ke {email}. Silakan cek inbox atau folder spam.
             </Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => router.replace('/login' as any)}
-            >
+            <TouchableOpacity style={styles.button} onPress={() => router.replace('/login' as any)}>
               <Text style={styles.buttonText}>Kembali ke Login</Text>
             </TouchableOpacity>
           </View>
@@ -130,5 +125,11 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   successBox: { alignItems: 'center', paddingVertical: 8 },
   successTitle: { fontSize: 18, fontWeight: '700', color: '#16a34a', marginBottom: 8 },
-  successText: { fontSize: 14, color: '#6b7280', textAlign: 'center', lineHeight: 20, marginBottom: 16 },
+  successText: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
 });

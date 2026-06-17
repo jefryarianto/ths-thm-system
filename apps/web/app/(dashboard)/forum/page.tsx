@@ -23,7 +23,9 @@ export default function ForumPage() {
       try {
         const res = await apiClient.get('/forum/categories');
         if (res.data.success) setCategories(res.data.data);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
     })();
   }, []);
@@ -54,9 +56,13 @@ export default function ForumPage() {
                   <FolderOpen size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{cat.nama}</h3>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                    {cat.nama}
+                  </h3>
                   {cat.deskripsi && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{cat.deskripsi}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                      {cat.deskripsi}
+                    </p>
                   )}
                   <div className="flex items-center gap-1 mt-3 text-xs text-gray-400">
                     <MessageSquare size={12} />

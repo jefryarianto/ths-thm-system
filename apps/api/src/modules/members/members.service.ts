@@ -88,7 +88,7 @@ export class MembersService {
         nomorAnggota: await this.generateMemberNumber(),
         statusData: 'complete',
         statusValidasi: 'pending',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
     });
 
@@ -165,7 +165,7 @@ export class MembersService {
             statusValidasi: 'pending',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
         });
 

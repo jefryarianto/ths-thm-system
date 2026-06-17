@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Linking, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  Linking,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useOrgDocuments, TIPE_OPTIONS } from '../../hooks/use-org-documents';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -64,7 +73,9 @@ export default function OrgDocumentsScreen() {
                 <Ionicons name={icon as any} size={22} color="#2563eb" />
               </View>
               <View style={styles.cardBody}>
-                <Text style={styles.name} numberOfLines={2}>{item.nama}</Text>
+                <Text style={styles.name} numberOfLines={2}>
+                  {item.nama}
+                </Text>
                 <View style={styles.metaRow}>
                   <Text style={styles.metaText}>{item.tipe}</Text>
                   <Text style={styles.metaDot}>·</Text>
@@ -77,9 +88,7 @@ export default function OrgDocumentsScreen() {
                   </Text>
                 </View>
               </View>
-              {item.fileUrl && (
-                <Ionicons name="download-outline" size={20} color="#6b7280" />
-              )}
+              {item.fileUrl && <Ionicons name="download-outline" size={20} color="#6b7280" />}
             </TouchableOpacity>
           );
         }}

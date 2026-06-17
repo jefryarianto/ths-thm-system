@@ -148,9 +148,11 @@ export class SyncService {
     await offlineDB.saveTrainings(remoteTrainings);
 
     return {
-      added: remoteTrainings.filter((t: any) => !localTrainings.find((l: any) => l.id === t.id)).length,
+      added: remoteTrainings.filter((t: any) => !localTrainings.find((l: any) => l.id === t.id))
+        .length,
       updated: 0,
-      deleted: localTrainings.filter((l: any) => !remoteTrainings.find((r: any) => r.id === l.id)).length,
+      deleted: localTrainings.filter((l: any) => !remoteTrainings.find((r: any) => r.id === l.id))
+        .length,
     };
   }
 

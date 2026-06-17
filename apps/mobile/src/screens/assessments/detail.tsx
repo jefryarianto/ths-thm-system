@@ -147,9 +147,7 @@ export default function AssessmentDetailScreen() {
                     </Text>
                   </View>
                   <View style={styles.scoreInfo}>
-                    <Text style={styles.scoreName}>
-                      {score.anggota?.namaLengkap || 'Unknown'}
-                    </Text>
+                    <Text style={styles.scoreName}>{score.anggota?.namaLengkap || 'Unknown'}</Text>
                     {score.item && (
                       <Text style={styles.scoreItem}>
                         {score.item.nama} (bobot: {score.item.bobot})

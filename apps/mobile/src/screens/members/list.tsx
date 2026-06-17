@@ -69,7 +69,12 @@ export default function MembersScreen() {
                   <Text style={styles.tingkatText}>{item.tingkat}</Text>
                 </View>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: item.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2' }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: item.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2' },
+                ]}
+              >
                 <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
               </View>
             </TouchableOpacity>

@@ -29,7 +29,9 @@ export default function NewThreadPage() {
           setCategories(res.data.data);
           if (res.data.data.length > 0) setCategoryId(res.data.data[0].id);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     })();
   }, []);
 
@@ -56,26 +58,35 @@ export default function NewThreadPage() {
     <PageContainer>
       <PageHeader title="Buat Thread Baru" />
 
-      <Link href="/forum" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-6">
+      <Link
+        href="/forum"
+        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-6"
+      >
         <ArrowLeft size={14} /> Kembali ke Forum
       </Link>
 
       <div className="max-w-2xl bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kategori</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Kategori
+          </label>
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.nama}</option>
+              <option key={c.id} value={c.id}>
+                {c.nama}
+              </option>
             ))}
           </select>
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Judul
+          </label>
           <input
             type="text"
             value={judul}
@@ -86,7 +97,9 @@ export default function NewThreadPage() {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Konten</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Konten
+          </label>
           <textarea
             value={konten}
             onChange={(e) => setKonten(e.target.value)}

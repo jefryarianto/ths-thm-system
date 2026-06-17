@@ -605,7 +605,10 @@ export class NotificationsService {
         }
       }
     } catch (error) {
-      this.logger.warn('FCM push failed (firebase-admin not configured):', (error as Error).message);
+      this.logger.warn(
+        'FCM push failed (firebase-admin not configured):',
+        (error as Error).message,
+      );
     }
   }
 }

@@ -55,7 +55,11 @@ export default function GraduationsScreen() {
           };
           const d = new Date(item.tanggalMulai);
           return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={() => router.push(`/graduations/${item.id}` as any)}>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.7}
+              onPress={() => router.push(`/graduations/${item.id}` as any)}
+            >
               <View style={styles.dateBox}>
                 <Text style={styles.dateDay}>{d.getDate()}</Text>
                 <Text style={styles.dateMonth}>{months[d.getMonth()]}</Text>

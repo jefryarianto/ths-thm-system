@@ -901,9 +901,7 @@ export class GamificationService {
   }
 
   /** Get top reward redemptions with member info */
-  async getTopRedemptions(
-    limit: number = 10,
-  ): Promise<
+  async getTopRedemptions(limit: number = 10): Promise<
     Array<{
       id: string;
       rewardName: string;

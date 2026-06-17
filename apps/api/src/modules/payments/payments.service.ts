@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -36,7 +31,11 @@ export class PaymentsService {
     };
   }
 
-  async uploadProof(iuranId: string, payload: { catatan: string; buktiBayarPath?: string }, scope?: UserScope) {
+  async uploadProof(
+    iuranId: string,
+    payload: { catatan: string; buktiBayarPath?: string },
+    scope?: UserScope,
+  ) {
     const iuran = await this.prisma.iuran.findUnique({
       where: { id: iuranId },
       include: { anggota: { select: { rantingId: true } } },

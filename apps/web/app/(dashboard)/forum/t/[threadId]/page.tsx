@@ -39,7 +39,9 @@ export default function ThreadDetailPage() {
     try {
       const res = await apiClient.get(`/forum/threads/${threadId}`);
       if (res.data.success) setThread(res.data.data);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
   };
 
@@ -78,15 +80,29 @@ export default function ThreadDetailPage() {
     await fetchThread();
   };
 
-  if (loading) return <PageContainer><div className="text-center py-16 text-gray-500">Memuat...</div></PageContainer>;
-  if (!thread) return <PageContainer><div className="text-center py-16 text-gray-400">Thread tidak ditemukan</div></PageContainer>;
+  if (loading)
+    return (
+      <PageContainer>
+        <div className="text-center py-16 text-gray-500">Memuat...</div>
+      </PageContainer>
+    );
+  if (!thread)
+    return (
+      <PageContainer>
+        <div className="text-center py-16 text-gray-400">Thread tidak ditemukan</div>
+      </PageContainer>
+    );
 
   return (
     <PageContainer>
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-        <Link href="/forum" className="hover:text-blue-600">Forum</Link>
+        <Link href="/forum" className="hover:text-blue-600">
+          Forum
+        </Link>
         <span>/</span>
-        <Link href={`/forum/c/${thread.category.id}`} className="hover:text-blue-600">{thread.category.nama}</Link>
+        <Link href={`/forum/c/${thread.category.id}`} className="hover:text-blue-600">
+          {thread.category.nama}
+        </Link>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-4">
@@ -98,17 +114,39 @@ export default function ThreadDetailPage() {
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{thread.judul}</h1>
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-              <span className="font-medium text-gray-600 dark:text-gray-300">{thread.author.namaLengkap}</span>
-              <span>{new Date(thread.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="flex items-center gap-1"><Eye size={12} /> {thread.viewCount}</span>
+              <span className="font-medium text-gray-600 dark:text-gray-300">
+                {thread.author.namaLengkap}
+              </span>
+              <span>
+                {new Date(thread.createdAt).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+              <span className="flex items-center gap-1">
+                <Eye size={12} /> {thread.viewCount}
+              </span>
             </div>
-            <div className="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{thread.konten}</div>
+            <div className="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+              {thread.konten}
+            </div>
           </div>
           <div className="flex items-center gap-1 ml-4">
-            <button onClick={handlePin} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors" title={thread.isPinned ? 'Unpin' : 'Pin'}>
+            <button
+              onClick={handlePin}
+              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
+              title={thread.isPinned ? 'Unpin' : 'Pin'}
+            >
               <Pin size={16} fill={thread.isPinned ? 'currentColor' : 'none'} />
             </button>
-            <button onClick={handleLock} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors" title={thread.isLocked ? 'Unlock' : 'Lock'}>
+            <button
+              onClick={handleLock}
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded transition-colors"
+              title={thread.isLocked ? 'Unlock' : 'Lock'}
+            >
               <Lock size={16} fill={thread.isLocked ? 'currentColor' : 'none'} />
             </button>
           </div>
@@ -121,20 +159,39 @@ export default function ThreadDetailPage() {
 
       <div className="space-y-3 mb-6">
         {thread.posts.map((post) => (
-          <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div
+            key={post.id}
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+          >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
-                  <span className="text-xs font-bold text-blue-600">{post.author.namaLengkap.charAt(0)}</span>
+                  <span className="text-xs font-bold text-blue-600">
+                    {post.author.namaLengkap.charAt(0)}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{post.author.namaLengkap}</span>
-                <span className="text-xs text-gray-400">{new Date(post.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {post.author.namaLengkap}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(post.createdAt).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
               </div>
-              <button onClick={() => handleDeletePost(post.id)} className="text-gray-300 hover:text-red-500 transition-colors">
+              <button
+                onClick={() => handleDeletePost(post.id)}
+                className="text-gray-300 hover:text-red-500 transition-colors"
+              >
                 <Trash2 size={14} />
               </button>
             </div>
-            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{post.konten}</div>
+            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+              {post.konten}
+            </div>
           </div>
         ))}
       </div>

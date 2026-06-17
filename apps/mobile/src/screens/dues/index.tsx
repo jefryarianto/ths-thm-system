@@ -108,7 +108,9 @@ export default function DuesScreen() {
                   </Text>
                 </View>
                 <View style={styles.cardRight}>
-                  <Text style={styles.jumlah}>Rp {Number(item.jumlah).toLocaleString('id-ID')}</Text>
+                  <Text style={styles.jumlah}>
+                    Rp {Number(item.jumlah).toLocaleString('id-ID')}
+                  </Text>
                   <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
                 </View>
               </TouchableOpacity>

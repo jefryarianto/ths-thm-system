@@ -19,12 +19,10 @@ describe('HealthController', () => {
   };
 
   const mockCache = {
-    getStats: jest
-      .fn()
-      .mockReturnValue({
-        size: 3,
-        keys: ['members:list:1:10', 'reports:dashboard:all', 'dues:list:1:10'],
-      }),
+    getStats: jest.fn().mockReturnValue({
+      size: 3,
+      keys: ['members:list:1:10', 'reports:dashboard:all', 'dues:list:1:10'],
+    }),
   };
 
   const mockAuditLogStore = {

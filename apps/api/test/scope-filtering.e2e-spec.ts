@@ -265,8 +265,14 @@ describe('Scope Filtering E2E', () => {
       'disposisi',
       `dari_user_id IN (SELECT id FROM users WHERE email LIKE 'scope-%') OR kepada_user_id IN (SELECT id FROM users WHERE email LIKE 'scope-%')`,
     );
-    await clean('penugasan_penguji', 'penguji_user_id IN (SELECT id FROM users WHERE email LIKE \'scope-%\')');
-    await clean('nilai_pendadaran', 'penguji_user_id IN (SELECT id FROM users WHERE email LIKE \'scope-%\')');
+    await clean(
+      'penugasan_penguji',
+      "penguji_user_id IN (SELECT id FROM users WHERE email LIKE 'scope-%')",
+    );
+    await clean(
+      'nilai_pendadaran',
+      "penguji_user_id IN (SELECT id FROM users WHERE email LIKE 'scope-%')",
+    );
     await clean(
       'dokumen_organisasi',
       `uploaded_by IN (SELECT id FROM users WHERE email LIKE 'scope-%')`,

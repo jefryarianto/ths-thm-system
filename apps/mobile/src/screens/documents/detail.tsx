@@ -139,11 +139,7 @@ export default function DocumentDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.subTitle}>QR Code</Text>
           <View style={styles.qrContainer}>
-            <Image
-              source={{ uri: document.qrCode }}
-              style={styles.qrImage}
-              resizeMode="contain"
-            />
+            <Image source={{ uri: document.qrCode }} style={styles.qrImage} resizeMode="contain" />
           </View>
         </View>
       )}
@@ -189,7 +185,12 @@ const styles = StyleSheet.create({
   infoContent: { flex: 1 },
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, alignSelf: 'flex-start' },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
   statusText: { fontSize: 11, fontWeight: '600' },
 
   downloadBtn: {

@@ -41,7 +41,9 @@ export default function CategoryThreadsPage() {
           const cat = catsRes.data.data.find((c: any) => c.id === categoryId);
           if (cat) setCategoryName(cat.nama);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       setLoading(false);
     })();
   }, [categoryId]);
@@ -57,7 +59,10 @@ export default function CategoryThreadsPage() {
         </Link>
       </PageHeader>
 
-      <Link href="/forum" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-4">
+      <Link
+        href="/forum"
+        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-4"
+      >
         <ArrowLeft size={14} /> Kembali ke Forum
       </Link>
 
@@ -82,10 +87,14 @@ export default function CategoryThreadsPage() {
                       {t.judul}
                     </h3>
                     {t.isLocked && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">Dikunci</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">
+                        Dikunci
+                      </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{t.konten}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
+                    {t.konten}
+                  </p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                     <span>{t.author.namaLengkap}</span>
                     <span>·</span>

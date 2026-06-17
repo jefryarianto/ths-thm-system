@@ -29,12 +29,18 @@ export class CronTasksService {
     let skipped = 0;
 
     for (const rec of recurrings) {
-      if (rec.anggota.statusKeanggotaan !== 'aktif') { skipped++; continue; }
+      if (rec.anggota.statusKeanggotaan !== 'aktif') {
+        skipped++;
+        continue;
+      }
 
       const existing = await this.prisma.iuran.findFirst({
         where: { anggotaId: rec.anggotaId, periode },
       });
-      if (existing) { skipped++; continue; }
+      if (existing) {
+        skipped++;
+        continue;
+      }
 
       try {
         await this.prisma.iuran.create({
@@ -49,7 +55,9 @@ export class CronTasksService {
         });
         generated++;
       } catch (error) {
-        this.logger.error(`Failed to generate due for ${rec.anggotaId}: ${(error as Error).message}`);
+        this.logger.error(
+          `Failed to generate due for ${rec.anggotaId}: ${(error as Error).message}`,
+        );
       }
     }
     this.logger.log(`Dues generation: ${generated} created, ${skipped} skipped`);
@@ -74,7 +82,10 @@ export class CronTasksService {
     let remindersSent = 0;
     for (const due of unpaidDues) {
       const alreadyReminded = await this.prisma.iuranReminder.findFirst({
-        where: { iuranId: due.id, sentAt: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } },
+        where: {
+          iuranId: due.id,
+          sentAt: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) },
+        },
       });
       if (alreadyReminded) continue;
 

@@ -184,7 +184,10 @@ export class TrainingsService {
       try {
         await this.gamificationService.recordTraining(dto.anggotaId);
       } catch (error) {
-        this.logger.warn('Failed to award gamification points for training:', (error as Error).message);
+        this.logger.warn(
+          'Failed to award gamification points for training:',
+          (error as Error).message,
+        );
       }
     }
 

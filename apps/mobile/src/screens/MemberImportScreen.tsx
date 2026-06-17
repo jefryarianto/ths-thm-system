@@ -16,7 +16,11 @@ import { LoadingView, ErrorView } from '../components/ui/shared';
 
 export default function MemberImportScreen() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success: number; incomplete: number; errors: number } | null>(null);
+  const [result, setResult] = useState<{
+    success: number;
+    incomplete: number;
+    errors: number;
+  } | null>(null);
 
   const pickFile = async () => {
     try {
@@ -57,7 +61,8 @@ export default function MemberImportScreen() {
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color="#2563eb" />
           <Text style={styles.infoText}>
-            Upload file CSV berisi data anggota baru. Format: namaLengkap, email, noHp, alamat, tanggalLahir, tempatLahir
+            Upload file CSV berisi data anggota baru. Format: namaLengkap, email, noHp, alamat,
+            tanggalLahir, tempatLahir
           </Text>
         </View>
 

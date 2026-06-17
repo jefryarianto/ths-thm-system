@@ -13,10 +13,7 @@ import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
-import {
-  STATUS_OPTIONS,
-  StatusBadge,
-} from '@/components/registrations/constants';
+import { STATUS_OPTIONS, StatusBadge } from '@/components/registrations/constants';
 
 interface RegistrationRow {
   id: string;

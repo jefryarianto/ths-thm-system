@@ -67,7 +67,10 @@ export default function DuesDetailScreen() {
 
   const handleSubmitProof = async () => {
     if (!catatan.trim()) {
-      Alert.alert('Error', 'Catatan pembayaran harus diisi (misal: nama pengirim, tanggal transfer)');
+      Alert.alert(
+        'Error',
+        'Catatan pembayaran harus diisi (misal: nama pengirim, tanggal transfer)',
+      );
       return;
     }
     setSubmitting(true);
@@ -189,10 +192,7 @@ export default function DuesDetailScreen() {
               <Text style={styles.bankValue}>{bankInfo.accountName}</Text>
             </View>
 
-            <TouchableOpacity
-              style={styles.payBtn}
-              onPress={() => setShowPayForm(true)}
-            >
+            <TouchableOpacity style={styles.payBtn} onPress={() => setShowPayForm(true)}>
               <Ionicons name="cloud-upload" size={18} color="#fff" />
               <Text style={styles.payBtnText}>Upload Bukti Bayar</Text>
             </TouchableOpacity>
@@ -205,7 +205,8 @@ export default function DuesDetailScreen() {
           <View style={styles.payForm}>
             <Text style={styles.payFormTitle}>Konfirmasi Pembayaran</Text>
             <Text style={styles.payFormHint}>
-              Isi catatan transfer (nama pengirim, bank asal, tanggal transfer) untuk verifikasi admin
+              Isi catatan transfer (nama pengirim, bank asal, tanggal transfer) untuk verifikasi
+              admin
             </Text>
             <TextInput
               style={styles.payInput}

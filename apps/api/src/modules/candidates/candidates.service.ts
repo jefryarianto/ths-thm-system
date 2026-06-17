@@ -129,7 +129,11 @@ export class CandidatesService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async importCsv(data: any[]) {
-    const results: { success: number; errors: number; details: Array<{ row: unknown; error: string }> } = { success: 0, errors: 0, details: [] };
+    const results: {
+      success: number;
+      errors: number;
+      details: Array<{ row: unknown; error: string }>;
+    } = { success: 0, errors: 0, details: [] };
 
     for (const row of data) {
       try {

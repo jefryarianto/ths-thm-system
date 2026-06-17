@@ -34,14 +34,12 @@ describe('THS-THM API (e2e)', () => {
       e2eUserId = loginRes.body.data.user?.id || '';
     } else {
       // Login failed — user may not exist, try to register
-      const regRes = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({
-          email: 'e2e@test.com',
-          password: 'test1234',
-          namaLengkap: 'E2E Test User',
-          role: 'superadmin',
-        });
+      const regRes = await request(app.getHttpServer()).post('/api/auth/register').send({
+        email: 'e2e@test.com',
+        password: 'test1234',
+        namaLengkap: 'E2E Test User',
+        role: 'superadmin',
+      });
 
       if (regRes.status < 300 && regRes.body?.data?.accessToken) {
         accessToken = regRes.body.data.accessToken;
