@@ -46,8 +46,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = jwt.verify(token, JWT_SECRET) as { sub: string; email: string; role: string };
       const userId = payload.sub;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any).userId = userId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any).email = payload.email;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any).role = payload.role;
 
       if (!this.userSockets.has(userId)) {
@@ -56,13 +59,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.get(userId)!.add(client.id);
 
       this.logger.log(`Chat client connected: ${client.id} (user: ${userId})`);
-    } catch (err) {
+    } catch {
       this.logger.warn('Invalid token, disconnecting client');
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
     if (userId) {
       const sockets = this.userSockets.get(userId);
@@ -82,6 +86,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('joinRoom')
   handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
     client.join(data.roomId);
 
@@ -96,6 +101,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
     client.leave(data.roomId);
 
@@ -110,8 +116,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chatMessage')
   handleChatMessage(@ConnectedSocket() client: Socket, @MessageBody() data: ChatMessage) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const email = (client as any).email;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const role = (client as any).role;
 
     const message = {
@@ -131,16 +140,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('typing:start')
   handleTypingStart(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
     client.to(data.roomId).emit('typing:start', { userId, roomId: data.roomId });
   }
 
   @SubscribeMessage('typing:stop')
   handleTypingStop(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
     client.to(data.roomId).emit('typing:stop', { userId, roomId: data.roomId });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendToRoom(roomId: string, event: string, data: any) {
     this.server.to(roomId).emit(event, data);
   }
