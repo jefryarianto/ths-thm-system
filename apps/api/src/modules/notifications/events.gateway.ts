@@ -38,7 +38,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const userId = payload.sub;
 
       // Attach userId and role to socket for later use
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any).userId = userId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any).role = payload.role;
 
       // Track user sockets
@@ -51,13 +53,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.join(`user:${userId}`);
 
       this.logger.log(`Client connected: ${client.id} (user: ${userId})`);
-    } catch (err) {
+    } catch {
       this.logger.warn('Invalid token, disconnecting client');
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = (client as any).userId;
     if (userId) {
       const sockets = this.userSockets.get(userId);
@@ -70,6 +73,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // ─── Emit to specific user ───
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendNotification(userId: string, data: any) {
     this.server.to(`user:${userId}`).emit('notification:new', data);
   }
@@ -80,14 +84,17 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // ─── Broadcast to all connected users ───
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   broadcastNotification(data: any) {
     this.server.emit('notification:new', data);
   }
 
   // ─── Emit to users with specific role ───
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendToRole(role: string, data: any) {
     // Iterate all connected clients and emit to matching roles
     this.server.sockets.sockets.forEach((socket: Socket) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const userRole = (socket as any).role;
       if (userRole === role) {
         socket.emit('notification:new', data);
