@@ -89,7 +89,7 @@ export default function VerifyDocumentPage() {
       setResult(res.data || res);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const status = (err as any)?.response?.status;
+      const status = err?.response?.status;
       if (status === 404) {
         setResult({ valid: false, message: 'Dokumen tidak ditemukan atau token tidak valid' });
       } else {
@@ -101,7 +101,8 @@ export default function VerifyDocumentPage() {
   };
 
   useEffect(() => {
-    if (token) verify(); // eslint-disable-line react-hooks/exhaustive-deps
+    if (token) verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   if (loading && !result) return <VerificationSkeleton />;

@@ -43,7 +43,9 @@ export default function ThreadDetailPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchThread(); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchThread();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId]);
 
   const handleReply = async () => {

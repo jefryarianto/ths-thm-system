@@ -76,7 +76,7 @@ export default function CandidateDetailPage() {
       setError(null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const status = (err as any)?.response?.status;
+      const status = err?.response?.status;
       if (status === 404) setError('Calon anggota tidak ditemukan');
       else if (status === 403) setError('Akses ditolak: di luar cakupan wilayah Anda');
       else setError('Gagal memuat data calon anggota');

@@ -95,7 +95,8 @@ export default function LettersPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setPage(1); // eslint-disable-line react-hooks/exhaustive-deps
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   const fetchData = useCallback(async () => {

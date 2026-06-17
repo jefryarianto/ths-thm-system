@@ -35,6 +35,7 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList,
         setError(err instanceof Error ? err.message : 'Terjadi kesalahan');
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export function usePaginatedList<T>(
         setError('Gagal memuat data');
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {
