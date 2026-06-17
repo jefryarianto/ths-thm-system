@@ -443,6 +443,9 @@ importers:
       eslint-config-next:
         specifier: ^16.0.0
         version: 16.2.9(@typescript-eslint/parser@8.61.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
+      eslint-plugin-react-hooks:
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@8.57.1)
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1(@noble/hashes@1.8.0)
