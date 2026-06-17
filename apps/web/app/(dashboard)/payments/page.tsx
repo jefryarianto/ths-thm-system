@@ -71,8 +71,8 @@ export default function PaymentsPage() {
     try {
       await apiClient.patch(`/payments/${id}/verify`);
       refetch();
-    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       alert(err?.response?.data?.message || 'Gagal verifikasi');
     }
   };
@@ -82,8 +82,8 @@ export default function PaymentsPage() {
     try {
       await apiClient.patch(`/payments/${id}/reject`);
       refetch();
-    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       alert(err?.response?.data?.message || 'Gagal menolak');
     }
   };

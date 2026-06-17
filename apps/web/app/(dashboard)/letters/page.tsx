@@ -95,7 +95,7 @@ export default function LettersPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setPage(1);
+    setPage(1); // eslint-disable-line react-hooks/exhaustive-deps
   }, [tab]);
 
   const fetchData = useCallback(async () => {
@@ -115,6 +115,7 @@ export default function LettersPage() {
       /* ignore */
     }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page, search, filters.status]);
 
   const openCreate = (type: LetterType) => {

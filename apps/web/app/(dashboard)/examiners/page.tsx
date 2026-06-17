@@ -32,6 +32,7 @@ export default function ExaminersPage() {
       const params = getApiParams({ limit: 10 });
       if (search) params.search = search;
       return apiClient.get('/examiners', { params }).then((r) => r.data);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, search]),
     [page, search],
   );

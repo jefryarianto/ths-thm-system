@@ -72,6 +72,7 @@ export default function NotificationsPage() {
       /* ignore */
     }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, filters.tipe, search]);
 
   useEffect(() => {

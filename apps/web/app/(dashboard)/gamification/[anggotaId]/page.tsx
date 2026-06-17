@@ -86,7 +86,7 @@ export default function GamificationProfilePage() {
       router.push('/login');
       return;
     }
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/exhaustive-deps
   }, [anggotaId]);
 
   const fetchData = async () => {

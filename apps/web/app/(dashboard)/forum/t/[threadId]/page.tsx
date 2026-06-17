@@ -43,7 +43,8 @@ export default function ThreadDetailPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchThread(); }, [threadId]);
+  useEffect(() => { fetchThread(); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [threadId]);
 
   const handleReply = async () => {
     if (!reply.trim()) return;
@@ -52,8 +53,8 @@ export default function ThreadDetailPage() {
       await apiClient.post(`/forum/threads/${threadId}/posts`, { konten: reply.trim() });
       setReply('');
       await fetchThread();
-    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       alert(err?.response?.data?.message || 'Gagal mengirim balasan');
     }
     setSubmitting(false);

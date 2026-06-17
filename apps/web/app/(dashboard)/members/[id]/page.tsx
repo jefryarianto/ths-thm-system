@@ -108,8 +108,8 @@ export default function MemberDetailPage() {
       const { data: res } = await apiClient.get(`/members/${id}`);
       setMember(res.data);
       setError(null);
-    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       const status = (err as any)?.response?.status;
       if (status === 404) setError('Anggota tidak ditemukan');
       else if (status === 403) setError('Akses ditolak: di luar cakupan wilayah Anda');

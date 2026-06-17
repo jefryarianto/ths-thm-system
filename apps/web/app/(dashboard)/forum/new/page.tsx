@@ -45,8 +45,8 @@ export default function NewThreadPage() {
       if (res.data.success) {
         router.push(`/forum/t/${res.data.data.id}`);
       }
-    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       alert(err?.response?.data?.message || 'Gagal membuat thread');
     }
     setSubmitting(false);

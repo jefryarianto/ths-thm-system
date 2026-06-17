@@ -87,8 +87,8 @@ export default function VerifyDocumentPage() {
     try {
       const { data: res } = await apiClient.get(`/documents/verify/${token}`);
       setResult(res.data || res);
-    } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       const status = (err as any)?.response?.status;
       if (status === 404) {
         setResult({ valid: false, message: 'Dokumen tidak ditemukan atau token tidak valid' });
@@ -101,7 +101,7 @@ export default function VerifyDocumentPage() {
   };
 
   useEffect(() => {
-    if (token) verify();
+    if (token) verify(); // eslint-disable-line react-hooks/exhaustive-deps
   }, [token]);
 
   if (loading && !result) return <VerificationSkeleton />;

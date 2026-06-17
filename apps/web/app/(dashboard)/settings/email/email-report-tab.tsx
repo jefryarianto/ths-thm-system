@@ -40,7 +40,7 @@ export default function EmailReportTab() {
 
   // Re-fetch when filters change
   useEffect(() => {
-    refetchStats();
+    refetchStats(); // eslint-disable-line react-hooks/exhaustive-deps
   }, [startDate, endDate]);
 
   if (statsLoading) {

@@ -74,7 +74,7 @@ export default function ManageRewardsPage() {
       router.push('/login');
       return;
     }
-    fetchData();
+    fetchData(); // eslint-disable-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {

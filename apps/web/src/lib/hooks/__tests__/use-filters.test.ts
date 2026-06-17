@@ -244,13 +244,12 @@ describe('useFilters', () => {
   });
 
   it('returns stable function references', () => {
-    const { result, rerender } = renderHook(() => useFilters());
+    const { result, rerender: _rerender } = renderHook(() => useFilters());
     const firstSetPage = result.current.setPage;
     const firstReset = result.current.resetFilters;
     const firstGetParams = result.current.getApiParams;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    rerender();
+    _rerender();
 
     expect(result.current.setPage).toBe(firstSetPage);
     expect(result.current.resetFilters).toBe(firstReset);
