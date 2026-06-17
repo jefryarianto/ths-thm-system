@@ -77,6 +77,7 @@ export function useFilters(options: UseFiltersOptions = {}): UseFiltersReturn {
     if (debouncedSearch === undefined) {
       setPage(1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   // Reset page when debouncedSearch changes (if provided)

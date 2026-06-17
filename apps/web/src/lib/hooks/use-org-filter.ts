@@ -63,6 +63,7 @@ export function useOrgFilter(): UseOrgFilterReturn {
 
   useEffect(() => {
     fetchOrgStructure();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchOrgStructure = useCallback(async () => {
