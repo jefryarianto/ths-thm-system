@@ -320,7 +320,7 @@ describe('useFilters', () => {
 
   it('works with both debouncedSearch and filters simultaneously', () => {
     const debouncedSearch = '';
-    const { result, rerender } = renderHook(
+    const { result } = renderHook(
       ({ ds }: { ds: string }) =>
         useFilters({
           debouncedSearch: ds,
