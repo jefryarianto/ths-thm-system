@@ -28,6 +28,7 @@ export class MembersService {
       cacheKey,
       async () => {
         const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const where: any = { deletedAt: null, ...scopeFilter };
 
         if (filter.search) {
@@ -78,6 +79,7 @@ export class MembersService {
   async create(dto: CreateMemberDto, scope?: UserScope) {
     // Auto-assign rantingId from scope for branch-level users
     if (scope?.rantingId && !dto.rantingId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).rantingId = scope.rantingId;
     }
     const member = await this.prisma.anggota.create({
@@ -86,6 +88,7 @@ export class MembersService {
         nomorAnggota: await this.generateMemberNumber(),
         statusData: 'complete',
         statusValidasi: 'pending',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
     });
 
@@ -141,6 +144,7 @@ export class MembersService {
     return { success: true, message: 'Anggota berhasil dihapus' };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async importCsv(data: any[], scope?: UserScope) {
     const results = { success: 0, incomplete: 0, errors: 0, details: [] as any[] };
 

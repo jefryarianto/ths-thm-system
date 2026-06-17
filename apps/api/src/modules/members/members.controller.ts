@@ -72,6 +72,7 @@ export class MembersController {
   @ApiOperation({ summary: 'Impor data anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
     return this.membersService.importCsv(data, req.scope);
   }

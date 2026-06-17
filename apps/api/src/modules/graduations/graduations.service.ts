@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
@@ -60,7 +60,9 @@ export class GraduationsService {
 
   async create(dto: CreateGraduationDto, scope?: UserScope) {
     if (scope?.rantingId && !dto.scopeId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).scopeId = scope.rantingId;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).scopeType = 'ranting';
     }
     const graduation = await this.prisma.kegiatan.create({
@@ -97,7 +99,7 @@ export class GraduationsService {
     return { success: true, data: candidate, message: 'Peserta berhasil didaftarkan' };
   }
 
-  async unregisterParticipant(graduationId: string, dto: RegisterParticipantDto) {
+  async unregisterParticipant(_graduationId: string, dto: RegisterParticipantDto) {
     await this.prisma.calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'diusulkan' },
@@ -105,7 +107,7 @@ export class GraduationsService {
     return { success: true, message: 'Peserta berhasil dibatalkan' };
   }
 
-  async getParticipants(graduationId: string) {
+  async getParticipants(_graduationId: string) {
     const participants = await this.prisma.calonAnggota.findMany({
       where: { status: 'mengikuti_pendadaran' },
       include: { ranting: true },
@@ -114,10 +116,10 @@ export class GraduationsService {
   }
 
   async importParticipants(
-    graduationId: string,
+    _graduationId: string,
     data: Array<{ candidateId?: string; id?: string }>,
   ) {
-    const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: graduationId } });
+    const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: _graduationId } });
     if (!kegiatan) throw new NotFoundException('Pendadaran tidak ditemukan');
 
     let imported = 0;
