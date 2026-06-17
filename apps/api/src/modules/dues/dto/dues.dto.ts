@@ -6,7 +6,6 @@ import {
   IsNumber,
   IsDateString,
   IsArray,
-  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';

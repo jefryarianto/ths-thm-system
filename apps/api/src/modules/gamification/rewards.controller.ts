@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';

@@ -33,6 +33,7 @@ export class ClaimsService {
       !(await this.scopeHelper.hasAccessToResourceAsync(
         this.prisma,
         scope,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (claim as any).anggota?.rantingId,
       ))
     ) {

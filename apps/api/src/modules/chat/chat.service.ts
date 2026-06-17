@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -48,6 +48,7 @@ export class ChatService {
    * Get messages for a room, paginated.
    */
   async getMessages(roomId: string, limit = 50, before?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { roomId };
     if (before) {
       where.createdAt = { lt: new Date(before) };

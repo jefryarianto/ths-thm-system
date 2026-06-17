@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
