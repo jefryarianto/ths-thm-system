@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
   Inject,
   forwardRef,
@@ -9,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
-import { trainingNotificationEmail, attendanceConfirmationEmail } from '../../mail/email-templates';
+import { attendanceConfirmationEmail } from '../../mail/email-templates';
 import {
   CreateTrainingDto,
   UpdateTrainingDto,
@@ -87,6 +86,7 @@ export class TrainingsService {
 
   async create(dto: CreateTrainingDto, scope?: UserScope, userId?: string) {
     if (scope?.rantingId && !dto.rantingId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (dto as any).rantingId = scope.rantingId;
     }
     // Resolve rantingId and pelatihId with runtime validation
@@ -184,7 +184,7 @@ export class TrainingsService {
       try {
         await this.gamificationService.recordTraining(dto.anggotaId);
       } catch (error) {
-        console.warn('Failed to award gamification points for training:', (error as Error).message);
+        this.logger.warn('Failed to award gamification points for training:', (error as Error).message);
       }
     }
 

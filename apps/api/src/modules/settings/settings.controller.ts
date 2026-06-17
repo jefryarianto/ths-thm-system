@@ -36,6 +36,7 @@ export class SettingsController {
 
   @Post(':key')
   @ApiOperation({ summary: 'Perbarui pengaturan' })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async updateSetting(@Param('key') key: string, @Body() body: { value: any }) {
     await this.prisma.setting.upsert({
       where: { key },
