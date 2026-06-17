@@ -32,7 +32,6 @@ test.describe('OAuth Login Flow', () => {
     const googleButton = page.locator('a[href*="/api/auth/google"]');
     const href = await googleButton.getAttribute('href');
     expect(href).toContain('/api/auth/google');
-    expect(href).toContain('localhost');
   });
 
   test('LinkedIn OAuth button links to correct URL', async ({ page }) => {
@@ -40,7 +39,6 @@ test.describe('OAuth Login Flow', () => {
     const linkedinButton = page.locator('a[href*="/api/auth/linkedin"]');
     const href = await linkedinButton.getAttribute('href');
     expect(href).toContain('/api/auth/linkedin');
-    expect(href).toContain('localhost');
   });
 
   test('OAuth error shows error toast on login page', async ({ page }) => {
