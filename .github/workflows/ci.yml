@@ -108,6 +108,13 @@ jobs:
       - name: Build Web
         run: pnpm --filter @ths-thm/web build
 
+      - name: Debug Web Build Output
+        run: |
+          echo "=== apps/web directory ==="
+          ls -la apps/web
+          echo "=== apps/web/.next directory ==="
+          ls -la apps/web/.next || echo ".next folder not found"
+
       - name: Upload API artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -119,7 +126,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-dist
-          path: apps/web/.next/
+          path: |
+            apps/web/.next/**
           if-no-files-found: error
 
   deploy:
