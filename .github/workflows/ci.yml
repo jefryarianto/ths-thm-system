@@ -228,7 +228,7 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
           script: |
             # Deploy API build
-            docker cp /tmp/ths-thm-prod-deploy/api-dist/. ths-thm-prod-api:/app/dist/ 2>/dev/null || echo '⚠️ API container not running'
+            docker cp /tmp/ths-thm-prod-deploy/api-dist/. ths-thm-prod-api:/app/apps/api/dist/ 2>/dev/null || echo '⚠️ API container not running'
             # Deploy web build
             docker cp /tmp/ths-thm-prod-deploy/web-dist/. ths-thm-prod-web:/app/.next/ 2>/dev/null || echo '⚠️ Web container not running'
             # Restart containers
@@ -236,8 +236,7 @@ jobs:
             docker restart ths-thm-prod-web 2>/dev/null || true
             echo "✅ Production containers restarted"
             # Run DB migrations
-            cd /opt/ths-thm
-            docker compose -f docker-compose.production.yml exec -T api sh -c 'cd /app/apps/api && node_modules/.bin/prisma migrate deploy' 2>&1 || echo 'ℹ️ Migration skipped'
+            docker exec ths-thm-prod-api sh -c 'cd /app/apps/api && node_modules/.bin/prisma migrate deploy' 2>&1 || echo 'ℹ️ Migration skipped'
             # Cleanup
             rm -rf /tmp/ths-thm-prod-deploy
             echo "✅ Production deploy complete"
