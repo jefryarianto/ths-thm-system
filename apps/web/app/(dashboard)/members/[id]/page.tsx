@@ -142,9 +142,17 @@ export default function MemberDetailPage() {
     noHp: '',
     email: '',
     tingkat: '',
+    rantingId: '',
+    distrikId: '',
+    wilayahId: '',
   });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
+  const [editDistriks, setEditDistriks] = useState<Array<{ id: string; nama: string }>>([]);
+  const [editWilayahs, setEditWilayahs] = useState<Array<{ id: string; nama: string }>>([]);
+  const [editRantings, setEditRantings] = useState<Array<{ id: string; nama: string }>>([]);
+  const [editWilayahLoading, setEditWilayahLoading] = useState(false);
+  const [editRantingLoading, setEditRantingLoading] = useState(false);
   const [cardData, setCardData] = useState<{ qrCode: string } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
 
@@ -500,7 +508,7 @@ export default function MemberDetailPage() {
                 </button>
               )}
               <button
-                onClick={() => {
+                onClick={async () => {
                   setEditForm({
                     namaLengkap: member.namaLengkap,
                     jenisKelamin: member.jenisKelamin,
@@ -510,8 +518,26 @@ export default function MemberDetailPage() {
                     noHp: member.noHp || '',
                     email: member.email || '',
                     tingkat: member.tingkat || '',
+                    rantingId: member.rantingId || '',
+                    distrikId: member.ranting?.wilayah?.distrik?.id || '',
+                    wilayahId: member.ranting?.wilayah?.id || '',
                   });
                   setEditError('');
+                  // Fetch distrik & cascading data
+                  try {
+                    const dRes = await apiClient.get('/org-structure/distrik');
+                    setEditDistriks(dRes.data.data || []);
+                    const distrikId = member.ranting?.wilayah?.distrik?.id;
+                    if (distrikId) {
+                      const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+                      setEditWilayahs(wRes.data.data || []);
+                      const wilayahId = member.ranting?.wilayah?.id;
+                      if (wilayahId) {
+                        const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+                        setEditRantings(rRes.data.data || []);
+                      }
+                    }
+                  } catch { /* ignore */ }
                   setShowEditModal(true);
                 }}
                 className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
@@ -1007,6 +1033,7 @@ export default function MemberDetailPage() {
               if (editForm.noHp !== (member?.noHp || '')) payload.noHp = editForm.noHp;
               if (editForm.email !== (member?.email || '')) payload.email = editForm.email;
               if (editForm.tingkat !== (member?.tingkat || '')) payload.tingkat = editForm.tingkat;
+              if (editForm.rantingId !== (member?.rantingId || '')) payload.rantingId = editForm.rantingId;
 
               if (Object.keys(payload).length === 0) {
                 setEditError('Tidak ada perubahan yang dilakukan');
@@ -1108,6 +1135,86 @@ export default function MemberDetailPage() {
                 onChange={(e) => setEditForm({ ...editForm, tingkat: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
+          </div>
+
+          {/* Organisasi - Cascading dropdowns */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Organisasi</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik</label>
+                <select
+                  value={editForm.distrikId}
+                  onChange={async (e) => {
+                    const distrikId = e.target.value;
+                    setEditForm({ ...editForm, distrikId, wilayahId: '', rantingId: '' });
+                    setEditWilayahs([]);
+                    setEditRantings([]);
+                    if (distrikId) {
+                      setEditWilayahLoading(true);
+                      try {
+                        const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+                        setEditWilayahs(wRes.data.data || []);
+                      } catch { /* ignore */ }
+                      setEditWilayahLoading(false);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Distrik</option>
+                  {editDistriks.map((d) => (
+                    <option key={d.id} value={d.id}>{d.nama}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
+                <select
+                  value={editForm.wilayahId}
+                  onChange={async (e) => {
+                    const wilayahId = e.target.value;
+                    setEditForm({ ...editForm, wilayahId, rantingId: '' });
+                    setEditRantings([]);
+                    if (wilayahId) {
+                      setEditRantingLoading(true);
+                      try {
+                        const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+                        setEditRantings(rRes.data.data || []);
+                      } catch { /* ignore */ }
+                      setEditRantingLoading(false);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Wilayah</option>
+                  {editWilayahLoading ? (
+                    <option disabled>Memuat...</option>
+                  ) : (
+                    editWilayahs.map((w) => (
+                      <option key={w.id} value={w.id}>{w.nama}</option>
+                    ))
+                  )}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting</label>
+                <select
+                  value={editForm.rantingId}
+                  onChange={(e) => setEditForm({ ...editForm, rantingId: e.target.value })}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Ranting</option>
+                  {editRantingLoading ? (
+                    <option disabled>Memuat...</option>
+                  ) : (
+                    editRantings.map((r) => (
+                      <option key={r.id} value={r.id}>{r.nama}</option>
+                    ))
+                  )}
+                </select>
+              </div>
             </div>
           </div>
 

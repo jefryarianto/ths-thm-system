@@ -39,6 +39,7 @@ import { CalendarModule } from './modules/calendar/calendar.module';
 import { ApprovalModule } from './modules/approvals/approval.module';
 import { OrgChartModule } from './modules/org-chart/org-chart.module';
 import { TargetsModule } from './modules/targets/targets.module';
+import { OrgStructureModule } from './modules/org-structure/org-structure.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { TargetsModule } from './modules/targets/targets.module';
     CalendarModule,
     ApprovalModule,
     OrgChartModule,
+    OrgStructureModule,
     TargetsModule,
   ],
   controllers: [HealthController],

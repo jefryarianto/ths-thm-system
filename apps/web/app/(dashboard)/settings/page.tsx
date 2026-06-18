@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, Save } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import Card from '@/components/cards/card';
 import InfoRow from '@/components/ui/info-row';
@@ -187,6 +188,27 @@ export default function SettingsPage() {
           <RefreshCw size={14} /> Refresh
         </button>
       </div>
+
+      {/* Navigasi Cepat */}
+      <Link
+        href="/settings/org-structure"
+        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
+            <Building2 size={20} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+              Struktur Organisasi
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Kelola Distrik, Wilayah, dan Ranting
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={18} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition" />
+      </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Informasi Organisasi */}

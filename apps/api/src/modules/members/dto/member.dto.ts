@@ -87,6 +87,11 @@ export class UpdateMemberDto {
   @IsOptional()
   @IsString()
   tingkat?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  rantingId?: string;
 }
 
 export class MemberFilterDto {

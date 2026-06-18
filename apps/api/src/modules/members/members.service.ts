@@ -147,7 +147,7 @@ export class MembersService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async importCsv(data: any[], _scope?: UserScope) {
+  async importCsv(data: any[], scope?: UserScope) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results = { success: 0, incomplete: 0, errors: 0, details: [] as any[] };
 
@@ -155,14 +155,30 @@ export class MembersService {
       try {
         const missingFields = this.validateCsvRow(row);
 
+        // Support legacy import: accept existing member number from CSV
+        const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota;
+        const nomorAnggota = existingNumber
+          ? String(existingNumber).trim()
+          : await this.generateMemberNumber();
+
+        // Normalize ranting: accept ranting_id from CSV
+        let rantingId = row.ranting_id || row.rantingId || '';
+        if (!rantingId && scope?.rantingId) {
+          rantingId = scope.rantingId;
+        }
+
         const member = await this.prisma.anggota.create({
           data: {
-            namaLengkap: row.nama || row.name,
-            jenisKelamin: row.jenis_kelamin || 'L',
-            noHp: row.no_hp || row.phone,
-            email: row.email,
-            alamat: row.alamat || row.address,
-            nomorAnggota: await this.generateMemberNumber(),
+            nomorAnggota,
+            namaLengkap: row.nama || row.name || row.nama_lengkap,
+            jenisKelamin: row.jenis_kelamin || row.jenisKelamin || 'L',
+            tempatLahir: row.tempat_lahir || row.tempatLahir || null,
+            tanggalLahir: row.tanggal_lahir || row.tanggalLahir || null,
+            noHp: row.no_hp || row.phone || null,
+            email: row.email || null,
+            alamat: row.alamat || row.address || null,
+            rantingId: rantingId || undefined,
+            tingkat: row.tingkat || null,
             statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
             statusValidasi: 'pending',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
