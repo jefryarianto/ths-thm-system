@@ -1,532 +1,158 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [master, develop]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
-  typecheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ths-thm/api prisma:generate
-      - run: pnpm --filter @ths-thm/api run typecheck && pnpm --filter @ths-thm/web run typecheck
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ths-thm/api run lint && pnpm --filter @ths-thm/web run lint
-      - run: pnpm run format:check
-
-  test-mobile:
-    name: Test (Mobile)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - name: Run mobile unit tests
-        run: cd apps/mobile && npx jest --no-cache
-        timeout-minutes: 5
-
-  e2e-mobile:
-    name: E2E (Mobile - Maestro)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Maestro CLI
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-      - name: Validate Maestro flows (dry-run syntax check)
-        run: |
-          echo "🔍 Checking Maestro flow syntax..."
-          for flow in apps/mobile/e2e/*.yaml; do
-            echo "  ➜ Validating $(basename $flow)"
-            cat "$flow" | head -5
-          done
-          echo "✅ All flows validated"
-        timeout-minutes: 2
-
   test:
-    name: Test (API)
+    name: Test & Lint
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: ths_thm
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: ths_thm_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ths-thm/api prisma:generate
-      - name: Run migrations
-        run: cd apps/api && npx prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_test
-      - name: Run tests
-        run: pnpm run test:cov
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_test
-          JWT_SECRET: test-jwt-secret
-          JWT_REFRESH_SECRET: test-jwt-refresh-secret
-          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
 
-  e2e-web:
-    name: E2E (Web - Playwright) shard ${{ matrix.shard }}/${{ matrix.total-shards }}
-    runs-on: ubuntu-latest
-    # Run in parallel with API unit tests for faster feedback
-    needs: []
-    strategy:
-      matrix:
-        shard: [1, 2, 3]
-        total-shards: [3]
-      fail-fast: false
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16
         env:
+          POSTGRES_DB: ths_thm_test
           POSTGRES_USER: ths_thm
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: ths_thm_e2e
+          POSTGRES_PASSWORD: ths_thm_password
         ports:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
-          --health-interval 5s
+          --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_test
+      JWT_SECRET: test-jwt-secret
+      JWT_REFRESH_SECRET: test-refresh-secret
+
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ths-thm/api prisma:generate
-      - name: Run migrations
-        run: cd apps/api && npx prisma migrate deploy
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ths-thm/api prisma:generate
+
+      - name: Run database migrations
+        run: pnpm --filter @ths-thm/api prisma:deploy
         env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
-      - name: Seed test data
-        run: cd apps/api && npx ts-node prisma/seed.ts
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
-          JWT_SECRET: test-jwt-secret
-          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
+          DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_test
+
+      - name: Run TypeScript type check
+        run: pnpm --filter @ths-thm/api typecheck
+
+      - name: Run API Tests
+        run: pnpm --filter @ths-thm/api test
+
+      - name: Run Lint
+        run: pnpm -r run lint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ths-thm/api prisma:generate
+
       - name: Build API
-        run: cd apps/api && npx nest build
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
-      - name: Start API server
-        run: |
-          cd apps/api && node dist/main.js &
-          echo "Waiting for API to be ready..."
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-              echo "✅ API is ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "❌ API failed to start"
-          exit 1
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
-          JWT_SECRET: test-jwt-secret
-          JWT_REFRESH_SECRET: test-jwt-refresh-secret
-          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
-          STRIPE_SECRET_KEY: sk_test_mock
-          STRIPE_WEBHOOK_SECRET: whsec_mock
-      - name: Start Web app
-        run: |
-          cd apps/web && npx next dev -p 3002 &
-          echo "Waiting for Web to be ready..."
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:3002/login > /dev/null 2>&1; then
-              echo "✅ Web is ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "❌ Web failed to start"
-          exit 1
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3001
-      - name: Get Playwright version
-        id: pw-version
-        run: echo "version=$(node -e "console.log(require('./apps/web/package.json').devDependencies['@playwright/test'])")" >> $GITHUB_OUTPUT
-      - name: Cache Playwright browsers
-        id: cache-playwright
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.pw-version.outputs.version }}-${{ runner.os }}
-      - name: Install Playwright browsers
-        if: steps.cache-playwright.outputs.cache-hit != 'true'
-        run: cd apps/web && npx playwright install chromium
-      - name: Run Playwright e2e tests (shard ${{ matrix.shard }}/${{ matrix.total-shards }})
-        run: cd apps/web && npx playwright test --shard=${{ matrix.shard }}/${{ matrix.total-shards }}
-        env:
-          E2E_BASE_URL: http://localhost:3002
-        timeout-minutes: 10
-      - name: Upload blob report
+        run: pnpm --filter @ths-thm/api build
+
+      - name: Build Web
+        run: pnpm --filter @ths-thm/web build
+
+      - name: Upload API artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: blob-report-${{ matrix.shard }}
-          path: apps/web/blob-report
-          retention-days: 3
-        if: always()
+          name: api-dist
+          path: apps/api/dist/
 
-  e2e-web-report:
-    name: E2E (Web - Merge Reports)
-    runs-on: ubuntu-latest
-    needs: [e2e-web]
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Upload Web artifacts
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: blob-report-*
-          path: all-blob-reports
-          merge-multiple: true
-      - name: Merge Playwright reports
-        run: npx playwright merge-reports --reporter html ../../all-blob-reports
-        working-directory: apps/web
-        if: always()
-      - uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: apps/web/playwright-report
-          retention-days: 7
+          name: web-dist
+          path: apps/web/.next/
 
-  e2e:
-    name: E2E Test (API)
+  deploy:
+    name: Deploy to VPS
     runs-on: ubuntu-latest
-    # Run in parallel with API unit tests (own DB, no conflict)
-    needs: []
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: ths_thm
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: ths_thm_e2e
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @ths-thm/api prisma:generate
-      - name: Run migrations
-        run: cd apps/api && npx prisma migrate deploy
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
-      - name: Run E2E tests
-        run: pnpm run test:e2e
-        env:
-          DATABASE_URL: postgresql://ths_thm:test_password@localhost:5432/ths_thm_e2e
-          JWT_SECRET: test-jwt-secret
-          JWT_REFRESH_SECRET: test-jwt-refresh-secret
-          API_KEYS: '[{"key":"test-api-key","name":"Test Key"}]'
-
-  build-api:
-    name: Build API Docker Image
-    runs-on: ubuntu-latest
-    needs: [typecheck, test]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}/api
-          tags: |
-            type=sha
-            type=raw,value=latest
-            type=raw,value=${{ github.ref_name }},enable=${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' }}
-      - name: Build and push API image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  build-web:
-    name: Build Web Docker Image
-    runs-on: ubuntu-latest
-    needs: [typecheck]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}/web
-          tags: |
-            type=sha
-            type=raw,value=latest
-            type=raw,value=${{ github.ref_name }},enable=${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' }}
-      - name: Build and push Web image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  smoke-test:
-    name: Smoke Test (API Docker)
-    runs-on: ubuntu-latest
-    needs: [build-api, e2e]
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: ths_thm
-          POSTGRES_PASSWORD: smoke_password
-          POSTGRES_DB: ths_thm_smoke
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build API image for smoke test
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          push: false
-          tags: ths-thm/api:smoke
-          load: true
-          cache-from: type=gha
-      - name: Start API container
-        run: |
-          docker run -d --name api-smoke \
-            -p 4001:3001 \
-            -e DATABASE_URL=postgresql://ths_thm:smoke_password@host.docker.internal:5432/ths_thm_smoke \
-            -e JWT_SECRET=smoke-test-secret \
-            -e JWT_REFRESH_SECRET=smoke-test-refresh \
-            -e APP_PORT=3001 \
-            -e NODE_ENV=production \
-            --add-host=host.docker.internal:host-gateway \
-            ths-thm/api:smoke
-      - name: Wait for API to be ready
-        run: |
-          echo "Waiting for API to start..."
-          for i in $(seq 1 60); do
-            if curl -sf http://localhost:4001/api/health > /dev/null 2>&1; then
-              echo "✅ API is healthy"
-              exit 0
-            fi
-            echo "Attempt $i/60 — waiting 2s..."
-            sleep 2
-          done
-          echo "❌ API failed to become healthy within 120s"
-          docker logs api-smoke
-          exit 1
-      - name: Verify health endpoint response
-        run: |
-          response=$(curl -sf http://localhost:4001/api/health)
-          echo "Health response: $response"
-          echo "$response" | grep -q '"status":"ok"'
-          echo "$response" | grep -q '"database"'
-          echo "$response" | grep -q '"cache"'
-          echo "✅ All health checks passed"
-      - name: Cleanup
-        if: always()
-        run: docker rm -f api-smoke || true
-
-  deploy-staging:
-    name: Deploy to Staging (VPS)
-    runs-on: ubuntu-latest
-    needs: [typecheck, test, e2e, build-api, build-web]
-    # Only deploy when on develop branch AND SSH secrets are configured
-    # if condition removed to always run deployment
-    environment:
-      name: staging
-      url: ${{ vars.STAGING_URL }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ vars.VPS_SSH_HOST }}
-          username: ${{ vars.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ vars.VPS_SSH_PORT || '22' }}
-          script: |
-            set -e
-            echo "🚀 Deploying staging to VPS..."
-            
-            cd /opt/ths-thm-staging
-            
-            # Login to GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Pull latest images
-            docker compose -f docker-compose.staging.yml pull
-            
-            # Run migrations
-            docker compose -f docker-compose.staging.yml run --rm api sh -c "npx prisma migrate deploy"
-            
-            # Restart services
-            docker compose -f docker-compose.staging.yml up -d --remove-orphans
-            
-            # Wait for health
-            echo "Waiting for API to be healthy..."
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-                echo "✅ Staging is healthy"
-                exit 0
-              fi
-              sleep 5
-            done
-            echo "❌ Staging health check failed"
-            docker compose -f docker-compose.staging.yml logs api --tail=50
-            exit 1
-
-  deploy-production:
-    name: Deploy to Production (VPS)
-    runs-on: ubuntu-latest
-    needs: [typecheck, test, e2e, smoke-test, build-api, build-web]
+    needs: build
     if: github.ref == 'refs/heads/master'
-    environment:
-      name: production
-      url: ${{ vars.PRODUCTION_URL }}
+
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to VPS (ths-thm.cloud)
-        uses: appleboy/ssh-action@v1
+
+      - name: Download API artifacts
+        uses: actions/download-artifact@v4
         with:
-          host: ${{ vars.VPS_SSH_HOST }}
-          username: ${{ vars.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ vars.VPS_SSH_PORT || '22' }}
+          name: api-dist
+          path: apps/api/dist
+
+      - name: Download Web artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/.next
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -e
-            echo "🚀 Deploying production to ths-thm.cloud..."
-            
-            cd /opt/ths-thm
-            
-            # Login to GHCR
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            docker compose -f docker-compose.production.yml pull
-            
-            # Run database migrations
-            docker compose -f docker-compose.production.yml run --rm api npx prisma migrate deploy
-            
-            # Restart services (web first, then api for zero-downtime)
-            docker compose -f docker-compose.production.yml up -d --remove-orphans web
-            sleep 5
-            docker compose -f docker-compose.production.yml up -d --remove-orphans --force-recreate api
-            
-            # Wait for API health check
-            echo "⏳ Waiting for API to be healthy..."
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-                echo "✅ API is healthy"
-                break
-              fi
-              echo "  Attempt $i/30 — waiting..."
-              sleep 5
-            done
-            
-            # Final health verification
-            response=$(curl -sf http://localhost:3001/api/health || echo "")
-            if echo "$response" | grep -q '"status":"ok"'; then
-              echo "✅ Production deployment successful!"
-              echo "🌐 URL: https://ths-thm.cloud"
-            else
-              echo "❌ Production health check failed"
-              docker compose -f docker-compose.production.yml logs api --tail=100
-              exit 1
-            fi
+            cd /opt/ths-thm-system
+            git pull origin master
+            pnpm install --frozen-lockfile
+            pnpm --filter @ths-thm/api prisma:deploy
+            pnpm --filter @ths-thm/api build
+            pnpm --filter @ths-thm/web build
+            docker compose -f docker-compose.production.yml up -d --build
+            docker system prune -f

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -20,6 +21,7 @@ interface AssessmentRow {
 }
 
 export default function AssessmentsPage() {
+  const router = useRouter();
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -38,7 +40,10 @@ export default function AssessmentsPage() {
   return (
     <PageContainer>
       <PageHeader title="Aspek & Item Penilaian" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => router.push('/assessments/aspects/new')}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+        >
           <Plus size={14} /> Tambah
         </button>
       </PageHeader>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useAspects, STATUS_STYLES, FILTER_OPTIONS } from '../../hooks/use-assessments';
 import { useRefresh } from '../../hooks/use-refresh';

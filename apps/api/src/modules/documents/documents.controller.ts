@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { DocumentsService } from './documents.service';
+import { DocumentsService, GenerateCertificateDto, GenerateAwardDto } from './documents.service';
 import { Public } from '../../common/decorators/public.decorator';
 import {
   GenerateDocumentDto,
@@ -10,6 +10,7 @@ import {
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+import { Response } from 'express';
 
 @ApiTags('Documents')
 @Controller('documents')
@@ -82,6 +83,52 @@ export class DocumentsController {
   @RequireScope('branch')
   getTypes() {
     return this.service.getTypes();
+  }
+
+  // ── Certificate (Sertifikat Pendadaran) ──
+
+  @Post('certificate')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate sertifikat pendadaran' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  generateCertificate(@Body() dto: GenerateCertificateDto) {
+    return this.service.generateCertificate(dto);
+  }
+
+  @Post('certificate/pdf')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Download sertifikat pendadaran (PDF)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  async getCertificatePdf(@Body() dto: GenerateCertificateDto, @Res() res: Response) {
+    const pdfBuffer = await this.service.getCertificatePdf(dto.memberId, dto);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="sertifikat-${dto.memberId}.pdf"`);
+    res.send(pdfBuffer);
+  }
+
+  @Post('certificate/image')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Preview sertifikat pendadaran (PNG)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  async getCertificateImage(@Body() dto: GenerateCertificateDto, @Res() res: Response) {
+    const pngBuffer = await this.service.getCertificateImage(dto.memberId, dto);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `inline; filename="sertifikat-${dto.memberId}.png"`);
+    res.send(pngBuffer);
+  }
+
+  // ── Award (Piagam Prestasi) ──
+
+  @Post('award')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate piagam prestasi' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  generateAward(@Body() dto: GenerateAwardDto) {
+    return this.service.generateAward(dto);
   }
 
   @Get(':id/verify-qr')

@@ -10,7 +10,6 @@ export class CronTasksService {
 
   /**
    * Auto-generate monthly dues for members with active IuranRecurring config.
-   * Runs every day at 1 AM — checks if today is the first of the month.
    */
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async autoGenerateMonthlyDues(): Promise<void> {
@@ -55,18 +54,14 @@ export class CronTasksService {
         });
         generated++;
       } catch (error) {
-        this.logger.error(
-          `Failed to generate due for ${rec.anggotaId}: ${(error as Error).message}`,
-        );
+        this.logger.error(`Failed to generate due for ${rec.anggotaId}: ${(error as Error).message}`);
       }
     }
     this.logger.log(`Dues generation: ${generated} created, ${skipped} skipped`);
   }
 
   /**
-   * Send reminders for unpaid dues.
-   * Runs every day at 8 AM.
-   * Notifies admin users about unpaid dues in their scope.
+   * Send reminders for unpaid dues via FCM + Email to members
    */
   @Cron(CronExpression.EVERY_DAY_AT_8AM)
   async sendDuesReminders(): Promise<void> {
@@ -75,7 +70,7 @@ export class CronTasksService {
 
     const unpaidDues = await this.prisma.iuran.findMany({
       where: { status: { in: ['belum_dibayar', 'menunggak'] }, periode: currentMonth },
-      include: { anggota: { select: { id: true, namaLengkap: true, rantingId: true } } },
+      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
       take: 100,
     });
 
@@ -92,17 +87,101 @@ export class CronTasksService {
       await this.prisma.iuranReminder.create({
         data: { iuranId: due.id, channel: 'system', status: 'sent' },
       });
+
+      // Create in-app notification
+      await this.createNotification(due.anggotaId, 'reminder_iuran',
+        'Pengingat Iuran',
+        `Iuran periode ${currentMonth} Anda segera jatuh tempo. Segera lakukan pembayaran.`);
+
       remindersSent++;
     }
 
     if (remindersSent > 0) {
-      this.logger.log(`Dues reminders sent: ${remindersSent} (${unpaidDues.length} total unpaid)`);
+      this.logger.log(`Dues reminders sent: ${remindersSent}`);
     }
   }
 
   /**
-   * Mark overdue dues as 'menunggak'.
-   * Runs every day at midnight.
+   * Send training reminders (H-1) to members
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async sendTrainingReminders(): Promise<void> {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const nextDay = new Date(tomorrow);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const upcomingTrainings = await this.prisma.latihan.findMany({
+      where: {
+        hariTanggal: { gte: tomorrow, lt: nextDay },
+      },
+      include: {
+        ranting: { select: { nama: true } },
+        absensi: { include: { anggota: { select: { id: true, email: true } } } },
+      },
+      take: 50,
+    });
+
+    let remindersSent = 0;
+    for (const training of upcomingTrainings) {
+      // Notify all members in this ranting
+      const members = await this.prisma.anggota.findMany({
+        where: { rantingId: training.rantingId, statusKeanggotaan: 'aktif' },
+        select: { id: true, namaLengkap: true },
+        take: 200,
+      });
+
+      for (const member of members) {
+        await this.createNotification(member.id, 'reminder_latihan',
+          'Pengingat Latihan',
+          `Latihan besok (${training.hariTanggal.toLocaleDateString('id-ID')}) di ${training.lokasi || training.ranting?.nama || 'lokasi biasa'}. Jangan lupa hadir!`);
+        remindersSent++;
+      }
+    }
+
+    if (remindersSent > 0) {
+      this.logger.log(`Training reminders sent: ${remindersSent}`);
+    }
+  }
+
+  /**
+   * Send birthday greetings to members
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_7AM)
+  async sendBirthdayGreetings(): Promise<void> {
+    const today = new Date();
+    const todayMonth = today.getMonth() + 1;
+    const todayDay = today.getDate();
+
+    // Find members whose birthday is today
+    // Note: PostgreSQL EXTRACT works for date comparison
+    const members = await this.prisma.$queryRawUnsafe<Array<{ id: string; namaLengkap: string }>>(
+      `SELECT id, "nama_lengkap" FROM anggota 
+       WHERE EXTRACT(MONTH FROM "tanggal_lahir") = $1 
+       AND EXTRACT(DAY FROM "tanggal_lahir") = $2
+       AND "status_keanggotaan" = 'aktif'
+       AND "deleted_at" IS NULL`,
+      todayMonth,
+      todayDay,
+    );
+
+    let greetingsSent = 0;
+    for (const member of members) {
+      await this.createNotification(member.id, 'umum',
+        'Selamat Ulang Tahun! 🎂',
+        `Selamat ulang tahun, ${member.namaLengkap}! Semoga selalu diberkati dan semakin bersemangat dalam berlatih.`);
+      greetingsSent++;
+    }
+
+    if (greetingsSent > 0) {
+      this.logger.log(`Birthday greetings sent: ${greetingsSent}`);
+    }
+  }
+
+  /**
+   * Mark overdue dues as 'menunggak'
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async markOverdueDues(): Promise<void> {
@@ -116,6 +195,19 @@ export class CronTasksService {
 
     if (overdue.count > 0) {
       this.logger.log(`Marked ${overdue.count} dues as menunggak`);
+    }
+  }
+
+  /**
+   * Create in-app notification for a user
+   */
+  private async createNotification(userId: string, tipe: string, judul: string, isi: string): Promise<void> {
+    try {
+      await this.prisma.notifikasi.create({
+        data: { userId, tipe: tipe as never, judul, isi },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to create notification for user ${userId}: ${(error as Error).message}`);
     }
   }
 }

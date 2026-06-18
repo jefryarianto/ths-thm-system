@@ -1,16 +1,50 @@
+# Dependencies
 node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# Build output
 dist/
 .next/
-.expo/
+coverage/
+build/
+storybook-static/
+
+# Environment
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
 *.log
-npm-debug.log*
-.git
+
+# Git
+.git/
 .gitignore
-Dockerfile*
-docker-compose*
-.coverage
-coverage/
-.nyc_output
+
+# Docker
+.dockerignore
+
+# Test results
+test-results/
+playwright-report/
+
+# Temp
+tmp/
+temp/
+uploads/*
+!uploads/.gitkeep
+
+# TypeScript
+*.tsbuildinfo

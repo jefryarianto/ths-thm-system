@@ -5,6 +5,7 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { User } from '@/types';
+import { useState } from 'react';
 import { Plus, MoreVertical, UserCheck, UserX, Users } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -15,6 +16,7 @@ import FilterSelect from '@/components/ui/filter-select';
 import { ROLE_OPTIONS, ROLE_BADGES, ROLE_LABELS } from '@/components/users/constants';
 
 export default function UsersPage() {
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const {
     page,
     setPage,
@@ -55,7 +57,10 @@ export default function UsersPage() {
   return (
     <PageContainer>
       <PageHeader title="Manajemen User" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+        >
           <Plus size={14} /> Tambah User
         </button>
       </PageHeader>

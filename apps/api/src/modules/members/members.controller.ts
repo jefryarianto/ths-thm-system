@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+import { Response } from 'express';
 
 @ApiTags('Members')
 @Controller('members')
@@ -131,5 +132,35 @@ export class MembersController {
   @RequireScope('branch')
   getDues(@Param('id') id: string) {
     return this.membersService.getDues(id);
+  }
+
+  @Get(':id/digital-card')
+  @ApiOperation({ summary: 'Kartu Anggota Digital dengan QR Code' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
+  getDigitalCard(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.membersService.getDigitalCard(id, req.scope);
+  }
+
+  @Get(':id/digital-card/pdf')
+  @ApiOperation({ summary: 'Download Kartu Anggota Digital (PDF)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
+  async getDigitalCardPdf(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
+    const pdfBuffer = await this.membersService.getDigitalCardPdf(id, req.scope);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="kartu-anggota-${id}.pdf"`);
+    res.send(pdfBuffer);
+  }
+
+  @Get(':id/digital-card/image')
+  @ApiOperation({ summary: 'Preview Kartu Anggota Digital (PNG)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @RequireScope('branch')
+  async getDigitalCardImage(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
+    const pngBuffer = await this.membersService.getDigitalCardImage(id, req.scope);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `inline; filename="kartu-anggota-${id}.png"`);
+    res.send(pngBuffer);
   }
 }

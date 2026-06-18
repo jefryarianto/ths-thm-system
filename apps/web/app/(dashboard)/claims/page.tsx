@@ -5,6 +5,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
+import { useRouter } from 'next/navigation';
 import { Plus, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -23,6 +24,7 @@ interface ClaimRow {
 }
 
 export default function ClaimsPage() {
+  const router = useRouter();
   const {
     page,
     setPage,
@@ -67,7 +69,10 @@ export default function ClaimsPage() {
   return (
     <PageContainer>
       <PageHeader title="Manajemen Klaim" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => router.push('/claims/new')}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+        >
           <Plus size={14} /> Tambah
         </button>
       </PageHeader>

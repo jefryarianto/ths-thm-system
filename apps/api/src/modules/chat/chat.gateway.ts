@@ -11,7 +11,17 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ths-thm-secret';
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required for ChatGateway');
+  }
+  return secret;
+})();
+
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
+  : ['http://localhost:3000'];
 
 interface ChatMessage {
   roomId: string;
@@ -20,7 +30,7 @@ interface ChatMessage {
 }
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: corsOrigins },
   namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

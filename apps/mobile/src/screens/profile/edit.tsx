@@ -12,7 +12,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import apiClient, { unwrap } from '../../lib/api-client';

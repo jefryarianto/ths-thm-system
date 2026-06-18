@@ -8,10 +8,20 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ths-thm-secret';
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required for EventsGateway');
+  }
+  return secret;
+})();
+
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
+  : ['http://localhost:3000'];
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: corsOrigins },
   namespace: '/',
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -94,6 +95,7 @@ const columns = [
 // ─── Page ───
 
 export default function DuesPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<DuesStats | null>(null);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
   const { page, setPage } = useFilters();
@@ -140,7 +142,10 @@ export default function DuesPage() {
         <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
           <Download size={14} /> Export
         </button>
-        <button className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button
+          onClick={() => router.push('/dues/new')}
+          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+        >
           <Plus size={16} /> Tambah Iuran
         </button>
       </PageHeader>

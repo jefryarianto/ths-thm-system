@@ -721,6 +721,19 @@ model Disposisi {
 
 // ── Dues & Payments ───────────────────────────────────────
 
+model BankInfo {
+  id             String   @id @default(uuid())
+  bankName       String   @map("bank_name")
+  accountNumber  String   @map("account_number")
+  accountName    String   @map("account_name")
+  qrisImageUrl   String?  @map("qris_image_url")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("bank_info")
+}
+
 model Iuran {
   id               String      @id @default(uuid())
   anggotaId        String      @map("anggota_id")

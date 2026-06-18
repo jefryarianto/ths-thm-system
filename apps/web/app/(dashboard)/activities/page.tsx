@@ -64,7 +64,10 @@ export default function ActivitiesPage() {
   return (
     <PageContainer>
       <PageHeader title="Manajemen Kegiatan">
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => router.push('/activities/new')}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+        >
           <Plus size={14} /> Tambah
         </button>
       </PageHeader>

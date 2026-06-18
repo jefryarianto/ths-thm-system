@@ -4,7 +4,7 @@ import { mockAuth, mockLoginError } from './helpers';
 test.describe('Login Flow', () => {
   test('shows login page with title and form', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.locator('h1')).toContainText('THS-THM System');
+    await expect(page.getByText('THS-THM').first()).toBeVisible();
     await expect(page.locator('[data-testid="email-input"]')).toBeVisible();
     await expect(page.locator('[data-testid="password-input"]')).toBeVisible();
     await expect(page.locator('[data-testid="login-submit"]')).toContainText('Masuk');

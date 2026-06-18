@@ -5,8 +5,6 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
-import { LinkedInOAuthStrategy } from './strategies/linkedin-oauth.strategy';
-
 @Module({
   imports: [
     PassportModule,
@@ -16,7 +14,7 @@ import { LinkedInOAuthStrategy } from './strategies/linkedin-oauth.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleOAuthStrategy, LinkedInOAuthStrategy],
+  providers: [AuthService, JwtStrategy, GoogleOAuthStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

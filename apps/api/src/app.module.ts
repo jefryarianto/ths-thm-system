@@ -35,6 +35,10 @@ import { MailModule } from './mail/mail.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ForumModule } from './modules/forum/forum.module';
 import { CronTasksModule } from './modules/cron/cron-tasks.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
+import { ApprovalModule } from './modules/approvals/approval.module';
+import { OrgChartModule } from './modules/org-chart/org-chart.module';
+import { TargetsModule } from './modules/targets/targets.module';
 
 @Module({
   imports: [
@@ -75,6 +79,10 @@ import { CronTasksModule } from './modules/cron/cron-tasks.module';
     SettingsModule,
     GamificationModule,
     MailModule,
+    CalendarModule,
+    ApprovalModule,
+    OrgChartModule,
+    TargetsModule,
   ],
   controllers: [HealthController],
   providers: [

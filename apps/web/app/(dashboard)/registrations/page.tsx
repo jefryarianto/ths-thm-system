@@ -76,7 +76,10 @@ export default function RegistrationsPage() {
         <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
           <Download size={14} /> Export
         </button>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => router.push('/daftar')}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+        >
           <Plus size={14} /> Tambah
         </button>
       </PageHeader>

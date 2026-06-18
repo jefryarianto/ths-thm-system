@@ -1,6 +1,6 @@
-import { Controller, Post, Get, Patch, Body, Param, Req } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { PaymentsService } from './payments.service';
+import { PaymentsService, CreateBankInfoDto, UpdateBankInfoDto } from './payments.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
@@ -11,12 +11,44 @@ import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 export class PaymentsController {
   constructor(private readonly service: PaymentsService) {}
 
+  // ── Bank Info Management (Admin) ──
+
   @Get('bank-info')
-  @ApiOperation({ summary: 'Dapatkan informasi rekening bank & QRIS' })
+  @ApiOperation({ summary: 'Dapatkan daftar rekening bank & QRIS aktif' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   getBankInfo() {
     return this.service.getBankInfo();
   }
+
+  @Get('bank-info/all')
+  @ApiOperation({ summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  getAllBankInfo() {
+    return this.service.getAllBankInfo();
+  }
+
+  @Post('bank-info')
+  @ApiOperation({ summary: 'Tambah rekening bank baru — Admin' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  createBankInfo(@Body() dto: CreateBankInfoDto) {
+    return this.service.createBankInfo(dto);
+  }
+
+  @Patch('bank-info/:id')
+  @ApiOperation({ summary: 'Ubah rekening bank — Admin' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  updateBankInfo(@Param('id') id: string, @Body() dto: UpdateBankInfoDto) {
+    return this.service.updateBankInfo(id, dto);
+  }
+
+  @Delete('bank-info/:id')
+  @ApiOperation({ summary: 'Hapus rekening bank — Admin' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  deleteBankInfo(@Param('id') id: string) {
+    return this.service.deleteBankInfo(id);
+  }
+
+  // ── Payment Flow ──
 
   @Post(':id/upload-proof')
   @ApiOperation({ summary: 'Upload bukti pembayaran manual' })

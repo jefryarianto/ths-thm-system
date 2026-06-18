@@ -5,6 +5,7 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Candidate } from '@/types';
+import { useRouter } from 'next/navigation';
 import { Plus, Upload, UserPlus } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -29,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function CandidatesPage() {
+  const router = useRouter();
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -52,10 +54,16 @@ export default function CandidatesPage() {
   return (
     <PageContainer>
       <PageHeader title="Manajemen Calon Anggota" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+        <button
+          onClick={() => router.push('/candidates/import')}
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
           <Upload size={14} /> Import
         </button>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+        <button
+          onClick={() => router.push('/candidates/new')}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+        >
           <Plus size={14} /> Tambah
         </button>
       </PageHeader>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -22,6 +23,7 @@ interface OrgDocumentRow {
 }
 
 export default function OrgDocumentsPage() {
+  const router = useRouter();
   const [categories, setCategories] = useState<{ id: string; nama: string }[]>([]);
   const {
     page,
@@ -66,7 +68,10 @@ export default function OrgDocumentsPage() {
   return (
     <PageContainer>
       <PageHeader title="Dokumen Organisasi" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
+        <button
+          onClick={() => router.push('/org-documents/new')}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+        >
           <Plus size={14} /> Tambah
         </button>
       </PageHeader>

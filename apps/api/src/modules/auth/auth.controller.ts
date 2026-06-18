@@ -119,28 +119,4 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
-  @Get('linkedin')
-  @Public()
-  @UseGuards(AuthGuard('linkedin'))
-  @ApiOperation({ summary: 'Login dengan LinkedIn' })
-  linkedinAuth() {
-    // Guard redirects to LinkedIn
-  }
-
-  @Get('linkedin/callback')
-  @Public()
-  @UseGuards(AuthGuard('linkedin'))
-  @ApiOperation({ summary: 'Callback login LinkedIn' })
-  linkedinAuthCallback(@Req() req: Request, @Res() res: Response) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = (req as any).user;
-    if (!user) {
-      return res.redirect(
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed`,
-      );
-    }
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const redirectUrl = `${frontendUrl}/login?token=${user.accessToken}&refresh=${user.refreshToken}`;
-    return res.redirect(redirectUrl);
-  }
 }

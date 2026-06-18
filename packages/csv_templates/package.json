@@ -1,0 +1,6 @@
+{
+  "name": "@ths-thm/csv-templates",
+  "version": "1.0.0",
+  "description": "CSV import templates for THS-THM System",
+  "private": true
+}

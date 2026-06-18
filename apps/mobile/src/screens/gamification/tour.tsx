@@ -9,7 +9,7 @@ import {
   Dimensions,
   FlatList,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOUR_STORAGE_KEY = 'gamification_tour_seen_v2';

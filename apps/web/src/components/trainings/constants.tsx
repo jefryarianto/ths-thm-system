@@ -38,7 +38,7 @@ export function formatTime(dateStr: string) {
 }
 
 interface InfoRowProps {
-  icon: ComponentType<{ size?: number; className?: string }>;
+  icon: ComponentType<{ size?: string | number; className?: string }>;
   label: string;
   value: string | null | undefined;
 }

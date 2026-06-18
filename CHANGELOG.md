@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] — API Backend Refactoring & Mobile Cleanup
+## [Unreleased] — Dependency Cleanup & Configuration Update
 
 ### ✨ Major Refactoring
 
@@ -60,12 +60,22 @@ Email methods consolidated to `MemberMailService`:
 - Removed unused `MailService` injection from 4 services (MembersService, CandidatesService, DocumentsService, DuesService) + their test files
 - Cleaned up unused `MailService` mock declarations from 4 test spec files
 
+### 🧹 Dependency Cleanup
+
+- **REMOVED** `stripe` — tidak digunakan, payment menggunakan manual transfer + QRIS
+- **REMOVED** `passport-linkedin-oauth2` — OAuth hanya Google
+- **REMOVED** `@types/passport-linkedin-oauth2` — cleanup devDependencies
+- **REMOVED** DTO Stripe `create-payment-intent.dto.ts` dan Midtrans `create-snap-token.dto.ts`
+- **REMOVED** LinkedIn OAuth strategy, controller endpoints, dan test spec
+- **UPDATED** `.env.example` — dibersihkan dari LinkedIn, komentar lebih jelas
+- **ADDED** Folder `./uploads` untuk file upload
+
 ### 📊 Metrics
 
 | Metric         | Value                       |
 | -------------- | --------------------------- |
-| Files changed  | ~50 files                   |
-| Lines removed  | ~250+ duplicated code       |
+| Files changed  | ~50 files (refactoring) + 10 files (cleanup) |
+| Lines removed  | ~250+ duplicated code + ~50 lines unused deps |
 | API TypeScript | ✅ Zero errors              |
 | Web TypeScript | ✅ Zero errors              |
 | API Tests      | ✅ 482/482 pass (37 suites) |

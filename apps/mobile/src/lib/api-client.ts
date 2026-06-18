@@ -18,21 +18,47 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+
+    // ─── NETWORK RETRY STRATEGY ───
+    const isNetworkError =
+      error.code === 'ECONNABORTED' ||
+      error.message?.includes('Network Error') ||
+      !error.response;
+
+    if (isNetworkError && !originalRequest._retryCount) {
+      originalRequest._retryCount = 1;
+    }
+
+    if (isNetworkError && originalRequest._retryCount <= 2) {
+      const delay = 500 * originalRequest._retryCount; // simple backoff
+      await new Promise((res) => setTimeout(res, delay));
+      originalRequest._retryCount += 1;
+      return apiClient(originalRequest);
+    }
+
+    // ─── TOKEN REFRESH HANDLING ───
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
       const refreshToken = await AsyncStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
           const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
           const { accessToken, refreshToken: newRefresh } = res.data.data;
+
           await AsyncStorage.setItem('accessToken', accessToken);
           await AsyncStorage.setItem('refreshToken', newRefresh);
-          error.config.headers.Authorization = `Bearer ${accessToken}`;
-          return axios(error.config);
+
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+          return apiClient(originalRequest);
         } catch {
           await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
         }
       }
     }
+
     return Promise.reject(error);
   },
 );

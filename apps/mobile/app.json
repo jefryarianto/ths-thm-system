@@ -23,9 +23,20 @@
       },
       "package": "org.thsthm.mobile"
     },
-    "plugins": ["expo-router", "expo-font"],
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "8b77feb3-c3cc-4458-99eb-bb0185126a94"
+      }
     }
   }
 }

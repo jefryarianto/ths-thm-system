@@ -178,13 +178,34 @@ export default function MembersPage() {
   return (
     <PageContainer>
       <PageHeader title="Anggota" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+        <button
+          onClick={() => router.push('/members/import')}
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+        >
           <Upload size={14} /> Import
         </button>
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+        <button
+          onClick={async () => {
+            try {
+              const { data: blob } = await apiClient.get('/members/export', { responseType: 'blob' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `anggota-export-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            } catch {
+              alert('Gagal mengekspor data');
+            }
+          }}
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+        >
           <Download size={14} /> Export
         </button>
-        <button className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+        <button
+          onClick={() => router.push('/members/new')}
+          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+        >
           <Plus size={16} /> Tambah
         </button>
       </PageHeader>

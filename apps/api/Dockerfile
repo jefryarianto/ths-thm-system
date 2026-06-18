@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 
 RUN apk add --no-cache openssl libc6-compat python3 make g++
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY packages/templates/package.json ./packages/templates/package.json
 
 # Install all dependencies
-RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --no-frozen-lockfile --ignore-scripts
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --ignore-scripts
 
 # Skip unnecessary downloads for faster build
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
@@ -32,7 +32,7 @@ RUN cd apps/api && pnpm run build
 FROM node:20-alpine AS production
 
 RUN apk add --no-cache openssl libc6-compat dumb-init
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
 
 WORKDIR /app
 

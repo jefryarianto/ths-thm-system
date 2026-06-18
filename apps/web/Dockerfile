@@ -6,12 +6,18 @@ RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
 
 WORKDIR /app
 
-# Copy source FIRST (before install)
-COPY . .
+# Copy dependency definition files first for layer caching
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/web/tsconfig.json ./apps/web/tsconfig.json
+COPY apps/web/next.config.* ./apps/web/
 
-# Then install (pnpm akan generate node_modules)
-RUN echo "shamefully-hoist=true" > .npmrc && \
-    pnpm install --no-frozen-lockfile --ignore-scripts --filter @ths-thm/web
+# Install ALL dependencies (including devDeps for build)
+RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy source files AFTER install (preserves layer cache)
+COPY apps/web/ ./apps/web/
+COPY packages/ ./packages/
 
 # Build
 RUN pnpm --filter @ths-thm/web build
@@ -23,18 +29,23 @@ RUN apk add --no-cache dumb-init wget
 
 WORKDIR /app
 
-# Copy all node_modules first
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy only runtime files
+# Copy only runtime files from builder
 COPY --from=builder /app/apps/web/.next ./.next
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/package.json ./package.json
+COPY --from=builder /app/apps/web/next.config.* ./
+
+# Install only production dependencies
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
+COPY apps/web/package.json ./apps/web/package.json
+RUN corepack enable && corepack prepare pnpm@11.5.2 --activate && \
+    echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --prod --ignore-scripts && \
+    rm -f .npmrc
 
 ENV NODE_ENV=production
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]

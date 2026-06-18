@@ -73,32 +73,26 @@ services:
       mountPath: /opt/render/project/src/apps/api/uploads
       sizeGB: 5
 
-  # Frontend Web (Next.js Static)
+  # Frontend Web (Next.js)
   - type: web
     name: ths-thm-web
-    runtime: static
+    runtime: node
     plan: starter
     rootDir: apps/web
     buildCommand: |
       corepack enable
       corepack prepare pnpm@latest --activate
+      cd ../..
       pnpm install --frozen-lockfile
-      pnpm run build
-    staticPublishPath: .next
+      pnpm --filter @ths-thm/web build
+    startCommand: npx next start -p 3000
     envVars:
       - key: NEXT_PUBLIC_API_URL
         fromService:
           name: ths-thm-api
           type: web
           property: url
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://ths-thm-api.onrender.com/api/*
     headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
       - path: /_next/static/*
         name: Cache-Control
         value: public, max-age=31536000, immutable

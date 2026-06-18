@@ -52,7 +52,7 @@ test.describe('Additional Dashboard Pages', () => {
 
     test('switches between tabs', async ({ page }) => {
       // Click Anggota tab
-      await page.getByText('Anggota').nth(1).click();
+      await page.getByRole('button', { name: 'Anggota' }).click();
       await expect(page.locator('input[placeholder="Cari anggota..."]')).toBeVisible();
 
       // Click Absensi tab

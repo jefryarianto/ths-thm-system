@@ -18,7 +18,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const login = useAuthStore((s: AuthState) => s.login);
-  const { handleGoogleLogin, handleLinkedInLogin, loading: oauthLoading } = useMobileOAuth();
+  const { handleGoogleLogin, loading: oauthLoading } = useMobileOAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -94,22 +94,6 @@ export default function LoginScreen() {
             <>
               <Text style={styles.oauthIcon}>G</Text>
               <Text style={styles.oauthButtonText}> Login dengan Google</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        {/* LinkedIn OAuth */}
-        <TouchableOpacity
-          style={[styles.oauthButton, oauthLoading === 'linkedin' && styles.oauthButtonDisabled]}
-          onPress={handleLinkedInLogin}
-          disabled={!!oauthLoading}
-        >
-          {oauthLoading === 'linkedin' ? (
-            <ActivityIndicator color="#374151" />
-          ) : (
-            <>
-              <Text style={styles.oauthIcon}>in</Text>
-              <Text style={styles.oauthButtonText}> Login dengan LinkedIn</Text>
             </>
           )}
         </TouchableOpacity>

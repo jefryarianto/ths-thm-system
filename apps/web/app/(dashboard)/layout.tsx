@@ -31,36 +31,102 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const menuItems = [
-  { href: '/', label: 'Dashboard', icon: BarChart3 },
-  { href: '/members', label: 'Anggota', icon: Users },
-  { href: '/candidates', label: 'Calon', icon: UserPlus },
-  { href: '/registrations', label: 'Pendaftaran', icon: UserPlus },
-  { href: '/claims', label: 'Klaim', icon: ClipboardCheck },
-  { href: '/trainings', label: 'Latihan', icon: Dumbbell },
-  { href: '/graduations', label: 'Pendadaran', icon: GraduationCap },
-  { href: '/activities', label: 'Kegiatan', icon: Calendar },
-  { href: '/examiners', label: 'Penguji', icon: Shield },
-  { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck },
-  { href: '/documents', label: 'Dokumen', icon: FileText },
-  { href: '/org-documents', label: 'Org. Docs', icon: FileText },
-  { href: '/letters', label: 'Surat', icon: Mail },
-  { href: '/dues', label: 'Iuran', icon: CreditCard },
-  { href: '/payments', label: 'Pembayaran', icon: Wallet },
-  { href: '/forum', label: 'Forum', icon: MessageSquare },
-  { href: '/notifications', label: 'Notifikasi', icon: Bell },
-  { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3 },
-  { href: '/reports', label: 'Laporan', icon: BarChart3 },
-  { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3 },
-  { href: '/gamification', label: 'Gamifikasi', icon: Trophy },
-  { href: '/gamification/admin', label: 'Admin Gamifikasi', icon: Shield },
-  { href: '/gamification/report', label: 'Lap. Gamifikasi', icon: BarChart3 },
-  { href: '/gamification/settings', label: 'Set. Gamifikasi', icon: Settings },
-  { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp },
-  { href: '/users', label: 'Users', icon: Shield },
-  { href: '/settings', label: 'Pengaturan', icon: Settings },
-  { href: '/settings/email', label: 'Email Admin', icon: Mail },
+interface MenuGroup {
+  label: string;
+  items: { href: string; label: string; icon: React.ComponentType<{ size?: string | number }> }[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    label: 'Utama',
+    items: [
+      { href: '/members', label: 'Dashboard', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Keanggotaan',
+    items: [
+      { href: '/members', label: 'Anggota', icon: Users },
+      { href: '/candidates', label: 'Calon', icon: UserPlus },
+      { href: '/registrations', label: 'Pendaftaran', icon: UserPlus },
+      { href: '/claims', label: 'Klaim', icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: 'Pelatihan & Penilaian',
+    items: [
+      { href: '/trainings', label: 'Latihan', icon: Dumbbell },
+      { href: '/graduations', label: 'Pendadaran', icon: GraduationCap },
+      { href: '/examiners', label: 'Penguji', icon: Shield },
+      { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: 'Aktivitas',
+    items: [
+      { href: '/activities', label: 'Kegiatan', icon: Calendar },
+      { href: '/calendar', label: 'Kalender', icon: Calendar },
+      { href: '/approvals', label: 'Persetujuan', icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: 'Organisasi',
+    items: [
+      { href: '/org-chart', label: 'Peta Organisasi', icon: Shield },
+      { href: '/org-documents', label: 'Dokumen Org.', icon: FileText },
+    ],
+  },
+  {
+    label: 'Dokumen & Surat',
+    items: [
+      { href: '/documents', label: 'Dokumen', icon: FileText },
+      { href: '/letters', label: 'Surat', icon: Mail },
+    ],
+  },
+  {
+    label: 'Keuangan',
+    items: [
+      { href: '/dues', label: 'Iuran', icon: CreditCard },
+      { href: '/payments', label: 'Pembayaran', icon: Wallet },
+    ],
+  },
+  {
+    label: 'Gamifikasi',
+    items: [
+      { href: '/gamification', label: 'Dasbor', icon: Trophy },
+      { href: '/gamification/admin', label: 'Admin', icon: Shield },
+      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp },
+      { href: '/gamification/report', label: 'Laporan', icon: BarChart3 },
+      { href: '/gamification/settings', label: 'Pengaturan', icon: Settings },
+    ],
+  },
+  {
+    label: 'Komunikasi',
+    items: [
+      { href: '/forum', label: 'Forum', icon: MessageSquare },
+      { href: '/notifications', label: 'Notifikasi', icon: Bell },
+      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Laporan & Analitik',
+    items: [
+      { href: '/reports', label: 'Laporan', icon: BarChart3 },
+      { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Sistem',
+    items: [
+      { href: '/users', label: 'Users', icon: Shield },
+      { href: '/settings', label: 'Pengaturan', icon: Settings },
+      { href: '/settings/email', label: 'Email Admin', icon: Mail },
+    ],
+  },
 ];
+
+// Flattened for header title lookup
+const menuItems = menuGroups.flatMap((g) => g.items);
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
@@ -128,25 +194,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dashboard Admin</p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname?.startsWith(item.href) || false;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm transition ${
-                  isActive
-                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Icon size={18} />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto p-2 space-y-4">
+          {menuGroups.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname?.startsWith(item.href) || false;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition ${
+                      isActive
+                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">

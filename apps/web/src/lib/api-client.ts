@@ -24,11 +24,38 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    // ─── NETWORK RETRY STRATEGY ───
+    const isNetworkError =
+      error.code === 'ECONNABORTED' ||
+      error.message?.includes('Network Error') ||
+      !error.response;
+
+    if (isNetworkError && !originalRequest._retryCount) {
+      originalRequest._retryCount = 1;
+    }
+
+    if (isNetworkError && originalRequest._retryCount <= 2) {
+      const delay = 500 * originalRequest._retryCount;
+      await new Promise((res) => setTimeout(res, delay));
+      originalRequest._retryCount += 1;
+      return apiClient(originalRequest);
+    }
+
+    // ─── TOKEN REFRESH HANDLING ───
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
+
+        if (!refreshToken) {
+          throw new Error('No refresh token');
+        }
+
         const { data } = await axios.post(`/api/auth/refresh`, {
           refreshToken,
         });
@@ -41,11 +68,23 @@ apiClient.interceptors.response.use(
       } catch {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
     }
 
-    return Promise.reject(error);
+    // ─── ERROR NORMALIZATION ───
+    const normalizedError = {
+      status: error.response?.status ?? 0,
+      message:
+        error.response?.data?.message ||
+        error.message ||
+        'Terjadi kesalahan pada server.',
+      data: error.response?.data ?? null,
+    };
+
+    return Promise.reject(normalizedError);
   },
 );
 

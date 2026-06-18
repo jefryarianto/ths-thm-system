@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 interface DetailRowProps {
-  icon: ComponentType<{ size?: number; className?: string }>;
+  icon: ComponentType<{ size?: string | number; className?: string }>;
   label: string;
   value: string | null;
   href?: string;
