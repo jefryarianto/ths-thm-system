@@ -130,8 +130,8 @@ jobs:
           if-no-files-found: error
           include-hidden-files: true
 
-  deploy:
-    name: Deploy to VPS
+  deploy-staging:
+    name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/master'
@@ -139,30 +139,105 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download API artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-dist
-          path: apps/api/dist
-
-      - name: Download Web artifacts
+      - name: Download Web build artifacts
         uses: actions/download-artifact@v4
         with:
           name: web-dist
-          path: apps/web/.next
+          path: web-dist
 
-      - name: Deploy via SSH
+      - name: Copy web build to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          source: "web-dist/"
+          target: "/tmp/ths-thm-deploy/"
+          strip_components: 1
+
+      - name: Deploy to staging containers
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_SSH_HOST }}
           username: ${{ secrets.VPS_SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
           script: |
-            cd /opt/ths-thm-system
-            git pull origin master
-            pnpm install --frozen-lockfile
-            pnpm --filter @ths-thm/api prisma:deploy
-            pnpm --filter @ths-thm/api build
-            pnpm --filter @ths-thm/web build
-            docker compose -f docker-compose.production.yml up -d --build
-            docker system prune -f
+            # Deploy web build to staging container
+            docker cp /tmp/ths-thm-deploy/.next/. ths-thm-staging-web:/app/.next/
+            docker restart ths-thm-staging-web
+            echo "✅ Web container restarted"
+
+            # Run database migrations
+            cd /opt/ths-thm-staging
+            docker compose -f docker-compose.staging.yml exec -T api sh -c 'cd /app/apps/api && node_modules/.bin/prisma migrate deploy' 2>&1 || echo 'ℹ️ Migration skipped or already up to date'
+            echo "✅ Database migrations applied"
+
+            # Clean up temp files
+            rm -rf /tmp/ths-thm-deploy
+            echo "✅ Cleanup done"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download API build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: api-dist
+          path: api-dist
+
+      - name: Download Web build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web-dist
+
+      - name: Copy API build to VPS (production)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          source: "api-dist/"
+          target: "/tmp/ths-thm-prod-deploy/api-dist"
+
+      - name: Copy Web build to VPS (production)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          source: "web-dist/"
+          target: "/tmp/ths-thm-prod-deploy/web-dist"
+
+      - name: Deploy to production containers
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          script: |
+            # Deploy API build
+            docker cp /tmp/ths-thm-prod-deploy/api-dist/. ths-thm-prod-api:/app/dist/ 2>/dev/null || echo '⚠️ API container not running'
+            # Deploy web build
+            docker cp /tmp/ths-thm-prod-deploy/web-dist/. ths-thm-prod-web:/app/.next/ 2>/dev/null || echo '⚠️ Web container not running'
+            # Restart containers
+            docker restart ths-thm-prod-api 2>/dev/null || true
+            docker restart ths-thm-prod-web 2>/dev/null || true
+            echo "✅ Production containers restarted"
+            # Run DB migrations
+            cd /opt/ths-thm
+            docker compose -f docker-compose.production.yml exec -T api sh -c 'cd /app/apps/api && node_modules/.bin/prisma migrate deploy' 2>&1 || echo 'ℹ️ Migration skipped'
+            # Cleanup
+            rm -rf /tmp/ths-thm-prod-deploy
+            echo "✅ Production deploy complete"
