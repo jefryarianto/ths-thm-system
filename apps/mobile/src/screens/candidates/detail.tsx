@@ -77,32 +77,34 @@ export default function CandidateDetailScreen() {
   };
 
   const handleReject = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Tolak Calon',
-          'Alasan penolakan (opsional):',
-          [
-            { text: 'Batal', style: 'cancel' },
-            {
-              text: 'Tolak',
-              style: 'destructive',
-              onPress: async (reason?: string) => {
-                setActionLoading('reject');
-                try {
-                  await apiClient.post(`/candidates/${id}/reject`, { reason });
-                  Alert.alert('Ditolak', 'Calon anggota telah ditolak');
-                  const res = await apiClient.get(`/candidates/${id}`);
-                  setCandidate(unwrap(res));
-                } catch (err: any) {
-                  Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
-                }
-                setActionLoading('');
-              },
+    if (Alert.prompt) {
+      Alert.prompt(
+        'Tolak Calon',
+        'Alasan penolakan (opsional):',
+        [
+          { text: 'Batal', style: 'cancel' },
+          {
+            text: 'Tolak',
+            style: 'destructive',
+            onPress: async (reason?: string) => {
+              setActionLoading('reject');
+              try {
+                await apiClient.post(`/candidates/${id}/reject`, { reason });
+                Alert.alert('Ditolak', 'Calon anggota telah ditolak');
+                const res = await apiClient.get(`/candidates/${id}`);
+                setCandidate(unwrap(res));
+              } catch (err: any) {
+                Alert.alert('Gagal', err.response?.data?.message || 'Terjadi kesalahan');
+              }
+              setActionLoading('');
             },
-          ],
-          'plain-text',
-        )
-      : handleRejectFallback();
+          },
+        ],
+        'plain-text',
+      );
+    } else {
+      handleRejectFallback();
+    }
   };
 
   const handleRejectFallback = () => {

@@ -8,13 +8,18 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
-const JWT_SECRET = (() => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required for EventsGateway');
+function getJwtSecret(): string {
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET;
   }
-  return secret;
-})();
+
+  // Allow tests to run without explicit env configuration
+  if (process.env.NODE_ENV === 'test') {
+    return 'test-secret';
+  }
+
+  throw new Error('JWT_SECRET environment variable is required for EventsGateway');
+}
 
 const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
@@ -44,7 +49,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const payload = jwt.verify(token, JWT_SECRET) as { sub: string; email: string; role: string };
+      const payload = jwt.verify(token, getJwtSecret()) as {
+        sub: string;
+        email: string;
+        role: string;
+      };
       const userId = payload.sub;
 
       // Attach userId and role to socket for later use
