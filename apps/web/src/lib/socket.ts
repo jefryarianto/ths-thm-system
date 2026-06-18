@@ -1,13 +1,14 @@
 import { io, Socket } from 'socket.io-client';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
 let socket: Socket | null = null;
 
 export function getSocket(token: string): Socket {
   if (socket?.connected) return socket;
 
-  socket = io(API_URL, {
+  // Use relative URL so it always connects to the current host.
+  // This works for localhost dev, staging, and production without needing
+  // a build-time NEXT_PUBLIC_* env var that would bake in a fixed URL.
+  socket = io({
     auth: { token },
     reconnection: true,
     reconnectionAttempts: 10,
