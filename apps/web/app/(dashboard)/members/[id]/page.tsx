@@ -26,6 +26,9 @@ import {
   IdCard,
   Download,
   Image,
+  Pencil,
+  X,
+  Save,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import {
@@ -129,6 +132,19 @@ export default function MemberDetailPage() {
     tabFromUrl || 'info'
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    namaLengkap: '',
+    jenisKelamin: 'L' as 'L' | 'P',
+    tempatLahir: '',
+    tanggalLahir: '',
+    alamat: '',
+    noHp: '',
+    email: '',
+    tingkat: '',
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
   const [cardData, setCardData] = useState<{ qrCode: string } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
 
@@ -483,6 +499,26 @@ export default function MemberDetailPage() {
                   Setujui
                 </button>
               )}
+              <button
+                onClick={() => {
+                  setEditForm({
+                    namaLengkap: member.namaLengkap,
+                    jenisKelamin: member.jenisKelamin,
+                    tempatLahir: member.tempatLahir || '',
+                    tanggalLahir: member.tanggalLahir || '',
+                    alamat: member.alamat || '',
+                    noHp: member.noHp || '',
+                    email: member.email || '',
+                    tingkat: member.tingkat || '',
+                  });
+                  setEditError('');
+                  setShowEditModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+              >
+                <Pencil size={14} />
+                Edit
+              </button>
               <button
                 onClick={() => setShowDeleteModal(true)}
                 className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
@@ -948,6 +984,155 @@ export default function MemberDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ── Edit Modal ── */}
+      <Modal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Anggota"
+        size="md"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setEditLoading(true);
+            setEditError('');
+            try {
+              const payload: Record<string, unknown> = {};
+              if (editForm.namaLengkap !== member?.namaLengkap) payload.namaLengkap = editForm.namaLengkap;
+              if (editForm.jenisKelamin !== member?.jenisKelamin) payload.jenisKelamin = editForm.jenisKelamin;
+              if (editForm.tempatLahir !== (member?.tempatLahir || '')) payload.tempatLahir = editForm.tempatLahir;
+              if (editForm.tanggalLahir !== (member?.tanggalLahir || '')) payload.tanggalLahir = editForm.tanggalLahir;
+              if (editForm.alamat !== (member?.alamat || '')) payload.alamat = editForm.alamat;
+              if (editForm.noHp !== (member?.noHp || '')) payload.noHp = editForm.noHp;
+              if (editForm.email !== (member?.email || '')) payload.email = editForm.email;
+              if (editForm.tingkat !== (member?.tingkat || '')) payload.tingkat = editForm.tingkat;
+
+              if (Object.keys(payload).length === 0) {
+                setEditError('Tidak ada perubahan yang dilakukan');
+                setEditLoading(false);
+                return;
+              }
+
+              await apiClient.patch(`/members/${member!.id}`, payload);
+              setShowEditModal(false);
+              await fetchMember();
+            } catch (err: unknown) {
+              const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+              setEditError(msg || 'Gagal menyimpan perubahan');
+            } finally {
+              setEditLoading(false);
+            }
+          }}
+          className="space-y-4"
+        >
+          {editError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
+              <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-red-700 dark:text-red-400">{editError}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
+              <input
+                type="text"
+                value={editForm.namaLengkap}
+                onChange={(e) => setEditForm({ ...editForm, namaLengkap: e.target.value })}
+                required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
+              <select
+                value={editForm.jenisKelamin}
+                onChange={(e) => setEditForm({ ...editForm, jenisKelamin: e.target.value as 'L' | 'P' })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>
+              <input
+                type="text"
+                value={editForm.tempatLahir}
+                onChange={(e) => setEditForm({ ...editForm, tempatLahir: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Lahir</label>
+              <input
+                type="date"
+                value={editForm.tanggalLahir ? editForm.tanggalLahir.split('T')[0] : ''}
+                onChange={(e) => setEditForm({ ...editForm, tanggalLahir: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
+              <textarea
+                value={editForm.alamat}
+                onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })}
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
+              <input
+                type="text"
+                value={editForm.noHp}
+                onChange={(e) => setEditForm({ ...editForm, noHp: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkat</label>
+              <input
+                type="text"
+                value={editForm.tingkat}
+                onChange={(e) => setEditForm({ ...editForm, tingkat: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(false)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={editLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              {editLoading ? (
+                <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Menyimpan...</>
+              ) : (
+                <><Save size={16} />Simpan Perubahan</>
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* ── Delete Modal ── */}
       <Modal

@@ -29,7 +29,7 @@ interface UserPayload {
 }
 
 interface OAuthUserProfile {
-  provider: 'google' | 'linkedin';
+  provider: 'google';
   providerId: string;
   email?: string;
   name: string;

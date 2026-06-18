@@ -61,7 +61,6 @@ describe('useMobileOAuth', () => {
     const { result } = renderHook(() => useMobileOAuth());
 
     expect(result.current).toHaveProperty('handleGoogleLogin');
-    expect(result.current).toHaveProperty('handleLinkedInLogin');
     expect(result.current).toHaveProperty('loading');
     expect(result.current.loading).toBeNull();
   });
@@ -79,23 +78,6 @@ describe('useMobileOAuth', () => {
 
     expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledWith(
       expect.stringContaining('/api/auth/google'),
-      expect.any(String),
-    );
-  });
-
-  it('opens WebBrowser for LinkedIn OAuth', async () => {
-    (WebBrowser.openAuthSessionAsync as jest.Mock).mockResolvedValue(
-      mockAuthSessionResult({ type: 'cancel' }),
-    );
-
-    const { result } = renderHook(() => useMobileOAuth());
-
-    await act(async () => {
-      await result.current.handleLinkedInLogin();
-    });
-
-    expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledWith(
-      expect.stringContaining('/api/auth/linkedin'),
       expect.any(String),
     );
   });

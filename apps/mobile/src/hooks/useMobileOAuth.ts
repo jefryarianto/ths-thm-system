@@ -60,22 +60,8 @@ export function useMobileOAuth() {
     }
   }, []);
 
-  const handleLinkedInLogin = useCallback(async () => {
-    setLoading('linkedin');
-    try {
-      const oauthUrl = `${API_URL}/api/auth/linkedin`;
-      const redirectUrl = `${FRONTEND_URL}/login`;
-      await WebBrowser.openAuthSessionAsync(oauthUrl, redirectUrl);
-    } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Terjadi kesalahan. Silakan coba lagi.');
-    } finally {
-      setLoading(null);
-    }
-  }, []);
-
   return {
     handleGoogleLogin,
-    handleLinkedInLogin,
     loading,
   };
 }
