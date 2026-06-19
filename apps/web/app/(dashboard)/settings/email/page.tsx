@@ -13,18 +13,20 @@ import {
   Server,
   AlertCircle,
   Info,
+  Code,
 } from 'lucide-react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import { type MailStatus } from './shared';
 import EmailTestTab from './email-test-tab';
 import EmailTemplatesTab from './email-templates-tab';
+import EmailVariablesTab from './email-variables-tab';
 import EmailLogsTab from './email-logs-tab';
 import EmailReportTab from './email-report-tab';
 import EmailSuppressedTab from './email-suppressed-tab';
 import { EMAIL_TEMPLATES } from './shared';
 
-type TabId = 'test' | 'templates' | 'logs' | 'report' | 'suppressed';
+type TabId = 'test' | 'templates' | 'variables' | 'logs' | 'report' | 'suppressed';
 
 const TABS: Array<{ id: TabId; label: string; icon: typeof Send }> = [
   { id: 'test', label: 'Test Email', icon: Send },
@@ -33,6 +35,7 @@ const TABS: Array<{ id: TabId; label: string; icon: typeof Send }> = [
     label: `Template (${EMAIL_TEMPLATES.reduce((c, g) => c + g.items.length, 0)})`,
     icon: FileText,
   },
+  { id: 'variables', label: 'Variabel', icon: Code },
   { id: 'logs', label: 'Riwayat', icon: History },
   { id: 'report', label: 'Laporan', icon: BarChart3 },
   { id: 'suppressed', label: 'Supresi', icon: Ban },
@@ -174,6 +177,7 @@ export default function EmailSettingsPage() {
       {/* Tab Content */}
       {activeTab === 'test' && <EmailTestTab />}
       {activeTab === 'templates' && <EmailTemplatesTab />}
+      {activeTab === 'variables' && <EmailVariablesTab />}
       {activeTab === 'logs' && <EmailLogsTab />}
       {activeTab === 'report' && <EmailReportTab />}
       {activeTab === 'suppressed' && <EmailSuppressedTab />}

@@ -161,11 +161,9 @@ async function main() {
       htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <h1 style="color: #1a56db;">Selamat Datang, {{nama}}!</h1>
   <p>Terima kasih telah bergabung dengan <strong>THS-THM</strong>.</p>
-  <p>Silakan login ke aplikasi untuk melengkapi profil Anda dan mengikuti kegiatan-kegiatan yang tersedia.</p>
+  <p>Silakan login ke aplikasi untuk melengkapi profil Anda dan mengikuti kegiatan yang tersedia.</p>
   <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-  <p style="color: #6b7280; font-size: 12px;">
-    THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
-  </p>
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System</p>
 </div>`,
       isActive: false,
     },
@@ -177,9 +175,7 @@ async function main() {
   <p>Anda telah resmi menjadi anggota <strong>THS-THM</strong>.</p>
   <p>Nomor Anggota: <strong>{{nomorAnggota}}</strong></p>
   <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-  <p style="color: #6b7280; font-size: 12px;">
-    THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
-  </p>
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System</p>
 </div>`,
       isActive: false,
     },
@@ -191,13 +187,83 @@ async function main() {
   <p>Halo <strong>{{nama}}</strong>,</p>
   <p>Klik tombol di bawah untuk mereset password Anda:</p>
   <div style="text-align: center; margin: 30px 0;">
-    <a href="{{resetUrl}}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-      Reset Password
-    </a>
+    <a href="{{resetUrl}}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Password</a>
   </div>
-  <p style="color: #6b7280; font-size: 12px;">
-    Jika Anda tidak meminta reset password, abaikan email ini.
-  </p>
+  <p style="color: #6b7280; font-size: 12px;">Jika Anda tidak meminta reset password, abaikan email ini.</p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'registrationApprovedEmail',
+      subject: 'Pendaftaran Disetujui — {{nama}}',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #1a56db;">Selamat, {{nama}}!</h2>
+  <p>Pendaftaran Anda telah disetujui. Anda sekarang terdaftar sebagai calon anggota THS-THM.</p>
+  <p>Silakan menunggu proses selanjutnya untuk menjadi anggota resmi.</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System</p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'paymentConfirmationEmail',
+      subject: 'Konfirmasi Pembayaran Iuran — THS-THM',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #16a34a;">Pembayaran Diterima</h2>
+  <p>Halo <strong>{{nama}}</strong>,</p>
+  <p>Pembayaran iuran periode <strong>{{periode}}</strong> sebesar <strong>Rp {{jumlah}}</strong> telah diterima.</p>
+  <p>Terima kasih atas kontribusi Anda.</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System — Notifikasi iuran otomatis</p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'claimStatusEmail',
+      subject: 'Status Klaim: {{status}} — THS-THM',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #1a56db;">Update Status Klaim</h2>
+  <p>Halo <strong>{{nama}}</strong>,</p>
+  <p>Status klaim Anda: <strong>{{status}}</strong></p>
+  <p>Alasan: {{alasan}}</p>
+  <p>Silakan login ke aplikasi untuk detail lebih lanjut.</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System</p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'badgeEarnedEmail',
+      subject: '{{badgeIcon}} Badge Baru! {{badgeName}}',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #a855f7;">Badge Baru Diraih!</h2>
+  <p>Selamat <strong>{{nama}}</strong>!</p>
+  <div style="text-align: center; margin: 24px 0; padding: 20px; background: #faf5ff; border-radius: 12px;">
+    <div style="font-size: 64px;">{{badgeIcon}}</div>
+    <h3 style="color: #7c3aed; margin: 12px 0;">{{badgeName}}</h3>
+    <p style="color: #6b7280;">{{description}}</p>
+  </div>
+  <p>Terus aktif berkontribusi untuk mendapatkan lebih banyak badge!</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System — Gamifikasi</p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'activityInvitationEmail',
+      subject: 'Undangan Kegiatan — {{kegiatanNama}}',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #1a56db;">Undangan Kegiatan</h2>
+  <p>Halo <strong>{{nama}}</strong>,</p>
+  <p>Anda telah didaftarkan sebagai peserta kegiatan:</p>
+  <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+    <tr><td style="padding: 8px; font-weight: bold;">Kegiatan</td><td style="padding: 8px;">{{kegiatanNama}}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold;">Tanggal</td><td style="padding: 8px;">{{tanggal}}</td></tr>
+    <tr><td style="padding: 8px; font-weight: bold;">Lokasi</td><td style="padding: 8px;">{{lokasi}}</td></tr>
+  </table>
+  <p>Mohon hadir tepat waktu.</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">THS-THM System</p>
 </div>`,
       isActive: false,
     },
@@ -210,7 +276,7 @@ async function main() {
       create: tpl,
     });
   }
-  console.log('Example email templates created');
+  console.log(`Seeded ${exampleTemplates.length} example email templates`);
 
   console.log('Seeding completed!');
 }
