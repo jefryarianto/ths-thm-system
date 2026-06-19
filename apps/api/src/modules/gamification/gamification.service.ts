@@ -45,8 +45,8 @@ export interface PointEvent {
   timestamp: string;
 }
 
-/** Member level definitions based on total points */
-const LEVELS = [
+/** Default level definitions — can be overridden via DB config */
+const DEFAULT_LEVELS = [
   { name: 'Bronze', minPoints: 0, icon: '🥉', color: '#cd7f32' },
   { name: 'Silver', minPoints: 100, icon: '🥈', color: '#c0c0c0' },
   { name: 'Gold', minPoints: 300, icon: '🥇', color: '#ffd700' },
@@ -54,13 +54,7 @@ const LEVELS = [
   { name: 'Diamond', minPoints: 1000, icon: '🔥', color: '#b9f2ff' },
 ];
 
-function getLevel(points: number): { name: string; icon: string; color: string } {
-  let level = LEVELS[0];
-  for (const l of LEVELS) {
-    if (points >= l.minPoints) level = l;
-  }
-  return level;
-}
+type LevelDef = { name: string; minPoints: number; icon: string; color: string };
 
 /** All available badges */
 const BADGES: Badge[] = [
@@ -151,10 +145,20 @@ const BADGES: Badge[] = [
  *
  * Tracks points, badges, and streaks for members via PostgreSQL.
  * Points are earned through training attendance, on-time dues payments, and achievements.
+ * Points values and level thresholds are configurable via DB settings (gamification_*).
  */
 @Injectable()
 export class GamificationService {
   private readonly logger = new Logger(GamificationService.name);
+
+  // ── Config Cache (60-second TTL) ──
+  private readonly configCache = new Map<string, { value: number; expiresAt: number }>();
+  private readonly CONFIG_CACHE_TTL_MS = 60_000;
+
+  // ── Level Cache (loaded lazily from DB) ──
+  private cachedLevels: LevelDef[] | null = null;
+  private levelsLoadedAt = 0;
+  private readonly LEVELS_CACHE_TTL_MS = 60_000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -162,6 +166,87 @@ export class GamificationService {
     private readonly notificationsService: NotificationsService,
     private readonly mailService: MailService,
   ) {}
+
+  // ═══════════════════════════════════════════════
+  //  CONFIG HELPERS
+  // ═══════════════════════════════════════════════
+
+  /**
+   * Read a numeric config value from DB with fallback default.
+   * Results are cached for 60 seconds to avoid excessive DB queries.
+   */
+  private async getNumericConfig(key: string, defaultVal: number): Promise<number> {
+    const cacheKey = `gamification_${key}`;
+    const cached = this.configCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value;
+    }
+    try {
+      const setting = await this.prisma.setting.findUnique({
+        where: { key: cacheKey },
+      });
+      if (setting && setting.value !== null && setting.value !== undefined) {
+        const parsed = Number(setting.value);
+        if (!isNaN(parsed)) {
+          this.configCache.set(cacheKey, { value: parsed, expiresAt: Date.now() + this.CONFIG_CACHE_TTL_MS });
+          return parsed;
+        }
+      }
+    } catch {
+      // If DB lookup fails, fall back to default
+    }
+    this.configCache.set(cacheKey, { value: defaultVal, expiresAt: Date.now() + this.CONFIG_CACHE_TTL_MS });
+    return defaultVal;
+  }
+
+  /**
+   * Load level thresholds from DB config, with TTL caching.
+   * Falls back to DEFAULT_LEVELS if no config found or on error.
+   */
+  private async getLevels(): Promise<LevelDef[]> {
+    if (this.cachedLevels && Date.now() - this.levelsLoadedAt < this.LEVELS_CACHE_TTL_MS) {
+      return this.cachedLevels;
+    }
+    try {
+      const settings = await this.prisma.setting.findMany({
+        where: { key: { startsWith: 'gamification_level_' } },
+      });
+      if (settings.length > 0) {
+        const configMap = new Map(settings.map((s) => [s.key, s.value as string]));
+        this.cachedLevels = DEFAULT_LEVELS.map((l) => {
+          const configKey = `gamification_level_${l.name.toLowerCase()}_min`;
+          const configVal = configMap.get(configKey);
+          if (configVal) {
+            const parsed = Number(configVal);
+            if (!isNaN(parsed)) {
+              return { ...l, minPoints: parsed };
+            }
+          }
+          return l;
+        });
+      } else {
+        this.cachedLevels = DEFAULT_LEVELS;
+      }
+    } catch {
+      this.cachedLevels = DEFAULT_LEVELS;
+    }
+    this.levelsLoadedAt = Date.now();
+    return this.cachedLevels;
+  }
+
+  /** Determine a member's level based on total points, using configurable thresholds. */
+  private async getLevel(points: number): Promise<{ name: string; icon: string; color: string }> {
+    const levels = await this.getLevels();
+    let level = levels[0];
+    for (const l of levels) {
+      if (points >= l.minPoints) level = l;
+    }
+    return level;
+  }
+
+  // ═══════════════════════════════════════════════
+  //  PROFILE
+  // ═══════════════════════════════════════════════
 
   /** Get or create a member's gamification profile */
   private async getOrCreate(anggotaId: string) {
@@ -200,7 +285,7 @@ export class GamificationService {
     const existingBadgeIds = new Set(existingBadges.map((b) => b.badgeId));
 
     // Calculate old level for level-up detection
-    const oldLevel = getLevel(profile.points);
+    const oldLevel = await this.getLevel(profile.points);
 
     // Add points
     const updatedProfile = await this.prisma.gamificationProfile.update({
@@ -212,7 +297,7 @@ export class GamificationService {
     });
 
     // Send level-up notification if level changed
-    const newLevel = getLevel(updatedProfile.points);
+    const newLevel = await this.getLevel(updatedProfile.points);
     if (newLevel.name !== oldLevel.name) {
       await this.sendLevelUpNotification(anggotaId, oldLevel, newLevel);
     }
@@ -285,7 +370,7 @@ export class GamificationService {
       profile: {
         anggotaId,
         points: updatedProfile.points,
-        level: getLevel(updatedProfile.points),
+        level: await this.getLevel(updatedProfile.points),
         badges: fullBadges.map((b) => b.badgeId),
         streaks: {
           latihan: updatedProfile.latihanStreak,
@@ -297,21 +382,9 @@ export class GamificationService {
     };
   }
 
-  /** Read a numeric config value from DB with fallback default */
-  private async getNumericConfig(key: string, defaultVal: number): Promise<number> {
-    try {
-      const setting = await this.prisma.setting.findUnique({
-        where: { key: `gamification_${key}` },
-      });
-      if (setting && setting.value !== null && setting.value !== undefined) {
-        const parsed = Number(setting.value);
-        if (!isNaN(parsed)) return parsed;
-      }
-    } catch {
-      // If DB lookup fails, fall back to default
-    }
-    return defaultVal;
-  }
+  // ═══════════════════════════════════════════════
+  //  RECORD ACTIVITIES
+  // ═══════════════════════════════════════════════
 
   /** Award a training attendance point */
   async recordTraining(
@@ -481,6 +554,10 @@ export class GamificationService {
     };
   }
 
+  // ═══════════════════════════════════════════════
+  //  GETTERS
+  // ═══════════════════════════════════════════════
+
   /** Get a member's gamification profile */
   async getProfile(anggotaId: string): Promise<GamificationProfile> {
     const profile = await this.getOrCreate(anggotaId);
@@ -499,7 +576,7 @@ export class GamificationService {
       anggotaId,
       namaLengkap: anggota?.namaLengkap ?? undefined,
       points: profile.points,
-      level: getLevel(profile.points),
+      level: await this.getLevel(profile.points),
       badges: badges.map((b) => b.badgeId),
       streaks: {
         latihan: profile.latihanStreak,
@@ -524,6 +601,10 @@ export class GamificationService {
   getAllBadges(): Badge[] {
     return [...BADGES];
   }
+
+  // ═══════════════════════════════════════════════
+  //  NOTIFICATIONS
+  // ═══════════════════════════════════════════════
 
   /** Send level-up notification when a member reaches a new tier */
   private async sendLevelUpNotification(
@@ -664,6 +745,10 @@ export class GamificationService {
     }
   }
 
+  // ═══════════════════════════════════════════════
+  //  LEADERBOARD & REPORTS
+  // ═══════════════════════════════════════════════
+
   /** Get leaderboard — top members by points */
   async getLeaderboard(
     limit: number = 10,
@@ -687,7 +772,6 @@ export class GamificationService {
         namaLengkap: { contains: search.trim(), mode: 'insensitive' },
       };
       if (where.anggota) {
-        // Merge with existing scope filter
         where.anggota = { ...(where.anggota as Record<string, unknown>), ...anggotaFilter };
       } else {
         where.anggota = anggotaFilter;
@@ -705,18 +789,22 @@ export class GamificationService {
       },
     });
 
-    return profiles.map((p) => ({
-      anggotaId: p.anggotaId,
-      namaLengkap: p.anggota?.namaLengkap ?? undefined,
-      points: p.points,
-      level: getLevel(p.points),
-      badges: p.badges.map((b) => b.badgeId),
-      streaks: {
-        latihan: p.latihanStreak,
-        iuran: p.iuranStreak,
-      },
-      lastActivity: p.lastActivity.toISOString(),
-    }));
+    const result: GamificationProfile[] = [];
+    for (const p of profiles) {
+      result.push({
+        anggotaId: p.anggotaId,
+        namaLengkap: p.anggota?.namaLengkap ?? undefined,
+        points: p.points,
+        level: await this.getLevel(p.points),
+        badges: p.badges.map((b) => b.badgeId),
+        streaks: {
+          latihan: p.latihanStreak,
+          iuran: p.iuranStreak,
+        },
+        lastActivity: p.lastActivity.toISOString(),
+      });
+    }
+    return result;
   }
 
   /** Get recent point events for a member */
@@ -900,38 +988,62 @@ export class GamificationService {
           rank: 0,
           namaLengkap: namaMap.get(anggotaId) || anggotaId,
           points: data.points,
-          level: getLevel(profile?.points ?? 0).name,
+          totalPts: profile ? profile.points : 0,
           events: data.events,
           lastActive: profile?.lastActivity?.toISOString() ?? '',
         };
       })
       .sort((a, b) => b.points - a.points)
-      .slice(0, limit)
-      .map((item, i) => ({ ...item, rank: i + 1 }));
+      .slice(0, limit);
 
-    return result;
+    // Resolve level names using configurable thresholds
+    const resolved: Array<{
+      rank: number;
+      namaLengkap: string;
+      points: number;
+      level: string;
+      events: number;
+      lastActive: string;
+    }> = [];
+    for (const item of result) {
+      const level = await this.getLevel(item.totalPts);
+      resolved.push({
+        ...item,
+        rank: resolved.length + 1,
+        level: level.name,
+      });
+    }
+
+    return resolved;
   }
+
+  // ═══════════════════════════════════════════════
+  //  GAMIFICATION CONFIG
+  // ═══════════════════════════════════════════════
 
   /** Get points distribution — how many members are at each level */
   async getPointsDistribution(): Promise<
     Array<{ level: string; icon: string; color: string; count: number }>
   > {
-    const profiles = await this.prisma.gamificationProfile.findMany({
-      select: { points: true },
-    });
+    const [profiles, levels] = await Promise.all([
+      this.prisma.gamificationProfile.findMany({
+        select: { points: true },
+      }),
+      this.getLevels(),
+    ]);
 
     const distribution = new Map<string, { icon: string; color: string; count: number }>();
-    for (const l of LEVELS) {
+    for (const l of levels) {
       distribution.set(l.name, { icon: l.icon, color: l.color, count: 0 });
     }
 
     for (const p of profiles) {
-      const level = getLevel(p.points);
+      const level = await this.getLevel(p.points);
       const entry = distribution.get(level.name);
       if (entry) entry.count++;
     }
 
-    return LEVELS.map((l) => ({
+    return levels.map((l) => ({
       level: l.name,
       icon: l.icon,
       color: l.color,
@@ -999,6 +1111,10 @@ export class GamificationService {
       });
     }
 
+    // Invalidate caches so next read picks up new values
+    this.configCache.clear();
+    this.cachedLevels = null;
+
     // Auto-sync: send notification to admin users about config change
     try {
       const adminUsers = await this.prisma.user.findMany({
@@ -1022,6 +1138,10 @@ export class GamificationService {
       this.logger.warn('Failed to send config update notification:', (error as Error).message);
     }
   }
+
+  // ═══════════════════════════════════════════════
+  //  WEEKLY SUMMARY & STATS
+  // ═══════════════════════════════════════════════
 
   /** Get weekly summary for a member */
   async getWeeklySummary(anggotaId: string): Promise<{
@@ -1057,11 +1177,13 @@ export class GamificationService {
       },
     });
 
+    const level = await this.getLevel(profile?.points ?? 0);
+
     return {
       pointsEarned,
       events: events.length,
       badgesEarned: badges.length,
-      level: getLevel(profile?.points ?? 0).name,
+      level: level.name,
       currentPoints: profile?.points ?? 0,
       periodStart: weekAgo.toISOString(),
       periodEnd: now.toISOString(),
