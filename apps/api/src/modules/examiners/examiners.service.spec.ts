@@ -32,6 +32,10 @@ describe('ExaminersService', () => {
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    renderWithOverride: jest.fn().mockResolvedValue({
+      subject: 'Examiner - THS-THM',
+      html: '<p>Examiner info</p>',
+    }),
   };
 
   const mockScopeHelper = {

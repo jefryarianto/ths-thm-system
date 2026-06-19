@@ -15,6 +15,17 @@ describe('MemberMailService', () => {
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    renderWithOverride: jest
+      .fn()
+      .mockImplementation(
+        async (
+          _templateName: string,
+          defaultRender: () => { subject: string; html: string },
+          _variables: Record<string, string>,
+        ) => {
+          return defaultRender();
+        },
+      ),
   };
 
   beforeEach(async () => {

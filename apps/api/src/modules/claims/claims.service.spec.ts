@@ -31,6 +31,10 @@ describe('ClaimsService', () => {
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    renderWithOverride: jest.fn().mockResolvedValue({
+      subject: 'Klaim - THS-THM',
+      html: '<p>Claim status info</p>',
+    }),
   };
 
   const mockMemberMailService = {

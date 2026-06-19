@@ -39,6 +39,10 @@ describe('GraduationsService', () => {
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    renderWithOverride: jest.fn().mockResolvedValue({
+      subject: 'Pendadaran - THS-THM',
+      html: '<p>Graduation info</p>',
+    }),
   };
 
   const mockMemberMailService = {

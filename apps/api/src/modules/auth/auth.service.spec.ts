@@ -44,6 +44,10 @@ describe('AuthService', () => {
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    renderWithOverride: jest.fn().mockResolvedValue({
+      subject: 'Reset Password - THS-THM',
+      html: '<p>Reset your password</p>',
+    }),
   };
 
   const mockJwt = {

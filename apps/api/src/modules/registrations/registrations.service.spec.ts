@@ -24,6 +24,10 @@ describe('RegistrationsService', () => {
 
   const mockMailService = {
     sendMail: jest.fn().mockResolvedValue(true),
+    renderWithOverride: jest.fn().mockResolvedValue({
+      subject: 'Registrasi - THS-THM',
+      html: '<p>Registration info</p>',
+    }),
   };
 
   beforeEach(async () => {
