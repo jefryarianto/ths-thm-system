@@ -252,6 +252,151 @@ describe('CandidatesService', () => {
     });
   });
 
+  describe('importCsv', () => {
+    it('should throw error when data exceeds MAX_IMPORT_ROWS', async () => {
+      const largeData = new Array(501).fill({ nama_lengkap: 'Test' });
+      await expect(service.importCsv(largeData)).rejects.toThrow(
+        'Maksimal 500 baris data per import',
+      );
+    });
+
+    it('should import rows with full template columns (nama_lengkap)', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [
+        {
+          nama_lengkap: 'Ahmad Fauzi',
+          jenis_kelamin: 'L',
+          tempat_lahir: 'Jakarta',
+          tanggal_lahir: '1998-05-12',
+          alamat: 'Jl. Merdeka No.10',
+          no_hp: '081234567890',
+          email: 'ahmad@example.com',
+          tingkat: 'Melati 1',
+          ranting_id: 'r1',
+          usul_oleh_id: 'u1',
+        },
+      ];
+
+      const result = await service.importCsv(data);
+
+      expect(result.success).toBe(true);
+      expect(result.data.success).toBe(1);
+      expect(result.data.errors).toBe(0);
+      expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            namaLengkap: 'Ahmad Fauzi',
+            jenisKelamin: 'L',
+            tempatLahir: 'Jakarta',
+            tanggalLahir: expect.any(Date),
+            alamat: 'Jl. Merdeka No.10',
+            noHp: '081234567890',
+            email: 'ahmad@example.com',
+            tingkat: 'Melati 1',
+            status: 'diusulkan',
+          }),
+        }),
+      );
+    });
+
+    it('should fallback to row.nama when nama_lengkap is missing', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [{ nama: 'Budi', email: 'budi@test.com' }];
+      await service.importCsv(data);
+      expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            namaLengkap: 'Budi',
+          }),
+        }),
+      );
+    });
+
+    it('should fallback to row.name when nama_lengkap and nama are missing', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [{ name: 'Siti' }];
+      await service.importCsv(data);
+      expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            namaLengkap: 'Siti',
+          }),
+        }),
+      );
+    });
+
+    it('should use defaults for missing optional fields', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [{ nama_lengkap: 'Test' }];
+      await service.importCsv(data);
+      expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            namaLengkap: 'Test',
+            jenisKelamin: 'L',
+            tempatLahir: null,
+            tanggalLahir: null,
+            tingkat: null,
+            status: 'diusulkan',
+          }),
+        }),
+      );
+    });
+
+    it('should parse tanggal_lahir as Date', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [
+        {
+          nama_lengkap: 'Test',
+          tanggal_lahir: '2000-06-15',
+        },
+      ];
+      await service.importCsv(data);
+      const callArg = mockPrisma.calonAnggota.create.mock.calls[0][0];
+      expect(callArg.data.tanggalLahir).toBeInstanceOf(Date);
+      expect(callArg.data.tanggalLahir.toISOString()).toContain('2000-06-15');
+    });
+
+    it('should handle mixed fallback with row.alamat', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [{ nama_lengkap: 'Test', address: 'Jl. Test', phone: '081234567890' }];
+      await service.importCsv(data);
+      expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            alamat: 'Jl. Test',
+            noHp: '081234567890',
+          }),
+        }),
+      );
+    });
+
+    it('should catch errors per row and continue processing', async () => {
+      mockPrisma.calonAnggota.create
+        .mockRejectedValueOnce(new Error('DB error'))
+        .mockResolvedValueOnce({ id: 'c2' });
+
+      const data = [
+        { nama_lengkap: 'Gagal' },
+        { nama_lengkap: 'Berhasil' },
+      ];
+
+      const result = await service.importCsv(data);
+
+      expect(result.data.success).toBe(1);
+      expect(result.data.errors).toBe(1);
+      expect(result.data.details).toHaveLength(1);
+      expect(result.data.details[0].error).toBe('DB error');
+    });
+
+    it('should invalidate cache after import', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const data = [{ nama_lengkap: 'Test' }];
+      await service.importCsv(data);
+      expect(mockCache.invalidatePrefix).toHaveBeenCalledWith('candidates:');
+    });
+  });
+
   describe('exportCsv', () => {
     it('should return candidates for export', async () => {
       mockPrisma.calonAnggota.findMany.mockResolvedValue([{ namaLengkap: 'Budi' }]);

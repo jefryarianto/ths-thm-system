@@ -7,6 +7,20 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, Info, XCircle, Download, FileText, Loader2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMPORT_ROWS = 500;
+
+// Field mapping for preview: CSV column → backend field
+const FIELD_MAPPINGS: { csvCol: string; field: string; required: boolean }[] = [
+  { csvCol: 'nama_lengkap', field: 'Nama Lengkap', required: true },
+  { csvCol: 'jenis_kelamin', field: 'Jenis Kelamin', required: false },
+  { csvCol: 'tempat_lahir', field: 'Tempat Lahir', required: false },
+  { csvCol: 'tanggal_lahir', field: 'Tanggal Lahir', required: false },
+  { csvCol: 'alamat', field: 'Alamat', required: false },
+  { csvCol: 'no_hp', field: 'No. HP', required: false },
+  { csvCol: 'email', field: 'Email', required: false },
+  { csvCol: 'tingkat', field: 'Tingkat', required: false },
+  { csvCol: 'ranting_id', field: 'Ranting ID', required: false },
+];
 
 const REQUIRED_COLUMNS = ['nama_lengkap', 'nama', 'Name'];
 const KNOWN_COLUMNS = [
@@ -117,6 +131,14 @@ export default function ImportCandidatesPage() {
     try {
       const text = await file.text();
       const lines = text.split('\n').filter(Boolean);
+
+      // Batch size check (exclude header)
+      const dataRowCount = lines.length - 1;
+      if (dataRowCount > MAX_IMPORT_ROWS) {
+        setError(`Maksimal ${MAX_IMPORT_ROWS} baris data per import. File Anda memiliki ${dataRowCount} baris.`);
+        return;
+      }
+
       if (lines.length < 2) {
         setError('File CSV harus memiliki header dan minimal 1 baris data');
         return;
@@ -287,8 +309,8 @@ export default function ImportCandidatesPage() {
             </p>
           </div>
 
-          {/* Download template */}
-          <div className="flex items-center justify-center gap-2">
+          {/* Template info + download */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <span className="text-xs text-gray-400">Belum punya file CSV?</span>
             <a
               href="/templates/template_csv_calon_anggota.csv"
@@ -298,6 +320,48 @@ export default function ImportCandidatesPage() {
               <Download size={14} />
               Download Template CSV
             </a>
+          </div>
+
+          {/* Column mapping preview */}
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Mapping Kolom
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+              {FIELD_MAPPINGS.map((m) => {
+                const matchedHeader = matchHeader(headers, m.csvCol);
+                return (
+                  <div
+                    key={m.csvCol}
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs ${
+                      matchedHeader
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                        : m.required
+                          ? 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                    }`}
+                  >
+                    {matchedHeader ? (
+                      <CheckCircle2 size={12} className="shrink-0" />
+                    ) : (
+                      <div className={`w-3 h-3 rounded-full border-2 shrink-0 ${m.required ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`} />
+                    )}
+                    <span className="font-mono">{m.field}</span>
+                    {matchedHeader && (
+                      <span className="text-gray-400 dark:text-gray-500">
+                        ← <span className="font-mono">{matchedHeader}</span>
+                      </span>
+                    )}
+                    {!matchedHeader && !m.required && (
+                      <span className="text-gray-400">(opsional)</span>
+                    )}
+                    {!matchedHeader && m.required && (
+                      <span className="text-red-400">(wajib)</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {csvData && (

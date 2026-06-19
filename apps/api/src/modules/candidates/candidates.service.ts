@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
@@ -14,6 +14,7 @@ export class CandidatesService {
   private readonly logger = new Logger(CandidatesService.name);
   private readonly CACHE_PREFIX = 'candidates:';
   private readonly CACHE_TTL = 30_000;
+  private readonly MAX_IMPORT_ROWS = 500;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -131,6 +132,10 @@ export class CandidatesService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async importCsv(data: any[]) {
+    if (data.length > this.MAX_IMPORT_ROWS) {
+      throw new BadRequestException(`Maksimal ${this.MAX_IMPORT_ROWS} baris data per import. File Anda memiliki ${data.length} baris.`);
+    }
+
     const results: {
       success: number;
       errors: number;
