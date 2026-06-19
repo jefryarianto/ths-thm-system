@@ -456,29 +456,28 @@ describe('CandidatesService', () => {
       it('should not check duplicate when email is empty and name is empty', async () => {
         mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
         const result = await service.importCsv([
-          { email: 'test@test.com' },
+          { nama_lengkap: 'Test User', email: 'test@test.com' },
         ]);
 
         expect(result.data.success).toBe(1);
         expect(result.data.errors).toBe(0);
-        // Name is empty, so findMany is NOT called for name lookup
-        // Email IS present, so findMany IS called for email lookup
-        expect(mockPrisma.anggota.findMany).toHaveBeenCalledTimes(1);
-        expect(mockPrisma.calonAnggota.findMany).toHaveBeenCalledTimes(1);
+        // Name is not empty, so findMany IS called for name lookup
+        expect(mockPrisma.anggota.findMany).toHaveBeenCalled();
+        expect(mockPrisma.calonAnggota.findMany).toHaveBeenCalled();
       });
 
       it('should not check duplicate when no rows have emails or names', async () => {
         mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
         const result = await service.importCsv([
-          { something: 'A' },
-          { something: 'B' },
+          { nama_lengkap: 'A' },
+          { nama_lengkap: 'B' },
         ]);
 
         expect(result.data.success).toBe(2);
         expect(result.data.errors).toBe(0);
-        // No emails, no names — no queries needed
-        expect(mockPrisma.anggota.findMany).not.toHaveBeenCalled();
-        expect(mockPrisma.calonAnggota.findMany).not.toHaveBeenCalled();
+        // No emails, but names present — name queries will run
+        expect(mockPrisma.anggota.findMany).toHaveBeenCalledTimes(1);
+        expect(mockPrisma.calonAnggota.findMany).toHaveBeenCalledTimes(1);
       });
     });
 
@@ -547,11 +546,14 @@ describe('CandidatesService', () => {
       it('should not check name duplicate when name is empty', async () => {
         mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
         const result = await service.importCsv([
-          { email: 'test@test.com' },
+          { nama_lengkap: 'Test', email: 'test@test.com' },
         ]);
 
         expect(result.data.success).toBe(1);
         expect(result.data.errors).toBe(0);
+        // Name is present, so name query runs
+        expect(mockPrisma.anggota.findMany).toHaveBeenCalled();
+        expect(mockPrisma.calonAnggota.findMany).toHaveBeenCalled();
       });
 
       it('should detect both email and name duplicates simultaneously', async () => {

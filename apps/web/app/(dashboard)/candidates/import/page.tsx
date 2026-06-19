@@ -51,6 +51,54 @@ function detectDelimiter(line: string): string {
   return ',';
 }
 
+/**
+ * Parse CSV content into logical lines, joining multi-line quoted fields.
+ * Handles \r\n, \n, \r line endings and escaped quotes ("").
+ */
+function splitCsvLines(text: string): string[] {
+  const lines: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if ((char === '\r' && nextChar === '\n') || (char === '\n' && nextChar === '\r')) {
+      if (!inQuotes) {
+        lines.push(current);
+        current = '';
+        i++;
+      } else {
+        current += '\n';
+        i++;
+      }
+    } else if (char === '\n' || char === '\r') {
+      if (!inQuotes) {
+        lines.push(current);
+        current = '';
+      } else {
+        current += '\n';
+      }
+    } else {
+      current += char;
+    }
+  }
+
+  if (current.trim().length > 0 || lines.length === 0) {
+    lines.push(current);
+  }
+
+  return lines;
+}
+
 function parseCsvLine(line: string, delimiter: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -183,7 +231,9 @@ export default function ImportCandidatesPage() {
 
     try {
       const text = await file.text();
-      const allLines = text.split(/\r?\n/);
+
+      // Use multi-line-aware CSV line splitter (handles quoted fields with newlines)
+      const allLines = splitCsvLines(text);
       const nonEmptyLines = allLines.filter((l) => l.trim().length > 0);
 
       // Detect delimiter from header line
@@ -622,40 +672,48 @@ export default function ImportCandidatesPage() {
               </div>
 
               {/* Preview table with row validation */}
-              <div className="overflow-x-auto max-h-56 border border-gray-200 dark:border-gray-700 rounded-xl">
+              <div className="overflow-x-auto max-h-56 border border-gray-200 dark:border-gray-600 rounded-xl shadow-sm dark:shadow-gray-900/30">
                 <table className="w-full text-xs">
-                  <thead className="bg-gray-50 dark:bg-gray-800/50 sticky top-0">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="px-2 py-1.5 text-left font-medium text-gray-500 w-8">#</th>
+                      <th className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 w-8">#</th>
                       {Object.keys(csvData[0]).map(h => (
-                        <th key={h} className="px-2 py-1.5 text-left font-medium text-gray-500 whitespace-nowrap">{h}</th>
+                        <th key={h} className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{h}</th>
                       ))}
-                      <th className="px-2 py-1.5 text-left font-medium text-gray-500 w-20">Status</th>
+                      <th className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 w-20">Status</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                     {csvData.slice(0, 10).map((row, i) => {
                       const valid = rowValidations[i];
                       const hasRowIssues = valid && valid.issues.length > 0;
                       return (
                         <tr
                           key={i}
-                          className={`border-b border-gray-100 dark:border-gray-700/50 ${hasRowIssues ? 'bg-red-50/50 dark:bg-red-950/20' : ''}`}
+                          className={`${
+                            hasRowIssues
+                              ? 'bg-red-50/50 dark:bg-red-950/20'
+                              : 'odd:bg-white dark:odd:bg-gray-900/50 even:bg-gray-50/50 dark:even:bg-gray-800/30'
+                          } hover:bg-gray-100/50 dark:hover:bg-gray-750 transition-colors`}
                         >
-                          <td className="px-2 py-1.5 text-gray-400">{i + 1}</td>
+                          <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500 font-mono">{i + 1}</td>
                           {Object.values(row).map((v, j) => (
                             <td key={j} className="px-2 py-1.5 text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
-                              {v || <span className="text-gray-300 dark:text-gray-600 italic">—</span>}
+                              {v ? (
+                                <span title={v}>{v}</span>
+                              ) : (
+                                <span className="text-gray-300 dark:text-gray-600 italic">—</span>
+                              )}
                             </td>
                           ))}
                           <td className="px-2 py-1.5">
                             {hasRowIssues ? (
-                              <span className="inline-flex items-center gap-1 text-red-500" title={valid!.issues.join('; ')}>
+                              <span className="inline-flex items-center gap-1 text-red-500 dark:text-red-400" title={valid!.issues.join('; ')}>
                                 <XCircle size={12} />
                                 {valid!.issues.length} err
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-green-500">
+                              <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
                                 <CheckCircle2 size={12} />
                                 OK
                               </span>
@@ -666,7 +724,7 @@ export default function ImportCandidatesPage() {
                     })}
                     {csvData.length > 10 && (
                       <tr>
-                        <td colSpan={Object.keys(csvData[0]).length + 2} className="px-2 py-2 text-center text-gray-400 text-xs">
+                        <td colSpan={Object.keys(csvData[0]).length + 2} className="px-2 py-2 text-center text-gray-400 dark:text-gray-500 text-xs">
                           ... dan {csvData.length - 10} baris lainnya
                         </td>
                       </tr>
@@ -677,21 +735,21 @@ export default function ImportCandidatesPage() {
 
               {/* Row-level error details */}
               {errorCount > 0 && (
-                <div className="max-h-32 overflow-y-auto space-y-1.5 bg-red-50/50 dark:bg-red-950/10 rounded-xl p-3">
+                <div className="max-h-32 overflow-y-auto space-y-1.5 bg-red-50/50 dark:bg-red-950/20 rounded-xl p-3 border border-red-100 dark:border-red-900/50">
                   {rowValidations
                     .filter((r) => r.issues.length > 0)
                     .slice(0, 20)
                     .map((r) => (
                       <p key={r.rowIndex} className="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
-                        <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                        <AlertCircle size={12} className="mt-0.5 shrink-0 text-red-400 dark:text-red-500" />
                         <span>
-                          <strong>Baris {r.rowIndex + 2}:</strong>{' '}
+                          <strong className="text-red-700 dark:text-red-300">Baris {r.rowIndex + 2}:</strong>{' '}
                           {r.issues.join('; ')}
                         </span>
                       </p>
                     ))}
                   {errorCount > 20 && (
-                    <p className="text-xs text-gray-400 text-center">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
                       ... dan {errorCount - 20} masalah lainnya
                     </p>
                   )}

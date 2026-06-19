@@ -216,6 +216,35 @@ export class CandidatesService {
           continue;
         }
 
+        // Server-side field validation
+        const nameValue = (row.nama_lengkap || row.nama || row.name || '').trim();
+        if (!nameValue) {
+          results.errors++;
+          results.details.push({ row, error: 'Nama lengkap tidak boleh kosong' });
+          continue;
+        }
+
+        const jenisKelamin = row.jenis_kelamin || '';
+        if (jenisKelamin && !['L', 'P'].includes(jenisKelamin.toUpperCase())) {
+          results.errors++;
+          results.details.push({ row, error: `Jenis kelamin "${jenisKelamin}" tidak valid. Harus "L" atau "P".` });
+          continue;
+        }
+
+        const emailVal = (row.email || '').trim();
+        if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+          results.errors++;
+          results.details.push({ row, error: `Format email "${emailVal}" tidak valid` });
+          continue;
+        }
+
+        const hpVal = (row.no_hp || row.phone || '').replace(/[\s-]/g, '');
+        if (hpVal && !/^(\+?62|0)\d{8,13}$/.test(hpVal)) {
+          results.errors++;
+          results.details.push({ row, error: `Format nomor HP "${row.no_hp || row.phone}" tidak valid (mulai 0/+62, 9-14 digit)` });
+          continue;
+        }
+
         await this.prisma.calonAnggota.create({
           data: {
             namaLengkap: row.nama_lengkap || row.nama || row.name,
