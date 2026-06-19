@@ -51,23 +51,32 @@ Token:
 
 ## Modules
 
-| Modul         | Deskripsi                                           |
-| ------------- | --------------------------------------------------- |
-| Auth          | Login, register, refresh token, role management     |
-| Users         | CRUD user/admin sistem                              |
-| Members       | CRUD anggota, validasi, approval, import/export CSV |
-| Candidates    | CRUD calon, validasi, approve/reject, import CSV    |
-| Registrations | Pendaftaran baru, verifikasi, approval              |
-| Claims        | Klaim anggota (sertifikat, dokumen)                 |
-| Trainings     | Latihan, absensi, evaluasi                          |
-| Graduations   | Pendadaran, peserta, kelulusan, generate sertifikat |
-| Activities    | Kegiatan/event, peserta, kehadiran                  |
-| Examiners     | Data penguji, penugasan, jadwal                     |
-| Assessments   | Aspek & item penilaian, input skor                  |
-| Documents     | Generate dokumen (kartu, sertifikat, piagam) + QR   |
-| Org-Documents | Dokumen organisasi (AD/ART, SK, proposal, dll)      |
-| Letters       | Surat masuk & keluar, disposisi                     |
-| Dues          | Iuran anggota, pembayaran, tunggakan                |
-| Notifications | Push notification FCM, scheduling                   |
-| Reports       | Laporan & statistik                                 |
-| Settings      | Konfigurasi, roles, signature, stamp                |
+| Modul | Deskripsi |
+|-------|-----------|
+| Auth | Login, register, refresh token, Google OAuth |
+| Users | CRUD user/admin sistem |
+| Members | CRUD anggota, validasi, approval, import/export CSV |
+| Candidates | CRUD calon, validasi, approve/reject, import CSV |
+| Registrations | Pendaftaran baru, verifikasi, approval |
+| Claims | Klaim anggota (sertifikat, dokumen) |
+| Trainings | Latihan, absensi, evaluasi |
+| Graduations | Pendadaran, peserta, kelulusan |
+| Activities | Kegiatan/event, peserta, kehadiran |
+| Examiners | Data penguji, penugasan, jadwal |
+| Assessments | Aspek & item penilaian, input skor |
+| Documents | Generate dokumen (kartu, sertifikat, piagam) + QR |
+| Org-Documents | Dokumen organisasi (AD/ART, SK, proposal, dll) |
+| Letters | Surat masuk & keluar, disposisi |
+| Dues | Iuran anggota, pembayaran manual, konfirmasi |
+| Payments | Info bank/QRIS, upload bukti, verifikasi |
+| Notifications | Push notification FCM, preferences |
+| Reports | Laporan, dashboard stats, chart data |
+| Settings | Konfigurasi sistem, branding, audit log |
+| Gamification | Points, badges, leaderboard, rewards |
+| Forum | Forum komunitas — threads, posts, categories |
+| Chat | Pesan real-time via WebSocket |
+| Org-Structure | Distrik, Wilayah, Ranting management |
+| Upload | Upload foto anggota (multipart) |
+| Calendar | Kalender event gabungan |
+| Approvals | Workflow persetujuan |
+| Health | Status sistem |

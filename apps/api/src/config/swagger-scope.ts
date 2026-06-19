@@ -76,7 +76,7 @@ export function setupSwagger(app: Parameters<typeof SwaggerModule.createDocument
     .addTag('Org-Documents', 'Dokumen organisasi — shared across org')
     .addTag('Claims', 'Klaim anggota — scope filtered via anggota relation')
     .addTag('Letters', 'Surat masuk dan keluar — admin-level access')
-    .addTag('Payments', 'Pembayaran online (Stripe) — scope verified via iuran to anggota')
+    .addTag('Payments', 'Pembayaran manual dan QRIS — konfirmasi dan verifikasi')
     .addTag('Reports', 'Laporan dan dashboard — scope-aware queries')
     .addTag('Notifications', 'Notifikasi FCM')
     .addTag('Users', 'Manajemen user dan role — scope filtered by rantingId')
