@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, Info, XCircle } from 'lucide-react';
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2, Info, XCircle, Download, FileText, Loader2 } from 'lucide-react';
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const REQUIRED_COLUMNS = ['nama', 'Name'];
 const KNOWN_COLUMNS = [
@@ -87,13 +89,28 @@ export default function ImportCandidatesPage() {
     [rowValidations],
   );
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processFile = useCallback(async (file: File) => {
     setResult(null);
     setCsvData(null);
     setHeaders([]);
     setHeaderWarnings([]);
+    setError('');
+
+    // File size check
+    if (file.size > MAX_FILE_SIZE) {
+      const mb = (file.size / (1024 * 1024)).toFixed(1);
+      setError(`File terlalu besar (${mb} MB). Maksimal 5 MB.`);
+      return;
+    }
+
+    // File type check
+    if (!file.name.endsWith('.csv') && file.type !== 'text/csv') {
+      setError('Hanya file CSV yang didukung. Pilih file dengan ekstensi .csv.');
+      return;
+    }
 
     try {
       const text = await file.text();
@@ -113,7 +130,7 @@ export default function ImportCandidatesPage() {
       );
       if (!hasNameHdr) {
         warnings.push(
-          `Kolom "nama" tidak ditemukan. Pastikan CSV memiliki kolom nama.`,
+          'Kolom "nama" tidak ditemukan. Pastikan CSV memiliki kolom nama.',
         );
       }
 
@@ -141,11 +158,38 @@ export default function ImportCandidatesPage() {
       });
 
       setCsvData(data);
-      setError('');
     } catch {
       setError('Gagal membaca file CSV. Pastikan file dalam format CSV valid.');
     }
-  };
+  }, []);
+
+  const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  }, [processFile]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  }, [processFile]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }, []);
 
   const handleImport = async () => {
     if (!csvData || csvData.length === 0) return;
@@ -196,10 +240,62 @@ export default function ImportCandidatesPage() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center">
-            <Upload size={32} className="mx-auto text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500">Pilih file CSV untuk diimport</p>
-            <input type="file" accept=".csv" onChange={handleFile} className="mt-2 text-sm" />
+          {/* Upload zone */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={`relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 ${
+              dragOver
+                ? 'border-purple-400 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/20 scale-[1.02]'
+                : 'border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFile}
+              className="hidden"
+            />
+            <div className={`transition-transform duration-200 ${dragOver ? 'scale-110' : ''}`}>
+              {dragOver ? (
+                <FileText size={40} className="mx-auto text-purple-500 mb-3" />
+              ) : (
+                <Upload size={40} className="mx-auto text-gray-400 mb-3" />
+              )}
+            </div>
+            {dragOver ? (
+              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                Lepaskan file di sini
+              </p>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Tarik & lepas file CSV di sini
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  atau klik untuk memilih file
+                </p>
+              </>
+            )}
+            <p className="text-xs text-gray-400 mt-3">
+              Format: .csv &middot; Maks: 5 MB
+            </p>
+          </div>
+
+          {/* Download template */}
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs text-gray-400">Belum punya file CSV?</span>
+            <a
+              href="/templates/template_csv_calon_anggota.csv"
+              download
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition"
+            >
+              <Download size={14} />
+              Download Template CSV
+            </a>
           </div>
 
           {csvData && (
@@ -327,7 +423,7 @@ export default function ImportCandidatesPage() {
                   } disabled:opacity-50`}
                 >
                   {importing ? (
-                    <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg> Mengimpor...</>
+                    <><Loader2 size={16} className="animate-spin" /> Mengimpor...</>
                   ) : (
                     <><Upload size={15} /> Import {csvData.length} Data</>
                   )}

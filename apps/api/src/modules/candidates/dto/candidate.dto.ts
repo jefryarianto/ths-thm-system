@@ -1,14 +1,15 @@
-import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min, MinLength, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateCandidateDto {
   @ApiProperty()
   @IsString()
+  @MinLength(1, { message: 'Nama lengkap tidak boleh kosong' })
   namaLengkap: string;
 
   @ApiProperty({ enum: ['L', 'P'] })
-  @IsEnum(['L', 'P'])
+  @IsEnum(['L', 'P'], { message: 'Jenis kelamin harus L atau P' })
   jenisKelamin: 'L' | 'P';
 
   @ApiPropertyOptional()
@@ -29,11 +30,14 @@ export class CreateCandidateDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^(\+?62|0)\d{8,13}$/, {
+    message: 'Format nomor HP tidak valid (mulai dengan 0 atau +62, 9-14 digit)',
+  })
   noHp?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsEmail()
+  @IsEmail({}, { message: 'Format email tidak valid' })
   email?: string;
 
   @ApiPropertyOptional()
