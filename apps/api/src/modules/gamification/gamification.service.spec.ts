@@ -23,6 +23,9 @@ const prismaMock: any = {
     findMany: jest.fn(),
     count: jest.fn(),
   },
+  setting: {
+    findUnique: jest.fn(),
+  },
   anggota: {
     findUnique: jest.fn(),
     findMany: jest.fn(),

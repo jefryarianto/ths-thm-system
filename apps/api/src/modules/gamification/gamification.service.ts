@@ -297,6 +297,22 @@ export class GamificationService {
     };
   }
 
+  /** Read a numeric config value from DB with fallback default */
+  private async getNumericConfig(key: string, defaultVal: number): Promise<number> {
+    try {
+      const setting = await this.prisma.setting.findUnique({
+        where: { key: `gamification_${key}` },
+      });
+      if (setting && setting.value !== null && setting.value !== undefined) {
+        const parsed = Number(setting.value);
+        if (!isNaN(parsed)) return parsed;
+      }
+    } catch {
+      // If DB lookup fails, fall back to default
+    }
+    return defaultVal;
+  }
+
   /** Award a training attendance point */
   async recordTraining(
     anggotaId: string,
@@ -311,7 +327,8 @@ export class GamificationService {
       },
     });
 
-    const result = await this.addPoints(anggotaId, 'training', 10, 'Latihan rutin');
+    const trainingPoints = await this.getNumericConfig('points_training', 10);
+    const result = await this.addPoints(anggotaId, 'training', trainingPoints, 'Latihan rutin');
 
     // Check training streak badges
     const existingBadgeIds = new Set(result.profile.badges);
@@ -390,7 +407,11 @@ export class GamificationService {
       });
     }
 
-    const points = onTime ? 20 : 5;
+    const [onTimePoints, latePoints] = await Promise.all([
+      this.getNumericConfig('points_dues_on_time', 20),
+      this.getNumericConfig('points_dues_late', 5),
+    ]);
+    const points = onTime ? onTimePoints : latePoints;
     const result = await this.addPoints(
       anggotaId,
       'dues',
