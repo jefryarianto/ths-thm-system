@@ -19,6 +19,7 @@ export default function NewCandidatePage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Org structure cascading dropdowns
   const [distriks, setDistriks] = useState<{ id: string; nama: string }[]>([]);
@@ -65,12 +66,30 @@ export default function NewCandidatePage() {
     setOrgLoading(prev => ({ ...prev, ranting: false }));
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!form.namaLengkap.trim()) {
+      errors.namaLengkap = 'Nama lengkap wajib diisi';
+    }
+    if (!selectedRanting) {
+      errors.ranting = 'Pilih ranting terlebih dahulu';
+    }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = 'Format email tidak valid';
+    }
+    if (form.noHp && !/^(\+?62|0)\d{8,13}$/.test(form.noHp.replace(/[\s-]/g, ''))) {
+      errors.noHp = 'Format no. HP tidak valid (mulai dengan 0 atau +62, 9-14 digit)';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRanting) {
-      setError('Pilih ranting terlebih dahulu');
-      return;
-    }
+    if (!validateForm()) return;
+
     setLoading(true);
     setError('');
 
@@ -176,10 +195,16 @@ export default function NewCandidatePage() {
               <input
                 type="text"
                 value={form.noHp}
-                onChange={(e) => setForm({ ...form, noHp: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, noHp: e.target.value });
+                  if (fieldErrors.noHp) setFieldErrors((prev) => ({ ...prev, noHp: '' }));
+                }}
                 placeholder="08123456789"
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                className={`w-full px-3 py-2.5 border ${fieldErrors.noHp ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm`}
               />
+              {fieldErrors.noHp && (
+                <p className="text-xs text-red-500 dark:text-red-400 mt-1">{fieldErrors.noHp}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -190,10 +215,16 @@ export default function NewCandidatePage() {
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                }}
                 placeholder="email@example.com"
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                className={`w-full px-3 py-2.5 border ${fieldErrors.email ? 'border-red-400 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm`}
               />
+              {fieldErrors.email && (
+                <p className="text-xs text-red-500 dark:text-red-400 mt-1">{fieldErrors.email}</p>
+              )}
             </div>
 
             {/* Tempat Lahir */}
@@ -222,7 +253,6 @@ export default function NewCandidatePage() {
                 className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
               />
             </div>
-
             {/* Alamat */}
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -283,7 +313,10 @@ export default function NewCandidatePage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting <span className="text-red-500">*</span></label>
                 <select
                   value={selectedRanting}
-                  onChange={(e) => setSelectedRanting(e.target.value)}
+                  onChange={(e) => {
+                  setSelectedRanting(e.target.value);
+                  if (fieldErrors.ranting) setFieldErrors((prev) => ({ ...prev, ranting: '' }));
+                }}
                   disabled={!selectedWilayah}
                   required
                   className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm disabled:opacity-50"
