@@ -82,21 +82,76 @@ async function main() {
   });
   console.log('Organization structure created');
 
-  // Create sample member
-  const member = await prisma.anggota.upsert({
-    where: { nomorAnggota: 'THS-2026-0001' },
+  // ── Seeder Users ──
+  // Create ranting admin user
+  const rantingAdmin = await prisma.user.upsert({
+    where: { email: 'admin.ranting@ths-thm.org' },
     update: {},
     create: {
+      email: 'admin.ranting@ths-thm.org',
+      passwordHash,
+      namaLengkap: 'Admin Ranting',
+      role: 'admin_ranting',
       rantingId: ranting.id,
-      nomorAnggota: 'THS-2026-0001',
-      namaLengkap: 'Anggota Contoh',
-      jenisKelamin: 'L',
-      statusKeanggotaan: 'aktif',
-      statusData: 'complete',
-      statusValidasi: 'approved',
+      isActive: true,
     },
   });
-  console.log(`Sample member created: ${member.namaLengkap}`);
+  console.log(`Ranting admin created: ${rantingAdmin.email}`);
+
+  // ── Seeder Members ──
+  const sampleMembers = [
+    {
+      nomorAnggota: 'THS-2026-0001',
+      namaLengkap: 'Anggota Contoh',
+      jenisKelamin: 'L' as const,
+      tempatLahir: 'Jakarta',
+      tanggalLahir: new Date('1990-01-15'),
+      alamat: 'Jl. Merdeka No. 10, Jakarta Pusat',
+      noHp: '081234567890',
+      email: 'anggota.contoh@email.com',
+      statusKeanggotaan: 'aktif' as const,
+      statusData: 'complete' as const,
+      statusValidasi: 'approved' as const,
+    },
+    {
+      nomorAnggota: 'THS-2026-0002',
+      namaLengkap: 'Siti Rahmawati',
+      jenisKelamin: 'P' as const,
+      tempatLahir: 'Bandung',
+      tanggalLahir: new Date('1992-06-20'),
+      alamat: 'Jl. Diponegoro No. 25, Bandung',
+      noHp: '082345678901',
+      email: 'siti.rahmawati@email.com',
+      statusKeanggotaan: 'aktif' as const,
+      statusData: 'complete' as const,
+      statusValidasi: 'approved' as const,
+    },
+    {
+      nomorAnggota: 'THS-2026-0003',
+      namaLengkap: 'Budi Santoso',
+      jenisKelamin: 'L' as const,
+      tempatLahir: 'Surabaya',
+      tanggalLahir: new Date('1988-11-03'),
+      alamat: 'Jl. Pahlawan No. 5, Surabaya',
+      noHp: '083456789012',
+      email: 'budi.santoso@email.com',
+      statusKeanggotaan: 'nonaktif' as const,
+      statusData: 'complete' as const,
+      statusValidasi: 'approved' as const,
+    },
+  ];
+
+  for (const m of sampleMembers) {
+    const member = await prisma.anggota.upsert({
+      where: { nomorAnggota: m.nomorAnggota },
+      update: {},
+      create: {
+        rantingId: ranting.id,
+        ...m,
+      },
+    });
+    console.log(`Member created: ${member.namaLengkap} (${member.nomorAnggota})`);
+  }
 
   console.log('Seeding completed!');
 }
