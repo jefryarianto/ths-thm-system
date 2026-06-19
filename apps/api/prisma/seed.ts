@@ -153,6 +153,65 @@ async function main() {
     console.log(`Member created: ${member.namaLengkap} (${member.nomorAnggota})`);
   }
 
+  // ── Seeder Email Template Examples ──
+  const exampleTemplates = [
+    {
+      name: 'welcomeMemberEmail',
+      subject: 'Selamat Datang, {{nama}}! — THS-THM',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h1 style="color: #1a56db;">Selamat Datang, {{nama}}!</h1>
+  <p>Terima kasih telah bergabung dengan <strong>THS-THM</strong>.</p>
+  <p>Silakan login ke aplikasi untuk melengkapi profil Anda dan mengikuti kegiatan-kegiatan yang tersedia.</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">
+    THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
+  </p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'approvedMemberEmail',
+      subject: 'Selamat! {{nama}} Telah Menjadi Anggota THS-THM',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h1 style="color: #16a34a;">Selamat, {{nama}}!</h1>
+  <p>Anda telah resmi menjadi anggota <strong>THS-THM</strong>.</p>
+  <p>Nomor Anggota: <strong>{{nomorAnggota}}</strong></p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+  <p style="color: #6b7280; font-size: 12px;">
+    THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
+  </p>
+</div>`,
+      isActive: false,
+    },
+    {
+      name: 'resetPasswordEmail',
+      subject: 'Reset Password — THS-THM System',
+      htmlBody: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h2 style="color: #1a56db;">Reset Password</h2>
+  <p>Halo <strong>{{nama}}</strong>,</p>
+  <p>Klik tombol di bawah untuk mereset password Anda:</p>
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="{{resetUrl}}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+      Reset Password
+    </a>
+  </div>
+  <p style="color: #6b7280; font-size: 12px;">
+    Jika Anda tidak meminta reset password, abaikan email ini.
+  </p>
+</div>`,
+      isActive: false,
+    },
+  ];
+
+  for (const tpl of exampleTemplates) {
+    await prisma.emailTemplate.upsert({
+      where: { name: tpl.name },
+      update: {},
+      create: tpl,
+    });
+  }
+  console.log('Example email templates created');
+
   console.log('Seeding completed!');
 }
 

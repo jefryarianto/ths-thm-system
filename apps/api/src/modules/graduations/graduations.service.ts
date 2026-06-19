@@ -208,10 +208,15 @@ export class GraduationsService {
             day: 'numeric',
           })
         : '-';
-      const tpl = graduationRegisteredEmail(nama, namaPendadaran, tanggal);
+      const tpl = await this.mailService.renderWithOverride(
+        'graduationRegisteredEmail',
+        () => graduationRegisteredEmail(nama, namaPendadaran, tanggal),
+        { nama, namaPendadaran, tanggal },
+      );
       await this.mailService.sendMail({
         to: email,
-        ...tpl,
+        subject: tpl.subject,
+        html: tpl.html,
         metadata: { module: 'graduations', template: 'graduationRegisteredEmail' },
       });
     } catch (error) {
@@ -226,10 +231,15 @@ export class GraduationsService {
     skor?: number,
   ): Promise<void> {
     try {
-      const tpl = graduationResultEmail(nama, lulus, skor);
+      const tpl = await this.mailService.renderWithOverride(
+        'graduationResultEmail',
+        () => graduationResultEmail(nama, lulus, skor),
+        { nama, lulus: lulus ? 'Lulus' : 'Gagal', skor: String(skor || 0) },
+      );
       await this.mailService.sendMail({
         to: email,
-        ...tpl,
+        subject: tpl.subject,
+        html: tpl.html,
         metadata: { module: 'graduations', template: 'graduationResultEmail' },
       });
     } catch (error) {

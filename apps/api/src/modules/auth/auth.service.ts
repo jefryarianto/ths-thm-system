@@ -164,10 +164,15 @@ export class AuthService {
 
     const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
 
-    const tpl = resetPasswordEmail(user.namaLengkap, resetUrl);
+    const tpl = await this.mailService.renderWithOverride(
+      'resetPasswordEmail',
+      () => resetPasswordEmail(user.namaLengkap, resetUrl),
+      { nama: user.namaLengkap, resetUrl },
+    );
     await this.mailService.sendMail({
       to: user.email,
-      ...tpl,
+      subject: tpl.subject,
+      html: tpl.html,
       metadata: { module: 'auth', template: 'resetPasswordEmail' },
     });
 

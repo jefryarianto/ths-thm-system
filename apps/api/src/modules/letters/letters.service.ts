@@ -190,17 +190,26 @@ export class LettersService {
 
       if (!penerima?.email || !surat) return;
 
-      const { subject, html } = dispositionNotificationEmail(
-        penerima.namaLengkap,
-        pengirim?.namaLengkap || 'Admin',
-        surat.perihal,
-        dto.isi,
+      const tpl = await this.mailService.renderWithOverride(
+        'dispositionNotificationEmail',
+        () => dispositionNotificationEmail(
+          penerima.namaLengkap,
+          pengirim?.namaLengkap || 'Admin',
+          surat.perihal,
+          dto.isi,
+        ),
+        {
+          namaPenerima: penerima.namaLengkap,
+          pengirim: pengirim?.namaLengkap || 'Admin',
+          perihalSurat: surat.perihal,
+          isiDisposisi: dto.isi,
+        },
       );
 
       await this.mailService.sendMail({
         to: penerima.email,
-        subject,
-        html,
+        subject: tpl.subject,
+        html: tpl.html,
         metadata: { module: 'letters', template: 'dispositionNotificationEmail' },
       });
     } catch (error) {

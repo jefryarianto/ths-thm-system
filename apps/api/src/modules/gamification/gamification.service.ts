@@ -535,16 +535,25 @@ export class GamificationService {
       // Also send personal email to the member
       if (anggota.email) {
         const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
-        const { subject, html } = levelUpEmail(
-          anggota.namaLengkap,
-          oldLevel.name,
-          newLevel.name,
-          profile?.points ?? 0,
+        const tpl = await this.mailService.renderWithOverride(
+          'levelUpEmail',
+          () => levelUpEmail(
+            anggota.namaLengkap,
+            oldLevel.name,
+            newLevel.name,
+            profile?.points ?? 0,
+          ),
+          {
+            nama: anggota.namaLengkap,
+            oldLevel: oldLevel.name,
+            newLevel: newLevel.name,
+            points: String(profile?.points ?? 0),
+          },
         );
         await this.mailService.sendMail({
           to: anggota.email,
-          subject,
-          html,
+          subject: tpl.subject,
+          html: tpl.html,
           metadata: { module: 'gamification', template: 'levelUpEmail' },
         });
       }
@@ -606,16 +615,25 @@ export class GamificationService {
 
         // Email for each badge
         for (const badge of badges) {
-          const { subject, html } = badgeEarnedEmail(
-            anggota.namaLengkap,
-            badge.name,
-            badge.icon,
-            badge.description,
+          const tpl = await this.mailService.renderWithOverride(
+            'badgeEarnedEmail',
+            () => badgeEarnedEmail(
+              anggota.namaLengkap,
+              badge.name,
+              badge.icon,
+              badge.description,
+            ),
+            {
+              nama: anggota.namaLengkap,
+              badgeName: badge.name,
+              badgeIcon: badge.icon,
+              description: badge.description,
+            },
           );
           await this.mailService.sendMail({
             to: anggota.email,
-            subject,
-            html,
+            subject: tpl.subject,
+            html: tpl.html,
             metadata: { module: 'gamification', template: 'badgeEarnedEmail' },
           });
         }

@@ -119,16 +119,25 @@ export class ClaimsService {
     status: string,
     reason?: string,
   ): void {
-    if (!anggota?.email) return;
-    const tpl = claimStatusEmail(anggota.namaLengkap || 'Anggota', status, reason);
-    this.mailService
-      .sendMail({
-        to: anggota.email,
-        ...tpl,
-        metadata: { module: 'claims', template: 'claimStatusEmail' },
-      })
-      .catch((err) =>
-        this.logger.error(`Claim status email failed for ${anggota.email}: ${err.message}`),
-      );
+    if (!anggota || !anggota.email) return;
+    const email = anggota.email;
+    const nama = anggota.namaLengkap || 'Anggota';
+    (async () => {
+      try {
+        const tpl = await this.mailService.renderWithOverride(
+          'claimStatusEmail',
+          () => claimStatusEmail(nama, status, reason),
+          { nama, status, alasan: reason || '' },
+        );
+        await this.mailService.sendMail({
+          to: email,
+          subject: tpl.subject,
+          html: tpl.html,
+          metadata: { module: 'claims', template: 'claimStatusEmail' },
+        });
+      } catch (err) {
+        this.logger.error(`Claim status email failed for ${email}: ${(err as Error).message}`);
+      }
+    })();
   }
 }

@@ -575,10 +575,15 @@ export class NotificationsService {
 
       if (!user?.email) return;
 
-      const tpl = generalNotificationEmail(user.namaLengkap, judul, isi);
+      const tpl = await this.mailService.renderWithOverride(
+        'generalNotificationEmail',
+        () => generalNotificationEmail(user.namaLengkap, judul, isi),
+        { nama: user.namaLengkap, judul, isi },
+      );
       await this.mailService.sendMail({
         to: user.email,
-        ...tpl,
+        subject: tpl.subject,
+        html: tpl.html,
         metadata: {
           module: 'notifications',
           template: 'generalNotificationEmail',

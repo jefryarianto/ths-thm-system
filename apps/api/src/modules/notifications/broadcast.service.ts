@@ -32,11 +32,15 @@ export class BroadcastService {
     for (let i = 0; i < members.length; i += batchSize) {
       const batch = members.slice(i, i + batchSize);
       const results = await Promise.allSettled(
-        batch.map((member) =>
+        batch.map(async (member) =>
           this.mailService.sendMail({
             to: member.email,
             subject: dto.subject,
-            html: generalNotificationEmail(member.namaLengkap, dto.subject, dto.content).html,
+            html: (await this.mailService.renderWithOverride(
+              'generalNotificationEmail',
+              () => generalNotificationEmail(member.namaLengkap, dto.subject, dto.content),
+              { nama: member.namaLengkap, judul: dto.subject, isi: dto.content },
+            )).html,
             metadata: { module: 'broadcast', template: 'generalNotificationEmail', userId: member.id },
           }),
         ),

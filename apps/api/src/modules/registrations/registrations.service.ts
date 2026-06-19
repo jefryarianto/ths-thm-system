@@ -118,10 +118,15 @@ export class RegistrationsService {
   }
 
   private async sendRegistrationApprovedEmail(nama: string, email: string): Promise<void> {
-    const tpl = registrationApprovedEmail(nama);
+    const tpl = await this.mailService.renderWithOverride(
+      'registrationApprovedEmail',
+      () => registrationApprovedEmail(nama),
+      { nama },
+    );
     await this.mailService.sendMail({
       to: email,
-      ...tpl,
+      subject: tpl.subject,
+      html: tpl.html,
       metadata: { module: 'registrations', template: 'registrationApprovedEmail', email },
     });
   }
@@ -131,13 +136,20 @@ export class RegistrationsService {
     email: string,
     reason?: string,
   ): Promise<void> {
-    const tpl = registrationRejectedEmail(nama, reason);
+    const tpl = await this.mailService.renderWithOverride(
+      'registrationRejectedEmail',
+      () => registrationRejectedEmail(nama, reason),
+      { nama, alasan: reason || '' },
+    );
     await this.mailService.sendMail({
       to: email,
-      ...tpl,
+      subject: tpl.subject,
+      html: tpl.html,
       metadata: { module: 'registrations', template: 'registrationRejectedEmail', email },
     });
   }
+
+
 
   async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;

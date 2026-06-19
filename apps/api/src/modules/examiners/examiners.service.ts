@@ -121,14 +121,20 @@ export class ExaminersService {
   }
 
   private sendWelcomeEmail(email: string, nama: string, setPasswordUrl: string) {
-    const { subject, html } = examinerWelcomeEmail(nama, email, setPasswordUrl);
     this.mailService
-      .sendMail({
-        to: email,
-        subject,
-        html,
-        metadata: { module: 'examiners', template: 'examinerWelcomeEmail', email },
-      })
+      .renderWithOverride(
+        'examinerWelcomeEmail',
+        () => examinerWelcomeEmail(nama, email, setPasswordUrl),
+        { nama, email, setPasswordUrl },
+      )
+      .then((tpl) =>
+        this.mailService.sendMail({
+          to: email,
+          subject: tpl.subject,
+          html: tpl.html,
+          metadata: { module: 'examiners', template: 'examinerWelcomeEmail', email },
+        }),
+      )
       .catch(() => {
         this.logger.warn(`Failed to send welcome email to examiner ${email}`);
       });
@@ -148,23 +154,34 @@ export class ExaminersService {
         })
       : 'Akan ditentukan';
 
-    const { subject, html } = examinerAssignmentEmail(
-      examiner.namaLengkap,
-      kegiatan.nama,
-      tanggal,
-      peran,
-    );
     this.mailService
-      .sendMail({
-        to: examiner.email,
-        subject,
-        html,
-        metadata: {
-          module: 'examiners',
-          template: 'examinerAssignmentEmail',
-          examinerId: examiner.id,
+      .renderWithOverride(
+        'examinerAssignmentEmail',
+        () => examinerAssignmentEmail(
+          examiner.namaLengkap,
+          kegiatan.nama,
+          tanggal,
+          peran,
+        ),
+        {
+          nama: examiner.namaLengkap,
+          kegiatanNama: kegiatan.nama,
+          tanggal,
+          peran,
         },
-      })
+      )
+      .then((tpl) =>
+        this.mailService.sendMail({
+          to: examiner.email,
+          subject: tpl.subject,
+          html: tpl.html,
+          metadata: {
+            module: 'examiners',
+            template: 'examinerAssignmentEmail',
+            examinerId: examiner.id,
+          },
+        }),
+      )
       .catch(() => {
         this.logger.warn(`Failed to send assignment email to ${examiner.email}`);
       });
