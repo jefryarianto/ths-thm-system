@@ -809,6 +809,21 @@ model DeviceToken {
   @@map("device_tokens")
 }
 
+// ── Email Templates (custom overrides) ─────────────────
+
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  name      String   @unique // matches function name in email-templates.ts
+  subject   String   // override subject (template variables: {{nama}}, etc.)
+  htmlBody  String   @map("html_body") // override HTML body (with {{variable}} placeholders)
+  isActive  Boolean  @default(true) @map("is_active")
+  updatedBy String?  @map("updated_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("email_templates")
+}
+
 // ── Email Logs ───────────────────────────────────────────
 
 model SuppressedEmail {

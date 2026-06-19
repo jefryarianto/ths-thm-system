@@ -85,6 +85,41 @@ export class MailService {
     return false;
   }
 
+  /**
+   * Render an email template with support for custom DB overrides.
+   * If a custom template with the same name exists in the DB and is active,
+   * it will replace {{variable}} placeholders with the provided values.
+   * Otherwise, it falls back to the default render function.
+   */
+  async renderWithOverride(
+    templateName: string,
+    defaultRender: () => { subject: string; html: string },
+    variables: Record<string, string>,
+  ): Promise<{ subject: string; html: string }> {
+    try {
+      const custom = await this.prisma.emailTemplate.findUnique({
+        where: { name: templateName },
+      });
+
+      if (custom && custom.isActive) {
+        let subject = custom.subject;
+        let htmlBody = custom.htmlBody;
+
+        for (const [key, value] of Object.entries(variables)) {
+          const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi');
+          subject = subject.replace(regex, value);
+          htmlBody = htmlBody.replace(regex, value);
+        }
+
+        return { subject, html: htmlBody };
+      }
+    } catch {
+      // If DB lookup fails, fall back to default
+    }
+
+    return defaultRender();
+  }
+
   async retryFailedEmails(
     ids?: string[],
   ): Promise<{ retried: number; succeeded: number; failed: number }> {

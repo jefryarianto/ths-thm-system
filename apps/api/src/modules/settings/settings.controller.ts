@@ -1,7 +1,22 @@
-import { Controller, Get, Post, Body, Param, Query, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
+import { SettingsService } from './settings.service';
+import {
+  CreatePeriodDto,
+  UpdatePeriodDto,
+} from './dto/setting.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 
@@ -9,7 +24,10 @@ import { RequireScope } from '../../common/decorators/scope.decorator';
 @Controller('settings')
 @ApiBearerAuth()
 export class SettingsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settingsService: SettingsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Ambil semua pengaturan' })
@@ -28,8 +46,80 @@ export class SettingsController {
     return { success: true, data: config };
   }
 
+  @Patch()
+  @ApiOperation({ summary: 'Perbarui pengaturan organisasi (bulk via key-value)' })
+  @Roles('superadmin')
+  @RequireScope('national')
+  async updateSettings(@Body() dto: Record<string, unknown>) {
+    return this.settingsService.updateSettings(dto);
+  }
+
+  // ─── Periods ───
+
+  @Get('periods')
+  @ApiOperation({ summary: 'Ambil daftar periode' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @RequireScope('national')
+  async getPeriods() {
+    return this.settingsService.getPeriods();
+  }
+
+  @Post('periods')
+  @ApiOperation({ summary: 'Tambah periode baru' })
+  @Roles('superadmin')
+  @RequireScope('national')
+  async createPeriod(@Body() dto: CreatePeriodDto) {
+    return this.settingsService.createPeriod(dto);
+  }
+
+  @Patch('periods/:id')
+  @ApiOperation({ summary: 'Perbarui periode' })
+  @Roles('superadmin')
+  @RequireScope('national')
+  async updatePeriod(@Param('id') id: string, @Body() dto: UpdatePeriodDto) {
+    return this.settingsService.updatePeriod(id, dto);
+  }
+
+  @Delete('periods/:id')
+  @ApiOperation({ summary: 'Hapus periode' })
+  @Roles('superadmin')
+  @RequireScope('national')
+  async deletePeriod(@Param('id') id: string) {
+    return this.settingsService.deletePeriod(id);
+  }
+
+  // ─── Signatures ───
+
+  @Get('signatures')
+  @ApiOperation({ summary: 'Ambil daftar tanda tangan' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @RequireScope('national')
+  async getSignatures() {
+    return this.settingsService.getSignatures();
+  }
+
+  @Delete('signatures/:id')
+  @ApiOperation({ summary: 'Hapus tanda tangan' })
+  @Roles('superadmin')
+  @RequireScope('national')
+  async deleteSignature(@Param('id') id: string) {
+    return this.settingsService.deleteSignature(id);
+  }
+
+  // ─── Stamp ───
+
+  @Get('stamp')
+  @ApiOperation({ summary: 'Ambil stempel aktif' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @RequireScope('national')
+  async getStamp() {
+    return this.settingsService.getStamp();
+  }
+
+  // ─── Key-value settings ───
+
   @Get(':key')
-  @ApiOperation({ summary: 'Ambil pengaturan' })
+  @ApiOperation({ summary: 'Ambil pengaturan by key' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
   @RequireScope('national')
   async getSetting(@Param('key') key: string) {
@@ -41,7 +131,7 @@ export class SettingsController {
   }
 
   @Post(':key')
-  @ApiOperation({ summary: 'Perbarui pengaturan' })
+  @ApiOperation({ summary: 'Perbarui pengaturan by key' })
   @Roles('superadmin')
   @RequireScope('national')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

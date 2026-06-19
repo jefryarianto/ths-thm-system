@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Query,
   Body,
@@ -14,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import * as crypto from 'crypto';
-import { ApiTags, ApiBearerAuth, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { TestMailDto } from './dto/test-mail.dto';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -531,6 +532,90 @@ export class MailController {
     // Clear all
     const { count } = await this.prisma.suppressedEmail.deleteMany();
     return { success: true, message: `Semua ${count} alamat dihapus dari supresi` };
+  }
+
+  // ─── Email Templates (custom overrides) ───
+
+  @Get('templates')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Ambil semua email template dengan override dari DB' })
+  async getTemplates() {
+    const customTemplates = await this.prisma.emailTemplate.findMany();
+    // Import template definitions from shared constant
+    // We list known template names from the definitions and merge with DB overrides
+    const customMap = new Map(customTemplates.map((t) => [t.name, t]));
+
+    // Return just the list of template names and whether they have custom overrides
+    return {
+      success: true,
+      data: customTemplates.map((t: { id: string; name: string; subject: string; htmlBody: string; isActive: boolean; updatedAt: Date }) => ({
+        id: t.id,
+        name: t.name,
+        subject: t.subject,
+        htmlBody: t.htmlBody,
+        isActive: t.isActive,
+        updatedAt: t.updatedAt,
+      })),
+    };
+  }
+
+  @Get('templates/:name')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Ambil detail email template (custom override jika ada)' })
+  async getTemplate(@Param('name') name: string) {
+    const custom = await this.prisma.emailTemplate.findUnique({
+      where: { name },
+    });
+    return {
+      success: true,
+      data: custom
+        ? {
+            id: custom.id,
+            name: custom.name,
+            subject: custom.subject,
+            htmlBody: custom.htmlBody,
+            isActive: custom.isActive,
+            updatedAt: custom.updatedAt,
+          }
+        : null,
+    };
+  }
+
+  @Put('templates/:name')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Simpan/ubah custom email template override' })
+  async upsertTemplate(
+    @Param('name') name: string,
+    @Body() body: { subject: string; htmlBody: string; isActive?: boolean },
+  ) {
+    const data: Record<string, unknown> = {
+      subject: body.subject,
+      htmlBody: body.htmlBody,
+    };
+    if (body.isActive !== undefined) data.isActive = body.isActive;
+
+    const template = await this.prisma.emailTemplate.upsert({
+      where: { name },
+      create: {
+        name,
+        subject: body.subject,
+        htmlBody: body.htmlBody,
+        isActive: body.isActive ?? true,
+      },
+      update: data,
+    });
+
+    return { success: true, data: template, message: 'Template berhasil disimpan' };
+  }
+
+  @Delete('templates/:name')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Hapus custom email template (kembali ke default)' })
+  async deleteTemplate(@Param('name') name: string) {
+    await this.prisma.emailTemplate.delete({ where: { name } }).catch(() => {
+      // Ignore if not found
+    });
+    return { success: true, message: 'Custom template dihapus, kembali ke default' };
   }
 
   @Get('modules')
