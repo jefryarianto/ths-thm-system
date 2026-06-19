@@ -6,17 +6,26 @@ import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { User } from '@/types';
 import { useState } from 'react';
-import { Plus, MoreVertical, UserCheck, UserX, Users } from 'lucide-react';
+import { Plus, Users, UserCheck, UserX } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import ConfirmModal from '@/components/ui/confirm-modal';
+import { useToast } from '@/components/ui/toast';
 import { ROLE_OPTIONS, ROLE_BADGES, ROLE_LABELS } from '@/components/users/constants';
+import UserActions from '@/components/users/UserActions';
+import CreateUserModal from '@/components/users/CreateUserModal';
+import EditUserModal from '@/components/users/EditUserModal';
 
 export default function UsersPage() {
+  const { toast } = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const {
     page,
     setPage,
@@ -53,6 +62,72 @@ export default function UsersPage() {
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
   };
+
+  const handleToggleActive = async (id: string, current: boolean) => {
+    setActionLoading(id);
+    try {
+      await apiClient.patch(`/users/${id}`, { isActive: !current });
+      toast('success', current ? 'User dinonaktifkan' : 'User diaktifkan');
+      refetch();
+    } catch {
+      toast('error', 'Gagal mengubah status user');
+    }
+    setActionLoading(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setActionLoading(deleteTarget.id);
+    try {
+      await apiClient.delete(`/users/${deleteTarget.id}`);
+      toast('success', 'User berhasil dinonaktifkan');
+      setDeleteTarget(null);
+      refetch();
+    } catch {
+      toast('error', 'Gagal menghapus user');
+    }
+    setActionLoading(null);
+  };
+
+  const columns = [
+    { key: 'namaLengkap', label: 'Nama' },
+    { key: 'email', label: 'Email', hidden: 'hidden sm:table-cell' },
+    {
+      key: 'role',
+      label: 'Role',
+      render: (user: User) => (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_BADGES[user.role] || ''}`}
+        >
+          {ROLE_LABELS[user.role] || user.role}
+        </span>
+      ),
+    },
+    {
+      key: 'isActive',
+      label: 'Status',
+      render: (user: User) =>
+        user.isActive !== false ? (
+          <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+            <UserCheck size={13} /> Aktif
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+            <UserX size={13} /> Nonaktif
+          </span>
+        ),
+    },
+    {
+      key: 'createdAt',
+      label: 'Dibuat',
+      hidden: 'hidden md:table-cell',
+      render: (user: User) => (
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {new Date(user.createdAt).toLocaleDateString('id-ID')}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <PageContainer>
@@ -92,14 +167,7 @@ export default function UsersPage() {
       </SearchBar>
 
       <DataTable
-        columns={[
-          { label: 'Nama' },
-          { label: 'Email', hidden: 'hidden sm:table-cell' },
-          { label: 'Role' },
-          { label: 'Status' },
-          { label: 'Dibuat', hidden: 'hidden md:table-cell' },
-          { label: 'Aksi', align: 'right' },
-        ]}
+        columns={columns}
         data={users}
         loading={loading}
         empty={{
@@ -110,49 +178,39 @@ export default function UsersPage() {
         totalPages={meta.totalPages}
         total={meta.total}
         onPageChange={handlePageChange}
-        colSpan={6}
-        renderRow={(user: User) => (
-          <tr
-            key={user.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-          >
-            <td className="px-4 py-3">
-              <span className="font-medium text-gray-900 dark:text-white">{user.namaLengkap}</span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
-              {user.email}
-            </td>
-            <td className="px-4 py-3">
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_BADGES[user.role] || ''}`}
-              >
-                {ROLE_LABELS[user.role] || user.role}
-              </span>
-            </td>
-            <td className="px-4 py-3">
-              {user.isActive !== false ? (
-                <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                  <UserCheck size={13} /> Aktif
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                  <UserX size={13} /> Nonaktif
-                </span>
-              )}
-            </td>
-            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
-              {new Date(user.createdAt).toLocaleDateString('id-ID')}
-            </td>
-            <td className="px-4 py-3 text-right">
-              <button
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                title="Aksi"
-              >
-                <MoreVertical size={16} />
-              </button>
-            </td>
-          </tr>
+        actions={(user: User) => (
+          <UserActions
+            user={user}
+            actionLoading={actionLoading}
+            onEdit={(id) => setEditUserId(id)}
+            onToggleActive={handleToggleActive}
+            onDelete={(_id) => setDeleteTarget(user)}
+          />
         )}
+      />
+
+      <CreateUserModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={refetch}
+      />
+
+      <EditUserModal
+        open={!!editUserId}
+        onClose={() => setEditUserId(null)}
+        onSuccess={refetch}
+        userId={editUserId}
+      />
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Nonaktifkan User"
+        message={`Apakah Anda yakin ingin menonaktifkan user "${deleteTarget?.namaLengkap}"?`}
+        confirmLabel="Ya, Nonaktifkan"
+        cancelLabel="Batal"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
       />
     </PageContainer>
   );

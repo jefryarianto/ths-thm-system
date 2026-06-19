@@ -5,11 +5,12 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
+import { env } from '../../config/env.validation';
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'development-secret',
+      secret: env.jwtSecret,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
     }),
   ],

@@ -9,6 +9,18 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function onTokenRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
 apiClient.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -39,23 +51,36 @@ apiClient.interceptors.response.use(
 
     // ─── TOKEN REFRESH HANDLING ───
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
-      const refreshToken = await AsyncStorage.getItem('refreshToken');
-      if (refreshToken) {
-        try {
-          const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
-          const { accessToken, refreshToken: newRefresh } = res.data.data;
+      try {
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        if (!refreshToken) throw new Error('No refresh token');
 
-          await AsyncStorage.setItem('accessToken', accessToken);
-          await AsyncStorage.setItem('refreshToken', newRefresh);
+        const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
+        const { accessToken, refreshToken: newRefresh } = res.data.data;
 
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        await AsyncStorage.setItem('accessToken', accessToken);
+        await AsyncStorage.setItem('refreshToken', newRefresh);
 
-          return apiClient(originalRequest);
-        } catch {
-          await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
-        }
+        onTokenRefreshed(accessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
+      } catch {
+        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+      } finally {
+        isRefreshing = false;
       }
     }
 

@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { ReportsService } from './reports.service';
 import { Response } from 'express';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('Reports')
 @Controller('reports')
@@ -16,18 +17,21 @@ export class ReportsController {
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Ambil data dashboard' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   async getDashboardData(@Req() req: ScopedRequest) {
     return this.reportsService.dashboardStats(req.scope);
   }
 
   @Get('scan-stats')
   @ApiOperation({ summary: 'Ambil statistik pemindaian' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   async getScanStats(@Req() req: ScopedRequest) {
     return this.reportsService.scanStats(req.scope);
   }
 
   @Get('chart/members-over-time')
   @ApiOperation({ summary: 'Grafik pertumbuhan anggota' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   async getMembersOverTime() {
     const data = await this.prisma.anggota.groupBy({
       by: ['createdAt'],
@@ -53,6 +57,7 @@ export class ReportsController {
 
   @Get('chart/training-attendance')
   @ApiOperation({ summary: 'Grafik kehadiran pelatihan' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   async getTrainingAttendance(@Query('year') year: string) {
     const start = new Date(`${year}-01-01`);
     const end = new Date(`${year}-12-31`);
@@ -84,6 +89,7 @@ export class ReportsController {
 
   @Get('export/audit-log')
   @ApiOperation({ summary: 'Ekspor log audit' })
+  @Roles('superadmin')
   async exportAuditLog(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {
     const logs = await this.prisma.emailLog.findMany({
       where: {

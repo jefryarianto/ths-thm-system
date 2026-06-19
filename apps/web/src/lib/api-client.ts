@@ -9,6 +9,18 @@ const apiClient = axios.create({
   },
 });
 
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function onTokenRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
@@ -47,7 +59,17 @@ apiClient.interceptors.response.use(
 
     // ─── TOKEN REFRESH HANDLING ───
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
@@ -60,10 +82,13 @@ apiClient.interceptors.response.use(
           refreshToken,
         });
 
-        localStorage.setItem('accessToken', data.data.accessToken);
+        const newToken = data.data.accessToken;
+        localStorage.setItem('accessToken', newToken);
         localStorage.setItem('refreshToken', data.data.refreshToken);
 
-        originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+        onTokenRefreshed(newToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch {
         localStorage.removeItem('accessToken');
@@ -71,6 +96,8 @@ apiClient.interceptors.response.use(
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
+      } finally {
+        isRefreshing = false;
       }
     }
 
