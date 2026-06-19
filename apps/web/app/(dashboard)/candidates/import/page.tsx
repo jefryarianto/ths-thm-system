@@ -81,14 +81,27 @@ function validateRows(
   });
 }
 
+type ImportResult = {
+  success: number;
+  errors: number;
+  details: Array<{ row?: Record<string, string>; error?: string }>;
+};
+
+type FailedRow = {
+  row: Record<string, string>;
+  error: string;
+};
+
 export default function ImportCandidatesPage() {
   const router = useRouter();
-  const [result, setResult] = useState<{ success: number; errors: number; details: Array<{ error?: string }> } | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState('');
   const [csvData, setCsvData] = useState<Record<string, string>[] | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [headerWarnings, setHeaderWarnings] = useState<string[]>([]);
+  const [failedRows, setFailedRows] = useState<FailedRow[]>([]);
+  const [retrying, setRetrying] = useState(false);
 
   const rowValidations = useMemo<RowValidation[]>(
     () => (csvData ? validateRows(csvData, headers) : []),
@@ -215,18 +228,70 @@ export default function ImportCandidatesPage() {
     setDragOver(false);
   }, []);
 
-  const handleImport = async () => {
-    if (!csvData || csvData.length === 0) return;
+  const handleImport = async (data?: Record<string, string>[]) => {
+    const payload = data || csvData;
+    if (!payload || payload.length === 0) return;
     setImporting(true);
     setError('');
+    const isRetry = !!data;
+    if (!isRetry) setFailedRows([]);
     try {
-      const { data: res } = await apiClient.post('/candidates/import', csvData);
+      const { data: res } = await apiClient.post('/candidates/import', payload);
       setResult(res.data);
+
+      // Extract failed rows with their data for retry capability
+      if (res.data.details?.length > 0) {
+        const failed = res.data.details
+          .filter((d: { row?: Record<string, string> }) => d.row)
+          .map((d: { row: Record<string, string>; error: string }) => ({
+            row: d.row,
+            error: d.error,
+          }));
+        setFailedRows(failed);
+      }
     } catch (err: unknown) {
       const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(apiErr || 'Gagal import. Silakan coba lagi.');
     }
     setImporting(false);
+  };
+
+  const handleRetryFailed = async () => {
+    if (failedRows.length === 0) return;
+    setRetrying(true);
+    setError('');
+    setResult(null);
+    try {
+      const failedData = failedRows.map((f) => f.row);
+      const { data: res } = await apiClient.post('/candidates/import', failedData);
+      setResult(res.data);
+
+      // Update failed rows with remaining failures
+      if (res.data.details?.length > 0) {
+        const stillFailed = res.data.details
+          .filter((d: { row?: Record<string, string> }) => d.row)
+          .map((d: { row: Record<string, string>; error: string }) => ({
+            row: d.row,
+            error: d.error,
+          }));
+        setFailedRows(stillFailed);
+      } else {
+        setFailedRows([]);
+      }
+    } catch (err: unknown) {
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(apiErr || 'Gagal mengirim ulang data. Silakan coba lagi.');
+    }
+    setRetrying(false);
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setCsvData(null);
+    setHeaders([]);
+    setHeaderWarnings([]);
+    setError('');
+    setFailedRows([]);
   };
 
   return (
@@ -246,21 +311,88 @@ export default function ImportCandidatesPage() {
 
       {result ? (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
-          <div className="flex items-center gap-3 text-green-600">
-            <CheckCircle2 size={24} />
+          <div className="flex items-center gap-3" style={{ color: result.errors > 0 ? '#d97706' : '#16a34a' }}>
+            {result.errors > 0 ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
             <div>
-              <p className="font-semibold">Import Selesai</p>
-              <p className="text-sm text-gray-500">{result.success} berhasil, {result.errors} gagal</p>
+              <p className="font-semibold" style={{ color: result.errors > 0 ? '#92400e' : '#166534' }}>
+                {result.errors > 0 ? 'Import Selesai dengan Peringatan' : 'Import Berhasil'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {result.success} berhasil, {result.errors} gagal
+                {failedRows.length > 0 && result.errors > 0 && (
+                  <span className="ml-1">— {failedRows.length} baris dapat dicoba ulang</span>
+                )}
+              </p>
             </div>
           </div>
-          {result.details.length > 0 && (
-            <div className="max-h-48 overflow-y-auto text-xs text-gray-500 space-y-1">
-              {result.details.map((d, i) => (
-                <p key={i} className="text-red-500">{d.error || 'Error'}</p>
-              ))}
+
+          {/* Failed rows detail table */}
+          {failedRows.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                Baris Gagal ({failedRows.length})
+              </h4>
+              <div className="max-h-48 overflow-y-auto border border-red-200 dark:border-red-800 rounded-xl">
+                <table className="w-full text-xs">
+                  <thead className="bg-red-50 dark:bg-red-950/30 sticky top-0">
+                    <tr className="border-b border-red-200 dark:border-red-800">
+                      <th className="px-2 py-1.5 text-left font-medium text-red-600">#</th>
+                      <th className="px-2 py-1.5 text-left font-medium text-red-600">Nama</th>
+                      <th className="px-2 py-1.5 text-left font-medium text-red-600">Email</th>
+                      <th className="px-2 py-1.5 text-left font-medium text-red-600">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {failedRows.slice(0, 50).map((f, i) => (
+                      <tr key={i} className="border-b border-red-100 dark:border-red-900/30">
+                        <td className="px-2 py-1.5 text-red-400">{i + 1}</td>
+                        <td className="px-2 py-1.5 text-red-700 dark:text-red-300 font-medium">
+                          {f.row?.nama_lengkap || f.row?.nama || f.row?.name || '-'}
+                        </td>
+                        <td className="px-2 py-1.5 text-red-600 dark:text-red-400">
+                          {f.row?.email || '-'}
+                        </td>
+                        <td className="px-2 py-1.5 text-red-500 max-w-[250px]">
+                          <span className="line-clamp-2" title={f.error}>{f.error}</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {failedRows.length > 50 && (
+                      <tr>
+                        <td colSpan={4} className="px-2 py-2 text-center text-gray-400">
+                          ... dan {failedRows.length - 50} baris lainnya
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-          <button onClick={() => router.push('/candidates')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Ke Daftar Calon</button>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {failedRows.length > 0 && (
+              <button
+                onClick={handleRetryFailed}
+                disabled={retrying}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {retrying ? (
+                  <><Loader2 size={14} className="animate-spin" /> Mencoba Ulang...</>
+                ) : (
+                  <><Upload size={14} /> Coba Ulang {failedRows.length} Baris Gagal</>
+                )}
+              </button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <button onClick={handleReset} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                Import Lagi
+              </button>
+              <button onClick={() => router.push('/candidates')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                Ke Daftar Calon
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
@@ -480,7 +612,7 @@ export default function ImportCandidatesPage() {
                   Batal
                 </button>
                 <button
-                  onClick={handleImport}
+                  onClick={() => handleImport()}
                   disabled={importing || hasErrors}
                   className={`px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-sm flex items-center gap-2 ${
                     hasErrors

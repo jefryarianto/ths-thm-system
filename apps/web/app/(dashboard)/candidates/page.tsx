@@ -6,7 +6,8 @@ import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Candidate } from '@/types';
 import { useRouter } from 'next/navigation';
-import { Plus, Upload, UserPlus } from 'lucide-react';
+import { useCallback } from 'react';
+import { Plus, Upload, Download, UserPlus } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -32,6 +33,23 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function CandidatesPage() {
   const router = useRouter();
+
+  const handleExport = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/candidates/export/csv', { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'calon-anggota.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Silent fail — export button is a convenience
+    }
+  }, []);
+
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -54,13 +72,18 @@ export default function CandidatesPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Manajemen Calon Anggota" onRefresh={refetch}>
-        <button
-          onClick={() => router.push('/candidates/import')}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-        >
-          <Upload size={14} /> Import
-        </button>
+      <PageHeader title="Manajemen Calon Anggota" onRefresh={refetch}>          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <Download size={14} /> Export
+          </button>
+          <button
+            onClick={() => router.push('/candidates/import')}
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <Upload size={14} /> Import
+          </button>
         <button
           onClick={() => router.push('/candidates/new')}
           className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"

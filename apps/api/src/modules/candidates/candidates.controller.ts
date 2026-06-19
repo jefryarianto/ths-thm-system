@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+import { Response } from 'express';
 
 @ApiTags('Candidates')
 @Controller('candidates')
@@ -86,10 +87,13 @@ export class CandidatesController {
   }
 
   @Get('export/csv')
-  @ApiOperation({ summary: 'Ekspor data kandidat' })
+  @ApiOperation({ summary: 'Download data kandidat sebagai CSV' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  exportCsv(@Query() filter: CandidateFilterDto) {
-    return this.candidatesService.exportCsv(filter);
+  async exportCsv(@Query() filter: CandidateFilterDto, @Res() res: Response) {
+    const csv = await this.candidatesService.exportCsv(filter);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="calon-anggota.csv"');
+    res.send(csv);
   }
 }

@@ -142,12 +142,18 @@ export class CandidatesService {
       details: Array<{ row: unknown; error: string }>;
     } = { success: 0, errors: 0, details: [] };
 
-    // Collect all emails to check duplicates in one batch
+    // Collect all emails and names to check duplicates in batch
     const emails = data
       .map((row) => row.email?.trim()?.toLowerCase())
       .filter(Boolean) as string[];
+    const names = data
+      .map((row) => (row.nama_lengkap || row.nama || row.name || '').trim().toLowerCase())
+      .filter(Boolean);
 
     let existingEmails = new Set<string>();
+    let existingNames = new Set<string>();
+
+    // Batch query for existing emails
     if (emails.length > 0) {
       const [existingAnggota, existingCalon] = await Promise.all([
         this.prisma.anggota.findMany({
@@ -166,9 +172,29 @@ export class CandidatesService {
       existingEmails = new Set(allEmails);
     }
 
+    // Batch query for existing names
+    if (names.length > 0) {
+      const [existingAnggotaNames, existingCalonNames] = await Promise.all([
+        this.prisma.anggota.findMany({
+          where: { namaLengkap: { in: names, mode: 'insensitive' } },
+          select: { namaLengkap: true },
+        }),
+        this.prisma.calonAnggota.findMany({
+          where: { namaLengkap: { in: names, mode: 'insensitive' } },
+          select: { namaLengkap: true },
+        }),
+      ]);
+      const allNames: string[] = [
+        ...existingAnggotaNames.map((a) => a.namaLengkap?.toLowerCase() || ''),
+        ...existingCalonNames.map((c) => c.namaLengkap?.toLowerCase() || ''),
+      ].filter(Boolean);
+      existingNames = new Set(allNames);
+    }
+
     for (const row of data) {
       try {
         const email = row.email?.trim()?.toLowerCase();
+        const namaLengkap = (row.nama_lengkap || row.nama || row.name || '').trim().toLowerCase();
 
         // Check duplicate email
         if (email && existingEmails.has(email)) {
@@ -176,6 +202,16 @@ export class CandidatesService {
           results.details.push({
             row,
             error: `Email "${row.email}" sudah terdaftar sebagai anggota atau calon anggota`,
+          });
+          continue;
+        }
+
+        // Check duplicate name
+        if (namaLengkap && existingNames.has(namaLengkap)) {
+          results.errors++;
+          results.details.push({
+            row,
+            error: `Nama "${row.nama_lengkap || row.nama || row.name}" sudah terdaftar sebagai anggota atau calon anggota`,
           });
           continue;
         }
@@ -288,7 +324,7 @@ export class CandidatesService {
     return { success: true, message: reason || 'Calon anggota ditolak' };
   }
 
-  async exportCsv(_filter: CandidateFilterDto) {
+  async exportCsv(_filter: CandidateFilterDto): Promise<string> {
     const candidates = await this.prisma.calonAnggota.findMany({
       where: {},
       select: {
@@ -299,11 +335,47 @@ export class CandidatesService {
         alamat: true,
         noHp: true,
         email: true,
+        tingkat: true,
         status: true,
       },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return { success: true, data: candidates };
+    // Generate CSV string
+    const headers = [
+      'nama_lengkap',
+      'jenis_kelamin',
+      'tempat_lahir',
+      'tanggal_lahir',
+      'alamat',
+      'no_hp',
+      'email',
+      'tingkat',
+      'status',
+    ];
+
+    const csvRows = candidates.map((c) =>
+      [
+        this.escapeCsvField(c.namaLengkap),
+        c.jenisKelamin,
+        this.escapeCsvField(c.tempatLahir || ''),
+        c.tanggalLahir ? c.tanggalLahir.toISOString().split('T')[0] : '',
+        this.escapeCsvField(c.alamat || ''),
+        c.noHp || '',
+        c.email || '',
+        c.tingkat || '',
+        c.status,
+      ].join(','),
+    );
+
+    return [headers.join(','), ...csvRows].join('\n');
+  }
+
+  private escapeCsvField(value: string): string {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
   }
 
 
