@@ -166,9 +166,9 @@ export default function OrgDocumentsPage() {
                   <Download size={15} />
                 </button>
                 <button
-                  disabled
-                  className="p-1.5 text-gray-300 dark:text-gray-600 cursor-not-allowed rounded-md transition-colors"
-                  title="Halaman detail belum tersedia"
+                  onClick={() => router.push(`/org-documents/${row.id}`)}
+                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                  title="Detail"
                 >
                   <Eye size={15} />
                 </button>
