@@ -1,18 +1,19 @@
 # CSV Template — Calon Anggota
 
-Format kolom untuk import data calon anggota:
+Kolom diselaraskan dengan template anggota penuh, karena calon anggota yang lulus akan menjadi anggota.
 
 ```
-name,email,phone,address,birth_date,registration_date,source,notes
+nama_lengkap,jenis_kelamin,tempat_lahir,tanggal_lahir,alamat,no_hp,email,tingkat,ranting_id
 ```
 
-| Kolom             | Tipe   | Required | Deskripsi                  |
-| ----------------- | ------ | -------- | -------------------------- |
-| name              | string | ✅       | Nama lengkap               |
-| email             | string |          | Email                      |
-| phone             | string |          | Nomor telepon              |
-| address           | string |          | Alamat                     |
-| birth_date        | date   |          | Tanggal lahir (YYYY-MM-DD) |
-| registration_date | date   | ✅       | Tanggal pendaftaran        |
-| source            | string |          | Sumber pendaftaran         |
-| notes             | string |          | Catatan tambahan           |
+| Kolom          | Tipe   | Required | Deskripsi                              |
+| -------------- | ------ | -------- | -------------------------------------- |
+| nama_lengkap   | string | ✅       | Nama lengkap                           |
+| jenis_kelamin  | enum   | ✅       | L (Laki-laki) / P (Perempuan)          |
+| tempat_lahir   | string |          | Tempat lahir                           |
+| tanggal_lahir  | date   |          | Tanggal lahir (YYYY-MM-DD)             |
+| alamat         | string |          | Alamat lengkap                         |
+| no_hp          | string |          | Nomor HP (mulai 0 atau +62)            |
+| email          | string |          | Email                                  |
+| tingkat        | string |          | Tingkat (contoh: Melati 1, Melati 2)   |
+| ranting_id     | string | ✅       | ID Ranting (diisi oleh sistem)          |

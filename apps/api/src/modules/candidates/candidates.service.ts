@@ -141,11 +141,14 @@ export class CandidatesService {
       try {
         await this.prisma.calonAnggota.create({
           data: {
-            namaLengkap: row.nama || row.name,
+            namaLengkap: row.nama_lengkap || row.nama || row.name,
             jenisKelamin: row.jenis_kelamin || 'L',
+            tempatLahir: row.tempat_lahir || null,
+            tanggalLahir: row.tanggal_lahir ? new Date(row.tanggal_lahir) : null,
+            alamat: row.alamat || row.address,
             noHp: row.no_hp || row.phone,
             email: row.email,
-            alamat: row.alamat || row.address,
+            tingkat: row.tingkat || null,
             status: 'diusulkan',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             usulOlehId: row.usulOlehId || row.usul_oleh_id || 'seed',

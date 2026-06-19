@@ -1,3 +1,4 @@
-name,email,phone,address,jenis_kelamin,tempat_lahir,tanggal_lahir,ranting_id
-John Doe,john@example.com,08123456789,Jakarta,L,Jakarta,2000-01-01,
-Jane Smith,jane@example.com,08765432100,Bandung,P,Bandung,1999-05-15,
+nama_lengkap,jenis_kelamin,tempat_lahir,tanggal_lahir,alamat,no_hp,email,tingkat,ranting_id
+Ahmad Fauzi,L,Jakarta,1998-05-12,Jl. Merdeka No.10,081234567890,ahmad@example.com,Melati 1,
+Siti Aminah,P,Bandung,1999-08-23,Jl. Sudirman No.5,081298765432,siti@example.com,Melati 1,
+Budi Santoso,L,Surabaya,2000-01-15,Jl. Gatot Subroto No.7,081212345678,budi@example.com,Melati 2,

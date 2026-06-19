@@ -8,15 +8,17 @@ import { ArrowLeft, Upload, AlertCircle, CheckCircle2, Info, XCircle, Download, 
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-const REQUIRED_COLUMNS = ['nama', 'Name'];
+const REQUIRED_COLUMNS = ['nama_lengkap', 'nama', 'Name'];
 const KNOWN_COLUMNS = [
+  'nama_lengkap', 'Nama Lengkap',
   'nama', 'Name', 'name',
-  'jenis_kelamin', 'jenis kelamin', 'Jenis Kelamin',
-  'no_hp', 'no hp', 'No HP', 'phone', 'Phone',
-  'email', 'Email',
+  'jenis_kelamin', 'Jenis Kelamin',
+  'tempat_lahir', 'Tempat Lahir',
+  'tanggal_lahir', 'Tanggal Lahir',
   'alamat', 'Alamat', 'address', 'Address',
-  'tempat_lahir', 'tempat lahir', 'Tempat Lahir',
-  'tanggal_lahir', 'tanggal lahir', 'Tanggal Lahir',
+  'no_hp', 'No HP', 'phone', 'Phone',
+  'email', 'Email',
+  'tingkat', 'Tingkat',
   'ranting_id', 'rantingId', 'Ranting',
 ];
 
