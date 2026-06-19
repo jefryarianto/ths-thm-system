@@ -185,7 +185,7 @@ export const statConfigs = [
     label: 'Data Tidak Lengkap',
     icon: AlertCircle,
     color: 'red' as const,
-    href: '/members',
+    href: '/members/incomplete',
   },
   {
     key: 'totalKegiatan' as const,

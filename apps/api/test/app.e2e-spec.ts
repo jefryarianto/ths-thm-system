@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('THS-THM API (e2e)', () => {
   let app: INestApplication;
   let accessToken: string;
   let refreshToken: string;
   let e2eUserId: string;
+  let e2eRantingId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -63,6 +65,13 @@ describe('THS-THM API (e2e)', () => {
     }
 
     expect(accessToken).toBeDefined();
+
+    // Fetch a ranting from seed data for member CRUD tests
+    const prisma = app.get(PrismaService);
+    const ranting = await prisma.ranting.findFirst();
+    if (ranting) {
+      e2eRantingId = ranting.id;
+    }
   });
 
   afterAll(async () => {
@@ -313,6 +322,9 @@ describe('THS-THM API (e2e)', () => {
 
   // ─── Members ───
   describe('Members', () => {
+    let createdMemberId: string;
+    let createdMemberNRA: string;
+
     it('GET /api/members — should return member list', () => {
       return request(app.getHttpServer())
         .get('/api/members')
@@ -326,6 +338,113 @@ describe('THS-THM API (e2e)', () => {
 
     it('GET /api/members — should reject without auth', () => {
       return request(app.getHttpServer()).get('/api/members').expect(401);
+    });
+
+    it('POST /api/members — should create a member with NRA', async () => {
+      if (!e2eRantingId) {
+        console.warn('Skipping: no ranting found in seed data');
+        return;
+      }
+
+      const res = await request(app.getHttpServer())
+        .post('/api/members')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          namaLengkap: 'E2E Test Member',
+          jenisKelamin: 'L',
+          tempatLahir: 'Jakarta',
+          tanggalLahir: '1990-01-15',
+          alamat: 'Jl. E2E Testing No.1',
+          noHp: '081111111111',
+          email: `e2e-member-${Date.now()}@test.com`,
+          rantingId: e2eRantingId,
+        })
+        .expect(201);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.namaLengkap).toBe('E2E Test Member');
+      expect(res.body.data.nomorAnggota).toMatch(/^\d{3,4}-\d{2,4}-\d{3}-\d{4}$/);
+      createdMemberId = res.body.data.id;
+      createdMemberNRA = res.body.data.nomorAnggota;
+    });
+
+    it('GET /api/members/:id — should return created member', async () => {
+      if (!createdMemberId) return;
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/members/${createdMemberId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.nomorAnggota).toBe(createdMemberNRA);
+    });
+
+    it('PATCH /api/members/:id — should update member', async () => {
+      if (!createdMemberId) return;
+
+      const res = await request(app.getHttpServer())
+        .patch(`/api/members/${createdMemberId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ namaLengkap: 'E2E Updated Member', alamat: 'Jl. Updated No.2' })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.namaLengkap).toBe('E2E Updated Member');
+      expect(res.body.data.alamat).toBe('Jl. Updated No.2');
+    });
+
+    it('POST /api/members/:id/approve — should approve member', async () => {
+      if (!createdMemberId) return;
+
+      const res = await request(app.getHttpServer())
+        .post(`/api/members/${createdMemberId}/approve`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(201);
+
+      expect(res.body.success).toBe(true);
+    });
+
+    it('PATCH /api/members/:id/suspend — should suspend member', async () => {
+      if (!createdMemberId) return;
+
+      const res = await request(app.getHttpServer())
+        .patch(`/api/members/${createdMemberId}/suspend`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('ditangguhkan');
+    });
+
+    it('PATCH /api/members/:id/reactivate — should reactivate member', async () => {
+      if (!createdMemberId) return;
+
+      const res = await request(app.getHttpServer())
+        .patch(`/api/members/${createdMemberId}/reactivate`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('diaktifkan');
+    });
+
+    it('DELETE /api/members/:id — should soft-delete member', async () => {
+      if (!createdMemberId) return;
+
+      const res = await request(app.getHttpServer())
+        .delete(`/api/members/${createdMemberId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('dihapus');
+
+      // Verify member is soft-deleted (returns 404)
+      await request(app.getHttpServer())
+        .get(`/api/members/${createdMemberId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(404);
     });
   });
 

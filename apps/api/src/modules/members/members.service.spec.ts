@@ -6,9 +6,26 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
+import { NraService } from '../../common/services/nra.service';
 
 describe('MembersService', () => {
   let service: MembersService;
+
+  const mockRanting = {
+    id: 'r1',
+    kodeRanting: 'RTG-0114-01',
+    nama: 'Ranting Test',
+    wilayah: {
+      id: 'w1',
+      kodeWilayah: 'WLY-0114-01',
+      nama: 'Wilayah Test',
+      distrik: {
+        id: 'd1',
+        kodeDistrik: 'DST-0114',
+        nama: 'Distrik Test',
+      },
+    },
+  };
 
   const mockPrisma = {
     anggota: {
@@ -18,12 +35,23 @@ describe('MembersService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    ranting: {
+      findUnique: jest.fn().mockResolvedValue(mockRanting),
+    },
     dokumen: {
       findMany: jest.fn(),
     },
     iuran: {
       findMany: jest.fn(),
     },
+  };
+
+  const mockNraService = {
+    generateMemberNumber: jest
+      .fn()
+      .mockImplementation((_rantingId: string, _tahunDadar?: string) =>
+        Promise.resolve('0114-0101-001-2026'),
+      ),
   };
 
   const mockScopeHelper = {
@@ -60,6 +88,7 @@ describe('MembersService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
         { provide: MemberMailService, useValue: mockMemberMailService },
+        { provide: NraService, useValue: mockNraService },
       ],
     }).compile();
 
@@ -69,6 +98,8 @@ describe('MembersService', () => {
     mockScopeHelper.buildScopeFilter.mockReturnValue({});
     mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
     mockCache.invalidatePrefix.mockClear();
+    mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
+    mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
   });
 
   it('should be defined', () => {
@@ -115,31 +146,57 @@ describe('MembersService', () => {
   });
 
   describe('create', () => {
-    it('should create a member and send welcome email', async () => {
-      mockPrisma.anggota.count.mockResolvedValue(10);
+    it('should call NraService.generateMemberNumber and create a member', async () => {
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-004-2026');
       mockPrisma.anggota.create.mockResolvedValue({
         id: 'm1',
-        nomorAnggota: 'THS-2026-0011',
+        nomorAnggota: '0114-0101-004-2026',
         email: 'budi@test.com',
         namaLengkap: 'Budi',
+        rantingId: 'r1',
       });
-      mockPrisma.anggota.findUnique.mockResolvedValue({
-        email: 'budi@test.com',
+
+      const result = await service.create({
         namaLengkap: 'Budi',
+        rantingId: 'r1',
+        email: 'budi@test.com',
       });
-      const result = await service.create({ namaLengkap: 'Budi' });
+
       expect(result.success).toBe(true);
-      expect(result.data.nomorAnggota).toBe('THS-2026-0011');
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
+      expect(result.data.nomorAnggota).toBe('0114-0101-004-2026');
       expect(mockMemberMailService.sendToMember).toHaveBeenCalledTimes(1);
     });
 
     it('should not send welcome email when email is missing', async () => {
-      mockPrisma.anggota.count.mockResolvedValue(10);
-      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0011' });
-      mockPrisma.anggota.findUnique.mockResolvedValue({ email: null, namaLengkap: 'Budi' });
-      const result = await service.create({ namaLengkap: 'Budi' });
+      mockPrisma.anggota.create.mockResolvedValue({
+        id: 'm1',
+        nomorAnggota: '0114-0101-001-2026',
+      });
+
+      const result = await service.create({
+        namaLengkap: 'Budi',
+        rantingId: 'r1',
+      });
       expect(result.success).toBe(true);
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
       expect(mockMemberMailService.sendToMember).not.toHaveBeenCalled();
+    });
+
+    it('should auto-assign rantingId from scope when not provided', async () => {
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
+      mockPrisma.anggota.create.mockResolvedValue({
+        id: 'm2',
+        nomorAnggota: '0114-0101-001-2026',
+      });
+
+      const result = await service.create(
+        { namaLengkap: 'Test' },
+        { rantingId: 'r1', role: 'admin_ranting' } as any,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
     });
   });
 
@@ -164,6 +221,11 @@ describe('MembersService', () => {
         id: 'm1',
         namaLengkap: 'Budi',
         jenisKelamin: 'L',
+        tempatLahir: 'Jakarta',
+        tanggalLahir: new Date('1990-01-01'),
+        tempatDadar: 'Jakarta',
+        tahunDadar: '2024',
+        tingkat: 'Tamtama',
       });
       mockPrisma.anggota.update.mockResolvedValue({ id: 'm1' });
       const result = await service.validate('m1');
@@ -178,23 +240,32 @@ describe('MembersService', () => {
   });
 
   describe('approve', () => {
-    it('should approve a member', async () => {
+    it('should approve a member and set statusValidasi and statusKeanggotaan', async () => {
       await service.approve('m1');
-      expect(mockPrisma.anggota.update).toHaveBeenCalled();
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { statusValidasi: 'approved', statusKeanggotaan: 'aktif' },
+      });
     });
   });
 
   describe('suspend', () => {
     it('should suspend a member', async () => {
       await service.suspend('m1');
-      expect(mockPrisma.anggota.update).toHaveBeenCalled();
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { statusKeanggotaan: 'nonaktif' },
+      });
     });
   });
 
   describe('reactivate', () => {
     it('should reactivate a member', async () => {
       await service.reactivate('m1');
-      expect(mockPrisma.anggota.update).toHaveBeenCalled();
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { statusKeanggotaan: 'aktif' },
+      });
     });
   });
 

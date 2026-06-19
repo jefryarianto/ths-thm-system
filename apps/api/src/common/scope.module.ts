@@ -5,6 +5,7 @@ import { AuditLogStore } from './services/audit-log-store.service';
 import { AuditLogController } from './controllers/audit-log.controller';
 import { CacheService } from './services/cache.service';
 import { MemberMailService } from './services/member-mail.service';
+import { NraService } from './services/nra.service';
 import { ApiKeyStore } from './guards/api-key.guard';
 import { ApiKeyManagementController } from './controllers/api-key-management.controller';
 import { CacheManagementController } from './controllers/cache-management.controller';
@@ -18,8 +19,9 @@ import { CacheManagementController } from './controllers/cache-management.contro
     AuditService,
     CacheService,
     MemberMailService,
+    NraService,
     ApiKeyStore,
   ],
-  exports: [ScopeHelper, AuditService, AuditLogStore, CacheService, MemberMailService, ApiKeyStore],
+  exports: [ScopeHelper, AuditService, AuditLogStore, CacheService, MemberMailService, NraService, ApiKeyStore],
 })
 export class ScopeModule {}

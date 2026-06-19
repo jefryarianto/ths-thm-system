@@ -13,6 +13,19 @@ import { Response } from 'express';
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
+  @Get('me')
+  @ApiOperation({ summary: 'Ambil data anggota untuk user yang login' })
+  @Roles('anggota', 'penguji', 'admin_ranting', 'admin_wilayah', 'admin_distrik', 'superadmin')
+  async getMe(@Req() req: ScopedRequest) {
+    const user = (req as any).user;
+    // Lookup Anggota by email matching the logged-in user's email
+    if (!user?.email) {
+      return { success: false, message: 'User tidak memiliki email' };
+    }
+    const member = await this.membersService.findByEmail(user.email);
+    return member;
+  }
+
   @Get()
   @ApiOperation({ summary: 'Ambil semua anggota' })
   @Roles(

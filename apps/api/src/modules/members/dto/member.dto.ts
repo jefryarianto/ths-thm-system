@@ -24,6 +24,16 @@ export class CreateMemberDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  tempatDadar?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tahunDadar?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   alamat?: string;
 
   @ApiPropertyOptional()
@@ -45,6 +55,11 @@ export class CreateMemberDto {
   @IsOptional()
   @IsString()
   tingkat?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  fotoPath?: string;
 }
 
 export class UpdateMemberDto {
@@ -71,6 +86,16 @@ export class UpdateMemberDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  tempatDadar?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tahunDadar?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   alamat?: string;
 
   @ApiPropertyOptional()
@@ -92,6 +117,11 @@ export class UpdateMemberDto {
   @IsOptional()
   @IsString()
   rantingId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  fotoPath?: string;
 }
 
 export class MemberFilterDto {

@@ -271,6 +271,8 @@ model Anggota {
   jenisKelamin      JenisKelamin      @map("jenis_kelamin")
   tempatLahir       String?           @map("tempat_lahir")
   tanggalLahir      DateTime?         @map("tanggal_lahir")
+  tempatDadar       String?           @map("tempat_dadar")
+  tahunDadar        String?           @map("tahun_dadar")
   alamat            String?
   noHp              String?           @map("no_hp")
   email             String?
@@ -320,6 +322,7 @@ model CalonAnggota {
   alamat         String?
   noHp           String?      @map("no_hp")
   email          String?
+  tingkat        String?
   status         StatusCalon  @default(diusulkan)
   usulOlehUserId String       @map("usul_oleh_user_id")
   createdAt      DateTime     @default(now()) @map("created_at")

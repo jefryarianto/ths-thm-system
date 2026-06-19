@@ -7,6 +7,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'THS-THM System Manajemen',
   description: 'Sistem Manajemen THS-THM (Taman Harapan Siswa / Taman Harapan Murid)',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   CheckCircle2, Shield, UserX, Eye, MoreVertical, Edit, Trash2,
   IdCard, FileText
@@ -24,6 +24,21 @@ export default function MemberActions({
   onViewDetail,
 }: MemberActionsProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+
+  const toggleMenu = () => {
+    if (!showMenu && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed' as const,
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+        zIndex: 50,
+      });
+    }
+    setShowMenu(!showMenu);
+  };
 
   const menuItems = [
     { label: 'Lihat Detail', icon: Eye, action: () => onViewDetail(member.id) },
@@ -60,17 +75,21 @@ export default function MemberActions({
       >
         <Eye size={14} className="text-blue-600" />
       </button>
-      <div className="relative">
+      <div>
         <button
-          onClick={() => setShowMenu(!showMenu)}
+          ref={buttonRef}
+          onClick={toggleMenu}
           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         >
           <MoreVertical size={14} className="text-gray-400" />
         </button>
         {showMenu && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1">
+            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+            <div
+              style={menuStyle}
+              className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
+            >
               {menuItems.map((item, i) => (
                 <button
                   key={i}

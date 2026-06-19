@@ -82,6 +82,11 @@ export class UpdateCandidateDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tingkat?: string;
 }
 
 export class CandidateFilterDto {

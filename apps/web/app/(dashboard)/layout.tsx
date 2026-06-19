@@ -188,10 +188,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <Link href="/members" className="text-lg font-bold text-blue-700 dark:text-blue-400">
-            THS-THM System
+          <Link href="/members" className="flex items-center gap-2">
+            <img src="/logo.png" alt="" className="w-8 h-8 rounded-lg object-cover" />
+            <span className="text-lg font-bold text-blue-700 dark:text-blue-400">THS-THM</span>
           </Link>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dashboard Admin</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-10">Dashboard Admin</p>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-4">

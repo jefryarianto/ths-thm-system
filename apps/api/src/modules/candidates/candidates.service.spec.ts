@@ -6,9 +6,26 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
+import { NraService } from '../../common/services/nra.service';
 
 describe('CandidatesService', () => {
   let service: CandidatesService;
+
+  const mockRanting = {
+    id: 'r1',
+    kodeRanting: 'RTG-0114-01',
+    nama: 'Ranting Test',
+    wilayah: {
+      id: 'w1',
+      kodeWilayah: 'WLY-0114-01',
+      nama: 'Wilayah Test',
+      distrik: {
+        id: 'd1',
+        kodeDistrik: 'DST-0114',
+        nama: 'Distrik Test',
+      },
+    },
+  };
 
   const mockPrisma = {
     calonAnggota: {
@@ -22,8 +39,20 @@ describe('CandidatesService', () => {
     anggota: {
       count: jest.fn(),
       create: jest.fn(),
+      findMany: jest.fn(),
       findUnique: jest.fn(),
     },
+    ranting: {
+      findUnique: jest.fn().mockResolvedValue(mockRanting),
+    },
+  };
+
+  const mockNraService = {
+    generateMemberNumber: jest
+      .fn()
+      .mockImplementation((_rantingId: string, _tahunDadar?: string) =>
+        Promise.resolve('0114-0101-001-2026'),
+      ),
   };
 
   const mockScopeHelper = {
@@ -65,6 +94,7 @@ describe('CandidatesService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
         { provide: MemberMailService, useValue: mockMemberMailService },
+        { provide: NraService, useValue: mockNraService },
       ],
     }).compile();
 
@@ -73,6 +103,8 @@ describe('CandidatesService', () => {
     mockScopeHelper.buildScopeFilter.mockReturnValue({});
     mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
     mockCache.invalidatePrefix.mockClear();
+    mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
+    mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
   });
 
   it('should be defined', () => {
@@ -129,28 +161,51 @@ describe('CandidatesService', () => {
   });
 
   describe('approve', () => {
-    it('should approve candidate, create member, and send email', async () => {
-      mockPrisma.calonAnggota.findUnique.mockResolvedValue({
-        id: 'c1',
-        namaLengkap: 'Budi',
-        jenisKelamin: 'L',
-        tempatLahir: 'Jakarta',
-        tanggalLahir: new Date('1990-01-01'),
-        alamat: 'Jl. A',
-        noHp: '0812',
-        email: 'budi@test.com',
-        rantingId: 'r1',
-      });
-      mockPrisma.anggota.count.mockResolvedValue(10);
-      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', nomorAnggota: 'THS-2026-0001' });
-      mockPrisma.anggota.findUnique.mockResolvedValue({
-        email: 'budi@test.com',
+    const mockCandidate = {
+      id: 'c1',
+      namaLengkap: 'Budi',
+      jenisKelamin: 'L',
+      tempatLahir: 'Jakarta',
+      tanggalLahir: new Date('1990-01-01'),
+      alamat: 'Jl. A',
+      noHp: '0812',
+      email: 'budi@test.com',
+      rantingId: 'r1',
+    };
+
+    it('should approve candidate and call NraService.generateMemberNumber', async () => {
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-011-2026');
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue(mockCandidate);
+      mockPrisma.anggota.create.mockResolvedValue({
+        id: 'm1',
+        nomorAnggota: '0114-0101-011-2026',
         namaLengkap: 'Budi',
       });
       mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', status: 'lulus' });
+
       const result = await service.approve('c1');
+
       expect(result.success).toBe(true);
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
+      expect(result.data.nomorAnggota).toBe('0114-0101-011-2026');
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
+    });
+
+    it('should use tahunDadar when provided', async () => {
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2020');
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue(mockCandidate);
+      mockPrisma.anggota.create.mockResolvedValue({
+        id: 'm3',
+        nomorAnggota: '0114-0101-001-2020',
+        namaLengkap: 'Budi',
+      });
+      mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', status: 'lulus' });
+
+      const result = await service.approve('c1', { tahunDadar: '2020' });
+
+      expect(result.success).toBe(true);
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', '2020');
+      expect(result.data.nomorAnggota).toBe('0114-0101-001-2020');
     });
 
     it('should throw NotFoundException when not found', async () => {

@@ -164,6 +164,13 @@ export class NotificationsController {
     return this.service.delete(id, user.id);
   }
 
+  @Post('send-incomplete')
+  @ApiOperation({ summary: 'Kirim notifikasi data incomplete ke anggota' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  sendIncomplete(@Body() dto: { memberIds?: string[] }) {
+    return this.service.sendIncompleteNotifications(dto?.memberIds);
+  }
+
   @Post('fcm-token')
   @ApiOperation({ summary: 'Daftarkan token FCM' })
   @Roles(

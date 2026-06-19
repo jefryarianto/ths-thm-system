@@ -6,6 +6,7 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
+import { NraService } from '../../common/services/nra.service';
 import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class CandidatesService {
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
     private readonly memberMailService: MemberMailService,
+    private readonly nraService: NraService,
   ) {}
 
   async findAll(filter: CandidateFilterDto, scope?: UserScope) {
@@ -169,7 +171,7 @@ export class CandidatesService {
     return { success: true, data: { valid: true, candidate } };
   }
 
-  async approve(id: string) {
+  async approve(id: string, dto?: { tempatDadar?: string; tahunDadar?: string; tingkat?: string }) {
     const candidate = await this.prisma.calonAnggota.findUnique({ where: { id } });
 
     if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
@@ -180,11 +182,14 @@ export class CandidatesService {
         jenisKelamin: candidate.jenisKelamin,
         tempatLahir: candidate.tempatLahir,
         tanggalLahir: candidate.tanggalLahir,
+        tempatDadar: dto?.tempatDadar || null,
+        tahunDadar: dto?.tahunDadar || null,
         alamat: candidate.alamat,
         noHp: candidate.noHp,
         email: candidate.email,
         rantingId: candidate.rantingId,
-        nomorAnggota: await this.generateMemberNumber(),
+        tingkat: dto?.tingkat || candidate.tingkat || null,
+        nomorAnggota: await this.nraService.generateMemberNumber(candidate.rantingId, dto?.tahunDadar),
         statusKeanggotaan: 'aktif',
         statusData: 'complete',
         statusValidasi: 'approved',
@@ -193,7 +198,7 @@ export class CandidatesService {
 
     await this.prisma.calonAnggota.update({
       where: { id },
-      data: { status: 'lulus' },
+      data: { status: 'lulus', tingkat: dto?.tingkat || candidate.tingkat },
     });
 
     // Send welcome email if email address is provided
@@ -255,9 +260,5 @@ export class CandidatesService {
     return { success: true, data: candidates };
   }
 
-  private async generateMemberNumber(): Promise<string> {
-    const year = new Date().getFullYear();
-    const count = await this.prisma.anggota.count();
-    return `THS-${year}-${String(count + 1).padStart(4, '0')}`;
-  }
+
 }

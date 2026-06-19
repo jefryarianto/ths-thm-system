@@ -153,6 +153,14 @@ export default function ImportMembersPage() {
         </button>
       </div>
 
+      {/* NRA Format Info */}
+      <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-700 dark:text-blue-400">
+        <p className="font-medium mb-1">📋 Format NRA</p>
+        <p>NRA akan digenerate otomatis dengan format: <strong>[kode_distrik]-[kode_wilayah][kode_ranting]-[3digit_urut]-[tahun_dadar]</strong></p>
+        <p className="mt-1">Contoh: <code className="bg-white/50 dark:bg-blue-900/50 px-1.5 py-0.5 rounded text-xs font-mono">0114-0101-001-1993</code></p>
+        <p className="mt-1">Jika CSV memiliki kolom <code className="bg-white/50 dark:bg-blue-900/50 px-1.5 py-0.5 rounded text-xs font-mono">nomor_anggota</code> yang sudah berisi NRA lama (contoh: <code className="bg-white/50 dark:bg-blue-900/50 px-1.5 py-0.5 rounded text-xs font-mono">001-1993</code>), sistem akan otomatis menambahkan kode distrik di depannya.</p>
+      </div>
+
       {/* Upload Zone */}
       {!result && (
         <div

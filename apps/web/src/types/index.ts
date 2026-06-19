@@ -56,6 +56,8 @@ export interface Member {
   jenisKelamin: 'L' | 'P';
   tempatLahir: string | null;
   tanggalLahir: string | null;
+  tempatDadar: string | null;
+  tahunDadar: string | null;
   alamat: string | null;
   noHp: string | null;
   email: string | null;
@@ -64,6 +66,7 @@ export interface Member {
   tingkat: string | null;
   statusData: 'complete' | 'incomplete';
   statusValidasi: 'pending' | 'approved' | 'rejected';
+  missingFields: string[] | null;
   rantingId: string;
   ranting?: Ranting;
   createdAt: string;
@@ -79,6 +82,7 @@ export interface Candidate {
   alamat: string | null;
   noHp: string | null;
   email: string | null;
+  tingkat: string | null;
   status: 'diusulkan' | 'mengikuti_pendadaran' | 'lulus' | 'gagal' | 'dibatalkan';
   rantingId: string;
   usulOlehUserId: string;

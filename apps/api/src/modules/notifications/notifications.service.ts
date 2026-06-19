@@ -482,6 +482,53 @@ export class NotificationsService {
     return result;
   }
 
+  async sendIncompleteNotifications(memberIds?: string[]) {
+    const where: any = { statusData: 'incomplete', email: { not: null } };
+    if (memberIds && memberIds.length > 0) {
+      where.id = { in: memberIds };
+    }
+
+    const members = await this.prisma.anggota.findMany({
+      where,
+      select: { id: true, namaLengkap: true, email: true, missingFields: true },
+    });
+
+    let sent = 0;
+    let noEmail = 0;
+
+    for (const member of members) {
+      if (!member.email) {
+        noEmail++;
+        continue;
+      }
+
+      const missingFields = (member.missingFields as string[]) || ['data diri'];
+
+      try {
+        const tpl = {
+          subject: 'Data Anggota Belum Lengkap — THS-THM',
+          html: `<h2>Halo ${member.namaLengkap},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${f.replace(/_/g, ' ')}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
+          text: `Halo ${member.namaLengkap},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke sistem untuk melengkapi data.`,
+        };
+
+        await this.mailService.sendMail({
+          to: member.email,
+          ...tpl,
+          metadata: {
+            module: 'notifications',
+            template: 'dataIncompleteEmail',
+            memberId: member.id,
+          },
+        });
+        sent++;
+      } catch (error) {
+        this.logger.error(`Failed to send incomplete notification to ${member.email}: ${(error as Error).message}`);
+      }
+    }
+
+    return { success: true, data: { sent, noEmail, total: members.length } };
+  }
+
   async registerDeviceToken(userId: string, token: string, platform: string) {
     await this.prisma.deviceToken.upsert({
       where: { token },

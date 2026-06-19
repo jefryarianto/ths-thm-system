@@ -70,11 +70,11 @@ export class CandidatesController {
   }
 
   @Post(':id/approve')
-  @ApiOperation({ summary: 'Setujui kandidat' })
+  @ApiOperation({ summary: 'Setujui kandidat (lulus pendadaran)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  approve(@Param('id') id: string) {
-    return this.candidatesService.approve(id);
+  approve(@Param('id') id: string, @Body() dto: { tempatDadar?: string; tahunDadar?: string; tingkat?: string }) {
+    return this.candidatesService.approve(id, dto);
   }
 
   @Post(':id/reject')

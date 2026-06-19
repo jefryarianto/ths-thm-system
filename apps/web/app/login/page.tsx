@@ -247,9 +247,11 @@ export default function LoginPage() {
                   className="mb-8 animate-fade-in-up"
                   style={{ animationDelay: '100ms', animationFillMode: 'both' }}
                 >
-                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-lg shadow-yellow-400/30 ring-4 ring-white/20">
-                    <span className="text-2xl font-black text-blue-900">THS</span>
-                  </div>
+                  <img
+                    src="/logo.png"
+                    alt="THS-THM Logo"
+                    className="mb-6 h-16 w-16 rounded-2xl shadow-lg ring-4 ring-white/20 object-cover"
+                  />
                   <h1 className="text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
                     THS-THM
                   </h1>
@@ -285,11 +287,11 @@ export default function LoginPage() {
               <div className="w-full max-w-sm">
                 {/* Mobile Logo (visible only on small screens) */}
                 <div className="mb-8 text-center lg:hidden">
-                  <div
-                    className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-lg"
-                  >
-                    <span className="text-lg font-black text-yellow-400">THS</span>
-                  </div>
+                  <img
+                    src="/logo.png"
+                    alt="THS-THM Logo"
+                    className="mx-auto mb-4 h-14 w-14 rounded-2xl shadow-lg object-cover"
+                  />
                   <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">
                     THS-THM
                   </h1>

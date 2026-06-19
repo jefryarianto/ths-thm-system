@@ -43,6 +43,14 @@ async function bootstrap() {
     setupSwagger(app);
   }
 
+  // Serve uploaded files statically
+  const { existsSync, mkdirSync } = require('fs');
+  const uploadDir = process.env.UPLOAD_DIR || './uploads';
+  if (!existsSync(uploadDir)) {
+    mkdirSync(uploadDir, { recursive: true });
+  }
+  app.use('/api/uploads', require('express').static(uploadDir));
+
   await app.listen(process.env.APP_PORT || 3001);
 
   console.log(`🚀 THS-THM API running on port ${process.env.APP_PORT || 3001}`);

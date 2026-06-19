@@ -6,6 +6,7 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
+import { NraService } from '../../common/services/nra.service';
 import { paginate } from '../../common/utils/pagination';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,6 +22,7 @@ export class MembersService {
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
     private readonly memberMailService: MemberMailService,
+    private readonly nraService: NraService,
   ) {}
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
@@ -87,7 +89,7 @@ export class MembersService {
     const member = await this.prisma.anggota.create({
       data: {
         ...dto,
-        nomorAnggota: await this.generateMemberNumber(),
+        nomorAnggota: await this.nraService.generateMemberNumber(dto.rantingId || scope?.rantingId || ''),
         statusData: 'complete',
         statusValidasi: 'pending',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,18 +157,35 @@ export class MembersService {
       try {
         const missingFields = this.validateCsvRow(row);
 
-        // Support legacy import: accept existing member number from CSV
-        const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota;
-        const nomorAnggota = existingNumber
-          ? String(existingNumber).trim()
-          : await this.generateMemberNumber();
-
         // Normalize ranting: accept ranting_id from CSV
         let rantingId = row.ranting_id || row.rantingId || '';
         if (!rantingId && scope?.rantingId) {
           rantingId = scope.rantingId;
         }
 
+        // Support legacy import: accept existing member number from CSV
+        // If exists, prepend [kode_distrik]- to the old NRA
+        // Otherwise generate NRA in new format [kode_distrik]-[kode_wilayah][kode_ranting]-[3digit_urut]-[tahun_dadar]
+        const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota;
+        let nomorAnggota: string;
+        if (existingNumber) {
+          // Fetch distrik code for this ranting
+          const rantingRow = rantingId
+            ? await this.prisma.ranting.findUnique({
+                where: { id: rantingId },
+                select: { wilayah: { select: { distrik: { select: { kodeDistrik: true } } } } },
+              })
+            : null;
+          const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.replace(/^\D+/g, '') || '';
+          nomorAnggota = kodeDistrik ? `${kodeDistrik}-${String(existingNumber).trim()}` : String(existingNumber).trim();
+        } else {
+          nomorAnggota = await this.nraService.generateMemberNumber(
+            rantingId || '',
+            row.tahun_dadar || row.tahunDadar || undefined,
+          );
+        }
+
+        // Accept semua field termasuk fotoPath, tempatDadar, tahunDadar
         const member = await this.prisma.anggota.create({
           data: {
             nomorAnggota,
@@ -174,11 +193,14 @@ export class MembersService {
             jenisKelamin: row.jenis_kelamin || row.jenisKelamin || 'L',
             tempatLahir: row.tempat_lahir || row.tempatLahir || null,
             tanggalLahir: row.tanggal_lahir || row.tanggalLahir || null,
+            tempatDadar: row.tempat_dadar || row.tempatDadar || null,
+            tahunDadar: row.tahun_dadar || row.tahunDadar || null,
+            fotoPath: row.foto || row.fotoPath || row.foto_path || null,
             noHp: row.no_hp || row.phone || null,
             email: row.email || null,
             alamat: row.alamat || row.address || null,
             rantingId: rantingId || undefined,
-            tingkat: row.tingkat || null,
+            tingkat: row.tingkat || row.tingkatan || null,
             statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
             statusValidasi: 'pending',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,18 +212,32 @@ export class MembersService {
         if (missingFields.length > 0) {
           results.incomplete++;
           results.details.push({ row, missingFields, memberId: member.id });
+
+          // Kirim notifikasi data incomplete ke user yang punya email
+          if (member.email) {
+            this.memberMailService.sendToMember(
+              member.id,
+              (nama) => ({
+                subject: 'Data Anggota Belum Lengkap — THS-THM',
+                html: `<h2>Halo ${nama},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${f.replace(/_/g, ' ')}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
+                text: `Halo ${nama},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke sistem untuk melengkapi data.`,
+              }),
+              { template: 'dataIncompleteEmail', email: member.email },
+              'members',
+            );
+          }
         } else {
           results.success++;
-        }
 
-        // Send welcome email if email is provided
-        if (member.email) {
-          this.memberMailService.sendToMember(
-            member.id,
-            (nama) => welcomeMemberEmail(nama),
-            { template: 'welcomeMemberEmail', email: member.email },
-            'members',
-          );
+          // Send welcome email if email is provided
+          if (member.email) {
+            this.memberMailService.sendToMember(
+              member.id,
+              (nama) => welcomeMemberEmail(nama),
+              { template: 'welcomeMemberEmail', email: member.email },
+              'members',
+            );
+          }
         }
       } catch (error) {
         results.errors++;
@@ -242,6 +278,11 @@ export class MembersService {
     const missingFields: string[] = [];
     if (!member.namaLengkap) missingFields.push('nama_lengkap');
     if (!member.jenisKelamin) missingFields.push('jenis_kelamin');
+    if (!member.tempatLahir) missingFields.push('tempat_lahir');
+    if (!member.tanggalLahir) missingFields.push('tanggal_lahir');
+    if (!member.tempatDadar) missingFields.push('tempat_dadar');
+    if (!member.tahunDadar) missingFields.push('tahun_dadar');
+    if (!member.tingkat) missingFields.push('tingkat');
 
     if (missingFields.length > 0) {
       await this.prisma.anggota.update({
@@ -258,6 +299,21 @@ export class MembersService {
     });
 
     return { success: true, data: { valid: true } };
+  }
+
+  async findByEmail(email: string) {
+    const member = await this.prisma.anggota.findFirst({
+      where: { email, deletedAt: null },
+      include: {
+        ranting: { include: { wilayah: { include: { distrik: true } } } },
+      },
+    });
+
+    if (!member) {
+      return { success: false, message: 'Anggota tidak ditemukan untuk email ini' };
+    }
+
+    return { success: true, data: member };
   }
 
   async approve(id: string) {
@@ -443,11 +499,7 @@ export class MembersService {
     return { card, memberData, verificationUrl: card.verificationUrl };
   }
 
-  private async generateMemberNumber(): Promise<string> {
-    const year = new Date().getFullYear();
-    const count = await this.prisma.anggota.count();
-    return `THS-${year}-${String(count + 1).padStart(4, '0')}`;
-  }
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private validateCsvRow(row: any): string[] {

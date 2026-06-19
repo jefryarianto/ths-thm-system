@@ -40,6 +40,7 @@ import { ApprovalModule } from './modules/approvals/approval.module';
 import { OrgChartModule } from './modules/org-chart/org-chart.module';
 import { TargetsModule } from './modules/targets/targets.module';
 import { OrgStructureModule } from './modules/org-structure/org-structure.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -85,6 +86,7 @@ import { OrgStructureModule } from './modules/org-structure/org-structure.module
     OrgChartModule,
     OrgStructureModule,
     TargetsModule,
+    UploadModule,
   ],
   controllers: [HealthController],
   providers: [

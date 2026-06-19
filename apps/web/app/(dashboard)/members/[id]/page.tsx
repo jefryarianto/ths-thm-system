@@ -29,6 +29,7 @@ import {
   Pencil,
   X,
   Save,
+  Upload,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import {
@@ -52,6 +53,8 @@ interface MemberDetail {
   jenisKelamin: 'L' | 'P';
   tempatLahir: string | null;
   tanggalLahir: string | null;
+  tempatDadar: string | null;
+  tahunDadar: string | null;
   alamat: string | null;
   noHp: string | null;
   email: string | null;
@@ -138,6 +141,8 @@ export default function MemberDetailPage() {
     jenisKelamin: 'L' as 'L' | 'P',
     tempatLahir: '',
     tanggalLahir: '',
+    tempatDadar: '',
+    tahunDadar: '',
     alamat: '',
     noHp: '',
     email: '',
@@ -398,13 +403,6 @@ export default function MemberDetailPage() {
 
   if (!member) return null;
 
-  const initials = member.namaLengkap
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
   const totalPaid = member.iuran
     .filter((d: DuesItem) => d.status === 'lunas')
     .reduce((sum: number, d: DuesItem) => sum + Number(d.jumlah), 0);
@@ -430,7 +428,7 @@ export default function MemberDetailPage() {
 
       {/* ── Profile Header ── */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 relative">
+        <div className="h-20 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative">
           <button
             onClick={fetchMember}
             className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
@@ -440,10 +438,46 @@ export default function MemberDetailPage() {
           </button>
         </div>
         <div className="px-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12">
-            {/* Avatar */}
-            <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg ring-4 ring-white dark:ring-gray-800">
-              {initials}
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-10">
+            {/* Avatar with Upload */}
+            <div className="relative group">
+              <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
+                {member.fotoPath ? (
+                  <img src={`/api/uploads/${member.fotoPath}`} alt="" className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden'); }} />
+                ) : null}
+                <img src="/logo.png" alt="" className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`} />
+              </div>
+              <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition">
+                <Upload size={20} className="text-white" />
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const res = await fetch(`/api/upload/member-photo/${member.id}`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: formData,
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        await fetchMember();
+                      } else {
+                        alert(data.message || 'Gagal upload foto');
+                      }
+                    } catch {
+                      alert('Gagal upload foto');
+                    }
+                  }}
+                />
+              </label>
             </div>
             <div className="flex-1 mt-2 sm:mt-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -514,6 +548,8 @@ export default function MemberDetailPage() {
                     jenisKelamin: member.jenisKelamin,
                     tempatLahir: member.tempatLahir || '',
                     tanggalLahir: member.tanggalLahir || '',
+                    tempatDadar: member.tempatDadar || '',
+                    tahunDadar: member.tahunDadar || '',
                     alamat: member.alamat || '',
                     noHp: member.noHp || '',
                     email: member.email || '',
@@ -620,6 +656,15 @@ export default function MemberDetailPage() {
                     .join(', ') || null
                 }
               />
+              <InfoRow
+                icon={Calendar}
+                label="Tempat - Tahun Dadar"
+                value={
+                  [member.tempatDadar, member.tahunDadar]
+                    .filter(Boolean)
+                    .join(' - ') || null
+                }
+              />
               <InfoRow icon={MapPin} label="Alamat" value={member.alamat} />
             </div>
           </div>
@@ -654,7 +699,7 @@ export default function MemberDetailPage() {
               </h3>
               <div className="space-y-2">
                 <InfoRow icon={Users} label="Jalur Organisasi" value={orgPath} />
-                <InfoRow icon={Award} label="Tingkat" value={member.tingkat || null} />
+                <InfoRow icon={Award} label="Tingkatan" value={member.tingkat || null} />
                 <InfoRow
                   icon={Calendar}
                   label="Terakhir Diperbarui"
@@ -1033,6 +1078,8 @@ export default function MemberDetailPage() {
               if (editForm.noHp !== (member?.noHp || '')) payload.noHp = editForm.noHp;
               if (editForm.email !== (member?.email || '')) payload.email = editForm.email;
               if (editForm.tingkat !== (member?.tingkat || '')) payload.tingkat = editForm.tingkat;
+              if (editForm.tempatDadar !== (member?.tempatDadar || '')) payload.tempatDadar = editForm.tempatDadar;
+              if (editForm.tahunDadar !== (member?.tahunDadar || '')) payload.tahunDadar = editForm.tahunDadar;
               if (editForm.rantingId !== (member?.rantingId || '')) payload.rantingId = editForm.rantingId;
 
               if (Object.keys(payload).length === 0) {
@@ -1099,6 +1146,25 @@ export default function MemberDetailPage() {
                 onChange={(e) => setEditForm({ ...editForm, tanggalLahir: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat - Tahun Dadar</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={editForm.tempatDadar}
+                  onChange={(e) => setEditForm({ ...editForm, tempatDadar: e.target.value })}
+                  placeholder="Tempat dadar"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={editForm.tahunDadar}
+                  onChange={(e) => setEditForm({ ...editForm, tahunDadar: e.target.value })}
+                  placeholder="Tahun"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>

@@ -1,16 +1,6 @@
 'use client';
 
-import {
-  DollarSign,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  ArrowUp,
-  ArrowDown,
-  Users,
-  BarChart3,
-} from 'lucide-react';
-import StatCard from '@/components/cards/stat-card';
+import { Wallet, CheckCircle2, AlertTriangle, TrendingUp } from 'lucide-react';
 
 interface DuesStats {
   totalIuran: number;
@@ -19,6 +9,7 @@ interface DuesStats {
   totalMenunggak: number;
   iuranBulanIni: number;
   lunasBulanIni: number;
+  belumBayarBulanIni: number;
   anggotaAktif: number;
 }
 
@@ -28,99 +19,64 @@ export function formatRupiah(value: number) {
   return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
-interface DuesStatCardsProps {
-  stats: DuesStats;
-}
+const cards = [
+  {
+    key: 'totalIuran',
+    label: 'Total Iuran Terkumpul',
+    icon: Wallet,
+    color: 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400',
+    format: true,
+  },
+  {
+    key: 'totalLunas',
+    label: 'Total Lunas',
+    icon: CheckCircle2,
+    color: 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400',
+    format: true,
+  },
+  {
+    key: 'totalMenunggak',
+    label: 'Total Menunggak',
+    icon: AlertTriangle,
+    color: 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400',
+    format: true,
+  },
+  {
+    key: 'iuranBulanIni',
+    label: 'Iuran Bulan Ini',
+    icon: TrendingUp,
+    color: 'bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400',
+    format: true,
+  },
+];
 
-export default function DuesStatCards({ stats }: DuesStatCardsProps) {
-  const complianceRate =
-    stats.anggotaAktif > 0 ? Math.round((stats.lunasBulanIni / stats.anggotaAktif) * 100) : 0;
-
-  const mainCards = [
-    {
-      label: 'Total Iuran',
-      value: formatRupiah(stats.totalIuran),
-      icon: DollarSign,
-      color: 'blue' as const,
-      sub: 'Keseluruhan',
-    },
-    {
-      label: 'Iuran Bulan Ini',
-      value: formatRupiah(stats.iuranBulanIni),
-      icon: TrendingUp,
-      color: 'green' as const,
-      sub: `${stats.lunasBulanIni}/${stats.anggotaAktif} anggota`,
-    },
-    {
-      label: 'Menunggak',
-      value: `${stats.totalMenunggak} anggota`,
-      icon: AlertTriangle,
-      color: 'red' as const,
-      sub: 'Perlu tindak lanjut',
-    },
-    {
-      label: 'Kepatuhan',
-      value: `${complianceRate}%`,
-      icon: CheckCircle,
-      color: 'purple' as const,
-      sub: 'Bulan ini',
-    },
-  ];
-
-  const miniCards = [
-    {
-      label: 'Total Lunas',
-      value: stats.totalLunas.toLocaleString('id-ID'),
-      icon: ArrowUp,
-      color: 'green' as const,
-    },
-    {
-      label: 'Total Menunggak',
-      value: stats.totalMenunggak.toLocaleString('id-ID'),
-      icon: ArrowDown,
-      color: 'red' as const,
-    },
-    {
-      label: 'Anggota Aktif',
-      value: stats.anggotaAktif.toLocaleString('id-ID'),
-      icon: Users,
-      color: 'blue' as const,
-    },
-    {
-      label: 'Total Transaksi',
-      value: stats.totalTransaksi.toLocaleString('id-ID'),
-      icon: BarChart3,
-      color: 'purple' as const,
-    },
-  ];
+export default function DuesStatCards({ stats }: { stats: DuesStats | null }) {
+  if (!stats) return null;
 
   return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {mainCards.map(({ label, value, icon: Icon, color, sub }) => (
-          <StatCard
-            key={label}
-            label={label}
-            value={value}
-            icon={<Icon size={20} />}
-            color={color}
-            sub={sub}
-          />
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {miniCards.map(({ label, value, icon: Icon, color }) => (
-          <StatCard
-            key={label}
-            label={label}
-            value={value}
-            icon={<Icon size={14} />}
-            color={color}
-            variant="mini"
-          />
-        ))}
-      </div>
-    </>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {cards.map((card) => {
+        const Icon = card.icon;
+        const value = stats[card.key as keyof DuesStats] as number;
+        return (
+          <div
+            key={card.key}
+            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 hover:shadow-md transition"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${card.color}`}>
+                <Icon size={20} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {card.format ? formatRupiah(value) : value.toLocaleString('id-ID')}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

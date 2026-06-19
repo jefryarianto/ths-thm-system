@@ -7,7 +7,7 @@ import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Member } from '@/types';
-import { Plus, Download, Upload, Users } from 'lucide-react';
+import { Plus, Download, Upload, Users, Image as ImageIcon } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
@@ -107,68 +107,76 @@ export default function MembersPage() {
 
   // ─── Column Definitions ───
 
+  const formatTtl = (m: Member) => {
+    const parts = [m.tempatLahir, m.tanggalLahir ? formatDate(m.tanggalLahir) : null].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : '-';
+  };
+
+  const formatDadar = (m: Member) => {
+    if (m.tempatDadar && m.tahunDadar) return `${m.tempatDadar} - ${m.tahunDadar}`;
+    if (m.tempatDadar) return m.tempatDadar;
+    if (m.tahunDadar) return m.tahunDadar;
+    return '-';
+  };
+
   const columns = [
     {
+      key: 'namaLengkap',
+      label: 'Nama',
+      render: (m: Member) => (
+        <div className="flex items-center gap-2">
+          {m.fotoPath ? (
+            <img src={`/api/uploads/${m.fotoPath}`} alt="" className="w-8 h-8 rounded-full object-cover bg-gray-100 dark:bg-gray-700" 
+              onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden'); }} />
+          ) : null}
+          <div className={`w-8 h-8 rounded-full ${m.fotoPath ? 'hidden' : ''}`}>
+            <img src="/logo.png" alt="" className="w-8 h-8 rounded-full object-cover" />
+          </div>
+          <span className="font-medium text-gray-900 dark:text-white">{m.namaLengkap}</span>
+        </div>
+      ),
+    },
+    {
       key: 'nomorAnggota',
-      label: 'No. Anggota',
+      label: 'NRA',
       render: (m: Member) => (
         <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{m.nomorAnggota}</span>
       ),
     },
     {
-      key: 'namaLengkap',
-      label: 'Nama',
-      render: (m: Member) => (
-        <span className="font-medium text-gray-900 dark:text-white">{m.namaLengkap}</span>
-      ),
-    },
-    {
-      key: 'jenisKelamin',
-      label: 'JK',
-      hidden: 'hidden sm:table-cell',
-      render: (m: Member) => (
-        <span className="text-gray-600 dark:text-gray-400">{m.jenisKelamin}</span>
-      ),
-    },
-    {
-      key: 'noHp',
-      label: 'No. HP',
+      key: 'ttl',
+      label: 'Tempat, Tgl Lahir',
       hidden: 'hidden md:table-cell',
       render: (m: Member) => (
-        <span className="text-gray-600 dark:text-gray-400">{m.noHp || '-'}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400">{formatTtl(m)}</span>
+      ),
+    },
+    {
+      key: 'dadar',
+      label: 'Tempat - Tahun Dadar',
+      hidden: 'hidden lg:table-cell',
+      render: (m: Member) => (
+        <span className="text-xs text-gray-600 dark:text-gray-400">{formatDadar(m)}</span>
       ),
     },
     {
       key: 'ranting',
       label: 'Ranting',
-      hidden: 'hidden lg:table-cell',
-      render: (m: Member) => <span className="text-gray-500">{m.ranting?.nama || '-'}</span>,
+      hidden: 'hidden xl:table-cell',
+      render: (m: Member) => <span className="text-xs text-gray-500">{m.ranting?.nama || '-'}</span>,
+    },
+    {
+      key: 'tingkat',
+      label: 'Tingkatan',
+      render: (m: Member) => (
+        <span className="text-xs font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded-full">{m.tingkat || '-'}</span>
+      ),
     },
     {
       key: 'statusKeanggotaan',
       label: 'Status',
       render: (m: Member) => (
         <StatusBadge status={m.statusKeanggotaan} labels={STATUS_LABELS.keanggotaan} />
-      ),
-    },
-    {
-      key: 'statusData',
-      label: 'Data',
-      render: (m: Member) => <StatusBadge status={m.statusData} labels={STATUS_LABELS.data} />,
-    },
-    {
-      key: 'statusValidasi',
-      label: 'Validasi',
-      render: (m: Member) => (
-        <StatusBadge status={m.statusValidasi} labels={STATUS_LABELS.validasi} />
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Tgl Daftar',
-      hidden: 'hidden md:table-cell',
-      render: (m: Member) => (
-        <span className="text-xs text-gray-500">{formatDate(m.createdAt)}</span>
       ),
     },
   ];

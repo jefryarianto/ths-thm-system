@@ -19,6 +19,7 @@ import {
   Users,
   UserPlus,
   Award,
+  Save,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import {
@@ -40,6 +41,7 @@ interface CandidateDetail {
   alamat: string | null;
   noHp: string | null;
   email: string | null;
+  tingkat: string | null;
   status: string;
   rantingId: string;
   usulOlehUserId: string;
@@ -64,6 +66,8 @@ export default function CandidateDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [approveForm, setApproveForm] = useState({ tempatDadar: '', tahunDadar: '', tingkat: '' });
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -93,12 +97,17 @@ export default function CandidateDetailPage() {
     if (!candidate) return;
     setActionLoading('approve');
     try {
-      await apiClient.post(`/candidates/${candidate.id}/approve`);
+      const payload: Record<string, string> = {};
+      if (approveForm.tempatDadar) payload.tempatDadar = approveForm.tempatDadar;
+      if (approveForm.tahunDadar) payload.tahunDadar = approveForm.tahunDadar;
+      if (approveForm.tingkat) payload.tingkat = approveForm.tingkat;
+      await apiClient.post(`/candidates/${candidate.id}/approve`, payload);
       await fetchCandidate();
     } catch {
       /* ignore */
     }
     setActionLoading(null);
+    setShowApproveModal(false);
   };
 
   const handleReject = async () => {
@@ -149,12 +158,6 @@ export default function CandidateDetailPage() {
 
   if (!candidate) return null;
 
-  const initials = candidate.namaLengkap
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
   const orgPath =
     [
       candidate.ranting?.wilayah?.distrik?.nama,
@@ -187,8 +190,8 @@ export default function CandidateDetailPage() {
         </div>
         <div className="px-6 pb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12">
-            <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg ring-4 ring-white dark:ring-gray-800">
-              {initials}
+            <div className="w-20 h-20 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
+              <img src="/logo.png" alt="" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 mt-2 sm:mt-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -205,7 +208,10 @@ export default function CandidateDetailPage() {
               {candidate.status === 'diusulkan' && (
                 <>
                   <button
-                    onClick={handleApprove}
+                    onClick={() => {
+                      setApproveForm({ tempatDadar: '', tahunDadar: '', tingkat: '' });
+                      setShowApproveModal(true);
+                    }}
                     disabled={actionLoading === 'approve'}
                     className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                   >
@@ -260,6 +266,17 @@ export default function CandidateDetailPage() {
 
         {/* Contact & Organization */}
         <div className="space-y-6">
+          {candidate.tingkat && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                <Award size={18} className="text-purple-500" />
+                Data Kelulusan
+              </h3>
+              <div className="space-y-2">
+                <InfoRow icon={Award} label="Tingkatan" value={candidate.tingkat} />
+              </div>
+            </div>
+          )}
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
               <Mail size={18} className="text-purple-500" />
@@ -353,6 +370,78 @@ export default function CandidateDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Approve Modal — input data kelulusan pendadaran */}
+      <Modal
+        open={showApproveModal}
+        onClose={() => setShowApproveModal(false)}
+        title="Setujui Calon Anggota"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800">
+            <CheckCircle2 size={20} className="text-emerald-500 flex-shrink-0" />
+            <p className="text-sm text-emerald-700 dark:text-emerald-400">
+              <strong>{candidate.namaLengkap}</strong> akan disetujui menjadi anggota THS-THM.
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Isi data kelulusan pendadaran untuk anggota baru:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Dadar</label>
+              <input
+                type="text"
+                value={approveForm.tempatDadar}
+                onChange={(e) => setApproveForm({ ...approveForm, tempatDadar: e.target.value })}
+                placeholder="Contoh: Hokeng"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tahun Dadar</label>
+              <input
+                type="text"
+                value={approveForm.tahunDadar}
+                onChange={(e) => setApproveForm({ ...approveForm, tahunDadar: e.target.value })}
+                placeholder="Contoh: 2024"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkatan</label>
+              <select
+                value={approveForm.tingkat}
+                onChange={(e) => setApproveForm({ ...approveForm, tingkat: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900"
+              >
+                <option value="">Pilih Tingkatan</option>
+                <option value="Tamtama">Tamtama</option>
+                <option value="Bintara">Bintara</option>
+                <option value="Perwira">Perwira</option>
+                <option value="Purnatugas">Purnatugas</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowApproveModal(false)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleApprove}
+              disabled={actionLoading === 'approve'}
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+            >
+              <Save size={14} />
+              {actionLoading === 'approve' ? 'Memproses...' : 'Setujui & Buat Anggota'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Reject Modal */}
       <Modal
