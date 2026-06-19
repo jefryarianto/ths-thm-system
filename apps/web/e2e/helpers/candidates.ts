@@ -45,4 +45,20 @@ export async function registerCandidatesMocks(page: Page) {
       }),
     });
   });
+
+  // Mock candidates CSV import endpoint
+  await page.route(/\/api\/candidates\/import/, async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { success: 2, errors: 0, details: [] },
+        }),
+      });
+    } else {
+      await route.continue();
+    }
+  });
 }

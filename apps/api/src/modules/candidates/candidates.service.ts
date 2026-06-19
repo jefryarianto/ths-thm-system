@@ -142,8 +142,44 @@ export class CandidatesService {
       details: Array<{ row: unknown; error: string }>;
     } = { success: 0, errors: 0, details: [] };
 
+    // Collect all emails to check duplicates in one batch
+    const emails = data
+      .map((row) => row.email?.trim()?.toLowerCase())
+      .filter(Boolean) as string[];
+
+    let existingEmails = new Set<string>();
+    if (emails.length > 0) {
+      const [existingAnggota, existingCalon] = await Promise.all([
+        this.prisma.anggota.findMany({
+          where: { email: { in: emails, mode: 'insensitive' } },
+          select: { email: true },
+        }),
+        this.prisma.calonAnggota.findMany({
+          where: { email: { in: emails, mode: 'insensitive' } },
+          select: { email: true },
+        }),
+      ]);
+      const allEmails: string[] = [
+        ...existingAnggota.map((a) => a.email?.toLowerCase() || ''),
+        ...existingCalon.map((c) => c.email?.toLowerCase() || ''),
+      ].filter(Boolean);
+      existingEmails = new Set(allEmails);
+    }
+
     for (const row of data) {
       try {
+        const email = row.email?.trim()?.toLowerCase();
+
+        // Check duplicate email
+        if (email && existingEmails.has(email)) {
+          results.errors++;
+          results.details.push({
+            row,
+            error: `Email "${row.email}" sudah terdaftar sebagai anggota atau calon anggota`,
+          });
+          continue;
+        }
+
         await this.prisma.calonAnggota.create({
           data: {
             namaLengkap: row.nama_lengkap || row.nama || row.name,

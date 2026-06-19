@@ -105,6 +105,9 @@ describe('CandidatesService', () => {
     mockCache.invalidatePrefix.mockClear();
     mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
     mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
+    // Default mock returns for duplicate email queries
+    mockPrisma.anggota.findMany.mockResolvedValue([]);
+    mockPrisma.calonAnggota.findMany.mockResolvedValue([]);
   });
 
   it('should be defined', () => {
@@ -394,6 +397,86 @@ describe('CandidatesService', () => {
       const data = [{ nama_lengkap: 'Test' }];
       await service.importCsv(data);
       expect(mockCache.invalidatePrefix).toHaveBeenCalledWith('candidates:');
+    });
+
+    describe('duplicate detection', () => {
+      it('should skip row when email already exists in Anggota', async () => {
+        mockPrisma.anggota.findMany.mockResolvedValue([
+          { email: 'existing@test.com' },
+        ]);
+        mockPrisma.calonAnggota.findMany.mockResolvedValue([]);
+
+        const data = [
+          { nama_lengkap: 'Budi', email: 'existing@test.com' },
+          { nama_lengkap: 'Siti', email: 'new@test.com' },
+        ];
+
+        mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+        const result = await service.importCsv(data);
+
+        expect(result.data.success).toBe(1);
+        expect(result.data.errors).toBe(1);
+        expect(result.data.details[0].error).toContain('sudah terdaftar');
+        expect(result.data.details[0].error).toContain('existing@test.com');
+        // Should only have called create once (for Siti)
+        expect(mockPrisma.calonAnggota.create).toHaveBeenCalledTimes(1);
+      });
+
+      it('should skip row when email already exists in CalonAnggota', async () => {
+        mockPrisma.anggota.findMany.mockResolvedValue([]);
+        mockPrisma.calonAnggota.findMany.mockResolvedValue([
+          { email: 'calon@test.com' },
+        ]);
+
+        mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+        const result = await service.importCsv([
+          { nama_lengkap: 'Test', email: 'calon@test.com' },
+        ]);
+
+        expect(result.data.success).toBe(0);
+        expect(result.data.errors).toBe(1);
+        expect(result.data.details[0].error).toContain('sudah terdaftar');
+      });
+
+      it('should handle duplicate check case-insensitively', async () => {
+        mockPrisma.anggota.findMany.mockResolvedValue([
+          { email: 'Existing@Test.com' },
+        ]);
+        mockPrisma.calonAnggota.findMany.mockResolvedValue([]);
+
+        mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+        const result = await service.importCsv([
+          { nama_lengkap: 'Test', email: 'existing@test.com' },
+        ]);
+
+        expect(result.data.errors).toBe(1);
+        expect(result.data.details[0].error).toContain('sudah terdaftar');
+      });
+
+      it('should not check duplicate when email is empty', async () => {
+        mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+        const result = await service.importCsv([
+          { nama_lengkap: 'Test Tanpa Email' },
+        ]);
+
+        expect(result.data.success).toBe(1);
+        expect(result.data.errors).toBe(0);
+        // Should not have called findMany for email lookup
+        expect(mockPrisma.anggota.findMany).not.toHaveBeenCalled();
+      });
+
+      it('should not check duplicate when no rows have emails', async () => {
+        mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+        const result = await service.importCsv([
+          { nama_lengkap: 'A' },
+          { nama_lengkap: 'B' },
+        ]);
+
+        expect(result.data.success).toBe(2);
+        expect(result.data.errors).toBe(0);
+        expect(mockPrisma.anggota.findMany).not.toHaveBeenCalled();
+        expect(mockPrisma.calonAnggota.findMany).not.toHaveBeenCalled();
+      });
     });
   });
 
