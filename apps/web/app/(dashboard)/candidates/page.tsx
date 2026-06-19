@@ -12,6 +12,7 @@ import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import CandidateActions from '@/components/candidates/CandidateActions';
 
 const STATUS_COLORS: Record<string, string> = {
   diusulkan: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
@@ -85,6 +86,7 @@ export default function CandidatesPage() {
           { label: 'No. HP', hidden: 'hidden md:table-cell' },
           { label: 'Email', hidden: 'hidden lg:table-cell' },
           { label: 'Status' },
+          { label: 'Aksi', align: 'right' },
         ]}
         data={candidates}
         loading={loading}
@@ -96,7 +98,7 @@ export default function CandidatesPage() {
         totalPages={meta.totalPages}
         total={meta.total}
         onPageChange={handlePageChange}
-        colSpan={5}
+        colSpan={6}
         renderRow={(c: Candidate) => (
           <tr
             key={c.id}
@@ -120,6 +122,9 @@ export default function CandidatesPage() {
               >
                 {STATUS_LABELS[c.status] || c.status}
               </span>
+            </td>
+            <td className="px-4 py-3 text-right">
+              <CandidateActions candidate={c} onSuccess={refetch} />
             </td>
           </tr>
         )}

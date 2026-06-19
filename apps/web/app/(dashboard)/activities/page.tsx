@@ -5,7 +5,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { useFilters } from '@/lib/hooks/use-filters';
-import { Plus, Calendar, Eye, MapPin } from 'lucide-react';
+import { Plus, Calendar, MapPin } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -17,6 +17,7 @@ import {
   ACTIVITY_STATUS_OPTIONS,
   ACTIVITY_TIPE_OPTIONS,
 } from '@/components/activities/constants';
+import ActivityActions from '@/components/activities/ActivityActions';
 
 interface ActivityRow {
   id: string;
@@ -152,13 +153,7 @@ export default function ActivitiesPage() {
               </span>
             </td>
             <td className="px-4 py-3 text-right">
-              <button
-                onClick={() => router.push(`/activities/${row.id}`)}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                title="Detail"
-              >
-                <Eye size={15} />
-              </button>
+              <ActivityActions activity={row} onSuccess={refetch} />
             </td>
           </tr>
         )}
