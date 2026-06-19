@@ -90,8 +90,8 @@ export class CandidatesController {
   @ApiOperation({ summary: 'Download data kandidat sebagai CSV' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  async exportCsv(@Query() filter: CandidateFilterDto, @Res() res: Response) {
-    const csv = await this.candidatesService.exportCsv(filter);
+  async exportCsv(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest, @Res() res: Response) {
+    const csv = await this.candidatesService.exportCsv(filter, req.scope);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="calon-anggota.csv"');
     res.send(csv);

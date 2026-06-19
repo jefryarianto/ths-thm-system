@@ -324,9 +324,22 @@ export class CandidatesService {
     return { success: true, message: reason || 'Calon anggota ditolak' };
   }
 
-  async exportCsv(_filter: CandidateFilterDto): Promise<string> {
+  async exportCsv(_filter: CandidateFilterDto, scope?: UserScope): Promise<string> {
+    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = { ...scopeFilter };
+
+    if (_filter.search) {
+      where.OR = [
+        { namaLengkap: { contains: _filter.search } },
+        { email: { contains: _filter.search } },
+      ];
+    }
+    if (_filter.rantingId) where.rantingId = _filter.rantingId;
+    if (_filter.status) where.status = _filter.status;
+
     const candidates = await this.prisma.calonAnggota.findMany({
-      where: {},
+      where,
       select: {
         namaLengkap: true,
         jenisKelamin: true,

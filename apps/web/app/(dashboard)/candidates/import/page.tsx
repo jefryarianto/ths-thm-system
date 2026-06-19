@@ -41,6 +41,45 @@ type RowValidation = {
   issues: string[];
 };
 
+function detectDelimiter(line: string): string {
+  const commaCount = (line.match(/,/g) || []).length;
+  const semicolonCount = (line.match(/;/g) || []).length;
+  const tabCount = (line.match(/\t/g) || []).length;
+
+  if (semicolonCount > commaCount && semicolonCount > tabCount) return ';';
+  if (tabCount > commaCount && tabCount > semicolonCount) return '\t';
+  return ',';
+}
+
+function parseCsvLine(line: string, delimiter: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote inside quoted field
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
 function matchHeader(headers: string[], target: string): string | undefined {
   return headers.find((h) => h.toLowerCase() === target.toLowerCase());
 }
@@ -102,6 +141,7 @@ export default function ImportCandidatesPage() {
   const [headerWarnings, setHeaderWarnings] = useState<string[]>([]);
   const [failedRows, setFailedRows] = useState<FailedRow[]>([]);
   const [retrying, setRetrying] = useState(false);
+  const [editedFailedRows, setEditedFailedRows] = useState<Record<number, Record<string, string>>>({});
 
   const rowValidations = useMemo<RowValidation[]>(
     () => (csvData ? validateRows(csvData, headers) : []),
@@ -143,22 +183,30 @@ export default function ImportCandidatesPage() {
 
     try {
       const text = await file.text();
-      const lines = text.split('\n').filter(Boolean);
+      const allLines = text.split(/\r?\n/);
+      const nonEmptyLines = allLines.filter((l) => l.trim().length > 0);
+
+      // Detect delimiter from header line
+      const headerLine = nonEmptyLines[0] || '';
+      const delimiter = detectDelimiter(headerLine);
 
       // Batch size check (exclude header)
-      const dataRowCount = lines.length - 1;
+      const dataRowCount = nonEmptyLines.length - 1;
       if (dataRowCount > MAX_IMPORT_ROWS) {
         setError(`Maksimal ${MAX_IMPORT_ROWS} baris data per import. File Anda memiliki ${dataRowCount} baris.`);
         return;
       }
 
-      if (lines.length < 2) {
+      if (nonEmptyLines.length < 2) {
         setError('File CSV harus memiliki header dan minimal 1 baris data');
         return;
       }
 
-      const hdrs = lines[0].split(',').map((h) => h.trim());
+      const hdrs = parseCsvLine(headerLine, delimiter).map((h) => h.trim());
       setHeaders(hdrs);
+
+      // Detect delimiter badge for info
+      const delimiterLabels: Record<string, string> = { ',': 'koma', ';': 'titik koma', '\t': 'tab' };
 
       // Validate headers
       const warnings: string[] = [];
@@ -182,11 +230,16 @@ export default function ImportCandidatesPage() {
         );
       }
 
+      // Add delimiter info (only if not comma)
+      if (delimiter !== ',') {
+        warnings.push(`Pemisah terdeteksi: ${delimiterLabels[delimiter] || delimiter}.`);
+      }
+
       setHeaderWarnings(warnings);
 
-      // Parse data rows
-      const data = lines.slice(1).map((line) => {
-        const vals = line.split(',').map((v) => v.trim());
+      // Parse data rows with proper quoted-field handling
+      const data = nonEmptyLines.slice(1).map((line) => {
+        const vals = parseCsvLine(line, delimiter);
         const row: Record<string, string> = {};
         hdrs.forEach((h, i) => {
           row[h] = vals[i] || '';
@@ -256,13 +309,25 @@ export default function ImportCandidatesPage() {
     setImporting(false);
   };
 
+  const handleEditFailedRow = useCallback((index: number, field: string, value: string) => {
+    setEditedFailedRows((prev) => ({
+      ...prev,
+      [index]: { ...prev[index], [field]: value },
+    }));
+  }, []);
+
   const handleRetryFailed = async () => {
     if (failedRows.length === 0) return;
     setRetrying(true);
     setError('');
     setResult(null);
     try {
-      const failedData = failedRows.map((f) => f.row);
+      // Apply inline edits before retrying
+      const failedData = failedRows.map((f, i) => {
+        const edits = editedFailedRows[i];
+        if (!edits) return f.row;
+        return { ...f.row, ...edits };
+      });
       const { data: res } = await apiClient.post('/candidates/import', failedData);
       setResult(res.data);
 
@@ -275,8 +340,10 @@ export default function ImportCandidatesPage() {
             error: d.error,
           }));
         setFailedRows(stillFailed);
+        setEditedFailedRows({});
       } else {
         setFailedRows([]);
+        setEditedFailedRows({});
       }
     } catch (err: unknown) {
       const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -292,6 +359,7 @@ export default function ImportCandidatesPage() {
     setHeaderWarnings([]);
     setError('');
     setFailedRows([]);
+    setEditedFailedRows({});
   };
 
   return (
@@ -326,37 +394,57 @@ export default function ImportCandidatesPage() {
             </div>
           </div>
 
-          {/* Failed rows detail table */}
+          {/* Failed rows detail table with inline editing */}
           {failedRows.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                Baris Gagal ({failedRows.length})
+                Baris Gagal ({failedRows.length}) — Klik nama/email untuk edit
               </h4>
-              <div className="max-h-48 overflow-y-auto border border-red-200 dark:border-red-800 rounded-xl">
+              <div className="max-h-64 overflow-y-auto border border-red-200 dark:border-red-800 rounded-xl">
                 <table className="w-full text-xs">
                   <thead className="bg-red-50 dark:bg-red-950/30 sticky top-0">
                     <tr className="border-b border-red-200 dark:border-red-800">
-                      <th className="px-2 py-1.5 text-left font-medium text-red-600">#</th>
+                      <th className="px-2 py-1.5 text-left font-medium text-red-600 w-8">#</th>
                       <th className="px-2 py-1.5 text-left font-medium text-red-600">Nama</th>
                       <th className="px-2 py-1.5 text-left font-medium text-red-600">Email</th>
                       <th className="px-2 py-1.5 text-left font-medium text-red-600">Error</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {failedRows.slice(0, 50).map((f, i) => (
-                      <tr key={i} className="border-b border-red-100 dark:border-red-900/30">
-                        <td className="px-2 py-1.5 text-red-400">{i + 1}</td>
-                        <td className="px-2 py-1.5 text-red-700 dark:text-red-300 font-medium">
-                          {f.row?.nama_lengkap || f.row?.nama || f.row?.name || '-'}
-                        </td>
-                        <td className="px-2 py-1.5 text-red-600 dark:text-red-400">
-                          {f.row?.email || '-'}
-                        </td>
-                        <td className="px-2 py-1.5 text-red-500 max-w-[250px]">
-                          <span className="line-clamp-2" title={f.error}>{f.error}</span>
-                        </td>
-                      </tr>
-                    ))}
+                    {failedRows.slice(0, 50).map((f, i) => {
+                      const edits = editedFailedRows[i] || {};
+                      const editedName = edits.nama_lengkap ?? edits.nama ?? edits.name;
+                      const editedEmail = edits.email;
+                      const origName = f.row?.nama_lengkap || f.row?.nama || f.row?.name || '';
+                      const origEmail = f.row?.email || '';
+                      const hasEdit = !!editedName || !!editedEmail;
+                      return (
+                        <tr key={i} className={`border-b border-red-100 dark:border-red-900/30 ${hasEdit ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                          <td className="px-2 py-1 text-red-400">{i + 1}</td>
+                          <td className="px-2 py-1">
+                            <input
+                              defaultValue={origName}
+                              onChange={(e) => handleEditFailedRow(i, 'nama_lengkap', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent hover:border-red-300 focus:border-amber-500 focus:outline-none text-red-700 dark:text-red-300 font-medium px-0.5 py-0.5 transition-colors truncate"
+                              placeholder="Nama..."
+                              title={origName}
+                            />
+                          </td>
+                          <td className="px-2 py-1">
+                            <input
+                              defaultValue={origEmail}
+                              onChange={(e) => handleEditFailedRow(i, 'email', e.target.value)}
+                              className="w-full bg-transparent border-b border-transparent hover:border-red-300 focus:border-amber-500 focus:outline-none text-red-600 dark:text-red-400 px-0.5 py-0.5 transition-colors truncate"
+                              placeholder="Email..."
+                              title={origEmail}
+                            />
+                          </td>
+                          <td className="px-2 py-1 text-red-500 max-w-[200px]">
+                            <span className="line-clamp-2 text-[11px]" title={f.error}>{f.error}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {failedRows.length > 50 && (
                       <tr>
                         <td colSpan={4} className="px-2 py-2 text-center text-gray-400">
@@ -367,6 +455,12 @@ export default function ImportCandidatesPage() {
                   </tbody>
                 </table>
               </div>
+              {Object.keys(editedFailedRows).length > 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Info size={12} />
+                  {Object.keys(editedFailedRows).length} baris telah diedit
+                </p>
+              )}
             </div>
           )}
 
