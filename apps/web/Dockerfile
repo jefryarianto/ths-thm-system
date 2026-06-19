@@ -19,8 +19,8 @@ RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --ig
 COPY apps/web/ ./apps/web/
 COPY packages/ ./packages/
 
-# Build
-RUN pnpm --filter @ths-thm/web build
+# Build with realtime features enabled for production
+RUN NEXT_PUBLIC_ENABLE_REALTIME=true pnpm --filter @ths-thm/web build
 
 # Production Stage
 FROM node:20-alpine

@@ -150,32 +150,29 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     };
     fetchCount();
 
-    // Realtime notifications via WebSocket (opt-in: set NEXT_PUBLIC_ENABLE_REALTIME=true)
-    const realtimeEnabled = process.env.NEXT_PUBLIC_ENABLE_REALTIME === 'true';
+    // WebSocket for real-time notifications (socket.ts handles enable/disable via
+    // NEXT_PUBLIC_ENABLE_REALTIME env var — returns noop socket when disabled)
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        const socket = getSocket(token);
+        socket.on('notification:new', () => {
+          setUnreadCount((prev) => prev + 1);
+        });
+        socket.on('notification:count', (data: { count: number }) => {
+          setUnreadCount(data.count);
+        });
 
-    if (realtimeEnabled) {
-      try {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          const socket = getSocket(token);
-          socket.on('notification:new', () => {
-            setUnreadCount((prev) => prev + 1);
-          });
-          socket.on('notification:count', (data: { count: number }) => {
-            setUnreadCount(data.count);
-          });
-
-          return () => {
-            socket.off('notification:new');
-            socket.off('notification:count');
-          };
-        }
-      } catch {
-        /* fallback to polling below */
+        return () => {
+          socket.off('notification:new');
+          socket.off('notification:count');
+        };
       }
+    } catch {
+      /* fallback to polling below */
     }
 
-    // Fallback: poll every 30s if WebSocket unavailable or disabled
+    // Fallback: poll every 30s if WebSocket unavailable
     const interval = setInterval(fetchCount, 30000);
     return () => clearInterval(interval);
   }, []);
