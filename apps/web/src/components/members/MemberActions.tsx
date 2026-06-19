@@ -34,7 +34,7 @@ export default function MemberActions({
         position: 'fixed' as const,
         top: rect.bottom + 4,
         right: window.innerWidth - rect.right,
-        zIndex: 50,
+        zIndex: 9999,
       });
     }
     setShowMenu(!showMenu);
@@ -85,7 +85,7 @@ export default function MemberActions({
         </button>
         {showMenu && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+            <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)} />
             <div
               style={menuStyle}
               className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"

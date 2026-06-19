@@ -5,7 +5,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, ClipboardList, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, ClipboardList, Eye, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -101,12 +101,34 @@ export default function AssessmentsPage() {
               )}
             </td>
             <td className="px-4 py-3 text-right hidden md:table-cell">
-              <button
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                title="Detail"
-              >
-                <Eye size={15} />
-              </button>
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={async () => {
+                    try {
+                      const newStatus = !row.isActive;
+                      await apiClient.patch(`/assessments/aspects/${row.id}`, { isActive: newStatus });
+                      refetch();
+                    } catch { alert('Gagal mengubah status aspek'); }
+                  }}
+                  className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                  title={row.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                >
+                  <Eye size={15} />
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Hapus aspek "${row.namaAspek}"?`)) return;
+                    try {
+                      await apiClient.delete(`/assessments/aspects/${row.id}`);
+                      refetch();
+                    } catch { alert('Gagal menghapus aspek'); }
+                  }}
+                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                  title="Hapus"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </td>
           </tr>
         )}

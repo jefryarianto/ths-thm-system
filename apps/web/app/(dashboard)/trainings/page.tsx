@@ -5,7 +5,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, Calendar, Eye, MapPin, User, BookOpen } from 'lucide-react';
+import { Plus, Calendar, Eye, MapPin, User, BookOpen, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -137,13 +137,28 @@ export default function TrainingsPage() {
               </div>
             </td>
             <td className="px-4 py-3 text-right">
-              <button
-                onClick={() => router.push(`/trainings/${row.id}`)}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                title="Detail"
-              >
-                <Eye size={15} />
-              </button>
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={() => router.push(`/trainings/${row.id}`)}
+                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                  title="Detail"
+                >
+                  <Eye size={15} />
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Hapus data latihan ini?`)) return;
+                    try {
+                      await apiClient.delete(`/trainings/${row.id}`);
+                      refetch();
+                    } catch { alert('Gagal menghapus latihan'); }
+                  }}
+                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                  title="Hapus"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </td>
           </tr>
         )}
