@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FileText, Edit3, Trash2, Eye, X, Code } from 'lucide-react';
+import { FileText, Edit3, Trash2, Eye, X, Code, Send } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { EMAIL_TEMPLATES } from './shared';
 import Modal from '@/components/ui/modal';
@@ -30,6 +30,10 @@ export default function EmailTemplatesTab() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewSubject, setPreviewSubject] = useState('');
   const [previewHtml, setPreviewHtml] = useState('');
+  const [testEmailInput, setTestEmailInput] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showTestForm, setShowTestForm] = useState(false);
   const [sampleValues, setSampleValues] = useState<Record<string, string>>({
     nama: 'John Doe',
     email: 'john@example.com',
@@ -77,11 +81,17 @@ export default function EmailTemplatesTab() {
       isActive: custom?.isActive ?? true,
     });
     setShowPreview(false);
+    setShowTestForm(false);
+    setTestResult(null);
+    setTestEmailInput('');
   };
 
   const closeEditor = () => {
     setEditingTemplate(null);
     setEditForm({ subject: '', htmlBody: '', isActive: true });
+    setShowTestForm(false);
+    setTestResult(null);
+    setTestEmailInput('');
   };
 
   const saveTemplate = async () => {
@@ -392,6 +402,91 @@ export default function EmailTemplatesTab() {
                     >
                       Generate Preview
                     </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Test Email Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+              <button
+                onClick={() => setShowTestForm(!showTestForm)}
+                className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 hover:text-green-800"
+              >
+                <Send size={14} />
+                {showTestForm ? 'Sembunyikan Test Email' : 'Kirim Test dengan Template Ini'}
+              </button>
+
+              {showTestForm && (
+                <div className="mt-3 space-y-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <p className="text-xs text-green-700 dark:text-green-400 font-medium">
+                    Kirim email test menggunakan subject &amp; konten HTML di atas. Placeholder akan diganti dengan sample values.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      value={testEmailInput}
+                      onChange={(e) => setTestEmailInput(e.target.value)}
+                      placeholder="Masukkan email tujuan test"
+                      className="flex-1 px-3 py-2 border border-green-300 dark:border-green-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!testEmailInput.trim()) {
+                          toast('error', 'Masukkan alamat email tujuan');
+                          return;
+                        }
+                        if (!editForm.subject.trim() || !editForm.htmlBody.trim()) {
+                          toast('error', 'Subject dan konten HTML harus diisi');
+                          return;
+                        }
+                        setTestSending(true);
+                        setTestResult(null);
+                        try {
+                          const { data } = await apiClient.post('/mail/templates/test-send', {
+                            name: editingTemplate?.name,
+                            subject: editForm.subject,
+                            htmlBody: editForm.htmlBody,
+                            to: testEmailInput.trim(),
+                          });
+                          setTestResult({
+                            success: data.success,
+                            message: data.message || (data.success ? 'Berhasil dikirim' : 'Gagal dikirim'),
+                          });
+                        } catch (err: unknown) {
+                          const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                          setTestResult({
+                            success: false,
+                            message: apiErr || 'Gagal terhubung ke server',
+                          });
+                        }
+                        setTestSending(false);
+                      }}
+                      disabled={testSending || !testEmailInput.trim()}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-50"
+                    >
+                      {testSending ? (
+                        <>
+                          <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                          Mengirim...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={14} /> Kirim Test
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {testResult && (
+                    <div
+                      className={`px-3 py-2 rounded-lg text-sm flex items-start gap-2 ${
+                        testResult.success
+                          ? 'bg-white dark:bg-gray-700 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700'
+                          : 'bg-white dark:bg-gray-700 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700'
+                      }`}
+                    >
+                      <span>{testResult.message}</span>
+                    </div>
                   )}
                 </div>
               )}

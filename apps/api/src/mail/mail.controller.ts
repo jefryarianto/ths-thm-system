@@ -83,6 +83,96 @@ export class MailController {
     return { success: false, message: 'Test email failed. Check API logs for details.' };
   }
 
+  @Post('templates/test-send')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Kirim test email menggunakan template custom (subject & HTML body dari editor)' })
+  async testSendTemplate(
+    @Body()
+    body: {
+      name: string;
+      subject: string;
+      htmlBody: string;
+      to: string;
+      variables?: Record<string, string>;
+    },
+  ) {
+    if (!body.to || !body.to.includes('@')) {
+      return { success: false, message: 'Alamat email tujuan tidak valid' };
+    }
+    if (!body.subject.trim() || !body.htmlBody.trim()) {
+      return { success: false, message: 'Subject dan konten HTML harus diisi' };
+    }
+
+    // Replace {{variable}} placeholders with sample/default values
+    const defaultVars: Record<string, string> = {
+      nama: 'John Doe',
+      email: 'john@example.com',
+      nomorAnggota: 'THM-2026-0001',
+      alasan: 'Test alasan',
+      resetUrl: 'https://app.ths-thm.org/reset?token=test',
+      kegiatanNama: 'Latihan Rutin Sabtu',
+      tanggal: '20 Juni 2026',
+      lokasi: 'GOR THS-THM',
+      jenisMateri: 'Teknik Dasar',
+      hadir: 'Hadir',
+      hariTanggal: 'Sabtu, 20 Juni 2026',
+      jumlah: 'Rp 50.000',
+      periode: 'Juni 2026',
+      docType: 'Kartu Anggota',
+      nomorDokumen: 'THM-2026-0001',
+      status: 'disetujui',
+      namaPendadaran: 'Pendadaran THS-THM',
+      lulus: 'Lulus',
+      skor: '85',
+      setPasswordUrl: 'https://app.ths-thm.org/set-password?token=test',
+      role: 'admin',
+      namaPenerima: 'Budi Santoso',
+      pengirim: 'Admin THS-THM',
+      perihalSurat: 'Undangan Rapat',
+      isiDisposisi: 'Mohon ditindaklanjuti',
+      judul: 'Notifikasi Test',
+      isi: 'Ini adalah isi notifikasi test',
+      kategori: 'Internal',
+      badgeName: 'Rajin Berlatih',
+      badgeIcon: '🏅',
+      description: 'Telah mengikuti 10 kali latihan',
+      oldLevel: 'Bronze',
+      newLevel: 'Silver',
+      points: '1500',
+      password: 'password123',
+      ...(body.variables || {}),
+    };
+
+    let renderedSubject = body.subject;
+    let renderedHtml = body.htmlBody;
+    for (const [key, value] of Object.entries(defaultVars)) {
+      const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi');
+      renderedSubject = renderedSubject.replace(regex, value);
+      renderedHtml = renderedHtml.replace(regex, value);
+    }
+
+    const sent = await this.mailService.sendMail({
+      to: body.to,
+      subject: `[TEST] ${renderedSubject}`,
+      html: renderedHtml,
+      metadata: {
+        module: 'mail-settings',
+        template: `test-${body.name}`,
+      },
+    });
+
+    if (sent) {
+      return {
+        success: true,
+        message: `✅ Email test berhasil dikirim ke ${body.to}`,
+      };
+    }
+    return {
+      success: false,
+      message: '❌ Gagal mengirim email test. Periksa konfigurasi email atau log untuk detail.',
+    };
+  }
+
   @Post('retry')
   @Roles('superadmin')
   async retryFailed(@Body() body: { ids?: string[] }) {
