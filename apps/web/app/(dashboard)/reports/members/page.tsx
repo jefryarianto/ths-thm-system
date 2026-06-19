@@ -7,12 +7,28 @@ import { Download, Filter } from 'lucide-react';
 
 interface OrgItem { id: string; nama: string; kodeDistrik?: string; kodeWilayah?: string; kodeRanting?: string; }
 
+interface MemberReport {
+  id: string;
+  nomorAnggota: string;
+  namaLengkap: string;
+  jenisKelamin: string;
+  tempatLahir?: string;
+  tanggalLahir?: string;
+  tempatDadar?: string;
+  tahunDadar?: string;
+  tingkat?: string;
+  statusKeanggotaan: string;
+  email?: string;
+  noHp?: string;
+  ranting?: { id: string; nama: string };
+}
+
 export default function MembersReportPage() {
   const router = useRouter();
   const [distriks, setDistriks] = useState<OrgItem[]>([]);
   const [wilayahs, setWilayahs] = useState<OrgItem[]>([]);
   const [rantings, setRantings] = useState<OrgItem[]>([]);
-  const [members, setMembers] = useState<Record<string, unknown>[]>([]);
+  const [members, setMembers] = useState<MemberReport[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ distrikId: '', wilayahId: '', rantingId: '' });
 

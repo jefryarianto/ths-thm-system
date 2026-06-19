@@ -12,8 +12,41 @@ import {
   Users,
 } from 'lucide-react';
 
+interface MemberProfile {
+  id: string;
+  namaLengkap: string;
+  nomorAnggota: string;
+  email?: string;
+  fotoPath?: string;
+  statusData: string;
+  missingFields?: string[];
+  tingkat?: string;
+  statusKeanggotaan: string;
+  tempatLahir?: string;
+  tanggalLahir?: string;
+  tempatDadar?: string;
+  tahunDadar?: string;
+  alamat?: string;
+  noHp?: string;
+  ranting?: {
+    id: string;
+    nama: string;
+    kodeRanting?: string;
+    wilayah?: {
+      id: string;
+      nama: string;
+      kodeWilayah?: string;
+      distrik?: {
+        id: string;
+        nama: string;
+        kodeDistrik?: string;
+      };
+    };
+  };
+}
+
 export default function ProfilePage() {
-  const [member, setMember] = useState<Record<string, unknown> | null>(null);
+  const [member, setMember] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
