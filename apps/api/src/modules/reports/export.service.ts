@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 

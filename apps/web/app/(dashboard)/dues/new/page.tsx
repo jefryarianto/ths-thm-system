@@ -14,7 +14,6 @@ interface Member {
 
 export default function NewDuesPage() {
   const router = useRouter();
-  const [members, setMembers] = useState<Member[]>([]);
   const [memberSearch, setMemberSearch] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [periode, setPeriode] = useState('');

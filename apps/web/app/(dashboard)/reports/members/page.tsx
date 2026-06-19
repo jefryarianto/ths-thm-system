@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { Download, Search, Filter } from 'lucide-react';
+import { Download, Filter } from 'lucide-react';
 
 interface OrgItem { id: string; nama: string; kodeDistrik?: string; kodeWilayah?: string; kodeRanting?: string; }
 

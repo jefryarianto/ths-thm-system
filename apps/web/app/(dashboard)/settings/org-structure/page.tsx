@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, Save, X, AlertCircle, ChevronRight, Building2, Map as MapIcon, Home } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, AlertCircle, Building2, Map as MapIcon, Home } from 'lucide-react';
 import Modal from '@/components/ui/modal';
-import Card from '@/components/cards/card';
 
 // ─── Types ───
 
@@ -228,6 +227,7 @@ export default function OrgStructureSettingsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDistrik, selectedWilayah]);
 
   const openCreate = () => {
@@ -235,7 +235,7 @@ export default function OrgStructureSettingsPage() {
     setShowModal(true);
   };
 
-  const openEdit = (item: Record<string, unknown>, level: OrgLevel) => {
+  const openEdit = (item: Record<string, unknown>, _level: OrgLevel) => {
     const form: Record<string, string> = {
       id: item.id as string,
       kode: item.kodeDistrik as string || item.kodeWilayah as string || item.kodeRanting as string || '',
@@ -261,7 +261,7 @@ export default function OrgStructureSettingsPage() {
     } else if (activeTab === 'wilayah') {
       const payload = { kodeWilayah: form.kode, nama: form.nama, distrikId: form.distrikId };
       if (isEdit) {
-        const { distrikId, ...updatePayload } = payload;
+        const { distrikId: _d, ...updatePayload } = payload;
         await apiClient.patch(`/org-structure/wilayah/${editData!.id}`, updatePayload);
       } else {
         await apiClient.post('/org-structure/wilayah', payload);
@@ -269,7 +269,7 @@ export default function OrgStructureSettingsPage() {
     } else if (activeTab === 'ranting') {
       const payload = { kodeRanting: form.kode, nama: form.nama, lokasiLatihan: form.lokasiLatihan, wilayahId: form.wilayahId };
       if (isEdit) {
-        const { wilayahId, ...updatePayload } = payload;
+        const { wilayahId: _w, ...updatePayload } = payload;
         await apiClient.patch(`/org-structure/ranting/${editData!.id}`, updatePayload);
       } else {
         await apiClient.post('/org-structure/ranting', payload);
@@ -391,7 +391,7 @@ export default function OrgStructureSettingsPage() {
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Klik "Tambah" untuk menambahkan</p>
             </div>
           ) : (
-            currentList.map((item, idx) => {
+            currentList.map((item) => {
               const wil = item as unknown as Wilayah;
               const ran = item as unknown as Ranting;
               const distrik = item as unknown as Distrik;

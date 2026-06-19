@@ -7,7 +7,7 @@ import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Member } from '@/types';
-import { Plus, Download, Upload, Users, Image as ImageIcon } from 'lucide-react';
+import { Plus, Download, Upload, Users } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';

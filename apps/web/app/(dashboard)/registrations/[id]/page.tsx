@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, User, AlertCircle } from 'lucide-react';
+import { ArrowLeft, User } from 'lucide-react';
 import { StatusBadge } from '@/components/members/constants';
 
 interface RegistrationDetail {

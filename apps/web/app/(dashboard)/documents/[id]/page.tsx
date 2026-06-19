@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 
 interface DocumentDetail {
   id: string;
@@ -16,7 +16,6 @@ interface DocumentDetail {
 }
 
 export default function DocumentDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
   const [doc, setDoc] = useState<DocumentDetail | null>(null);

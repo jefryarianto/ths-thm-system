@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, Download } from 'lucide-react';
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function ImportCandidatesPage() {
   const router = useRouter();

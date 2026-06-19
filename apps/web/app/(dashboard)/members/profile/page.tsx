@@ -1,15 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import {
   User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Award,
   AlertCircle,
   Save,
   Upload,
@@ -17,10 +11,8 @@ import {
   CheckCircle2,
   Users,
 } from 'lucide-react';
-import { formatDate } from '@/components/members/constants';
 
 export default function ProfilePage() {
-  const router = useRouter();
   const [member, setMember] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

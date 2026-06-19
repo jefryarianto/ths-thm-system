@@ -11,7 +11,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { MembersService } from '../members/members.service';
 import { UpdateMemberDto } from '../members/dto/member.dto';

@@ -6,7 +6,6 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import type { Member } from '@/types';
 import {
-  AlertCircle,
   Mail,
   Send,
   CheckCircle2,
@@ -16,7 +15,7 @@ import {
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
-import { StatusBadge, STATUS_LABELS, formatDate } from '@/components/members/constants';
+import { formatDate } from '@/components/members/constants';
 
 export default function IncompleteMembersPage() {
   const router = useRouter();
@@ -204,7 +203,7 @@ export default function IncompleteMembersPage() {
         page={1}
         totalPages={meta.totalPages}
         total={meta.total}
-        onPageChange={(p) => {}}
+        onPageChange={(_p) => {}}
       />
     </PageContainer>
   );

@@ -27,7 +27,6 @@ import {
   Download,
   Image,
   Pencil,
-  X,
   Save,
   Upload,
 } from 'lucide-react';

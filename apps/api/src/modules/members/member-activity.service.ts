@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class MemberActivityService {
