@@ -218,6 +218,10 @@ export class DocumentsService {
       [docType, nomorDokumen],
       { template: 'documentReadyEmail' },
       'documents',
+      {
+        docType,
+        nomorDokumen,
+      },
     );
   }
 

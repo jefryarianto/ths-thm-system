@@ -13,6 +13,7 @@ export class MemberMailService {
 
   /**
    * Find an anggota by ID and send an email using the provided template function.
+   * Supports custom DB template overrides via renderWithOverride.
    * Silently skips if the member has no email or is not found.
    * Catches and logs errors to never crash the caller.
    */
@@ -21,6 +22,7 @@ export class MemberMailService {
     templateFn: (nama: string) => { subject: string; html?: string; text?: string },
     metadata: Record<string, unknown>,
     moduleName: string,
+    variables?: Record<string, string>,
   ): Promise<void> {
     try {
       const member = await this.prisma.anggota.findUnique({
@@ -29,12 +31,22 @@ export class MemberMailService {
       });
       if (!member?.email) return;
 
-      const tpl = templateFn(member.namaLengkap);
+      const templateName = (metadata.template as string) || '';
+      const defaultTpl = templateFn(member.namaLengkap);
+      const defaultRenderOnce = () => ({ subject: defaultTpl.subject, html: defaultTpl.html || '' });
+      const mergedVars = { nama: member.namaLengkap, ...variables };
+
+      const tpl = await this.mailService.renderWithOverride(
+        templateName,
+        defaultRenderOnce,
+        mergedVars,
+      );
+
       const mailOptions: SendMailOptions = {
         to: member.email,
         subject: tpl.subject,
-        html: tpl.html,
-        text: tpl.text,
+        html: tpl.html || defaultTpl.html,
+        text: defaultTpl.text,
         metadata: { module: moduleName, ...metadata },
       };
       await this.mailService.sendMail(mailOptions);
@@ -46,6 +58,7 @@ export class MemberMailService {
   /**
    * Send email with a template that includes additional parameters beyond member name.
    * The templateFn receives all extra args as a spread.
+   * Supports custom DB template overrides via renderWithOverride.
    */
   async sendToMemberWithArgs<T extends unknown[]>(
     anggotaId: string,
@@ -53,6 +66,7 @@ export class MemberMailService {
     args: T,
     metadata: Record<string, unknown>,
     moduleName: string,
+    variables?: Record<string, string>,
   ): Promise<void> {
     try {
       const member = await this.prisma.anggota.findUnique({
@@ -61,12 +75,22 @@ export class MemberMailService {
       });
       if (!member?.email) return;
 
-      const tpl = templateFn(member.namaLengkap, ...args);
+      const templateName = (metadata.template as string) || '';
+      const defaultTpl = templateFn(member.namaLengkap, ...args);
+      const defaultRenderOnce = () => ({ subject: defaultTpl.subject, html: defaultTpl.html || '' });
+      const mergedVars = { nama: member.namaLengkap, ...variables };
+
+      const tpl = await this.mailService.renderWithOverride(
+        templateName,
+        defaultRenderOnce,
+        mergedVars,
+      );
+
       const mailOptions: SendMailOptions = {
         to: member.email,
         subject: tpl.subject,
-        html: tpl.html,
-        text: tpl.text,
+        html: tpl.html || defaultTpl.html,
+        text: defaultTpl.text,
         metadata: { module: moduleName, ...metadata },
       };
       await this.mailService.sendMail(mailOptions);

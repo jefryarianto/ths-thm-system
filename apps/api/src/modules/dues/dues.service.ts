@@ -163,6 +163,10 @@ export class DuesService {
       [jumlah, periode, status === 'lunas'],
       { template: 'paymentConfirmationEmail' },
       'dues',
+      {
+        jumlah: String(jumlah || 0),
+        periode: periode || '',
+      },
     );
   }
 

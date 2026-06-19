@@ -270,21 +270,23 @@ export class ActivitiesService {
     tanggalMulai: Date,
     lokasi: string | null,
   ): Promise<void> {
+    const tanggal = tanggalMulai.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
     await this.memberMailService.sendToMemberWithArgs(
       anggotaId,
       activityInvitationEmail,
-      [
-        activityName,
-        tanggalMulai.toLocaleDateString('id-ID', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        lokasi || '-',
-      ],
+      [activityName, tanggal, lokasi || '-'],
       { template: 'activityInvitationEmail' },
       'activities',
+      {
+        kegiatanNama: activityName,
+        tanggal,
+        lokasi: lokasi || '-',
+      },
     );
   }
 }

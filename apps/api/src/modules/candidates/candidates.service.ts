@@ -209,6 +209,7 @@ export class CandidatesService {
         [member.nomorAnggota],
         { template: 'approvedMemberEmail', email: candidate.email },
         'candidates',
+        { nomorAnggota: member.nomorAnggota },
       );
     }
 
@@ -235,6 +236,7 @@ export class CandidatesService {
         [reason],
         { template: 'candidateRejectedEmail', email: candidate.email },
         'candidates',
+        { alasan: reason || '' },
       );
     }
 

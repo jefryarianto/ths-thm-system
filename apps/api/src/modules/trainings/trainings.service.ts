@@ -280,6 +280,10 @@ export class TrainingsService {
       [jenisMateri, hadir],
       { template: 'attendanceConfirmationEmail' },
       'trainings',
+      {
+        jenisMateri,
+        hadir: hadir ? 'Hadir' : 'Tidak Hadir',
+      },
     );
   }
 }
