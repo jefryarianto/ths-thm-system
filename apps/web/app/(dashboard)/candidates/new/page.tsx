@@ -33,7 +33,7 @@ export default function NewCandidatePage() {
     setOrgLoading(prev => ({ ...prev, distrik: true }));
     apiClient.get('/org-structure/distrik')
       .then((r) => setDistriks(r.data.data || []))
-      .catch(() => {})
+      .catch(() => {/* ignore */})
       .finally(() => setOrgLoading(prev => ({ ...prev, distrik: false })));
   }, []);
 
@@ -48,7 +48,7 @@ export default function NewCandidatePage() {
     try {
       const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
       setWilayahs(r.data.data || []);
-    } catch {}
+    } catch { /* ignore */ }
     setOrgLoading(prev => ({ ...prev, wilayah: false }));
   };
 
@@ -61,7 +61,7 @@ export default function NewCandidatePage() {
     try {
       const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
       setRantings(r.data.data || []);
-    } catch {}
+    } catch { /* ignore */ }
     setOrgLoading(prev => ({ ...prev, ranting: false }));
   };
 

@@ -12,7 +12,7 @@ export default function MembersReportPage() {
   const [distriks, setDistriks] = useState<OrgItem[]>([]);
   const [wilayahs, setWilayahs] = useState<OrgItem[]>([]);
   const [rantings, setRantings] = useState<OrgItem[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ distrikId: '', wilayahId: '', rantingId: '' });
 

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { Edit, Trash2, MoreVertical, Eye } from 'lucide-react';
+import { Edit, Trash2, MoreVertical } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import { useToast } from '@/components/ui/toast';
 

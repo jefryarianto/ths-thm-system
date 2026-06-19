@@ -2,15 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function ImportCandidatesPage() {
   const router = useRouter();
-  const [result, setResult] = useState<{ success: number; errors: number; details: any[] } | null>(null);
+  const [result, setResult] = useState<{ success: number; errors: number; details: Array<{ error?: string }> } | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState('');
-  const [csvData, setCsvData] = useState<any[] | null>(null);
+  const [csvData, setCsvData] = useState<Record<string, string>[] | null>(null);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,7 +41,8 @@ export default function ImportCandidatesPage() {
       const { data: res } = await apiClient.post('/candidates/import', csvData);
       setResult(res.data);
     } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Gagal import');
+      const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(apiErr || 'Gagal import');
     }
     setImporting(false);
   };
@@ -48,9 +50,9 @@ export default function ImportCandidatesPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
-        <button onClick={() => router.push('/candidates')} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+        <Link href="/candidates" className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition">
           <ArrowLeft size={18} className="text-gray-500" />
-        </button>
+        </Link>
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Import Calon Anggota</h1>
       </div>
 

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -9,21 +9,21 @@ export default function CalendarPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<Array<{ date: string; title: string; type: string; location?: string }>>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [year, month]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await apiClient.get(`/calendar/events?year=${year}&month=${month}`);
       if (data.success) setEvents(data.data.events || []);
     } catch { /* ignore */ }
     setLoading(false);
-  };
+  }, [year, month]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
@@ -62,7 +62,7 @@ export default function CalendarPage() {
               return (
                 <div key={i} className={`min-h-[100px] p-1 rounded-lg border ${day ? 'bg-white' : 'bg-gray-50'}`}>
                   {day && <span className="text-sm font-medium">{day}</span>}
-                  {dayEvents.slice(0, 3).map((e: any, j: number) => (
+                  {dayEvents.slice(0, 3).map((e: { title: string; type: string }, j: number) => (
                     <div key={j} className={`text-xs p-1 mt-1 rounded truncate ${e.type === 'training' ? 'bg-green-100 text-green-800' : e.type === 'pendadaran' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
                       {e.title}
                     </div>
@@ -76,7 +76,7 @@ export default function CalendarPage() {
           <div className="mt-6">
             <h2 className="text-lg font-semibold mb-3">Semua Event Bulan Ini ({events.length})</h2>
             <div className="space-y-2">
-              {events.map((e: any, i: number) => (
+              {events.map((e: { date: string; title: string; type: string; location?: string }, i: number) => (
                 <div key={i} className="flex items-center gap-4 p-3 bg-white rounded-lg border">
                   <div className={`w-3 h-3 rounded-full ${e.type === 'training' ? 'bg-green-500' : e.type === 'pendadaran' ? 'bg-purple-500' : 'bg-blue-500'}`} />
                   <div className="flex-1">

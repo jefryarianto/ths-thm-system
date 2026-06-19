@@ -6,7 +6,7 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import {
   ArrowLeft, Calendar, MapPin, User, Users, FileText,
-  RefreshCw, AlertCircle, Edit, Trash2, Clock, Tag,
+  RefreshCw, AlertCircle, Edit, Trash2, Tag,
 } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import { useToast } from '@/components/ui/toast';
@@ -79,8 +79,8 @@ export default function ActivityDetailPage() {
       const { data: res } = await apiClient.get(`/activities/${id}`);
       setActivity(res.data);
       setError(null);
-    } catch (err: any) {
-      if (err?.response?.status === 404) setError('Kegiatan tidak ditemukan');
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 404) setError('Kegiatan tidak ditemukan');
       else setError('Gagal memuat data kegiatan');
     }
     setLoading(false);

@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import {
-  ArrowLeft, FolderOpen, Download, Calendar, User,
-  RefreshCw, AlertCircle, Edit, Trash2, Tag, FileText,
+  ArrowLeft, Download, Calendar, User,
+  RefreshCw, AlertCircle, Trash2, Tag, FileText,
 } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import { useToast } from '@/components/ui/toast';
@@ -59,8 +59,8 @@ export default function OrgDocumentDetailPage() {
       const { data: res } = await apiClient.get(`/org-documents/${id}`);
       setDoc(res.data);
       setError(null);
-    } catch (err: any) {
-      if (err?.response?.status === 404) setError('Dokumen tidak ditemukan');
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 404) setError('Dokumen tidak ditemukan');
       else setError('Gagal memuat data dokumen');
     }
     setLoading(false);

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const [member, setMember] = useState<any>(null);
+  const [member, setMember] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
