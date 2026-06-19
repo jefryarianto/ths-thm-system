@@ -270,6 +270,21 @@ export class CandidatesService {
     }
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
+
+    // Log import for audit trail
+    if (results.success > 0 || results.errors > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.prisma as any).importLog.create({
+        data: {
+          module: 'candidates',
+          totalRows: data.length,
+          successRows: results.success,
+          errorRows: results.errors,
+          details: results.details.length > 0 ? results.details.slice(0, 100) : undefined,
+        },
+      }).catch((err: Error) => this.logger.warn('Failed to write import log:', err.message));
+    }
+
     return { success: true, data: results };
   }
 

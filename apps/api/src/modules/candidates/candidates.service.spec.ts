@@ -45,6 +45,9 @@ describe('CandidatesService', () => {
     ranting: {
       findUnique: jest.fn().mockResolvedValue(mockRanting),
     },
+    importLog: {
+      create: jest.fn().mockResolvedValue(undefined),
+    },
   };
 
   const mockNraService = {

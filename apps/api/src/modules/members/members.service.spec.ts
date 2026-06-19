@@ -44,6 +44,9 @@ describe('MembersService', () => {
     iuran: {
       findMany: jest.fn(),
     },
+    importLog: {
+      create: jest.fn().mockResolvedValue(undefined),
+    },
   };
 
   const mockNraService = {

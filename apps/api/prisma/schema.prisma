@@ -824,6 +824,24 @@ model EmailTemplate {
   @@map("email_templates")
 }
 
+// ── Import Logs (Audit Trail) ───────────────────────────
+
+model ImportLog {
+  id          String   @id @default(uuid())
+  module      String   // 'candidates' | 'members' | 'dues'
+  fileName    String?  @map("file_name")
+  totalRows   Int      @map("total_rows")
+  successRows Int      @map("success_rows")
+  errorRows   Int      @map("error_rows")
+  details     Json?    // summary of errors for quick audit
+  importedBy  String?  @map("imported_by")
+  importedAt  DateTime @default(now()) @map("imported_at")
+
+  @@index([module])
+  @@index([importedAt(sort: Desc)])
+  @@map("import_logs")
+}
+
 // ── Email Logs ───────────────────────────────────────────
 
 model SuppressedEmail {

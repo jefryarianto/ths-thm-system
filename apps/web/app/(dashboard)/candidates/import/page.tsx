@@ -4,6 +4,12 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import {
+  detectDelimiter,
+  splitCsvLines,
+  parseCsvLine,
+  matchHeader,
+} from '@/lib/csv-utils';
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, Info, XCircle, Download, FileText, Loader2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -40,97 +46,6 @@ type RowValidation = {
   rowIndex: number;
   issues: string[];
 };
-
-function detectDelimiter(line: string): string {
-  const commaCount = (line.match(/,/g) || []).length;
-  const semicolonCount = (line.match(/;/g) || []).length;
-  const tabCount = (line.match(/\t/g) || []).length;
-
-  if (semicolonCount > commaCount && semicolonCount > tabCount) return ';';
-  if (tabCount > commaCount && tabCount > semicolonCount) return '\t';
-  return ',';
-}
-
-/**
- * Parse CSV content into logical lines, joining multi-line quoted fields.
- * Handles \r\n, \n, \r line endings and escaped quotes ("").
- */
-function splitCsvLines(text: string): string[] {
-  const lines: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if ((char === '\r' && nextChar === '\n') || (char === '\n' && nextChar === '\r')) {
-      if (!inQuotes) {
-        lines.push(current);
-        current = '';
-        i++;
-      } else {
-        current += '\n';
-        i++;
-      }
-    } else if (char === '\n' || char === '\r') {
-      if (!inQuotes) {
-        lines.push(current);
-        current = '';
-      } else {
-        current += '\n';
-      }
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.trim().length > 0 || lines.length === 0) {
-    lines.push(current);
-  }
-
-  return lines;
-}
-
-function parseCsvLine(line: string, delimiter: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        // Escaped quote inside quoted field
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === delimiter && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  result.push(current.trim());
-  return result;
-}
-
-function matchHeader(headers: string[], target: string): string | undefined {
-  return headers.find((h) => h.toLowerCase() === target.toLowerCase());
-}
 
 function validateRows(
   data: Record<string, string>[],
@@ -331,6 +246,32 @@ export default function ImportCandidatesPage() {
     setDragOver(false);
   }, []);
 
+  const [importProgress, setImportProgress] = useState(0);
+  const importTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startProgressSimulation = useCallback((totalRows: number) => {
+    setImportProgress(0);
+    let progress = 0;
+    // Simulate progress up to 90% while waiting for backend
+    const increment = Math.max(1, Math.floor(90 / Math.max(totalRows, 10)));
+    importTimerRef.current = setInterval(() => {
+      progress = Math.min(progress + increment, 90);
+      setImportProgress(progress);
+      if (progress >= 90 && importTimerRef.current) {
+        clearInterval(importTimerRef.current);
+        importTimerRef.current = null;
+      }
+    }, 150);
+  }, []);
+
+  const stopProgressSimulation = useCallback(() => {
+    if (importTimerRef.current) {
+      clearInterval(importTimerRef.current);
+      importTimerRef.current = null;
+    }
+    setImportProgress(100);
+  }, []);
+
   const handleImport = async (data?: Record<string, string>[]) => {
     const payload = data || csvData;
     if (!payload || payload.length === 0) return;
@@ -338,8 +279,10 @@ export default function ImportCandidatesPage() {
     setError('');
     const isRetry = !!data;
     if (!isRetry) setFailedRows([]);
+    startProgressSimulation(payload.length);
     try {
       const { data: res } = await apiClient.post('/candidates/import', payload);
+      stopProgressSimulation();
       setResult(res.data);
 
       // Extract failed rows with their data for retry capability
@@ -353,24 +296,19 @@ export default function ImportCandidatesPage() {
         setFailedRows(failed);
       }
     } catch (err: unknown) {
+      stopProgressSimulation();
       const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(apiErr || 'Gagal import. Silakan coba lagi.');
     }
     setImporting(false);
   };
 
-  const handleEditFailedRow = useCallback((index: number, field: string, value: string) => {
-    setEditedFailedRows((prev) => ({
-      ...prev,
-      [index]: { ...prev[index], [field]: value },
-    }));
-  }, []);
-
   const handleRetryFailed = async () => {
     if (failedRows.length === 0) return;
     setRetrying(true);
     setError('');
     setResult(null);
+    startProgressSimulation(failedRows.length);
     try {
       // Apply inline edits before retrying
       const failedData = failedRows.map((f, i) => {
@@ -379,6 +317,7 @@ export default function ImportCandidatesPage() {
         return { ...f.row, ...edits };
       });
       const { data: res } = await apiClient.post('/candidates/import', failedData);
+      stopProgressSimulation();
       setResult(res.data);
 
       // Update failed rows with remaining failures
@@ -396,11 +335,19 @@ export default function ImportCandidatesPage() {
         setEditedFailedRows({});
       }
     } catch (err: unknown) {
+      stopProgressSimulation();
       const apiErr = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(apiErr || 'Gagal mengirim ulang data. Silakan coba lagi.');
     }
     setRetrying(false);
   };
+
+  const handleEditFailedRow = useCallback((index: number, field: string, value: string) => {
+    setEditedFailedRows((prev) => ({
+      ...prev,
+      [index]: { ...prev[index], [field]: value },
+    }));
+  }, []);
 
   const handleReset = () => {
     setResult(null);
@@ -756,10 +703,37 @@ export default function ImportCandidatesPage() {
                 </div>
               )}
 
+              {/* Progress indicator */}
+              {importing && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      <Loader2 size={13} className="animate-spin" />
+                      {retrying ? 'Mencoba ulang baris gagal...' : 'Memproses data...'}
+                    </span>
+                    <span className="text-gray-400 dark:text-gray-500 font-mono">
+                      {importProgress}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${importProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
+                    {retrying
+                      ? `Mengirim ${failedRows.length} baris...`
+                      : `Mengirim ${csvData?.length || 0} baris ke server...`}
+                  </p>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setCsvData(null)}
-                  className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  disabled={importing}
+                  className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-30"
                 >
                   Batal
                 </button>
