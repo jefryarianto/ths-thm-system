@@ -6,7 +6,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, FolderOpen, Eye, Download } from 'lucide-react';
+import { Plus, FolderOpen, Eye, Download, Trash2 } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -134,16 +134,56 @@ export default function OrgDocumentsPage() {
             <td className="px-4 py-3 text-right">
               <div className="flex items-center justify-end gap-1">
                 <button
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const response = await fetch(`/api/org-documents/${row.id}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      if (!response.ok) { alert('Gagal memuat dokumen'); return; }
+                      const data = await response.json();
+                      if (data?.data?.fileUrl) {
+                        window.open(data.data.fileUrl, '_blank');
+                      } else {
+                        const token2 = localStorage.getItem('accessToken');
+                        const dlResponse = await fetch(`/api/org-documents/${row.id}/download`, {
+                          headers: { Authorization: `Bearer ${token2}` },
+                        });
+                        if (!dlResponse.ok) { alert('Dokumen tidak tersedia untuk didownload'); return; }
+                        const blob = await dlResponse.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${row.judul}.pdf`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }
+                    } catch { alert('Gagal mendownload dokumen'); }
+                  }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
                   title="Download"
                 >
                   <Download size={15} />
                 </button>
                 <button
-                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                  title="Detail"
+                  disabled
+                  className="p-1.5 text-gray-300 dark:text-gray-600 cursor-not-allowed rounded-md transition-colors"
+                  title="Halaman detail belum tersedia"
                 >
                   <Eye size={15} />
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Hapus dokumen "${row.judul}"?`)) return;
+                    try {
+                      await apiClient.delete(`/org-documents/${row.id}`);
+                      refetch();
+                    } catch { alert('Gagal menghapus dokumen'); }
+                  }}
+                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                  title="Hapus"
+                >
+                  <Trash2 size={15} />
                 </button>
               </div>
             </td>

@@ -1,16 +1,17 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
-import { Plus, MoreVertical, UserCheck, Users } from 'lucide-react';
+import { Plus, Trash2, UserCheck, Users, AlertTriangle } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import Modal from '@/components/ui/modal';
 
 interface Examiner {
   id: string;
@@ -38,6 +39,22 @@ export default function ExaminersPage() {
     }, [page, search]),
     [page, search],
   );
+
+  const [deleteTarget, setDeleteTarget] = useState<Examiner | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await apiClient.delete(`/examiners/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      refetch();
+    } catch {
+      alert('Gagal menghapus penguji');
+    }
+    setDeleteLoading(false);
+  };
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
@@ -99,13 +116,49 @@ export default function ExaminersPage() {
               {new Date(ex.createdAt).toLocaleDateString('id-ID')}
             </td>
             <td className="px-4 py-3 text-right">
-              <button className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
-                <MoreVertical size={16} />
+              <button
+                onClick={() => setDeleteTarget(ex)}
+                className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                title="Hapus penguji"
+              >
+                <Trash2 size={15} />
               </button>
             </td>
           </tr>
         )}
       />
+
+      {/* Delete Modal */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus Penguji"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+            <AlertTriangle size={20} className="text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700 dark:text-red-400">
+              Hapus penguji <strong>{deleteTarget?.namaLengkap}</strong>?
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setDeleteTarget(null)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              className="flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition"
+            >
+              {deleteLoading ? 'Menghapus...' : 'Ya, Hapus'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </PageContainer>
   );
 }

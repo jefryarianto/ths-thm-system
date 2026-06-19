@@ -11,7 +11,7 @@ import PageHeader from '@/components/ui/page-header';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import DuesStatCards from '@/components/dues/DuesStatCards';
 import DuesCharts from '@/components/dues/DuesCharts';
-import { Plus, CreditCard, Download } from 'lucide-react';
+import { Plus, CreditCard, Download, Trash2 } from 'lucide-react';
 
 // ─── Types ───
 
@@ -69,28 +69,6 @@ function formatShortDate(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
-
-const columns = [
-  {
-    key: 'anggota',
-    label: 'Anggota',
-    render: (d: DuesRow) => <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span>,
-  },
-  { key: 'periode', label: 'Periode' },
-  { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(Number(d.jumlah)) },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (d: DuesRow) => (
-      <span
-        className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[d.status] || ''}`}
-      >
-        {STATUS_LABELS[d.status] || d.status}
-      </span>
-    ),
-  },
-  { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => formatShortDate(d.createdAt) },
-];
 
 // ─── Page ───
 
@@ -164,7 +142,49 @@ export default function DuesPage() {
         totalPages={meta.totalPages}
         total={meta.total}
         onPageChange={setPage}
-        columns={columns}
+        columns={[
+          {
+            key: 'anggota',
+            label: 'Anggota',
+            render: (d: DuesRow) => <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span>,
+          },
+          { key: 'periode', label: 'Periode' },
+          { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(Number(d.jumlah)) },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (d: DuesRow) => (
+              <span
+                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[d.status] || ''}`}
+              >
+                {STATUS_LABELS[d.status] || d.status}
+              </span>
+            ),
+          },
+          { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => formatShortDate(d.createdAt) },
+          {
+            key: 'actions',
+            label: 'Aksi',
+            align: 'right' as const,
+            render: (d: DuesRow) => (
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={async () => {
+                    if (!confirm('Hapus iuran ini?')) return;
+                    try {
+                      await apiClient.delete(`/dues/${d.id}`);
+                      refetch();
+                    } catch { alert('Gagal menghapus iuran'); }
+                  }}
+                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                  title="Hapus"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ),
+          },
+        ]}
         empty={{
           icon: CreditCard,
           message: 'Belum ada data iuran',
