@@ -196,7 +196,7 @@ export class CandidatesService {
         const email = row.email?.trim()?.toLowerCase();
         const namaLengkap = (row.nama_lengkap || row.nama || row.name || '').trim().toLowerCase();
 
-        // Check duplicate email
+        // Check duplicate email (against existing DB AND intra-CSV)
         if (email && existingEmails.has(email)) {
           results.errors++;
           results.details.push({
@@ -206,7 +206,7 @@ export class CandidatesService {
           continue;
         }
 
-        // Check duplicate name
+        // Check duplicate name (against existing DB AND intra-CSV)
         if (namaLengkap && existingNames.has(namaLengkap)) {
           results.errors++;
           results.details.push({
@@ -262,6 +262,9 @@ export class CandidatesService {
             rantingId: row.rantingId || row.ranting_id || 'seed',
           } as never,
         });
+        // Track intra-CSV duplicates for subsequent rows
+        if (email) existingEmails.add(email);
+        if (namaLengkap) existingNames.add(namaLengkap);
         results.success++;
       } catch (error) {
         results.errors++;

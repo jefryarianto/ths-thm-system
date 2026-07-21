@@ -518,13 +518,13 @@ export class MembersService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private validateCsvRow(row: any): string[] {
-    const required = ['nama', 'name'];
+    const required = ['nama', 'name', 'nama_lengkap', 'namaLengkap'];
     const missing: string[] = [];
 
     const hasName = required.some((field) => row[field]);
     if (!hasName) missing.push('nama');
 
-    if (!row.jenis_kelamin && !row.gender) missing.push('jenis_kelamin');
+    if (!row.jenis_kelamin && !row.jenisKelamin && !row.gender) missing.push('jenis_kelamin');
 
     return missing;
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
@@ -248,6 +248,16 @@ export default function ImportCandidatesPage() {
 
   const [importProgress, setImportProgress] = useState(0);
   const importTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clean up progress interval on unmount
+  useEffect(() => {
+    return () => {
+      if (importTimerRef.current !== null) {
+        clearInterval(importTimerRef.current);
+        importTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const startProgressSimulation = useCallback((totalRows: number) => {
     setImportProgress(0);
