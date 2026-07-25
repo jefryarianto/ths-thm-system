@@ -84,7 +84,7 @@ export class CandidatesService {
           namaLengkap: dto.namaLengkap,
           jenisKelamin: dto.jenisKelamin,
           tempatLahir: dto.tempatLahir,
-          tanggalLahir: dto.tanggalLahir,
+          tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
           alamat: dto.alamat,
           noHp: dto.noHp,
           email: dto.email,
@@ -116,7 +116,10 @@ export class CandidatesService {
 
     const updated = await this.prisma.calonAnggota.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
+      } as any,
     });
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
@@ -211,7 +214,7 @@ export class CandidatesService {
           namaLengkap: candidate.namaLengkap,
           jenisKelamin: candidate.jenisKelamin,
           tempatLahir: candidate.tempatLahir,
-          tanggalLahir: candidate.tanggalLahir,
+          tanggalLahir: candidate.tanggalLahir ?? null,
           tempatDadar: dto?.tempatDadar || null,
           tahunDadar: dto?.tahunDadar || null,
           alamat: candidate.alamat,

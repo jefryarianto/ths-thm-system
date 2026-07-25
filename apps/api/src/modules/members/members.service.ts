@@ -91,6 +91,7 @@ export class MembersService {
       const member = await this.prisma.anggota.create({
         data: {
           ...dto,
+          tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
           nomorAnggota: await this.nraService.generateMemberNumber(dto.rantingId || scope?.rantingId || ''),
           statusData: 'complete',
           statusValidasi: 'pending',
@@ -130,7 +131,10 @@ export class MembersService {
 
     const updated = await this.prisma.anggota.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
+      } as any,
     });
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
