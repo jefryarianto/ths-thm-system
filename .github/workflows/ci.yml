@@ -255,6 +255,8 @@ jobs:
 
             # Stop & remove old containers, then restart with latest config
             docker compose -f "$COMPOSE" down --remove-orphans 2>/dev/null || true
+            # Force-remove any orphaned containers from previous compose projects
+            docker ps -aq --filter "name=ths-thm" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
             docker compose -f "$COMPOSE" up -d --remove-orphans
 
             # Health check (via docker compose exec — api port is internal, not exposed on host)
