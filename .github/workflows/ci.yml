@@ -235,6 +235,17 @@ jobs:
             echo "🚀 Deploying to ${DOMAIN}..."
             cd "$DIR"
 
+            # Download latest config files from GitHub (VPS might have stale versions)
+            # Write to .tmp first then mv — prevents partial file corruption on timeout
+            curl -sf -o "$COMPOSE.tmp" "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/$COMPOSE" && mv "$COMPOSE.tmp" "$COMPOSE" || { rm -f "$COMPOSE.tmp"; echo "   ⚠️ Using existing compose file"; }
+
+            # Download nginx config for this environment
+            if [ "$ENV_TARGET" = "production" ]; then
+              curl -sf -o nginx/production.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/production.conf" && mv nginx/production.conf.tmp nginx/production.conf || rm -f nginx/production.conf.tmp
+            else
+              curl -sf -o nginx/staging.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/staging.conf" && mv nginx/staging.conf.tmp nginx/staging.conf || rm -f nginx/staging.conf.tmp
+            fi
+
             # Pull images (built in CI — zero CPU on VPS)
             docker compose -f "$COMPOSE" pull
 
