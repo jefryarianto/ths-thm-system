@@ -78,7 +78,7 @@ export class RedisIoAdapter extends IoAdapter {
    * Clean up Redis connections when the adapter is disposed.
    * Called by NestJS lifecycle during shutdown.
    */
-  dispose(): void {
+  async dispose(): Promise<void> {
     if (this.subClient) {
       this.subClient.disconnect();
       this.subClient = null;
