@@ -78,16 +78,18 @@ describe('EventsGateway', () => {
       expect(gateway.isUserOnline('user-1')).toBe(true);
     });
 
-    it('should disconnect client without token', () => {
+    it('should connect client without token (no disconnect)', () => {
       const socket = createMockSocket('sock-1');
       gateway.handleConnection(socket);
-      expect(socket.disconnect).toHaveBeenCalled();
+      expect(socket.disconnect).not.toHaveBeenCalled();
+      expect(socket.join).not.toHaveBeenCalled();
     });
 
-    it('should disconnect client with invalid token', () => {
+    it('should connect client with invalid token (no disconnect)', () => {
       const socket = createMockSocket('sock-1', 'bad-token');
       gateway.handleConnection(socket);
-      expect(socket.disconnect).toHaveBeenCalled();
+      expect(socket.disconnect).not.toHaveBeenCalled();
+      expect(socket.join).not.toHaveBeenCalled();
     });
 
     it('should attach role from JWT payload to socket', () => {

@@ -44,8 +44,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.handshake.headers?.authorization?.replace('Bearer ', '');
 
       if (!token) {
-        this.logger.warn('Client connected without token, disconnecting');
-        client.disconnect();
+        this.logger.debug(`Unauthenticated client connected: ${client.id}`);
         return;
       }
 
@@ -73,8 +72,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       this.logger.log(`Client connected: ${client.id} (user: ${userId})`);
     } catch {
-      this.logger.warn('Invalid token, disconnecting client');
-      client.disconnect();
+      this.logger.warn(`Invalid token for client ${client.id}, connecting without auth`);
     }
   }
 
