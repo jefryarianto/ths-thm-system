@@ -157,8 +157,9 @@ jobs:
             docker compose -f docker-compose.production.yml run --rm api \
               sh -c "cd apps/api && npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
 
-            # Restart all services
+            # Stop & remove old containers, then restart with latest config
             echo "   Restarting services..."
+            docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
             docker compose -f docker-compose.production.yml up -d --remove-orphans
 
             # Wait for health check (via docker compose exec — api port is internal, not exposed on host)

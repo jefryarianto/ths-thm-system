@@ -253,7 +253,8 @@ jobs:
             docker compose -f "$COMPOSE" run --rm api \
               sh -c "cd apps/api && npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
 
-            # Restart services
+            # Stop & remove old containers, then restart with latest config
+            docker compose -f "$COMPOSE" down --remove-orphans 2>/dev/null || true
             docker compose -f "$COMPOSE" up -d --remove-orphans
 
             # Health check (via docker compose exec — api port is internal, not exposed on host)
