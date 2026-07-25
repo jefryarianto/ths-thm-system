@@ -207,26 +207,45 @@ export class TrainingsService {
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
-    let imported = 0;
-    for (const row of data) {
-      const anggotaId = row.anggotaId || row.memberId;
-      if (!anggotaId) continue;
-      const existing = await this.prisma.absensiLatihan.findFirst({
-        where: { latihanId: trainingId, anggotaId },
-      });
-      if (!existing) {
-        await this.prisma.absensiLatihan.create({
-          data: {
-            latihanId: trainingId,
-            anggotaId,
-            hadir: row.hadir !== false,
-            catatan: row.catatan,
-          },
-        });
-        imported++;
-      }
+    // Collect all valid anggotaIds for batch check
+    const allAnggotaIds = data
+      .map((row) => row.anggotaId || row.memberId)
+      .filter(Boolean) as string[];
+
+    if (allAnggotaIds.length === 0) {
+      return { success: true, data: { imported: 0 }, message: 'Tidak ada data kehadiran untuk diimpor' };
     }
-    return { success: true, data: { imported }, message: `${imported} kehadiran berhasil diimpor` };
+
+    // Batch check existing attendance records (single query instead of N)
+    const existingRecords = await this.prisma.absensiLatihan.findMany({
+      where: { latihanId: trainingId, anggotaId: { in: allAnggotaIds } },
+      select: { anggotaId: true },
+    });
+    const existingSet = new Set(existingRecords.map((r) => r.anggotaId));
+
+    // Filter only non-existing rows
+    const toCreate = data
+      .filter((row) => {
+        const id = row.anggotaId || row.memberId;
+        return id && !existingSet.has(id);
+      })
+      .map((row) => ({
+        latihanId: trainingId,
+        anggotaId: (row.anggotaId || row.memberId)!,
+        hadir: row.hadir !== false,
+        catatan: row.catatan,
+      }));
+
+    // Batch insert all new attendance records (single query instead of N)
+    if (toCreate.length > 0) {
+      await this.prisma.absensiLatihan.createMany({ data: toCreate });
+    }
+
+    return {
+      success: true,
+      data: { imported: toCreate.length },
+      message: `${toCreate.length} kehadiran berhasil diimpor`,
+    };
   }
 
   async getEvaluations(trainingId: string) {

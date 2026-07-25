@@ -28,6 +28,26 @@ services:
         reservations:
           memory: 128M
 
+  redis:
+    image: redis:7-alpine
+    container_name: ths-thm-staging-redis
+    restart: unless-stopped
+    volumes:
+      - staging_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ths-thm-staging
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
   api:
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_REPO:-jefryarianto/ths-thm-system}/api:${IMAGE_TAG:-latest}
     container_name: ths-thm-staging-api
@@ -40,6 +60,7 @@ services:
       retries: 3
     environment:
       DATABASE_URL: postgresql://ths_thm_staging:${STAGING_DB_PASSWORD:-staging_password_change_me}@postgres:5432/ths_thm_staging
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: ${STAGING_JWT_SECRET}
       JWT_REFRESH_SECRET: ${STAGING_JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: 15m
@@ -62,6 +83,8 @@ services:
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - ths-thm-staging
@@ -113,6 +136,7 @@ services:
 
 volumes:
   staging_postgres_data:
+  staging_redis_data:
 
 networks:
   ths-thm-staging:

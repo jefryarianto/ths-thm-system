@@ -197,30 +197,56 @@ export class ActivitiesService {
     const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: activityId } });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
 
-    let imported = 0;
-    for (const row of data) {
-      const anggotaId = row.anggotaId || row.memberId;
-      if (!anggotaId) continue;
-      const existing = await this.prisma.kegiatanPeserta.findFirst({
-        where: { kegiatanId: activityId, anggotaId },
-      });
-      if (!existing) {
-        await this.prisma.kegiatanPeserta.create({
-          data: { kegiatanId: activityId, anggotaId },
-        });
-        imported++;
+    // Collect all valid anggotaIds for batch check
+    const allAnggotaIds = data
+      .map((row) => row.anggotaId || row.memberId)
+      .filter(Boolean) as string[];
 
-        // Send invitation email to each new participant (method handles errors internally)
-        this.sendActivityInvitation(
-          anggotaId,
-          kegiatan.nama,
-          kegiatan.tanggalMulai,
-          kegiatan.lokasi,
-        );
-      }
+    if (allAnggotaIds.length === 0) {
+      return { success: true, data: { imported: 0 }, message: 'Tidak ada peserta untuk diimpor' };
     }
+
+    // Batch check existing participants (single query instead of N)
+    const existingRecords = await this.prisma.kegiatanPeserta.findMany({
+      where: { kegiatanId: activityId, anggotaId: { in: allAnggotaIds } },
+      select: { anggotaId: true },
+    });
+    const existingSet = new Set(existingRecords.map((r) => r.anggotaId));
+
+    // Filter only new participants
+    const newEntries = data.filter((row) => {
+      const id = row.anggotaId || row.memberId;
+      return id && !existingSet.has(id);
+    });
+
+    if (newEntries.length > 0) {
+      // Batch insert all new participants (single query instead of N)
+      await this.prisma.kegiatanPeserta.createMany({
+        data: newEntries.map((row) => ({
+          kegiatanId: activityId,
+          anggotaId: (row.anggotaId || row.memberId)!,
+        })),
+      });
+
+      // Send invitation emails in parallel (fire-and-forget, errors handled internally)
+      await Promise.allSettled(
+        newEntries.map((row) =>
+          this.sendActivityInvitation(
+            row.anggotaId || row.memberId!,
+            kegiatan.nama,
+            kegiatan.tanggalMulai,
+            kegiatan.lokasi,
+          ),
+        ),
+      );
+    }
+
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: { imported }, message: `${imported} peserta berhasil diimpor` };
+    return {
+      success: true,
+      data: { imported: newEntries.length },
+      message: `${newEntries.length} peserta berhasil diimpor`,
+    };
   }
 
   async getPresence(activityId: string) {

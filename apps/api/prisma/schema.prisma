@@ -275,7 +275,7 @@ model Anggota {
   tahunDadar        String?           @map("tahun_dadar")
   alamat            String?
   noHp              String?           @map("no_hp")
-  email             String?
+  email             String?           @unique
   fotoPath          String?           @map("foto_path")
   statusKeanggotaan StatusKeanggotaan @default(aktif) @map("status_keanggotaan")
   tingkat           String?
@@ -321,7 +321,7 @@ model CalonAnggota {
   tanggalLahir   DateTime?    @map("tanggal_lahir")
   alamat         String?
   noHp           String?      @map("no_hp")
-  email          String?
+  email          String?      @unique
   tingkat        String?
   status         StatusCalon  @default(diusulkan)
   usulOlehUserId String       @map("usul_oleh_user_id")
@@ -1282,6 +1282,60 @@ model DokumenVersion {
   @@map("dokumen_versions")
 }
 
+// ── Document Batch Jobs (Queue System) ──────────────────
+
+enum BatchStatus {
+  pending
+  processing
+  completed
+  completed_with_errors
+  cancelled
+}
+
+enum JobStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model DocumentBatchJob {
+  id          String      @id @default(uuid())
+  type        String      // 'kta' | 'sertifikat_pendadaran' | 'sertifikat_pelatihan' | 'piagam_prestasi'
+  totalJobs   Int         @map("total_jobs")
+  completed   Int         @default(0) @map("completed")
+  failed      Int         @default(0) @map("failed")
+  status      BatchStatus @default(pending)
+  createdBy   String?     @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  jobs DocumentJob[]
+
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("document_batch_jobs")
+}
+
+model DocumentJob {
+  id            String    @id @default(uuid())
+  batchId       String    @map("batch_id")
+  memberId      String    @map("member_id")
+  nomorDokumen  String?   @map("nomor_dokumen")
+  status        JobStatus @default(pending)
+  error         String?
+  retryCount    Int       @default(0) @map("retry_count")
+  startedAt     DateTime? @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  batch DocumentBatchJob @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([status])
+  @@map("document_jobs")
+}
+
 // ── Bulk Notifications ───────────────────────────────────
 
 model BulkNotification {
@@ -1298,6 +1352,19 @@ model BulkNotification {
 
   @@index([status])
   @@map("bulk_notifications")
+}
+
+// ── Queue Uptime Events (Persistent Disconnect Tracking) ─
+
+model QueueUptimeEvent {
+  id          String    @id @default(uuid())
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  durationMs  Int?      @map("duration_ms")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([startTime(sort: Desc)])
+  @@map("queue_uptime_events")
 }
 
 // ── Member Transfer ──────────────────────────────────────

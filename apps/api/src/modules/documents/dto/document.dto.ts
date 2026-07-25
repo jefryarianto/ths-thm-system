@@ -25,15 +25,29 @@ export class GenerateDocumentDto {
 }
 
 export class BatchGenerateDocumentDto {
-  @ApiProperty({ type: [String] })
+  @ApiPropertyOptional({ type: [String], description: 'Daftar ID anggota (opsional jika range dipakai)' })
+  @IsOptional()
   @IsArray()
-  memberIds: string[];
+  memberIds?: string[];
 
   @ApiProperty({
     enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'],
   })
   @IsString()
   type: string;
+
+  @ApiPropertyOptional({
+    enum: ['all_active', 'by_ranting', 'by_ids', 'graduated_only'],
+    description: 'Rentang anggota untuk resolve memberIds otomatis',
+  })
+  @IsOptional()
+  @IsString()
+  range?: string;
+
+  @ApiPropertyOptional({ description: 'ID ranting jika range=by_ranting' })
+  @IsOptional()
+  @IsString()
+  rantingId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -44,6 +58,26 @@ export class BatchGenerateDocumentDto {
   @IsOptional()
   @IsString()
   stampId?: string;
+}
+
+export class BatchEstimateQueryDto {
+  @ApiProperty({
+    enum: ['all_active', 'by_ranting', 'by_ids', 'graduated_only'],
+  })
+  @IsString()
+  range: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  rantingId?: string;
+}
+
+export class BatchRetryDto {
+  @ApiPropertyOptional({ type: [String], description: 'Opsional — retry hanya job tertentu' })
+  @IsOptional()
+  @IsArray()
+  jobIds?: string[];
 }
 
 export class DocumentFilterDto {
@@ -70,4 +104,22 @@ export class DocumentFilterDto {
   @IsOptional()
   @IsString()
   anggotaId?: string;
+}
+
+// ── Batch Endpoint DTOs ──
+
+export class BatchListQueryDto {
+  @ApiPropertyOptional({ default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
 }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Optional, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
-import { generalNotificationEmail } from '../../mail/email-templates';
+import { generalNotificationEmail, escapeHtml } from '../../mail/email-templates';
 import { EventsGateway } from './events.gateway';
 import {
   SendNotificationDto,
@@ -493,21 +493,17 @@ export class NotificationsService {
       select: { id: true, namaLengkap: true, email: true, missingFields: true },
     });
 
-    let sent = 0;
-    let noEmail = 0;
+    const noEmail = members.filter((m) => !m.email).length;
+    const membersWithEmail = members.filter((m): m is typeof m & { email: string } => !!m.email);
 
-    for (const member of members) {
-      if (!member.email) {
-        noEmail++;
-        continue;
-      }
+    // Send all emails in parallel instead of sequential loop
+    const results = await Promise.allSettled(
+      membersWithEmail.map(async (member) => {
+        const missingFields = (member.missingFields as string[]) || ['data diri'];
 
-      const missingFields = (member.missingFields as string[]) || ['data diri'];
-
-      try {
         const tpl = {
           subject: 'Data Anggota Belum Lengkap — THS-THM',
-          html: `<h2>Halo ${member.namaLengkap},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${f.replace(/_/g, ' ')}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
+          html: `<h2>Halo ${escapeHtml(member.namaLengkap)},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${escapeHtml(f.replace(/_/g, ' '))}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
           text: `Halo ${member.namaLengkap},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke sistem untuk melengkapi data.`,
         };
 
@@ -520,13 +516,19 @@ export class NotificationsService {
             memberId: member.id,
           },
         });
-        sent++;
-      } catch (error) {
-        this.logger.error(`Failed to send incomplete notification to ${member.email}: ${(error as Error).message}`);
-      }
+      }),
+    );
+
+    const sent = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.filter((r) => r.status === 'rejected').length;
+
+    if (failed > 0) {
+      this.logger.warn(
+        `sendIncompleteNotifications: ${failed}/${membersWithEmail.length} emails failed`,
+      );
     }
 
-    return { success: true, data: { sent, noEmail, total: members.length } };
+    return { success: true, data: { sent, noEmail, failed, total: members.length } };
   }
 
   async registerDeviceToken(userId: string, token: string, platform: string) {

@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
+import { DocumentBatchService } from './document-batch.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -48,6 +49,14 @@ describe('DocumentsService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockBatchService = {
+    initQueue: jest.fn(),
+    createBatch: jest.fn(),
+    getBatchProgress: jest.fn(),
+    getBatchList: jest.fn(),
+    cancelBatch: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -56,6 +65,7 @@ describe('DocumentsService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
         { provide: MemberMailService, useValue: mockMemberMailService },
+        { provide: DocumentBatchService, useValue: mockBatchService },
       ],
     }).compile();
 

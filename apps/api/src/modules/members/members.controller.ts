@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MembersService } from './members.service';
+import { MembersDigitalCardService } from './members-digital-card.service';
+import { MembersWorkflowService } from './members-workflow.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -11,7 +13,11 @@ import { Response } from 'express';
 @Controller('members')
 @ApiBearerAuth()
 export class MembersController {
-  constructor(private readonly membersService: MembersService) {}
+  constructor(
+    private readonly membersService: MembersService,
+    private readonly digitalCardService: MembersDigitalCardService,
+    private readonly workflowService: MembersWorkflowService,
+  ) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Ambil data anggota untuk user yang login' })
@@ -103,32 +109,32 @@ export class MembersController {
   @ApiOperation({ summary: 'Validasi anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  validate(@Param('id') id: string) {
-    return this.membersService.validate(id);
+  validate(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.workflowService.validate(id, req.scope);
   }
 
   @Post(':id/approve')
   @ApiOperation({ summary: 'Setujui anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  approve(@Param('id') id: string) {
-    return this.membersService.approve(id);
+  approve(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.workflowService.approve(id, req.scope);
   }
 
   @Patch(':id/suspend')
   @ApiOperation({ summary: 'Tangguhkan anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  suspend(@Param('id') id: string) {
-    return this.membersService.suspend(id);
+  suspend(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.workflowService.suspend(id, req.scope);
   }
 
   @Patch(':id/reactivate')
   @ApiOperation({ summary: 'Aktifkan kembali anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   @RequireScope('branch')
-  reactivate(@Param('id') id: string) {
-    return this.membersService.reactivate(id);
+  reactivate(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.workflowService.reactivate(id, req.scope);
   }
 
   @Get(':id/documents')
@@ -152,7 +158,7 @@ export class MembersController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
   getDigitalCard(@Param('id') id: string, @Req() req: ScopedRequest) {
-    return this.membersService.getDigitalCard(id, req.scope);
+    return this.digitalCardService.getDigitalCard(id, req.scope);
   }
 
   @Get(':id/digital-card/pdf')
@@ -160,7 +166,7 @@ export class MembersController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
   async getDigitalCardPdf(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
-    const pdfBuffer = await this.membersService.getDigitalCardPdf(id, req.scope);
+    const pdfBuffer = await this.digitalCardService.getDigitalCardPdf(id, req.scope);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="kartu-anggota-${id}.pdf"`);
     res.send(pdfBuffer);
@@ -171,7 +177,7 @@ export class MembersController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
   async getDigitalCardImage(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
-    const pngBuffer = await this.membersService.getDigitalCardImage(id, req.scope);
+    const pngBuffer = await this.digitalCardService.getDigitalCardImage(id, req.scope);
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Content-Disposition', `inline; filename="kartu-anggota-${id}.png"`);
     res.send(pngBuffer);

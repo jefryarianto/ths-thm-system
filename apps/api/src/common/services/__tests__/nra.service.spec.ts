@@ -37,13 +37,17 @@ describe('NraService', () => {
     },
   };
 
+  // Mock transaction client that delegates to the main mockPrisma
+  const mockTx = {
+    ranting: { findUnique: jest.fn() },
+    anggota: { findFirst: jest.fn() },
+  };
+
   const mockPrisma = {
-    ranting: {
-      findUnique: jest.fn(),
-    },
-    anggota: {
-      findMany: jest.fn(),
-    },
+    // Interactive transaction: passes mockTx to the callback
+    $transaction: jest.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
+    ranting: mockTx.ranting,
+    anggota: mockTx.anggota,
   };
 
   beforeEach(async () => {
@@ -64,28 +68,25 @@ describe('NraService', () => {
 
   describe('generateMemberNumber', () => {
     it('should generate NRA in format [kode_distrik]-[kode_wilayah][kode_ranting]-[3digit_urut]-[tahun]', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([
-        { nomorAnggota: '0114-0101-001-2020' },
-        { nomorAnggota: '0114-0101-002-2020' },
-        { nomorAnggota: '0114-0101-003-2020' },
-      ]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue({
+        nomorAnggota: '0114-0101-003-2020',
+      });
 
       const nra = await service.generateMemberNumber('r1');
 
       // Format: DST-0114 → 0114, WLY-0114-01 → 01, RTG-0114-01 → 01
-      // Sequence: max(001, 002, 003) + 1 = 004
+      // Sequence: max from latest (003) + 1 = 004
       // Default tahun: current year (2026)
       expect(nra).toMatch(/^\d{3,4}-\d{2,4}-\d{3}-\d{4}$/);
       expect(nra).toBe('0114-0101-004-2026');
     });
 
     it('should use max sequence + 1 even for non-sequential members', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([
-        { nomorAnggota: '0114-0101-005-2020' },
-        { nomorAnggota: '0114-0101-010-2024' },
-      ]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue({
+        nomorAnggota: '0114-0101-010-2024',
+      });
 
       const nra = await service.generateMemberNumber('r1');
 
@@ -94,8 +95,8 @@ describe('NraService', () => {
     });
 
     it('should start from 001 when no existing members', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
 
       const nra = await service.generateMemberNumber('r1');
 
@@ -103,8 +104,8 @@ describe('NraService', () => {
     });
 
     it('should extract numeric codes from different kode formats', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRantingKodeBerbeda);
-      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRantingKodeBerbeda);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
 
       const nra = await service.generateMemberNumber('r2');
 
@@ -113,8 +114,8 @@ describe('NraService', () => {
     });
 
     it('should use provided tahunDadar when specified', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
 
       const nra = await service.generateMemberNumber('r1', '2020');
 
@@ -122,41 +123,37 @@ describe('NraService', () => {
     });
 
     it('should handle members without nomorAnggota gracefully', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([
-        { nomorAnggota: null },
-        { nomorAnggota: '0114-0101-005-2020' },
-      ]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue({
+        nomorAnggota: '0114-0101-005-2020',
+      });
 
       const nra = await service.generateMemberNumber('r1');
 
-      // null should be skipped, max seq from 005 → 006
+      // max seq from 005 → 006
       expect(nra).toBe('0114-0101-006-2026');
     });
 
     it('should handle members with new format NRA (4 segments)', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([
-        { nomorAnggota: '0114-0101-001-2020' },
-        { nomorAnggota: '0114-0102-005-2024' }, // different kodeWilayahRanting
-        { nomorAnggota: '0114-0101-012-2025' },
-      ]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue({
+        nomorAnggota: '0114-0101-012-2025',
+      });
 
       const nra = await service.generateMemberNumber('r1');
 
       // Max seq from parts[parts.length - 2]: 012 → next: 013
-      // (005 is from kodeWilayahRanting 0102 which also parses correctly)
       expect(nra).toBe('0114-0101-013-2026');
     });
 
     it('should use fallback codes when ranting has no wilayah/distrik', async () => {
-      mockPrisma.ranting.findUnique.mockResolvedValue({
+      mockTx.ranting.findUnique.mockResolvedValue({
         id: 'r3',
         kodeRanting: null,
         nama: 'Ranting Tanpa Struktur',
         wilayah: null,
       });
-      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
 
       const nra = await service.generateMemberNumber('r3');
 
@@ -167,8 +164,8 @@ describe('NraService', () => {
     it('should use default current year when no tahunDadar provided', async () => {
       const currentYear = String(new Date().getFullYear());
 
-      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
-      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
 
       const nra = await service.generateMemberNumber('r1');
 

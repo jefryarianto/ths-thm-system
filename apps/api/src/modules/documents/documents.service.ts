@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { documentReadyEmail } from '../../mail/email-templates';
 import {
@@ -11,6 +11,8 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { paginate } from '../../common/utils/pagination';
+import { DocumentBatchService } from './document-batch.service';
+import { JobPayload, JobResult } from '../../common/queue/queue.interface';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -54,9 +56,13 @@ export class DocumentsService {
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
     private readonly memberMailService: MemberMailService,
+    private readonly batchService: DocumentBatchService,
   ) {
     this.outputDir = path.resolve('storage', 'documents');
     fs.mkdirSync(this.outputDir, { recursive: true });
+
+    // Initialize batch queue with this service's generateSingle as processor
+    this.batchService.initQueue((payload) => this.generateSingle(payload));
   }
 
   async findAll(query: DocumentFilterDto, scope?: UserScope) {
@@ -170,22 +176,118 @@ export class DocumentsService {
     return { success: true, data: doc, message: 'Dokumen berhasil digenerate' };
   }
 
-  async batchGenerate(dto: BatchGenerateDocumentDto) {
-    const results = [];
-    for (const memberId of dto.memberIds || []) {
-      const result = await this.generate({
+  /**
+   * Process a single document generation job from the queue.
+   * This is the core method called by the queue adapter.
+   */
+  async generateSingle(payload: JobPayload): Promise<JobResult> {
+    const { memberId, type, batchId, documentJobId } = payload.data as Record<string, string>;
+
+    try {
+      await this.generate({
         memberId,
-        type: dto.type,
-        signatureId: dto.signatureId,
-        stampId: dto.stampId,
+        type,
+        signatureId: undefined,
+        stampId: undefined,
       });
-      results.push(result);
+
+      return {
+        jobId: payload.jobId,
+        success: true,
+        data: { batchId, documentJobId, memberId },
+      };
+    } catch (error) {
+      return {
+        jobId: payload.jobId,
+        success: false,
+        error: (error as Error).message,
+        data: { batchId, documentJobId, memberId },
+      };
     }
+  }
+
+  async batchGenerate(dto: BatchGenerateDocumentDto) {
+    // Resolve member IDs from range-based filter, or use explicit memberIds
+    let memberIds = dto.memberIds;
+    if ((!memberIds || memberIds.length === 0) && dto.range) {
+      memberIds = await this.resolveMemberIdsByRange(dto.range, dto.rantingId);
+    }
+
+    if (!memberIds || memberIds.length === 0) {
+      throw new BadRequestException('Tidak ada anggota yang dipilih untuk generate dokumen');
+    }
+
+    const { batchId, totalJobs } = await this.batchService.createBatch(
+      dto.type,
+      memberIds,
+    );
+
     return {
       success: true,
-      data: { generated: results.length },
-      message: `${results.length} dokumen berhasil digenerate`,
+      data: {
+        batchId,
+        totalJobs,
+        status: 'pending',
+      },
+      message: `${totalJobs} dokumen akan digenerate. Pantau progress di endpoint GET /documents/batch/${batchId}.`,
     };
+  }
+
+  /**
+   * Estimate the number of members that would match a range filter.
+   * Delegates to the batch service for the actual count query.
+   */
+  async estimateBatch(range: string, rantingId?: string): Promise<number> {
+    return this.batchService.estimateBatch(range, rantingId);
+  }
+
+  /**
+   * Resolve member IDs based on a range filter string.
+   * Used when the frontend sends range=all_active / by_ranting / graduated_only
+   * instead of explicit memberIds.
+   */
+  private async resolveMemberIdsByRange(range: string, rantingId?: string): Promise<string[]> {
+    switch (range) {
+      case 'all_active': {
+        const members = await this.prisma.anggota.findMany({
+          where: { statusKeanggotaan: 'aktif', deletedAt: null },
+          select: { id: true },
+        });
+        return members.map((m) => m.id);
+      }
+
+      case 'by_ranting': {
+        if (!rantingId) {
+          throw new BadRequestException('rantingId diperlukan untuk filter per ranting');
+        }
+        const members = await this.prisma.anggota.findMany({
+          where: { rantingId, statusKeanggotaan: 'aktif', deletedAt: null },
+          select: { id: true },
+        });
+        return members.map((m) => m.id);
+      }
+
+      case 'graduated_only': {
+        // Members associated with graduated CalonAnggota via NilaiPendadaran
+        const evaluatedIds = await this.prisma.nilaiPendadaran.findMany({
+          where: { anggotaId: { not: null } },
+          select: { anggotaId: true },
+          distinct: ['anggotaId'],
+        });
+        const memberIdSet = new Set(
+          evaluatedIds.map((n) => n.anggotaId).filter((id): id is string => id !== null),
+        );
+        return Array.from(memberIdSet);
+      }
+
+      case 'by_ids':
+        throw new BadRequestException(
+          'memberIds diperlukan untuk range=by_ids. Gunakan field memberIds di body.',
+        );
+
+      default:
+        return [];
+    }
   }
 
   async remove(id: string, scope?: UserScope) {

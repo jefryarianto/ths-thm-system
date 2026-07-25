@@ -1,10 +1,41 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CacheService } from './cache.service';
 
+// Mock ioredis so the Redis constructor returns a controllable mock.
+// All Redis tests set REDIS_URL explicitly; in-memory-only tests leave it unset.
+jest.mock('ioredis', () => {
+  const mockRedis = {
+    on: jest.fn().mockReturnThis(),
+    connect: jest.fn().mockRejectedValue(new Error('Mock: Redis unreachable')),
+    set: jest.fn().mockResolvedValue('OK'),
+    del: jest.fn().mockResolvedValue(1),
+    scan: jest.fn().mockResolvedValue(['0', []]),
+    pipeline: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([]) }),
+    disconnect: jest.fn(),
+    quit: jest.fn(),
+  };
+  const MockRedis = jest.fn().mockImplementation(() => mockRedis);
+  return { default: MockRedis };
+});
+
 describe('CacheService (integration)', () => {
   let cache: CacheService;
+  let originalRedisUrl: string | undefined;
+
+  beforeAll(() => {
+    originalRedisUrl = process.env.REDIS_URL;
+  });
+
+  afterAll(() => {
+    if (originalRedisUrl) {
+      process.env.REDIS_URL = originalRedisUrl;
+    } else {
+      delete process.env.REDIS_URL;
+    }
+  });
 
   beforeEach(async () => {
+    delete process.env.REDIS_URL;
     const module: TestingModule = await Test.createTestingModule({
       providers: [CacheService],
     }).compile();
@@ -327,6 +358,97 @@ describe('CacheService (integration)', () => {
   describe('onModuleDestroy', () => {
     it('should clear cleanup interval without error', () => {
       expect(() => cache.onModuleDestroy()).not.toThrow();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────
+  //  Redis integration (graceful fallback)
+  // ─────────────────────────────────────────────────────────────────────
+  describe('Redis integration', () => {
+    afterEach(() => {
+      cache.onModuleDestroy();
+    });
+
+    it('should report Redis as disconnected when REDIS_URL is not set', () => {
+      expect(cache.isRedisConnected()).toBe(false);
+    });
+
+    it('should fall back to in-memory when Redis connect fails', async () => {
+      process.env.REDIS_URL = 'redis://mock:6379';
+
+      // Creating a new service with REDIS_URL set will trigger tryConnectRedis
+      const mod2: TestingModule = await Test.createTestingModule({
+        providers: [CacheService],
+      }).compile();
+      const cacheWithRedis = mod2.get<CacheService>(CacheService);
+
+      // The mock redis.connect() rejects immediately, so after a tick the
+      // 'connect' event won't fire and isRedisConnected should be false.
+      await new Promise((r) => setTimeout(r, 50));
+      expect(cacheWithRedis.isRedisConnected()).toBe(false);
+
+      // In-memory operations must still succeed
+      cacheWithRedis.set('failover-key', 'failover-value');
+      expect(cacheWithRedis.get('failover-key')).toBe('failover-value');
+
+      cacheWithRedis.onModuleDestroy();
+    });
+
+    it('should report Redis status changes', () => {
+      // Without Redis URL, isRedisConnected is always false
+      expect(cache.isRedisConnected()).toBe(false);
+
+      // The in-memory store is unaffected
+      cache.set('status-key', 'works');
+      expect(cache.get('status-key')).toBe('works');
+    });
+
+    it('should still respect TTL when only in-memory is active', async () => {
+      cache.set('ttl-fallback', 'expire-me', 30);
+      expect(cache.get('ttl-fallback')).toBe('expire-me');
+
+      await new Promise((r) => setTimeout(r, 50));
+      expect(cache.get('ttl-fallback')).toBeUndefined();
+    });
+
+    it('should maintain MAX_ENTRIES eviction under in-memory-only mode', () => {
+      for (let i = 0; i < 1001; i++) {
+        cache.set(`no-redis-entry-${i}`, `v${i}`, 60_000);
+      }
+
+      const stats = cache.getStats();
+      expect(stats.size).toBe(1000);
+      expect(cache.get('no-redis-entry-0')).toBeUndefined();
+      expect(cache.get('no-redis-entry-1000')).toBe('v1000');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────
+  //  Config validation / env wiring
+  // ─────────────────────────────────────────────────────────────────────
+  describe('env wiring', () => {
+    it('should have DEFAULT_REDIS_OPTIONS static with expected defaults', () => {
+      const opts = (CacheService as any).DEFAULT_REDIS_OPTIONS;
+      expect(opts).toBeDefined();
+      expect(opts.lazyConnect).toBe(true);
+      expect(opts.maxRetriesPerRequest).toBe(2);
+      expect(opts.connectTimeout).toBe(3000);
+      expect(opts.commandTimeout).toBe(2000);
+      expect(opts.enableOfflineQueue).toBe(false);
+    });
+
+    it('should expose KEY_PREFIX constant', () => {
+      expect((CacheService as any).KEY_PREFIX).toBe('cache:');
+    });
+
+    it('should handle REDIS_URL env var gracefully when set to empty string', () => {
+      process.env.REDIS_URL = '';
+      // Create service with empty URL — should skip Redis and stay in-memory
+      const svc = new CacheService();
+      expect(svc.isRedisConnected()).toBe(false);
+      svc.set('empty-url', 'ok');
+      expect(svc.get('empty-url')).toBe('ok');
+      svc.onModuleDestroy();
     });
   });
 });

@@ -5,6 +5,7 @@ import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
 
@@ -78,6 +79,15 @@ describe('MembersService', () => {
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
 
+  const mockCsvImportService = {
+    importRows: jest.fn(),
+    parseDateField: jest.fn().mockImplementation((value) => {
+      if (!value) return null;
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? null : date;
+    }),
+  };
+
   const mockMemberMailService = {
     sendToMember: jest.fn().mockResolvedValue(undefined),
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
@@ -87,6 +97,7 @@ describe('MembersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembersService,
+        { provide: CsvImportService, useValue: mockCsvImportService },
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },
@@ -215,60 +226,6 @@ describe('MembersService', () => {
     it('should soft-delete a member', async () => {
       await service.remove('m1');
       expect(mockPrisma.anggota.update).toHaveBeenCalled();
-    });
-  });
-
-  describe('validate', () => {
-    it('should return valid true when member is complete', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue({
-        id: 'm1',
-        namaLengkap: 'Budi',
-        jenisKelamin: 'L',
-        tempatLahir: 'Jakarta',
-        tanggalLahir: new Date('1990-01-01'),
-        tempatDadar: 'Jakarta',
-        tahunDadar: '2024',
-        tingkat: 'Tamtama',
-      });
-      mockPrisma.anggota.update.mockResolvedValue({ id: 'm1' });
-      const result = await service.validate('m1');
-      expect(result.success).toBe(true);
-      expect(result.data.valid).toBe(true);
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      mockPrisma.anggota.findUnique.mockResolvedValue(null);
-      await expect(service.validate('m1')).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('approve', () => {
-    it('should approve a member and set statusValidasi and statusKeanggotaan', async () => {
-      await service.approve('m1');
-      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
-        where: { id: 'm1' },
-        data: { statusValidasi: 'approved', statusKeanggotaan: 'aktif' },
-      });
-    });
-  });
-
-  describe('suspend', () => {
-    it('should suspend a member', async () => {
-      await service.suspend('m1');
-      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
-        where: { id: 'm1' },
-        data: { statusKeanggotaan: 'nonaktif' },
-      });
-    });
-  });
-
-  describe('reactivate', () => {
-    it('should reactivate a member', async () => {
-      await service.reactivate('m1');
-      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
-        where: { id: 'm1' },
-        data: { statusKeanggotaan: 'aktif' },
-      });
     });
   });
 

@@ -1,17 +1,27 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, FileText, Download, Eye, Trash2 } from 'lucide-react';
+import {
+  Plus,
+  FileText,
+  Download,
+  Eye,
+  Trash2,
+  Layers,
+} from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import { BatchHistoryPanel } from '@/components/ui/batch-history';
+import BatchGenerateModal from '@/components/documents/BatchGenerateModal';
 
 interface DocumentRow {
   id: string;
@@ -37,8 +47,14 @@ const STATUS_COLORS: Record<string, string> = {
   archived: 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400',
 };
 
+type Tab = 'documents' | 'batch';
+
 export default function DocumentsPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<Tab>('documents');
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchTabKey, setBatchTabKey] = useState(0); // force re-mount for auto-refresh
+
   const {
     page,
     setPage,
@@ -76,105 +92,181 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleBatchCreated = (_batchId: string) => {
+    // Switch to batch tab and force re-mount to show new batch
+    setActiveTab('batch');
+    setBatchTabKey((k) => k + 1);
+  };
+
   return (
     <PageContainer>
-      <PageHeader title="Generate Dokumen" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors">
-          <Download size={14} /> Generate
+      {/* ─── Tabs ─── */}
+      <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setActiveTab('documents')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'documents'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <FileText size={16} />
+          Dokumen
         </button>
         <button
-          onClick={() => router.push('/documents/new')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+          onClick={() => setActiveTab('batch')}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'batch'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
         >
-          <Plus size={14} /> Tambah
+          <Layers size={16} />
+          Generate Massal
         </button>
-      </PageHeader>
+      </div>
 
-      <SummaryBar icon={FileText} label="Total Dokumen" total={meta.total} />
+      {/* ─── Tab: Dokumen ─── */}
+      {activeTab === 'documents' && (
+        <>
+          <PageHeader title="Dokumen" onRefresh={refetch}>
+            <button
+              onClick={() => {
+                setShowBatchModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors"
+            >
+              <Download size={14} /> Generate Massal
+            </button>
+            <button
+              onClick={() => router.push('/documents/new')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Plus size={14} /> Tambah
+            </button>
+          </PageHeader>
 
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        onReset={resetFilters}
-        placeholder="Cari dokumen (no. dokumen, tipe)..."
-        debounceMs={300}
-      >
-        <FilterSelect
-          value={filters.tipe}
-          onChange={(v) => setFilter('tipe', v)}
-          options={TIPE_OPTIONS}
-          placeholder="Semua Tipe"
-        />
-      </SearchBar>
+          <SummaryBar icon={FileText} label="Total Dokumen" total={meta.total} />
 
-      <DataTable
-        columns={[
-          { label: 'No. Dokumen' },
-          { label: 'Tipe', hidden: 'hidden sm:table-cell' },
-          { label: 'Anggota', hidden: 'hidden md:table-cell' },
-          { label: 'Status' },
-          { label: 'Tanggal', hidden: 'hidden lg:table-cell' },
-          { label: 'Aksi', align: 'right' },
-        ]}
-        data={data}
-        loading={loading}
-        empty={{
-          icon: FileText,
-          ...buildEmptyMessage('dokumen', hasActiveFilters, resetFilters),
-        }}
-        page={page}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={handlePageChange}
-        colSpan={6}
-        renderRow={(row: DocumentRow) => (
-          <tr
-            key={row.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+          <SearchBar
+            search={search}
+            onSearchChange={setSearch}
+            onReset={resetFilters}
+            placeholder="Cari dokumen (no. dokumen, tipe)..."
+            debounceMs={300}
           >
-            <td className="px-4 py-3">
-              <span className="font-mono text-sm text-gray-900 dark:text-white">
-                {row.nomorDokumen}
-              </span>
-            </td>
-            <td className="px-4 py-3 hidden sm:table-cell">
-              <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 capitalize">
-                {row.tipe}
-              </span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
-              {row.anggota?.namaLengkap || '-'}
-            </td>
-            <td className="px-4 py-3">
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}
+            <FilterSelect
+              value={filters.tipe}
+              onChange={(v) => setFilter('tipe', v)}
+              options={TIPE_OPTIONS}
+              placeholder="Semua Tipe"
+            />
+          </SearchBar>
+
+          <DataTable
+            columns={[
+              { label: 'No. Dokumen' },
+              { label: 'Tipe', hidden: 'hidden sm:table-cell' },
+              { label: 'Anggota', hidden: 'hidden md:table-cell' },
+              { label: 'Status' },
+              { label: 'Tanggal', hidden: 'hidden lg:table-cell' },
+              { label: 'Aksi', align: 'right' },
+            ]}
+            data={data}
+            loading={loading}
+            empty={{
+              icon: FileText,
+              ...buildEmptyMessage('dokumen', hasActiveFilters, resetFilters),
+            }}
+            page={page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            onPageChange={handlePageChange}
+            colSpan={6}
+            renderRow={(row: DocumentRow) => (
+              <tr
+                key={row.id}
+                className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
               >
-                {row.status}
-              </span>
-            </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
-              {new Date(row.createdAt).toLocaleDateString('id-ID')}
-            </td>
-            <td className="px-4 py-3 text-right">
-              <div className="flex items-center justify-end gap-1">
-                <button
-                  onClick={() => router.push(`/documents/${row.id}`)}
-                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                  title="Detail"
-                >
-                  <Eye size={15} />
-                </button>
-                <button
-                  onClick={() => handleDelete(row.id)}
-                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                  title="Hapus"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </td>
-          </tr>
-        )}
+                <td className="px-4 py-3">
+                  <span className="font-mono text-sm text-gray-900 dark:text-white">
+                    {row.nomorDokumen}
+                  </span>
+                </td>
+                <td className="px-4 py-3 hidden sm:table-cell">
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 capitalize">
+                    {row.tipe}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                  {row.anggota?.namaLengkap || '-'}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || ''}`}
+                  >
+                    {row.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+                  {new Date(row.createdAt).toLocaleDateString('id-ID')}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => router.push(`/documents/${row.id}`)}
+                      className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                      title="Detail"
+                    >
+                      <Eye size={15} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(row.id)}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                      title="Hapus"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
+          />
+        </>
+      )}
+
+      {/* ─── Tab: Generate Massal ─── */}
+      {activeTab === 'batch' && (
+        <div className="space-y-6">
+          {/* Quick actions */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Generate &amp; Riwayat Batch
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Buat generate dokumen massal dan pantau progresnya
+              </p>
+            </div>
+            <button
+              onClick={() => setShowBatchModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Download size={14} />
+              Batch Baru
+            </button>
+          </div>
+
+          {/* Batch history panel */}
+          <BatchHistoryPanel key={batchTabKey} />
+        </div>
+      )}
+
+      {/* ─── Batch Generate Modal ─── */}
+      <BatchGenerateModal
+        open={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+        onBatchCreated={handleBatchCreated}
       />
     </PageContainer>
   );

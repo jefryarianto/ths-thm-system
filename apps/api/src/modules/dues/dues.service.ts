@@ -209,6 +209,7 @@ export class DuesService {
         anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } },
       },
       orderBy: { periode: 'asc' },
+      take: 10_000,
     });
 
     const totalArrears = arrears.reduce((sum, i) => sum + Number(i.jumlah), 0);
@@ -273,6 +274,7 @@ export class DuesService {
   async exportReport(_query: Record<string, unknown>) {
     const dues = await this.prisma.iuran.findMany({
       include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
+      take: 10_000,
     });
     return { success: true, data: dues };
   }

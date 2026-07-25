@@ -10,7 +10,7 @@ import bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
-import { resetPasswordEmail } from '../../mail/email-templates';
+import { resetPasswordEmail, escapeHtml } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
 import {
   LoginDto,
@@ -59,7 +59,8 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email sudah terdaftar');
     const passwordHash = await bcrypt.hash(dto.password, 12);
-    const role = (dto.role as Role) || ('anggota' as Role);
+    // Security: force role to 'anggota' for public registration — never trust user-supplied role
+    const role: Role = 'anggota';
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -221,7 +222,7 @@ export class AuthService {
 
     const tpl = {
       subject: 'Magic Link Login - THS-THM',
-      html: `<p>Klik link ini untuk login:</p><a href="${magicUrl}">Login</a><p>Link berlaku 15 menit.</p>`,
+      html: `<p>Klik link ini untuk login:</p><a href="${escapeHtml(magicUrl)}">Login</a><p>Link berlaku 15 menit.</p>`,
       text: `Login: ${magicUrl}`,
     };
 
@@ -269,14 +270,33 @@ export class AuthService {
   }
 
   async findOrCreateOAuthUser(profile: OAuthUserProfile) {
-    let user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+    let user: { id: string; email: string; role: string; namaLengkap: string; refreshToken?: string | null; passwordHash?: string } | null = null;
+
+    // If email is provided, look up by email (most common path)
+    if (profile.email) {
+      user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+    }
+
+    // Fallback: look up via OAuth providerId (handles anonymous OAuth where email scope is denied)
+    if (!user) {
+      const oauthAccount = await this.prisma.oAuthAccount.findUnique({
+        where: {
+          provider_providerId: { provider: profile.provider, providerId: profile.providerId },
+        },
+        select: { userId: true },
+      });
+      if (oauthAccount) {
+        user = await this.prisma.user.findUnique({ where: { id: oauthAccount.userId } });
+      }
+    }
 
     if (!user) {
+      const syntheticEmail = profile.email || `${profile.providerId}@oauth.${profile.provider}.com`;
       const randomPassword = Math.random().toString(36).slice(-10);
       const passwordHash = await bcrypt.hash(randomPassword, 12);
       user = await this.prisma.user.create({
         data: {
-          email: profile.email || `${profile.providerId}@oauth.${profile.provider}.com`,
+          email: syntheticEmail,
           passwordHash,
           namaLengkap: profile.name,
           role: 'anggota',
@@ -288,7 +308,7 @@ export class AuthService {
       where: {
         provider_providerId: { provider: profile.provider, providerId: profile.providerId },
       },
-      update: { email: profile.email, name: profile.name, photo: profile.photo },
+      update: { email: profile.email, name: profile.name, photo: profile.photo, userId: user.id },
       create: {
         userId: user.id,
         provider: profile.provider,

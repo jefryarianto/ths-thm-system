@@ -34,7 +34,7 @@ export class MemberMailService {
       const templateName = (metadata.template as string) || '';
       const defaultTpl = templateFn(member.namaLengkap);
       const defaultRenderOnce = () => ({ subject: defaultTpl.subject, html: defaultTpl.html || '' });
-      const mergedVars = { nama: member.namaLengkap, ...variables };
+      const mergedVars = { ...variables, nama: member.namaLengkap };
 
       const tpl = await this.mailService.renderWithOverride(
         templateName,
@@ -78,7 +78,7 @@ export class MemberMailService {
       const templateName = (metadata.template as string) || '';
       const defaultTpl = templateFn(member.namaLengkap, ...args);
       const defaultRenderOnce = () => ({ subject: defaultTpl.subject, html: defaultTpl.html || '' });
-      const mergedVars = { nama: member.namaLengkap, ...variables };
+      const mergedVars = { ...variables, nama: member.namaLengkap };
 
       const tpl = await this.mailService.renderWithOverride(
         templateName,

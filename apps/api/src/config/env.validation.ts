@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 
 export function validateEnv() {
-  const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
+    const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
+  const optionalVars = ['REDIS_URL'];
 
   const missing = requiredVars.filter((key) => !process.env[key]);
 
@@ -9,6 +10,11 @@ export function validateEnv() {
     console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
     console.error('   Copy .env.example to .env and fill in the values.');
     process.exit(1);
+  }
+
+  const notSet = optionalVars.filter((key) => !process.env[key]);
+  if (notSet.length > 0) {
+    console.log(`ℹ️  Optional vars not set: ${notSet.join(', ')} (using defaults)`);
   }
 
   if (process.env.JWT_SECRET === 'change-me-to-random-64-char-string') {
@@ -46,5 +52,6 @@ export const env = {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
   },
+  redisUrl: process.env.REDIS_URL || '',
   resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET || '',
 };

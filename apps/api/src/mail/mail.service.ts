@@ -1,6 +1,7 @@
 ﻿import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { env } from '../config/env.validation';
+import { escapeHtml, escapeRegex } from './html-utils';
 
 export interface SendMailOptions {
   to: string;
@@ -90,6 +91,9 @@ export class MailService {
    * If a custom template with the same name exists in the DB and is active,
    * it will replace {{variable}} placeholders with the provided values.
    * Otherwise, it falls back to the default render function.
+   *
+   * Both the variable key (for the regex) and the variable value (for HTML)
+   * are sanitised to prevent injection attacks.
    */
   async renderWithOverride(
     templateName: string,
@@ -105,10 +109,14 @@ export class MailService {
         let subject = custom.subject;
         let htmlBody = custom.htmlBody;
 
-        for (const [key, value] of Object.entries(variables)) {
-          const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi');
-          subject = subject.replace(regex, value);
-          htmlBody = htmlBody.replace(regex, value);
+        for (const [key, rawValue] of Object.entries(variables)) {
+          // Escape regex special chars in key to prevent ReDoS / malformed regex
+          const safeKey = escapeRegex(key);
+          const regex = new RegExp(`\\{\\{\\s*${safeKey}\\s*\\}\\}`, 'gi');
+          // HTML-escape the value to prevent injection into the rendered template
+          const safeValue = escapeHtml(rawValue);
+          subject = subject.replace(regex, safeValue);
+          htmlBody = htmlBody.replace(regex, safeValue);
         }
 
         return { subject, html: htmlBody };
@@ -132,6 +140,16 @@ export class MailService {
 
     for (const log of failedLogs) {
       retried++;
+
+      // Logged content may be truncated (max 500 chars). If so, the re-sent
+      // email will contain broken HTML — warn operators to re-render manually.
+      if (log.content && log.content.endsWith('...')) {
+        this.logger.warn(
+          `Retrying email to ${log.to}: content was truncated (max ${this.MAX_LOG_CONTENT_LENGTH} chars). ` +
+          `Consider re-rendering the template instead.`,
+        );
+      }
+
       const metadata = (log.metadata as Record<string, unknown> | null) || undefined;
       const sent = await this.sendMail({
         to: log.to,
@@ -145,6 +163,13 @@ export class MailService {
     return { retried, succeeded, failed: retried - succeeded };
   }
 
+  /**
+   * Maximum length of email content to store in the log.
+   * Full content is truncated to protect PII (names, email bodies, etc.)
+   * from long-term storage in the email_logs table.
+   */
+  private readonly MAX_LOG_CONTENT_LENGTH = 500;
+
   private async logToDb(
     to: string,
     subject: string,
@@ -155,6 +180,13 @@ export class MailService {
     content?: string | null,
   ): Promise<void> {
     try {
+      // Truncate content to protect PII — full HTML bodies often contain
+      // names, addresses, phone numbers, and other personal data
+      const safeContent =
+        content && content.length > this.MAX_LOG_CONTENT_LENGTH
+          ? content.slice(0, this.MAX_LOG_CONTENT_LENGTH) + '...'
+          : content || undefined;
+
       await this.prisma.emailLog.create({
         data: {
           to,
@@ -162,7 +194,7 @@ export class MailService {
           status,
           provider,
           error,
-          content: content || undefined,
+          content: safeContent,
           metadata: (metadata as never) || undefined,
         },
       });

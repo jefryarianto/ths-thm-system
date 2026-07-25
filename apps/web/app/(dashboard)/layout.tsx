@@ -24,6 +24,7 @@ import {
   Trophy,
   TrendingUp,
   MessageSquare,
+  Activity,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -31,9 +32,19 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
+interface MenuItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: string | number }>;
+  /** If true, only show to users with admin-level roles (superadmin, admin_distrik, etc.) */
+  adminOnly?: boolean;
+  /** If true, open in a new tab (external/API-hosted pages like Bull Board) */
+  external?: boolean;
+}
+
 interface MenuGroup {
   label: string;
-  items: { href: string; label: string; icon: React.ComponentType<{ size?: string | number }> }[];
+  items: MenuItem[];
 }
 
 const menuGroups: MenuGroup[] = [
@@ -121,6 +132,12 @@ const menuGroups: MenuGroup[] = [
       { href: '/users', label: 'Users', icon: Shield },
       { href: '/settings', label: 'Pengaturan', icon: Settings },
       { href: '/settings/email', label: 'Email Admin', icon: Mail },
+      {
+        href: '/admin/queues',
+        label: 'Antrean',
+        icon: Activity,
+        adminOnly: true,
+      },
     ],
   },
 ];
@@ -133,6 +150,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [queueStats, setQueueStats] = useState<{ waiting: number; active: number } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -177,6 +195,41 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // ── Queue Stats Polling ────────────────────────────────
+  // Fetch queue job counts every 10s for admin users.
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Only poll if the current user is an admin
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const role = user?.role || '';
+      const adminRoles = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
+      if (!adminRoles.includes(role)) return;
+    } catch {
+      return;
+    }
+
+    const fetchStats = async () => {
+      try {
+        const { data } = await apiClient.get('/admin/queue-stats');
+        if (data?.data?.counts) {
+          setQueueStats({
+            waiting: data.data.counts.waiting ?? 0,
+            active: data.data.counts.active ?? 0,
+          });
+        }
+      } catch {
+        // Silently ignore — queue may not be available
+        setQueueStats(null);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 10_000);
+    return () => clearInterval(interval);
+  }, [mounted]);
+
   const handleLogout = () => {
     disconnectSocket();
     clearTokens();
@@ -202,24 +255,90 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {group.label}
               </p>
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname?.startsWith(item.href) || false;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition ${
-                      isActive
-                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <Icon size={18} />
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {group.items
+                .filter((item) => {
+                  // Hide admin-only items from non-admin users
+                  if (item.adminOnly && mounted) {
+                    try {
+                      const user = JSON.parse(localStorage.getItem('user') || '{}');
+                      const role = user?.role || '';
+                      const adminRoles = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
+                      if (!adminRoles.includes(role)) return false;
+                    } catch {
+                      return false;
+                    }
+                  }
+                  return true;
+                })
+                .map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname?.startsWith(item.href) || false;
+
+                  // External links (API-hosted pages like Bull Board) open in a new tab
+                  if (item.external) {
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition ${
+                          isActive
+                            ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        <Icon size={18} />
+                        {item.label}
+                        {/* Right-aligned container for badge + external icon */}
+                        <span className="ml-auto flex items-center gap-1.5">
+                          {/* Queue stats badge — only for the Antrean link */}
+                          {item.href === '/admin/queues' && queueStats &&
+                            (queueStats.waiting + queueStats.active > 0) && (
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                                queueStats.waiting > 0
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+                                  : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                              }`}
+                            >
+                              {queueStats.waiting + queueStats.active}
+                            </span>
+                          )}
+                          {/* External link indicator */}
+                          <svg
+                            className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </span>
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition ${
+                        isActive
+                          ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <Icon size={18} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
             </div>
           ))}
         </nav>

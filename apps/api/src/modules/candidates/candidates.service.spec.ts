@@ -1,10 +1,11 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { CandidatesService } from './candidates.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
 
@@ -79,6 +80,93 @@ describe('CandidatesService', () => {
     getStats: jest.fn().mockReturnValue({ size: 0, keys: [] }),
   };
 
+  // Mock CsvImportService that reads from mockPrisma fixtures (like the real service does)
+  const mockCsvImportService = {
+    importRows: jest.fn().mockImplementation(async (data, options) => {
+      const maxRows = options.maxRows ?? 500;
+      if (data.length > maxRows) {
+        throw new BadRequestException(`Maksimal ${maxRows} baris data per import. File Anda memiliki ${data.length} baris.`);
+      }
+      const result = { success: 0, incomplete: 0, errors: 0, details: [] };
+
+      // Collect emails/names from data for batch duplicate check
+      const dataEmails = data
+        .map((r) => r.email?.toString().trim().toLowerCase())
+        .filter(Boolean);
+      const dataNames = data
+        .map((r) => (r.nama_lengkap || r.nama || r.name || '').toString().trim().toLowerCase())
+        .filter(Boolean);
+
+      // Consult mockPrisma fixtures for existing records (mirrors real batchCheckEmails/batchCheckNames)
+      const existingEmails = new Set<string>();
+      const existingNames = new Set<string>();
+
+      if (dataEmails.length > 0) {
+        const anggotaEmails = await mockPrisma.anggota.findMany();
+        const calonEmails = await mockPrisma.calonAnggota.findMany();
+        for (const e of [...anggotaEmails, ...calonEmails]) {
+          if (e.email) existingEmails.add(e.email.toLowerCase());
+        }
+      }
+      if (dataNames.length > 0) {
+        const anggotaNames = await mockPrisma.anggota.findMany();
+        const calonNames = await mockPrisma.calonAnggota.findMany();
+        for (const n of [...anggotaNames, ...calonNames]) {
+          if (n.namaLengkap) existingNames.add(n.namaLengkap.toLowerCase());
+        }
+      }
+
+      for (const row of data) {
+        try {
+          const email = (row.email || '').toString().trim().toLowerCase() || undefined;
+          const namaLengkap = (row.nama_lengkap || row.nama || row.name || '').toString().trim().toLowerCase();
+
+          if (email && existingEmails.has(email)) {
+            result.errors++;
+            result.details.push({ row, error: `Email "${row.email}" sudah terdaftar` });
+            continue;
+          }
+          if (namaLengkap && existingNames.has(namaLengkap)) {
+            result.errors++;
+            result.details.push({ row, error: `Nama "${row.nama_lengkap || row.nama || row.name}" sudah terdaftar` });
+            continue;
+          }
+
+          const processed = await options.rowProcessor(row, {
+            email,
+            namaLengkap,
+            addIntraCsv: (e, n) => {
+              if (e) existingEmails.add(e);
+              if (n) existingNames.add(n);
+            },
+          });
+
+          if (processed.skip) {
+            result.incomplete++;
+            continue;
+          }
+          if (processed.success) {
+            if (email) existingEmails.add(email);
+            if (namaLengkap) existingNames.add(namaLengkap);
+            result.success++;
+          } else {
+            result.errors++;
+            result.details.push({ row, error: processed.error || 'Gagal memproses baris' });
+          }
+        } catch (error) {
+          result.errors++;
+          result.details.push({ row, error: (error as Error).message });
+        }
+      }
+      return result;
+    }),
+    parseDateField: jest.fn().mockImplementation((value) => {
+      if (!value) return null;
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? null : date;
+    }),
+  };
+
   const mockMemberMailService = {
     sendToMember: jest.fn().mockResolvedValue(undefined),
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
@@ -93,6 +181,7 @@ describe('CandidatesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CandidatesService,
+        { provide: CsvImportService, useValue: mockCsvImportService },
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: CacheService, useValue: mockCache },

@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger-scope';
+import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -50,6 +51,9 @@ async function bootstrap() {
     mkdirSync(uploadDir, { recursive: true });
   }
   app.use('/api/uploads', require('express').static(uploadDir));
+
+  // Mount Bull Board dashboard (Express-level, bypasses NestJS guards)
+  QueueDashboardModule.setup(app);
 
   await app.listen(process.env.APP_PORT || 3001);
 

@@ -5,6 +5,20 @@ on:
     branches: [master, develop]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'Target environment (Docker images built from master branch only)'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: jefryarianto/ths-thm-system
 
 jobs:
   test:
@@ -108,135 +122,115 @@ jobs:
       - name: Build Web
         run: pnpm --filter @ths-thm/web build
 
-      - name: Debug Web Build Output
+  build-docker:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_NAME }}/api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_NAME }}/web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_target || 'staging' }}
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Determine environment
+        id: env
         run: |
-          echo "=== apps/web directory ==="
-          ls -la apps/web
-          echo "=== apps/web/.next directory ==="
-          ls -la apps/web/.next || echo ".next folder not found"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "target=${{ inputs.deploy_target }}" >> $GITHUB_OUTPUT
+          else
+            echo "target=staging" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Upload API artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-dist
-          path: apps/api/dist/
-          if-no-files-found: error
-
-      - name: Upload Web artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: apps/web/.next
-          if-no-files-found: error
-          include-hidden-files: true
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Web build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: web-dist
-          path: web-dist
-
-      - name: Copy web build to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          username: ${{ secrets.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          source: "web-dist/"
-          target: "/tmp/ths-thm-deploy/"
-          strip_components: 1
-
-      - name: Deploy to staging containers
+      - name: Deploy to ${{ steps.env.outputs.target }} via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_SSH_HOST }}
           username: ${{ secrets.VPS_SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          envs: ENV_TARGET
           script: |
-            # Deploy web build to staging container
-            docker cp /tmp/ths-thm-deploy/.next/. ths-thm-staging-web:/app/.next/
-            docker restart ths-thm-staging-web
-            echo "✅ Web container restarted"
+            set -e
 
-            # Run database migrations
-            cd /opt/ths-thm-staging
-            docker compose -f docker-compose.staging.yml exec -T api sh -c 'cd /app/apps/api && node_modules/.bin/prisma migrate deploy' 2>&1 || echo 'ℹ️ Migration skipped or already up to date'
-            echo "✅ Database migrations applied"
+            # Determine which env to deploy (from step output or default)
+            ENV_TARGET="${{ steps.env.outputs.target }}"
 
-            # Clean up temp files
-            rm -rf /tmp/ths-thm-deploy
-            echo "✅ Cleanup done"
+            if [ "$ENV_TARGET" = "production" ]; then
+              DIR="/opt/ths-thm"
+              COMPOSE="docker-compose.production.yml"
+              DOMAIN="ths-thm.cloud"
+            else
+              DIR="/opt/ths-thm-staging"
+              COMPOSE="docker-compose.staging.yml"
+              DOMAIN="staging.ths-thm.cloud"
+            fi
 
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master'
+            echo "🚀 Deploying to ${DOMAIN}..."
+            cd "$DIR"
 
-    steps:
-      - uses: actions/checkout@v4
+            # Pull images (built in CI — zero CPU on VPS)
+            docker compose -f "$COMPOSE" pull
 
-      - name: Download API build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: api-dist
-          path: api-dist
+            # Run migrations
+            docker compose -f "$COMPOSE" run --rm api \
+              sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
 
-      - name: Download Web build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: web-dist
-          path: web-dist
+            # Restart services
+            docker compose -f "$COMPOSE" up -d --remove-orphans
 
-      - name: Copy API build to VPS (production)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          username: ${{ secrets.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          source: "api-dist/"
-          target: "/tmp/ths-thm-prod-deploy/api-dist"
+            # Health check
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+                echo "   ✅ ${DOMAIN} API is healthy!"
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "   ❌ ${DOMAIN} health check FAILED"
+                docker compose -f "$COMPOSE" logs api --tail=20
+                exit 1
+              fi
+              sleep 5
+            done
 
-      - name: Copy Web build to VPS (production)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          username: ${{ secrets.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          source: "web-dist/"
-          target: "/tmp/ths-thm-prod-deploy/web-dist"
-
-      - name: Deploy to production containers
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          username: ${{ secrets.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          script: |
-            # Deploy API build
-            docker cp /tmp/ths-thm-prod-deploy/api-dist/. ths-thm-prod-api:/app/apps/api/dist/ 2>/dev/null || echo '⚠️ API container not running'
-            # Deploy web build
-            docker cp /tmp/ths-thm-prod-deploy/web-dist/. ths-thm-prod-web:/app/.next/ 2>/dev/null || echo '⚠️ Web container not running'
-            # Restart containers
-            docker restart ths-thm-prod-api 2>/dev/null || true
-            docker restart ths-thm-prod-web 2>/dev/null || true
-            echo "✅ Production containers restarted"
-            # Run DB migrations
-            docker exec ths-thm-prod-api sh -c 'cd /app/apps/api && node_modules/.bin/prisma migrate deploy' 2>&1 || echo 'ℹ️ Migration skipped'
-            # Cleanup
-            rm -rf /tmp/ths-thm-prod-deploy
-            echo "✅ Production deploy complete"
+            # Clean up old images (save disk on small VPS)
+            docker image prune -af --filter "until=24h" 2>/dev/null || true
+            echo "✅ ${DOMAIN} deploy complete!"

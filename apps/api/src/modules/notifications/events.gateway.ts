@@ -91,10 +91,16 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
-  // ─── Emit to specific user ───
+  // ─── Emit to specific user (notification:new event) ───
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendNotification(userId: string, data: any) {
     this.server.to(`user:${userId}`).emit('notification:new', data);
+  }
+
+  // ─── Emit arbitrary event to a specific user (e.g., batch:progress, batch:complete) ───
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendToUser(userId: string, event: string, data: any) {
+    this.server.to(`user:${userId}`).emit(event, data);
   }
 
   // ─── Emit notification count update ───
@@ -106,6 +112,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   broadcastNotification(data: any) {
     this.server.emit('notification:new', data);
+  }
+
+  // ─── Broadcast arbitrary event to all connected users ───
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  broadcast(event: string, data: any) {
+    this.server.emit(event, data);
   }
 
   // ─── Emit to users with specific role ───
