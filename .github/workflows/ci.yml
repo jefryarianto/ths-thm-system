@@ -241,9 +241,9 @@ jobs:
 
             # Download nginx config for this environment
             if [ "$ENV_TARGET" = "production" ]; then
-              curl -sf -o nginx/production.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/production.conf" && mv nginx/production.conf.tmp nginx/production.conf || rm -f nginx/production.conf.tmp
+              curl -sf -o nginx/production.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/production.conf" && mv nginx/production.conf.tmp nginx/production.conf || { rm -f nginx/production.conf.tmp; echo "   ⚠️ Using existing nginx/production.conf"; }
             else
-              curl -sf -o nginx/staging.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/staging.conf" && mv nginx/staging.conf.tmp nginx/staging.conf || rm -f nginx/staging.conf.tmp
+              curl -sf -o nginx/staging.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/staging.conf" && mv nginx/staging.conf.tmp nginx/staging.conf || { rm -f nginx/staging.conf.tmp; echo "   ⚠️ Using existing nginx/staging.conf"; }
             fi
 
             # Pull images (built in CI — zero CPU on VPS)

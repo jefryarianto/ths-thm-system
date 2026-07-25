@@ -143,7 +143,7 @@ jobs:
             # Download latest config files from GitHub (VPS might have stale versions)
             # Write to .tmp first then mv — prevents partial file corruption on timeout
             curl -sf -o docker-compose.production.yml.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/docker-compose.production.yml" && mv docker-compose.production.yml.tmp docker-compose.production.yml || { rm -f docker-compose.production.yml.tmp; echo "   ⚠️ Using existing compose file"; }
-            curl -sf -o nginx/production.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/production.conf" && mv nginx/production.conf.tmp nginx/production.conf || rm -f nginx/production.conf.tmp
+            curl -sf -o nginx/production.conf.tmp "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/nginx/production.conf" && mv nginx/production.conf.tmp nginx/production.conf || { rm -f nginx/production.conf.tmp; echo "   ⚠️ Using existing nginx/production.conf"; }
 
             # Export image tag so docker-compose picks it up
             export IMAGE_TAG=${IMAGE_TAG:-latest}
