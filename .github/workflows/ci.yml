@@ -210,9 +210,9 @@ jobs:
             # Pull images (built in CI — zero CPU on VPS)
             docker compose -f "$COMPOSE" pull
 
-            # Run migrations
+            # Run migrations (from apps/api/ so prisma finds schema.prisma)
             docker compose -f "$COMPOSE" run --rm api \
-              sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
+              sh -c "cd apps/api && npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
 
             # Restart services
             docker compose -f "$COMPOSE" up -d --remove-orphans
