@@ -6,6 +6,7 @@ import compression from 'compression';
 import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger-scope';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
+import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -39,6 +40,9 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  // Configure Socket.IO with Redis adapter for cross-instance WebSocket state
+  app.useWebSocketAdapter(new RedisIoAdapter(app));
 
   if (process.env.NODE_ENV !== 'production') {
     setupSwagger(app);
