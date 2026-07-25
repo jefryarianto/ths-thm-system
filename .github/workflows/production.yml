@@ -156,10 +156,10 @@ jobs:
             echo "   Restarting services..."
             docker compose -f docker-compose.production.yml up -d --remove-orphans
 
-            # Wait for health check
+            # Wait for health check (via docker compose exec — api port is internal, not exposed on host)
             echo "   Waiting for API health check..."
             for i in $(seq 1 30); do
-              if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+              if docker compose -f docker-compose.production.yml exec -T api wget --no-verbose --tries=1 --spider http://localhost:3001/api/health > /dev/null 2>&1; then
                 echo "   ✅ API is healthy!"
                 break
               fi

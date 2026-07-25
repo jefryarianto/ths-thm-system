@@ -245,9 +245,9 @@ jobs:
             # Restart services
             docker compose -f "$COMPOSE" up -d --remove-orphans
 
-            # Health check
+            # Health check (via docker compose exec — api port is internal, not exposed on host)
             for i in $(seq 1 30); do
-              if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+              if docker compose -f "$COMPOSE" exec -T api wget --no-verbose --tries=1 --spider http://localhost:3001/api/health > /dev/null 2>&1; then
                 echo "   ✅ ${DOMAIN} API is healthy!"
                 break
               fi
