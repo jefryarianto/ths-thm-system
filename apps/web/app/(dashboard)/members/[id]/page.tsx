@@ -484,7 +484,7 @@ export default function MemberDetailPage() {
                         />
                       </label>
                     </div>
-                    <div className="flex-1 pt-12 sm:pt-0">
+                    <div className="flex-1 mt-2 sm:mt-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                           {member.namaLengkap}
