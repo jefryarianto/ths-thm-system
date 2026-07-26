@@ -39,7 +39,7 @@ interface Incident {
 
 type Severity = 'all' | 'short' | 'medium' | 'long' | 'critical';
 
-const COMPONENT_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const COMPONENT_ICONS: Record<string, React.ComponentType<{ size?: number | string; className?: string }>> = {
   queue: Network,
   database: Database,
   api: Cpu,

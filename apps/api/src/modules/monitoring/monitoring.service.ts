@@ -156,12 +156,13 @@ export class MonitoringService {
 
   private extractMetric(health: HealthSnapshot, metric: string): number | null {
     switch (metric) {
-      case 'cpu_percent':
+      case 'cpu_percent': {
         // Use 1-minute load average / CPU count as rough CPU usage %
         const cpuCount = os.cpus().length;
         if (cpuCount === 0) return null;
         const load1 = os.loadavg()[0]; // 1-minute load average
         return Math.min(Math.round((load1 / cpuCount) * 100), 100);
+      }
       case 'memory_percent':
         // Parse "128 MB used / 512 MB total" into percentage
         return this.parseMemoryPercent(health.memory);

@@ -111,7 +111,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready -U ths_thm -d ths_thm_e2e
+          --health-cmd "pg_isready -U ths_thm -d ths_thm_e2e"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
@@ -343,7 +343,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready -U ths_thm -d ths_thm_smoke
+          --health-cmd "pg_isready -U ths_thm -d ths_thm_smoke"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
