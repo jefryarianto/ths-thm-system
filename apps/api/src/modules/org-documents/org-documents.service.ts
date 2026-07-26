@@ -42,7 +42,15 @@ export class OrgDocumentsService {
   }
 
   async create(dto: CreateOrgDocumentDto) {
-    const doc = await this.prisma.dokumenOrganisasi.create({ data: dto as never });
+    const doc = await this.prisma.dokumenOrganisasi.create({
+      data: {
+        kategoriId: dto.kategoriId,
+        judul: dto.judul,
+        deskripsi: dto.deskripsi,
+        filePath: dto.filePath,
+        uploadedBy: dto.uploadedBy,
+      },
+    });
 
     // Notify admins about new org document (method handles errors internally)
     this.notifyAdminsNewDocument(dto.judul || 'Dokumen Baru');

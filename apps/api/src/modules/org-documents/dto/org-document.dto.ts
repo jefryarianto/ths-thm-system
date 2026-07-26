@@ -22,7 +22,7 @@ export class CreateOrgDocumentDto {
 
   @ApiProperty()
   @IsString()
-  uploadedById: string;
+  uploadedBy: string;
 }
 
 export class UpdateOrgDocumentDto {
