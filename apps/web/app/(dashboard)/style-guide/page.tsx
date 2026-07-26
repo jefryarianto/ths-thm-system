@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import {
   Users, Mail, Bell, Settings, Trash2, Edit3, Plus, Eye, Download, Search,
-  XCircle, AlertTriangle, Clock, Info, RefreshCw,
+  XCircle, CheckCircle, AlertTriangle, Clock, Info, RefreshCw,
 } from 'lucide-react';
 import Badge from '@/components/ui/badge';
 import Button from '@/components/ui/button';

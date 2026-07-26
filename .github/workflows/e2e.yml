@@ -397,7 +397,8 @@ jobs:
         continue-on-error: true
 
       - name: Build API
-        run: cd apps/api && pnpm exec nest build
+        working-directory: apps/api
+        run: npx nest build
         timeout-minutes: 5
 
       - name: Build Web
