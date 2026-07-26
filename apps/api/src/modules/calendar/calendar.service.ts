@@ -12,6 +12,21 @@ export class CalendarService {
     private readonly scopeHelper: ScopeHelper,
   ) {}
 
+  async getHolidays(year?: number) {
+    const where: Record<string, unknown> = { isActive: true };
+    if (year) {
+      const start = new Date(year, 0, 1);
+      const end = new Date(year, 11, 31, 23, 59, 59);
+      where.date = { gte: start, lte: end };
+    }
+    const holidays = await this.prisma.nationalHoliday.findMany({
+      where,
+      orderBy: { date: 'asc' },
+      select: { id: true, date: true, name: true },
+    });
+    return { success: true, data: holidays };
+  }
+
   async getCalendarEvents(year: number, month: number, scope?: UserScope) {
     // Build date range for the month
     const startDate = new Date(year, month - 1, 1);

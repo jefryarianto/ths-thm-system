@@ -1012,6 +1012,22 @@ model Setting {
   @@map("settings")
 }
 
+// ── National Holidays ────────────────────────────────────
+
+model NationalHoliday {
+  id        String   @id @default(uuid())
+  date      DateTime @map("date")
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([date, name])
+  @@index([date])
+  @@index([date, isActive])
+  @@map("national_holidays")
+}
+
 model Periode {
   id         String   @id @default(uuid())
   nama       String

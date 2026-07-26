@@ -6,38 +6,6 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 const MONTHS_FULL = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-// ─── Indonesian National Holidays ──────────────────────────────
-function getIndonesianHolidays(year: number): Array<{ date: string; name: string }> {
-  return [
-    { date: `${year}-01-01`, name: 'Tahun Baru Masehi' },
-    { date: `${year}-01-28`, name: 'Tahun Baru Imlek 2578' },
-    { date: `${year}-03-29`, name: 'Hari Raya Nyepi' },
-    { date: `${year}-03-31`, name: 'Wafat Isa Almasih' },
-    { date: `${year}-04-10`, name: 'Idul Fitri 1449 H' },
-    { date: `${year}-04-11`, name: 'Idul Fitri 1449 H' },
-    { date: `${year}-05-01`, name: 'Hari Buruh Internasional' },
-    { date: `${year}-05-08`, name: 'Kenaikan Isa Almasih' },
-    { date: `${year}-05-20`, name: 'Hari Kebangkitan Nasional' },
-    { date: `${year}-06-01`, name: 'Hari Lahir Pancasila' },
-    { date: `${year}-06-06`, name: 'Idul Adha 1449 H' },
-    { date: `${year}-06-27`, name: 'Tahun Baru Islam 1450 H' },
-    { date: `${year}-08-17`, name: 'Hari Kemerdekaan RI' },
-    { date: `${year}-09-05`, name: 'Maulid Nabi Muhammad SAW' },
-    { date: `${year}-10-01`, name: 'Hari Kesaktian Pancasila' },
-    { date: `${year}-10-28`, name: 'Hari Sumpah Pemuda' },
-    { date: `${year}-11-10`, name: 'Hari Pahlawan' },
-    { date: `${year}-12-22`, name: 'Hari Ibu' },
-    { date: `${year}-12-25`, name: 'Hari Raya Natal' },
-    { date: `${year}-12-26`, name: 'Cuti Bersama Natal' },
-  ];
-}
-
-function isHoliday(day: number, month: number, year: number): { isHoliday: boolean; name?: string } {
-  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const found = getIndonesianHolidays(year).find(h => h.date === dateStr);
-  return found ? { isHoliday: true, name: found.name } : { isHoliday: false };
-}
-
 // ─── Types ──────────────────────────────────────────────────────
 interface CalendarEvent {
   id: string;
@@ -47,6 +15,16 @@ interface CalendarEvent {
   type: string;
   location?: string;
   description?: string;
+}
+
+interface NationalHoliday {
+  id: string;
+  date: string;
+  name: string;
+}
+
+interface HolidayLookup {
+  [dateKey: string]: string; // "YYYY-MM-DD" => holiday name
 }
 
 // ─── Event Color Map ────────────────────────────────────────────
@@ -86,12 +64,17 @@ function getEventStyle(type: string) {
   };
 }
 
+function toDateKey(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 // ─── Component ──────────────────────────────────────────────────
 export default function CalendarPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [holidays, setHolidays] = useState<HolidayLookup>({});
   const [loading, setLoading] = useState(true);
 
   const today = useMemo(() => {
@@ -100,15 +83,32 @@ export default function CalendarPage() {
   }, []);
 
   const fetchEvents = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await apiClient.get(`/calendar/events?year=${year}&month=${month}`);
       if (data.success) setEvents(data.data.events || []);
     } catch { /* ignore */ }
-    setLoading(false);
   }, [year, month]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  const fetchHolidays = useCallback(async () => {
+    try {
+      const { data } = await apiClient.get(`/calendar/holidays?year=${year}`);
+      if (data.success && Array.isArray(data.data)) {
+        const lookup: HolidayLookup = {};
+        for (const h of data.data as NationalHoliday[]) {
+          const d = new Date(h.date);
+          const key = toDateKey(d.getFullYear(), d.getMonth() + 1, d.getDate());
+          // Only store first holiday name for a given date (most significant)
+          if (!lookup[key]) lookup[key] = h.name;
+        }
+        setHolidays(lookup);
+      }
+    } catch { /* ignore */ }
+  }, [year]);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([fetchEvents(), fetchHolidays()]).finally(() => setLoading(false));
+  }, [fetchEvents, fetchHolidays]);
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
@@ -134,8 +134,8 @@ export default function CalendarPage() {
   const isToday = (day: number) => day === today.day && month === today.month && year === today.year;
 
   const getDayClass = (day: number, dayOfWeek: number): { numClass: string; cellClass: string } => {
-    const holi = isHoliday(day, month, year);
-    const isRed = dayOfWeek === 0 || holi.isHoliday;
+    const holidayName = holidays[toDateKey(year, month, day)];
+    const isRed = dayOfWeek === 0 || !!holidayName;
     const isSat = dayOfWeek === 6;
 
     let numClass: string;
@@ -177,4 +177,117 @@ export default function CalendarPage() {
           <span className="text-xl font-bold text-gray-900 dark:text-white">
             {MONTHS_FULL[month - 1]} {year}
           </span>
-          <button onClick={goToday} className="px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 ro
+          <button onClick={goToday} className="px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors">
+            Hari Ini
+          </button>
+        </div>
+        <button onClick={nextMonth} className="px-3 sm:px-4 py-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors text-sm font-medium">
+          {MONTHS_FULL[month === 12 ? 0 : month].substring(0, 3)} &rarr;
+        </button>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Day headers */}
+        <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+          {DAYS_FULL.map((d, i) => (
+            <div key={d} className={`p-2 sm:p-3 text-center text-xs sm:text-sm font-semibold ${
+              i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'
+            }`}>
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{d.substring(0, 2)}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div className="grid grid-cols-7">
+          {calendarDays.map((day, idx) => {
+            if (day === null) return <div key={`empty-${idx}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50/30 dark:bg-gray-800/10" />;
+
+            const dayOfWeek = idx % 7;
+            const { numClass, cellClass } = getDayClass(day, dayOfWeek);
+            const dayEvents = getEventsForDay(day);
+            const holidayName = holidays[toDateKey(year, month, day)];
+
+            return (
+              <div
+                key={`day-${day}`}
+                className={`min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 border-b border-r border-gray-100 dark:border-gray-800/50 ${cellClass} transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/20`}
+                title={holidayName || (dayEvents.length > 0 ? `${dayEvents.length} kegiatan` : undefined)}
+              >
+                {/* Date number */}
+                <div className="flex items-start justify-between mb-1">
+                  <span className={`inline-flex items-center justify-center w-7 h-7 text-xs sm:text-sm rounded-full ${numClass}`}>
+                    {day}
+                  </span>
+                  {dayEvents.length > 0 && (
+                    <span className="hidden sm:inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-blue-500 rounded-full">
+                      {dayEvents.length}
+                    </span>
+                  )}
+                </div>
+
+                {/* Holiday name */}
+                {holidayName && (
+                  <div className="hidden sm:block text-[10px] leading-tight text-red-600 dark:text-red-400 font-medium truncate mb-0.5 px-0.5">
+                    {holidayName}
+                  </div>
+                )}
+
+                {/* Event dots */}
+                <div className="flex flex-col gap-0.5">
+                  {dayEvents.slice(0, 3).map((ev) => (
+                    <div
+                      key={ev.id}
+                      className={`hidden sm:flex items-center gap-1 px-1 py-0.5 rounded text-[10px] leading-tight truncate ${getEventStyle(ev.type).badge}`}
+                      title={ev.title}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getEventStyle(ev.type).dot}`} />
+                      {ev.title}
+                    </div>
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <div className="hidden sm:block text-[10px] text-gray-400 dark:text-gray-500 pl-1">
+                      +{dayEvents.length - 3} lainnya
+                    </div>
+                  )}
+                  {/* Mobile dots */}
+                  {dayEvents.length > 0 && (
+                    <div className="sm:hidden flex gap-0.5 flex-wrap">
+                      {dayEvents.slice(0, 4).map((ev) => (
+                        <span key={ev.id} className={`w-1.5 h-1.5 rounded-full ${getEventStyle(ev.type).dot}`} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Loading overlay */}
+      {loading && (
+        <div className="mt-4 flex items-center justify-center py-3 text-sm text-gray-400 dark:text-gray-500">
+          <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Memuat kalender...
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+        {Object.entries(EVENT_STYLES).map(([key, style]) => (
+          <span key={key} className="inline-flex items-center gap-1.5">
+            <span className={`w-2.5 h-2.5 rounded-full ${style.dot}`} />
+            {key === 'training' ? 'Latihan' : key === 'pendadaran' ? 'Pendadaran' : key === 'ujian_tingkat' ? 'Ujian Tingkat' : key.charAt(0).toUpperCase() + key.slice(1)}
+          </span>
+        ))}
+      </div>
+    </div>
+    </PermissionGuard>
+  );
+}

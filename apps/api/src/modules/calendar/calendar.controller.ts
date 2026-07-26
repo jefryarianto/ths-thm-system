@@ -25,6 +25,15 @@ export class CalendarController {
     return this.service.getCalendarEvents(y, m, req.scope);
   }
 
+  @Get('holidays')
+  @ApiOperation({ summary: 'Ambil hari libur nasional (opsional filter tahun)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
+  @RequireScope('branch')
+  getHolidays(@Query('year') year: string) {
+    const y = year ? parseInt(year, 10) : undefined;
+    return this.service.getHolidays(y);
+  }
+
   @Get('upcoming')
   @ApiOperation({ summary: 'Ambil event 7 hari ke depan (latihan + iuran jatuh tempo)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota')
