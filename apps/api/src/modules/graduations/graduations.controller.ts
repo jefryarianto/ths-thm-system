@@ -47,7 +47,7 @@ export class GraduationsController {
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
   @RequireScope('branch')
   create(@Body() dto: CreateGraduationDto, @Req() req: ScopedRequest) {
-    return this.service.create(dto, req.scope);
+    return this.service.create(dto, req.scope, req.user?.id);
   }
 
   @Post(':id/register')

@@ -74,27 +74,26 @@ export class GraduationsService {
     return { success: true, data: updated, message: 'Pendadaran berhasil diperbarui' };
   }
 
-  async create(dto: CreateGraduationDto, scope?: UserScope) {
-    if (scope?.rantingId && !dto.scopeId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (dto as any).scopeId = scope.rantingId;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (dto as any).scopeType = 'ranting';
-    }
+  async create(dto: CreateGraduationDto, scope?: UserScope, userId?: string) {
+    // Auto-resolve scope from user context if not explicitly provided
+    const resolvedScopeType = dto.scopeType || (scope?.rantingId ? 'ranting' : scope?.wilayahId ? 'wilayah' : scope?.distrikId ? 'distrik' : 'nasional');
+    const resolvedScopeId = dto.scopeId || scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'national';
+
     const graduation = await this.prisma.kegiatan.create({
       data: {
         nama: dto.nama,
         lokasi: dto.lokasi,
         tanggalMulai: new Date(dto.tanggalMulai),
-        tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : undefined,
-        scopeType: dto.scopeType as
+        // tanggalSelesai is required in schema — fall back to tanggalMulai if not provided
+        tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : new Date(dto.tanggalMulai),
+        scopeType: resolvedScopeType as
           | 'nasional'
           | 'distrik'
           | 'wilayah'
           | 'ranting'
-          | 'unit_latihan'
-          | undefined,
-        scopeId: dto.scopeId,
+          | 'unit_latihan',
+        scopeId: resolvedScopeId,
+        createdBy: userId || 'system',
         tipe: 'pendadaran',
         status: 'draft',
       } as never,
