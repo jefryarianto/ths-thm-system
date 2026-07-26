@@ -397,8 +397,7 @@ jobs:
         continue-on-error: true
 
       - name: Build API
-        working-directory: apps/api
-        run: pnpm run build
+        run: pnpm --filter @ths-thm/api build
         timeout-minutes: 5
 
       - name: Build Web
