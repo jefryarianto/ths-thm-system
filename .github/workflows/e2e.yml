@@ -398,7 +398,7 @@ jobs:
 
       - name: Build API
         working-directory: apps/api
-        run: npx nest build
+        run: pnpm run build
         timeout-minutes: 5
 
       - name: Build Web
