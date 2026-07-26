@@ -7,7 +7,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, ClipboardList, Eye, CheckCircle, XCircle, Trash2, Edit3, ListOrdered } from 'lucide-react';
+import { Plus, ClipboardList, Eye, CheckCircle, XCircle, Trash2, Edit3, ListOrdered, Upload } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -97,6 +97,12 @@ export default function AssessmentsPage() {
             Item
           </button>
         </div>
+        <button
+          onClick={() => router.push('/assessments/import')}
+          className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-md text-sm hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+        >
+          <Upload size={14} /> Import CSV
+        </button>
         {tab === 'aspek' && (
           <button
             onClick={() => router.push('/assessments/aspects/new')}

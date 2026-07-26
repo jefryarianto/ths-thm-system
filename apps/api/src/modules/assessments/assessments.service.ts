@@ -18,6 +18,7 @@ export interface ImportRow {
   aspek: string;
   item: string;
   deskripsi?: string;
+  skorMaksimal?: number;
 }
 
 @Injectable()
@@ -153,7 +154,8 @@ export class AssessmentsService {
               aspekId: aspek.id,
               kodeItem,
               namaItem: row.item.trim(),
-              skorMaksimal: 100,
+              deskripsi: row.deskripsi || null,
+              skorMaksimal: row.skorMaksimal || 100,
               bobot: 1,
               urutan,
               isActive: true,
@@ -181,10 +183,23 @@ export class AssessmentsService {
   // ── Import dari CSV (parse dulu di controller) ──
 
   async importFromCsvText(csvText: string) {
-    // Parse CSV text manually (format: NO,ASPEK,ITEM,DESKRIPSI)
+    // Parse CSV text manually (format: NO,ASPEK,ITEM,DESKRIPSI,SKOR_MAX)
     const lines = csvText.trim().split('\n');
     if (lines.length < 2) {
       return { success: true, data: { importedAspects: 0, importedItems: 0, total: 0 } };
+    }
+
+    // Detect header and column indices
+    const headerLine = lines[0].trim().toLowerCase();
+    const headers = this.parseCsvLine(headerLine);
+    const colIndices: Record<string, number> = {};
+    for (let i = 0; i < headers.length; i++) {
+      const h = headers[i].replace(/[^a-z_]/g, '');
+      if (h === 'no' || h === 'nomor') colIndices.no = i;
+      else if (h === 'aspek' || h === 'aspe') colIndices.aspek = i;
+      else if (h === 'item' || h === 'items') colIndices.item = i;
+      else if (h === 'deskripsi' || h === 'deskri') colIndices.deskripsi = i;
+      else if (h === 'skor_max' || h === 'skormax' || h === 'skor maksimal' || h === 'nilai_max') colIndices.skorMax = i;
     }
 
     // Skip header line, parse data
@@ -193,14 +208,14 @@ export class AssessmentsService {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Parse CSV line (simple parser, handle quoted values)
       const values = this.parseCsvLine(line);
       if (values.length >= 3) {
         data.push({
-          no: parseInt(values[0], 10) || 0,
-          aspek: values[1].trim(),
-          item: values[2].trim(),
-          deskripsi: values[3]?.trim() || '',
+          no: colIndices.no !== undefined ? (parseInt(values[colIndices.no], 10) || 0) : i,
+          aspek: (colIndices.aspek !== undefined ? values[colIndices.aspek] : values[1]).trim(),
+          item: (colIndices.item !== undefined ? values[colIndices.item] : values[2]).trim(),
+          deskripsi: colIndices.deskripsi !== undefined ? values[colIndices.deskripsi]?.trim() : '',
+          skorMaksimal: colIndices.skorMax !== undefined ? (parseInt(values[colIndices.skorMax], 10) || 100) : undefined,
         });
       }
     }
