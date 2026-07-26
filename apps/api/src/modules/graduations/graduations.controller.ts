@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { GraduationsService } from './graduations.service';
 import {
   CreateGraduationDto,
+  UpdateGraduationDto,
   GraduationFilterDto,
   RegisterParticipantDto,
   GraduateDto,
@@ -31,6 +32,14 @@ export class GraduationsController {
   @RequireScope('branch')
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Perbarui pendadaran' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @RequireScope('branch')
+  update(@Param('id') id: string, @Body() dto: UpdateGraduationDto) {
+    return this.service.update(id, dto);
   }
 
   @Post()

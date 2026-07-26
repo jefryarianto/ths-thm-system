@@ -1,10 +1,14 @@
 'use client';
 
+import { PermissionGuard } from '@/components/auth/permission-guard';
+
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
+
   detectDelimiter,
   splitCsvLines,
   parseCsvLine,
@@ -370,403 +374,406 @@ export default function ImportCandidatesPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-2">
-        <Link href="/candidates" className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-          <ArrowLeft size={18} className="text-gray-500" />
-        </Link>
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Import Calon Anggota</h1>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
-          <AlertCircle size={16} /> {error}
-        </div>
-      )}
-
-      {result ? (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
-          <div className="flex items-center gap-3" style={{ color: result.errors > 0 ? '#d97706' : '#16a34a' }}>
-            {result.errors > 0 ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
-            <div>
-              <p className="font-semibold" style={{ color: result.errors > 0 ? '#92400e' : '#166534' }}>
-                {result.errors > 0 ? 'Import Selesai dengan Peringatan' : 'Import Berhasil'}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {result.success} berhasil, {result.errors} gagal
-                {failedRows.length > 0 && result.errors > 0 && (
-                  <span className="ml-1">— {failedRows.length} baris dapat dicoba ulang</span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Failed rows detail table with inline editing */}
-          {failedRows.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                Baris Gagal ({failedRows.length}) — Klik nama/email untuk edit
-              </h4>
-              <div className="max-h-64 overflow-y-auto border border-red-200 dark:border-red-800 rounded-xl">
-                <table className="w-full text-xs">
-                  <thead className="bg-red-50 dark:bg-red-950/30 sticky top-0">
-                    <tr className="border-b border-red-200 dark:border-red-800">
-                      <th className="px-2 py-1.5 text-left font-medium text-red-600 w-8">#</th>
-                      <th className="px-2 py-1.5 text-left font-medium text-red-600">Nama</th>
-                      <th className="px-2 py-1.5 text-left font-medium text-red-600">Email</th>
-                      <th className="px-2 py-1.5 text-left font-medium text-red-600">Error</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {failedRows.slice(0, 50).map((f, i) => {
-                      const edits = editedFailedRows[i] || {};
-                      const editedName = edits.nama_lengkap ?? edits.nama ?? edits.name;
-                      const editedEmail = edits.email;
-                      const origName = f.row?.nama_lengkap || f.row?.nama || f.row?.name || '';
-                      const origEmail = f.row?.email || '';
-                      const hasEdit = !!editedName || !!editedEmail;
-                      return (
-                        <tr key={i} className={`border-b border-red-100 dark:border-red-900/30 ${hasEdit ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
-                          <td className="px-2 py-1 text-red-400">{i + 1}</td>
-                          <td className="px-2 py-1">
-                            <input
-                              defaultValue={origName}
-                              onChange={(e) => handleEditFailedRow(i, 'nama_lengkap', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent hover:border-red-300 focus:border-amber-500 focus:outline-none text-red-700 dark:text-red-300 font-medium px-0.5 py-0.5 transition-colors truncate"
-                              placeholder="Nama..."
-                              title={origName}
-                            />
-                          </td>
-                          <td className="px-2 py-1">
-                            <input
-                              defaultValue={origEmail}
-                              onChange={(e) => handleEditFailedRow(i, 'email', e.target.value)}
-                              className="w-full bg-transparent border-b border-transparent hover:border-red-300 focus:border-amber-500 focus:outline-none text-red-600 dark:text-red-400 px-0.5 py-0.5 transition-colors truncate"
-                              placeholder="Email..."
-                              title={origEmail}
-                            />
-                          </td>
-                          <td className="px-2 py-1 text-red-500 max-w-[200px]">
-                            <span className="line-clamp-2 text-[11px]" title={f.error}>{f.error}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {failedRows.length > 50 && (
-                      <tr>
-                        <td colSpan={4} className="px-2 py-2 text-center text-gray-400">
-                          ... dan {failedRows.length - 50} baris lainnya
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+      <PermissionGuard module="candidates" action="create">
+        <Breadcrumbs />
+        <div className="max-w-3xl mx-auto space-y-6">
+              <div className="flex items-center gap-2">
+                <Link href="/candidates" className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                  <ArrowLeft size={18} className="text-gray-500" />
+                </Link>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Import Calon Anggota</h1>
               </div>
-              {Object.keys(editedFailedRows).length > 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <Info size={12} />
-                  {Object.keys(editedFailedRows).length} baris telah diedit
-                </p>
+        
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+                  <AlertCircle size={16} /> {error}
+                </div>
               )}
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {failedRows.length > 0 && (
-              <button
-                onClick={handleRetryFailed}
-                disabled={retrying}
-                className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition flex items-center gap-2 disabled:opacity-50"
-              >
-                {retrying ? (
-                  <><Loader2 size={14} className="animate-spin" /> Mencoba Ulang...</>
-                ) : (
-                  <><Upload size={14} /> Coba Ulang {failedRows.length} Baris Gagal</>
-                )}
-              </button>
-            )}
-            <div className="flex gap-2 ml-auto">
-              <button onClick={handleReset} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                Import Lagi
-              </button>
-              <button onClick={() => router.push('/candidates')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
-                Ke Daftar Calon
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
-          {/* Upload zone */}
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-            className={`relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 ${
-              dragOver
-                ? 'border-purple-400 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/20 scale-[1.02]'
-                : 'border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleFile}
-              className="hidden"
-            />
-            <div className={`transition-transform duration-200 ${dragOver ? 'scale-110' : ''}`}>
-              {dragOver ? (
-                <FileText size={40} className="mx-auto text-purple-500 mb-3" />
+        
+              {result ? (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
+                  <div className="flex items-center gap-3" style={{ color: result.errors > 0 ? '#d97706' : '#16a34a' }}>
+                    {result.errors > 0 ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
+                    <div>
+                      <p className="font-semibold" style={{ color: result.errors > 0 ? '#92400e' : '#166534' }}>
+                        {result.errors > 0 ? 'Import Selesai dengan Peringatan' : 'Import Berhasil'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {result.success} berhasil, {result.errors} gagal
+                        {failedRows.length > 0 && result.errors > 0 && (
+                          <span className="ml-1">— {failedRows.length} baris dapat dicoba ulang</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+        
+                  {/* Failed rows detail table with inline editing */}
+                  {failedRows.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                        Baris Gagal ({failedRows.length}) — Klik nama/email untuk edit
+                      </h4>
+                      <div className="max-h-64 overflow-y-auto border border-red-200 dark:border-red-800 rounded-xl">
+                        <table className="w-full text-xs">
+                          <thead className="bg-red-50 dark:bg-red-950/30 sticky top-0">
+                            <tr className="border-b border-red-200 dark:border-red-800">
+                              <th className="px-2 py-1.5 text-left font-medium text-red-600 w-8">#</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-red-600">Nama</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-red-600">Email</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-red-600">Error</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {failedRows.slice(0, 50).map((f, i) => {
+                              const edits = editedFailedRows[i] || {};
+                              const editedName = edits.nama_lengkap ?? edits.nama ?? edits.name;
+                              const editedEmail = edits.email;
+                              const origName = f.row?.nama_lengkap || f.row?.nama || f.row?.name || '';
+                              const origEmail = f.row?.email || '';
+                              const hasEdit = !!editedName || !!editedEmail;
+                              return (
+                                <tr key={i} className={`border-b border-red-100 dark:border-red-900/30 ${hasEdit ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                                  <td className="px-2 py-1 text-red-400">{i + 1}</td>
+                                  <td className="px-2 py-1">
+                                    <input
+                                      defaultValue={origName}
+                                      onChange={(e) => handleEditFailedRow(i, 'nama_lengkap', e.target.value)}
+                                      className="w-full bg-transparent border-b border-transparent hover:border-red-300 focus:border-amber-500 focus:outline-none text-red-700 dark:text-red-300 font-medium px-0.5 py-0.5 transition-colors truncate"
+                                      placeholder="Nama..."
+                                      title={origName}
+                                    />
+                                  </td>
+                                  <td className="px-2 py-1">
+                                    <input
+                                      defaultValue={origEmail}
+                                      onChange={(e) => handleEditFailedRow(i, 'email', e.target.value)}
+                                      className="w-full bg-transparent border-b border-transparent hover:border-red-300 focus:border-amber-500 focus:outline-none text-red-600 dark:text-red-400 px-0.5 py-0.5 transition-colors truncate"
+                                      placeholder="Email..."
+                                      title={origEmail}
+                                    />
+                                  </td>
+                                  <td className="px-2 py-1 text-red-500 max-w-[200px]">
+                                    <span className="line-clamp-2 text-[11px]" title={f.error}>{f.error}</span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {failedRows.length > 50 && (
+                              <tr>
+                                <td colSpan={4} className="px-2 py-2 text-center text-gray-400">
+                                  ... dan {failedRows.length - 50} baris lainnya
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      {Object.keys(editedFailedRows).length > 0 && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                          <Info size={12} />
+                          {Object.keys(editedFailedRows).length} baris telah diedit
+                        </p>
+                      )}
+                    </div>
+                  )}
+        
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    {failedRows.length > 0 && (
+                      <button
+                        onClick={handleRetryFailed}
+                        disabled={retrying}
+                        className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {retrying ? (
+                          <><Loader2 size={14} className="animate-spin" /> Mencoba Ulang...</>
+                        ) : (
+                          <><Upload size={14} /> Coba Ulang {failedRows.length} Baris Gagal</>
+                        )}
+                      </button>
+                    )}
+                    <div className="flex gap-2 ml-auto">
+                      <button onClick={handleReset} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                        Import Lagi
+                      </button>
+                      <button onClick={() => router.push('/candidates')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                        Ke Daftar Calon
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <Upload size={40} className="mx-auto text-gray-400 mb-3" />
-              )}
-            </div>
-            {dragOver ? (
-              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                Lepaskan file di sini
-              </p>
-            ) : (
-              <>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Tarik & lepas file CSV di sini
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  atau klik untuk memilih file
-                </p>
-              </>
-            )}
-            <p className="text-xs text-gray-400 mt-3">
-              Format: .csv &middot; Maks: 5 MB
-            </p>
-          </div>
-
-          {/* Template info + download */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <span className="text-xs text-gray-400">Belum punya file CSV?</span>
-            <a
-              href="/templates/template_csv_calon_anggota.csv"
-              download
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition"
-            >
-              <Download size={14} />
-              Download Template CSV
-            </a>
-          </div>
-
-          {/* Column mapping preview */}
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-              Mapping Kolom
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-              {FIELD_MAPPINGS.map((m) => {
-                const matchedHeader = matchHeader(headers, m.csvCol);
-                return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 space-y-4">
+                  {/* Upload zone */}
                   <div
-                    key={m.csvCol}
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs ${
-                      matchedHeader
-                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                        : m.required
-                          ? 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 ${
+                      dragOver
+                        ? 'border-purple-400 bg-purple-50 dark:border-purple-500 dark:bg-purple-900/20 scale-[1.02]'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
                     }`}
                   >
-                    {matchedHeader ? (
-                      <CheckCircle2 size={12} className="shrink-0" />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv"
+                      onChange={handleFile}
+                      className="hidden"
+                    />
+                    <div className={`transition-transform duration-200 ${dragOver ? 'scale-110' : ''}`}>
+                      {dragOver ? (
+                        <FileText size={40} className="mx-auto text-purple-500 mb-3" />
+                      ) : (
+                        <Upload size={40} className="mx-auto text-gray-400 mb-3" />
+                      )}
+                    </div>
+                    {dragOver ? (
+                      <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                        Lepaskan file di sini
+                      </p>
                     ) : (
-                      <div className={`w-3 h-3 rounded-full border-2 shrink-0 ${m.required ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`} />
+                      <>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Tarik & lepas file CSV di sini
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          atau klik untuk memilih file
+                        </p>
+                      </>
                     )}
-                    <span className="font-mono">{m.field}</span>
-                    {matchedHeader && (
-                      <span className="text-gray-400 dark:text-gray-500">
-                        ← <span className="font-mono">{matchedHeader}</span>
-                      </span>
-                    )}
-                    {!matchedHeader && !m.required && (
-                      <span className="text-gray-400">(opsional)</span>
-                    )}
-                    {!matchedHeader && m.required && (
-                      <span className="text-red-400">(wajib)</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {csvData && (
-            <>
-              {/* Header warnings */}
-              {headerWarnings.length > 0 && (
-                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl space-y-1">
-                  {headerWarnings.map((w, i) => (
-                    <p key={i} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
-                      <Info size={15} /> {w}
+                    <p className="text-xs text-gray-400 mt-3">
+                      Format: .csv &middot; Maks: 5 MB
                     </p>
-                  ))}
-                </div>
-              )}
-
-              {/* Validation summary */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">
-                  {csvData.length} baris data
-                  {errorCount > 0 && (
-                    <span className="ml-2 text-amber-600 dark:text-amber-400 font-medium">
-                      · {errorCount} masalah validasi
-                    </span>
-                  )}
-                </p>
-                {hasErrors && (
-                  <span className="text-xs text-red-500 flex items-center gap-1">
-                    <XCircle size={12} />
-                    Perbaiki data sebelum import
-                  </span>
-                )}
-              </div>
-
-              {/* Preview table with row validation */}
-              <div className="overflow-x-auto max-h-56 border border-gray-200 dark:border-gray-600 rounded-xl shadow-sm dark:shadow-gray-900/30">
-                <table className="w-full text-xs">
-                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 w-8">#</th>
-                      {Object.keys(csvData[0]).map(h => (
-                        <th key={h} className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{h}</th>
-                      ))}
-                      <th className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 w-20">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                    {csvData.slice(0, 10).map((row, i) => {
-                      const valid = rowValidations[i];
-                      const hasRowIssues = valid && valid.issues.length > 0;
-                      return (
-                        <tr
-                          key={i}
-                          className={`${
-                            hasRowIssues
-                              ? 'bg-red-50/50 dark:bg-red-950/20'
-                              : 'odd:bg-white dark:odd:bg-gray-900/50 even:bg-gray-50/50 dark:even:bg-gray-800/30'
-                          } hover:bg-gray-100/50 dark:hover:bg-gray-750 transition-colors`}
-                        >
-                          <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500 font-mono">{i + 1}</td>
-                          {Object.values(row).map((v, j) => (
-                            <td key={j} className="px-2 py-1.5 text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
-                              {v ? (
-                                <span title={v}>{v}</span>
-                              ) : (
-                                <span className="text-gray-300 dark:text-gray-600 italic">—</span>
-                              )}
-                            </td>
-                          ))}
-                          <td className="px-2 py-1.5">
-                            {hasRowIssues ? (
-                              <span className="inline-flex items-center gap-1 text-red-500 dark:text-red-400" title={valid!.issues.join('; ')}>
-                                <XCircle size={12} />
-                                {valid!.issues.length} err
-                              </span>
+                  </div>
+        
+                  {/* Template info + download */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <span className="text-xs text-gray-400">Belum punya file CSV?</span>
+                    <a
+                      href="/templates/template_csv_calon_anggota.csv"
+                      download
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition"
+                    >
+                      <Download size={14} />
+                      Download Template CSV
+                    </a>
+                  </div>
+        
+                  {/* Column mapping preview */}
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      Mapping Kolom
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                      {FIELD_MAPPINGS.map((m) => {
+                        const matchedHeader = matchHeader(headers, m.csvCol);
+                        return (
+                          <div
+                            key={m.csvCol}
+                            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs ${
+                              matchedHeader
+                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                : m.required
+                                  ? 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                            }`}
+                          >
+                            {matchedHeader ? (
+                              <CheckCircle2 size={12} className="shrink-0" />
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
-                                <CheckCircle2 size={12} />
-                                OK
+                              <div className={`w-3 h-3 rounded-full border-2 shrink-0 ${m.required ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`} />
+                            )}
+                            <span className="font-mono">{m.field}</span>
+                            {matchedHeader && (
+                              <span className="text-gray-400 dark:text-gray-500">
+                                ← <span className="font-mono">{matchedHeader}</span>
                               </span>
                             )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {csvData.length > 10 && (
-                      <tr>
-                        <td colSpan={Object.keys(csvData[0]).length + 2} className="px-2 py-2 text-center text-gray-400 dark:text-gray-500 text-xs">
-                          ... dan {csvData.length - 10} baris lainnya
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Row-level error details */}
-              {errorCount > 0 && (
-                <div className="max-h-32 overflow-y-auto space-y-1.5 bg-red-50/50 dark:bg-red-950/20 rounded-xl p-3 border border-red-100 dark:border-red-900/50">
-                  {rowValidations
-                    .filter((r) => r.issues.length > 0)
-                    .slice(0, 20)
-                    .map((r) => (
-                      <p key={r.rowIndex} className="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
-                        <AlertCircle size={12} className="mt-0.5 shrink-0 text-red-400 dark:text-red-500" />
-                        <span>
-                          <strong className="text-red-700 dark:text-red-300">Baris {r.rowIndex + 2}:</strong>{' '}
-                          {r.issues.join('; ')}
-                        </span>
-                      </p>
-                    ))}
-                  {errorCount > 20 && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-                      ... dan {errorCount - 20} masalah lainnya
-                    </p>
+                            {!matchedHeader && !m.required && (
+                              <span className="text-gray-400">(opsional)</span>
+                            )}
+                            {!matchedHeader && m.required && (
+                              <span className="text-red-400">(wajib)</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+        
+                  {csvData && (
+                    <>
+                      {/* Header warnings */}
+                      {headerWarnings.length > 0 && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl space-y-1">
+                          {headerWarnings.map((w, i) => (
+                            <p key={i} className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400">
+                              <Info size={15} /> {w}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+        
+                      {/* Validation summary */}
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-500">
+                          {csvData.length} baris data
+                          {errorCount > 0 && (
+                            <span className="ml-2 text-amber-600 dark:text-amber-400 font-medium">
+                              · {errorCount} masalah validasi
+                            </span>
+                          )}
+                        </p>
+                        {hasErrors && (
+                          <span className="text-xs text-red-500 flex items-center gap-1">
+                            <XCircle size={12} />
+                            Perbaiki data sebelum import
+                          </span>
+                        )}
+                      </div>
+        
+                      {/* Preview table with row validation */}
+                      <div className="overflow-x-auto max-h-56 border border-gray-200 dark:border-gray-600 rounded-xl shadow-sm dark:shadow-gray-900/30">
+                        <table className="w-full text-xs">
+                          <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                              <th className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 w-8">#</th>
+                              {Object.keys(csvData[0]).map(h => (
+                                <th key={h} className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{h}</th>
+                              ))}
+                              <th className="px-2 py-1.5 text-left font-medium text-gray-500 dark:text-gray-400 w-20">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                            {csvData.slice(0, 10).map((row, i) => {
+                              const valid = rowValidations[i];
+                              const hasRowIssues = valid && valid.issues.length > 0;
+                              return (
+                                <tr
+                                  key={i}
+                                  className={`${
+                                    hasRowIssues
+                                      ? 'bg-red-50/50 dark:bg-red-950/20'
+                                      : 'odd:bg-white dark:odd:bg-gray-900/50 even:bg-gray-50/50 dark:even:bg-gray-800/30'
+                                  } hover:bg-gray-100/50 dark:hover:bg-gray-750 transition-colors`}
+                                >
+                                  <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500 font-mono">{i + 1}</td>
+                                  {Object.values(row).map((v, j) => (
+                                    <td key={j} className="px-2 py-1.5 text-gray-700 dark:text-gray-300 max-w-[200px] truncate">
+                                      {v ? (
+                                        <span title={v}>{v}</span>
+                                      ) : (
+                                        <span className="text-gray-300 dark:text-gray-600 italic">—</span>
+                                      )}
+                                    </td>
+                                  ))}
+                                  <td className="px-2 py-1.5">
+                                    {hasRowIssues ? (
+                                      <span className="inline-flex items-center gap-1 text-red-500 dark:text-red-400" title={valid!.issues.join('; ')}>
+                                        <XCircle size={12} />
+                                        {valid!.issues.length} err
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                                        <CheckCircle2 size={12} />
+                                        OK
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {csvData.length > 10 && (
+                              <tr>
+                                <td colSpan={Object.keys(csvData[0]).length + 2} className="px-2 py-2 text-center text-gray-400 dark:text-gray-500 text-xs">
+                                  ... dan {csvData.length - 10} baris lainnya
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+        
+                      {/* Row-level error details */}
+                      {errorCount > 0 && (
+                        <div className="max-h-32 overflow-y-auto space-y-1.5 bg-red-50/50 dark:bg-red-950/20 rounded-xl p-3 border border-red-100 dark:border-red-900/50">
+                          {rowValidations
+                            .filter((r) => r.issues.length > 0)
+                            .slice(0, 20)
+                            .map((r) => (
+                              <p key={r.rowIndex} className="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
+                                <AlertCircle size={12} className="mt-0.5 shrink-0 text-red-400 dark:text-red-500" />
+                                <span>
+                                  <strong className="text-red-700 dark:text-red-300">Baris {r.rowIndex + 2}:</strong>{' '}
+                                  {r.issues.join('; ')}
+                                </span>
+                              </p>
+                            ))}
+                          {errorCount > 20 && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+                              ... dan {errorCount - 20} masalah lainnya
+                            </p>
+                          )}
+                        </div>
+                      )}
+        
+                      {/* Progress indicator */}
+                      {importing && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                              <Loader2 size={13} className="animate-spin" />
+                              {retrying ? 'Mencoba ulang baris gagal...' : 'Memproses data...'}
+                            </span>
+                            <span className="text-gray-400 dark:text-gray-500 font-mono">
+                              {importProgress}%
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-300 ease-out"
+                              style={{ width: `${importProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
+                            {retrying
+                              ? `Mengirim ${failedRows.length} baris...`
+                              : `Mengirim ${csvData?.length || 0} baris ke server...`}
+                          </p>
+                        </div>
+                      )}
+        
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button
+                          onClick={() => setCsvData(null)}
+                          disabled={importing}
+                          className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-30"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={() => handleImport()}
+                          disabled={importing || hasErrors}
+                          className={`px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-sm flex items-center gap-2 ${
+                            hasErrors
+                              ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+                          } disabled:opacity-50`}
+                        >
+                          {importing ? (
+                            <><Loader2 size={16} className="animate-spin" /> Mengimpor...</>
+                          ) : (
+                            <><Upload size={15} /> Import {csvData.length} Data</>
+                          )}
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
-
-              {/* Progress indicator */}
-              {importing && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                      <Loader2 size={13} className="animate-spin" />
-                      {retrying ? 'Mencoba ulang baris gagal...' : 'Memproses data...'}
-                    </span>
-                    <span className="text-gray-400 dark:text-gray-500 font-mono">
-                      {importProgress}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-300 ease-out"
-                      style={{ width: `${importProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
-                    {retrying
-                      ? `Mengirim ${failedRows.length} baris...`
-                      : `Mengirim ${csvData?.length || 0} baris ke server...`}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setCsvData(null)}
-                  disabled={importing}
-                  className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-30"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={() => handleImport()}
-                  disabled={importing || hasErrors}
-                  className={`px-6 py-2.5 rounded-xl text-sm font-medium transition shadow-sm flex items-center gap-2 ${
-                    hasErrors
-                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
-                  } disabled:opacity-50`}
-                >
-                  {importing ? (
-                    <><Loader2 size={16} className="animate-spin" /> Mengimpor...</>
-                  ) : (
-                    <><Upload size={15} /> Import {csvData.length} Data</>
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            </div>
+      </PermissionGuard>
+    );
 }

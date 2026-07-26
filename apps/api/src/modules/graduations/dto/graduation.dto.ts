@@ -104,6 +104,33 @@ export class GraduateResultDto {
   lulus: boolean;
 }
 
+export class UpdateGraduationDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nama?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  lokasi?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  tanggalMulai?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  tanggalSelesai?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
+}
+
 export class GraduateDto {
   @ApiProperty({ type: [GraduateResultDto] })
   @IsArray()

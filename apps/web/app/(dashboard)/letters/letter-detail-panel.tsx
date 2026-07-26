@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, Trash2, Edit3 } from 'lucide-react';
+import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import type { LetterRow, LetterDetail } from './shared';
 import { statusColors, DetailRow, FilePreview } from './shared';
@@ -9,7 +10,6 @@ import { statusColors, DetailRow, FilePreview } from './shared';
 interface Props {
   selectedLetter: LetterRow;
   onClose: () => void;
-  onEdit: (detail: LetterDetail) => void;
   onDelete: (detail: LetterDetail) => void;
   deleting: boolean;
 }
@@ -17,7 +17,6 @@ interface Props {
 export default function LetterDetailPanel({
   selectedLetter,
   onClose,
-  onEdit,
   onDelete,
   deleting,
 }: Props) {
@@ -164,12 +163,12 @@ export default function LetterDetailPanel({
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button
-              onClick={() => onEdit(detailData)}
+            <Link
+              href={detailData.type === 'masuk' ? `/letters/incoming/${detailData.id}/edit` : `/letters/outgoing/${detailData.id}/edit`}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
               <Edit3 size={14} /> Edit
-            </button>
+            </Link>
             <button
               onClick={() => onDelete(detailData)}
               disabled={deleting}

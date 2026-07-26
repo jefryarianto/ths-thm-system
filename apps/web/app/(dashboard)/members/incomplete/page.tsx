@@ -1,11 +1,14 @@
 'use client';
 
+import { PermissionGuard } from '@/components/auth/permission-guard';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import type { Member } from '@/types';
 import {
+
   Mail,
   Send,
   CheckCircle2,
@@ -153,58 +156,60 @@ export default function IncompleteMembersPage() {
   ];
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Data Belum Lengkap"
-        onRefresh={refetch}
-      >
-        <button
-          onClick={handleSendAllNotifications}
-          disabled={sendingAll || members.length === 0}
-          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition"
-        >
-          {sendingAll ? (
-            <><RefreshCw size={14} className="animate-spin" /> Mengirim...</>
-          ) : (
-            <><Mail size={14} /> Kirim Semua Notifikasi</>
-          )}
-        </button>
-      </PageHeader>
-
-      {sendResult && (
-        <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl">
-          <CheckCircle2 size={20} className="text-green-600 shrink-0" />
-          <div className="text-sm text-green-700 dark:text-green-400">
-            Notifikasi terkirim ke <strong>{sendResult.sent}</strong> anggota.
-            {sendResult.noEmail > 0 && (
-              <span className="ml-1">
-                {sendResult.noEmail} anggota tanpa email dilewati.
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl">
-          {error}
-        </div>
-      )}
-
-      <DataTable
-        columns={columns}
-        data={members}
-        loading={loading}
-        empty={{
-          icon: Users,
-          message: 'Semua anggota sudah memiliki data lengkap',
-          action: { label: 'Ke Daftar Anggota', onClick: () => router.push('/members') },
-        }}
-        page={1}
-        totalPages={meta.totalPages}
-        total={meta.total}
-        onPageChange={(_p) => {}}
-      />
-    </PageContainer>
-  );
+      <PermissionGuard module="members" action="view">
+        <PageContainer>
+              <PageHeader
+                title="Data Belum Lengkap"
+                onRefresh={refetch}
+              >
+                <button
+                  onClick={handleSendAllNotifications}
+                  disabled={sendingAll || members.length === 0}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                >
+                  {sendingAll ? (
+                    <><RefreshCw size={14} className="animate-spin" /> Mengirim...</>
+                  ) : (
+                    <><Mail size={14} /> Kirim Semua Notifikasi</>
+                  )}
+                </button>
+              </PageHeader>
+        
+              {sendResult && (
+                <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl">
+                  <CheckCircle2 size={20} className="text-green-600 shrink-0" />
+                  <div className="text-sm text-green-700 dark:text-green-400">
+                    Notifikasi terkirim ke <strong>{sendResult.sent}</strong> anggota.
+                    {sendResult.noEmail > 0 && (
+                      <span className="ml-1">
+                        {sendResult.noEmail} anggota tanpa email dilewati.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+        
+              {error && (
+                <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl">
+                  {error}
+                </div>
+              )}
+        
+              <DataTable
+                columns={columns}
+                data={members}
+                loading={loading}
+                empty={{
+                  icon: Users,
+                  message: 'Semua anggota sudah memiliki data lengkap',
+                  action: { label: 'Ke Daftar Anggota', onClick: () => router.push('/members') },
+                }}
+                page={1}
+                totalPages={meta.totalPages}
+                total={meta.total}
+                onPageChange={(_p) => {}}
+              />
+            </PageContainer>
+      </PermissionGuard>
+    );
 }

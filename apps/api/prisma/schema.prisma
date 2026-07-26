@@ -259,6 +259,7 @@ model User {
   iuranDiverifikasi           Iuran[]             @relation("IuranVerifikator")
   dokumenOrgUploaded          DokumenOrganisasi[] @relation("DokumenOrgUploader")
   oauthAccounts               OAuthAccount[]
+  auditLogs                   AuditLog[]
 
   @@map("users")
 }
@@ -824,6 +825,29 @@ model EmailTemplate {
   @@map("email_templates")
 }
 
+// ── Audit Trail ─────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String   // e.g., 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'REFRESH_TOKEN'
+  entity      String   // e.g., 'User', 'Assessment', 'Document', 'Approval'
+  entityId    String?  @map("entity_id")
+  userId      String?  @map("user_id")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  details     Json?    // Before/after data, additional context
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([entity])
+  @@index([entityId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
 // ── Import Logs (Audit Trail) ───────────────────────────
 
 model ImportLog {
@@ -1354,6 +1378,45 @@ model BulkNotification {
   @@map("bulk_notifications")
 }
 
+// ── Monitoring Alerts (Threshold + Notification Channels) ─
+
+enum AlertMetric {
+  cpu_percent
+  memory_percent
+  disk_percent
+  db_down
+  queue_down
+  api_down
+  queue_downtime_ms
+  queue_latency_ms
+  queue_failed_jobs
+}
+
+enum AlertChannel {
+  telegram
+  email
+}
+
+model MonitoringAlert {
+  id              String        @id @default(uuid())
+  name            String        // Human-readable name
+  metric          AlertMetric   // What to measure
+  operator        String        // 'gt' | 'gte' | 'lt' | 'lte'
+  threshold       Float         // Value to compare against
+  duration        Int           @default(0) // Seconds the condition must persist before alerting
+  channels        AlertChannel[] // Notification channels
+  telegramBotToken String?      @map("telegram_bot_token")
+  telegramChatId  String?       @map("telegram_chat_id")
+  emailRecipients String?       @map("email_recipients") // Comma-separated emails
+  cooldown        Int           @default(300) // Seconds between alerts (min 5 min)
+  isActive        Boolean       @default(true) @map("is_active")
+  lastTriggeredAt DateTime?     @map("last_triggered_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("monitoring_alerts")
+}
+
 // ── Queue Uptime Events (Persistent Disconnect Tracking) ─
 
 model QueueUptimeEvent {
@@ -1361,7 +1424,10 @@ model QueueUptimeEvent {
   startTime   DateTime  @map("start_time")
   endTime     DateTime? @map("end_time")
   durationMs  Int?      @map("duration_ms")
+  notes       String?   // Root cause / notes from admin
+  component   String?   @default("queue") // 'queue' | 'api' | 'database' | 'other'
   createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@index([startTime(sort: Desc)])
   @@map("queue_uptime_events")

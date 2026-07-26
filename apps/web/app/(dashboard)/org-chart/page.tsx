@@ -1,4 +1,6 @@
 'use client';
+
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { ChevronDown, ChevronRight, Building2, MapPin, Users, Loader2 } from 'lucide-react';
@@ -105,10 +107,10 @@ export default function OrgChartPage() {
           {data?.summary && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
-                { label: 'Distrik', value: data.summary.totalDistrik, color: 'bg-blue-50 text-blue-700' },
-                { label: 'Wilayah', value: data.summary.totalWilayah, color: 'bg-green-50 text-green-700' },
-                { label: 'Ranting', value: data.summary.totalRanting, color: 'bg-purple-50 text-purple-700' },
-                { label: 'Anggota', value: data.summary.totalMembers, color: 'bg-yellow-50 text-yellow-700' },
+                { label: 'Distrik', value: data.summary.totalDistrik, color: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+                { label: 'Wilayah', value: data.summary.totalWilayah, color: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
+                { label: 'Ranting', value: data.summary.totalRanting, color: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
+                { label: 'Anggota', value: data.summary.totalMembers, color: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
               ].map((card) => (
                 <div
                   key={card.label}

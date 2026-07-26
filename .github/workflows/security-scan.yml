@@ -1,0 +1,581 @@
+# ── Security Scan ──────────────────────────────────────────────────────
+#
+# Scans the codebase, its dependencies, and the production Docker images
+# for known vulnerabilities.  Results appear in three places:
+#
+#   1. The workflow run log (table format for quick triage)
+#   2. The GitHub Security tab (SARIF uploads from Trivy)
+#   3. Slack notification (optional — requires SLACK_WEBHOOK_URL secret)
+#
+# ── Scans performed ────────────────────────────────────────────────────
+#
+#   audit      — pnpm audit (dependency vulnerabilities)
+#   snyk       — Snyk open-source + container scan (needs SNYK_TOKEN)
+#   trivy      — Trivy filesystem + Docker image scan (SARIF output)
+#
+# ── Secrets (all optional — failed scans are reported but don't fail) ──
+#
+#   SNYK_TOKEN           — Snyk API token (https://app.snyk.io/account)
+#   SLACK_WEBHOOK_URL    — Slack Incoming Webhook for notifications
+#
+# ════════════════════════════════════════════════════════════════════════
+
+name: 🛡️ Security Scan
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+  schedule:
+    # Run weekly on Monday 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9.15.4'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── 1. Dependency Audit (pnpm audit) ───────────────────────────────
+  audit:
+    name: 📦 Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit
+        id: audit
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          OUTPUT=$(pnpm audit --audit-level=high 2>&1)
+          EXIT_CODE=$?
+          echo "$OUTPUT"
+
+          # Count vulnerabilities
+          CRITICAL=$(echo "$OUTPUT" | grep -oP 'Critical:\s+\K\d+' || echo "0")
+          HIGH=$(echo "$OUTPUT" | grep -oP 'High:\s+\K\d+' || echo "0")
+          MODERATE=$(echo "$OUTPUT" | grep -oP 'Moderate:\s+\K\d+' || echo "0")
+          LOW=$(echo "$OUTPUT" | grep -oP 'Low:\s+\K\d+' || echo "0")
+
+          echo "critical=$CRITICAL" >> "$GITHUB_OUTPUT"
+          echo "high=$HIGH" >> "$GITHUB_OUTPUT"
+          echo "moderate=$MODERATE" >> "$GITHUB_OUTPUT"
+          echo "low=$LOW" >> "$GITHUB_OUTPUT"
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "status=passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo ""
+          echo "=== Audit Summary ==="
+          echo "  Critical: $CRITICAL"
+          echo "  High:     $HIGH"
+          echo "  Moderate: $MODERATE"
+          echo "  Low:      $LOW"
+          echo "  Status:   $([ $EXIT_CODE -eq 0 ] && echo '✅ Passed' || echo '❌ Failed')"
+          exit $EXIT_CODE
+
+      - name: Upload audit report
+        if: always()
+        shell: bash
+        run: |
+          echo "## 📦 Dependency Audit Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|:---------|:------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔴 Critical | ${{ steps.audit.outputs.critical || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟠 High | ${{ steps.audit.outputs.high || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟡 Moderate | ${{ steps.audit.outputs.moderate || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⚪ Low | ${{ steps.audit.outputs.low || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.audit.outputs.status }}" = "passed" ]; then
+            echo "✅ **pnpm audit passed — no high-severity vulnerabilities found.**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **pnpm audit found high-severity vulnerabilities that require attention.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ─── 2. Snyk Scan (open-source + container, optional) ───────────────
+  # NOTE: GitHub Actions does not support secrets in job-level `if:`.
+  # Instead the job always runs but every Snyk step has `continue-on-error: true`,
+  # so missing SNYK_TOKEN is harmless.
+  snyk:
+    name: 🔍 Snyk Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check if SNYK_TOKEN is set
+        id: check-snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ SNYK_TOKEN not set — skipping all Snyk scans"
+          fi
+
+      - name: Build API (for Snyk to analyse)
+        if: steps.check-snyk.outputs.skip != 'true'
+        run: pnpm --filter @ths-thm/api build
+        timeout-minutes: 5
+
+      - name: Snyk Open Source scan
+        id: snyk-oss
+        if: steps.check-snyk.outputs.skip != 'true'
+        continue-on-error: true
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: >-
+            --severity-threshold=high
+            --json-file-output=snyk-oss-results.json
+
+      - name: Snyk Code scan
+        id: snyk-code
+        if: steps.check-snyk.outputs.skip != 'true'
+        continue-on-error: true
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
+          # snyk code test uses --sarif-file-output, not --json-file-output
+          args: >-
+            --severity-threshold=high
+            --sarif-file-output=snyk-code-results.sarif
+
+      - name: Build Docker images for container scan
+        if: steps.check-snyk.outputs.skip != 'true'
+        shell: bash
+        run: |
+          # Build API image (minimal, for scanning only)
+          docker build -t ths-thm-api:scan \
+            --file apps/api/Dockerfile \
+            --build-arg NODE_ENV=production \
+            .
+
+          # Build Web image (minimal, for scanning only)
+          docker build -t ths-thm-web:scan \
+            --file apps/web/Dockerfile \
+            --build-arg NODE_ENV=production \
+            .
+
+      - name: Snyk Container scan (API)
+        id: snyk-container-api
+        if: steps.check-snyk.outputs.skip != 'true'
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ths-thm-api:scan
+          args: >-
+            --severity-threshold=high
+            --json-file-output=snyk-container-api-results.json
+            --exclude-base-image-vulns
+
+      - name: Snyk Container scan (Web)
+        id: snyk-container-web
+        if: steps.check-snyk.outputs.skip != 'true'
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ths-thm-web:scan
+          args: >-
+            --severity-threshold=high
+            --json-file-output=snyk-container-web-results.json
+            --exclude-base-image-vulns
+
+      - name: Upload Snyk results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-results
+          path: |
+            snyk-*-results.*
+          retention-days: 30
+
+      - name: Snyk summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🔍 Snyk Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|:-----|:-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Open Source | ${{ steps.snyk-oss.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code | ${{ steps.snyk-code.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container (API) | ${{ steps.snyk-container-api.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container (Web) | ${{ steps.snyk-container-web.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Snyk results** uploaded as the \\`snyk-results\\` artifact." >> $GITHUB_STEP_SUMMARY
+
+  # ─── 3. Trivy Scan (filesystem + Docker images, SARIF output) ───────
+  trivy:
+    name: 🐳 Trivy Scan
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write   # Required for SARIF upload
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (API)
+        uses: docker/build-push-action@v6
+        with:
+          file: apps/api/Dockerfile
+          tags: ths-thm-api:scan
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Docker image (Web)
+        uses: docker/build-push-action@v6
+        with:
+          file: apps/web/Dockerfile
+          tags: ths-thm-web:scan
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy — filesystem scan
+        id: trivy-fs
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-fs-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Trivy — Docker image scan (API)
+        id: trivy-image-api
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ths-thm-api:scan
+          format: sarif
+          output: trivy-api-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Trivy — Docker image scan (Web)
+        id: trivy-image-web
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ths-thm-web:scan
+          format: sarif
+          output: trivy-web-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Upload Trivy SARIF (filesystem)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-fs-results.sarif
+          category: trivy-filesystem
+
+      - name: Upload Trivy SARIF (API Docker)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-api-results.sarif
+          category: trivy-docker-api
+
+      - name: Upload Trivy SARIF (Web Docker)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-web-results.sarif
+          category: trivy-docker-web
+
+      - name: Upload Trivy raw artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: |
+            trivy-*.sarif
+          retention-days: 30
+
+      - name: Clean up Docker images
+        if: always()
+        shell: bash
+        run: |
+          docker rmi -f ths-thm-api:scan ths-thm-web:scan 2>/dev/null || true
+
+      - name: Trivy summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🐳 Trivy Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|:-----|:-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Filesystem | ${{ steps.trivy-fs.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker (API) | ${{ steps.trivy-image-api.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker (Web) | ${{ steps.trivy-image-web.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "SARIF results uploaded to **GitHub Security tab** → https://github.com/${{ github.repository }}/security/code-scanning" >> $GITHUB_STEP_SUMMARY
+
+  # ─── Summary + Slack notification ─────────────────────────────────
+  summary:
+    name: 📋 Security Scan Summary
+    needs: [audit, snyk, trivy]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Aggregate results
+        id: aggregate
+        shell: bash
+        run: |
+          AUDIT_STATUS="${{ needs.audit.result }}"
+          SNYK_STATUS="${{ needs.snyk.result }}"
+          TRIVY_STATUS="${{ needs.trivy.result }}"
+
+          ALL_PASSED=true
+
+          echo "## 🛡️ Security Scan Overview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|:-----|:-------|" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$AUDIT_STATUS" = "success" ]; then
+            echo "| 📦 Dependency Audit | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$AUDIT_STATUS" = "skipped" ]; then
+            echo "| 📦 Dependency Audit | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 📦 Dependency Audit | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            ALL_PASSED=false
+          fi
+
+          if [ "$SNYK_STATUS" = "success" ]; then
+            echo "| 🔍 Snyk Scan | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$SNYK_STATUS" = "skipped" ]; then
+            echo "| 🔍 Snyk Scan | ⏭️ Skipped (SNYK_TOKEN not set) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🔍 Snyk Scan | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            ALL_PASSED=false
+          fi
+
+          if [ "$TRIVY_STATUS" = "success" ]; then
+            echo "| 🐳 Trivy Scan | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$TRIVY_STATUS" = "skipped" ]; then
+            echo "| 🐳 Trivy Scan | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🐳 Trivy Scan | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            ALL_PASSED=false
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ALL_PASSED" = "true" ]; then
+            echo "✅ **All security scans passed.**" >> $GITHUB_STEP_SUMMARY
+            echo "overall=passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ **Some security scans reported issues. Review the detailed results above.**" >> $GITHUB_STEP_SUMMARY
+            echo "overall=failed" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **View in GitHub Security tab:** https://github.com/${{ github.repository }}/security/code-scanning" >> $GITHUB_STEP_SUMMARY
+
+      # ─── Determine status emoji for Slack ──────────────────────────
+      - name: Determine overall status
+        id: status
+        if: always()
+        shell: bash
+        run: |
+          AUDIT_STATUS="${{ needs.audit.result }}"
+          SNYK_STATUS="${{ needs.snyk.result }}"
+          TRIVY_STATUS="${{ needs.trivy.result }}"
+
+          # Emoji for each scan
+          audit_emoji=""
+          case "$AUDIT_STATUS" in
+            success)   audit_emoji="✅" ;;
+            skipped)   audit_emoji="⏭️" ;;
+            *)         audit_emoji="❌" ;;
+          esac
+          echo "audit_emoji=$audit_emoji" >> "$GITHUB_OUTPUT"
+
+          snyk_emoji=""
+          case "$SNYK_STATUS" in
+            success)   snyk_emoji="✅" ;;
+            skipped)   snyk_emoji="⏭️" ;;
+            *)         snyk_emoji="❌" ;;
+          esac
+          echo "snyk_emoji=$snyk_emoji" >> "$GITHUB_OUTPUT"
+
+          trivy_emoji=""
+          case "$TRIVY_STATUS" in
+            success)   trivy_emoji="✅" ;;
+            skipped)   trivy_emoji="⏭️" ;;
+            *)         trivy_emoji="❌" ;;
+          esac
+          echo "trivy_emoji=$trivy_emoji" >> "$GITHUB_OUTPUT"
+
+          # Overall emoji
+          if [ "$AUDIT_STATUS" = "success" ] && [ "$SNYK_STATUS" = "success" ] && [ "$TRIVY_STATUS" = "success" ]; then
+            echo "overall_emoji=✅" >> "$GITHUB_OUTPUT"
+          elif [ "$AUDIT_STATUS" = "skipped" ] && [ "$SNYK_STATUS" = "skipped" ] && [ "$TRIVY_STATUS" = "skipped" ]; then
+            echo "overall_emoji=⏭️" >> "$GITHUB_OUTPUT"
+          else
+            echo "overall_emoji=⚠️" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Slack webhook
+        id: check-slack
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || '' }}
+        shell: bash
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ SLACK_WEBHOOK_URL not set — skipping Slack notification"
+          fi
+
+      - name: Notify Slack
+        if: always() && steps.check-slack.outputs.skip != 'true'
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🛡️ Security Scan Results"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Audit:*\n${{ steps.status.outputs.audit_emoji }} ${{ needs.audit.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Snyk:*\n${{ steps.status.outputs.snyk_emoji }} ${{ needs.snyk.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Trivy:*\n${{ steps.status.outputs.trivy_emoji }} ${{ needs.trivy.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "👀 View Run"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "primary"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "🔒 Security Tab"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/security/code-scanning",
+                      "style": "danger"
+                    }
+                  ]
+                }
+              ]
+            }

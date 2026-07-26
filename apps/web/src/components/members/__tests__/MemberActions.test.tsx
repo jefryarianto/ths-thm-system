@@ -2,6 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MemberActions from '../MemberActions';
 
+/** Helper: open the kebab menu (dropdown) so menu items render in the DOM */
+function openDropdown() {
+  fireEvent.click(screen.getByTitle('Menu lainnya'));
+}
+
 describe('MemberActions', () => {
   const defaultMember = {
     id: 'member-1',
@@ -28,7 +33,7 @@ describe('MemberActions', () => {
     expect(approveBtn).toBeInTheDocument();
   });
 
-  it('renders suspend button when statusKeanggotaan is aktif', () => {
+  it('renders suspend menu item when statusKeanggotaan is aktif', () => {
     render(
       <MemberActions
         member={defaultMember}
@@ -37,10 +42,11 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
+    openDropdown();
     expect(screen.getByTitle('Nonaktifkan')).toBeInTheDocument();
   });
 
-  it('renders reactivate button when statusKeanggotaan is nonaktif', () => {
+  it('renders reactivate menu item when statusKeanggotaan is nonaktif', () => {
     render(
       <MemberActions
         member={{ ...defaultMember, statusKeanggotaan: 'nonaktif' }}
@@ -49,7 +55,8 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
-    expect(screen.getByTitle('Aktifkan kembali')).toBeInTheDocument();
+    openDropdown();
+    expect(screen.getByTitle('Aktifkan')).toBeInTheDocument();
   });
 
   it('does not render approve button when statusValidasi is not pending', () => {
@@ -73,6 +80,7 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
+    openDropdown();
     expect(screen.queryByTitle('Nonaktifkan')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Aktifkan kembali')).not.toBeInTheDocument();
   });
@@ -90,7 +98,7 @@ describe('MemberActions', () => {
     expect(onAction).toHaveBeenCalledWith('member-1', 'approve');
   });
 
-  it('calls onAction with suspend when suspend button clicked', () => {
+  it('calls onAction with suspend when suspend menu item clicked', () => {
     render(
       <MemberActions
         member={defaultMember}
@@ -99,6 +107,7 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
+    openDropdown();
     fireEvent.click(screen.getByTitle('Nonaktifkan'));
     expect(onAction).toHaveBeenCalledWith('member-1', 'suspend');
   });
@@ -116,7 +125,7 @@ describe('MemberActions', () => {
     expect(onViewDetail).toHaveBeenCalledWith('member-1');
   });
 
-  it('disables action buttons when actionLoading matches member id', () => {
+  it('disables inline approve button when actionLoading matches member id', () => {
     render(
       <MemberActions
         member={defaultMember}
@@ -125,9 +134,8 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
-    // Approve and suspend buttons should be disabled
+    // Inline approve button should be disabled when loading
     expect(screen.getByTitle('Setujui')).toBeDisabled();
-    expect(screen.getByTitle('Nonaktifkan')).toBeDisabled();
     // Detail button should NOT be disabled (it doesn't accept disabled)
     expect(screen.getByTitle('Detail')).not.toBeDisabled();
   });

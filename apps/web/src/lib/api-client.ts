@@ -72,19 +72,11 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        const { data } = await axios.post(`/api/auth/refresh`, {
-          refreshToken,
-        });
+        // refreshToken sekarang dikirim secara otomatis sebagai HttpOnly cookie
+        const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
 
         const newToken = data.data.accessToken;
         localStorage.setItem('accessToken', newToken);
-        localStorage.setItem('refreshToken', data.data.refreshToken);
 
         onTokenRefreshed(newToken);
 
@@ -92,7 +84,6 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch {
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }

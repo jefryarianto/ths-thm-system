@@ -11,9 +11,13 @@ import PageHeader from '@/components/ui/page-header';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import DuesStatCards from '@/components/dues/DuesStatCards';
 import DuesCharts from '@/components/dues/DuesCharts';
-import { Plus, CreditCard, Download, Trash2 } from 'lucide-react';
+import { Plus, CreditCard, Trash2, ExternalLink } from 'lucide-react';
+import ExportMenu from '@/components/ui/export-menu';
+import { CanCreate, CanDelete, CanExport } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 
 // ─── Types ───
+
 
 interface DuesStats {
   totalIuran: number;
@@ -114,18 +118,21 @@ export default function DuesPage() {
   };
 
   return (
+    <PermissionGuard module="dues" action="view">
     <PageContainer>
       {/* ── Header ── */}
       <PageHeader title="Manajemen Iuran" onRefresh={handleRefresh}>
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-          <Download size={14} /> Export
-        </button>
-        <button
-          onClick={() => router.push('/dues/new')}
-          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-        >
-          <Plus size={16} /> Tambah Iuran
-        </button>
+        <CanExport module="dues">
+          <ExportMenu serverType="dues" filename="iuran-export" />
+        </CanExport>
+        <CanCreate module="dues">
+          <button
+            onClick={() => router.push('/dues/new')}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          >
+            <Plus size={16} /> Tambah Iuran
+          </button>
+        </CanCreate>
       </PageHeader>
 
       {/* ── Stat Cards ── */}
@@ -169,18 +176,27 @@ export default function DuesPage() {
             render: (d: DuesRow) => (
               <div className="flex items-center justify-end gap-1">
                 <button
-                  onClick={async () => {
-                    if (!confirm('Hapus iuran ini?')) return;
-                    try {
-                      await apiClient.delete(`/dues/${d.id}`);
-                      refetch();
-                    } catch { alert('Gagal menghapus iuran'); }
-                  }}
-                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                  title="Hapus"
+                  onClick={() => router.push(`/dues/${d.id}`)}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                  title="Lihat Detail"
                 >
-                  <Trash2 size={14} />
+                  <ExternalLink size={14} />
                 </button>
+                <CanDelete module="dues">
+                  <button
+                    onClick={async () => {
+                      if (!confirm('Hapus iuran ini?')) return;
+                      try {
+                        await apiClient.delete(`/dues/${d.id}`);
+                        refetch();
+                      } catch { alert('Gagal menghapus iuran'); }
+                    }}
+                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                    title="Hapus"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </CanDelete>
               </div>
             ),
           },
@@ -191,5 +207,6 @@ export default function DuesPage() {
         }}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

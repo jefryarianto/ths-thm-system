@@ -107,6 +107,120 @@ This checklist outlines the verification steps that should be completed before m
 
 ---
 
+## Disaster Recovery — Database Backup & Restore
+
+### Backup System
+
+Backups run automatically via **systemd timer** (`ths-thm-backup.timer`) daily at 02:00 AM.
+
+| Component | Detail |
+|:----------|:-------|
+| **Script** | `scripts/backup-database.sh` |
+| **Schedule** | `systemd timer` — daily @ 02:00 + 10 min after boot |
+| **Format** | `pg_dump --format=custom --compress=9` (compressed, parallel-restore capable) |
+| **Location** | `/opt/backups/ths-thm/{production,staging}/` |
+| **Retention** | 30 days (auto-cleaned) |
+| **Offsite** | Optional rsync to remote host (`OFFSITE_HOST` env var) |
+| **Notification** | Optional Slack webhook on failure (`SLACK_WEBHOOK_URL`) |
+
+### Restore Commands
+
+```bash
+# List available backups
+sudo -u ths-thm ./scripts/restore-database.sh --list
+
+# Dry-run restore of latest backup
+sudo -u ths-thm ./scripts/restore-database.sh --latest --dry-run
+
+# Restore latest backup to production (with confirmation)
+sudo -u ths-thm ./scripts/restore-database.sh --latest
+
+# Restore a specific file
+sudo -u ths-thm ./scripts/restore-database.sh --file /opt/backups/ths_thm_db_20260101_020000.sql.gz
+
+# Restore from stdin (pipe)
+gunzip -c backup.sql.gz | sudo -u ths-thm ./scripts/restore-database.sh --stdin --staging
+
+# Fetch from offsite first, then restore
+OFFSITE_HOST=backup@backup.example.com OFFSITE_DIR=/backups/ths-thm/production \
+  sudo -u ths-thm ./scripts/restore-database.sh --from-offsite --latest
+```
+
+### Manual Backup
+
+```bash
+# Production
+sudo -u ths-thm ./scripts/backup-database.sh --production
+
+# Staging
+sudo -u ths-thm TARGET=staging ./scripts/backup-database.sh
+
+# Offsite sync only (skip pg_dump)
+sudo -u ths-thm ./scripts/backup-database.sh --offsite-only
+```
+
+### Systemd Service Management
+
+```bash
+# View timer status
+sudo systemctl status ths-thm-backup.timer
+sudo systemctl list-timers --all | grep ths-thm
+
+# View last backup log
+sudo journalctl -u ths-thm-backup.service -n 50 --no-pager
+
+# View backup failure logs
+sudo journalctl -u ths-thm-backup.service -p err -n 20 --no-pager
+
+# Trigger backup immediately (without waiting for timer)
+sudo systemctl start ths-thm-backup.service
+```
+
+### Disaster Recovery Procedure
+
+**If database is corrupted or lost:**
+
+1. **Stop the API** to prevent further writes:
+   ```bash
+   docker compose -f docker-compose.production.yml stop api
+   ```
+
+2. **Verify latest backup exists:**
+   ```bash
+   ./scripts/restore-database.sh --list
+   ```
+
+3. **Restore the latest backup:**
+   ```bash
+   ./scripts/restore-database.sh --latest
+   ```
+
+4. **Run database migrations** (if restore is from an older schema):
+   ```bash
+   docker compose -f docker-compose.production.yml run --rm api sh -c "cd apps/api && npx prisma migrate deploy"
+   ```
+
+5. **Restart the API:**
+   ```bash
+   docker compose -f docker-compose.production.yml start api
+   ```
+
+6. **Verify:**
+   ```bash
+   curl -sf https://ths-thm.cloud/api/health
+   ```
+
+**If offsite backup is needed:**
+
+```bash
+OFFSITE_HOST=backup@backup.example.com \
+  OFFSITE_DIR=/backups/ths-thm/production \
+  OFFSITE_KEY=/home/ths-thm/.ssh/backup-key \
+  ./scripts/restore-database.sh --from-offsite --latest
+```
+
+---
+
 > **Note:** Not every step is required for every single commit. Use judgment:
 >
 > - A dependency update → run typecheck + lint + unit tests (skip E2E if risk is low)

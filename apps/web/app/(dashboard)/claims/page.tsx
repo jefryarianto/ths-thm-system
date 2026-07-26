@@ -6,7 +6,8 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, FileText, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -14,6 +15,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { STATUS_COLORS, STATUS_OPTIONS } from '@/components/claims/constants';
+
 
 interface ClaimRow {
   id: string;
@@ -67,6 +69,7 @@ export default function ClaimsPage() {
   };
 
   return (
+    <PermissionGuard module="claims" action="view">
     <PageContainer>
       <PageHeader title="Manajemen Klaim" onRefresh={refetch}>
         <button
@@ -138,6 +141,13 @@ export default function ClaimsPage() {
             </td>
             <td className="px-4 py-3 text-right">
               <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={() => router.push(`/claims/${row.id}`)}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                  title="Lihat Detail"
+                >
+                  <ExternalLink size={14} />
+                </button>
                 {row.status === 'pending' && (
                   <>
                     <button
@@ -192,5 +202,6 @@ export default function ClaimsPage() {
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

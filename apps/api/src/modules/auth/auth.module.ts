@@ -15,7 +15,15 @@ import { env } from '../../config/env.validation';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleOAuthStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    GoogleOAuthStrategy,
+    {
+      provide: 'ENV',
+      useValue: env,
+    },
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

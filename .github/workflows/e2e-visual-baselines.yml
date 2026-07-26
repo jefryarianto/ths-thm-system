@@ -1,0 +1,194 @@
+# ── E2E Visual Regression — Update Baselines ─────────────────────────
+#
+# Separate workflow to update visual regression screenshot baselines.
+# Run this when UI changes intentionally alter component appearance.
+#
+# Usage:
+#   1. Go to Actions → E2E Visual Baselines → "Run workflow"
+#   2. Select the branch
+#   3. The workflow runs all visual tests with --update-snapshots
+#   4. Download the "visual-snapshots-updated" artifact
+#   5. Extract and replace files in:
+#        apps/web/e2e/style-guide-visual.spec.ts-snapshots/
+#   6. Commit and push the new PNGs
+#
+# ═════════════════════════════════════════════════════════════════════
+
+name: 📸 E2E Visual Baselines
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to update baselines on'
+        required: true
+        default: master
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9.15.4'
+  E2E_BASE_URL: http://localhost:3002
+
+jobs:
+  update-baselines:
+    name: 📸 Update Visual Baselines
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || github.ref_name }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers (Chromium only)
+        working-directory: apps/web
+        run: npx playwright install chromium --with-deps
+
+      - name: Build Next.js app (production)
+        run: pnpm --filter @ths-thm/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_ENABLE_REALTIME: false
+          NODE_ENV: production
+
+      - name: Start Next.js server in background
+        shell: bash
+        run: |
+          cd apps/web
+          npx next start -p 3002 &
+          echo "NEXT_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for Next.js to be ready
+        shell: bash
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/ | grep -q "200\|302"; then
+              echo "✅ Next.js server is ready"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "❌ Next.js server failed to start"
+          exit 1
+
+      - name: Generate new visual regression snapshots
+        working-directory: apps/web
+        shell: bash
+        run: |
+          echo "📸 Generating new visual regression baselines..."
+          npx playwright test style-guide-visual.spec.ts --update-snapshots --reporter=line
+          echo "✅ Snapshots generated"
+
+      - name: Archive updated snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots-updated
+          path: apps/web/e2e/style-guide-visual.spec.ts-snapshots/
+          retention-days: 7
+
+      - name: Stop Next.js server
+        if: always()
+        shell: bash
+        run: |
+          kill $NEXT_PID 2>/dev/null || true
+          pkill -f "next start" 2>/dev/null || true
+
+      - name: Show snapshot summary
+        shell: bash
+        run: |
+          echo "## 📸 Visual Baseline Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          SNAPSHOT_DIR="apps/web/e2e/style-guide-visual.spec.ts-snapshots"
+          if [ -d "$SNAPSHOT_DIR" ]; then
+            echo "**Updated snapshots:**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            ls -la "$SNAPSHOT_DIR" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Instructions:** Download the **visual-snapshots-updated** artifact, extract the PNG files, and copy them into \`$SNAPSHOT_DIR\` in your local checkout, then commit and push." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No snapshots generated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ─── Check Slack webhook is configured ─────────────────────────────────────
+      - name: Check Slack webhook
+        id: check-slack
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || '' }}
+        shell: bash
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ SLACK_WEBHOOK_URL not set — skipping Slack notification"
+          fi
+
+      # ─── Send Slack notification (optional — requires SLACK_WEBHOOK_URL) ────
+      - name: Notify Slack
+        if: always() && steps.check-slack.outputs.skip != 'true'
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "📸 Visual Baseline Update"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Visual regression snapshots have been regenerated for branch *${{ inputs.branch || github.ref_name }}*."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "👀 View Run"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "primary"
+                    }
+                  ]
+                }
+              ]
+            }
+

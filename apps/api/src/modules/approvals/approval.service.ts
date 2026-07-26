@@ -131,6 +131,21 @@ export class ApprovalService {
     return { success: true, message: 'Pengajuan ditolak' };
   }
 
+  async findOne(id: string, scope?: UserScope) {
+    const request = await this.prisma.approvalRequest.findUnique({
+      where: { id },
+      include: {
+        levels: {
+          include: { approvalLevel: true },
+          orderBy: { approvalLevel: { order: 'asc' } },
+        },
+      },
+    });
+
+    if (!request) throw new NotFoundException('Pengajuan tidak ditemukan');
+    return { success: true, data: request };
+  }
+
   async getPending(scope?: UserScope) {
     const where: Record<string, unknown> = { status: 'pending' };
     

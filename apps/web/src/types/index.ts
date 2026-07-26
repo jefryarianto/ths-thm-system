@@ -16,6 +16,8 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Path/URL to the member's profile photo, if available */
+  fotoPath?: string | null;
 }
 
 export interface Tokens {

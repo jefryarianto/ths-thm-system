@@ -1,5 +1,7 @@
 'use client';
 
+import { PermissionGuard } from '@/components/auth/permission-guard';
+
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -8,6 +10,7 @@ import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
 import { TIPE_OPTIONS } from '@/components/notifications/constants';
+
 
 interface NotificationItem {
   id: string;
@@ -193,245 +196,249 @@ export default function NotificationReportPage() {
   ];
 
   return (
-    <PageContainer>
-      <PageHeader title="Laporan Notifikasi" onRefresh={fetchAllData}>
-        <button
-          onClick={handleExportCSV}
-          disabled={exporting || data.length === 0}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
-        >
-          <Download size={14} />
-          {exporting ? 'Exporting...' : 'Export CSV'}
-        </button>
-      </PageHeader>
-
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Filter size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-            <select
-              value={filterTipe}
-              onChange={(e) => {
-                setFilterTipe(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              {TIPE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Calendar size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="flex-1 sm:flex-none px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-            />
-            <span className="text-gray-500 dark:text-gray-400 text-sm flex-shrink-0">s/d</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="flex-1 sm:flex-none px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={fetchAllData}
-              disabled={loading}
-              className="flex-1 sm:flex-none px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {loading ? 'Memuat...' : 'Terapkan'}
-            </button>
-            {(filterTipe || startDate || endDate) && (
-              <button
-                onClick={() => {
-                  setFilterTipe('');
-                  setStartDate('');
-                  setEndDate('');
-                }}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800"
-              >
-                Reset
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
-          <span>{error}</span>
-          <button
-            onClick={fetchAllData}
-            className="text-red-700 dark:text-red-400 underline hover:no-underline text-xs"
-          >
-            Coba lagi
-          </button>
-        </div>
-      )}
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse"
-            >
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-3" />
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!loading && (
-        <>
-          {/* Overview Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950">
-                <Bell size={18} className="text-blue-600 dark:text-blue-400" />
+      <PermissionGuard module="notifications" action="view">
+        <PageContainer>
+              <PageHeader title="Laporan Notifikasi" onRefresh={fetchAllData}>
+                <button
+                  onClick={handleExportCSV}
+                  disabled={exporting || data.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
+                >
+                  <Download size={14} />
+                  {exporting ? 'Exporting...' : 'Export CSV'}
+                </button>
+              </PageHeader>
+        
+              {/* Filters */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Filter size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                    <select
+                      value={filterTipe}
+                      onChange={(e) => {
+                        setFilterTipe(e.target.value);
+                        setPage(1);
+                      }}
+                      className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    >
+                      {TIPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Calendar size={16} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="flex-1 sm:flex-none px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-500 dark:text-gray-400 text-sm flex-shrink-0">s/d</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="flex-1 sm:flex-none px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={fetchAllData}
+                      disabled={loading}
+                      className="flex-1 sm:flex-none px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                      {loading ? 'Memuat...' : 'Terapkan'}
+                    </button>
+                    {(filterTipe || startDate || endDate) && (
+                      <button
+                        onClick={() => {
+                          setFilterTipe('');
+                          setStartDate('');
+                          setEndDate('');
+                        }}
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Notifikasi</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  {totalStats.total}
-                </p>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-yellow-50 dark:bg-yellow-950">
-                <Bell size={18} className="text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Belum Dibaca</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  {totalStats.unread}
-                </p>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-950">
-                <BarChart3 size={18} className="text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Rata-rata per Hari</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  {totalStats.total > 0
-                    ? (
-                        totalStats.total /
-                        Math.max(
-                          1,
-                          Math.ceil(
-                            (new Date(endDate || Date.now()).getTime() -
-                              new Date(
-                                startDate || Date.now() - 30 * 24 * 60 * 60 * 1000,
-                              ).getTime()) /
-                              (1000 * 60 * 60 * 24),
-                          ),
-                        )
-                      ).toFixed(1)
-                    : '0'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Chart */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-              Notifikasi per Tipe
-            </h2>
-            {chartData.some((d) => d.Total > 0) ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+        
+              {/* Error */}
+              {error && (
+                <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
+                  <span>{error}</span>
+                  <button
+                    onClick={fetchAllData}
+                    className="text-red-700 dark:text-red-400 underline hover:no-underline text-xs"
+                  >
+                    Coba lagi
+                  </button>
+                </div>
+              )}
+        
+              {/* Loading skeleton */}
+              {loading && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse"
+                    >
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-3" />
+                      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                    </div>
+                  ))}
+                </div>
+              )}
+        
+              {!loading && (
+                <>
+                  {/* Overview Stats */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+                      <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950">
+                        <Bell size={18} className="text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Total Notifikasi</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                          {totalStats.total}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+                      <div className="p-2.5 rounded-lg bg-yellow-50 dark:bg-yellow-950">
+                        <Bell size={18} className="text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Belum Dibaca</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                          {totalStats.unread}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+                      <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-950">
+                        <BarChart3 size={18} className="text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Rata-rata per Hari</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                          {totalStats.total > 0
+                            ? (
+                                totalStats.total /
+                                Math.max(
+                                  1,
+                                  Math.ceil(
+                                    (new Date(endDate || Date.now()).getTime() -
+                                      new Date(
+                                        startDate || Date.now() - 30 * 24 * 60 * 60 * 1000,
+                                      ).getTime()) /
+                                      (1000 * 60 * 60 * 24),
+                                  ),
+                                )
+                              ).toFixed(1)
+                            : '0'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+        
+                  {/* Chart */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+                      Notifikasi per Tipe
+                    </h2>
+                    {chartData.some((d) => d.Total > 0) ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fontSize: 12, fill: '#6b7280' }}
+                            tickLine={false}
+                            axisLine={{ stroke: '#e5e7eb' }}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 12, fill: '#6b7280' }}
+                            tickLine={false}
+                            axisLine={false}
+                            allowDecimals={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: '8px',
+                              border: '1px solid var(--tooltip-border)',
+                              background: 'var(--tooltip-bg)',
+                              color: 'var(--tooltip-color)',
+                              boxShadow: 'var(--tooltip-shadow)',
+                            }}
+                          />
+                          <Bar
+                            dataKey="Total"
+                            fill="#3b82f6"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={32}
+                            name="Total"
+                          />
+                          <Bar
+                            dataKey="BelumDibaca"
+                            fill="#f59e0b"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={32}
+                            name="Belum Dibaca"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
+                        Belum ada data notifikasi dengan filter ini
+                      </div>
+                    )}
+                  </div>
+        
+                  {/* Stats Table */}
+                  <DataTable
+                    columns={statsColumns}
+                    data={
+                      statsByType.length > 0
+                        ? statsByType
+                        : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
+                            key: tipe.value,
+                            label: tipe.label,
+                            total: data.filter((n) => n.tipe === tipe.value).length,
+                            unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
+                          }))
+                    }
+                    loading={false}
+                    page={1}
+                    totalPages={1}
+                    total={
+                      (statsByType.length > 0
+                        ? statsByType
+                        : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
+                            key: tipe.value,
+                            label: tipe.label,
+                            total: data.filter((n) => n.tipe === tipe.value).length,
+                            unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
+                          }))
+                      ).length
+                    }
+                    empty={{
+                      icon: FileText,
+                      message: 'Belum ada data notifikasi',
+                      title: 'Detail per Tipe',
                     }}
                   />
-                  <Bar
-                    dataKey="Total"
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={32}
-                    name="Total"
-                  />
-                  <Bar
-                    dataKey="BelumDibaca"
-                    fill="#f59e0b"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={32}
-                    name="Belum Dibaca"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
-                Belum ada data notifikasi dengan filter ini
-              </div>
-            )}
-          </div>
-
-          {/* Stats Table */}
-          <DataTable
-            columns={statsColumns}
-            data={
-              statsByType.length > 0
-                ? statsByType
-                : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
-                    key: tipe.value,
-                    label: tipe.label,
-                    total: data.filter((n) => n.tipe === tipe.value).length,
-                    unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
-                  }))
-            }
-            loading={false}
-            page={1}
-            totalPages={1}
-            total={
-              (statsByType.length > 0
-                ? statsByType
-                : TIPE_OPTIONS.filter((t) => t.value).map((tipe) => ({
-                    key: tipe.value,
-                    label: tipe.label,
-                    total: data.filter((n) => n.tipe === tipe.value).length,
-                    unread: data.filter((n) => n.tipe === tipe.value && !n.isRead).length,
-                  }))
-              ).length
-            }
-            empty={{
-              icon: FileText,
-              message: 'Belum ada data notifikasi',
-              title: 'Detail per Tipe',
-            }}
-          />
-        </>
-      )}
-    </PageContainer>
-  );
+                </>
+              )}
+            </PageContainer>
+      </PermissionGuard>
+    );
 }

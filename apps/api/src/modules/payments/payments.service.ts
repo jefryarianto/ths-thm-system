@@ -154,6 +154,32 @@ export class PaymentsService {
     return result;
   }
 
+  async findOne(id: string, scope?: UserScope) {
+    const iuran = await this.prisma.iuran.findUnique({
+      where: { id },
+      include: {
+        anggota: { select: { id: true, namaLengkap: true, nomorAnggota: true, rantingId: true, ranting: { select: { id: true, nama: true } } } },
+        verifikator: { select: { id: true, namaLengkap: true, email: true } },
+      },
+    });
+
+    if (!iuran) throw new NotFoundException('Pembayaran tidak ditemukan');
+
+    if (scope && iuran.anggota?.rantingId) {
+      if (
+        !(await this.scopeHelper.hasAccessToResourceAsync(
+          this.prisma,
+          scope,
+          iuran.anggota.rantingId,
+        ))
+      ) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
+    return { success: true, data: iuran };
+  }
+
   async uploadProof(
     iuranId: string,
     payload: { catatan: string; buktiBayarPath?: string },

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Patch, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -16,31 +16,43 @@ import {
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Request, Response } from 'express';
+import { env } from '../../config/env.validation';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Inject('ENV') private readonly envConfig: typeof env,
+  ) {}
 
   @Post('login')
   @Public()
   @ApiOperation({ summary: 'Login pengguna' })
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    // Pass `res` so the service sets the HttpOnly cookie internally
+    const { data: result } = await this.authService.login(dto, res);
+    // When `res` is provided, login() omits refreshToken from the response body
+    return { success: true, data: result };
   }
 
   @Post('register')
   @Public()
   @ApiOperation({ summary: 'Registrasi pengguna baru' })
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
+    return this.authService.register(dto, res);
   }
 
   @Post('refresh')
   @Public()
   @ApiOperation({ summary: 'Refresh token akses' })
-  refresh(@Body() dto: RefreshDto) {
-    return this.authService.refreshToken(dto);
+  async refresh(@Body() dto: RefreshDto, @Res({ passthrough: true }) res: Response) {
+    const { data: result } = await this.authService.refreshToken(dto);
+    this.authService.setRefreshTokenCookie(res, result.refreshToken);
+    // Hapus refresh token dari body respons
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { refreshToken: _, ...rest } = result;
+    return { success: true, data: rest };
   }
 
   @Post('forgot')
@@ -106,16 +118,20 @@ export class AuthController {
   @Public()
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Callback login Google' })
-  googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+  async googleAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = (req as any).user;
     if (!user) {
       return res.redirect(
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed`,
+        `${this.envConfig.frontendUrl}/login?error=oauth_failed`,
       );
     }
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const redirectUrl = `${frontendUrl}/login?token=${user.accessToken}&refresh=${user.refreshToken}`;
+
+    // Set refresh token as HttpOnly cookie
+    this.authService.setRefreshTokenCookie(res, user.refreshToken);
+
+    // Redirect with only access token
+    const redirectUrl = `${this.envConfig.frontendUrl}/login?token=${user.accessToken}`;
     return res.redirect(redirectUrl);
   }
 

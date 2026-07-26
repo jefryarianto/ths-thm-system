@@ -139,4 +139,40 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   getOnlineUserCount(): number {
     return this.userSockets.size;
   }
+
+  /**
+   * Returns comprehensive WebSocket connection statistics for monitoring.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getStats(): Record<string, any> {
+    const sockets = this.server.sockets.sockets;
+    const rooms = this.server.sockets.adapter.rooms;
+
+    // Count connected users and their socket counts
+    const userCounts: Record<string, number> = {};
+    this.userSockets.forEach((socketIds, userId) => {
+      userCounts[userId] = socketIds.size;
+    });
+
+    // Build room stats (skip default rooms that start with user: for brevity?)
+    // Actually let's show all rooms
+    const roomStats: Array<{ room: string; sockets: number }> = [];
+    rooms.forEach((socketSet, roomName) => {
+      // Skip the default socket.io room (the room with the same name as socket id)
+      if (!sockets.has(roomName)) {
+        roomStats.push({ room: roomName, sockets: socketSet.size });
+      }
+    });
+
+    // Sort rooms by socket count descending
+    roomStats.sort((a, b) => b.sockets - a.sockets);
+
+    return {
+      totalConnections: sockets.size,
+      uniqueUsers: this.userSockets.size,
+      rooms: roomStats,
+      userConnectionCounts: userCounts,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }

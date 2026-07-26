@@ -8,6 +8,18 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 
+jest.mock('./pdf-generator', () => ({
+  buildPdfDocument: jest.fn().mockReturnValue({}),
+}));
+
+jest.mock('@react-pdf/renderer', () => ({
+  renderToStream: jest.fn().mockResolvedValue({
+    pipe: jest.fn((writeStream) => {
+      process.nextTick(() => writeStream.emit('finish'));
+    }),
+  }),
+}));
+
 describe('DocumentsService', () => {
   let service: DocumentsService;
 

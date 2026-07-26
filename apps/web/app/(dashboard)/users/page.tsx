@@ -6,7 +6,8 @@ import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { User } from '@/types';
 import { useState } from 'react';
-import { Plus, Users, UserCheck, UserX } from 'lucide-react';
+import { Plus, Users, UserCheck, UserX, ArrowUpDown } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -20,12 +21,20 @@ import UserActions from '@/components/users/UserActions';
 import CreateUserModal from '@/components/users/CreateUserModal';
 import EditUserModal from '@/components/users/EditUserModal';
 
+
 export default function UsersPage() {
   const { toast } = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // ── Role change picker state ──
+  const [roleChangeTarget, setRoleChangeTarget] = useState<{
+    user: User;
+    newRole: string;
+  } | null>(null);
+  const [roleChangeLoading, setRoleChangeLoading] = useState(false);
   const {
     page,
     setPage,
@@ -89,6 +98,24 @@ export default function UsersPage() {
     setActionLoading(null);
   };
 
+  // ── Handle role change ──
+  const handleRoleChange = async () => {
+    if (!roleChangeTarget) return;
+    setRoleChangeLoading(true);
+    const { user, newRole } = roleChangeTarget;
+    const oldRole = user.role;
+    try {
+      await apiClient.patch(`/users/${user.id}`, { role: newRole });
+      toast('success', `Role ${user.namaLengkap} berubah: ${ROLE_LABELS[oldRole] || oldRole} → ${ROLE_LABELS[newRole] || newRole}`);
+      setRoleChangeTarget(null);
+      refetch();
+    } catch {
+      toast('error', 'Gagal mengubah role user');
+    }
+    setRoleChangeLoading(false);
+  };
+
+  // ── Columns ──
   const columns = [
     { key: 'namaLengkap', label: 'Nama' },
     { key: 'email', label: 'Email', hidden: 'hidden sm:table-cell' },
@@ -96,11 +123,30 @@ export default function UsersPage() {
       key: 'role',
       label: 'Role',
       render: (user: User) => (
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_BADGES[user.role] || ''}`}
-        >
-          {ROLE_LABELS[user.role] || user.role}
-        </span>
+        <div className="relative group" onClick={(e) => e.stopPropagation()}>
+          <select
+            value={user.role}
+            onChange={(e) => {
+              const newRole = e.target.value;
+              if (newRole !== user.role) {
+                setRoleChangeTarget({ user, newRole });
+              }
+            }}
+            className={`appearance-none cursor-pointer px-2 py-0.5 pr-6 rounded-full text-xs font-medium border-2 border-transparent hover:border-blue-300 dark:hover:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all ${
+              ROLE_BADGES[user.role] || 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <ArrowUpDown
+            size={10}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+          />
+        </div>
       ),
     },
     {
@@ -130,6 +176,7 @@ export default function UsersPage() {
   ];
 
   return (
+    <PermissionGuard module="users" action="view">
     <PageContainer>
       <PageHeader title="Manajemen User" onRefresh={refetch}>
         <button
@@ -212,6 +259,23 @@ export default function UsersPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* ── Role Change Confirmation Modal ── */}
+      <ConfirmModal
+        open={!!roleChangeTarget}
+        title="Ubah Role User"
+        message={
+          roleChangeTarget
+            ? `Ubah role "${roleChangeTarget.user.namaLengkap}" dari "${ROLE_LABELS[roleChangeTarget.user.role] || roleChangeTarget.user.role}" menjadi "${ROLE_LABELS[roleChangeTarget.newRole] || roleChangeTarget.newRole}"?\n\nPerubahan ini akan tercatat di audit log.`
+            : ''
+        }
+        confirmLabel={roleChangeLoading ? 'Menyimpan...' : 'Ya, Ubah'}
+        cancelLabel="Batal"
+        variant="warning"
+        onConfirm={handleRoleChange}
+        onCancel={() => setRoleChangeTarget(null)}
+      />
     </PageContainer>
+    </PermissionGuard>
   );
 }

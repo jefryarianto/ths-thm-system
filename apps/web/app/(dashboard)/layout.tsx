@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import apiClient, { clearTokens } from '@/lib/api-client';
@@ -25,8 +25,16 @@ import {
   TrendingUp,
   MessageSquare,
   Activity,
+  Wifi,
+  PanelLeftClose,
+  PanelLeft,
+  User,
+  Lock,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useAuth } from '@/hooks/use-auth';
+import { MODULE_PERMISSIONS } from '@/components/auth/can';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -35,8 +43,8 @@ interface DashboardLayoutProps {
 interface MenuItem {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: string | number }>;
-  /** If true, only show to users with admin-level roles (superadmin, admin_distrik, etc.) */
+  icon: React.ComponentType<{ size?: string | number; className?: string }>;
+  /** If true, only show to users with admin-level roles */
   adminOnly?: boolean;
   /** If true, open in a new tab (external/API-hosted pages like Bull Board) */
   external?: boolean;
@@ -46,6 +54,9 @@ interface MenuGroup {
   label: string;
   items: MenuItem[];
 }
+
+const SIDEBAR_EXPANDED = 256;
+const SIDEBAR_COLLAPSED = 64;
 
 const menuGroups: MenuGroup[] = [
   {
@@ -130,6 +141,9 @@ const menuGroups: MenuGroup[] = [
     label: 'Sistem',
     items: [
       { href: '/users', label: 'Users', icon: Shield },
+      { href: '/monitoring', label: 'Monitoring', icon: Activity },
+      { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: Bell },
+      { href: '/monitoring/incidents', label: 'Incidents', icon: AlertTriangle },
       { href: '/settings', label: 'Pengaturan', icon: Settings },
       { href: '/settings/email', label: 'Email Admin', icon: Mail },
       {
@@ -138,26 +152,119 @@ const menuGroups: MenuGroup[] = [
         icon: Activity,
         adminOnly: true,
       },
+      {
+        href: '/ws-monitor',
+        label: 'WebSocket',
+        icon: Wifi,
+        adminOnly: true,
+      },
     ],
   },
 ];
 
 // Flattened for header title lookup
-const menuItems = menuGroups.flatMap((g) => g.items);
+const menuItems = menuGroups.flatMap((g) => g.items);/** Small dropdown menu item used in the user profile popover */
+function DropdownItem({
+  icon: Icon,
+  label,
+  href,
+  onClick,
+}: {
+  icon: React.ComponentType<{ size?: string | number; className?: string }>;
+  label: string;
+  href: string;
+  onClick: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+    >
+      <Icon size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />
+      {label}
+    </Link>
+  );
+}
+
+ function getModuleKey(href: string): string | null {
+  const parts = href.replace(/^\//, '').split('/');
+  const first = parts[0];
+  if (!first) return null;
+
+  if (first === 'admin' && parts[1] === 'queues') return 'queues';
+  if (first === 'ws-monitor') return 'wsMonitor';
+  if (first === 'audit-logs') return 'auditLogs';
+  if (first === 'org-chart') return 'org-chart';
+  if (first === 'org-documents') return 'org-documents';
+  if (first === 'scan-stats') return 'scan-stats';
+  if (first === 'forum') return 'forum';
+  if (first === 'notifications') return 'notifications';
+  if (first === 'gamification') return 'gamification';
+  if (first === 'settings') return 'settings';
+  if (first === 'users') return 'users';
+
+  return first;
+}
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { user, isAdmin, isSystemAdmin, hasMinRole } = useAuth();
   const [queueStats, setQueueStats] = useState<{ waiting: number; active: number } | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
+  const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
+
+  // Hydration guard + responsive sidebar:
+  //   - Screens < 1024px: always collapsed (no localStorage)
+  //   - Screens >= 1024px: restore user preference from localStorage
   useEffect(() => {
     setMounted(true);
+    if (isDesktop()) {
+      const saved = localStorage.getItem('sidebarCollapsed');
+      if (saved === 'true') {
+        setCollapsed(true);
+      }
+    } else {
+      setCollapsed(true);
+    }
+  }, []);
+
+  // Listen for viewport resize to auto-collapse/expand
+  useEffect(() => {
+    if (!mounted) return;
+    const mql = window.matchMedia('(max-width: 1023px)');
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        setCollapsed(true);
+      } else {
+        // Restore user preference when going back to desktop
+        const saved = localStorage.getItem('sidebarCollapsed');
+        setCollapsed(saved === 'true');
+      }
+    };
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [mounted]);
+
+  const toggleSidebar = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      if (isDesktop()) {
+        localStorage.setItem('sidebarCollapsed', String(next));
+      }
+      return next;
+    });
   }, []);
 
   useEffect(() => {
-    // Initial fetch
+    let socketSubscribed = false;
+
     const fetchCount = async () => {
       try {
         const { data } = await apiClient.get('/notifications/count');
@@ -166,10 +273,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         /* ignore */
       }
     };
+
     fetchCount();
 
-    // WebSocket for real-time notifications (socket.ts handles enable/disable via
-    // NEXT_PUBLIC_ENABLE_REALTIME env var — returns noop socket when disabled)
     try {
       const token = localStorage.getItem('accessToken');
       if (token) {
@@ -180,6 +286,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         socket.on('notification:count', (data: { count: number }) => {
           setUnreadCount(data.count);
         });
+        socketSubscribed = true;
 
         return () => {
           socket.off('notification:new');
@@ -187,28 +294,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         };
       }
     } catch {
-      /* fallback to polling below */
+      /* fallback to polling below — only set up interval when socket fails */
     }
 
-    // Fallback: poll every 30s if WebSocket unavailable
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
+    // Only poll when socket subscription didn't succeed
+    if (!socketSubscribed) {
+      const interval = setInterval(fetchCount, 30000);
+      return () => clearInterval(interval);
+    }
   }, []);
 
-  // ── Queue Stats Polling ────────────────────────────────
-  // Fetch queue job counts every 10s for admin users.
+  // Queue Stats Polling
   useEffect(() => {
     if (!mounted) return;
-
-    // Only poll if the current user is an admin
-    try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const role = user?.role || '';
-      const adminRoles = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
-      if (!adminRoles.includes(role)) return;
-    } catch {
-      return;
-    }
+    if (!isAdmin) return;
 
     const fetchStats = async () => {
       try {
@@ -220,7 +319,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           });
         }
       } catch {
-        // Silently ignore — queue may not be available
         setQueueStats(null);
       }
     };
@@ -230,41 +328,86 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => clearInterval(interval);
   }, [mounted]);
 
+  // Click outside to close profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = () => {
+    setProfileOpen(false);
     disconnectSocket();
     clearTokens();
     localStorage.removeItem('user');
     router.push('/login');
   };
 
+  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
+
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <Link href="/members" className="flex items-center gap-2">
-            <img src="/logo.png" alt="" className="w-8 h-8 rounded-lg object-cover" />
-            <span className="text-lg font-bold text-blue-700 dark:text-blue-400">THS-THM</span>
-          </Link>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-10">Dashboard Admin</p>
+      <aside
+        className="bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 ease-in-out"
+        style={{ width: sidebarWidth, minWidth: sidebarWidth }}
+      >
+        {/* Brand + Toggle */}
+        <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800 h-14 shrink-0">
+          {collapsed ? (
+            <Link href="/members" className="mx-auto">
+              <img
+                src="/logo.png"
+                alt=""
+                className="w-8 h-8 rounded-lg object-cover dark:brightness-0 dark:invert transition-all duration-300"
+              />
+            </Link>
+          ) : (
+            <Link href="/members" className="flex items-center gap-2 min-w-0">
+              <img
+                src="/logo.png"
+                alt=""
+                className="w-8 h-8 rounded-lg object-cover shrink-0 dark:brightness-0 dark:invert transition-all duration-300"
+              />
+              <span className="text-lg font-bold text-blue-700 dark:text-blue-400 truncate">THS-THM</span>
+            </Link>
+          )}
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0"
+            title={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+            aria-label={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-2 space-y-4">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4">
           {menuGroups.map((group) => (
             <div key={group.label}>
-              <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                {group.label}
-              </p>
+              {/* Group label — hidden when collapsed */}
+              {!collapsed && (
+                <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                  {group.label}
+                </p>
+              )}
+
               {group.items
                 .filter((item) => {
-                  // Hide admin-only items from non-admin users
                   if (item.adminOnly && mounted) {
-                    try {
-                      const user = JSON.parse(localStorage.getItem('user') || '{}');
-                      const role = user?.role || '';
-                      const adminRoles = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'];
-                      if (!adminRoles.includes(role)) return false;
-                    } catch {
+                    if (!isAdmin) return false;
+                  }
+                  const moduleKey = getModuleKey(item.href);
+                  if (moduleKey) {
+                    const perms = MODULE_PERMISSIONS[moduleKey];
+                    const requiredViewRole = perms?.view;
+                    if (requiredViewRole && !hasMinRole(requiredViewRole)) {
                       return false;
                     }
                   }
@@ -274,25 +417,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   const Icon = item.icon;
                   const isActive = pathname?.startsWith(item.href) || false;
 
-                  // External links (API-hosted pages like Bull Board) open in a new tab
-                  if (item.external) {
-                    return (
-                      <a
-                        key={item.href}
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition ${
-                          isActive
-                            ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
-                      >
-                        <Icon size={18} />
-                        {item.label}
-                        {/* Right-aligned container for badge + external icon */}
+                  // Shared classes for both external and internal links
+                  const linkClasses = `flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  } ${collapsed ? 'justify-center px-2' : ''}`;
+
+                  const content = (
+                    <>
+                      <Icon size={18} className="shrink-0" />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                      {/* Badge + external indicator — only when expanded */}
+                      {!collapsed && (
                         <span className="ml-auto flex items-center gap-1.5">
-                          {/* Queue stats badge — only for the Antrean link */}
                           {item.href === '/admin/queues' && queueStats &&
                             (queueStats.waiting + queueStats.active > 0) && (
                             <span
@@ -305,21 +443,33 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                               {queueStats.waiting + queueStats.active}
                             </span>
                           )}
-                          {/* External link indicator */}
-                          <svg
-                            className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
+                          {item.external && (
+                            <svg
+                              className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500"
+                              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                          )}
                         </span>
+                      )}
+                    </>
+                  );
+
+                  if (item.external) {
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={linkClasses}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        {content}
                       </a>
                     );
                   }
@@ -328,14 +478,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition ${
-                        isActive
-                          ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }`}
+                      className={linkClasses}
+                      title={collapsed ? item.label : undefined}
                     >
-                      <Icon size={18} />
-                      {item.label}
+                      {content}
                     </Link>
                   );
                 })}
@@ -343,20 +489,115 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition w-full"
-          >
-            <LogOut size={18} />
-            Keluar
-          </button>
-        </div>
+        {/* User Profile — with dropdown menu */}
+        {user && (
+          <div className="relative" ref={profileRef}>
+            {/* Clickable trigger */}
+            <button
+              onClick={() => setProfileOpen((prev) => !prev)}
+              className={`w-full text-left transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                collapsed ? 'flex justify-center py-3' : 'px-3 py-3'
+              } ${profileOpen ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+              title={collapsed ? user.namaLengkap : undefined}
+            >
+              {collapsed ? (
+                <UserAvatar
+                  fotoPath={user.fotoPath}
+                  namaLengkap={user.namaLengkap}
+                  size="sm"
+                />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <UserAvatar
+                    fotoPath={user.fotoPath}
+                    namaLengkap={user.namaLengkap}
+                    size="md"
+                  />
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                      {user.namaLengkap}
+                    </p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </button>
+
+            {/* Dropdown menu */}
+            {profileOpen && (
+              <>
+                {/* Collapsed: dropdown appears to the right of the avatar */}
+                {collapsed ? (
+                  <div className="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    {/* User info header */}
+                    <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {user.namaLengkap}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                    <DropdownItem
+                      icon={User}
+                      label="Profil Saya"
+                      href="/settings"
+                      onClick={() => setProfileOpen(false)}
+                    />
+                    <DropdownItem
+                      icon={Lock}
+                      label="Ubah Password"
+                      href="/settings"
+                      onClick={() => setProfileOpen(false)}
+                    />
+                    <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                    >
+                      <LogOut size={16} className="shrink-0" />
+                      Keluar
+                    </button>
+                  </div>
+                ) : (
+                  /* Expanded: dropdown appears below the profile card */
+                  <div className="absolute left-3 right-3 top-full mt-0.5 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    <DropdownItem
+                      icon={User}
+                      label="Profil Saya"
+                      href="/settings"
+                      onClick={() => setProfileOpen(false)}
+                    />
+                    <DropdownItem
+                      icon={Lock}
+                      label="Ubah Password"
+                      href="/settings"
+                      onClick={() => setProfileOpen(false)}
+                    />
+                    <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                    >
+                      <LogOut size={16} className="shrink-0" />
+                      Keluar
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between">
+      <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+        {/* Header */}
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
           </h2>
@@ -364,7 +605,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <ThemeToggle />
             <Link
               href="/notifications"
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Bell size={20} className="text-gray-600 dark:text-gray-300" />
               {unreadCount > 0 && (
@@ -373,12 +614,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </span>
               )}
             </Link>
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              {mounted ? JSON.parse(localStorage.getItem('user') || '{}')?.namaLengkap : ''}
+            <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">
+              {user?.namaLengkap || ''}
             </span>
           </div>
         </header>
 
+        {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>

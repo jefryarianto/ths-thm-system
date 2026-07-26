@@ -7,6 +7,7 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import {
+
   Plus,
   FileText,
   Download,
@@ -14,6 +15,8 @@ import {
   Trash2,
   Layers,
 } from 'lucide-react';
+import { CanCreate, CanDelete } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -99,6 +102,7 @@ export default function DocumentsPage() {
   };
 
   return (
+    <PermissionGuard module="documents" action="view">
     <PageContainer>
       {/* ─── Tabs ─── */}
       <div className="flex items-center gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -130,20 +134,24 @@ export default function DocumentsPage() {
       {activeTab === 'documents' && (
         <>
           <PageHeader title="Dokumen" onRefresh={refetch}>
-            <button
-              onClick={() => {
-                setShowBatchModal(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors"
-            >
-              <Download size={14} /> Generate Massal
-            </button>
-            <button
-              onClick={() => router.push('/documents/new')}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={14} /> Tambah
-            </button>
+            <CanCreate module="documents">
+              <button
+                onClick={() => {
+                  setShowBatchModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors"
+              >
+                <Download size={14} /> Generate Massal
+              </button>
+            </CanCreate>
+            <CanCreate module="documents">
+              <button
+                onClick={() => router.push('/documents/new')}
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+              >
+                <Plus size={14} /> Tambah
+              </button>
+            </CanCreate>
           </PageHeader>
 
           <SummaryBar icon={FileText} label="Total Dokumen" total={meta.total} />
@@ -220,13 +228,15 @@ export default function DocumentsPage() {
                     >
                       <Eye size={15} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(row.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <CanDelete module="documents">
+                      <button
+                        onClick={() => handleDelete(row.id)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                        title="Hapus"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </CanDelete>
                   </div>
                 </td>
               </tr>
@@ -248,13 +258,15 @@ export default function DocumentsPage() {
                 Buat generate dokumen massal dan pantau progresnya
               </p>
             </div>
-            <button
-              onClick={() => setShowBatchModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <Download size={14} />
-              Batch Baru
-            </button>
+            <CanCreate module="documents">
+              <button
+                onClick={() => setShowBatchModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <Download size={14} />
+                Batch Baru
+              </button>
+            </CanCreate>
           </div>
 
           {/* Batch history panel */}
@@ -269,5 +281,6 @@ export default function DocumentsPage() {
         onBatchCreated={handleBatchCreated}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

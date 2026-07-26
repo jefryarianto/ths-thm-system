@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Logger, OnApplicationBootstrap, Optional, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Header, Logger, OnApplicationBootstrap, Optional, Param, Patch, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
@@ -10,6 +10,7 @@ import { EventsGateway } from '../modules/notifications/events.gateway';
 import { createHash } from 'crypto';
 import type { Request, Response } from 'express';
 import { QueueDashboardModule } from '../modules/queue-dashboard/queue-dashboard.module';
+import { MonitoringService } from '../modules/monitoring/monitoring.service';
 
 /**
  * In-memory 24-hour uptime tracker recording queue connection status
@@ -317,6 +318,7 @@ export class HealthController implements OnApplicationBootstrap {
     private readonly auditLogStore: AuditLogStore,
     private readonly apiKeyStore: ApiKeyStore,
     @Optional() private readonly eventsGateway?: EventsGateway,
+    @Optional() private readonly monitoringService?: MonitoringService,
   ) {}
 
   @Get()
@@ -384,6 +386,93 @@ export class HealthController implements OnApplicationBootstrap {
         queue: await this.getQueueHealth(),
       },
     };
+  }
+
+  /**
+   * GET /health/events — Server-Sent Events stream that pushes real-time
+   * health snapshots every 5 seconds. The client uses EventSource to
+   * receive updates instantly without polling.
+   *
+   * Event types:
+   *   - `health`: Full health snapshot (every 5s)
+   *   - `queue-status`: Queue status transitions only (connected↔disconnected)
+   *   - `keepalive`: Sent every 30s to prevent proxy timeouts
+   *
+   * On connection, immediately sends the current health snapshot.
+   * On disconnect (client closes tab), the interval is cleaned up automatically.
+   */
+  @Get('events')
+  @Public()
+  @ApiOperation({ summary: 'SSE stream — real-time health updates every 5 detik' })
+  async streamHealth(@Res() res: Response): Promise<void> {
+    // ── SSE Headers ──
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // nginx: disable buffering
+    res.flushHeaders();
+
+    // Keep track of health data so we can detect queue status transitions
+    let lastQueueStatus: string | undefined;
+
+    const sendEvent = (event: string, data: unknown) => {
+      try {
+        res.write(`event: ${event}\n`);
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      } catch {
+        // Client likely disconnected — interval cleanup handles this
+      }
+    };
+
+    // Helper: run the full health check and send the result
+    const sendHealthSnapshot = async () => {
+      try {
+        const snapshot = await this.check();
+        const healthData = (snapshot as { data: Record<string, unknown> })?.data || snapshot;
+        sendEvent('health', healthData);
+
+        // Detect queue status transition
+        const queueStatus = (healthData as Record<string, unknown>)?.queue as QueueHealthDetail | undefined;
+        const currentStatus = queueStatus?.status;
+        if (currentStatus && currentStatus !== lastQueueStatus) {
+          sendEvent('queue-status', {
+            status: currentStatus,
+            previous: lastQueueStatus,
+            workerStatus: queueStatus.workerStatus,
+            latencyMs: queueStatus.latencyMs,
+            timestamp: new Date().toISOString(),
+          });
+          lastQueueStatus = currentStatus;
+        }
+
+        // Evaluate monitoring alerts against current health
+        this.monitoringService?.evaluateAlerts(healthData as never).catch((err) => {
+          this.logger.warn(`Alert evaluation error: ${(err as Error).message}`);
+        });
+      } catch (err) {
+        sendEvent('error', {
+          message: (err as Error).message || 'Health check failed',
+          timestamp: new Date().toISOString(),
+        });
+      }
+    };
+
+    // Send initial snapshot immediately
+    await sendHealthSnapshot();
+
+    // Then every 5 seconds
+    const intervalId = setInterval(sendHealthSnapshot, 5_000);
+
+    // Keepalive every 30 seconds to prevent proxy timeouts
+    const keepaliveId = setInterval(() => {
+      sendEvent('keepalive', { timestamp: new Date().toISOString() });
+    }, 30_000);
+
+    // Clean up on client disconnect
+    res.on('close', () => {
+      clearInterval(intervalId);
+      clearInterval(keepaliveId);
+    });
   }
 
   /**
@@ -752,6 +841,53 @@ export class HealthController implements OnApplicationBootstrap {
     }
 
     res.json(responseValue);
+  }
+
+  /**
+   * PATCH /admin/queue-uptime/events/:id — Update incident notes (root cause) and component.
+   * Used by the monitoring incidents page for inline root cause editing.
+   */
+  @Patch('admin/queue-uptime/events/:id')
+  @Roles('superadmin', 'admin_distrik')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update incident notes / root cause for a queue uptime event' })
+  async updateUptimeEvent(
+    @Param('id') id: string,
+    @Body() body: { notes?: string; component?: string },
+  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
+    // Basic input validation
+    if (body.notes !== undefined && body.notes.length > 2000) {
+      return { success: false, error: 'Notes must be 2000 characters or fewer' };
+    }
+    const allowedComponents = ['queue', 'database', 'api', 'other'];
+    if (body.component !== undefined && !allowedComponents.includes(body.component)) {
+      return { success: false, error: `Component must be one of: ${allowedComponents.join(', ')}` };
+    }
+
+    const data: Record<string, unknown> = {};
+    if (body.notes !== undefined) data.notes = body.notes;
+    if (body.component !== undefined) data.component = body.component;
+
+    try {
+      const updated = await this.prisma.queueUptimeEvent.update({
+        where: { id },
+        data,
+      });
+
+      this.cache.invalidatePrefix(HealthController.EVENT_CACHE_PREFIX);
+
+      return {
+        success: true,
+        data: {
+          id: updated.id,
+          notes: updated.notes,
+          component: updated.component,
+        },
+      };
+    } catch (err: unknown) {
+      this.logger.warn(`Failed to update uptime event ${id}: ${(err as Error).message}`);
+      return { success: false, error: 'Incident not found or could not be updated' };
+    }
   }
 
   /**

@@ -36,7 +36,7 @@ export default function SearchBar({
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}

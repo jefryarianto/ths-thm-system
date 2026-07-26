@@ -1,8 +1,9 @@
-import { Controller, Get, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { ReportsService } from './reports.service';
+import { ExportService } from './export.service';
 import { Response } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';
 
@@ -13,6 +14,7 @@ export class ReportsController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly reportsService: ReportsService,
+    private readonly exportService: ExportService,
   ) {}
 
   @Get('dashboard')
@@ -85,6 +87,37 @@ export class ReportsController {
       .sort((a, b) => a.month.localeCompare(b.month));
 
     return { success: true, data: result };
+  }
+
+  @Get('export/:type')
+  @ApiOperation({ summary: 'Ekspor data ke XLSX/CSV' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  async exportData(
+    @Param('type') type: string,
+    @Query('format') format: string,
+    @Req() req: ScopedRequest,
+    @Res() res: Response,
+  ) {
+    const fmt = format || 'xlsx';
+
+    if (fmt === 'csv') {
+      const csv = await this.exportService.exportToCsv(type, req.scope);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${type}-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+      );
+      // Add BOM for Excel compatibility
+      res.send('\uFEFF' + csv);
+    } else {
+      const buffer = await this.exportService.exportToXlsx(type, req.scope);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${type}-export-${new Date().toISOString().slice(0, 10)}.xlsx"`,
+      );
+      res.send(buffer);
+    }
   }
 
   @Get('export/audit-log')

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuditLogStore } from './audit-log-store.service';
+import { EventBusService } from './event-bus.service';
 
 /**
  * Audit event types for classification.
@@ -49,7 +50,10 @@ export interface AuditLogEntry {
 export class AuditService {
   private readonly logger = new Logger('Audit');
 
-  constructor(private readonly store: AuditLogStore) {}
+  constructor(
+    private readonly store: AuditLogStore,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   /**
    * Log a scope violation (access denied by ScopeGuard).
@@ -88,6 +92,7 @@ export class AuditService {
 
     this.logger.log(JSON.stringify(entry));
     this.store.add(entry);
+    this.eventBus.emit('audit:new', entry);
   }
 
   /**
@@ -150,6 +155,7 @@ export class AuditService {
 
     this.logger.log(JSON.stringify(entry));
     this.store.add(entry);
+    this.eventBus.emit('audit:new', entry);
   }
 
   /**
@@ -171,5 +177,6 @@ export class AuditService {
 
     this.logger.log(JSON.stringify(entry));
     this.store.add(entry);
+    this.eventBus.emit('audit:new', entry);
   }
 }

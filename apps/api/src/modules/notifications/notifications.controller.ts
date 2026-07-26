@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, Patch } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
+import { EventsGateway } from './events.gateway';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
@@ -15,7 +16,10 @@ import {
 @Controller('notifications')
 @ApiBearerAuth()
 export class NotificationsController {
-  constructor(private readonly service: NotificationsService) {}
+  constructor(
+    private readonly service: NotificationsService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   @Post('send')
   @ApiOperation({ summary: 'Kirim notifikasi' })
@@ -92,6 +96,13 @@ export class NotificationsController {
   )
   markAllAsRead(@CurrentUser() user: { id: string }) {
     return this.service.markAllAsRead(user.id);
+  }
+
+  @Get('ws-stats')
+  @ApiOperation({ summary: 'Statistik koneksi WebSocket real-time' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  getWsStats() {
+    return this.eventsGateway.getStats();
   }
 
   @Get('stats')

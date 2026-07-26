@@ -4,6 +4,7 @@ import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
 import {
   CreateGraduationDto,
+  UpdateGraduationDto,
   GraduationFilterDto,
   RegisterParticipantDto,
   GraduateDto,
@@ -56,6 +57,21 @@ export class GraduationsService {
     if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
     this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
     return { success: true, data: graduation };
+  }
+
+  async update(id: string, dto: UpdateGraduationDto) {
+    const existing = await this.prisma.kegiatan.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Pendadaran tidak ditemukan');
+
+    const data: Record<string, unknown> = {};
+    if (dto.nama !== undefined) data.nama = dto.nama;
+    if (dto.lokasi !== undefined) data.lokasi = dto.lokasi;
+    if (dto.tanggalMulai !== undefined) data.tanggalMulai = new Date(dto.tanggalMulai);
+    if (dto.tanggalSelesai !== undefined) data.tanggalSelesai = new Date(dto.tanggalSelesai);
+    if (dto.status !== undefined) data.status = dto.status;
+
+    const updated = await this.prisma.kegiatan.update({ where: { id }, data });
+    return { success: true, data: updated, message: 'Pendadaran berhasil diperbarui' };
   }
 
   async create(dto: CreateGraduationDto, scope?: UserScope) {

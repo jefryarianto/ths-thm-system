@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import SummaryBar from '@/components/ui/summary-bar';
@@ -57,6 +58,7 @@ export default function ApprovalsPage() {
   };
 
   return (
+    <PermissionGuard module="approvals" action="view">
     <PageContainer>
       <PageHeader title="Persetujuan" onRefresh={fetchPending} />
 
@@ -154,5 +156,6 @@ export default function ApprovalsPage() {
         </div>
       )}
     </PageContainer>
+    </PermissionGuard>
   );
 }

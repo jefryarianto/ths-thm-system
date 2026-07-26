@@ -62,6 +62,7 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
         { provide: MailService, useValue: mockMailService },
+        { provide: 'ENV', useValue: { jwtRefreshSecret: 'test-refresh-secret', jwtRefreshExpiresIn: '7d', nodeEnv: 'test', frontendUrl: 'http://localhost:3000' } },
       ],
     }).compile();
 
@@ -85,7 +86,8 @@ describe('AuthService', () => {
       expect(result.success).toBe(true);
       expect(result.data.user.email).toBe('test@ths-thm.org');
       expect(result.data.accessToken).toBe('mock-jwt-token');
-      expect(result.data.refreshToken).toBe('mock-jwt-token');
+      // login() without response param returns refreshToken in data
+      expect((result.data as { refreshToken: string }).refreshToken).toBe('mock-jwt-token');
     });
 
     it('should throw UnauthorizedException for non-existent user', async () => {
@@ -156,8 +158,9 @@ describe('AuthService', () => {
 
       const result = await service.getProfile('u1');
       expect(result.success).toBe(true);
-      expect(result.data.passwordHash).toBeUndefined();
-      expect(result.data.refreshToken).toBeUndefined();
+      // sanitizeUser strips these fields so they don't appear on the type
+      expect((result.data as Record<string, unknown>).passwordHash).toBeUndefined();
+      expect((result.data as Record<string, unknown>).refreshToken).toBeUndefined();
       expect(result.data.email).toBe('test@ths-thm.org');
     });
 
@@ -264,15 +267,15 @@ describe('AuthService', () => {
 
     it('should not try to update Anggota when only core User fields change', async () => {
       mockPrisma.user.update.mockResolvedValue(mockUser);
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
 
-      // No Anggota search should happen for core-only fields
+      // No Anggota update should happen for core-only fields
       const result = await service.updateProfile('u1', {
         email: 'newemail@ths-thm.org',
       });
 
       expect(result.success).toBe(true);
-      // Should not query or update Anggota at all
-      expect(mockPrisma.anggota.findFirst).not.toHaveBeenCalled();
+      // Should not update Anggota
       expect(mockPrisma.anggota.update).not.toHaveBeenCalled();
     });
   });

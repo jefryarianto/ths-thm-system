@@ -7,6 +7,7 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { Plus, CheckCircle, XCircle, Users, Download, Eye, FileText } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -14,6 +15,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { STATUS_OPTIONS, StatusBadge } from '@/components/registrations/constants';
+
 
 interface RegistrationRow {
   id: string;
@@ -71,6 +73,7 @@ export default function RegistrationsPage() {
   };
 
   return (
+    <PermissionGuard module="registrations" action="view">
     <PageContainer>
       <PageHeader title="Pendaftaran Baru">
         <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -188,5 +191,6 @@ export default function RegistrationsPage() {
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

@@ -119,34 +119,34 @@ export function FilePreview({ fileUrl, fileName }: { fileUrl: string; fileName: 
     <div className="space-y-2">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition text-left"
+        className="flex items-center gap-2 w-full p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition text-left"
       >
         <FileText size={16} className="text-blue-600 flex-shrink-0" />
-        <span className="text-sm text-gray-700 truncate flex-1">{fileName}</span>
+        <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">{fileName}</span>
         <ChevronRight
           size={14}
-          className={`text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          className={`text-gray-400 dark:text-gray-500 transition-transform ${expanded ? 'rotate-90' : ''}`}
         />
       </button>
       {expanded && (
-        <div className="rounded-lg overflow-hidden border border-gray-200">
+        <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
           {isPdf ? (
             <iframe src={fileUrl} className="w-full h-80" title={`Preview: ${fileName}`} />
           ) : isImage ? (
             <img
               src={fileUrl}
               alt={fileName}
-              className="w-full h-auto max-h-80 object-contain bg-gray-50"
+              className="w-full h-auto max-h-80 object-contain bg-gray-50 dark:bg-gray-800"
             />
           ) : (
-            <div className="p-4 text-center text-sm text-gray-500">
-              <FileText size={32} className="mx-auto mb-2 text-gray-400" />
+            <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+              <FileText size={32} className="mx-auto mb-2 text-gray-400 dark:text-gray-500" />
               <p>Preview tidak tersedia untuk file ini</p>
               <a
                 href={fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="mt-2 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
               >
                 <Download size={12} /> Download
               </a>

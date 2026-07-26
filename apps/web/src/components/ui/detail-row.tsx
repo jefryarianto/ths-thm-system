@@ -37,7 +37,7 @@ export default function DetailRow({
             hoverable ? 'truncate' : ''
           }`}
         >
-          {value || <span className="text-gray-400 italic">Tidak ada data</span>}
+          {value || <span className="text-gray-400 dark:text-gray-500 italic">Tidak ada data</span>}
         </p>
       </div>
       {href && (

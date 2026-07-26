@@ -80,6 +80,7 @@ export default function MemberActions({
           ref={buttonRef}
           onClick={toggleMenu}
           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          title="Menu lainnya"
         >
           <MoreVertical size={14} className="text-gray-400" />
         </button>
@@ -93,6 +94,7 @@ export default function MemberActions({
               {menuItems.map((item, i) => (
                 <button
                   key={i}
+                  title={item.label}
                   onClick={() => { setShowMenu(false); item.action(); }}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
                     item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'

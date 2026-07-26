@@ -9,11 +9,14 @@ import PageHeader from '@/components/ui/page-header';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
-import { Plus, FileText } from 'lucide-react';
-import type { LetterRow, LetterDetail, LetterType, TabValue } from './shared';
+import { FileText, ExternalLink } from 'lucide-react';
+import { CanCreate } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
+import type { LetterRow, TabValue } from './shared';
+import Link from 'next/link';
 import { statusColors, TAB_VALUES } from './shared';
 import LetterDetailPanel from './letter-detail-panel';
-import LetterFormModal from './letter-form-modal';
+
 
 const columns = [
   { key: 'nomorSurat', label: 'No. Surat' },
@@ -86,11 +89,6 @@ export default function LettersPage() {
   // Detail panel state
   const [selectedLetter, setSelectedLetter] = useState<LetterRow | null>(null);
 
-  // Form modal state
-  const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState<LetterType>('masuk');
-  const [editLetter, setEditLetter] = useState<LetterDetail | null>(null);
-
   // Delete state
   const [deleting, setDeleting] = useState(false);
 
@@ -119,25 +117,7 @@ export default function LettersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page, search, filters.status]);
 
-  const openCreate = (type: LetterType) => {
-    setFormType(type);
-    setEditLetter(null);
-    setShowForm(true);
-  };
-
-  const openEdit = (detail: LetterDetail) => {
-    setFormType(
-      detail.type === 'masuk' || detail.type === 'keluar'
-        ? detail.type
-        : detail.pengirim
-          ? 'masuk'
-          : 'keluar',
-    );
-    setEditLetter(detail);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (letter: LetterDetail) => {
+  const handleDelete = async (letter: import('./shared').LetterDetail) => {
     if (!confirm('Yakin ingin menghapus surat ini?')) return;
     const type = letter.type || (letter.pengirim ? 'masuk' : 'keluar');
     const endpoint = type === 'masuk' ? '/letters/incoming' : '/letters/outgoing';
@@ -160,6 +140,7 @@ export default function LettersPage() {
   const closeDetail = () => setSelectedLetter(null);
 
   return (
+    <PermissionGuard module="letters" action="view">
     <PageContainer>
       <PageHeader title="Surat" onRefresh={fetchData}>
         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 mr-3">
@@ -177,18 +158,22 @@ export default function LettersPage() {
             </button>
           ))}
         </div>
-        <button
-          onClick={() => openCreate('masuk')}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-        >
-          <Plus size={14} /> Surat Masuk
-        </button>
-        <button
-          onClick={() => openCreate('keluar')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-        >
-          <Plus size={14} /> Surat Keluar
-        </button>
+        <CanCreate module="letters">
+          <Link
+            href="/letters/incoming/new"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+          >
+            <ExternalLink size={14} /> Surat Masuk
+          </Link>
+        </CanCreate>
+        <CanCreate module="letters">
+          <Link
+            href="/letters/outgoing/new"
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          >
+            <ExternalLink size={14} /> Surat Keluar
+          </Link>
+        </CanCreate>
       </PageHeader>
 
       <SummaryBar icon={FileText} label="Total Surat" total={meta.total} onRefresh={fetchData} />
@@ -229,22 +214,14 @@ export default function LettersPage() {
           <LetterDetailPanel
             selectedLetter={selectedLetter}
             onClose={closeDetail}
-            onEdit={openEdit}
             onDelete={handleDelete}
             deleting={deleting}
           />
         )}
       </div>
 
-      {/* Create/Edit Modal */}
-      <LetterFormModal
-        key={editLetter?.id || `new-${formType}`}
-        show={showForm}
-        onClose={() => setShowForm(false)}
-        onSaved={() => fetchData()}
-        editLetter={editLetter}
-        formType={formType}
-      />
+      {/* Create/Edit via dedicated pages: /letters/incoming/new, /letters/outgoing/new */}
     </PageContainer>
+    </PermissionGuard>
   );
 }

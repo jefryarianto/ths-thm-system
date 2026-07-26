@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuditService, AuditEventType } from './audit.service';
 import { AuditLogStore } from './audit-log-store.service';
+import { EventBusService } from './event-bus.service';
 
 describe('AuditService', () => {
   let service: AuditService;
   let loggerSpy: { warn: jest.Mock; log: jest.Mock; debug: jest.Mock };
   let mockStore: { add: jest.Mock };
+  let mockEventBus: { emit: jest.Mock };
 
   beforeEach(async () => {
     loggerSpy = {
@@ -14,9 +16,14 @@ describe('AuditService', () => {
       debug: jest.fn(),
     };
     mockStore = { add: jest.fn() };
+    mockEventBus = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuditService, { provide: AuditLogStore, useValue: mockStore }],
+      providers: [
+        AuditService,
+        { provide: AuditLogStore, useValue: mockStore },
+        { provide: EventBusService, useValue: mockEventBus },
+      ],
     }).compile();
 
     service = module.get<AuditService>(AuditService);

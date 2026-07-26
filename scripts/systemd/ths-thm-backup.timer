@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════════════
+# THS-THM Database Backup Timer
+#
+# Triggers ths-thm-backup.service daily at 02:00 AM.
+# Also runs once 10 minutes after boot (to catch missed backups
+# after a server restart).
+#
+# Verify:
+#   sudo systemctl status ths-thm-backup.timer
+#   sudo systemctl list-timers --all | grep ths-thm
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=THS-THM Daily Database Backup
+Documentation=https://github.com/jefryarianto/ths-thm-system
+
+[Timer]
+# Run daily at 02:00 AM server local time
+# Explicit time avoids OnCalendar=daily defaulting to 00:00
+OnCalendar=*-*-* 02:00:00
+FixedRandomDelay=15m
+
+# Also run 10 minutes after boot if the timer was missed
+OnBootSec=10min
+
+# If the system was powered off during the scheduled time,
+# run immediately on next boot
+Persistent=true
+
+# Prevent multiple concurrent runs
+Unit=ths-thm-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,40 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache openssl libc6-compat python3 make g++ git curl dumb-init
+
+# Install pnpm globally via npm
+RUN npm install -g pnpm@9.15.4
+
+WORKDIR /app
+
+# Copy minimal files untuk install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/tsconfig.json ./apps/api/
+COPY apps/api/nest-cli.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY apps/web/tsconfig.json ./apps/web/
+COPY apps/web/next.config.* ./apps/web/
+COPY packages/templates/package.json ./packages/templates/
+COPY packages/csv_templates/package.json ./packages/csv_templates/
+
+# Install tanpa scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy source
+COPY apps/api/ ./apps/api/
+COPY apps/web/ ./apps/web/
+COPY packages/ ./packages/
+COPY scripts/ ./scripts/
+
+# Generate Prisma
+RUN cd apps/api && pnpm exec prisma generate
+
+ENV NODE_ENV=development
+ENV DATABASE_URL=postgresql://ths_thm:[REDACTED]@postgres:5432/ths_thm_db
+ENV REDIS_URL=redis://redis:6379
+
+EXPOSE 3001 3002
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy --skip-generate 2>/dev/null || true; concurrently 'pnpm --filter @ths-thm/api start:dev' 'pnpm --filter @ths-thm/web dev'"]

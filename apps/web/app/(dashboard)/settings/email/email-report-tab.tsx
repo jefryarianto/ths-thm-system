@@ -183,8 +183,10 @@ export default function EmailReportTab() {
                     }}
                     contentStyle={{
                       borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      border: '1px solid var(--tooltip-border)',
+                      background: 'var(--tooltip-bg)',
+                      color: 'var(--tooltip-color)',
+                      boxShadow: 'var(--tooltip-shadow)',
                     }}
                   />
                   <Bar

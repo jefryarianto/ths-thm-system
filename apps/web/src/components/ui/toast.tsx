@@ -56,7 +56,7 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
       <p className="text-sm text-gray-800 dark:text-gray-200 flex-1">{t.message}</p>
       <button
         onClick={() => onDismiss(t.id)}
-        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
+        className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
       >
         <X size={14} />
       </button>

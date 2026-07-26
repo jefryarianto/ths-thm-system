@@ -34,7 +34,7 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
   processing: <Loader2 size={16} className="text-blue-600 animate-spin" />,
   completed: <CheckCircle2 size={16} className="text-green-600" />,
   completed_with_errors: <AlertTriangle size={16} className="text-orange-600" />,
-  cancelled: <XCircle size={16} className="text-gray-500" />,
+  cancelled: <XCircle size={16} className="text-gray-500 dark:text-gray-400" />,
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -46,7 +46,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const JOB_STATUS_ICONS: Record<string, React.ReactNode> = {
-  pending: <Clock size={14} className="text-gray-400" />,
+  pending: <Clock size={14} className="text-gray-400 dark:text-gray-500" />,
   processing: <Loader2 size={14} className="text-blue-500 animate-spin" />,
   completed: <CheckCircle2 size={14} className="text-green-500" />,
   failed: <XCircle size={14} className="text-red-500" />,
@@ -58,10 +58,10 @@ function JobRow({ job }: { job: BatchJobItem }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2 text-xs border-b border-gray-50 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors rounded-sm">
       <span className="shrink-0">{JOB_STATUS_ICONS[job.status]}</span>
-      <span className="font-mono text-gray-500 truncate min-w-0 flex-1">
+      <span className="font-mono text-gray-500 dark:text-gray-400 truncate min-w-0 flex-1">
         {job.nomorDokumen || '—'}
       </span>
-      <span className="text-gray-400">{job.memberId.slice(0, 8)}...</span>
+      <span className="text-gray-400 dark:text-gray-500">{job.memberId.slice(0, 8)}...</span>
       {job.error && (
         <span className="text-red-500 truncate max-w-[200px]" title={job.error}>
           {job.error}
@@ -299,7 +299,7 @@ export function BatchProgressCard({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={refetch}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition"
+              className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition"
               title="Refresh"
             >
               <RefreshCw size={14} />
@@ -404,7 +404,7 @@ export function BatchProgressCard({
           {detail.jobs.length > 0 && !compact && (
             <button
               onClick={() => setShowJobs(!showJobs)}
-              className="flex items-center gap-1 ml-auto text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition"
+              className="flex items-center gap-1 ml-auto text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition"
             >
               {showJobs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               {detail.jobs.length} job

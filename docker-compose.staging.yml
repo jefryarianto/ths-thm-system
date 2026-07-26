@@ -79,6 +79,9 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ORG: ${SENTRY_ORG}
+      SENTRY_PROJECT: ${SENTRY_PROJECT}
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,6 +102,10 @@ services:
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: https://staging.ths-thm.cloud/api
+      NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ORG: ${SENTRY_ORG}
+      SENTRY_PROJECT: ${SENTRY_PROJECT}
     depends_on:
       - api
     networks:

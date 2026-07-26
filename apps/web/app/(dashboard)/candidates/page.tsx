@@ -6,14 +6,17 @@ import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Candidate } from '@/types';
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
-import { Plus, Upload, Download, UserPlus } from 'lucide-react';
+import { Plus, Upload, UserPlus } from 'lucide-react';
+import ExportMenu from '@/components/ui/export-menu';
+import { CanCreate, CanExport } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import CandidateActions from '@/components/candidates/CandidateActions';
+
 
 const STATUS_COLORS: Record<string, string> = {
   diusulkan: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
@@ -33,22 +36,6 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function CandidatesPage() {
   const router = useRouter();
-
-  const handleExport = useCallback(async () => {
-    try {
-      const res = await apiClient.get('/candidates/export/csv', { responseType: 'blob' });
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'calon-anggota.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      // Silent fail — export button is a convenience
-    }
-  }, []);
 
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
@@ -71,25 +58,28 @@ export default function CandidatesPage() {
   };
 
   return (
+    <PermissionGuard module="candidates" action="view">
     <PageContainer>
-      <PageHeader title="Manajemen Calon Anggota" onRefresh={refetch}>          <button
-            onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            <Download size={14} /> Export
-          </button>
+      <PageHeader title="Manajemen Calon Anggota" onRefresh={refetch}>
+        <CanExport module="candidates">
+          <ExportMenu serverType="candidates" filename="calon-anggota" />
+        </CanExport>
+        <CanCreate module="candidates">
           <button
             onClick={() => router.push('/candidates/import')}
             className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <Upload size={14} /> Import
           </button>
-        <button
-          onClick={() => router.push('/candidates/new')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
-        >
-          <Plus size={14} /> Tambah
-        </button>
+        </CanCreate>
+        <CanCreate module="candidates">
+          <button
+            onClick={() => router.push('/candidates/new')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+          >
+            <Plus size={14} /> Tambah
+          </button>
+        </CanCreate>
       </PageHeader>
 
       <SummaryBar icon={UserPlus} label="Total Calon" total={meta.total} />
@@ -153,5 +143,6 @@ export default function CandidatesPage() {
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

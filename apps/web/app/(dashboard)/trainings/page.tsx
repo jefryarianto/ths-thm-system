@@ -1,11 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { Plus, Calendar, Eye, MapPin, User, BookOpen, Trash2 } from 'lucide-react';
+import ExportMenu from '@/components/ui/export-menu';
+import { CanCreate, CanDelete, CanExport } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -13,6 +16,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { MATERI_OPTIONS } from '@/components/trainings/constants';
+
 
 interface TrainingRow {
   id: string;
@@ -54,11 +58,20 @@ export default function TrainingsPage() {
   };
 
   return (
+    <PermissionGuard module="trainings" action="view">
     <PageContainer>
       <PageHeader title="Manajemen Latihan" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
-          <Plus size={14} /> Jadwal Latihan
-        </button>
+        <CanExport module="trainings">
+          <ExportMenu serverType="trainings" filename="latihan-export" />
+        </CanExport>
+        <CanCreate module="trainings">
+          <Link
+            href="/trainings/new"
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={14} /> Jadwal Latihan
+          </Link>
+        </CanCreate>
       </PageHeader>
 
       <SummaryBar icon={Calendar} label="Total Latihan" total={meta.total} />
@@ -145,24 +158,27 @@ export default function TrainingsPage() {
                 >
                   <Eye size={15} />
                 </button>
-                <button
-                  onClick={async () => {
-                    if (!confirm(`Hapus data latihan ini?`)) return;
-                    try {
-                      await apiClient.delete(`/trainings/${row.id}`);
-                      refetch();
-                    } catch { alert('Gagal menghapus latihan'); }
-                  }}
-                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                  title="Hapus"
-                >
-                  <Trash2 size={14} />
-                </button>
+                <CanDelete module="trainings">
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Hapus data latihan ini?`)) return;
+                      try {
+                        await apiClient.delete(`/trainings/${row.id}`);
+                        refetch();
+                      } catch { alert('Gagal menghapus latihan'); }
+                    }}
+                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                    title="Hapus"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </CanDelete>
               </div>
             </td>
           </tr>
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

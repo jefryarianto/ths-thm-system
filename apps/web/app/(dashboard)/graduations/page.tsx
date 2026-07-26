@@ -6,6 +6,9 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { Plus, GraduationCap, Eye, MapPin, Users, Calendar } from 'lucide-react';
+import ExportMenu from '@/components/ui/export-menu';
+import { CanCreate, CanExport } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -13,6 +16,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { ACTIVITY_STATUS_COLORS, ACTIVITY_STATUS_OPTIONS } from '@/components/activities/constants';
+
 
 interface GraduationRow {
   id: string;
@@ -54,11 +58,20 @@ export default function GraduationsPage() {
   };
 
   return (
+    <PermissionGuard module="graduations" action="view">
     <PageContainer>
       <PageHeader title="Manajemen Pendadaran" onRefresh={refetch}>
-        <button className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors">
-          <Plus size={14} /> Jadwal Pendadaran
-        </button>
+        <CanExport module="graduations">
+          <ExportMenu serverType="graduations" filename="pendadaran-export" />
+        </CanExport>
+        <CanCreate module="graduations">
+          <button
+            onClick={() => router.push('/graduations/new')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={14} /> Jadwal Pendadaran
+          </button>
+        </CanCreate>
       </PageHeader>
 
       <SummaryBar icon={GraduationCap} label="Total Pendadaran" total={meta.total} />
@@ -146,5 +159,6 @@ export default function GraduationsPage() {
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

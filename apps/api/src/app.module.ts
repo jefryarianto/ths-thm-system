@@ -42,6 +42,7 @@ import { TargetsModule } from './modules/targets/targets.module';
 import { OrgStructureModule } from './modules/org-structure/org-structure.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 
 @Module({
   imports: [
@@ -89,6 +90,7 @@ import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.
     TargetsModule,
     UploadModule,
     QueueDashboardModule,
+    MonitoringModule,
   ],
   controllers: [HealthController],
   providers: [

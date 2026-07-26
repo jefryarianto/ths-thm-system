@@ -1,0 +1,61 @@
+# Development Dockerfile for THS-THM System
+FROM node:20-alpine
+
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    git \
+    curl \
+    dumb-init
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+# Copy workspace and dependency files
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
+
+# Copy app-specific files
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+COPY apps/api/nest-cli.json ./apps/api/nest-cli.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/web/tsconfig.json ./apps/web/tsconfig.json
+COPY apps/web/next.config.* ./apps/web/
+COPY packages/templates/package.json ./packages/templates/package.json
+COPY packages/csv_templates/package.json ./packages/csv_templates/package.json
+
+# Install all dependencies (including devDependencies)
+RUN echo "shamefully-hoist=true" > .npmrc && \
+    pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy source code
+COPY apps/api/ ./apps/api/
+COPY apps/web/ ./apps/web/
+COPY packages/ ./packages/
+COPY scripts/ ./scripts/
+
+# Generate Prisma client
+RUN cd apps/api && pnpm exec prisma generate
+
+# Environment defaults for development
+ENV NODE_ENV=development
+ENV DATABASE_URL=postgresql://ths_thm:ths_thm_password@postgres:5432/ths_thm_db
+ENV REDIS_URL=redis://redis:6379
+ENV JWT_SECRET=dev-secret-key-change-in-production
+ENV JWT_REFRESH_SECRET=dev-refresh-secret-key-change-in-production
+
+# Expose ports
+EXPOSE 3001 3002 3000 5555
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3001/api/health || exit 1
+
+ENTRYPOINT ["dumb-init", "--"]
+
+# Default command: start both API and Web in development mode
+CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy --skip-generate; concurrently 'pnpm --filter @ths-thm/api start:dev' 'pnpm --filter @ths-thm/web dev'"]

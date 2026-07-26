@@ -4,6 +4,9 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+// Track the transition timeout to handle rapid clicks (clear previous timeout)
+let themeTransitionTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -15,9 +18,19 @@ export function ThemeToggle() {
   }
 
   const cycle = () => {
+    // Enable smooth color transitions during theme switch
+    if (themeTransitionTimer) clearTimeout(themeTransitionTimer);
+    document.documentElement.classList.add('transitioning-theme');
+
     if (theme === 'light') setTheme('dark');
     else if (theme === 'dark') setTheme('system');
     else setTheme('light');
+
+    // Remove the transition class after the animation completes
+    themeTransitionTimer = setTimeout(() => {
+      document.documentElement.classList.remove('transitioning-theme');
+      themeTransitionTimer = null;
+    }, 350);
   };
 
   const Icon = theme === 'dark' ? Moon : theme === 'system' ? Monitor : Sun;

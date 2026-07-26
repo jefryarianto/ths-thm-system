@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { MessageSquare, FolderOpen, Plus } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
+
 
 interface Category {
   id: string;
@@ -31,6 +33,7 @@ export default function ForumPage() {
   }, []);
 
   return (
+    <PermissionGuard module="forum" action="view">
     <PageContainer>
       <PageHeader title="Forum Komunitas">
         <Link
@@ -81,5 +84,6 @@ export default function ForumPage() {
         </div>
       )}
     </PageContainer>
+    </PermissionGuard>
   );
 }

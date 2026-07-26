@@ -5,6 +5,7 @@ import apiClient from '@/lib/api-client';
 import { useApi, usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { BarChart3, Users, Activity, Download } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import OverviewTab from '@/components/reports/OverviewTab';
@@ -13,6 +14,7 @@ import ScanTab from '@/components/reports/ScanTab';
 import ExportTab from '@/components/reports/ExportTab';
 
 // ─── Types ───
+
 
 interface DashboardData {
   totalMembers: number;
@@ -159,6 +161,7 @@ export default function ReportsPage() {
   };
 
   return (
+    <PermissionGuard module="reports" action="view">
     <PageContainer className="space-y-6 max-w-6xl">
       <PageHeader
         title="Laporan & Statistik"
@@ -227,5 +230,6 @@ export default function ReportsPage() {
         {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
       </div>
     </PageContainer>
+    </PermissionGuard>
   );
 }

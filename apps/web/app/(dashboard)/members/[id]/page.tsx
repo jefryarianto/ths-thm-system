@@ -1,10 +1,14 @@
 'use client';
 
+import { PermissionGuard } from '@/components/auth/permission-guard';
+
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
+
   ArrowLeft,
   User,
   Mail,
@@ -100,7 +104,7 @@ interface DuesItem {
 function InfoPreview({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
     <div className="grid grid-cols-[100px_1fr] gap-1 mt-2 items-start">
-      <div className="text-sm font-bold text-blue-950">{label}</div>
+            <div className="text-sm font-bold text-blue-950">{label}</div>
       <div className={`${strong ? 'text-lg font-black text-blue-950' : 'text-sm font-semibold text-slate-800'}`}>
         : {value}
       </div>
@@ -415,932 +419,902 @@ export default function MemberDetailPage() {
       .join(' › ') || '-';
 
   return (
-    <div className="space-y-6">
-      {/* ── Back Button ── */}
-      <Link
-        href="/members"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
-      >
-        <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-        Kembali ke Daftar Anggota
-      </Link>
-
-      {/* ── Profile Header ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-        <div className="h-20 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative">
-          <button
-            onClick={fetchMember}
-            className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
-            title="Refresh"
-          >
-            <RefreshCw size={14} />
-          </button>
-        </div>
-        <div className="px-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-10">
-            {/* Avatar with Upload */}
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
-                {member.fotoPath ? (
-                  <img src={`/api/uploads/${member.fotoPath}`} alt="" className="w-full h-full object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden'); }} />
-                ) : null}
-                <img src="/logo.png" alt="" className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`} />
-              </div>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition">
-                <Upload size={20} className="text-white" />
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const formData = new FormData();
-                    formData.append('photo', file);
-                    try {
-                      const token = localStorage.getItem('accessToken');
-                      const res = await fetch(`/api/upload/member-photo/${member.id}`, {
-                        method: 'POST',
-                        headers: { Authorization: `Bearer ${token}` },
-                        body: formData,
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        await fetchMember();
-                      } else {
-                        alert(data.message || 'Gagal upload foto');
-                      }
-                    } catch {
-                      alert('Gagal upload foto');
-                    }
-                  }}
-                />
-              </label>
-            </div>
-            <div className="flex-1 mt-2 sm:mt-0">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {member.namaLengkap}
-                </h1>
-                <span className="font-mono text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
-                  {member.nomorAnggota}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <StatusBadge status={member.statusKeanggotaan} bordered />
-                <StatusBadge status={member.statusValidasi} bordered />
-                <StatusBadge status={member.statusData} bordered />
-                {member.tingkat && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
-                    <Award size={12} />
-                    {member.tingkat}
-                  </span>
-                )}
-              </div>
-            </div>
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2 mt-4 sm:mt-0">
-              {member.statusValidasi === 'pending' && (
-                <button
-                  onClick={() => handleAction('approve')}
-                  disabled={actionLoading === 'approve'}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                >
-                  <CheckCircle2 size={14} />
-                  {actionLoading === 'approve' ? 'Memproses...' : 'Setujui'}
-                </button>
-              )}
-              {member.statusKeanggotaan === 'aktif' ? (
-                <button
-                  onClick={() => handleAction('suspend')}
-                  disabled={actionLoading === 'suspend'}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-950 transition disabled:opacity-50"
-                >
-                  <UserX size={14} />
-                  {actionLoading === 'suspend' ? 'Memproses...' : 'Nonaktifkan'}
-                </button>
-              ) : member.statusKeanggotaan === 'nonaktif' ? (
-                <button
-                  onClick={() => handleAction('reactivate')}
-                  disabled={actionLoading === 'reactivate'}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                >
-                  <Shield size={14} />
-                  {actionLoading === 'reactivate' ? 'Memproses...' : 'Aktifkan'}
-                </button>
-              ) : null}
-              {member.statusValidasi === 'rejected' && (
-                <button
-                  onClick={() => handleAction('approve')}
-                  disabled={actionLoading === 'approve'}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  <BadgeCheck size={14} />
-                  Setujui
-                </button>
-              )}
-              <button
-                onClick={async () => {
-                  setEditForm({
-                    namaLengkap: member.namaLengkap,
-                    jenisKelamin: member.jenisKelamin,
-                    tempatLahir: member.tempatLahir || '',
-                    tanggalLahir: member.tanggalLahir || '',
-                    tempatDadar: member.tempatDadar || '',
-                    tahunDadar: member.tahunDadar || '',
-                    alamat: member.alamat || '',
-                    noHp: member.noHp || '',
-                    email: member.email || '',
-                    tingkat: member.tingkat || '',
-                    rantingId: member.rantingId || '',
-                    distrikId: member.ranting?.wilayah?.distrik?.id || '',
-                    wilayahId: member.ranting?.wilayah?.id || '',
-                  });
-                  setEditError('');
-                  // Fetch distrik & cascading data
-                  try {
-                    const dRes = await apiClient.get('/org-structure/distrik');
-                    setEditDistriks(dRes.data.data || []);
-                    const distrikId = member.ranting?.wilayah?.distrik?.id;
-                    if (distrikId) {
-                      const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-                      setEditWilayahs(wRes.data.data || []);
-                      const wilayahId = member.ranting?.wilayah?.id;
-                      if (wilayahId) {
-                        const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-                        setEditRantings(rRes.data.data || []);
-                      }
-                    }
-                  } catch { /* ignore */ }
-                  setShowEditModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-              >
-                <Pencil size={14} />
-                Edit
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
-                title="Hapus anggota"
-              >
-                <MoreVertical size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Summary Cards ── */}
-      <DetailStats
-        createdAt={member.createdAt}
-        dokumenCount={member.dokumen.length}
-        paidDues={paidDues}
-        totalDues={totalDues}
-        rantingNama={member.ranting?.nama || '-'}
-      />
-
-      {/* ── Tabs ── */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <div className="flex gap-6">
-          {[
-            { key: 'info', label: 'Informasi Pribadi', icon: User },
-            { key: 'documents', label: `Dokumen (${member.dokumen.length})`, icon: FileText },
-            { key: 'dues', label: `Riwayat Iuran (${totalDues})`, icon: CreditCard },
-            { key: 'card', label: `Kartu Digital`, icon: IdCard },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                  isActive
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
-                }`}
-              >
-                <Icon size={16} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Tab: Info Pribadi ── */}
-      {activeTab === 'info' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Personal Info */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-              <User size={18} className="text-blue-500" />
-              Data Pribadi
-            </h3>
-            <div className="space-y-2">
-              <InfoRow icon={User} label="Nama Lengkap" value={member.namaLengkap} />
-              <InfoRow
-                icon={User}
-                label="Jenis Kelamin"
-                value={member.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
-              />
-              <InfoRow
-                icon={Calendar}
-                label="Tempat, Tgl Lahir"
-                value={
-                  [member.tempatLahir, member.tanggalLahir ? formatDate(member.tanggalLahir) : null]
-                    .filter(Boolean)
-                    .join(', ') || null
-                }
-              />
-              <InfoRow
-                icon={Calendar}
-                label="Tempat - Tahun Dadar"
-                value={
-                  [member.tempatDadar, member.tahunDadar]
-                    .filter(Boolean)
-                    .join(' - ') || null
-                }
-              />
-              <InfoRow icon={MapPin} label="Alamat" value={member.alamat} />
-            </div>
-          </div>
-
-          {/* Contact & Organization */}
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                <Mail size={18} className="text-blue-500" />
-                Kontak
-              </h3>
-              <div className="space-y-2">
-                <InfoRow
-                  icon={Mail}
-                  label="Email"
-                  value={member.email}
-                  href={member.email ? `mailto:${member.email}` : undefined}
-                />
-                <InfoRow
-                  icon={Phone}
-                  label="No. HP"
-                  value={member.noHp}
-                  href={member.noHp ? `tel:${member.noHp}` : undefined}
-                />
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                <Users size={18} className="text-blue-500" />
-                Organisasi
-              </h3>
-              <div className="space-y-2">
-                <InfoRow icon={Users} label="Jalur Organisasi" value={orgPath} />
-                <InfoRow icon={Award} label="Tingkatan" value={member.tingkat || null} />
-                <InfoRow
-                  icon={Calendar}
-                  label="Terakhir Diperbarui"
-                  value={formatDate(member.updatedAt)}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Tab: Dokumen ── */}
-      {activeTab === 'documents' && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <FileText size={18} className="text-blue-500" />
-              Dokumen Anggota
-            </h3>
-            <span className="text-xs text-gray-400">{member.dokumen.length} dokumen</span>
-          </div>
-          {member.dokumen.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 dark:border-gray-700">
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                      Jenis
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                      Nama Dokumen
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                      Status
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                      Dibuat
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {member.dokumen.map((doc) => (
-                    <tr
-                      key={doc.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
-                    >
-                      <td className="px-4 py-3">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {DOCUMENT_TYPES[doc.jenis] || doc.jenis}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {doc.namaDokumen || '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={doc.status} />
-                      </td>
-                      <td className="px-4 py-3 hidden sm:table-cell text-xs text-gray-500">
-                        {formatDate(doc.createdAt)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {doc.tokenVerifikasi && (
-                            <Link
-                              href={`/verify/${doc.tokenVerifikasi}`}
-                              target="_blank"
-                              className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-                              title="Verifikasi Dokumen"
-                            >
-                              <BadgeCheck size={14} className="text-blue-600" />
-                            </Link>
-                          )}
-                          <Link
-                            href={`/documents?search=${doc.jenis}`}
-                            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                            title="Lihat Detail"
-                          >
-                            <ExternalLink size={14} className="text-gray-400" />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <FileText size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada dokumen</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                Dokumen akan muncul setelah di-generate
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Kartu Digital ── */}
-      {activeTab === 'card' && (
+      <PermissionGuard module="members" action="view">
+        <Breadcrumbs suffix={{ href: '#', label: member?.namaLengkap || 'Detail' }} />
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <IdCard size={20} className="text-blue-500" />
-              Kartu Anggota Digital (KTA)
-            </h3>
-          </div>
-
-          {/* Front Side Preview */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Depan</h4>
-            <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[20px] overflow-hidden shadow-xl border border-gray-300 bg-white">
-              {/* Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-white to-blue-100" />
-              <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-cyan-300/30" />
-              <div className="absolute -bottom-28 -left-20 w-96 h-96 rounded-full bg-blue-700/15" />
-              <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-blue-900 via-blue-700 to-cyan-500" />
-              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600" />
-              <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
-              
-              {/* Watermark */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
-                <div className="w-60 h-60 rounded-full border-[18px] border-blue-900 flex items-center justify-center text-5xl font-black text-blue-900">THS</div>
+              {/* ── Back Button ── */}
+              <Link
+                href="/members"
+                className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
+              >
+                <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+                Kembali ke Daftar Anggota
+              </Link>
+        
+              {/* ── Profile Header ── */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="h-20 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative">
+                  <button
+                    onClick={fetchMember}
+                    className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
+                    title="Refresh"
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                </div>
+                <div className="px-6 pb-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-10">
+                    {/* Avatar with Upload */}
+                    <div className="relative group">
+                      <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
+                        {member.fotoPath ? (
+                          <img src={`/api/uploads/${member.fotoPath}`} alt="" className="w-full h-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden'); }} />
+                        ) : null}
+                        <img src="/logo.png" alt="" className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`} />
+                      </div>
+                      <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition">
+                        <Upload size={20} className="text-white" />
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const formData = new FormData();
+                            formData.append('photo', file);
+                            try {
+                              const token = localStorage.getItem('accessToken');
+                              const res = await fetch(`/api/upload/member-photo/${member.id}`, {
+                                method: 'POST',
+                                headers: { Authorization: `Bearer ${token}` },
+                                body: formData,
+                              });
+                              const data = await res.json();
+                              if (data.success) {
+                                await fetchMember();
+                              } else {
+                                alert(data.message || 'Gagal upload foto');
+                              }
+                            } catch {
+                              alert('Gagal upload foto');
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <div className="flex-1 mt-2 sm:mt-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                          {member.namaLengkap}
+                        </h1>
+                        <span className="font-mono text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
+                          {member.nomorAnggota}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <StatusBadge status={member.statusKeanggotaan} bordered />
+                        <StatusBadge status={member.statusValidasi} bordered />
+                        <StatusBadge status={member.statusData} bordered />
+                        {member.tingkat && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                            <Award size={12} />
+                            {member.tingkat}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Quick Actions */}
+                    <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                      {member.statusValidasi === 'pending' && (
+                        <button
+                          onClick={() => handleAction('approve')}
+                          disabled={actionLoading === 'approve'}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                        >
+                          <CheckCircle2 size={14} />
+                          {actionLoading === 'approve' ? 'Memproses...' : 'Setujui'}
+                        </button>
+                      )}
+                      {member.statusKeanggotaan === 'aktif' ? (
+                        <button
+                          onClick={() => handleAction('suspend')}
+                          disabled={actionLoading === 'suspend'}
+                          className="flex items-center gap-1.5 px-3 py-2 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-950 transition disabled:opacity-50"
+                        >
+                          <UserX size={14} />
+                          {actionLoading === 'suspend' ? 'Memproses...' : 'Nonaktifkan'}
+                        </button>
+                      ) : member.statusKeanggotaan === 'nonaktif' ? (
+                        <button
+                          onClick={() => handleAction('reactivate')}
+                          disabled={actionLoading === 'reactivate'}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                        >
+                          <Shield size={14} />
+                          {actionLoading === 'reactivate' ? 'Memproses...' : 'Aktifkan'}
+                        </button>
+                      ) : null}
+                      {member.statusValidasi === 'rejected' && (
+                        <button
+                          onClick={() => handleAction('approve')}
+                          disabled={actionLoading === 'approve'}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                        >
+                          <BadgeCheck size={14} />
+                          Setujui
+                        </button>
+                      )}
+                      <Link
+                        href={`/members/${member.id}/edit`}
+                        className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                      >
+                        <Pencil size={14} />
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
+                        title="Hapus anggota"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              {/* Content */}
-              <div className="relative z-10 h-full p-8">
-                {/* Header */}
-                <div className="flex items-start gap-4 text-white">
-                  <div className="w-12 h-12 rounded-full bg-yellow-300 border-4 border-slate-900 flex items-center justify-center flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-white border border-slate-700 flex items-center justify-center text-[9px] font-black text-blue-800">THS</div>
-                  </div>
-                  <div className="leading-tight">
-                    <div className="text-[18px] font-black tracking-wide">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
-                    <div className="text-[14px] font-semibold opacity-95">DISTRIK {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
-                  </div>
-                </div>
-
-                {/* Title */}
-                <div className="absolute left-0 right-0 text-center" style={{ top: '82px' }}>
-                  <div className="inline-block px-6 py-1.5 rounded-full bg-white/90 border border-yellow-500 shadow-sm">
-                    <span className="text-[18px] font-black tracking-[0.18em] text-blue-900">KARTU TANDA ANGGOTA</span>
-                  </div>
-                </div>
-
-                {/* Photo */}
-                <div className="absolute left-8 rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden" style={{ top: '140px', width: '160px', height: '200px' }}>
-                  <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm">FOTO</div>
-                </div>
-
-                {/* Info */}
-                <div className="absolute text-slate-800" style={{ left: '210px', top: '138px', right: '30px' }}>
-                  <InfoPreview label="Nama" value={member.namaLengkap} strong />
-                  <InfoPreview label="No. Anggota" value={member.nomorAnggota} />
-                  <InfoPreview label="Ranting" value={member.ranting?.nama || '-'} />
-                  <InfoPreview label="Wilayah" value={member.ranting?.wilayah?.nama || '-'} />
-                  <InfoPreview label="Distrik" value={member.ranting?.wilayah?.distrik?.nama || '-'} />
-                </div>
-
-                {/* Bottom */}
-                <div className="absolute left-8 text-white" style={{ bottom: '28px' }}>
-                  <div className="text-[12px] opacity-90">Berlaku sampai</div>
-                  <div className="text-[18px] font-black">{new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-                </div>
-                <div className="absolute text-center text-white" style={{ right: '40px', bottom: '24px' }}>
-                  <div className="relative h-16 w-36">
-                    <div className="absolute left-6 top-0 text-3xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
-                    <div className="absolute right-0 top-0 w-16 h-16 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[8px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
-                  </div>
-                  <div className="text-[13px] font-black border-t border-white/60 pt-1">Koordinator Distrik</div>
-                  <div className="text-[10px] font-semibold opacity-95">THS-THM</div>
+        
+              {/* ── Summary Cards ── */}
+              <DetailStats
+                createdAt={member.createdAt}
+                dokumenCount={member.dokumen.length}
+                paidDues={paidDues}
+                totalDues={totalDues}
+                rantingNama={member.ranting?.nama || '-'}
+              />
+        
+              {/* ── Tabs ── */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <div className="flex gap-6">
+                  {[
+                    { key: 'info', label: 'Informasi Pribadi', icon: User },
+                    { key: 'documents', label: `Dokumen (${member.dokumen.length})`, icon: FileText },
+                    { key: 'dues', label: `Riwayat Iuran (${totalDues})`, icon: CreditCard },
+                    { key: 'card', label: `Kartu Digital`, icon: IdCard },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
+                          isActive
+                            ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon size={16} />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Back Side Preview */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
-            <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[20px] overflow-hidden shadow-xl border border-gray-300 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600">
-              <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
-              <div className="relative z-10 h-full p-8">
-                <div className="absolute left-0 right-0 text-center" style={{ top: '24px' }}>
-                  <div className="text-[22px] font-black tracking-[0.16em] text-white">VERIFIKASI KARTU ANGGOTA</div>
-                  <div className="text-[12px] opacity-90 text-white mt-1">Scan QR untuk memeriksa keabsahan anggota</div>
+        
+              {/* ── Tab: Info Pribadi ── */}
+              {activeTab === 'info' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Personal Info */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                      <User size={18} className="text-blue-500" />
+                      Data Pribadi
+                    </h3>
+                    <div className="space-y-2">
+                      <InfoRow icon={User} label="Nama Lengkap" value={member.namaLengkap} />
+                      <InfoRow
+                        icon={User}
+                        label="Jenis Kelamin"
+                        value={member.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
+                      />
+                      <InfoRow
+                        icon={Calendar}
+                        label="Tempat, Tgl Lahir"
+                        value={
+                          [member.tempatLahir, member.tanggalLahir ? formatDate(member.tanggalLahir) : null]
+                            .filter(Boolean)
+                            .join(', ') || null
+                        }
+                      />
+                      <InfoRow
+                        icon={Calendar}
+                        label="Tempat - Tahun Dadar"
+                        value={
+                          [member.tempatDadar, member.tahunDadar]
+                            .filter(Boolean)
+                            .join(' - ') || null
+                        }
+                      />
+                      <InfoRow icon={MapPin} label="Alamat" value={member.alamat} />
+                    </div>
+                  </div>
+        
+                  {/* Contact & Organization */}
+                  <div className="space-y-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                        <Mail size={18} className="text-blue-500" />
+                        Kontak
+                      </h3>
+                      <div className="space-y-2">
+                        <InfoRow
+                          icon={Mail}
+                          label="Email"
+                          value={member.email}
+                          href={member.email ? `mailto:${member.email}` : undefined}
+                        />
+                        <InfoRow
+                          icon={Phone}
+                          label="No. HP"
+                          value={member.noHp}
+                          href={member.noHp ? `tel:${member.noHp}` : undefined}
+                        />
+                      </div>
+                    </div>
+        
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                        <Users size={18} className="text-blue-500" />
+                        Organisasi
+                      </h3>
+                      <div className="space-y-2">
+                        <InfoRow icon={Users} label="Jalur Organisasi" value={orgPath} />
+                        <InfoRow icon={Award} label="Tingkatan" value={member.tingkat || null} />
+                        <InfoRow
+                          icon={Calendar}
+                          label="Terakhir Diperbarui"
+                          value={formatDate(member.updatedAt)}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="absolute bg-white rounded-2xl border-4 border-blue-900 shadow-lg p-3 flex items-center justify-center" style={{ left: '40px', top: '100px', width: '170px', height: '170px' }}>
-                  {cardData?.qrCode ? (
-                    <img src={cardData.qrCode} alt="QR Code" className="w-full h-full" />
+              )}
+        
+              {/* ── Tab: Dokumen ── */}
+              {activeTab === 'documents' && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <FileText size={18} className="text-blue-500" />
+                      Dokumen Anggota
+                    </h3>
+                    <span className="text-xs text-gray-400">{member.dokumen.length} dokumen</span>
+                  </div>
+                  {member.dokumen.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100 dark:border-gray-700">
+                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                              Jenis
+                            </th>
+                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                              Nama Dokumen
+                            </th>
+                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                              Status
+                            </th>
+                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                              Dibuat
+                            </th>
+                            <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                              Aksi
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                          {member.dokumen.map((doc) => (
+                            <tr
+                              key={doc.id}
+                              className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                            >
+                              <td className="px-4 py-3">
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                  {DOCUMENT_TYPES[doc.jenis] || doc.jenis}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                                {doc.namaDokumen || '-'}
+                              </td>
+                              <td className="px-4 py-3">
+                                <StatusBadge status={doc.status} />
+                              </td>
+                              <td className="px-4 py-3 hidden sm:table-cell text-xs text-gray-500">
+                                {formatDate(doc.createdAt)}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  {doc.tokenVerifikasi && (
+                                    <Link
+                                      href={`/verify/${doc.tokenVerifikasi}`}
+                                      target="_blank"
+                                      className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                                      title="Verifikasi Dokumen"
+                                    >
+                                      <BadgeCheck size={14} className="text-blue-600" />
+                                    </Link>
+                                  )}
+                                  <Link
+                                    href={`/documents?search=${doc.jenis}`}
+                                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                    title="Lihat Detail"
+                                  >
+                                    <ExternalLink size={14} className="text-gray-400" />
+                                  </Link>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
-                    <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1">
-                      {Array.from({ length: 25 }).map((_, i) => (
-                        <div key={i} className={`${i % 3 === 0 || i % 7 === 0 ? 'bg-slate-900' : 'bg-slate-200'} rounded-sm`} />
-                      ))}
+                    <div className="text-center py-10">
+                      <FileText size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada dokumen</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Dokumen akan muncul setelah di-generate
+                      </p>
                     </div>
                   )}
                 </div>
-                <div className="absolute bg-white/85 rounded-2xl border border-blue-200 p-4 shadow-sm" style={{ left: '240px', top: '100px', right: '30px' }}>
-                  <p className="text-sm leading-relaxed text-slate-700 mb-3">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
-                  <BackPreview label="TTL" value={member.tempatLahir ? `${member.tempatLahir}, ${member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID') : '-'}` : member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID') : '-'} />
-                  <BackPreview label="Status" value={member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'} />
-                </div>
-                <div className="absolute text-white flex items-end justify-between gap-6" style={{ left: '30px', right: '30px', bottom: '24px' }}>
-                  <div className="text-xs leading-relaxed opacity-95 max-w-[500px]">Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
-                  <div className="text-right">
-                    <div className="text-[10px] opacity-80">URL Verifikasi</div>
-                    <div className="text-[13px] font-bold">/verify/member/token</div>
+              )}
+        
+              {/* ── Tab: Kartu Digital ── */}
+              {activeTab === 'card' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <IdCard size={20} className="text-blue-500" />
+                      Kartu Anggota Digital (KTA)
+                    </h3>
+                  </div>
+        
+                  {/* Front Side Preview */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Depan</h4>
+                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[20px] overflow-hidden shadow-xl border border-gray-300 bg-white">
+                      {/* Background */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-white to-blue-100" />
+                      <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-cyan-300/30" />
+                      <div className="absolute -bottom-28 -left-20 w-96 h-96 rounded-full bg-blue-700/15" />
+                      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-blue-900 via-blue-700 to-cyan-500" />
+                      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600" />
+                      <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
+                      
+                      {/* Watermark */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
+                        <div className="w-60 h-60 rounded-full border-[18px] border-blue-900 flex items-center justify-center text-5xl font-black text-blue-900">THS</div>
+                      </div>
+        
+                      {/* Content */}
+                      <div className="relative z-10 h-full p-8">
+                        {/* Header */}
+                        <div className="flex items-start gap-4 text-white">
+                          <div className="w-12 h-12 rounded-full bg-yellow-300 border-4 border-slate-900 flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-white border border-slate-700 flex items-center justify-center text-[9px] font-black text-blue-800">THS</div>
+                          </div>
+                          <div className="leading-tight">
+                            <div className="text-[18px] font-black tracking-wide">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
+                            <div className="text-[14px] font-semibold opacity-95">DISTRIK {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
+                          </div>
+                        </div>
+        
+                        {/* Title */}
+                        <div className="absolute left-0 right-0 text-center" style={{ top: '82px' }}>
+                          <div className="inline-block px-6 py-1.5 rounded-full bg-white/90 border border-yellow-500 shadow-sm">
+                            <span className="text-[18px] font-black tracking-[0.18em] text-blue-900">KARTU TANDA ANGGOTA</span>
+                          </div>
+                        </div>
+        
+                        {/* Photo */}
+                        <div className="absolute left-8 rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden" style={{ top: '140px', width: '160px', height: '200px' }}>
+                          <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm">FOTO</div>
+                        </div>
+        
+                        {/* Info */}
+                        <div className="absolute text-slate-800" style={{ left: '210px', top: '138px', right: '30px' }}>
+                          <InfoPreview label="Nama" value={member.namaLengkap} strong />
+                          <InfoPreview label="No. Anggota" value={member.nomorAnggota} />
+                          <InfoPreview label="Ranting" value={member.ranting?.nama || '-'} />
+                          <InfoPreview label="Wilayah" value={member.ranting?.wilayah?.nama || '-'} />
+                          <InfoPreview label="Distrik" value={member.ranting?.wilayah?.distrik?.nama || '-'} />
+                        </div>
+        
+                        {/* Bottom */}
+                        <div className="absolute left-8 text-white" style={{ bottom: '28px' }}>
+                          <div className="text-[12px] opacity-90">Berlaku sampai</div>
+                          <div className="text-[18px] font-black">{new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                        </div>
+                        <div className="absolute text-center text-white" style={{ right: '40px', bottom: '24px' }}>
+                          <div className="relative h-16 w-36">
+                            <div className="absolute left-6 top-0 text-3xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
+                            <div className="absolute right-0 top-0 w-16 h-16 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[8px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
+                          </div>
+                          <div className="text-[13px] font-black border-t border-white/60 pt-1">Koordinator Distrik</div>
+                          <div className="text-[10px] font-semibold opacity-95">THS-THM</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+        
+                  {/* Back Side Preview */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
+                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[20px] overflow-hidden shadow-xl border border-gray-300 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600">
+                      <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
+                      <div className="relative z-10 h-full p-8">
+                        <div className="absolute left-0 right-0 text-center" style={{ top: '24px' }}>
+                          <div className="text-[22px] font-black tracking-[0.16em] text-white">VERIFIKASI KARTU ANGGOTA</div>
+                          <div className="text-[12px] opacity-90 text-white mt-1">Scan QR untuk memeriksa keabsahan anggota</div>
+                        </div>
+                        <div className="absolute bg-white rounded-2xl border-4 border-blue-900 shadow-lg p-3 flex items-center justify-center" style={{ left: '40px', top: '100px', width: '170px', height: '170px' }}>
+                          {cardData?.qrCode ? (
+                            <img src={cardData.qrCode} alt="QR Code" className="w-full h-full" />
+                          ) : (
+                            <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-1">
+                              {Array.from({ length: 25 }).map((_, i) => (
+                                <div key={i} className={`${i % 3 === 0 || i % 7 === 0 ? 'bg-slate-900' : 'bg-slate-200'} rounded-sm`} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute bg-white/85 rounded-2xl border border-blue-200 p-4 shadow-sm" style={{ left: '240px', top: '100px', right: '30px' }}>
+                          <p className="text-sm leading-relaxed text-slate-700 mb-3">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
+                          <BackPreview label="TTL" value={member.tempatLahir ? `${member.tempatLahir}, ${member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID') : '-'}` : member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID') : '-'} />
+                          <BackPreview label="Status" value={member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'} />
+                        </div>
+                        <div className="absolute text-white flex items-end justify-between gap-6" style={{ left: '30px', right: '30px', bottom: '24px' }}>
+                          <div className="text-xs leading-relaxed opacity-95 max-w-[500px]">Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
+                          <div className="text-right">
+                            <div className="text-[10px] opacity-80">URL Verifikasi</div>
+                            <div className="text-[13px] font-bold">/verify/member/token</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+        
+                  {/* Download Actions */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      onClick={() => downloadKTA(member.id, 'pdf')}
+                      className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg"
+                    >
+                      <Download size={20} />
+                      Download PDF (KTA) — 2 Sisi
+                    </button>
+                    <button
+                      onClick={() => downloadKTA(member.id, 'image')}
+                      className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg"
+                    >
+                      <Image size={20} />
+                      Preview PNG (KTA)
+                    </button>
+                  </div>
+        
+                  <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 text-sm text-yellow-700 dark:text-yellow-400">
+                    Kartu digital ini menggunakan format CR80 landscape (856x540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Download Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button
-              onClick={() => downloadKTA(member.id, 'pdf')}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg"
-            >
-              <Download size={20} />
-              Download PDF (KTA) — 2 Sisi
-            </button>
-            <button
-              onClick={() => downloadKTA(member.id, 'image')}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg"
-            >
-              <Image size={20} />
-              Preview PNG (KTA)
-            </button>
-          </div>
-
-          <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 text-sm text-yellow-700 dark:text-yellow-400">
-            Kartu digital ini menggunakan format CR80 landscape (856x540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
-          </div>
-        </div>
-      )}
-
-      {/* ── Tab: Iuran ── */}
-      {activeTab === 'dues' && (
-        <div className="space-y-6">
-          {/* Dues Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
-                  <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Lunas</p>
-                  <p className="text-lg font-bold text-green-600">{paidDues}x</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
-                  <CreditCard size={18} className="text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Dibayar</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    {formatRupiah(totalPaid)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
-                  <Award size={18} className="text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Kepatuhan</p>
-                  <p className="text-lg font-bold text-purple-600">
-                    {totalDues > 0 ? Math.round((paidDues / totalDues) * 100) : 0}%
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Dues Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Riwayat Pembayaran Iuran
-              </h3>
-            </div>
-            {member.iuran.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                        Periode
-                      </th>
-                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                        Jumlah
-                      </th>
-                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
-                        Status
-                      </th>
-                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                        Tgl Bayar
-                      </th>
-                      <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                        Tgl Input
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {member.iuran.map((dues) => (
-                      <tr
-                        key={dues.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
-                      >
-                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                          {dues.periode}
-                        </td>
-                        <td className="px-5 py-3 font-mono text-sm text-gray-700 dark:text-gray-300">
-                          {formatRupiah(Number(dues.jumlah))}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${DUES_STATUS_STYLES[dues.status] || ''}`}
-                          >
-                            {FLAT_STATUS_LABELS[dues.status] || dues.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 hidden sm:table-cell text-xs text-gray-500">
-                          {dues.tanggalBayar ? formatDate(dues.tanggalBayar) : '-'}
-                        </td>
-                        <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
-                          {formatDate(dues.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <CreditCard size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada riwayat iuran</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  Data iuran akan muncul setelah dicatat
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Edit Modal ── */}
-      <Modal
-        open={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Edit Anggota"
-        size="md"
-      >
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setEditLoading(true);
-            setEditError('');
-            try {
-              const payload: Record<string, unknown> = {};
-              if (editForm.namaLengkap !== member?.namaLengkap) payload.namaLengkap = editForm.namaLengkap;
-              if (editForm.jenisKelamin !== member?.jenisKelamin) payload.jenisKelamin = editForm.jenisKelamin;
-              if (editForm.tempatLahir !== (member?.tempatLahir || '')) payload.tempatLahir = editForm.tempatLahir;
-              if (editForm.tanggalLahir !== (member?.tanggalLahir || '')) payload.tanggalLahir = editForm.tanggalLahir;
-              if (editForm.alamat !== (member?.alamat || '')) payload.alamat = editForm.alamat;
-              if (editForm.noHp !== (member?.noHp || '')) payload.noHp = editForm.noHp;
-              if (editForm.email !== (member?.email || '')) payload.email = editForm.email;
-              if (editForm.tingkat !== (member?.tingkat || '')) payload.tingkat = editForm.tingkat;
-              if (editForm.tempatDadar !== (member?.tempatDadar || '')) payload.tempatDadar = editForm.tempatDadar;
-              if (editForm.tahunDadar !== (member?.tahunDadar || '')) payload.tahunDadar = editForm.tahunDadar;
-              if (editForm.rantingId !== (member?.rantingId || '')) payload.rantingId = editForm.rantingId;
-
-              if (Object.keys(payload).length === 0) {
-                setEditError('Tidak ada perubahan yang dilakukan');
-                setEditLoading(false);
-                return;
-              }
-
-              await apiClient.patch(`/members/${member!.id}`, payload);
-              setShowEditModal(false);
-              await fetchMember();
-            } catch (err: unknown) {
-              const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-              setEditError(msg || 'Gagal menyimpan perubahan');
-            } finally {
-              setEditLoading(false);
-            }
-          }}
-          className="space-y-4"
-        >
-          {editError && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
-              <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-red-700 dark:text-red-400">{editError}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
-              <input
-                type="text"
-                value={editForm.namaLengkap}
-                onChange={(e) => setEditForm({ ...editForm, namaLengkap: e.target.value })}
-                required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
-              <select
-                value={editForm.jenisKelamin}
-                onChange={(e) => setEditForm({ ...editForm, jenisKelamin: e.target.value as 'L' | 'P' })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>
-              <input
-                type="text"
-                value={editForm.tempatLahir}
-                onChange={(e) => setEditForm({ ...editForm, tempatLahir: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Lahir</label>
-              <input
-                type="date"
-                value={editForm.tanggalLahir ? editForm.tanggalLahir.split('T')[0] : ''}
-                onChange={(e) => setEditForm({ ...editForm, tanggalLahir: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat - Tahun Dadar</label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={editForm.tempatDadar}
-                  onChange={(e) => setEditForm({ ...editForm, tempatDadar: e.target.value })}
-                  placeholder="Tempat dadar"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  value={editForm.tahunDadar}
-                  onChange={(e) => setEditForm({ ...editForm, tahunDadar: e.target.value })}
-                  placeholder="Tahun"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
-              <textarea
-                value={editForm.alamat}
-                onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
-              <input
-                type="text"
-                value={editForm.noHp}
-                onChange={(e) => setEditForm({ ...editForm, noHp: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input
-                type="email"
-                value={editForm.email}
-                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkat</label>
-              <input
-                type="text"
-                value={editForm.tingkat}
-                onChange={(e) => setEditForm({ ...editForm, tingkat: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* Organisasi - Cascading dropdowns */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Organisasi</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik</label>
-                <select
-                  value={editForm.distrikId}
-                  onChange={async (e) => {
-                    const distrikId = e.target.value;
-                    setEditForm({ ...editForm, distrikId, wilayahId: '', rantingId: '' });
-                    setEditWilayahs([]);
-                    setEditRantings([]);
-                    if (distrikId) {
-                      setEditWilayahLoading(true);
-                      try {
-                        const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-                        setEditWilayahs(wRes.data.data || []);
-                      } catch { /* ignore */ }
-                      setEditWilayahLoading(false);
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Pilih Distrik</option>
-                  {editDistriks.map((d) => (
-                    <option key={d.id} value={d.id}>{d.nama}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
-                <select
-                  value={editForm.wilayahId}
-                  onChange={async (e) => {
-                    const wilayahId = e.target.value;
-                    setEditForm({ ...editForm, wilayahId, rantingId: '' });
-                    setEditRantings([]);
-                    if (wilayahId) {
-                      setEditRantingLoading(true);
-                      try {
-                        const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-                        setEditRantings(rRes.data.data || []);
-                      } catch { /* ignore */ }
-                      setEditRantingLoading(false);
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Pilih Wilayah</option>
-                  {editWilayahLoading ? (
-                    <option disabled>Memuat...</option>
-                  ) : (
-                    editWilayahs.map((w) => (
-                      <option key={w.id} value={w.id}>{w.nama}</option>
-                    ))
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting</label>
-                <select
-                  value={editForm.rantingId}
-                  onChange={(e) => setEditForm({ ...editForm, rantingId: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Pilih Ranting</option>
-                  {editRantingLoading ? (
-                    <option disabled>Memuat...</option>
-                  ) : (
-                    editRantings.map((r) => (
-                      <option key={r.id} value={r.id}>{r.nama}</option>
-                    ))
-                  )}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowEditModal(false)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={editLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {editLoading ? (
-                <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Menyimpan...</>
-              ) : (
-                <><Save size={16} />Simpan Perubahan</>
               )}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ── Delete Modal ── */}
-      <Modal
-        open={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Hapus Anggota"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-            <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
-            <p className="text-sm text-red-700 dark:text-red-400">
-              Tindakan ini akan menghapus <strong>{member.namaLengkap}</strong> secara permanen.
-            </p>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Data yang terkait seperti dokumen dan riwayat iuran juga akan terhapus. Tindakan ini
-            tidak dapat dibatalkan.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={actionLoading === 'delete'}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
-            >
-              {actionLoading === 'delete' ? 'Menghapus...' : 'Ya, Hapus'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
+        
+              {/* ── Tab: Iuran ── */}
+              {activeTab === 'dues' && (
+                <div className="space-y-6">
+                  {/* Dues Summary */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
+                          <CheckCircle2 size={18} className="text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total Lunas</p>
+                          <p className="text-lg font-bold text-green-600">{paidDues}x</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
+                          <CreditCard size={18} className="text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Total Dibayar</p>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            {formatRupiah(totalPaid)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
+                          <Award size={18} className="text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Kepatuhan</p>
+                          <p className="text-lg font-bold text-purple-600">
+                            {totalDues > 0 ? Math.round((paidDues / totalDues) * 100) : 0}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+        
+                  {/* Dues Table */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Riwayat Pembayaran Iuran
+                      </h3>
+                    </div>
+                    {member.iuran.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                Periode
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                Jumlah
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                Status
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                                Tgl Bayar
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                                Tgl Input
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {member.iuran.map((dues) => (
+                              <tr
+                                key={dues.id}
+                                className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                              >
+                                <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                                  {dues.periode}
+                                </td>
+                                <td className="px-5 py-3 font-mono text-sm text-gray-700 dark:text-gray-300">
+                                  {formatRupiah(Number(dues.jumlah))}
+                                </td>
+                                <td className="px-5 py-3">
+                                  <span
+                                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${DUES_STATUS_STYLES[dues.status] || ''}`}
+                                  >
+                                    {FLAT_STATUS_LABELS[dues.status] || dues.status}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3 hidden sm:table-cell text-xs text-gray-500">
+                                  {dues.tanggalBayar ? formatDate(dues.tanggalBayar) : '-'}
+                                </td>
+                                <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
+                                  {formatDate(dues.createdAt)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-10">
+                        <CreditCard size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada riwayat iuran</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          Data iuran akan muncul setelah dicatat
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+        
+              {/* ── Edit Modal ── */}
+              <Modal
+                open={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                title="Edit Anggota"
+                size="md"
+              >
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setEditLoading(true);
+                    setEditError('');
+                    try {
+                      const payload: Record<string, unknown> = {};
+                      if (editForm.namaLengkap !== member?.namaLengkap) payload.namaLengkap = editForm.namaLengkap;
+                      if (editForm.jenisKelamin !== member?.jenisKelamin) payload.jenisKelamin = editForm.jenisKelamin;
+                      if (editForm.tempatLahir !== (member?.tempatLahir || '')) payload.tempatLahir = editForm.tempatLahir;
+                      if (editForm.tanggalLahir !== (member?.tanggalLahir || '')) payload.tanggalLahir = editForm.tanggalLahir;
+                      if (editForm.alamat !== (member?.alamat || '')) payload.alamat = editForm.alamat;
+                      if (editForm.noHp !== (member?.noHp || '')) payload.noHp = editForm.noHp;
+                      if (editForm.email !== (member?.email || '')) payload.email = editForm.email;
+                      if (editForm.tingkat !== (member?.tingkat || '')) payload.tingkat = editForm.tingkat;
+                      if (editForm.tempatDadar !== (member?.tempatDadar || '')) payload.tempatDadar = editForm.tempatDadar;
+                      if (editForm.tahunDadar !== (member?.tahunDadar || '')) payload.tahunDadar = editForm.tahunDadar;
+                      if (editForm.rantingId !== (member?.rantingId || '')) payload.rantingId = editForm.rantingId;
+        
+                      if (Object.keys(payload).length === 0) {
+                        setEditError('Tidak ada perubahan yang dilakukan');
+                        setEditLoading(false);
+                        return;
+                      }
+        
+                      await apiClient.patch(`/members/${member!.id}`, payload);
+                      setShowEditModal(false);
+                      await fetchMember();
+                    } catch (err: unknown) {
+                      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                      setEditError(msg || 'Gagal menyimpan perubahan');
+                    } finally {
+                      setEditLoading(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  {editError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
+                      <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
+                      <p className="text-sm text-red-700 dark:text-red-400">{editError}</p>
+                    </div>
+                  )}
+        
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
+                      <input
+                        type="text"
+                        value={editForm.namaLengkap}
+                        onChange={(e) => setEditForm({ ...editForm, namaLengkap: e.target.value })}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
+                      <select
+                        value={editForm.jenisKelamin}
+                        onChange={(e) => setEditForm({ ...editForm, jenisKelamin: e.target.value as 'L' | 'P' })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>
+                      <input
+                        type="text"
+                        value={editForm.tempatLahir}
+                        onChange={(e) => setEditForm({ ...editForm, tempatLahir: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Lahir</label>
+                      <input
+                        type="date"
+                        value={editForm.tanggalLahir ? editForm.tanggalLahir.split('T')[0] : ''}
+                        onChange={(e) => setEditForm({ ...editForm, tanggalLahir: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat - Tahun Dadar</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={editForm.tempatDadar}
+                          onChange={(e) => setEditForm({ ...editForm, tempatDadar: e.target.value })}
+                          placeholder="Tempat dadar"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input
+                          type="text"
+                          value={editForm.tahunDadar}
+                          onChange={(e) => setEditForm({ ...editForm, tahunDadar: e.target.value })}
+                          placeholder="Tahun"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
+                      <textarea
+                        value={editForm.alamat}
+                        onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
+                      <input
+                        type="text"
+                        value={editForm.noHp}
+                        onChange={(e) => setEditForm({ ...editForm, noHp: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkat</label>
+                      <input
+                        type="text"
+                        value={editForm.tingkat}
+                        onChange={(e) => setEditForm({ ...editForm, tingkat: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+        
+                  {/* Organisasi - Cascading dropdowns */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Organisasi</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik</label>
+                        <select
+                          value={editForm.distrikId}
+                          onChange={async (e) => {
+                            const distrikId = e.target.value;
+                            setEditForm({ ...editForm, distrikId, wilayahId: '', rantingId: '' });
+                            setEditWilayahs([]);
+                            setEditRantings([]);
+                            if (distrikId) {
+                              setEditWilayahLoading(true);
+                              try {
+                                const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+                                setEditWilayahs(wRes.data.data || []);
+                              } catch { /* ignore */ }
+                              setEditWilayahLoading(false);
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Pilih Distrik</option>
+                          {editDistriks.map((d) => (
+                            <option key={d.id} value={d.id}>{d.nama}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
+                        <select
+                          value={editForm.wilayahId}
+                          onChange={async (e) => {
+                            const wilayahId = e.target.value;
+                            setEditForm({ ...editForm, wilayahId, rantingId: '' });
+                            setEditRantings([]);
+                            if (wilayahId) {
+                              setEditRantingLoading(true);
+                              try {
+                                const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+                                setEditRantings(rRes.data.data || []);
+                              } catch { /* ignore */ }
+                              setEditRantingLoading(false);
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Pilih Wilayah</option>
+                          {editWilayahLoading ? (
+                            <option disabled>Memuat...</option>
+                          ) : (
+                            editWilayahs.map((w) => (
+                              <option key={w.id} value={w.id}>{w.nama}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting</label>
+                        <select
+                          value={editForm.rantingId}
+                          onChange={(e) => setEditForm({ ...editForm, rantingId: e.target.value })}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Pilih Ranting</option>
+                          {editRantingLoading ? (
+                            <option disabled>Memuat...</option>
+                          ) : (
+                            editRantings.map((r) => (
+                              <option key={r.id} value={r.id}>{r.nama}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+        
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditModal(false)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                      {editLoading ? (
+                        <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Menyimpan...</>
+                      ) : (
+                        <><Save size={16} />Simpan Perubahan</>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </Modal>
+        
+              {/* ── Delete Modal ── */}
+              <Modal
+                open={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                title="Hapus Anggota"
+                size="sm"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+                    <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      Tindakan ini akan menghapus <strong>{member.namaLengkap}</strong> secara permanen.
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Data yang terkait seperti dokumen dan riwayat iuran juga akan terhapus. Tindakan ini
+                    tidak dapat dibatalkan.
+                  </p>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setShowDeleteModal(false)}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      disabled={actionLoading === 'delete'}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+                    >
+                      {actionLoading === 'delete' ? 'Menghapus...' : 'Ya, Hapus'}
+                    </button>
+                  </div>
+                </div>
+              </Modal>
+            </div>
+      </PermissionGuard>
+    );
 }

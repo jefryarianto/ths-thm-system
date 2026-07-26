@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
+
   Play,
   Square,
   Sliders,
@@ -319,6 +321,7 @@ export default function TestBatchProgressPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <Breadcrumbs />
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* ═══ Header ═══ */}
         <div className="flex items-center justify-between">

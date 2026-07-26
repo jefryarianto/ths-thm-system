@@ -200,7 +200,12 @@ describe('api-client', () => {
         config: {},
       };
 
-      await expect(errorHandler(error)).rejects.toBe(error);
+      // Error normalization wraps the original error into a consistent shape
+      await expect(errorHandler(error)).rejects.toEqual({
+        status: 500,
+        message: 'Terjadi kesalahan pada server.',
+        data: null,
+      });
     });
   });
 

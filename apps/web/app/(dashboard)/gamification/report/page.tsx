@@ -1,11 +1,14 @@
 'use client';
 
+import { PermissionGuard } from '@/components/auth/permission-guard';
+
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import { Trophy, Zap, AlertCircle, Download, Calendar } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
+
 
 interface ReportEntry {
   rank: number;
@@ -146,85 +149,87 @@ export default function PointsReportPage() {
   }
 
   return (
-    <PageContainer>
-      <PageHeader title="Laporan Poin" onRefresh={fetchReport}>
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition"
-        >
-          <Download size={14} />
-          CSV
-        </button>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition"
-        >
-          <Download size={14} />
-          Print
-        </button>
-      </PageHeader>
-
-      {/* Period Selector */}
-      <div className="flex items-center gap-3">
-        <Calendar size={16} className="text-gray-400" />
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
-          <button
-            onClick={() => setPeriod('weekly')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition ${
-              period === 'weekly'
-                ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
-            }`}
-          >
-            Mingguan
-          </button>
-          <button
-            onClick={() => setPeriod('monthly')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition ${
-              period === 'monthly'
-                ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
-            }`}
-          >
-            Bulanan
-          </button>
-        </div>
-      </div>
-
-      {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Peserta</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{report.length}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Total Poin ({period === 'weekly' ? 'Minggu' : 'Bulan'} Ini)
-          </p>
-          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">
-            {totalPoints.toLocaleString('id-ID')}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Rata-rata Poin</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-            {report.length > 0
-              ? Math.round(totalPoints / report.length).toLocaleString('id-ID')
-              : 0}
-          </p>
-        </div>
-      </div>
-
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={report}
-        loading={false}
-        page={1}
-        totalPages={1}
-        total={report.length}
-        empty={{ icon: Trophy, message: 'Belum ada data untuk periode ini' }}
-      />
-    </PageContainer>
-  );
+      <PermissionGuard module="gamification" action="view">
+        <PageContainer>
+              <PageHeader title="Laporan Poin" onRefresh={fetchReport}>
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg transition"
+                >
+                  <Download size={14} />
+                  CSV
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition"
+                >
+                  <Download size={14} />
+                  Print
+                </button>
+              </PageHeader>
+        
+              {/* Period Selector */}
+              <div className="flex items-center gap-3">
+                <Calendar size={16} className="text-gray-400" />
+                <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setPeriod('weekly')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+                      period === 'weekly'
+                        ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
+                    }`}
+                  >
+                    Mingguan
+                  </button>
+                  <button
+                    onClick={() => setPeriod('monthly')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+                      period === 'monthly'
+                        ? 'bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
+                    }`}
+                  >
+                    Bulanan
+                  </button>
+                </div>
+              </div>
+        
+              {/* Summary */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Peserta</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{report.length}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Total Poin ({period === 'weekly' ? 'Minggu' : 'Bulan'} Ini)
+                  </p>
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">
+                    {totalPoints.toLocaleString('id-ID')}
+                  </p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Rata-rata Poin</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {report.length > 0
+                      ? Math.round(totalPoints / report.length).toLocaleString('id-ID')
+                      : 0}
+                  </p>
+                </div>
+              </div>
+        
+              {/* Table */}
+              <DataTable
+                columns={columns}
+                data={report}
+                loading={false}
+                page={1}
+                totalPages={1}
+                total={report.length}
+                empty={{ icon: Trophy, message: 'Belum ada data untuk periode ini' }}
+              />
+            </PageContainer>
+      </PermissionGuard>
+    );
 }

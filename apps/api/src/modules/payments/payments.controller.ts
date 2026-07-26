@@ -50,6 +50,14 @@ export class PaymentsController {
 
   // ── Payment Flow ──
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail pembayaran iuran' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.findOne(id, req.scope);
+  }
+
   @Post(':id/upload-proof')
   @ApiOperation({ summary: 'Upload bukti pembayaran manual' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')

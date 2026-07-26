@@ -47,7 +47,7 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
         <button
           onClick={handlePrev}
           disabled={page <= 1}
-          className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={16} />
         </button>
@@ -55,7 +55,7 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
         <button
           onClick={handleNext}
           disabled={page >= totalPages}
-          className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronRight size={16} />
         </button>

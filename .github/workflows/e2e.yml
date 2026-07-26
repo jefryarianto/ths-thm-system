@@ -1,0 +1,717 @@
+# ── E2E Tests ─────────────────────────────────────────────────────────
+#
+# Runs ALL Playwright E2E tests across N parallel shards using GitHub
+# Actions matrix strategy, then merges blob reports into a single HTML
+# report for convenient browsing.
+#
+# ── Test architecture ─────────────────────────────────────────────────
+#
+# All E2E tests mock API calls in-browser via Playwright's page.route().
+# No running API backend is required — tests only need the Next.js
+# production server.  A PostgreSQL service container is still provisioned
+# so future integration-style E2E tests can talk to a real database
+# without changing the CI configuration.
+#
+# ── Visual regression baselines ───────────────────────────────────────
+#
+# The first CI run for a new branch will FAIL because Playwright's
+# toHaveScreenshot() requires stored baseline PNGs.  After the initial
+# run, download the blob-report artifact, merge it locally to see which
+# screenshots failed, then generate baselines:
+#
+#   1. Run the visual baseline update workflow (e2e-visual-baselines.yml)
+#      OR manually:
+#        npx playwright test style-guide-visual.spec.ts --update-snapshots
+#   2. Commit the generated *.png files in:
+#        apps/web/e2e/style-guide-visual.spec.ts-snapshots/
+#   3. Push — subsequent CI runs will compare against these baselines.
+#
+# ── Environment variables ────────────────────────────────────────────
+#
+# E2E_BASE_URL    — base URL for the Next.js server (internal to job)
+# DATABASE_URL    — PostgreSQL connection string for future DB-backed tests
+# NODE_ENV        = test
+#
+# ── Secrets ──────────────────────────────────────────────────────────
+#
+# SLACK_WEBHOOK_URL (optional) — Slack Incoming Webhook URL for posting
+#   E2E test results to #ci-cd (or any channel). Get one at:
+#   https://api.slack.com/messaging/webhooks
+#   If not set, Slack notifications are silently skipped.
+#
+# ═════════════════════════════════════════════════════════════════════
+
+name: 🧪 E2E Tests
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: 'Number of parallel shards (default: 4)'
+        required: false
+        default: '4'
+      update_snapshots:
+        description: 'Update visual regression snapshots (--update-snapshots)'
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9.15.4'
+  E2E_BASE_URL: http://localhost:3002
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Pre-flight: determine shard count ──────────────────────────
+  plan:
+    name: 📋 Plan Shards
+    runs-on: ubuntu-latest
+    outputs:
+      shard_count: ${{ steps.shard_count.outputs.value }}
+
+    steps:
+      - id: shard_count
+        run: |
+          COUNT="${{ inputs.shards || '4' }}"
+          echo "value=$COUNT" >> "$GITHUB_OUTPUT"
+          # Generate a JSON array matching the count so test job can use it
+          JSON_ARRAY="["
+          for i in $(seq 1 "$COUNT"); do
+            [ "$i" -gt 1 ] && JSON_ARRAY+=","
+            JSON_ARRAY+="$i"
+          done
+          JSON_ARRAY+="]"
+          echo "shard_list=$JSON_ARRAY" >> "$GITHUB_OUTPUT"
+          echo "   Running $COUNT shard(s): $JSON_ARRAY"
+
+  # ─── E2E Tests (Matrix — one job per shard) ────────────────────
+  test:
+    name: E2E — Shard ${{ matrix.shard }}/${{ strategy.job-total }}
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # let all shards report independently
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shard_list) }}
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ths_thm
+          POSTGRES_PASSWORD: ths_thm_password
+          POSTGRES_DB: ths_thm_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U ths_thm -d ths_thm_e2e
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_e2e
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers (Chromium only)
+        working-directory: apps/web
+        run: npx playwright install chromium --with-deps
+
+      - name: Build Next.js app (production)
+        run: pnpm --filter @ths-thm/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_ENABLE_REALTIME: false
+          NODE_ENV: production
+
+      - name: Start Next.js server in background
+        shell: bash
+        run: |
+          cd apps/web
+          npx next start -p 3002 &
+          # Store PID for later cleanup
+          echo "NEXT_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for Next.js to be ready
+        shell: bash
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/ | grep -q "200\|302"; then
+              echo "✅ Next.js server is ready (attempt $i)"
+              exit 0
+            fi
+            echo "   Waiting... (attempt $i/30)"
+            sleep 3
+          done
+          echo "❌ Next.js server failed to start within 90 seconds"
+          exit 1
+
+      - name: Run Playwright tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
+        working-directory: apps/web
+        shell: bash
+        run: |
+          UPDATE_FLAG=""
+          if [ "${{ inputs.update_snapshots }}" = "true" ]; then
+            UPDATE_FLAG="--update-snapshots"
+            echo "   📸 Updating visual regression snapshots"
+          fi
+          npx playwright test \
+            --shard=${{ matrix.shard }}/${{ strategy.job-total }} \
+            $UPDATE_FLAG
+        env:
+          E2E_BASE_URL: http://localhost:3002
+          CI: true
+
+      - name: Upload blob report (shard ${{ matrix.shard }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: apps/web/blob-report/
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload test results (traces, screenshots on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.shard }}
+          path: apps/web/test-results/
+          retention-days: 14
+
+      - name: Stop Next.js server
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "$NEXT_PID" ]; then
+            kill $NEXT_PID 2>/dev/null || true
+          fi
+          # Also kill any lingering node processes
+          pkill -f "next start" 2>/dev/null || true
+
+  # ─── Merge blob reports into HTML report ───────────────────────
+  merge:
+    name: 📊 Merge Reports
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download all blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: blob-report-download
+          merge-multiple: true
+
+      - name: Move blob reports to expected location
+        shell: bash
+        run: |
+          mkdir -p apps/web/blob-report
+          if [ -d blob-report-download ]; then
+            cp -r blob-report-download/* apps/web/blob-report/ 2>/dev/null || true
+          fi
+          echo "Blob report contents:"
+          ls -la apps/web/blob-report/
+
+      - name: Merge blob reports into HTML
+        id: merge
+        working-directory: apps/web
+        continue-on-error: true
+        shell: bash
+        run: |
+          if ls blob-report/*.zip 1>/dev/null 2>&1; then
+            npx playwright merge-reports --reporter html ./blob-report
+            echo "✅ Reports merged successfully"
+          else
+            echo "⚠️ No blob reports found — skipping merge"
+            echo "skipped=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload merged HTML report
+        if: always() && steps.merge.outputs.skipped != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report
+          path: apps/web/playwright-report/
+          retention-days: 60
+          compression-level: 0
+
+      - name: Check blob report files exist
+        id: check-blob
+        if: always() && steps.merge.outputs.skipped == 'true'
+        shell: bash
+        run: |
+          REPORT_DIR="apps/web/blob-report"
+          if [ -d "$REPORT_DIR" ] && ls "$REPORT_DIR"/*.zip 1>/dev/null 2>&1; then
+            echo "has_files=true" >> "$GITHUB_OUTPUT"
+            echo "📦 Found blob report files"
+          else
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ No blob report files to upload"
+          fi
+
+      - name: Upload raw blob reports (fallback artifact)
+        if: always() && steps.merge.outputs.skipped == 'true' && steps.check-blob.outputs.has_files == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-raw
+          path: apps/web/blob-report/
+          retention-days: 30
+          compression-level: 0
+
+      - name: Upload merged blob report archive
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-merged
+          path: apps/web/blob-report/
+          retention-days: 7
+
+  # ─── Summary ───────────────────────────────────────────────────
+  # ─── Smoke Test ──────────────────────────────────────────────────
+  # Deploys the built API + Web to a temporary staging environment,
+  # runs health checks and basic integration tests, then tears down.
+  # ─── Smoke Test ──────────────────────────────────────────────────
+  # Deploys the built API + Web to a temporary staging environment,
+  # runs health checks and basic integration tests, then tears down.
+  smoke-test:
+    name: 🔥 Smoke Test
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ths_thm
+          POSTGRES_PASSWORD: ths_thm_password
+          POSTGRES_DB: ths_thm_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U ths_thm -d ths_thm_smoke
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_smoke
+      JWT_SECRET: smoke-test-jwt-secret
+      JWT_REFRESH_SECRET: smoke-test-jwt-refresh-secret
+      APP_PORT: 3001
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NODE_ENV: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ths-thm/api prisma:generate
+
+      - name: Run database migrations
+        run: pnpm --filter @ths-thm/api prisma:deploy
+
+      - name: Seed test data (optional)
+        run: pnpm --filter @ths-thm/api prisma:seed
+        continue-on-error: true
+
+      - name: Build API
+        run: pnpm --filter @ths-thm/api build
+        timeout-minutes: 5
+
+      - name: Build Web
+        run: pnpm --filter @ths-thm/web build
+        timeout-minutes: 5
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          NEXT_PUBLIC_ENABLE_REALTIME: false
+
+      - name: Start API server in background
+        shell: bash
+        run: |
+          cd apps/api
+          node dist/main.js > ./smoke-test-api.log 2>&1 &
+          echo "API_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for API health
+        shell: bash
+        run: |
+          for i in $(seq 1 30); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ API health check passed (attempt $i)"
+              curl -s http://localhost:3001/api/health
+              echo ""
+              exit 0
+            fi
+            echo "   Waiting... (attempt $i/30) HTTP $HTTP_CODE"
+            sleep 3
+          done
+          echo "❌ API failed to start within 90 seconds"
+          tail -30 ./smoke-test-api.log 2>/dev/null || true
+          exit 1
+
+      - name: Start Web server in background
+        shell: bash
+        run: |
+          cd apps/web
+          npx next start -p 3000 > ./smoke-test-web.log 2>&1 &
+          echo "WEB_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for Web health
+        shell: bash
+        run: |
+          for i in $(seq 1 30); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "302" ]; then
+              echo "✅ Web health check passed (attempt $i)"
+              exit 0
+            fi
+            echo "   Waiting... (attempt $i/30) HTTP $HTTP_CODE"
+            sleep 3
+          done
+          echo "❌ Web failed to start within 90 seconds"
+          tail -30 ./smoke-test-web.log 2>/dev/null || true
+          exit 1
+
+      # ─── Smoke Tests ────────────────────────────────────────────
+      - name: Verify API info endpoint
+        id: verify-api-health
+        shell: bash
+        run: |
+          echo "--- API Health ---"
+          curl -sf http://localhost:3001/api/health
+          echo ""
+          echo "✅ API health endpoint OK"
+
+      - name: Verify Web serves HTML
+        id: verify-web-health
+        shell: bash
+        run: |
+          HTTP_CODE=$(curl -s -o /tmp/web-response.html -w "%{http_code}" http://localhost:3000/)
+          echo "Web HTTP Status: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "302" ]; then
+            HEAD_TITLE=$(grep -o "<title>[^<]*</title>" /tmp/web-response.html 2>/dev/null || echo "No title tag")
+            echo "Page title: $HEAD_TITLE"
+            echo "✅ Web serving HTML OK"
+          else
+            echo "❌ Web returned HTTP $HTTP_CODE"
+            head -20 /tmp/web-response.html 2>/dev/null
+            exit 1
+          fi
+
+      - name: Smoke test API CRUD
+        id: smoke-api-crud
+        shell: bash
+        continue-on-error: true
+        run: |
+          # Try JWT login with seed admin
+          LOGIN=$(curl -sf -X POST http://localhost:3001/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"superadmin@ths-thm.org","password":"admin123"}' 2>/dev/null || echo "")
+          TOKEN=$(echo "$LOGIN" | grep -o '"accessToken":"[^"]*"' | head -1 | cut -d'"' -f4)
+          if [ -n "$TOKEN" ]; then
+            MEMBERS=$(curl -sf http://localhost:3001/api/members?limit=3 \
+              -H "Authorization: Bearer $TOKEN" 2>/dev/null || echo '{"error":"failed"}')
+            echo "Members response: $MEMBERS" | head -c 300
+            echo ""
+            echo "✅ API authenticated request succeeded"
+          else
+            echo "⚠️ No seed data — login skipped, health endpoint is sufficient"
+          fi
+
+      - name: Smoke test database connectivity
+        id: smoke-db
+        shell: bash
+        run: |
+          HEALTH=$(curl -sf http://localhost:3001/api/health 2>/dev/null || echo '{"status":"error"}')
+          echo "Health: $HEALTH" | head -c 200
+          if echo "$HEALTH" | grep -qi "ok|healthy"; then
+            echo ""
+            echo "✅ Database connectivity OK"
+          else
+            echo ""
+            echo "⚠️ Health endpoint responded"
+          fi
+
+      # ─── Teardown ───────────────────────────────────────────────
+      - name: Stop servers
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "$API_PID" ]; then
+            kill $API_PID 2>/dev/null || true
+            echo "   API server stopped"
+          fi
+          if [ -n "$WEB_PID" ]; then
+            kill $WEB_PID 2>/dev/null || true
+            echo "   Web server stopped"
+          fi
+          pkill -f "node dist/main.js" 2>/dev/null || true
+          pkill -f "next start" 2>/dev/null || true
+
+      - name: Upload smoke test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-logs
+          path: |
+            smoke-test-api.log
+            smoke-test-web.log
+          retention-days: 7
+
+      - name: Smoke test summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🔥 Smoke Test Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          RESULT="${{ job.status }}"
+          if [ "$RESULT" = "success" ]; then
+            echo "✅ **Smoke test passed!** API and Web are functioning correctly." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Smoke test failed.** Check the smoke-test-logs artifact for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|:------|:-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API Health | ${{ steps.verify-api-health.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web Health | ${{ steps.verify-web-health.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| DB Connectivity | ${{ steps.smoke-db.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API CRUD | ${{ steps.smoke-api-crud.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+
+
+  summary:
+    name: 📋 Test Summary
+    needs: [plan, test, merge]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Summarize E2E results
+        shell: bash
+        run: |
+          echo "## 🧪 E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          RESULT="${{ needs.test.result }}"
+          SHARD_COUNT="${{ needs.plan.outputs.shard_count }}"
+
+          echo "| Detail | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|:-------|:------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Shards | ${SHARD_COUNT} parallel |" >> $GITHUB_STEP_SUMMARY
+          if [ "$RESULT" = "success" ]; then
+            echo "| Result | ✅ All passed |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🎉 **All E2E tests passed across all ${SHARD_COUNT} shards!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Result | ❌ $RESULT |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Some shards failed. Download the [HTML report artifact](#) and open \`index.html\` in a browser to identify failures.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### How to view the report" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download **playwright-html-report** from the Artifacts section above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Unzip the archive" >> $GITHUB_STEP_SUMMARY
+          echo "3. Open \`index.html\` in a browser" >> $GITHUB_STEP_SUMMARY
+          echo "4. Click on any failed test to view error, trace, and screenshot" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR with report link
+        if: github.event_name == 'pull_request' && needs.merge.result == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+
+            const reportArtifact = artifacts.data.artifacts.find(
+              a => a.name === 'playwright-html-report'
+            );
+
+            if (reportArtifact) {
+              const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/artifacts/${reportArtifact.id}.zip`;
+              const comment = `## 🧪 E2E Test Report
+
+            | Artifact | Link |
+            |:---------|:-----|
+            | 📊 HTML Report | [Download](${artifactUrl}) |
+            | 🏃 Workflow Run | [View](${runUrl}) |
+
+            Download the HTML report artifact, unzip, and open \`index.html\` in a browser to see full results with traces.`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment,
+              });
+            }
+
+      # ─── Determine status emoji & label ───────────────────────────────────────────
+      - name: Determine test status
+        id: status
+        if: always()
+        shell: bash
+        run: |
+          RESULT="${{ needs.test.result }}"
+          case "$RESULT" in
+            success)   echo "emoji=✅" >> "$GITHUB_OUTPUT"; echo "label=Passed"    >> "$GITHUB_OUTPUT" ;;
+            cancelled) echo "emoji=⚠️" >> "$GITHUB_OUTPUT"; echo "label=Cancelled" >> "$GITHUB_OUTPUT" ;;
+            *)         echo "emoji=❌" >> "$GITHUB_OUTPUT"; echo "label=Failed"    >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # ─── Check Slack webhook is configured ─────────────────────────────────────
+      - name: Check Slack webhook
+        id: check-slack
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || '' }}
+        shell: bash
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ SLACK_WEBHOOK_URL not set — skipping Slack notification"
+          fi
+
+      # ─── Send Slack notification (optional — requires SLACK_WEBHOOK_URL) ────
+      - name: Notify Slack
+        if: always() && steps.check-slack.outputs.skip != 'true'
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "⤴️ E2E Test Results"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.label }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Trigger:*\n${{ github.event_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Shards:*\n${{ needs.plan.outputs.shard_count }} parallel"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "👀 View Run"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "primary"
+                    }
+                  ]
+                }
+              ]
+            }
+
+

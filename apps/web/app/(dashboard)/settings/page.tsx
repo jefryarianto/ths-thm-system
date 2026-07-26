@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import Card from '@/components/cards/card';
 import InfoRow from '@/components/ui/info-row';
 import FormField from '@/components/ui/form-field';
+
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 interface OrgSettings {
   nama: string;
@@ -177,7 +180,9 @@ export default function SettingsPage() {
     );
 
   return (
+    <PermissionGuard module="settings" action="view">
     <div className="space-y-6">
+      <Breadcrumbs />
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Pengaturan Sistem</h1>
@@ -208,6 +213,46 @@ export default function SettingsPage() {
           </div>
         </div>
         <ArrowRight size={18} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition" />
+      </Link>
+
+      <Link
+        href="/settings/periods"
+        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-green-300 dark:hover:border-green-700 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
+            <Calendar size={20} className="text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition">
+              Periode Iuran
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Kelola periode dan tahun iuran anggota
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={18} className="text-gray-400 group-hover:text-green-500 group-hover:translate-x-0.5 transition" />
+      </Link>
+
+      <Link
+        href="/audit-logs"
+        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950">
+            <Shield size={20} className="text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
+              Audit Log
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Lacak aktivitas, akses data, dan pelanggaran scope
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={18} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition" />
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -475,5 +520,6 @@ export default function SettingsPage() {
         </div>
       </Modal>
     </div>
+    </PermissionGuard>
   );
 }

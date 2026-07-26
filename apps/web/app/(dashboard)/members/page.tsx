@@ -7,7 +7,10 @@ import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Member } from '@/types';
-import { Plus, Download, Upload, Users } from 'lucide-react';
+import { Plus, Upload, Users } from 'lucide-react';
+import ExportMenu from '@/components/ui/export-menu';
+import { CanCreate, CanExport } from '@/components/auth/can';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
@@ -19,6 +22,7 @@ import MemberStatCards from '@/components/members/MemberStatCards';
 import { StatusBadge, STATUS_LABELS, formatDate } from '@/components/members/constants';
 
 // ─── Page ───
+
 
 export default function MembersPage() {
   const router = useRouter();
@@ -184,38 +188,28 @@ export default function MembersPage() {
   // ─── Render ───
 
   return (
+    <PermissionGuard module="members" action="view">
     <PageContainer>
       <PageHeader title="Anggota" onRefresh={refetch}>
-        <button
-          onClick={() => router.push('/members/import')}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-        >
-          <Upload size={14} /> Import
-        </button>
-        <button
-          onClick={async () => {
-            try {
-              const { data: blob } = await apiClient.get('/members/export', { responseType: 'blob' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `anggota-export-${new Date().toISOString().slice(0, 10)}.csv`;
-              a.click();
-              URL.revokeObjectURL(url);
-            } catch {
-              alert('Gagal mengekspor data');
-            }
-          }}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-        >
-          <Download size={14} /> Export
-        </button>
-        <button
-          onClick={() => router.push('/members/new')}
-          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-        >
-          <Plus size={16} /> Tambah
-        </button>
+        <CanCreate module="members">
+          <button
+            onClick={() => router.push('/members/import')}
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+          >
+            <Upload size={14} /> Import
+          </button>
+        </CanCreate>
+        <CanExport module="members">
+          <ExportMenu serverType="members" filename="anggota-export" />
+        </CanExport>
+        <CanCreate module="members">
+          <button
+            onClick={() => router.push('/members/new')}
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          >
+            <Plus size={16} /> Tambah
+          </button>
+        </CanCreate>
       </PageHeader>
 
       {/* Stats Cards */}
@@ -299,5 +293,6 @@ export default function MembersPage() {
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

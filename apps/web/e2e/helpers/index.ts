@@ -17,3 +17,4 @@ export { registerImportMocks } from './import';
 export { registerCandidatesMocks } from './candidates';
 export { registerRegistrationMocks } from './registration';
 export { registerDocumentsMocks, getMockBatchId } from './documents';
+export { registerApprovalsMocks } from './approvals';

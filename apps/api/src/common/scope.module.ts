@@ -3,6 +3,8 @@ import { ScopeHelper } from './utils/scope-helpers';
 import { AuditService } from './services/audit.service';
 import { AuditLogStore } from './services/audit-log-store.service';
 import { AuditLogController } from './controllers/audit-log.controller';
+import { AuditSseController } from './controllers/audit-sse.controller';
+import { EventBusService } from './services/event-bus.service';
 import { CacheService } from './services/cache.service';
 import { CsvImportService } from './services/csv-import.service';
 import { MemberMailService } from './services/member-mail.service';
@@ -13,17 +15,19 @@ import { CacheManagementController } from './controllers/cache-management.contro
 
 @Global()
 @Module({
-  controllers: [AuditLogController, ApiKeyManagementController, CacheManagementController],
+  imports: [],
+  controllers: [AuditLogController, AuditSseController, ApiKeyManagementController, CacheManagementController],
   providers: [
     ScopeHelper,
     AuditLogStore,
     AuditService,
+    EventBusService,
     CacheService,
     CsvImportService,
     MemberMailService,
     NraService,
     ApiKeyStore,
   ],
-  exports: [ScopeHelper, AuditService, AuditLogStore, CacheService, CsvImportService, MemberMailService, NraService, ApiKeyStore],
+  exports: [ScopeHelper, AuditService, AuditLogStore, EventBusService, CacheService, CsvImportService, MemberMailService, NraService, ApiKeyStore],
 })
 export class ScopeModule {}

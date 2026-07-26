@@ -35,6 +35,14 @@ export class ApprovalController {
     return this.service.reject(id, req.user.id, note);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail pengajuan persetujuan' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @RequireScope('branch')
+  findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.findOne(id, req.scope);
+  }
+
   @Get('pending')
   @ApiOperation({ summary: 'Lihat pengajuan yang menunggu persetujuan' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')

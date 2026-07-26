@@ -3,7 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import apiClient from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
+
   TrendingUp,
   Bell,
   Activity,
@@ -42,6 +44,7 @@ import {
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex items-center justify-center h-64">
+      <Breadcrumbs />
       <div className="text-center">
         <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
         <p className="text-red-600 font-medium">{message}</p>
@@ -210,8 +213,10 @@ export default function DashboardPage() {
                   formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Jumlah']}
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    border: '1px solid var(--tooltip-border)',
+                    background: 'var(--tooltip-bg)',
+                    color: 'var(--tooltip-color)',
+                    boxShadow: 'var(--tooltip-shadow)',
                   }}
                 />
                 <Bar dataKey="jumlah" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={48} />
@@ -256,8 +261,10 @@ export default function DashboardPage() {
                     formatter={(value: number) => [value.toLocaleString('id-ID'), 'Anggota']}
                     contentStyle={{
                       borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      border: '1px solid var(--tooltip-border)',
+                      background: 'var(--tooltip-bg)',
+                      color: 'var(--tooltip-color)',
+                      boxShadow: 'var(--tooltip-shadow)',
                     }}
                   />
                   <Legend

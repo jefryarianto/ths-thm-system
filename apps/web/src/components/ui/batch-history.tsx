@@ -251,7 +251,7 @@ export function BatchHistoryPanel({ onOpenBatch }: BatchHistoryPanelProps) {
                     ) : (
                       <ChevronRight
                         size={18}
-                        className={`text-gray-400 transition-transform duration-200 ${
+                        className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
                           expandedId === batch.id ? 'rotate-90' : ''
                         }`}
                       />

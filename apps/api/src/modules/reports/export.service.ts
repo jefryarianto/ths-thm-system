@@ -15,28 +15,7 @@ export class ExportService {
     let data: Record<string, unknown>[] = [];
     let headers: string[] = [];
 
-    switch (type) {
-      case 'members':
-        ({ data, headers } = await this.getMembersData(scope));
-        break;
-      case 'dues':
-        ({ data, headers } = await this.getDuesData(scope));
-        break;
-      case 'trainings':
-        ({ data, headers } = await this.getTrainingData(scope));
-        break;
-      case 'candidates':
-        ({ data, headers } = await this.getCandidateData(scope));
-        break;
-      case 'graduations':
-        ({ data, headers } = await this.getGraduationData(scope));
-        break;
-      case 'assessments':
-        ({ data, headers } = await this.getAssessmentData(scope));
-        break;
-      default:
-        throw new Error(`Unknown export type: ${type}`);
-    }
+    ({ data, headers } = await this.getExportData(type, scope));
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
@@ -50,28 +29,32 @@ export class ExportService {
   }
 
   async exportToCsv(type: string, scope?: UserScope): Promise<string> {
-    let data: Record<string, unknown>[] = [];
-    let headers: string[] = [];
-
-    switch (type) {
-      case 'members':
-        ({ data, headers } = await this.getMembersData(scope));
-        break;
-      case 'dues':
-        ({ data, headers } = await this.getDuesData(scope));
-        break;
-      case 'trainings':
-        ({ data, headers } = await this.getTrainingData(scope));
-        break;
-      default:
-        throw new Error(`Unknown export type: ${type}`);
-    }
-
+    const { data: xlsxData, headers } = await this.getExportData(type, scope);
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+    const worksheet = XLSX.utils.json_to_sheet(xlsxData, { header: headers });
     XLSX.utils.book_append_sheet(workbook, worksheet, type.toUpperCase());
     const csv = XLSX.write(workbook, { type: 'string', bookType: 'csv' });
     return csv;
+  }
+
+  /** Shared data fetcher for all export types, used by both XLSX and CSV export. */
+  private async getExportData(type: string, scope?: UserScope) {
+    switch (type) {
+      case 'members':
+        return this.getMembersData(scope);
+      case 'dues':
+        return this.getDuesData(scope);
+      case 'trainings':
+        return this.getTrainingData(scope);
+      case 'candidates':
+        return this.getCandidateData(scope);
+      case 'graduations':
+        return this.getGraduationData(scope);
+      case 'assessments':
+        return this.getAssessmentData(scope);
+      default:
+        throw new Error(`Unknown export type: ${type}`);
+    }
   }
 
   private async getMembersData(scope?: UserScope) {

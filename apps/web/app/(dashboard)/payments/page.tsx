@@ -6,10 +6,12 @@ import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2 } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
+
 
 interface DuesRecord {
   id: string;
@@ -97,6 +99,7 @@ export default function PaymentsPage() {
   };
 
   return (
+    <PermissionGuard module="payments" action="view">
     <PageContainer>
       <PageHeader title="Manajemen Pembayaran" onRefresh={refetch} />
 
@@ -302,5 +305,6 @@ export default function PaymentsPage() {
         )}
       />
     </PageContainer>
+    </PermissionGuard>
   );
 }

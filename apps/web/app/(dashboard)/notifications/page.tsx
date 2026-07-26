@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
 import { useFilters } from '@/lib/hooks/use-filters';
 import {
+
   Send,
   Bell,
   BellOff,
@@ -15,6 +16,7 @@ import {
   Trash2,
   RefreshCw,
 } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import Link from 'next/link';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -209,6 +211,7 @@ export default function NotificationsPage() {
   };
 
   return (
+    <PermissionGuard module="notifications" action="view">
     <PageContainer>
       <PageHeader title="Notifikasi" onRefresh={fetchData}>
         {meta.unreadCount > 0 && (
@@ -485,5 +488,6 @@ export default function NotificationsPage() {
       {/* Send Notification Modal */}
       <SendNotificationModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} />
     </PageContainer>
+    </PermissionGuard>
   );
 }

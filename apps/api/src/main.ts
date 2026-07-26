@@ -3,12 +3,32 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
+import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger-scope';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
+import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
 
 async function bootstrap() {
+  // ── Sentry Initialisation ──────────────────────────────────────────
+  // Must be called before any other import that uses Sentry.
+  // No-ops automatically when SENTRY_DSN is not set (local dev).
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      // Sample 10% of transactions in production to balance
+      // performance insight vs cost.
+      tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+      integrations: [
+        // Node.js default integrations + Express request handler
+        ...Sentry.autoIntegrations(),
+      ],
+    });
+    console.log('🔍 Sentry error tracking initialized');
+  }
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
   });
@@ -40,6 +60,9 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  // ── Global Exception Filters ────────────────────────────────────
+  app.useGlobalFilters(new SentryExceptionFilter());
 
   // Configure Socket.IO with Redis adapter for cross-instance WebSocket state
   app.useWebSocketAdapter(new RedisIoAdapter(app));

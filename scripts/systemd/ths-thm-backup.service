@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════════════════════════
+# THS-THM Database Backup Service
+#
+# This service runs the backup-database.sh script. It is
+# triggered by the corresponding .timer unit.
+#
+# Install:
+#   sudo cp ths-thm-backup.service /etc/systemd/system/
+#   sudo cp ths-thm-backup.timer    /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable ths-thm-backup.timer
+#   sudo systemctl start  ths-thm-backup.timer
+#
+# Verify:
+#   sudo systemctl status ths-thm-backup.service
+#   sudo systemctl status ths-thm-backup.timer
+#   sudo journalctl -u ths-thm-backup.service -n 50 --no-pager
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=THS-THM Database Backup
+Documentation=https://github.com/jefryarianto/ths-thm-system
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+User=ths-thm
+Group=ths-thm
+
+# ── Environment ──────────────────────────────────────────────
+# These override the defaults in backup-database.sh.
+# Adjust paths if your installation differs.
+
+Environment=TARGET=production
+Environment=BACKUP_DIR=/opt/backups/ths-thm
+Environment=RETENTION_DAYS=30
+
+# Offsite backup (optional — uncomment and fill in):
+# Environment=OFFSITE_HOST=backup@backup.example.com
+# Environment=OFFSITE_DIR=/backups/ths-thm/production
+# Environment=OFFSITE_KEY=/home/ths-thm/.ssh/backup-key
+
+# Slack notification (optional):
+# Environment=SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+
+# ── Execution ────────────────────────────────────────────────
+ExecStart=/opt/ths-thm/scripts/backup-database.sh
+
+# ── Resource limits ──────────────────────────────────────────
+# pg_dump with compression is CPU-bound — don't cap aggressively
+# Memory limit handles ~300MB dump size on a 512MB VPS
+MemoryMax=1024M
+
+# ── Logging ──────────────────────────────────────────────────
+StandardOutput=journal
+StandardError=journal
+
+# ── Failure handling ─────────────────────────────────────────
+Restart=on-failure
+RestartSec=60
+StartLimitInterval=600
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

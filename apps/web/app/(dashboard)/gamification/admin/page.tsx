@@ -1,5 +1,7 @@
 'use client';
 
+import { PermissionGuard } from '@/components/auth/permission-guard';
+
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import DataTable from '@/components/ui/data-table';
@@ -7,6 +9,7 @@ import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { Zap, AlertCircle, Gift, Users } from 'lucide-react';
 import {
+
   BarChart,
   Bar,
   XAxis,
@@ -84,9 +87,9 @@ export default function GamificationAdminPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
-          <h1 className="text-xl font-semibold text-gray-900 sr-only">Admin Gamifikasi</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 sr-only">Admin Gamifikasi</h1>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <p className="text-sm text-gray-500">Memuat data admin gamifikasi...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Memuat data admin gamifikasi...</p>
         </div>
       </div>
     );
@@ -96,135 +99,137 @@ export default function GamificationAdminPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Admin Gamifikasi</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Admin Gamifikasi</h1>
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
-          <p className="text-red-600 font-medium">{error}</p>
-          <p className="text-sm text-gray-500 mt-1">Periksa koneksi ke server API</p>
+          <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Periksa koneksi ke server API</p>
         </div>
       </div>
     );
   }
 
   return (
-    <PageContainer>
-      <PageHeader title="Admin Gamifikasi" onRefresh={fetchData} />
-
-      {/* Points Distribution Chart */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="mb-6 flex items-center gap-2">
-          <Users size={20} className="text-blue-500" />
-          <h3 className="text-base font-semibold text-gray-900">Distribusi Anggota per Level</h3>
-        </div>
-        {distribution.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={distribution} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis
-                dataKey="level"
-                tick={{ fontSize: 12, fill: '#6b7280' }}
-                tickFormatter={(val) => {
-                  const item = distribution.find((d) => d.level === val);
-                  return item ? `${item.icon} ${val}` : val;
-                }}
-              />
-              <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
-              <Tooltip
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: number, _name: string, props: any) => [
-                  `${value} anggota`,
-                  `${props.payload.icon} ${props.payload.level}`,
-                ]}
-                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-              />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={60}>
-                {distribution.map((entry, idx) => (
-                  <Cell key={idx} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-            Belum ada data distribusi
-          </div>
-        )}
-        {/* Legend */}
-        <div className="flex flex-wrap gap-4 mt-4 justify-center">
-          {distribution.map((d) => (
-            <div key={d.level} className="flex items-center gap-1.5 text-xs text-gray-600">
-              <span
-                className="inline-block w-3 h-3 rounded-sm"
-                style={{ backgroundColor: d.color }}
-              />
-              {d.icon} {d.level}: <span className="font-semibold">{d.count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Top Redemptions Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="mb-6 flex items-center gap-2">
-          <Gift size={20} className="text-purple-500" />
-          <h3 className="text-base font-semibold text-gray-900">Riwayat Redeem Reward</h3>
-        </div>
-        <DataTable
-          columns={[
-            {
-              key: 'reward',
-              label: 'Reward',
-              render: (r: Redemption) => (
-                <span className="text-sm font-medium text-gray-900">
-                  {r.rewardIcon} {r.rewardName}
-                </span>
-              ),
-            },
-            {
-              key: 'anggota',
-              label: 'Anggota',
-              render: (r: Redemption) => (
-                <span className="text-sm text-gray-700">{r.namaLengkap}</span>
-              ),
-            },
-            {
-              key: 'pointsSpent',
-              label: 'Poin',
-              align: 'right' as const,
-              render: (r: Redemption) => (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
-                  <Zap size={10} /> {r.pointsSpent.toLocaleString('id-ID')}
-                </span>
-              ),
-            },
-            {
-              key: 'status',
-              label: 'Status',
-              align: 'center' as const,
-              render: (r: Redemption) => (
-                <span
-                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGES[r.status]?.class || 'bg-gray-100 text-gray-800'}`}
-                >
-                  {STATUS_BADGES[r.status]?.label || r.status}
-                </span>
-              ),
-            },
-            {
-              key: 'createdAt',
-              label: 'Waktu',
-              align: 'right' as const,
-              render: (r: Redemption) => (
-                <span className="text-xs text-gray-500">{getTimeAgo(r.createdAt)}</span>
-              ),
-            },
-          ]}
-          data={redemptions}
-          loading={false}
-          empty={{ icon: Gift, message: 'Belum ada redeem reward' }}
-          page={1}
-          totalPages={1}
-          total={redemptions.length}
-        />
-      </div>
-    </PageContainer>
-  );
+      <PermissionGuard module="gamification" action="view">
+        <PageContainer>
+              <PageHeader title="Admin Gamifikasi" onRefresh={fetchData} />
+        
+              {/* Points Distribution Chart */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                <div className="mb-6 flex items-center gap-2">
+                  <Users size={20} className="text-blue-500" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Distribusi Anggota per Level</h3>
+                </div>
+                {distribution.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={distribution} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        dataKey="level"
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        tickFormatter={(val) => {
+                          const item = distribution.find((d) => d.level === val);
+                          return item ? `${item.icon} ${val}` : val;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
+                      <Tooltip
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={(value: number, _name: string, props: any) => [
+                          `${value} anggota`,
+                          `${props.payload.icon} ${props.payload.level}`,
+                        ]}
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', background: 'var(--tooltip-bg, #fff)', color: 'var(--tooltip-color, #111827)' }}
+                      />
+                      <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={60}>
+                        {distribution.map((entry, idx) => (
+                          <Cell key={idx} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+                    Belum ada data distribusi
+                  </div>
+                )}
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 mt-4 justify-center">
+                  {distribution.map((d) => (
+                    <div key={d.level} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span
+                        className="inline-block w-3 h-3 rounded-sm"
+                        style={{ backgroundColor: d.color }}
+                      />
+                      {d.icon} {d.level}: <span className="font-semibold">{d.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+        
+              {/* Top Redemptions Table */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+                <div className="mb-6 flex items-center gap-2">
+                  <Gift size={20} className="text-purple-500" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Riwayat Redeem Reward</h3>
+                </div>
+                <DataTable
+                  columns={[
+                    {
+                      key: 'reward',
+                      label: 'Reward',
+                      render: (r: Redemption) => (
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {r.rewardIcon} {r.rewardName}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'anggota',
+                      label: 'Anggota',
+                      render: (r: Redemption) => (
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{r.namaLengkap}</span>
+                      ),
+                    },
+                    {
+                      key: 'pointsSpent',
+                      label: 'Poin',
+                      align: 'right' as const,
+                      render: (r: Redemption) => (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                          <Zap size={10} /> {r.pointsSpent.toLocaleString('id-ID')}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'status',
+                      label: 'Status',
+                      align: 'center' as const,
+                      render: (r: Redemption) => (
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGES[r.status]?.class || 'bg-gray-100 text-gray-800'}`}
+                        >
+                          {STATUS_BADGES[r.status]?.label || r.status}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'createdAt',
+                      label: 'Waktu',
+                      align: 'right' as const,
+                      render: (r: Redemption) => (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{getTimeAgo(r.createdAt)}</span>
+                      ),
+                    },
+                  ]}
+                  data={redemptions}
+                  loading={false}
+                  empty={{ icon: Gift, message: 'Belum ada redeem reward' }}
+                  page={1}
+                  totalPages={1}
+                  total={redemptions.length}
+                />
+              </div>
+            </PageContainer>
+      </PermissionGuard>
+    );
 }
