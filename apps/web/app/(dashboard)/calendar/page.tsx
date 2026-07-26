@@ -2,21 +2,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import apiClient from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
-
-const MONTHS_FULL = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-const DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+import CalendarDay, {
+  MONTHS_FULL,
+  DAYS_FULL,
+  EVENT_STYLES,
+  toDateKey,
+  type CalendarDayEvent,
+} from '@/components/ui/calendar-day';
 
 // ─── Types ──────────────────────────────────────────────────────
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: string;
-  endDate?: string;
-  type: string;
-  location?: string;
-  description?: string;
-}
-
 interface NationalHoliday {
   id: string;
   date: string;
@@ -24,48 +18,7 @@ interface NationalHoliday {
 }
 
 interface HolidayLookup {
-  [dateKey: string]: string; // "YYYY-MM-DD" => holiday name
-}
-
-// ─── Event Color Map ────────────────────────────────────────────
-const EVENT_STYLES: Record<string, { dot: string; badge: string; text: string }> = {
-  training: {
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800',
-    text: 'text-emerald-700 dark:text-emerald-300',
-  },
-  pendadaran: {
-    dot: 'bg-violet-500',
-    badge: 'bg-violet-100 dark:bg-violet-900/60 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-800',
-    text: 'text-violet-700 dark:text-violet-300',
-  },
-  latihan: {
-    dot: 'bg-amber-500',
-    badge: 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800',
-    text: 'text-amber-700 dark:text-amber-300',
-  },
-  ujian_tingkat: {
-    dot: 'bg-rose-500',
-    badge: 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800',
-    text: 'text-rose-700 dark:text-rose-300',
-  },
-  rapat: {
-    dot: 'bg-sky-500',
-    badge: 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200 border-sky-200 dark:border-sky-800',
-    text: 'text-sky-700 dark:text-sky-300',
-  },
-};
-
-function getEventStyle(type: string) {
-  return EVENT_STYLES[type] || {
-    dot: 'bg-blue-500',
-    badge: 'bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800',
-    text: 'text-blue-700 dark:text-blue-300',
-  };
-}
-
-function toDateKey(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  [dateKey: string]: string;
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -73,7 +26,7 @@ export default function CalendarPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarDayEvent[]>([]);
   const [holidays, setHolidays] = useState<HolidayLookup>({});
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +50,6 @@ export default function CalendarPage() {
         for (const h of data.data as NationalHoliday[]) {
           const d = new Date(h.date);
           const key = toDateKey(d.getFullYear(), d.getMonth() + 1, d.getDate());
-          // Only store first holiday name for a given date (most significant)
           if (!lookup[key]) lookup[key] = h.name;
         }
         setHolidays(lookup);
@@ -130,31 +82,6 @@ export default function CalendarPage() {
   const prevMonth = () => { if (month === 1) { setYear(y => y - 1); setMonth(12); } else setMonth(m => m - 1); };
   const nextMonth = () => { if (month === 12) { setYear(y => y + 1); setMonth(1); } else setMonth(m => m + 1); };
   const goToday = () => { setYear(today.year); setMonth(today.month); };
-
-  const isToday = (day: number) => day === today.day && month === today.month && year === today.year;
-
-  const getDayClass = (day: number, dayOfWeek: number): { numClass: string; cellClass: string } => {
-    const holidayName = holidays[toDateKey(year, month, day)];
-    const isRed = dayOfWeek === 0 || !!holidayName;
-    const isSat = dayOfWeek === 6;
-
-    let numClass: string;
-    let cellClass = 'bg-white dark:bg-gray-900';
-
-    if (isToday(day)) {
-      numClass = 'bg-blue-600 text-white font-bold';
-      cellClass = 'ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/20';
-    } else if (isRed) {
-      numClass = 'text-red-600 dark:text-red-400 font-semibold';
-      cellClass = 'bg-red-50/40 dark:bg-red-950/10';
-    } else if (isSat) {
-      numClass = 'text-blue-600 dark:text-blue-400';
-    } else {
-      numClass = 'text-gray-900 dark:text-gray-100';
-    }
-
-    return { numClass, cellClass };
-  };
 
   return (
     <PermissionGuard module="calendar" action="view">
@@ -200,68 +127,28 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        {/* Day cells */}
+        {/* Day cells — using CalendarDay component */}
         <div className="grid grid-cols-7">
           {calendarDays.map((day, idx) => {
             if (day === null) return <div key={`empty-${idx}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50/30 dark:bg-gray-800/10" />;
 
             const dayOfWeek = idx % 7;
-            const { numClass, cellClass } = getDayClass(day, dayOfWeek);
             const dayEvents = getEventsForDay(day);
             const holidayName = holidays[toDateKey(year, month, day)];
 
             return (
-              <div
+              <CalendarDay
                 key={`day-${day}`}
-                className={`min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 border-b border-r border-gray-100 dark:border-gray-800/50 ${cellClass} transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/20`}
-                title={holidayName || (dayEvents.length > 0 ? `${dayEvents.length} kegiatan` : undefined)}
-              >
-                {/* Date number */}
-                <div className="flex items-start justify-between mb-1">
-                  <span className={`inline-flex items-center justify-center w-7 h-7 text-xs sm:text-sm rounded-full ${numClass}`}>
-                    {day}
-                  </span>
-                  {dayEvents.length > 0 && (
-                    <span className="hidden sm:inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-blue-500 rounded-full">
-                      {dayEvents.length}
-                    </span>
-                  )}
-                </div>
-
-                {/* Holiday name */}
-                {holidayName && (
-                  <div className="hidden sm:block text-[10px] leading-tight text-red-600 dark:text-red-400 font-medium truncate mb-0.5 px-0.5">
-                    {holidayName}
-                  </div>
-                )}
-
-                {/* Event dots */}
-                <div className="flex flex-col gap-0.5">
-                  {dayEvents.slice(0, 3).map((ev) => (
-                    <div
-                      key={ev.id}
-                      className={`hidden sm:flex items-center gap-1 px-1 py-0.5 rounded text-[10px] leading-tight truncate ${getEventStyle(ev.type).badge}`}
-                      title={ev.title}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getEventStyle(ev.type).dot}`} />
-                      {ev.title}
-                    </div>
-                  ))}
-                  {dayEvents.length > 3 && (
-                    <div className="hidden sm:block text-[10px] text-gray-400 dark:text-gray-500 pl-1">
-                      +{dayEvents.length - 3} lainnya
-                    </div>
-                  )}
-                  {/* Mobile dots */}
-                  {dayEvents.length > 0 && (
-                    <div className="sm:hidden flex gap-0.5 flex-wrap">
-                      {dayEvents.slice(0, 4).map((ev) => (
-                        <span key={ev.id} className={`w-1.5 h-1.5 rounded-full ${getEventStyle(ev.type).dot}`} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+                day={day}
+                year={year}
+                month={month}
+                variant="md"
+                events={dayEvents}
+                holidayName={holidayName || null}
+                isToday={day === today.day && month === today.month && year === today.year}
+                dayOfWeek={dayOfWeek}
+                eventStyles={EVENT_STYLES}
+              />
             );
           })}
         </div>
