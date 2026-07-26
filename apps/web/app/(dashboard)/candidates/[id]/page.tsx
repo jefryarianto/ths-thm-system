@@ -185,7 +185,7 @@ export default function CandidateDetailPage() {
         
               {/* Profile Header */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="h-24 bg-gradient-to-r from-purple-500 via-purple-600 to-indigo-600 relative">
+                <div className="h-20 bg-gradient-to-r from-purple-500 via-purple-600 to-indigo-600 relative">
                   <button
                     onClick={fetchCandidate}
                     className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
@@ -194,8 +194,8 @@ export default function CandidateDetailPage() {
                     <RefreshCw size={14} />
                   </button>
                 </div>
-                <div className="px-6 pb-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12">
+                <div className="px-6 pb-6 -mt-12">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                     <div className="w-20 h-20 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
                       <img src="/logo.png" alt="" className="w-full h-full object-cover" />
                     </div>
