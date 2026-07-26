@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import ProfileHeader from '@/components/ui/profile-header';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
 
@@ -184,60 +185,39 @@ export default function CandidateDetailPage() {
               </Link>
         
               {/* Profile Header */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="h-20 bg-gradient-to-r from-purple-500 via-purple-600 to-indigo-600 relative">
-                  <button
-                    onClick={fetchCandidate}
-                    className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
-                    title="Refresh"
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                </div>
-                <div className="px-6 pb-6 -mt-12">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-                    <div className="w-20 h-20 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
-                      <img src="/logo.png" alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 mt-2 sm:mt-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                          {candidate.namaLengkap}
-                        </h1>
-                        <StatusBadge status={candidate.status} />
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{orgPath}</p>
-                    </div>
-        
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-4 sm:mt-0">
-                      {candidate.status === 'diusulkan' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setApproveForm({ tempatDadar: '', tahunDadar: '', tingkat: '' });
-                              setShowApproveModal(true);
-                            }}
-                            disabled={actionLoading === 'approve'}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                          >
-                            <CheckCircle2 size={14} />
-                            {actionLoading === 'approve' ? 'Memproses...' : 'Setujui → Anggota'}
-                          </button>
-                          <button
-                            onClick={() => setShowRejectModal(true)}
-                            disabled={actionLoading === 'reject'}
-                            className="flex items-center gap-1.5 px-3 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
-                          >
-                            <XCircle size={14} />
-                            Tolak
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ProfileHeader
+                name={candidate.namaLengkap}
+                subtitle={orgPath}
+                avatar={{ shape: 'rounded' }}
+                badges={[<StatusBadge key="status" status={candidate.status} />]}
+                onRefresh={fetchCandidate}
+                gradient="from-purple-500 via-purple-600 to-indigo-600"
+                actions={
+                  candidate.status === 'diusulkan' ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setApproveForm({ tempatDadar: '', tahunDadar: '', tingkat: '' });
+                          setShowApproveModal(true);
+                        }}
+                        disabled={actionLoading === 'approve'}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                      >
+                        <CheckCircle2 size={14} />
+                        {actionLoading === 'approve' ? 'Memproses...' : 'Setujui → Anggota'}
+                      </button>
+                      <button
+                        onClick={() => setShowRejectModal(true)}
+                        disabled={actionLoading === 'reject'}
+                        className="flex items-center gap-1.5 px-3 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
+                      >
+                        <XCircle size={14} />
+                        Tolak
+                      </button>
+                    </>
+                  ) : undefined
+                }
+              />
         
               {/* Info Cards */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

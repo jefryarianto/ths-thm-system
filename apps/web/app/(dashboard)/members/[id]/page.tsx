@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import ProfileHeader from '@/components/ui/profile-header';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
 
@@ -432,138 +433,94 @@ export default function MemberDetailPage() {
               </Link>
         
               {/* ── Profile Header ── */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="h-16 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative">
-                  <button
-                    onClick={fetchMember}
-                    className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
-                    title="Refresh"
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                </div>
-                <div className="px-6 pb-6 -mt-12">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-                    {/* Avatar with Upload */}
-                    <div className="relative group shrink-0">
-                      <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
-                        {member.fotoPath ? (
-                          <img src={`/api/uploads/${member.fotoPath}`} alt="" className="w-full h-full object-cover"
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden'); }} />
-                        ) : null}
-                        <img src="/logo.png" alt="" className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`} />
-                      </div>
-                      <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition">
-                        <Upload size={20} className="text-white" />
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/gif"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const formData = new FormData();
-                            formData.append('photo', file);
-                            try {
-                              const token = localStorage.getItem('accessToken');
-                              const res = await fetch(`/api/upload/member-photo/${member.id}`, {
-                                method: 'POST',
-                                headers: { Authorization: `Bearer ${token}` },
-                                body: formData,
-                              });
-                              const data = await res.json();
-                              if (data.success) {
-                                await fetchMember();
-                              } else {
-                                alert(data.message || 'Gagal upload foto');
-                              }
-                            } catch {
-                              alert('Gagal upload foto');
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                    <div className="flex-1 mt-2 sm:mt-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                          {member.namaLengkap}
-                        </h1>
-                        <span className="font-mono text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
-                          {member.nomorAnggota}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <StatusBadge status={member.statusKeanggotaan} bordered />
-                        <StatusBadge status={member.statusValidasi} bordered />
-                        <StatusBadge status={member.statusData} bordered />
-                        {member.tingkat && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
-                            <Award size={12} />
-                            {member.tingkat}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {/* Quick Actions */}
-                    <div className="flex items-center gap-2 mt-4 sm:mt-0">
-                      {member.statusValidasi === 'pending' && (
-                        <button
-                          onClick={() => handleAction('approve')}
-                          disabled={actionLoading === 'approve'}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                        >
-                          <CheckCircle2 size={14} />
-                          {actionLoading === 'approve' ? 'Memproses...' : 'Setujui'}
-                        </button>
-                      )}
-                      {member.statusKeanggotaan === 'aktif' ? (
-                        <button
-                          onClick={() => handleAction('suspend')}
-                          disabled={actionLoading === 'suspend'}
-                          className="flex items-center gap-1.5 px-3 py-2 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-950 transition disabled:opacity-50"
-                        >
-                          <UserX size={14} />
-                          {actionLoading === 'suspend' ? 'Memproses...' : 'Nonaktifkan'}
-                        </button>
-                      ) : member.statusKeanggotaan === 'nonaktif' ? (
-                        <button
-                          onClick={() => handleAction('reactivate')}
-                          disabled={actionLoading === 'reactivate'}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
-                        >
-                          <Shield size={14} />
-                          {actionLoading === 'reactivate' ? 'Memproses...' : 'Aktifkan'}
-                        </button>
-                      ) : null}
-                      {member.statusValidasi === 'rejected' && (
-                        <button
-                          onClick={() => handleAction('approve')}
-                          disabled={actionLoading === 'approve'}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
-                        >
-                          <BadgeCheck size={14} />
-                          Setujui
-                        </button>
-                      )}
-                      <Link
-                        href={`/members/${member.id}/edit`}
-                        className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-                      >
-                        <Pencil size={14} />
-                        Edit
-                      </Link>
+              <ProfileHeader
+                name={member.namaLengkap}
+                subtitle={orgPath}
+                meta={member.nomorAnggota}
+                avatar={{
+                  src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
+                  onUpload: async (file) => {
+                    const token = localStorage.getItem('accessToken');
+                    const res = await fetch(`/api/upload/member-photo/${member.id}`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${token}` },
+                      body: (() => { const fd = new FormData(); fd.append('photo', file); return fd; })(),
+                    });
+                    const data = await res.json();
+                    if (data.success) await fetchMember();
+                    else alert(data.message || 'Gagal upload foto');
+                  },
+                }}
+                badges={[
+                  <StatusBadge key="keanggotaan" status={member.statusKeanggotaan} bordered />,
+                  <StatusBadge key="validasi" status={member.statusValidasi} bordered />,
+                  <StatusBadge key="data" status={member.statusData} bordered />,
+                  ...(member.tingkat ? [
+                    <span key="tingkat" className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                      <Award size={12} />
+                      {member.tingkat}
+                    </span>
+                  ] : []),
+                ]}
+                onRefresh={fetchMember}
+                actions={
+                  <>
+                    {member.statusValidasi === 'pending' && (
                       <button
-                        onClick={() => setShowDeleteModal(true)}
-                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
-                        title="Hapus anggota"
+                        onClick={() => handleAction('approve')}
+                        disabled={actionLoading === 'approve'}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
                       >
-                        <MoreVertical size={16} />
+                        <CheckCircle2 size={14} />
+                        {actionLoading === 'approve' ? 'Memproses...' : 'Setujui'}
                       </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    )}
+                    {member.statusKeanggotaan === 'aktif' ? (
+                      <button
+                        onClick={() => handleAction('suspend')}
+                        disabled={actionLoading === 'suspend'}
+                        className="flex items-center gap-1.5 px-3 py-2 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 rounded-lg text-xs font-medium hover:bg-yellow-50 dark:hover:bg-yellow-950 transition disabled:opacity-50"
+                      >
+                        <UserX size={14} />
+                        {actionLoading === 'suspend' ? 'Memproses...' : 'Nonaktifkan'}
+                      </button>
+                    ) : member.statusKeanggotaan === 'nonaktif' ? (
+                      <button
+                        onClick={() => handleAction('reactivate')}
+                        disabled={actionLoading === 'reactivate'}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                      >
+                        <Shield size={14} />
+                        {actionLoading === 'reactivate' ? 'Memproses...' : 'Aktifkan'}
+                      </button>
+                    ) : null}
+                    {member.statusValidasi === 'rejected' && (
+                      <button
+                        onClick={() => handleAction('approve')}
+                        disabled={actionLoading === 'approve'}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                      >
+                        <BadgeCheck size={14} />
+                        Setujui
+                      </button>
+                    )}
+                    <Link
+                      href={`/members/${member.id}/edit`}
+                      className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                    >
+                      <Pencil size={14} />
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => setShowDeleteModal(true)}
+                      className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
+                      title="Hapus anggota"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                  </>
+                }
+              />
         
               {/* ── Summary Cards ── */}
               <DetailStats
