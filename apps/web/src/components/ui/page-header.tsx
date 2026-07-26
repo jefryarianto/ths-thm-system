@@ -10,7 +10,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 export interface PageTab {
   key: string;
   label: string;
-  icon?: React.ComponentType<{ size?: number }>;
+  icon?: React.ComponentType<{ size?: number | string }>;
   count?: number;
 }
 

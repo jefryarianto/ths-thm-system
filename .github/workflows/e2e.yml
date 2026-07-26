@@ -397,7 +397,7 @@ jobs:
         continue-on-error: true
 
       - name: Build API
-        run: pnpm --filter @ths-thm/api build
+        run: cd apps/api && pnpm exec nest build
         timeout-minutes: 5
 
       - name: Build Web
