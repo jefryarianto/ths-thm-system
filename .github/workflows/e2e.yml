@@ -397,7 +397,10 @@ jobs:
         continue-on-error: true
 
       - name: Build API
-        run: pnpm --filter @ths-thm/api build
+        working-directory: apps/api
+        run: |
+          rm -rf dist
+          npx tsc -p tsconfig.build.json
         timeout-minutes: 5
 
       - name: Build Web
