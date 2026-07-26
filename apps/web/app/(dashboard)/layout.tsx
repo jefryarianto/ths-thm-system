@@ -25,6 +25,7 @@ import {
   TrendingUp,
   MessageSquare,
   Activity,
+  AlertTriangle,
   Wifi,
   PanelLeftClose,
   PanelLeft,
