@@ -32,8 +32,6 @@ export interface ProfileHeaderProps {
   gradient?: string;
   /** Refresh callback — shows a refresh button when provided */
   onRefresh?: () => void;
-  /** Whether the component is in a loading state */
-  loading?: boolean;
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -50,6 +48,7 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   const avatarShape = avatar?.shape || 'circle';
   const avatarRadius = avatarShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
+  const uploadRadius = avatarShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">

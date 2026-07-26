@@ -438,17 +438,21 @@ export default function MemberDetailPage() {
                 avatar={{
                   src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
                   onUpload: async (file) => {
-                    const token = localStorage.getItem('accessToken');
-                    const formData = new FormData();
-                    formData.append('photo', file);
-                    const res = await fetch(`/api/upload/member-photo/${member.id}`, {
-                      method: 'POST',
-                      headers: { Authorization: `Bearer ${token}` },
-                      body: formData,
-                    });
-                    const data = await res.json();
-                    if (data.success) await fetchMember();
-                    else alert(data.message || 'Gagal upload foto');
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const formData = new FormData();
+                      formData.append('photo', file);
+                      const res = await fetch(`/api/upload/member-photo/${member.id}`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: formData,
+                      });
+                      const data = await res.json();
+                      if (data.success) await fetchMember();
+                      else alert(data.message || 'Gagal upload foto');
+                    } catch {
+                      alert('Gagal upload foto. Silakan coba lagi.');
+                    }
                   },
                 }}
                 badges={[
