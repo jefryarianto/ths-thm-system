@@ -4,16 +4,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
-// Import ErrorBoundary from @sentry/nextjs — declared dependency, always
-// available at build time.  The component is <3 KB and is tree-shaken
-// by webpack's dead-code elimination when NEXT_PUBLIC_SENTRY_DSN is
-// not set at build time.
-//
-// Do NOT use dynamic() or conditional require() here — both cause
-// either hydration mismatches (dynamic + ssr:false) or violate
-// React 19's component-purity rules (require() inside render).
-import { ErrorBoundary as SentryErrorBoundary } from '@sentry/nextjs';
-
 export const metadata: Metadata = {
   title: 'THS-THM System Manajemen',
   description: 'Sistem Manajemen THS-THM (Taman Harapan Siswa / Taman Harapan Murid)',
@@ -45,23 +35,13 @@ function ErrorFallback({ resetError }: { resetError: () => void }) {
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
-
-  let content = (
-    <ThemeProvider>
-      <ToastProvider>{children}</ToastProvider>
-    </ThemeProvider>
-  );
-
-  // Only wrap with Sentry ErrorBoundary when DSN is configured
-  // Without DSN the ErrorBoundary import is dead code → tree-shaken
-  if (SENTRY_DSN) {
-    content = <SentryErrorBoundary fallback={ErrorFallback}>{content}</SentryErrorBoundary>;
-  }
-
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className="antialiased">{content}</body>
+      <body className="antialiased">
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
