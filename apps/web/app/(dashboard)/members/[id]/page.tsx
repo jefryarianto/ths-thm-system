@@ -23,7 +23,6 @@ import {
   CreditCard,
   Award,
   AlertCircle,
-  RefreshCw,
   ExternalLink,
   MoreVertical,
   BadgeCheck,
@@ -33,7 +32,6 @@ import {
   Image,
   Pencil,
   Save,
-  Upload,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import {
@@ -441,10 +439,12 @@ export default function MemberDetailPage() {
                   src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
                   onUpload: async (file) => {
                     const token = localStorage.getItem('accessToken');
+                    const formData = new FormData();
+                    formData.append('photo', file);
                     const res = await fetch(`/api/upload/member-photo/${member.id}`, {
                       method: 'POST',
                       headers: { Authorization: `Bearer ${token}` },
-                      body: (() => { const fd = new FormData(); fd.append('photo', file); return fd; })(),
+                      body: formData,
                     });
                     const data = await res.json();
                     if (data.success) await fetchMember();

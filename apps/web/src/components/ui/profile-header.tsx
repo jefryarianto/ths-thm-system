@@ -94,7 +94,7 @@ export default function ProfileHeader({
                 />
               </div>
               {avatar.onUpload && (
-                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition">
+                <label className={`absolute inset-0 flex items-center justify-center bg-black/40 ${uploadRadius} opacity-0 group-hover:opacity-100 cursor-pointer transition`}>
                   <Upload size={20} className="text-white" />
                   <input
                     type="file"
@@ -116,11 +116,7 @@ export default function ProfileHeader({
               <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
                 {name}
               </h1>
-              {badges?.map((badge, i) => (
-                <span key={i} className="shrink-0">
-                  {badge}
-                </span>
-              ))}
+              {badges}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
               {subtitle && (
