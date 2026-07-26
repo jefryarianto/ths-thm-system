@@ -94,6 +94,7 @@ export class GraduationsService {
           | 'unit_latihan',
         scopeId: resolvedScopeId,
         createdBy: userId || 'system',
+        adminKegiatanId: dto.adminKegiatanId || null,
         tipe: 'pendadaran',
         status: 'draft',
       } as never,

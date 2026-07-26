@@ -40,6 +40,11 @@ export class CreateGraduationDto {
   @IsOptional()
   @IsString()
   scopeId?: string;
+
+  @ApiPropertyOptional({ description: 'User ID yang ditunjuk sebagai admin kegiatan' })
+  @IsOptional()
+  @IsString()
+  adminKegiatanId?: string;
 }
 
 export class GraduationFilterDto {

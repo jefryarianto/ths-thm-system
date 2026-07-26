@@ -252,6 +252,7 @@ model User {
   disposisiKepada             Disposisi[]         @relation("DisposisiKepada")
   calonAnggotasDiusul         CalonAnggota[]      @relation("CalonAnggotaUsul")
   kegiatanDibuat              Kegiatan[]          @relation("KegiatanCreatedBy")
+  kegiatanAdminKegiatan       Kegiatan[]          @relation("AdminKegiatan")
   penugasanPengujis           PenugasanPenguji[]
   latihansDipelatih           Latihan[]           @relation("LatihanPelatih")
   nilaiPendadaranPenguji      NilaiPendadaran[]   @relation("NilaiPendadaranPenguji")
@@ -388,11 +389,14 @@ model Kegiatan {
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
   creator           User               @relation("KegiatanCreatedBy", fields: [createdBy], references: [id])
+  adminKegiatanId   String?            @map("admin_kegiatan_id")
+  adminKegiatan     User?              @relation("AdminKegiatan", fields: [adminKegiatanId], references: [id])
   latihans          Latihan[]
   peserta           KegiatanPeserta[]
   presensi          PresensiKegiatan[]
   dokumenKegiatan   DokumenKegiatan[]
   penugasanPengujis PenugasanPenguji[]
+  ujianPrakteks     UjianPraktek[]
   nilaiPendadarans  NilaiPendadaran[]
   hasilPendadarans  HasilPendadaran[]
   checkIns          CheckIn[]
@@ -548,6 +552,7 @@ model NilaiPendadaran {
   anggotaId       String?  @map("anggota_id")
   itemPenilaianId String   @map("item_penilaian_id")
   pengujiUserId   String   @map("penguji_user_id")
+  ujianPraktekId  String?  @map("ujian_praktek_id")
   skor            Decimal  @db.Decimal(65, 30)
   komentar        String?
   createdAt       DateTime @default(now()) @map("created_at")
@@ -558,6 +563,7 @@ model NilaiPendadaran {
   anggota       Anggota?      @relation(fields: [anggotaId], references: [id])
   itemPenilaian ItemPenilaian @relation(fields: [itemPenilaianId], references: [id])
   penguji       User          @relation("NilaiPendadaranPenguji", fields: [pengujiUserId], references: [id])
+  ujianPraktek  UjianPraktek? @relation(fields: [ujianPraktekId], references: [id])
 
   @@map("nilai_pendadaran")
 }
@@ -580,6 +586,64 @@ model HasilPendadaran {
   divalidasiUser User?        @relation("HasilPendadaranValidasi", fields: [divalidasiOleh], references: [id])
 
   @@map("hasil_pendadaran")
+}
+
+// ── Practical Exams (Ujian Praktek) within Pendadaran ──
+
+enum StatusUjianPraktek {
+  draft
+  berlangsung
+  selesai
+  dibatalkan
+}
+
+model UjianPraktek {
+  id          String              @id @default(uuid())
+  kegiatanId  String              @map("kegiatan_id")
+  nama        String
+  deskripsi   String?
+  tanggal     DateTime?
+  durasiMenit Int?                @map("durasi_menit")
+  status      StatusUjianPraktek  @default(draft)
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  kegiatan  Kegiatan              @relation(fields: [kegiatanId], references: [id])
+  penilais   UjianPraktekPenilai[]
+  items     UjianPraktekItem[]
+  penilaians NilaiPendadaran[]
+
+  @@index([kegiatanId])
+  @@map("ujian_praktek")
+}
+
+model UjianPraktekPenilai {
+  id              String   @id @default(uuid())
+  ujianPraktekId  String   @map("ujian_praktek_id")
+  pengujiUserId   String   @map("penguji_user_id")
+  catatan         String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  ujianPraktek UjianPraktek @relation(fields: [ujianPraktekId], references: [id], onDelete: Cascade)
+  pengujiUser  User         @relation(fields: [pengujiUserId], references: [id])
+
+  @@unique([ujianPraktekId, pengujiUserId])
+  @@map("ujian_praktek_penilai")
+}
+
+model UjianPraktekItem {
+  id              String   @id @default(uuid())
+  ujianPraktekId  String   @map("ujian_praktek_id")
+  itemPenilaianId String   @map("item_penilaian_id")
+  urutan          Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  ujianPraktek UjianPraktek @relation(fields: [ujianPraktekId], references: [id], onDelete: Cascade)
+  itemPenilaian ItemPenilaian @relation(fields: [itemPenilaianId], references: [id])
+
+  @@unique([ujianPraktekId, itemPenilaianId])
+  @@index([ujianPraktekId])
+  @@map("ujian_praktek_item")
 }
 
 // ── Documents ─────────────────────────────────────────────

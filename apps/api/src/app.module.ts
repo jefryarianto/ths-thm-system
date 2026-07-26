@@ -43,6 +43,7 @@ import { OrgStructureModule } from './modules/org-structure/org-structure.module
 import { UploadModule } from './modules/upload/upload.module';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
+import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { MonitoringModule } from './modules/monitoring/monitoring.module';
     UploadModule,
     QueueDashboardModule,
     MonitoringModule,
+    UjianPraktekModule,
   ],
   controllers: [HealthController],
   providers: [

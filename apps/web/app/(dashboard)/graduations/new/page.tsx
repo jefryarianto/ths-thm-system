@@ -2,10 +2,10 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, Users } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -19,9 +19,18 @@ export default function NewGraduationPage() {
     tanggalSelesai: '',
     scopeType: 'ranting',
     scopeId: '',
+    adminKegiatanId: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [adminUsers, setAdminUsers] = useState<Array<{ id: string; namaLengkap: string; email: string }>>([]);
+
+  useEffect(() => {
+    // Fetch users with admin_kegiatan role for the dropdown
+    apiClient.get('/users', { params: { role: 'admin_kegiatan', limit: 50 } })
+      .then((res) => setAdminUsers(res.data?.data || []))
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +43,7 @@ export default function NewGraduationPage() {
       const body: Record<string, unknown> = { ...form };
       if (!body.tanggalSelesai) delete body.tanggalSelesai;
       if (!body.scopeId) { delete body.scopeId; delete body.scopeType; }
+      if (!body.adminKegiatanId) delete body.adminKegiatanId;
 
       const { data: res } = await apiClient.post('/graduations', body);
       const newId = res.data?.id;
@@ -151,6 +161,31 @@ export default function NewGraduationPage() {
                         <p className="mt-1 text-xs text-gray-400">ID ranting/wilayah/distrik</p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Admin Kegiatan */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1">
+                      <Users size={12} />
+                      Tunjuk admin kegiatan untuk mengelola pendadaran ini
+                    </p>
+                    <FormField label="Admin Kegiatan (opsional)">
+                      <select
+                        value={form.adminKegiatanId}
+                        onChange={(e) => setForm({ ...form, adminKegiatanId: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                      >
+                        <option value="">Pilih admin kegiatan...</option>
+                        {adminUsers.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.namaLengkap} ({u.email})
+                          </option>
+                        ))}
+                        {adminUsers.length === 0 && (
+                          <option value="" disabled>Tidak ada user dengan role admin_kegiatan</option>
+                        )}
+                      </select>
+                    </FormField>
                   </div>
                 </div>
         
