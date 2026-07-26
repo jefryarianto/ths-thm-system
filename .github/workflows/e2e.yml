@@ -354,7 +354,9 @@ jobs:
       JWT_REFRESH_SECRET: smoke-test-jwt-refresh-secret
       APP_PORT: 3001
       NEXT_PUBLIC_API_URL: http://localhost:3001
-      NODE_ENV: production
+      # NODE_ENV deliberately NOT set to production here so pnpm install
+      # includes devDependencies (needed for build).  Production mode
+      # is applied individually on the server-start steps.
 
     steps:
       - name: Checkout repository
@@ -385,6 +387,7 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        # devDependencies required for build — NODE_ENV must NOT be production here
 
       - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
