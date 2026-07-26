@@ -433,7 +433,7 @@ export default function MemberDetailPage() {
         
               {/* ── Profile Header ── */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="h-20 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative">
+                <div className="h-16 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 relative">
                   <button
                     onClick={fetchMember}
                     className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
@@ -442,10 +442,10 @@ export default function MemberDetailPage() {
                     <RefreshCw size={14} />
                   </button>
                 </div>
-                <div className="px-6 pb-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-10">
+                <div className="px-6 pb-6 -mt-12">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                     {/* Avatar with Upload */}
-                    <div className="relative group">
+                    <div className="relative group shrink-0">
                       <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
                         {member.fotoPath ? (
                           <img src={`/api/uploads/${member.fotoPath}`} alt="" className="w-full h-full object-cover"
@@ -484,7 +484,7 @@ export default function MemberDetailPage() {
                         />
                       </label>
                     </div>
-                    <div className="flex-1 mt-2 sm:mt-0">
+                    <div className="flex-1 pt-12 sm:pt-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                           {member.namaLengkap}
