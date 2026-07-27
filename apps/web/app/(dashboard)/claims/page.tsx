@@ -49,7 +49,7 @@ export default function ClaimsPage() {
     if (debouncedSearch) params.search = debouncedSearch;
     else delete params.search;
     if (filters.status) params.status = filters.status;
-    return apiClient.get('/claims', { params }).then((r: { data: ClaimRow[] }) => r.data);
+    return apiClient.get('/claims', { params }).then((r) => r);
   }, [page, debouncedSearch, filters.status]);
 
   const handleAction = async (id: string, action: string) => {

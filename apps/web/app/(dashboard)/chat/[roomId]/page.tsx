@@ -98,7 +98,7 @@ export default function ChatRoomPage() {
           if (mounted) setRealtimeConnected(false);
         });
 
-        socket.on('chat:message', (msg: Message & { userId: string; email: string; role: string }) => {
+        socket.on('chat:message', (msg: Message & { userId: string; email: string; role: string; roomId: string }) => {
           if (mounted && msg.roomId === roomId) {
             setMessages((prev) => {
               if (prev.some((m) => m.id === msg.id)) return prev;
@@ -148,8 +148,8 @@ export default function ChatRoomPage() {
         type: 'text',
       });
       setContent('');
-    } catch (err) {
-      toast('error', err?.response?.data?.message || 'Gagal mengirim pesan');
+    } catch (err: unknown) {
+      toast('error', (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Gagal mengirim pesan');
     }
     setSending(false);
   };
