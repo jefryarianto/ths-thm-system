@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from './scope-helpers';
 import { CacheService } from '../services/cache.service';
@@ -364,7 +365,15 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
   ): Promise<{ data: T; message: string }> {
     await this.verifyScope(id, scope);
     const data = await this.beforeUpdate(id, dto);
-    const updated = await this.prismaDelegate.update({ where: { id }, data });
+    let updated: T;
+    try {
+      updated = await this.prismaDelegate.update({ where: { id }, data });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
+      }
+      throw error;
+    }
     await this.afterUpdate(updated, dto);
     this.invalidateCache();
     return {
@@ -389,13 +398,20 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     await this.verifyScope(id, scope);
     await this.beforeRemove(id);
 
-    if (this.config.softDelete) {
-      await this.prismaDelegate.update({
-        where: { id },
-        data: { deletedAt: new Date() },
-      });
-    } else {
-      await this.prismaDelegate.delete({ where: { id } });
+    try {
+      if (this.config.softDelete) {
+        await this.prismaDelegate.update({
+          where: { id },
+          data: { deletedAt: new Date() },
+        });
+      } else {
+        await this.prismaDelegate.delete({ where: { id } });
+      }
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
+      }
+      throw error;
     }
 
     await this.afterRemove(id);
