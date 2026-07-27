@@ -69,7 +69,7 @@ export default function ActivityDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  const { toast } = useToast();
+  const toast = useToast();
 
   const [activity, setActivity] = useState<ActivityDetail | null>(null);
   const [loading, setLoading] = useState(true);

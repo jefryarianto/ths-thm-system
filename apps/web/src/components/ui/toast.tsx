@@ -23,7 +23,7 @@ const ToastContext = createContext<ToastContextValue>({
   toast: () => {},
 });
 
-export const useToast = () => useContext(ToastContext);
+export const useToast = () => useContext(ToastContext).toast;
 
 // ─── Icons ───
 

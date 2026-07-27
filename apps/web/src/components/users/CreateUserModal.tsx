@@ -16,7 +16,7 @@ interface CreateUserModalProps {
 }
 
 export default function CreateUserModal({ open, onClose, onSuccess }: CreateUserModalProps) {
-  const { toast } = useToast();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: '', namaLengkap: '', role: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});

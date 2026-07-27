@@ -17,7 +17,7 @@ interface CustomTemplate {
 }
 
 export default function EmailTemplatesTab() {
-  const { toast } = useToast();
+  const toast = useToast();
   const [customTemplates, setCustomTemplates] = useState<Map<string, CustomTemplate>>(new Map());
   const [loading, setLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<{

@@ -156,7 +156,7 @@ function QuickNav({ items }: { items: { id: string; label: string }[] }) {
 function StorybookPageContent() {
   const [theme, setTheme] = useState<ThemeMode>('light');
   const [view, setView] = useState<ViewMode>('grid');
-  const { toast } = useToast();
+  const toast = useToast();
 
   // ── Interactive States ──
   const [modalSize, setModalSize] = useState<'sm' | 'md' | 'lg'>('md');

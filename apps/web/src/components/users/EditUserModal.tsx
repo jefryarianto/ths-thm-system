@@ -18,7 +18,7 @@ interface EditUserModalProps {
 }
 
 export default function EditUserModal({ open, onClose, onSuccess, userId }: EditUserModalProps) {
-  const { toast } = useToast();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [form, setForm] = useState({ email: '', namaLengkap: '', role: '', password: '' });

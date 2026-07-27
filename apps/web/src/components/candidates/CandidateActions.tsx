@@ -18,7 +18,7 @@ interface CandidateActionsProps {
 
 export default function CandidateActions({ candidate, onSuccess }: CandidateActionsProps) {
   const router = useRouter();
-  const { toast } = useToast();
+  const toast = useToast();
   const [showMenu, setShowMenu] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);

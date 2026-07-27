@@ -23,7 +23,7 @@ import EditUserModal from '@/components/users/EditUserModal';
 
 
 export default function UsersPage() {
-  const { toast } = useToast();
+  const toast = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);

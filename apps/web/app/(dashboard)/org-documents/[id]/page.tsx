@@ -49,7 +49,7 @@ export default function OrgDocumentDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  const { toast } = useToast();
+  const toast = useToast();
 
   const [doc, setDoc] = useState<OrgDocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
