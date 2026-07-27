@@ -28,8 +28,8 @@ export class AssessmentsController {
 
   @Get('aspects')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil semua aspek penilaian' })
-  getAspects(@Query() q: AssessmentFilterDto) {
-    return this.aspectService.findAll(q);
+  getAspects(@Query() _q: AssessmentFilterDto) {
+    return this.aspectService.findAll();
   }
 
   @Get('aspects/:id')
