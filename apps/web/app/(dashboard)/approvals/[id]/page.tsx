@@ -97,7 +97,7 @@ export default function ApprovalDetailPage() {
       await fetchApproval();
       setNote('');
     } catch {
-      toast(`Gagal ${action === 'approve' ? 'menyetujui' : 'menolak'} pengajuan`);
+      toast('error', `Gagal ${action === 'approve' ? 'menyetujui' : 'menolak'} pengajuan`);
     }
     setActionLoading(null);
   };

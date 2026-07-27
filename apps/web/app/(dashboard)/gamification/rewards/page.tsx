@@ -100,7 +100,7 @@ export default function RewardsPage() {
       setRewards(unwrap(rewardsRes));
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast(msg || 'Gagal redeem reward');
+      toast('error', msg || 'Gagal redeem reward');
     } finally {
       setRedeemingId(null);
     }

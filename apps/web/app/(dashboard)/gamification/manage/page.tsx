@@ -113,7 +113,7 @@ export default function ManageRewardsPage() {
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-       toast(msg || 'Gagal menyimpan');
+       toast('error', msg || 'Gagal menyimpan');
     } finally {
       setSaving(false);
     }
@@ -126,7 +126,7 @@ export default function ManageRewardsPage() {
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-       toast(msg || 'Gagal menghapus');
+       toast('error', msg || 'Gagal menghapus');
     }
   };
 
@@ -136,7 +136,7 @@ export default function ManageRewardsPage() {
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-       toast(msg || 'Gagal update status');
+       toast('error', msg || 'Gagal update status');
     }
   };
 

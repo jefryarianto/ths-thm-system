@@ -129,10 +129,9 @@ export default function LettersPage() {
       setSelectedLetter(null);
       fetchData();
     } catch (err: unknown) {
-       toast(
+       toast('error',
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          'Gagal menghapus surat',
-      );
+          'Gagal menghapus surat');
     }
     setDeleting(false);
   };
