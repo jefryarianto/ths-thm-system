@@ -21,8 +21,8 @@ import {
   Database,
   Cpu,
   Network,
-  type LucideIcon,
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -40,7 +40,7 @@ interface Incident {
 
 type Severity = 'all' | 'short' | 'medium' | 'long' | 'critical';
 
-const COMPONENT_ICONS: Record<string, LucideIcon> = {
+const COMPONENT_ICONS: Record<string, React.ComponentType<LucideProps>> = {
   queue: Network,
   database: Database,
   api: Cpu,
