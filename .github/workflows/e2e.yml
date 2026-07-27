@@ -395,6 +395,9 @@ jobs:
       - name: Run database migrations
         run: pnpm --filter @ths-thm/api prisma:deploy
 
+      - name: Sync schema (safety net for undocumented models)
+        run: pnpm --filter @ths-thm/api exec prisma db push
+
       - name: Seed test data (optional)
         run: pnpm --filter @ths-thm/api prisma:seed
         continue-on-error: true

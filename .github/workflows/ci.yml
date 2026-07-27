@@ -70,6 +70,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_test
 
+      - name: Sync schema (safety net for undocumented models)
+        run: pnpm --filter @ths-thm/api exec prisma db push
+        env:
+          DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_test
+
       - name: Run TypeScript type check
         run: pnpm --filter @ths-thm/api typecheck
 
