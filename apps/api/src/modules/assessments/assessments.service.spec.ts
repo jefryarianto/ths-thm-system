@@ -71,7 +71,7 @@ describe('AssessmentsService', () => {
     it('should return items', async () => {
       mockPrisma.itemPenilaian.findMany.mockResolvedValue([{ id: 'i1', nama: 'Tendangan' }]);
       const result = await service.getItems({});
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
   });
 
@@ -79,7 +79,7 @@ describe('AssessmentsService', () => {
     it('should return a single item', async () => {
       mockPrisma.itemPenilaian.findUnique.mockResolvedValue({ id: 'i1', nama: 'Tendangan' });
       const result = await service.getItem('i1');
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
 
     it('should throw NotFoundException', async () => {
@@ -92,7 +92,7 @@ describe('AssessmentsService', () => {
     it('should create an item', async () => {
       mockPrisma.itemPenilaian.create.mockResolvedValue({ id: 'i1', namaItem: 'Tendangan' });
       const result = await service.createItem({ namaItem: 'Tendangan', skorMaksimal: 100 } as any);
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
   });
 
@@ -115,7 +115,7 @@ describe('AssessmentsService', () => {
         pengujiUserId: 'u1',
         skor: 85,
       } as any);
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
   });
 });

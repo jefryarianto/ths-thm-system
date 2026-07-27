@@ -142,7 +142,6 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     await this.verifyScope(id, scope);
     await this.prismaDelegate.update({ where: { id }, data: { status: 'cancelled' } });
     this.invalidateCache();
-    return { message: 'Kegiatan dibatalkan' };
   }
 
   // ── Domain Methods ──────────────────────────────────────
@@ -166,7 +165,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     );
 
     this.invalidateCache();
-    return { data: participant, message: 'Peserta berhasil ditambahkan' };
+    return participant;
   }
 
   async removeParticipant(activityId: string, participantId: string) {
@@ -174,7 +173,6 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       where: { id: participantId },
     });
     this.invalidateCache();
-    return { message: 'Peserta berhasil dihapus' };
   }
 
   async importParticipants(
@@ -191,7 +189,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       .filter(Boolean) as string[];
 
     if (allAnggotaIds.length === 0) {
-      return { data: { imported: 0 }, message: 'Tidak ada peserta untuk diimpor' };
+      return { imported: 0 };
     }
 
     // Batch check existing participants
@@ -229,10 +227,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     }
 
     this.invalidateCache();
-    return {
-      data: { imported: newEntries.length },
-      message: `${newEntries.length} peserta berhasil diimpor`,
-    };
+    return { imported: newEntries.length };
   }
 
   async getPresence(activityId: string) {
@@ -243,7 +238,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       },
       orderBy: { createdAt: 'desc' },
     });
-    return { data: presence };
+    return presence;
   }
 
   async recordPresence(activityId: string, dto: RecordPresenceDto) {
@@ -256,7 +251,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       data: { kegiatanId: activityId, anggotaId: dto.anggotaId, hadir: dto.hadir !== false },
     });
     this.invalidateCache();
-    return { data: presence, message: 'Kehadiran tercatat' };
+    return presence;
   }
 
   async getDocuments(activityId: string) {
@@ -264,7 +259,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       where: { kegiatanId: activityId },
       orderBy: { createdAt: 'desc' },
     });
-    return { data: docs };
+    return docs;
   }
 
   async uploadDocument(activityId: string, dto: UploadActivityDocumentDto) {
@@ -277,7 +272,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       },
     });
     this.invalidateCache();
-    return { data: doc, message: 'Dokumen berhasil diupload' };
+    return doc;
   }
 
   // ── Private Helpers ─────────────────────────────────────

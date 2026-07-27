@@ -38,7 +38,7 @@ export class AssessmentsService {
       include: { aspek: true },
       orderBy: { urutan: 'asc' },
     });
-    return { data };
+    return data;
   }
 
   async getItem(id: string) {
@@ -47,23 +47,22 @@ export class AssessmentsService {
       include: { aspek: true },
     });
     if (!item) throw new NotFoundException('Item tidak ditemukan');
-    return { data: item };
+    return item;
   }
 
   async createItem(dto: CreateItemDto) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const item = await this.prisma.itemPenilaian.create({ data: dto as any });
-    return { data: item, message: 'Item penilaian berhasil dibuat' };
+    return item;
   }
 
   async updateItem(id: string, dto: UpdateItemDto) {
     const item = await this.prisma.itemPenilaian.update({ where: { id }, data: dto });
-    return { data: item, message: 'Item penilaian diperbarui' };
+    return item;
   }
 
   async deleteItem(id: string) {
     await this.prisma.itemPenilaian.update({ where: { id }, data: { isActive: false } });
-    return { message: 'Item penilaian dinonaktifkan' };
   }
 
   // ── Import Aspek & Item dari List ──
@@ -134,10 +133,7 @@ export class AssessmentsService {
 
     this.logger.log(`Import completed: ${importedAspects} aspects, ${importedItems} items`);
 
-    return {
-      data: { importedAspects, importedItems, total: data.length },
-      message: `Berhasil import ${importedAspects} aspek dan ${importedItems} item penilaian`,
-    };
+    return { importedAspects, importedItems, total: data.length };
   }
 
   async importFromCsvText(csvText: string) {
@@ -255,7 +251,7 @@ export class AssessmentsService {
         komentar: dto.komentar,
       },
     });
-    return { data: score, message: 'Nilai berhasil disimpan' };
+    return score;
   }
 
   async importScores(data: Record<string, unknown>[]) {
@@ -276,6 +272,6 @@ export class AssessmentsService {
         /* skip */
       }
     }
-    return { data: { imported, total: data.length } };
+    return { imported, total: data.length };
   }
 }

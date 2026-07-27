@@ -57,9 +57,9 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
-      return { success: true, data: { user: await this.sanitizeUser(user), accessToken: tokens.accessToken } };
+      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken };
     }
-    return { success: true, data: { user: await this.sanitizeUser(user), ...tokens } };
+    return { user: await this.sanitizeUser(user), ...tokens };
   }
 
   async register(dto: RegisterDto, response?: Response) {
@@ -80,9 +80,9 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
-      return { success: true, data: { user: await this.sanitizeUser(user), accessToken: tokens.accessToken } };
+      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken };
     }
-    return { success: true, data: { user: await this.sanitizeUser(user), ...tokens } };
+    return { user: await this.sanitizeUser(user), ...tokens };
   }
 
   async refreshToken(dto: RefreshDto) {
@@ -94,7 +94,7 @@ export class AuthService {
       if (!user || user.refreshToken !== dto.refreshToken)
         throw new UnauthorizedException('Token tidak valid');
       const tokens = await this.generateTokens(user);
-      return { success: true, data: tokens };
+      return tokens;
     } catch {
       throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
     }
@@ -103,7 +103,7 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
-    return { success: true, data: await this.sanitizeUser(user) };
+    return this.sanitizeUser(user);
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
@@ -148,7 +148,7 @@ export class AuthService {
       }
     }
 
-    return { success: true, data: await this.sanitizeUser(user) };
+    return this.sanitizeUser(user);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
@@ -160,13 +160,12 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash: await bcrypt.hash(dto.newPassword, 12) },
     });
-    return { success: true, message: 'Password berhasil diubah' };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user) {
-      return { success: true, message: 'Link reset password telah dikirim ke email Anda' };
+      return;
     }
 
     const resetToken = this.jwtService.sign(
@@ -188,7 +187,6 @@ export class AuthService {
       metadata: { module: 'auth', template: 'resetPasswordEmail' },
     });
 
-    return { success: true, message: 'Link reset password telah dikirim ke email Anda' };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
@@ -208,10 +206,7 @@ export class AuthService {
         data: { passwordHash: await bcrypt.hash(dto.newPassword, 12) },
       });
 
-      return {
-        success: true,
-        message: 'Password berhasil direset. Silakan login dengan password baru.',
-      };
+    
     } catch (error) {
       this.logger.error(`Reset password failed: ${(error as Error).message}`);
       throw new UnauthorizedException('Token reset password tidak valid atau kadaluarsa');
@@ -221,7 +216,7 @@ export class AuthService {
   async sendMagicLink(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return { success: true, message: 'Link login telah dikirim ke email Anda' };
+      return;
     }
 
     const magicToken = this.jwtService.sign(
@@ -243,7 +238,6 @@ export class AuthService {
       metadata: { module: 'auth', template: 'magicLink' },
     });
 
-    return { success: true, message: 'Link login telah dikirim ke email Anda' };
   }
 
   async loginWithMagicLink(token: string) {
@@ -257,7 +251,7 @@ export class AuthService {
       if (!user) throw new NotFoundException('User tidak ditemukan');
 
       const tokens = await this.generateTokens(user);
-      return { success: true, data: { user: await this.sanitizeUser(user), ...tokens } };
+      return { user: await this.sanitizeUser(user), ...tokens };
     } catch {
       throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
     }

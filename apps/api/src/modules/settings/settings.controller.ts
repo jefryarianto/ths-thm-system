@@ -110,7 +110,6 @@ export class SettingsController {
       create: { key, value: body.value },
       update: { value: body.value },
     });
-    return { message: 'Setting updated' };
   }
 
   @Get('branding/colors')
@@ -133,7 +132,6 @@ export class SettingsController {
       create: { key: 'branding', value: body },
       update: { value: body },
     });
-    return { message: 'Branding updated' };
   }
 
   @Get('export/audit')

@@ -167,7 +167,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       where: { anggotaId: memberId },
       orderBy: { periode: 'desc' },
     });
-    return { data: dues };
+    return dues;
   }
 
   async getMyDues(user: { id: string; email: string; role: string }) {
@@ -177,7 +177,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     });
 
     if (!anggota) {
-      return { data: [] };
+      return [];
     }
 
     const dues = await (this.prisma as any).iuran.findMany({
@@ -185,7 +185,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       orderBy: { periode: 'desc' },
     });
 
-    return { data: dues };
+    return dues;
   }
 
   async getArrears() {
@@ -200,7 +200,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
     const totalArrears = arrears.reduce((sum: number, i: any) => sum + Number(i.jumlah), 0);
 
-    return { data: { items: arrears, totalArrears, count: arrears.length } };
+    return { items: arrears, totalArrears, count: arrears.length };
   }
 
   async getDashboardStats() {
@@ -239,16 +239,14 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         const belumBayarBulanIni = anggotaAktif - iuranBulanIni.length;
 
         return {
-          data: {
-            totalIuran: Number(totalIuran._sum.jumlah || 0),
-            totalTransaksi: totalIuran._count,
-            totalLunas: Number(totalLunas._sum.jumlah || 0),
-            totalMenunggak: Number(totalMenunggak._sum.jumlah || 0),
-            iuranBulanIni: iuranBulanIniTotal,
-            lunasBulanIni,
-            belumBayarBulanIni,
-            anggotaAktif,
-          },
+          totalIuran: Number(totalIuran._sum.jumlah || 0),
+          totalTransaksi: totalIuran._count,
+          totalLunas: Number(totalLunas._sum.jumlah || 0),
+          totalMenunggak: Number(totalMenunggak._sum.jumlah || 0),
+          iuranBulanIni: iuranBulanIniTotal,
+          lunasBulanIni,
+          belumBayarBulanIni,
+          anggotaAktif,
         };
       },
       this.CACHE_TTL, // ms — direct cache.getOrSet call
@@ -262,7 +260,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       _sum: { jumlah: true },
     });
 
-    return { data: stats };
+    return stats;
   }
 
   async exportReport() {
@@ -270,7 +268,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
       take: 10_000,
     });
-    return { data: dues };
+    return dues;
   }
 
   async importDues(data: Record<string, unknown>[]) {
@@ -296,7 +294,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    return { data: { imported: success, failed: data.length - success } };
+    return { imported: success, failed: data.length - success };
   }
 
   async batchPayment(dto: BatchPaymentDto) {
@@ -315,9 +313,6 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    return {
-      message: `Pembayaran massal untuk ${memberIds.length} anggota berhasil`,
-    };
   }
 
   async submitPaymentConfirmation(id: string, dto: PaymentConfirmationDto) {
@@ -346,10 +341,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
 
-    return {
-      data: updated,
-      message: 'Konfirmasi pembayaran berhasil dikirim. Menunggu verifikasi admin.',
-    };
+    return updated;
   }
 
   // ── Private Helpers ─────────────────────────────────────

@@ -83,10 +83,10 @@ describe('AuthService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
 
       const result = await service.login({ email: 'test@ths-thm.org', password: 'password123' });
-      expect(result.data.user.email).toBe('test@ths-thm.org');
-      expect(result.data.accessToken).toBe('mock-jwt-token');
+      expect(result.user.email).toBe('test@ths-thm.org');
+      expect(result.accessToken).toBe('mock-jwt-token');
       // login() without response param returns refreshToken in data
-      expect((result.data as { refreshToken: string }).refreshToken).toBe('mock-jwt-token');
+      expect((result as { refreshToken: string }).refreshToken).toBe('mock-jwt-token');
     });
 
     it('should throw UnauthorizedException for non-existent user', async () => {
@@ -117,8 +117,8 @@ describe('AuthService', () => {
         password: 'password123',
         namaLengkap: 'New User',
       });
-      expect(result.data.user).toBeDefined();
-      expect(result.data.accessToken).toBe('mock-jwt-token');
+      expect(result.user).toBeDefined();
+      expect(result.accessToken).toBe('mock-jwt-token');
     });
 
     it('should throw ConflictException for existing email', async () => {
@@ -156,9 +156,9 @@ describe('AuthService', () => {
 
       const result = await service.getProfile('u1');
       // sanitizeUser strips these fields so they don't appear on the type
-      expect((result.data as Record<string, unknown>).passwordHash).toBeUndefined();
-      expect((result.data as Record<string, unknown>).refreshToken).toBeUndefined();
-      expect(result.data.email).toBe('test@ths-thm.org');
+      expect((result as Record<string, unknown>).passwordHash).toBeUndefined();
+      expect((result as Record<string, unknown>).refreshToken).toBeUndefined();
+      expect(result.email).toBe('test@ths-thm.org');
     });
 
     it('should throw NotFoundException when user not found', async () => {
@@ -175,7 +175,7 @@ describe('AuthService', () => {
       });
 
       const result = await service.updateProfile('u1', { namaLengkap: 'Updated Name' });
-      expect(result.data.namaLengkap).toBe('Updated Name');
+      expect(result.namaLengkap).toBe('Updated Name');
     });
 
     it('should update email if provided', async () => {
@@ -280,7 +280,6 @@ describe('AuthService', () => {
         currentPassword: 'oldpass',
         newPassword: 'newpass123',
       });
-      expect(result.message).toContain('berhasil diubah');
       expect(bcrypt.hash).toHaveBeenCalledWith('newpass123', 12);
     });
 
@@ -310,14 +309,12 @@ describe('AuthService', () => {
   describe('forgotPassword', () => {
     it('should return success message when user not found (prevent enumeration)', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
-      const result = await service.forgotPassword({ email: 'unknown@test.com' });
-      expect(result.message).toContain('reset password');
+      await service.forgotPassword({ email: 'unknown@test.com' });
     });
 
     it('should send email when user exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      const result = await service.forgotPassword({ email: 'test@ths-thm.org' });
-      expect(result.message).toContain('reset password');
+      await service.forgotPassword({ email: 'test@ths-thm.org' });
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: 'test@ths-thm.org',
@@ -337,11 +334,10 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
 
-      const result = await service.resetPassword({
+      await service.resetPassword({
         token: 'valid-token',
         newPassword: 'newpass123',
       });
-      expect(result.message).toContain('berhasil direset');
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
@@ -362,7 +358,7 @@ describe('AuthService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
 
       const result = await service.refreshToken({ refreshToken: 'valid-rt' });
-      expect(result.data.accessToken).toBe('mock-jwt-token');
+      expect(result.accessToken).toBe('mock-jwt-token');
     });
 
     it('should throw UnauthorizedException for invalid refresh token', async () => {

@@ -89,7 +89,7 @@ export class ForumService {
       },
     });
 
-    return { data: { ...thread, posts } };
+    return { ...thread, posts };
   }
 
   async createThread(dto: CreateThreadDto, authorId: string) {
@@ -104,7 +104,7 @@ export class ForumService {
       },
     });
 
-    return { data: thread, message: 'Thread berhasil dibuat' };
+    return thread;
   }
 
   async updateThread(id: string, dto: UpdateThreadDto, userId: string) {
@@ -123,7 +123,7 @@ export class ForumService {
       },
     });
 
-    return { data: updated, message: 'Thread berhasil diperbarui' };
+    return updated;
   }
 
   async togglePin(id: string) {
@@ -135,7 +135,7 @@ export class ForumService {
       data: { isPinned: !thread.isPinned },
     });
 
-    return { data: updated, message: updated.isPinned ? 'Thread dipin' : 'Thread unpin' };
+    return updated;
   }
 
   async toggleLock(id: string) {
@@ -147,14 +147,13 @@ export class ForumService {
       data: { isLocked: !thread.isLocked },
     });
 
-    return { data: updated, message: updated.isLocked ? 'Thread dikunci' : 'Thread dibuka' };
+    return updated;
   }
 
   async deleteThread(id: string) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
     await this.prisma.forumThread.delete({ where: { id } });
-    return { message: 'Thread berhasil dihapus' };
   }
 
   // ─────────────────────────────────────────────────────────
@@ -185,7 +184,7 @@ export class ForumService {
       }
     }
 
-    return { data: post, message: 'Balasan berhasil dikirim' };
+    return post;
   }
 
   async updatePost(id: string, dto: UpdatePostDto, userId: string) {
@@ -202,7 +201,7 @@ export class ForumService {
       include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
-    return { data: updated, message: 'Balasan berhasil diperbarui' };
+    return updated;
   }
 
   async markAsSolution(postId: string, threadId: string, userId: string) {
@@ -238,13 +237,12 @@ export class ForumService {
       }
     }
 
-    return { data: updated, message: 'Solusi berhasil ditandai' };
+    return updated;
   }
 
   async deletePost(id: string) {
     const post = await this.prisma.forumPost.findUnique({ where: { id } });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
     await this.prisma.forumPost.delete({ where: { id } });
-    return { message: 'Balasan berhasil dihapus' };
   }
 }

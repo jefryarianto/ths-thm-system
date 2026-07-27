@@ -312,7 +312,6 @@ export class GamificationController {
   @ApiOperation({ summary: 'Update gamification configuration' })
   async updateConfig(@Body() body: Record<string, unknown>) {
     await this.gamificationService.updateConfig(body);
-    return { message: 'Konfigurasi berhasil diperbarui' };
   }
 
   /**

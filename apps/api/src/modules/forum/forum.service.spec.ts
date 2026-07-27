@@ -122,7 +122,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.update.mockResolvedValue(mockThread);
       mockPrisma.forumPost.findMany.mockResolvedValue([mockPost]);
       const result = await service.getThread('thread1');
-      expect(result.data.posts).toHaveLength(1);
+      expect(result.posts).toHaveLength(1);
     });
 
     it('should increment viewCount', async () => {
@@ -142,7 +142,7 @@ describe('ForumService', () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumThread.create.mockResolvedValue(mockThread);
       const result = await service.createThread({ categoryId: 'cat1', judul: 'Test', konten: 'Konten' }, 'user1');
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
 
     it('should throw NotFoundException for invalid category', async () => {
@@ -158,7 +158,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.update.mockResolvedValue({ ...mockThread, judul: 'Updated' });
       const result = await service.updateThread('thread1', { judul: 'Updated' }, 'user1');
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
   });
 
@@ -167,7 +167,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.update.mockResolvedValue({ ...mockThread, isPinned: true });
       const result = await service.togglePin('thread1');
-      expect(result.data.isPinned).toBe(true);
+      expect(result.isPinned).toBe(true);
     });
   });
 
@@ -176,7 +176,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.update.mockResolvedValue({ ...mockThread, isLocked: true });
       const result = await service.toggleLock('thread1');
-      expect(result.data.isLocked).toBe(true);
+      expect(result.isLocked).toBe(true);
     });
   });
 
@@ -184,8 +184,7 @@ describe('ForumService', () => {
     it('should delete a thread', async () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.delete.mockResolvedValue(mockThread);
-      const result = await service.deleteThread('thread1');
-      expect(result.message).toBeDefined();
+      await service.deleteThread('thread1');
     });
   });
 
@@ -194,7 +193,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
       mockPrisma.forumPost.create.mockResolvedValue(mockPost);
       const result = await service.createPost('thread1', { konten: 'Reply' }, 'user2');
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
 
     it('should throw ForbiddenException for locked thread', async () => {
@@ -223,7 +222,7 @@ describe('ForumService', () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue({ ...mockPost, authorId: 'user1' });
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, konten: 'Updated' });
       const result = await service.updatePost('post1', { konten: 'Updated' }, 'user1');
-      expect(result.data).toBeDefined();
+      expect(result).toBeDefined();
     });
 
     it('should throw ForbiddenException for non-author', async () => {
@@ -241,7 +240,7 @@ describe('ForumService', () => {
       mockPrisma.forumPost.updateMany.mockResolvedValue([]);
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, isSolution: true });
       const result = await service.markAsSolution('post1', 'thread1', 'user1');
-      expect(result.data.isSolution).toBe(true);
+      expect(result.isSolution).toBe(true);
     });
 
     it('should notify post author when marked as solution', async () => {
@@ -264,8 +263,7 @@ describe('ForumService', () => {
     it('should delete a post', async () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
       mockPrisma.forumPost.delete.mockResolvedValue(mockPost);
-      const result = await service.deletePost('post1');
-      expect(result.message).toBeDefined();
+      await service.deletePost('post1');
     });
   });
 });

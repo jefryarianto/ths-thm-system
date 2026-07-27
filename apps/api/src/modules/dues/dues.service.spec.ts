@@ -147,7 +147,7 @@ describe('DuesService', () => {
     it('should return dues for a member', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'd1', jumlah: 100000 }]);
       const result = await service.getMemberDues('a1');
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
   });
 
@@ -158,8 +158,8 @@ describe('DuesService', () => {
         { id: 'd2', jumlah: 200000, status: 'menunggak' },
       ]);
       const result = await service.getArrears({});
-      expect(result.data.count).toBe(2);
-      expect(result.data.totalArrears).toBe(300000);
+      expect(result.count).toBe(2);
+      expect(result.totalArrears).toBe(300000);
     });
   });
 
@@ -175,8 +175,8 @@ describe('DuesService', () => {
       ]);
       mockPrisma.anggota.count.mockResolvedValue(100);
       const result = await service.getDashboardStats();
-      expect(result.data.totalIuran).toBe(5000000);
-      expect(result.data.anggotaAktif).toBe(100);
+      expect(result.totalIuran).toBe(5000000);
+      expect(result.anggotaAktif).toBe(100);
     });
   });
 
@@ -186,7 +186,7 @@ describe('DuesService', () => {
       const result = await service.importDues([
         { anggota_id: 'a1', periode: '2026-01', jumlah: '100000' },
       ]);
-      expect(result.data.imported).toBe(1);
+      expect(result.imported).toBe(1);
     });
 
     it('should count failures on error', async () => {
@@ -194,8 +194,8 @@ describe('DuesService', () => {
       const result = await service.importDues([
         { anggota_id: 'a1', periode: '2026-01', jumlah: '100000' },
       ]);
-      expect(result.data.imported).toBe(0);
-      expect(result.data.failed).toBe(1);
+      expect(result.imported).toBe(0);
+      expect(result.failed).toBe(1);
     });
   });
 

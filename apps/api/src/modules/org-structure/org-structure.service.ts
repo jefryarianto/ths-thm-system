@@ -20,7 +20,7 @@ export class OrgStructureService {
       orderBy: { nama: 'asc' },
       include: { _count: { select: { wilayahs: true } } },
     });
-    return { success: true, data };
+    return data;
   }
 
   async getDistrik(id: string) {
@@ -35,7 +35,7 @@ export class OrgStructureService {
       },
     });
     if (!data) throw new NotFoundException('Distrik tidak ditemukan');
-    return { success: true, data };
+    return data;
   }
 
   async createDistrik(dto: CreateDistrikDto) {
@@ -48,7 +48,7 @@ export class OrgStructureService {
         nasionalId: dto.nasionalId || nasional?.id || 'seed',
       },
     });
-    return { success: true, data, message: 'Distrik berhasil ditambahkan' };
+    return data;
   }
 
   async updateDistrik(id: string, dto: UpdateDistrikDto) {
@@ -56,7 +56,7 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Distrik tidak ditemukan');
 
     const data = await this.prisma.distrik.update({ where: { id }, data: dto });
-    return { success: true, data, message: 'Distrik berhasil diperbarui' };
+    return data;
   }
 
   async deleteDistrik(id: string) {
@@ -64,7 +64,6 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Distrik tidak ditemukan');
 
     await this.prisma.distrik.delete({ where: { id } });
-    return { success: true, message: 'Distrik berhasil dihapus' };
   }
 
   // ─── WILAYAH ───
@@ -79,7 +78,7 @@ export class OrgStructureService {
         _count: { select: { rantings: true } },
       },
     });
-    return { success: true, data };
+    return data;
   }
 
   async getWilayah(id: string) {
@@ -94,12 +93,12 @@ export class OrgStructureService {
       },
     });
     if (!data) throw new NotFoundException('Wilayah tidak ditemukan');
-    return { success: true, data };
+    return data;
   }
 
   async createWilayah(dto: CreateWilayahDto) {
     const data = await this.prisma.wilayah.create({ data: dto });
-    return { success: true, data, message: 'Wilayah berhasil ditambahkan' };
+    return data;
   }
 
   async updateWilayah(id: string, dto: UpdateWilayahDto) {
@@ -107,7 +106,7 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Wilayah tidak ditemukan');
 
     const data = await this.prisma.wilayah.update({ where: { id }, data: dto });
-    return { success: true, data, message: 'Wilayah berhasil diperbarui' };
+    return data;
   }
 
   async deleteWilayah(id: string) {
@@ -115,7 +114,6 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Wilayah tidak ditemukan');
 
     await this.prisma.wilayah.delete({ where: { id } });
-    return { success: true, message: 'Wilayah berhasil dihapus' };
   }
 
   // ─── RANTING ───
@@ -130,7 +128,7 @@ export class OrgStructureService {
         _count: { select: { anggota: true } },
       },
     });
-    return { success: true, data };
+    return data;
   }
 
   async getRanting(id: string) {
@@ -142,12 +140,12 @@ export class OrgStructureService {
       },
     });
     if (!data) throw new NotFoundException('Ranting tidak ditemukan');
-    return { success: true, data };
+    return data;
   }
 
   async createRanting(dto: CreateRantingDto) {
     const data = await this.prisma.ranting.create({ data: dto });
-    return { success: true, data, message: 'Ranting berhasil ditambahkan' };
+    return data;
   }
 
   async updateRanting(id: string, dto: UpdateRantingDto) {
@@ -155,7 +153,7 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Ranting tidak ditemukan');
 
     const data = await this.prisma.ranting.update({ where: { id }, data: dto });
-    return { success: true, data, message: 'Ranting berhasil diperbarui' };
+    return data;
   }
 
   async deleteRanting(id: string) {
@@ -163,7 +161,6 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Ranting tidak ditemukan');
 
     await this.prisma.ranting.delete({ where: { id } });
-    return { success: true, message: 'Ranting berhasil dihapus' };
   }
 
   // ─── ORGANIZATION TREE ───

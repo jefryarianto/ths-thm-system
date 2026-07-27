@@ -158,7 +158,6 @@ export class DocumentsController {
     if (!cancelled) {
       return { success: false, message: 'Batch tidak ditemukan atau sudah selesai' };
     }
-    return { message: 'Batch dibatalkan' };
   }
 
   @Patch('batch/:batchId/cancel')

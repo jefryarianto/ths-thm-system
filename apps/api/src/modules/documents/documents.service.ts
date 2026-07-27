@@ -94,12 +94,12 @@ export class DocumentsService {
     });
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
     if (
-      scope &&
+      scope &&    
       !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, doc.anggota?.rantingId))
     ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
-    return { success: true, data: doc };
+    return doc;
   }
 
   async generate(dto: GenerateDocumentDto) {
@@ -173,7 +173,7 @@ export class DocumentsService {
     }
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: doc, message: 'Dokumen berhasil digenerate' };
+    return doc;
   }
 
   /**
@@ -310,7 +310,6 @@ export class DocumentsService {
 
     await this.prisma.dokumen.update({ where: { id }, data: { status: 'revoked' } });
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, message: 'Dokumen berhasil dihapus' };
   }
 
   private sendDocumentReadyEmail(memberId: string, docType: string, nomorDokumen: string): void {
@@ -328,9 +327,7 @@ export class DocumentsService {
   }
 
   async getTypes() {
-    return {
-      success: true,
-      data: [
+    return [
         {
           type: 'kartu_anggota',
           label: 'Kartu Anggota',
@@ -351,8 +348,7 @@ export class DocumentsService {
           label: 'Piagam Prestasi',
           description: 'Piagam penghargaan prestasi',
         },
-      ],
-    };
+    ];
   }
 
   async verifyQR(dokumenId: string) {
@@ -363,8 +359,8 @@ export class DocumentsService {
       },
     });
 
-    if (!qr) return { success: false, message: 'QR code tidak valid' };
-    if (!qr.isValid) return { success: false, message: 'Dokumen sudah tidak berlaku' };
+    if (!qr) throw new NotFoundException('QR code tidak valid');
+    if (!qr.isValid) throw new NotFoundException('Dokumen sudah tidak berlaku');
 
     await this.prisma.qRValidation.update({
       where: { id: qr.id },
@@ -372,15 +368,12 @@ export class DocumentsService {
     });
 
     return {
-      success: true,
-      data: {
-        valid: true,
-        dokumenId: qr.dokumenId,
-        tipe: qr.dokumen.tipe,
-        nomorDokumen: qr.dokumen.nomorDokumen,
-        anggota: qr.dokumen.anggota,
-        firstScanned: qr.scanCount === 0,
-      },
+      valid: true,
+      dokumenId: qr.dokumenId,
+      tipe: qr.dokumen.tipe,
+      nomorDokumen: qr.dokumen.nomorDokumen,
+      anggota: qr.dokumen.anggota,
+      firstScanned: qr.scanCount === 0,
     };
   }
 
@@ -462,11 +455,7 @@ export class DocumentsService {
     this.sendDocumentReadyEmail(dto.memberId, 'sertifikat_pendadaran', nomorDokumen);
 
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return {
-      success: true,
-      data: doc,
-      message: 'Sertifikat pendadaran berhasil digenerate',
-    };
+    return doc;
   }
 
   async getCertificatePdf(memberId: string, dto: GenerateCertificateDto, scope?: UserScope): Promise<Buffer> {
@@ -582,12 +571,7 @@ export class DocumentsService {
 
     this.sendDocumentReadyEmail(dto.memberId, 'piagam_prestasi', nomorDokumen);
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
-
-    return {
-      success: true,
-      data: doc,
-      message: 'Piagam prestasi berhasil digenerate',
-    };
+    return doc;
   }
 
   async verifyByToken(token: string) {
@@ -598,8 +582,8 @@ export class DocumentsService {
       },
     });
 
-    if (!qr) return { success: false, message: 'Token QR tidak valid' };
-    if (!qr.isValid) return { success: false, message: 'Dokumen sudah tidak berlaku' };
+    if (!qr) throw new NotFoundException('Token QR tidak valid');
+    if (!qr.isValid) throw new NotFoundException('Dokumen sudah tidak berlaku');
 
     await this.prisma.qRValidation.update({
       where: { id: qr.id },

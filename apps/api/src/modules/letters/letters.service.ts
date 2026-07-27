@@ -61,7 +61,7 @@ export class LettersService {
   async incomingFindOne(id: string) {
     const letter = await this.prisma.suratMasuk.findUnique({ where: { id } });
     if (!letter) throw new NotFoundException('Surat tidak ditemukan');
-    return { data: letter };
+    return letter;
   }
 
   async incomingCreate(dto: CreateIncomingLetterDto) {
@@ -76,7 +76,7 @@ export class LettersService {
         status: 'diterima',
       },
     });
-    return { data: letter, message: 'Surat masuk berhasil dicatat' };
+    return letter;
   }
 
   async incomingUpdate(id: string, dto: UpdateIncomingLetterDto) {
@@ -89,12 +89,11 @@ export class LettersService {
     if (dto.fileScanPath) data.fileScanPath = dto.fileScanPath;
 
     const letter = await this.prisma.suratMasuk.update({ where: { id }, data });
-    return { data: letter, message: 'Surat masuk berhasil diperbarui' };
+    return letter;
   }
 
   async incomingRemove(id: string) {
     await this.prisma.suratMasuk.delete({ where: { id } });
-    return { message: 'Surat masuk berhasil dihapus' };
   }
 
   async createDisposition(suratMasukId: string, dto: CreateDispositionDto) {
@@ -109,7 +108,7 @@ export class LettersService {
 
     this.sendDispositionEmail(suratMasukId, dto);
 
-    return { data: disposition, message: 'Disposisi berhasil dicatat' };
+    return disposition;
   }
 
   async outgoingFindAll(query: LetterFilterDto) {
@@ -123,7 +122,7 @@ export class LettersService {
   async outgoingFindOne(id: string) {
     const letter = await this.prisma.suratKeluar.findUnique({ where: { id } });
     if (!letter) throw new NotFoundException('Surat tidak ditemukan');
-    return { data: letter };
+    return letter;
   }
 
   async outgoingCreate(dto: CreateOutgoingLetterDto) {
@@ -138,7 +137,7 @@ export class LettersService {
         status: 'draft',
       },
     });
-    return { data: letter, message: 'Draft surat keluar berhasil dibuat' };
+    return letter;
   }
 
   async outgoingUpdate(id: string, dto: UpdateOutgoingLetterDto) {
@@ -151,12 +150,11 @@ export class LettersService {
     if (dto.status) data.status = dto.status;
 
     const letter = await this.prisma.suratKeluar.update({ where: { id }, data });
-    return { data: letter, message: 'Surat keluar berhasil diperbarui' };
+    return letter;
   }
 
   async outgoingRemove(id: string) {
     await this.prisma.suratKeluar.delete({ where: { id } });
-    return { message: 'Surat keluar berhasil dihapus' };
   }
 
   async outgoingSend(id: string) {
@@ -164,7 +162,7 @@ export class LettersService {
       where: { id },
       data: { status: 'terkirim' },
     });
-    return { data: letter, message: 'Surat berhasil dikirim' };
+    return letter;
   }
 
   async incomingExport() {

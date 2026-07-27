@@ -122,7 +122,7 @@ describe('DocumentsService', () => {
   describe('getTypes', () => {
     it('should return document types', async () => {
       const result = await service.getTypes();
-      expect(result.data.length).toBeGreaterThan(0);
+      expect(result.length).toBeGreaterThan(0);
     });
   });
 

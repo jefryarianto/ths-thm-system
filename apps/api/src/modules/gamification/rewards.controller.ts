@@ -51,7 +51,6 @@ export class RewardsController {
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Delete a reward (admin)' })
   async deleteReward(@Param('id') id: string) {
     await this.rewardsService.deleteReward(id);
-    return { message: 'Reward berhasil dihapus' };
   }
 
   @Post('rewards/:rewardId/redeem')
