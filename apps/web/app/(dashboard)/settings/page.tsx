@@ -101,8 +101,10 @@ export default function SettingsPage() {
     setSavingOrg(true);
     setOrgError('');
     try {
-      const { data: res } = await apiClient.patch('/settings', orgForm);
-      setOrg(res.data);
+      await apiClient.patch('/settings', orgForm);
+      // Re-fetch org data after saving since the PATCH returns void
+      const orgRes = await apiClient.get('/settings');
+      setOrg(unwrap(orgRes));
       setShowOrgModal(false);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;

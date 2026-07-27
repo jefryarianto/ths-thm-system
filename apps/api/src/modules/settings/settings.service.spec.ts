@@ -64,7 +64,7 @@ describe('SettingsService', () => {
       mockPrisma.setting.findMany.mockResolvedValue(mockSettings);
 
       const result = await service.getSettings();
-      expect(result.data).toEqual(mockSettings);
+      expect(result).toEqual(mockSettings);
     });
   });
 
@@ -83,7 +83,7 @@ describe('SettingsService', () => {
       mockPrisma.periode.findMany.mockResolvedValue(mockPeriods);
 
       const result = await service.getPeriods();
-      expect(result.data).toEqual(mockPeriods);
+      expect(result).toEqual(mockPeriods);
     });
   });
 
@@ -128,8 +128,8 @@ describe('SettingsService', () => {
   describe('getRoles', () => {
     it('should return all predefined roles', async () => {
       const result = await service.getRoles();
-      expect(result.data).toHaveLength(7);
-      expect(result.data[0].role).toBe('superadmin');
+      expect(result).toHaveLength(7);
+      expect(result[0].role).toBe('superadmin');
     });
   });
 
@@ -148,7 +148,7 @@ describe('SettingsService', () => {
       mockPrisma.tandaTangan.findMany.mockResolvedValue(mockSigs);
 
       const result = await service.getSignatures();
-      expect(result.data).toEqual(mockSigs);
+      expect(result).toEqual(mockSigs);
     });
   });
 
@@ -174,14 +174,14 @@ describe('SettingsService', () => {
       mockPrisma.stempel.findFirst.mockResolvedValue({ id: '1', isActive: true });
 
       const result = await service.getStamp();
-      expect(result.data?.isActive).toBe(true);
+      expect(result?.isActive).toBe(true);
     });
 
     it('should return null when no active stamp', async () => {
       mockPrisma.stempel.findFirst.mockResolvedValue(null);
 
       const result = await service.getStamp();
-      expect(result.data).toBeNull();
+      expect(result).toBeNull();
     });
   });
 });

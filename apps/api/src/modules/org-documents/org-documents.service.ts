@@ -80,10 +80,9 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
   // ── Domain: Categories ──────────────────────────────
 
   async getCategories() {
-    const categories = await (this.prisma as any).kategoriDokumen.findMany({
+    return (this.prisma as any).kategoriDokumen.findMany({
       include: { _count: { select: { dokumen: true } } },
     });
-    return { data: categories };
   }
 
   async getCategory(id: string) {
@@ -91,27 +90,24 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
       where: { id },
     });
     if (!cat) throw new NotFoundException('Kategori tidak ditemukan');
-    return { data: cat };
+    return cat;
   }
 
   async createCategory(dto: CreateCategoryDto) {
-    const cat = await (this.prisma as any).kategoriDokumen.create({
+    return (this.prisma as any).kategoriDokumen.create({
       data: dto as any,
     });
-    return { data: cat, message: 'Kategori berhasil dibuat' };
   }
 
   async updateCategory(id: string, dto: UpdateCategoryDto) {
-    const cat = await (this.prisma as any).kategoriDokumen.update({
+    return (this.prisma as any).kategoriDokumen.update({
       where: { id },
       data: dto as Record<string, unknown>,
     });
-    return { data: cat, message: 'Kategori berhasil diperbarui' };
   }
 
   async deleteCategory(id: string) {
     await (this.prisma as any).kategoriDokumen.delete({ where: { id } });
-    return { message: 'Kategori berhasil dihapus' };
   }
 
   // ── Private Helpers ─────────────────────────────────

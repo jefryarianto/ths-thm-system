@@ -177,7 +177,7 @@ export class PaymentsService {
       }
     }
 
-    return { data: iuran };
+    return iuran;
   }
 
   async uploadProof(
@@ -227,10 +227,7 @@ export class PaymentsService {
     this.cache.invalidatePrefix('dues:');
     this.cache.invalidatePrefix('reports:');
 
-    return {
-      data: updated,
-      message: 'Bukti pembayaran berhasil dikirim. Menunggu verifikasi admin.',
-    };
+    return updated;
   }
 
   async verifyPayment(iuranId: string, userId: string, scope?: UserScope) {
@@ -272,10 +269,7 @@ export class PaymentsService {
 
     this.logger.log(`Payment verified for iuran ${iuranId} by user ${userId}`);
 
-    return {
-      data: updated,
-      message: 'Pembayaran berhasil diverifikasi',
-    };
+    return updated;
   }
 
   async rejectPayment(iuranId: string, scope?: UserScope) {
@@ -309,9 +303,6 @@ export class PaymentsService {
     this.cache.invalidatePrefix('dues:');
     this.cache.invalidatePrefix('reports:');
 
-    return {
-      data: updated,
-      message: 'Pembayaran ditolak. Status dikembalikan ke belum dibayar.',
-    };
+    return updated;
   }
 }

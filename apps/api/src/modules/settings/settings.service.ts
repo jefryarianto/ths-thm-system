@@ -27,11 +27,8 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   // ── Key-Value Settings ──────────────────────────────
 
   async getSettings() {
-    const settings = await this.prisma.setting.findMany();
-    return { data: settings };
-  }
-
-  async updateSettings(dto: Record<string, unknown>) {
+    return this.prisma.setting.findMany();
+  }    async updateSettings(dto: Record<string, unknown>) {
     for (const [key, value] of Object.entries(dto)) {
       await this.prisma.setting.upsert({
         where: { key },
@@ -39,14 +36,12 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
         create: { key, value: value as never },
       });
     }
-    return { message: 'Konfigurasi berhasil diperbarui' };
   }
 
   // ── Period CRUD (via BaseCrudService) ──────────────
 
   async getPeriods() {
-    const periods = await this.prisma.periode.findMany({ orderBy: { tglMulai: 'desc' } });
-    return { data: periods };
+    return this.prisma.periode.findMany({ orderBy: { tglMulai: 'desc' } });
   }
 
   async getPeriod(id: string) {
@@ -68,63 +63,55 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
 
   async deletePeriod(id: string) {
     await this.baseRemove(id);
-    return { message: 'Periode berhasil dihapus' };
   }
 
   // ── Roles ─────────────────────────────────────────
 
   async getRoles() {
-    return {
-      data: [
-        { role: 'superadmin', label: 'Super Admin', permissions: ['*'] },
-        {
-          role: 'admin_distrik',
-          label: 'Admin Distrik',
-          permissions: ['members', 'candidates', 'trainings', 'graduations', 'reports'],
-        },
-        {
-          role: 'admin_wilayah',
-          label: 'Admin Wilayah',
-          permissions: ['members', 'candidates', 'trainings', 'reports'],
-        },
-        { role: 'admin_ranting', label: 'Admin Ranting', permissions: ['members', 'candidates'] },
-        {
-          role: 'admin_kegiatan',
-          label: 'Admin Kegiatan',
-          permissions: ['trainings', 'graduations', 'activities'],
-        },
-        { role: 'penguji', label: 'Penguji', permissions: ['assessments'] },
-        { role: 'anggota', label: 'Anggota', permissions: ['profile', 'documents', 'dues'] },
-      ],
-    };
+    return [
+      { role: 'superadmin', label: 'Super Admin', permissions: ['*'] },
+      {
+        role: 'admin_distrik',
+        label: 'Admin Distrik',
+        permissions: ['members', 'candidates', 'trainings', 'graduations', 'reports'],
+      },
+      {
+        role: 'admin_wilayah',
+        label: 'Admin Wilayah',
+        permissions: ['members', 'candidates', 'trainings', 'reports'],
+      },
+      { role: 'admin_ranting', label: 'Admin Ranting', permissions: ['members', 'candidates'] },
+      {
+        role: 'admin_kegiatan',
+        label: 'Admin Kegiatan',
+        permissions: ['trainings', 'graduations', 'activities'],
+      },
+      { role: 'penguji', label: 'Penguji', permissions: ['assessments'] },
+      { role: 'anggota', label: 'Anggota', permissions: ['profile', 'documents', 'dues'] },
+    ];
   }
 
   // ── Signatures & Stamps ───────────────────────────
 
   async uploadSignature(dto: CreateSignatureDto) {
-    const sig = await this.prisma.tandaTangan.create({ data: dto });
-    return { data: sig, message: 'Tanda tangan berhasil diupload' };
+    return this.prisma.tandaTangan.create({ data: dto });
   }
 
   async getSignatures() {
-    const sigs = await this.prisma.tandaTangan.findMany({
+    return this.prisma.tandaTangan.findMany({
       include: { user: { select: { namaLengkap: true } } },
     });
-    return { data: sigs };
   }
 
   async deleteSignature(id: string) {
     await this.prisma.tandaTangan.delete({ where: { id } });
-    return { message: 'Tanda tangan berhasil dihapus' };
   }
 
   async uploadStamp(dto: CreateStampDto) {
-    const stamp = await this.prisma.stempel.create({ data: dto });
-    return { data: stamp, message: 'Stempel berhasil diupload' };
+    return this.prisma.stempel.create({ data: dto });
   }
 
   async getStamp() {
-    const stamp = await this.prisma.stempel.findFirst({ where: { isActive: true } });
-    return { data: stamp };
+    return this.prisma.stempel.findFirst({ where: { isActive: true } });
   }
 }

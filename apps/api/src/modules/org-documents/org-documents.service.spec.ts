@@ -142,7 +142,7 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.findMany.mockResolvedValue(mockCats);
 
       const result = await service.getCategories();
-      expect(result.data).toEqual(mockCats);
+      expect(result).toEqual(mockCats);
     });
   });
 
@@ -152,7 +152,7 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.createCategory(dto);
-      expect(result.data.nama).toBe('Umum');
+      expect(result.nama).toBe('Umum');
     });
   });
 
