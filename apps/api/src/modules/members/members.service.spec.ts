@@ -175,7 +175,7 @@ describe('MembersService', () => {
       });
 
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
-      expect(result.nomorAnggota).toBe('0114-0101-004-2026');
+      expect(result.data.nomorAnggota).toBe('0114-0101-004-2026');
       expect(mockMemberMailService.sendToMember).toHaveBeenCalledTimes(1);
     });
 

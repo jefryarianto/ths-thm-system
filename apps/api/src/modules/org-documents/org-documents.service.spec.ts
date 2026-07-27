@@ -109,7 +109,7 @@ describe('OrgDocumentsService', () => {
       ]);
 
       const result = await service.create(dto);
-      expect(result.judul).toBe('AD/ART');
+      expect(result.data.judul).toBe('AD/ART');
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'admin@test.com' }),
@@ -123,7 +123,7 @@ describe('OrgDocumentsService', () => {
       mockPrisma.dokumenOrganisasi.update.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.update('1', dto);
-      expect(result.judul).toBe('Updated');
+      expect(result.data.judul).toBe('Updated');
     });
   });
 

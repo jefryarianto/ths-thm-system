@@ -233,7 +233,7 @@ describe('CandidatesService', () => {
     it('should create a candidate', async () => {
       mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1', status: 'diusulkan' });
       const result = await service.create({ namaLengkap: 'Budi' } as any);
-      expect(result.status).toBe('diusulkan');
+      expect(result.data.status).toBe('diusulkan');
     });
   });
 

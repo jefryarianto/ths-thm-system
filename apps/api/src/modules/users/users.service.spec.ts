@@ -145,8 +145,8 @@ describe('UsersService', () => {
       mockPrisma.user.create.mockResolvedValue(mockCreated);
 
       const result = await service.create(dto);
-      expect(result.email).toBe('new@test.com');
-      expect(result).not.toHaveProperty('passwordHash');
+      expect(result.data.email).toBe('new@test.com');
+      expect(result.data).not.toHaveProperty('passwordHash');
     });
 
     it('should auto-assign rantingId from scope', async () => {
@@ -168,7 +168,7 @@ describe('UsersService', () => {
       mockPrisma.user.update.mockResolvedValue({ id: '1', namaLengkap: 'Updated' });
 
       const result = await service.update('1', dto);
-      expect(result.namaLengkap).toBe('Updated');
+      expect(result.data.namaLengkap).toBe('Updated');
     });
 
     it('should throw ForbiddenException for out-of-scope user', async () => {

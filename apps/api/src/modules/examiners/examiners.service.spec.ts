@@ -118,7 +118,7 @@ describe('ExaminersService', () => {
     it('should create an examiner with hashed password', async () => {
       mockPrisma.user.create.mockResolvedValue({ id: 'u1', role: 'penguji' });
       const result = await service.create({ email: 'penguji@test.com', namaLengkap: 'Budi' });
-      expect(result.role).toBe('penguji');
+      expect(result.data.role).toBe('penguji');
     });
   });
 
@@ -126,7 +126,7 @@ describe('ExaminersService', () => {
     it('should update an examiner', async () => {
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', namaLengkap: 'Updated' });
       const result = await service.update('u1', { namaLengkap: 'Updated' });
-      expect(result.namaLengkap).toBe('Updated');
+      expect(result.data.namaLengkap).toBe('Updated');
     });
   });
 
