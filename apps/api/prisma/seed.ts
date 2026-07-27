@@ -280,14 +280,14 @@ async function main() {
 
   // ── Seeder Gamification Settings ──
   const gamificationSettings = [
-    { key: 'gamification_points_training', value: '10' },
-    { key: 'gamification_points_dues_on_time', value: '20' },
-    { key: 'gamification_points_dues_late', value: '5' },
-    { key: 'gamification_level_bronze_min', value: '0' },
-    { key: 'gamification_level_silver_min', value: '100' },
-    { key: 'gamification_level_gold_min', value: '300' },
-    { key: 'gamification_level_platinum_min', value: '500' },
-    { key: 'gamification_level_diamond_min', value: '1000' },
+    { key: 'gamification_points_training', value: 10 },
+    { key: 'gamification_points_dues_on_time', value: 20 },
+    { key: 'gamification_points_dues_late', value: 5 },
+    { key: 'gamification_level_bronze_min', value: 0 },
+    { key: 'gamification_level_silver_min', value: 100 },
+    { key: 'gamification_level_gold_min', value: 300 },
+    { key: 'gamification_level_platinum_min', value: 500 },
+    { key: 'gamification_level_diamond_min', value: 1000 },
   ];
 
   for (const s of gamificationSettings) {
