@@ -278,6 +278,24 @@ async function main() {
   }
   console.log(`Seeded ${exampleTemplates.length} example email templates`);
 
+  // ── Seeder Organization Settings ──
+  const orgSettings = [
+    { key: 'nama', value: 'THS-THM (Tapak Suci Putera Muhammadiyah)' },
+    { key: 'alamat', value: 'Jl. K.H. Ahmad Dahlan No. 103, Yogyakarta' },
+    { key: 'noTelp', value: '(0274) 123456' },
+    { key: 'email', value: 'admin@ths-thm.org' },
+    { key: 'website', value: 'https://ths-thm.org' },
+  ];
+
+  for (const s of orgSettings) {
+    await prisma.setting.upsert({
+      where: { key: s.key },
+      update: { value: s.value },
+      create: { key: s.key, value: s.value },
+    });
+  }
+  console.log(`Seeded ${orgSettings.length} organization settings`);
+
   // ── Seeder Gamification Settings ──
   const gamificationSettings = [
     { key: 'gamification_points_training', value: 10 },
