@@ -21,6 +21,7 @@ import {
   Database,
   Cpu,
   Network,
+  type LucideIcon,
 } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -39,7 +40,7 @@ interface Incident {
 
 type Severity = 'all' | 'short' | 'medium' | 'long' | 'critical';
 
-const COMPONENT_ICONS: Record<string, React.ComponentType<{ size?: number | string; className?: string }>> = {
+const COMPONENT_ICONS: Record<string, LucideIcon> = {
   queue: Network,
   database: Database,
   api: Cpu,
@@ -104,7 +105,7 @@ function StatCard({
   sub,
   color,
 }: {
-  icon: React.ComponentType<{ size?: number | string; className?: string }>;
+  icon: LucideIcon;
   label: string;
   value: string;
   sub?: string;

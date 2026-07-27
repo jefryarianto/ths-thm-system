@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import {
   Users, Mail, Bell, Settings, Trash2, Edit3, Plus, Eye, Download, Search,
-  XCircle, CheckCircle, AlertTriangle, Clock, Info, RefreshCw,
+  XCircle, CircleCheck, AlertTriangle, Clock, Info, RefreshCw,
 } from 'lucide-react';
 import Badge from '@/components/ui/badge';
 import Button from '@/components/ui/button';
@@ -232,7 +232,7 @@ export default function StyleGuidePage() {
                 </Showcase>
                 <Showcase label="With Icons (inline)">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
-                    <CheckCircle size={12} /> Active
+                    <CircleCheck size={12} /> Active
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
                     <Clock size={12} /> Pending
