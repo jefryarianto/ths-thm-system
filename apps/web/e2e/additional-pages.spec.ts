@@ -105,4 +105,93 @@ test.describe('Additional Dashboard Pages', () => {
       await expect(page.getByText('Semua Badge')).toBeVisible();
     });
   });
+
+  test.describe('Examiners Page', () => {
+    test.beforeEach(async ({ page }) => {
+      await mockAuthWithAll(page);
+      await page.goto('/examiners');
+      await page.waitForLoadState('networkidle');
+    });
+
+    test('renders header and examiner list', async ({ page }) => {
+      await expect(page.locator('h1')).toContainText('Penguji');
+      await expect(page.getByText('Daftar Penguji')).toBeVisible();
+    });
+
+    test('shows add examiner button', async ({ page }) => {
+      await expect(page.getByRole('button', { name: /tambah|add/i })).toBeVisible();
+    });
+  });
+
+  test.describe('Claims Page', () => {
+    test.beforeEach(async ({ page }) => {
+      await mockAuthWithAll(page);
+      await page.goto('/claims');
+      await page.waitForLoadState('networkidle');
+    });
+
+    test('renders header and claims list', async ({ page }) => {
+      await expect(page.locator('h1')).toContainText('Klaim');
+      await expect(page.getByText('Daftar Klaim')).toBeVisible();
+    });
+
+    test('shows search and filter controls', async ({ page }) => {
+      await expect(page.locator('input[placeholder*="Cari"]').first()).toBeVisible();
+    });
+  });
+
+  test.describe('Forum Pages', () => {
+    test.beforeEach(async ({ page }) => {
+      await mockAuthWithAll(page);
+    });
+
+    test('renders forum categories page', async ({ page }) => {
+      await page.goto('/forum');
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('h1')).toContainText('Forum');
+      await expect(page.getByText('Kategori Forum')).toBeVisible();
+    });
+
+    test('navigates to category threads', async ({ page }) => {
+      await page.goto('/forum');
+      await page.waitForLoadState('networkidle');
+      const firstCategory = page.locator('a[href*="/forum/c/"]').first();
+      if (await firstCategory.count() > 0) {
+        await firstCategory.click();
+        await page.waitForLoadState('networkidle');
+        await expect(page.locator('h1')).toBeVisible();
+      }
+    });
+
+    test('renders new thread form', async ({ page }) => {
+      await page.goto('/forum/new');
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('h1')).toContainText('Thread');
+      await expect(page.getByText('Judul')).toBeVisible();
+    });
+  });
+
+  test.describe('Chat Pages', () => {
+    test.beforeEach(async ({ page }) => {
+      await mockAuthWithAll(page);
+    });
+
+    test('renders chat rooms list', async ({ page }) => {
+      await page.goto('/chat');
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('h1')).toContainText('Chat');
+      await expect(page.getByText('Ruang Chat')).toBeVisible();
+    });
+
+    test('navigates to chat room', async ({ page }) => {
+      await page.goto('/chat');
+      await page.waitForLoadState('networkidle');
+      const firstRoom = page.locator('a[href*="/chat/"]').first();
+      if (await firstRoom.count() > 0) {
+        await firstRoom.click();
+        await page.waitForLoadState('networkidle');
+        await expect(page.locator('h1')).toBeVisible();
+      }
+    });
+  });
 });
