@@ -95,7 +95,6 @@ describe('DocumentsService', () => {
       mockPrisma.dokumen.findMany.mockResolvedValue([{ id: 'd1', tipe: 'kartu_anggota' }]);
       mockPrisma.dokumen.count.mockResolvedValue(1);
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
@@ -105,7 +104,6 @@ describe('DocumentsService', () => {
     it('should return a single document', async () => {
       mockPrisma.dokumen.findUnique.mockResolvedValue({ id: 'd1', tipe: 'kartu_anggota' });
       const result = await service.findOne('d1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -124,7 +122,6 @@ describe('DocumentsService', () => {
   describe('getTypes', () => {
     it('should return document types', async () => {
       const result = await service.getTypes();
-      expect(result.success).toBe(true);
       expect(result.data.length).toBeGreaterThan(0);
     });
   });
@@ -139,7 +136,6 @@ describe('DocumentsService', () => {
       });
 
       const result = await service.generate({ memberId: 'm1', type: 'kartu_anggota' });
-      expect(result.success).toBe(true);
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
   });

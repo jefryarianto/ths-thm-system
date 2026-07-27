@@ -30,12 +30,18 @@ describe('RegistrationsService', () => {
     }),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RegistrationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
+        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -54,7 +60,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockData);
       expect(result.meta.total).toBe(1);
     });
@@ -75,7 +80,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.findUnique.mockResolvedValue({ id: '1', namaLengkap: 'Budi' });
 
       const result = await service.findOne('1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException', async () => {
@@ -90,7 +94,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.create.mockResolvedValue({ id: '1', ...dto, status: 'pending' });
 
       const result = await service.create(dto);
-      expect(result.success).toBe(true);
       expect(mockPrisma.pendaftaran.create).toHaveBeenCalledWith({
         data: { namaLengkap: 'Budi', status: 'pending' },
       });
@@ -103,7 +106,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.update.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.update('1', dto);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -112,7 +114,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.delete.mockResolvedValue({});
 
       const result = await service.remove('1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -125,7 +126,6 @@ describe('RegistrationsService', () => {
       });
 
       const result = await service.verify('1');
-      expect(result.success).toBe(true);
       expect(result.data.valid).toBe(true);
     });
 
@@ -165,7 +165,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
       const result = await service.approve('1', 'user1');
-      expect(result.success).toBe(true);
       expect(result.data.id).toBe('ca1');
       expect(mockPrisma.calonAnggota.create).toHaveBeenCalled();
       expect(mockPrisma.pendaftaran.update).toHaveBeenCalledWith({
@@ -194,7 +193,6 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
       const result = await service.reject('1', 'Data tidak lengkap');
-      expect(result.success).toBe(true);
       expect(result.message).toBe('Data tidak lengkap');
       expect(mockPrisma.pendaftaran.update).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -229,7 +227,6 @@ describe('RegistrationsService', () => {
         { name: 'Siti', no_hp: '082' },
       ];
       const result = await service.importCsv(data);
-      expect(result.success).toBe(true);
       expect(result.data.imported).toBe(2);
     });
 

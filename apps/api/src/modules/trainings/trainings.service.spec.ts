@@ -97,7 +97,6 @@ describe('TrainingsService', () => {
       mockPrisma.latihan.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockData);
       expect(result.meta.total).toBe(1);
     });
@@ -115,7 +114,6 @@ describe('TrainingsService', () => {
     it('should return a training with relations', async () => {
       mockPrisma.latihan.findUnique.mockResolvedValue({ id: '1', jenisMateri: 'Tendangan' });
       const result = await service.findOne('1');
-      expect(result.success).toBe(true);
       expect(result.data.id).toBe('1');
     });
 
@@ -135,7 +133,6 @@ describe('TrainingsService', () => {
       };
       mockPrisma.latihan.create.mockResolvedValue({ id: '1', ...dto });
       const result = await service.create(dto);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -143,7 +140,6 @@ describe('TrainingsService', () => {
     it('should update a training', async () => {
       mockPrisma.latihan.update.mockResolvedValue({ id: '1', jenisMateri: 'Updated' });
       const result = await service.update('1', { jenisMateri: 'Updated' });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -151,7 +147,6 @@ describe('TrainingsService', () => {
     it('should delete a training', async () => {
       mockPrisma.latihan.delete.mockResolvedValue({});
       const result = await service.remove('1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -159,7 +154,6 @@ describe('TrainingsService', () => {
     it('should return attendances', async () => {
       mockPrisma.absensiLatihan.findMany.mockResolvedValue([{ id: 'a1', hadir: true }]);
       const result = await service.getAttendances('t1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -172,7 +166,6 @@ describe('TrainingsService', () => {
         namaLengkap: 'Budi',
       });
       const result = await service.recordAttendance('t1', { anggotaId: 'ang1', hadir: true });
-      expect(result.success).toBe(true);
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
@@ -188,7 +181,6 @@ describe('TrainingsService', () => {
     it('should return evaluations', async () => {
       mockPrisma.evaluasiLatihan.findMany.mockResolvedValue([{ id: 'e1', nilai: 85 }]);
       const result = await service.getEvaluations('t1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -197,7 +189,6 @@ describe('TrainingsService', () => {
       mockPrisma.latihan.findUnique.mockResolvedValue({ id: 't1' });
       mockPrisma.evaluasiLatihan.create.mockResolvedValue({ id: 'e1', nilai: 85 });
       const result = await service.createEvaluation('t1', { anggotaId: 'ang1', nilai: 85 });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -205,7 +196,6 @@ describe('TrainingsService', () => {
     it('should update an evaluation', async () => {
       mockPrisma.evaluasiLatihan.update.mockResolvedValue({ id: 'e1', nilai: 90 });
       const result = await service.updateEvaluation('t1', 'e1', { nilai: 90 });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -213,7 +203,6 @@ describe('TrainingsService', () => {
     it('should delete an evaluation', async () => {
       mockPrisma.evaluasiLatihan.delete.mockResolvedValue({});
       const result = await service.removeEvaluation('t1', 'e1');
-      expect(result.success).toBe(true);
     });
   });
 });

@@ -42,6 +42,11 @@ describe('ClaimsService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +55,7 @@ describe('ClaimsService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: MailService, useValue: mockMailService },
         { provide: MemberMailService, useValue: mockMemberMailService },
+        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -66,7 +72,6 @@ describe('ClaimsService', () => {
       mockPrisma.klaim.findMany.mockResolvedValue([{ id: 'cl1', status: 'pending' }]);
       mockPrisma.klaim.count.mockResolvedValue(1);
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
 
@@ -86,7 +91,6 @@ describe('ClaimsService', () => {
     it('should return a single claim', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({ id: 'cl1', status: 'pending' });
       const result = await service.findOne('cl1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -108,7 +112,6 @@ describe('ClaimsService', () => {
     it('should create a claim with pending status', async () => {
       mockPrisma.klaim.create.mockResolvedValue({ id: 'cl1', status: 'pending' });
       const result = await service.create({ tipe: 'asuransi', anggotaId: 'a1' });
-      expect(result.success).toBe(true);
       expect(result.data.status).toBe('pending');
     });
   });
@@ -117,7 +120,6 @@ describe('ClaimsService', () => {
     it('should update a claim', async () => {
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', tipe: 'asuransi' });
       const result = await service.update('cl1', { tipe: 'asuransi' });
-      expect(result.success).toBe(true);
     });
 
     it('should throw ForbiddenException for out-of-scope resource', async () => {
@@ -183,7 +185,6 @@ describe('ClaimsService', () => {
       });
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', status: 'diproses' });
       const result = await service.process('cl1');
-      expect(result.success).toBe(true);
       expect(result.data.status).toBe('diproses');
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
     });

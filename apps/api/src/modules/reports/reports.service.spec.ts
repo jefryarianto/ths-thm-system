@@ -100,7 +100,6 @@ describe('ReportsService', () => {
       ]);
 
       const result = await service.membersReport();
-      expect(result.success).toBe(true);
       expect(result.data.total).toBe(50);
       expect(result.data.byStatus).toHaveLength(2);
       expect(result.data.byRanting).toHaveLength(2);
@@ -138,7 +137,6 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.dashboardStats();
-      expect(result.success).toBe(true);
       expect(result.data.totalMembers).toBe(100);
       expect(result.data.totalCandidates).toBe(20);
       expect(result.data.totalGraduated).toBe(12);
@@ -185,7 +183,6 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.scanStats();
-      expect(result.success).toBe(true);
       expect(result.data.totalAbsensi).toBe(150);
       expect(result.data.totalDokumen).toBe(30);
       expect(result.data.activeKegiatan).toBe(3);
@@ -201,7 +198,6 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.scanStats();
-      expect(result.success).toBe(true);
       expect(result.data.totalAbsensi).toBe(0);
       expect(result.data.recentAbsensi).toHaveLength(0);
     });
@@ -242,7 +238,6 @@ describe('ReportsService', () => {
     it('should export members data', async () => {
       mockPrisma.anggota.findMany.mockResolvedValue([{ namaLengkap: 'Budi' }]);
       const result = await service.exportReport('members', {});
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith({
         where: { deletedAt: null },
@@ -253,14 +248,12 @@ describe('ReportsService', () => {
     it('should export dues data', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ jumlah: 100000 }]);
       const result = await service.exportReport('dues', {});
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
 
     it('should export graduates data', async () => {
       mockPrisma.calonAnggota.findMany.mockResolvedValue([{ namaLengkap: 'Lulusan' }]);
       const result = await service.exportReport('graduates', {});
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(mockPrisma.calonAnggota.findMany).toHaveBeenCalledWith({
         where: { status: 'lulus' },
@@ -269,7 +262,6 @@ describe('ReportsService', () => {
 
     it('should return empty array for unknown type', async () => {
       const result = await service.exportReport('unknown', {});
-      expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
     });
 

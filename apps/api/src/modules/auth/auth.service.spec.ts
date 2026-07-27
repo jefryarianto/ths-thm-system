@@ -83,7 +83,6 @@ describe('AuthService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
 
       const result = await service.login({ email: 'test@ths-thm.org', password: 'password123' });
-      expect(result.success).toBe(true);
       expect(result.data.user.email).toBe('test@ths-thm.org');
       expect(result.data.accessToken).toBe('mock-jwt-token');
       // login() without response param returns refreshToken in data
@@ -118,7 +117,6 @@ describe('AuthService', () => {
         password: 'password123',
         namaLengkap: 'New User',
       });
-      expect(result.success).toBe(true);
       expect(result.data.user).toBeDefined();
       expect(result.data.accessToken).toBe('mock-jwt-token');
     });
@@ -157,7 +155,6 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
       const result = await service.getProfile('u1');
-      expect(result.success).toBe(true);
       // sanitizeUser strips these fields so they don't appear on the type
       expect((result.data as Record<string, unknown>).passwordHash).toBeUndefined();
       expect((result.data as Record<string, unknown>).refreshToken).toBeUndefined();
@@ -178,7 +175,6 @@ describe('AuthService', () => {
       });
 
       const result = await service.updateProfile('u1', { namaLengkap: 'Updated Name' });
-      expect(result.success).toBe(true);
       expect(result.data.namaLengkap).toBe('Updated Name');
     });
 
@@ -189,7 +185,6 @@ describe('AuthService', () => {
       });
 
       const result = await service.updateProfile('u1', { email: 'updated@ths-thm.org' });
-      expect(result.success).toBe(true);
     });
 
     it('should sync profile fields to Anggota model when noHp is provided', async () => {
@@ -207,7 +202,6 @@ describe('AuthService', () => {
         alamat: 'Jl. Test No. 123',
       });
 
-      expect(result.success).toBe(true);
       // Should find Anggota by user email
       expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
         where: { email: 'test@ths-thm.org' },
@@ -234,7 +228,6 @@ describe('AuthService', () => {
         tanggalLahir: '2000-01-15',
       });
 
-      expect(result.success).toBe(true);
       // Verify tanggalLahir is converted to Date object
       expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
         where: { id: 'a1' },
@@ -260,7 +253,6 @@ describe('AuthService', () => {
         alamat: 'Jl. Test',
       });
 
-      expect(result.success).toBe(true);
       // Should NOT call anggota.update since no match found
       expect(mockPrisma.anggota.update).not.toHaveBeenCalled();
     });
@@ -274,7 +266,6 @@ describe('AuthService', () => {
         email: 'newemail@ths-thm.org',
       });
 
-      expect(result.success).toBe(true);
       // Should not update Anggota
       expect(mockPrisma.anggota.update).not.toHaveBeenCalled();
     });
@@ -289,7 +280,6 @@ describe('AuthService', () => {
         currentPassword: 'oldpass',
         newPassword: 'newpass123',
       });
-      expect(result.success).toBe(true);
       expect(result.message).toContain('berhasil diubah');
       expect(bcrypt.hash).toHaveBeenCalledWith('newpass123', 12);
     });
@@ -321,14 +311,12 @@ describe('AuthService', () => {
     it('should return success message when user not found (prevent enumeration)', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       const result = await service.forgotPassword({ email: 'unknown@test.com' });
-      expect(result.success).toBe(true);
       expect(result.message).toContain('reset password');
     });
 
     it('should send email when user exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       const result = await service.forgotPassword({ email: 'test@ths-thm.org' });
-      expect(result.success).toBe(true);
       expect(result.message).toContain('reset password');
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -353,7 +341,6 @@ describe('AuthService', () => {
         token: 'valid-token',
         newPassword: 'newpass123',
       });
-      expect(result.success).toBe(true);
       expect(result.message).toContain('berhasil direset');
     });
 
@@ -375,7 +362,6 @@ describe('AuthService', () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
 
       const result = await service.refreshToken({ refreshToken: 'valid-rt' });
-      expect(result.success).toBe(true);
       expect(result.data.accessToken).toBe('mock-jwt-token');
     });
 

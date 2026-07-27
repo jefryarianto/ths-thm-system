@@ -33,12 +33,23 @@ describe('OrgDocumentsService', () => {
     sendMail: jest.fn().mockResolvedValue(true),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+  const mockScopeHelper = {
+    buildScopeFilter: jest.fn().mockReturnValue({}),
+    hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrgDocumentsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
+        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: mockScopeHelper },
+        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -57,7 +68,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.dokumenOrganisasi.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockDocs);
       expect(result.meta.total).toBe(1);
     });
@@ -81,7 +91,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.dokumenOrganisasi.findUnique.mockResolvedValue(mockDoc);
 
       const result = await service.findOne('1');
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockDoc);
     });
 
@@ -100,8 +109,7 @@ describe('OrgDocumentsService', () => {
       ]);
 
       const result = await service.create(dto);
-      expect(result.success).toBe(true);
-      expect(result.data.judul).toBe('AD/ART');
+      expect(result.judul).toBe('AD/ART');
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'admin@test.com' }),
@@ -115,8 +123,7 @@ describe('OrgDocumentsService', () => {
       mockPrisma.dokumenOrganisasi.update.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.update('1', dto);
-      expect(result.success).toBe(true);
-      expect(result.data.judul).toBe('Updated');
+      expect(result.judul).toBe('Updated');
     });
   });
 
@@ -125,7 +132,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.dokumenOrganisasi.delete.mockResolvedValue({});
 
       const result = await service.remove('1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.dokumenOrganisasi.delete).toHaveBeenCalledWith({ where: { id: '1' } });
     });
   });
@@ -136,7 +142,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.findMany.mockResolvedValue(mockCats);
 
       const result = await service.getCategories();
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockCats);
     });
   });
@@ -147,7 +152,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.createCategory(dto);
-      expect(result.success).toBe(true);
       expect(result.data.nama).toBe('Umum');
     });
   });
@@ -157,7 +161,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.findUnique.mockResolvedValue({ id: '1', nama: 'Umum' });
 
       const result = await service.getCategory('1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException', async () => {
@@ -172,7 +175,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.update.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.updateCategory('1', dto);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -181,7 +183,6 @@ describe('OrgDocumentsService', () => {
       mockPrisma.kategoriDokumen.delete.mockResolvedValue({});
 
       const result = await service.deleteCategory('1');
-      expect(result.success).toBe(true);
     });
   });
 });

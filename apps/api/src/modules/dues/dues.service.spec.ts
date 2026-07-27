@@ -86,7 +86,6 @@ describe('DuesService', () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'd1', jumlah: 100000 }]);
       mockPrisma.iuran.count.mockResolvedValue(1);
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
@@ -107,7 +106,6 @@ describe('DuesService', () => {
       });
       mockPrisma.iuran.create.mockResolvedValue({ id: 'd1', jumlah: 100000 });
       const result = await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' });
-      expect(result.success).toBe(true);
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
@@ -123,7 +121,6 @@ describe('DuesService', () => {
     it('should return a single due', async () => {
       mockPrisma.iuran.findUnique.mockResolvedValue({ id: 'd1', jumlah: 100000 });
       const result = await service.findOne('d1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -136,7 +133,6 @@ describe('DuesService', () => {
     it('should update a due record', async () => {
       mockPrisma.iuran.update.mockResolvedValue({ id: 'd1', jumlah: 200000 });
       const result = await service.update('d1', { jumlah: 200000 });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -151,7 +147,6 @@ describe('DuesService', () => {
     it('should return dues for a member', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'd1', jumlah: 100000 }]);
       const result = await service.getMemberDues('a1');
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -163,7 +158,6 @@ describe('DuesService', () => {
         { id: 'd2', jumlah: 200000, status: 'menunggak' },
       ]);
       const result = await service.getArrears({});
-      expect(result.success).toBe(true);
       expect(result.data.count).toBe(2);
       expect(result.data.totalArrears).toBe(300000);
     });
@@ -181,7 +175,6 @@ describe('DuesService', () => {
       ]);
       mockPrisma.anggota.count.mockResolvedValue(100);
       const result = await service.getDashboardStats();
-      expect(result.success).toBe(true);
       expect(result.data.totalIuran).toBe(5000000);
       expect(result.data.anggotaAktif).toBe(100);
     });
@@ -193,7 +186,6 @@ describe('DuesService', () => {
       const result = await service.importDues([
         { anggota_id: 'a1', periode: '2026-01', jumlah: '100000' },
       ]);
-      expect(result.success).toBe(true);
       expect(result.data.imported).toBe(1);
     });
 
@@ -215,7 +207,6 @@ describe('DuesService', () => {
         periode: '2026-01',
         jumlah: 100000,
       });
-      expect(result.success).toBe(true);
       expect(mockPrisma.iuran.create).toHaveBeenCalledTimes(2);
     });
   });

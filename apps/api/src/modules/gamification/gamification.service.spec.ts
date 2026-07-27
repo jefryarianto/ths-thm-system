@@ -93,6 +93,10 @@ describe('GamificationService', () => {
           useValue: notificationsServiceMock,
         },
         { provide: MailService, useValue: mailServiceMock },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: { getOrSet: jest.fn((_, fn) => fn()), invalidatePrefix: jest.fn() },
+        },
       ],
     }).compile();
 

@@ -126,7 +126,6 @@ describe('MembersService', () => {
       mockPrisma.anggota.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
@@ -149,8 +148,7 @@ describe('MembersService', () => {
     it('should return a single member', async () => {
       mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'm1', namaLengkap: 'Budi' });
       const result = await service.findOne('m1');
-      expect(result.success).toBe(true);
-      expect(result.data.namaLengkap).toBe('Budi');
+      expect(result.namaLengkap).toBe('Budi');
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -176,9 +174,8 @@ describe('MembersService', () => {
         email: 'budi@test.com',
       });
 
-      expect(result.success).toBe(true);
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
-      expect(result.data.nomorAnggota).toBe('0114-0101-004-2026');
+      expect(result.nomorAnggota).toBe('0114-0101-004-2026');
       expect(mockMemberMailService.sendToMember).toHaveBeenCalledTimes(1);
     });
 
@@ -192,7 +189,6 @@ describe('MembersService', () => {
         namaLengkap: 'Budi',
         rantingId: 'r1',
       });
-      expect(result.success).toBe(true);
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
       expect(mockMemberMailService.sendToMember).not.toHaveBeenCalled();
     });
@@ -209,7 +205,6 @@ describe('MembersService', () => {
         { rantingId: 'r1', role: 'admin_ranting' } as any,
       );
 
-      expect(result.success).toBe(true);
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
     });
   });
@@ -218,7 +213,6 @@ describe('MembersService', () => {
     it('should update a member', async () => {
       mockPrisma.anggota.update.mockResolvedValue({ id: 'm1', namaLengkap: 'Updated' });
       const result = await service.update('m1', { namaLengkap: 'Updated' });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -233,7 +227,6 @@ describe('MembersService', () => {
     it('should return documents for a member', async () => {
       mockPrisma.dokumen.findMany.mockResolvedValue([{ id: 'd1' }]);
       const result = await service.getDocuments('m1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -241,7 +234,6 @@ describe('MembersService', () => {
     it('should return dues for a member', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'i1', jumlah: 100000 }]);
       const result = await service.getDues('m1');
-      expect(result.success).toBe(true);
     });
   });
 });

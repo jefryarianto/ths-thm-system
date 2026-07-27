@@ -55,6 +55,11 @@ describe('UsersService', () => {
       }),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -62,6 +67,7 @@ describe('UsersService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -88,7 +94,6 @@ describe('UsersService', () => {
       mockPrisma.user.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockUsers);
       expect(result.meta.total).toBe(1);
     });
@@ -119,7 +124,6 @@ describe('UsersService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: '1', email: 'test@test.com' });
 
       const result = await service.findOne('1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException', async () => {
@@ -141,9 +145,8 @@ describe('UsersService', () => {
       mockPrisma.user.create.mockResolvedValue(mockCreated);
 
       const result = await service.create(dto);
-      expect(result.success).toBe(true);
-      expect(result.data.email).toBe('new@test.com');
-      expect(result.data).not.toHaveProperty('passwordHash');
+      expect(result.email).toBe('new@test.com');
+      expect(result).not.toHaveProperty('passwordHash');
     });
 
     it('should auto-assign rantingId from scope', async () => {
@@ -165,8 +168,7 @@ describe('UsersService', () => {
       mockPrisma.user.update.mockResolvedValue({ id: '1', namaLengkap: 'Updated' });
 
       const result = await service.update('1', dto);
-      expect(result.success).toBe(true);
-      expect(result.data.namaLengkap).toBe('Updated');
+      expect(result.namaLengkap).toBe('Updated');
     });
 
     it('should throw ForbiddenException for out-of-scope user', async () => {
@@ -183,7 +185,6 @@ describe('UsersService', () => {
       mockPrisma.user.update.mockResolvedValue({});
 
       const result = await service.remove('1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: { isActive: false },

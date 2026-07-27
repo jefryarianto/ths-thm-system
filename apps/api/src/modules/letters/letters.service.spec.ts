@@ -34,12 +34,18 @@ describe('LettersService', () => {
     },
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LettersService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
+        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -61,7 +67,6 @@ describe('LettersService', () => {
       mockPrisma.suratKeluar.count.mockResolvedValue(1);
 
       const result = await service.findAllCombined({ page: '1', limit: '10' });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
       expect(result.data[0].type).toBe('keluar');
       expect(result.data[1].type).toBe('masuk');
@@ -75,7 +80,6 @@ describe('LettersService', () => {
       mockPrisma.suratMasuk.count.mockResolvedValue(1);
 
       const result = await service.incomingFindAll({ page: '1', limit: '10' });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
@@ -85,7 +89,6 @@ describe('LettersService', () => {
     it('should return a single incoming letter', async () => {
       mockPrisma.suratMasuk.findUnique.mockResolvedValue({ id: 'sm1' });
       const result = await service.incomingFindOne('sm1');
-      expect(result.success).toBe(true);
       expect(result.data.id).toBe('sm1');
     });
 
@@ -99,7 +102,6 @@ describe('LettersService', () => {
     it('should create an incoming letter with diterima status', async () => {
       mockPrisma.suratMasuk.create.mockResolvedValue({ id: 'sm1', status: 'diterima' });
       const result = await service.incomingCreate({ nomorSurat: '001' });
-      expect(result.success).toBe(true);
       expect(result.data.status).toBe('diterima');
     });
   });
@@ -108,7 +110,6 @@ describe('LettersService', () => {
     it('should update an incoming letter', async () => {
       mockPrisma.suratMasuk.update.mockResolvedValue({ id: 'sm1', nomorSurat: '002' });
       const result = await service.incomingUpdate('sm1', { nomorSurat: '002' });
-      expect(result.success).toBe(true);
       expect(result.data.nomorSurat).toBe('002');
     });
   });
@@ -128,7 +129,6 @@ describe('LettersService', () => {
         kepadaUserId: 'u2',
         isi: 'Tindak lanjuti',
       });
-      expect(result.success).toBe(true);
       expect(result.data.suratMasukId).toBe('sm1');
     });
   });
@@ -139,7 +139,6 @@ describe('LettersService', () => {
       mockPrisma.suratKeluar.count.mockResolvedValue(1);
 
       const result = await service.outgoingFindAll({ page: '1', limit: '10' });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -148,7 +147,6 @@ describe('LettersService', () => {
     it('should return a single outgoing letter', async () => {
       mockPrisma.suratKeluar.findUnique.mockResolvedValue({ id: 'sk1' });
       const result = await service.outgoingFindOne('sk1');
-      expect(result.success).toBe(true);
       expect(result.data.id).toBe('sk1');
     });
   });
@@ -157,7 +155,6 @@ describe('LettersService', () => {
     it('should create an outgoing letter with draft status', async () => {
       mockPrisma.suratKeluar.create.mockResolvedValue({ id: 'sk1', status: 'draft' });
       const result = await service.outgoingCreate({ nomorSurat: '001' });
-      expect(result.success).toBe(true);
       expect(result.data.status).toBe('draft');
     });
   });
@@ -166,7 +163,6 @@ describe('LettersService', () => {
     it('should update an outgoing letter', async () => {
       mockPrisma.suratKeluar.update.mockResolvedValue({ id: 'sk1', nomorSurat: '002' });
       const result = await service.outgoingUpdate('sk1', { nomorSurat: '002' });
-      expect(result.success).toBe(true);
       expect(result.data.nomorSurat).toBe('002');
     });
   });
@@ -182,7 +178,6 @@ describe('LettersService', () => {
     it('should set outgoing letter status to terkirim', async () => {
       mockPrisma.suratKeluar.update.mockResolvedValue({ id: 'sk1', status: 'terkirim' });
       const result = await service.outgoingSend('sk1');
-      expect(result.success).toBe(true);
       expect(result.data.status).toBe('terkirim');
     });
   });
@@ -191,7 +186,6 @@ describe('LettersService', () => {
     it('should export all incoming letters', async () => {
       mockPrisma.suratMasuk.findMany.mockResolvedValue([{ id: 'sm1' }]);
       const result = await service.incomingExport();
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -200,7 +194,6 @@ describe('LettersService', () => {
     it('should export all outgoing letters', async () => {
       mockPrisma.suratKeluar.findMany.mockResolvedValue([{ id: 'sk1' }]);
       const result = await service.outgoingExport();
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });

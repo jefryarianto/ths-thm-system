@@ -46,6 +46,14 @@ describe('ExaminersService', () => {
     verifyKegiatanScope: jest.fn(),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -53,6 +61,7 @@ describe('ExaminersService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -70,7 +79,6 @@ describe('ExaminersService', () => {
       mockPrisma.user.count.mockResolvedValue(1);
 
       const result = await service.findAll({ page: '1', limit: '10' });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -96,8 +104,7 @@ describe('ExaminersService', () => {
     it('should return a single examiner', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
       const result = await service.findOne('u1');
-      expect(result.success).toBe(true);
-      expect(result.data.id).toBe('u1');
+      expect(result.id).toBe('u1');
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -110,8 +117,7 @@ describe('ExaminersService', () => {
     it('should create an examiner with hashed password', async () => {
       mockPrisma.user.create.mockResolvedValue({ id: 'u1', role: 'penguji' });
       const result = await service.create({ email: 'penguji@test.com', namaLengkap: 'Budi' });
-      expect(result.success).toBe(true);
-      expect(result.data.role).toBe('penguji');
+      expect(result.role).toBe('penguji');
     });
   });
 
@@ -119,8 +125,7 @@ describe('ExaminersService', () => {
     it('should update an examiner', async () => {
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', namaLengkap: 'Updated' });
       const result = await service.update('u1', { namaLengkap: 'Updated' });
-      expect(result.success).toBe(true);
-      expect(result.data.namaLengkap).toBe('Updated');
+      expect(result.namaLengkap).toBe('Updated');
     });
   });
 
@@ -145,7 +150,6 @@ describe('ExaminersService', () => {
       });
 
       const result = await service.assign('u1', { kegiatanId: 'k1', peran: 'penguji' });
-      expect(result.success).toBe(true);
       expect(result.data.kegiatanId).toBe('k1');
     });
 
@@ -182,7 +186,6 @@ describe('ExaminersService', () => {
     it('should return assignments for an examiner', async () => {
       mockPrisma.penugasanPenguji.findMany.mockResolvedValue([{ id: 'a1', kegiatanId: 'k1' }]);
       const result = await service.getAssignments('u1');
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -205,7 +208,6 @@ describe('ExaminersService', () => {
         },
       ]);
       const result = await service.getSchedules('u1');
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
 

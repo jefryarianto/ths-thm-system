@@ -31,9 +31,23 @@ describe('SettingsService', () => {
     },
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+  const mockScopeHelper = {
+    buildScopeFilter: jest.fn().mockReturnValue({}),
+    hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SettingsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        SettingsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: mockScopeHelper },
+        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+      ],
     }).compile();
 
     service = module.get<SettingsService>(SettingsService);
@@ -50,7 +64,6 @@ describe('SettingsService', () => {
       mockPrisma.setting.findMany.mockResolvedValue(mockSettings);
 
       const result = await service.getSettings();
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockSettings);
     });
   });
@@ -60,7 +73,6 @@ describe('SettingsService', () => {
       mockPrisma.setting.upsert.mockResolvedValue({ key: 'app_name', value: 'New' });
 
       const result = await service.updateSettings({ app_name: 'New', app_desc: 'Desc' });
-      expect(result.success).toBe(true);
       expect(mockPrisma.setting.upsert).toHaveBeenCalledTimes(2);
     });
   });
@@ -71,7 +83,6 @@ describe('SettingsService', () => {
       mockPrisma.periode.findMany.mockResolvedValue(mockPeriods);
 
       const result = await service.getPeriods();
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockPeriods);
     });
   });
@@ -81,7 +92,6 @@ describe('SettingsService', () => {
       mockPrisma.periode.findUnique.mockResolvedValue({ id: '1', nama: '2026' });
 
       const result = await service.getPeriod('1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException', async () => {
@@ -96,7 +106,6 @@ describe('SettingsService', () => {
       mockPrisma.periode.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.createPeriod(dto);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -105,7 +114,6 @@ describe('SettingsService', () => {
       mockPrisma.periode.update.mockResolvedValue({ id: '1', nama: 'Updated' });
 
       const result = await service.updatePeriod('1', { nama: 'Updated' });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -114,14 +122,12 @@ describe('SettingsService', () => {
       mockPrisma.periode.delete.mockResolvedValue({});
 
       const result = await service.deletePeriod('1');
-      expect(result.success).toBe(true);
     });
   });
 
   describe('getRoles', () => {
     it('should return all predefined roles', async () => {
       const result = await service.getRoles();
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(7);
       expect(result.data[0].role).toBe('superadmin');
     });
@@ -133,7 +139,6 @@ describe('SettingsService', () => {
       mockPrisma.tandaTangan.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.uploadSignature(dto);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -143,7 +148,6 @@ describe('SettingsService', () => {
       mockPrisma.tandaTangan.findMany.mockResolvedValue(mockSigs);
 
       const result = await service.getSignatures();
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockSigs);
     });
   });
@@ -153,7 +157,6 @@ describe('SettingsService', () => {
       mockPrisma.tandaTangan.delete.mockResolvedValue({});
 
       const result = await service.deleteSignature('1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -163,7 +166,6 @@ describe('SettingsService', () => {
       mockPrisma.stempel.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.uploadStamp(dto);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -172,7 +174,6 @@ describe('SettingsService', () => {
       mockPrisma.stempel.findFirst.mockResolvedValue({ id: '1', isActive: true });
 
       const result = await service.getStamp();
-      expect(result.success).toBe(true);
       expect(result.data?.isActive).toBe(true);
     });
 

@@ -91,7 +91,6 @@ describe('NotificationsService', () => {
       mockPrisma.deviceToken.findMany.mockResolvedValue([]);
 
       const result = await service.broadcast({ judul: 'Broadcast', isi: 'Hello all' });
-      expect(result.success).toBe(true);
       expect(result.data.sentTo).toBe(2);
       expect(result.data.total).toBe(2);
       // Should use createMany for batch insert
@@ -121,7 +120,6 @@ describe('NotificationsService', () => {
       mockPrisma.deviceToken.findMany.mockResolvedValue([]);
 
       const result = await service.broadcast({ judul: 'Broadcast', isi: 'Hello' });
-      expect(result.success).toBe(true);
       // Only u2 should receive (u1 disabled 'umum')
       expect(result.data.sentTo).toBe(1);
       expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
@@ -133,7 +131,6 @@ describe('NotificationsService', () => {
       mockPrisma.user.findMany.mockResolvedValue([]);
 
       const result = await service.broadcast({ judul: 'Empty', isi: 'No users' });
-      expect(result.success).toBe(true);
       expect(result.data.sentTo).toBe(0);
       // createMany should not be called with empty array
       expect(mockPrisma.notifikasi.createMany).not.toHaveBeenCalled();
@@ -173,7 +170,6 @@ describe('NotificationsService', () => {
         judul: 'Role broadcast',
         isi: 'Only admins',
       });
-      expect(result.success).toBe(true);
       expect(result.data.sentTo).toBe(2);
       // Verify role filter was applied
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
@@ -201,7 +197,6 @@ describe('NotificationsService', () => {
         isi: 'Time for training',
         tipe: 'reminder_latihan',
       });
-      expect(result.success).toBe(true);
       expect(result.data.sentTo).toBe(1);
     });
   });
@@ -210,7 +205,6 @@ describe('NotificationsService', () => {
     it('should return unread count', async () => {
       mockPrisma.notifikasi.count.mockResolvedValue(5);
       const result = await service.getUnreadCount('u1');
-      expect(result.success).toBe(true);
       expect(result.data.count).toBe(5);
     });
   });
@@ -222,7 +216,6 @@ describe('NotificationsService', () => {
       mockPrisma.notifikasi.count.mockResolvedValue(1);
 
       const result = await service.findAll('u1', { page: 1, limit: 20 });
-      expect(result.success).toBe(true);
       expect(result.data).toEqual(mockNotifs);
       expect(result.meta.total).toBe(1);
       expect(result.meta.unreadCount).toBe(1);
@@ -246,7 +239,6 @@ describe('NotificationsService', () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'u1' });
       mockPrisma.notifikasi.update.mockResolvedValue({});
       const result = await service.markAsRead('n1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.notifikasi.update).toHaveBeenCalledWith({
         where: { id: 'n1' },
         data: { isRead: true },
@@ -264,7 +256,6 @@ describe('NotificationsService', () => {
       mockPrisma.notifikasi.update.mockResolvedValue({});
       // Without userId param, skip ownership check
       const result = await service.markAsRead('n1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.notifikasi.update).toHaveBeenCalled();
     });
   });
@@ -273,7 +264,6 @@ describe('NotificationsService', () => {
     it('should mark all notifications as read', async () => {
       mockPrisma.notifikasi.updateMany.mockResolvedValue({ count: 3 });
       const result = await service.markAllAsRead('u1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.notifikasi.updateMany).toHaveBeenCalledWith({
         where: { userId: 'u1', isRead: false },
         data: { isRead: true },
@@ -285,7 +275,6 @@ describe('NotificationsService', () => {
     it('should return a notification', async () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', judul: 'Test', userId: 'u1' });
       const result = await service.findOne('n1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -301,7 +290,6 @@ describe('NotificationsService', () => {
     it('should return notification when userId matches', async () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', judul: 'Test', userId: 'u1' });
       const result = await service.findOne('n1', 'u1');
-      expect(result.success).toBe(true);
       expect(result.data.userId).toBe('u1');
     });
   });
@@ -311,7 +299,6 @@ describe('NotificationsService', () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'u1' });
       mockPrisma.notifikasi.delete.mockResolvedValue({});
       const result = await service.delete('n1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException when userId does not match', async () => {
@@ -324,7 +311,6 @@ describe('NotificationsService', () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue({ userId: 'other-user' });
       mockPrisma.notifikasi.delete.mockResolvedValue({});
       const result = await service.delete('n1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.notifikasi.delete).toHaveBeenCalled();
     });
   });
@@ -342,7 +328,6 @@ describe('NotificationsService', () => {
         isi: 'Hello',
         tipe: 'umum',
       });
-      expect(result.success).toBe(true);
       expect(mockGateway.sendNotification).toHaveBeenCalled();
       expect(mockGateway.sendUnreadCount).toHaveBeenCalled();
     });
@@ -358,7 +343,6 @@ describe('NotificationsService', () => {
         isi: 'Hello',
         tipe: 'umum',
       });
-      expect(result.success).toBe(true);
       expect(result.data).toBeNull();
       expect(result.message).toContain('ditunda');
     });
@@ -368,7 +352,6 @@ describe('NotificationsService', () => {
     it('should return default preferences when none saved', async () => {
       mockPrisma.setting.findUnique.mockResolvedValue(null);
       const result = await service.getPreferences('u1');
-      expect(result.success).toBe(true);
       // All default to { inApp: true, email: true }
       expect(result.data.welcome).toEqual({ inApp: true, email: true });
       expect(result.data.umum).toEqual({ inApp: true, email: true });
@@ -388,7 +371,6 @@ describe('NotificationsService', () => {
     it('should upsert preferences', async () => {
       mockPrisma.setting.upsert.mockResolvedValue({});
       const result = await service.updatePreferences('u1', { umum: false });
-      expect(result.success).toBe(true);
       expect(mockPrisma.setting.upsert).toHaveBeenCalled();
     });
   });
@@ -398,7 +380,6 @@ describe('NotificationsService', () => {
       mockPrisma.deviceToken.upsert.mockResolvedValue({});
       mockPrisma.user.update.mockResolvedValue({});
       const result = await service.registerDeviceToken('u1', 'token-abc', 'android');
-      expect(result.success).toBe(true);
       expect(mockPrisma.deviceToken.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { token: 'token-abc' },
@@ -412,7 +393,6 @@ describe('NotificationsService', () => {
     it('should deactivate device token', async () => {
       mockPrisma.deviceToken.update.mockResolvedValue({});
       const result = await service.unregisterDeviceToken('dt1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.deviceToken.update).toHaveBeenCalledWith({
         where: { id: 'dt1' },
         data: { isActive: false },

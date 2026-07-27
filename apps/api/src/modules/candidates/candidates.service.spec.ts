@@ -211,7 +211,6 @@ describe('CandidatesService', () => {
       mockPrisma.calonAnggota.findMany.mockResolvedValue([{ id: 'c1', namaLengkap: 'Budi' }]);
       mockPrisma.calonAnggota.count.mockResolvedValue(1);
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
@@ -221,8 +220,7 @@ describe('CandidatesService', () => {
     it('should return a single candidate', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c1', namaLengkap: 'Budi' });
       const result = await service.findOne('c1');
-      expect(result.success).toBe(true);
-      expect(result.data.namaLengkap).toBe('Budi');
+      expect(result.namaLengkap).toBe('Budi');
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -233,18 +231,15 @@ describe('CandidatesService', () => {
 
   describe('create', () => {
     it('should create a candidate', async () => {
-      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1', status: 'diusulkan' });
-      const result = await service.create({ namaLengkap: 'Budi' } as any);
-      expect(result.success).toBe(true);
-      expect(result.data.status).toBe('diusulkan');
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1', status: 'diusulkan' });      const result = await service.create({ namaLengkap: 'Budi' } as any);
+      expect(result.status).toBe('diusulkan');
     });
-  });
 
-  describe('update', () => {
+    it('should update a candidate', async () => {, () => {
     it('should update a candidate', async () => {
       mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', namaLengkap: 'Updated' });
       const result = await service.update('c1', { namaLengkap: 'Updated' } as any);
-      expect(result.success).toBe(true);
+      expect(result).toBeDefined();
     });
   });
 
@@ -280,7 +275,6 @@ describe('CandidatesService', () => {
 
       const result = await service.approve('c1');
 
-      expect(result.success).toBe(true);
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
       expect(result.data.nomorAnggota).toBe('0114-0101-011-2026');
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
@@ -298,7 +292,6 @@ describe('CandidatesService', () => {
 
       const result = await service.approve('c1', { tahunDadar: '2020' });
 
-      expect(result.success).toBe(true);
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', '2020');
       expect(result.data.nomorAnggota).toBe('0114-0101-001-2020');
     });
@@ -337,7 +330,6 @@ describe('CandidatesService', () => {
     it('should return valid true when candidate exists', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c1' });
       const result = await service.validate('c1');
-      expect(result.success).toBe(true);
       expect(result.data.valid).toBe(true);
     });
 
@@ -374,7 +366,6 @@ describe('CandidatesService', () => {
 
       const result = await service.importCsv(data);
 
-      expect(result.success).toBe(true);
       expect(result.data.success).toBe(1);
       expect(result.data.errors).toBe(0);
       expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith(

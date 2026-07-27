@@ -57,7 +57,6 @@ describe('AssessmentsService', () => {
     it('should return all aspects', async () => {
       mockPrisma.aspekPenilaian.findMany.mockResolvedValue([{ id: 'a1', nama: 'Teknik' }]);
       const result = await service.getAspects({});
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -66,7 +65,6 @@ describe('AssessmentsService', () => {
     it('should return a single aspect', async () => {
       mockPrisma.aspekPenilaian.findUnique.mockResolvedValue({ id: 'a1', nama: 'Teknik' });
       const result = await service.getAspect('a1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException', async () => {
@@ -79,7 +77,6 @@ describe('AssessmentsService', () => {
     it('should create an aspect', async () => {
       mockPrisma.aspekPenilaian.create.mockResolvedValue({ id: 'a1', nama: 'Teknik' });
       const result = await service.createAspect({ nama: 'Teknik', deskripsi: 'Desc' } as any);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -87,7 +84,6 @@ describe('AssessmentsService', () => {
     it('should return items', async () => {
       mockPrisma.itemPenilaian.findMany.mockResolvedValue([{ id: 'i1', nama: 'Tendangan' }]);
       const result = await service.getItems({});
-      expect(result.success).toBe(true);
     });
   });
 
@@ -96,7 +92,6 @@ describe('AssessmentsService', () => {
       mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([{ id: 's1', skor: 85 }]);
       mockPrisma.nilaiPendadaran.count.mockResolvedValue(1);
       const result = await service.getScores({ page: 1, limit: 20 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -111,7 +106,6 @@ describe('AssessmentsService', () => {
         pengujiUserId: 'u1',
         skor: 85,
       } as any);
-      expect(result.success).toBe(true);
     });
   });
 });

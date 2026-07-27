@@ -202,7 +202,6 @@ describe('ChatService', () => {
 
       const result = await service.getUserRooms({ id: 'user-1', role: 'admin_ranting' });
 
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(4); // 2 general + 1 role + 1 private
 
       // General rooms

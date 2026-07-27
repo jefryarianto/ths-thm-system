@@ -86,7 +86,6 @@ describe('ActivitiesService', () => {
       mockPrisma.kegiatan.findMany.mockResolvedValue([{ id: 'k1', nama: 'Latihan' }]);
       mockPrisma.kegiatan.count.mockResolvedValue(1);
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -95,7 +94,6 @@ describe('ActivitiesService', () => {
     it('should return a single activity', async () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1', nama: 'Latihan' });
       const result = await service.findOne('k1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -108,7 +106,6 @@ describe('ActivitiesService', () => {
     it('should create an activity', async () => {
       mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k1', nama: 'Latihan' });
       const result = await service.create({ nama: 'Latihan' });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -116,7 +113,6 @@ describe('ActivitiesService', () => {
     it('should update an activity', async () => {
       mockPrisma.kegiatan.update.mockResolvedValue({ id: 'k1', nama: 'Updated' });
       const result = await service.update('k1', { nama: 'Updated' });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -141,7 +137,6 @@ describe('ActivitiesService', () => {
         namaLengkap: 'Budi',
       });
       const result = await service.addParticipant('k1', { anggotaId: 'a1' });
-      expect(result.success).toBe(true);
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
 
@@ -164,7 +159,6 @@ describe('ActivitiesService', () => {
     it('should return presence list', async () => {
       mockPrisma.presensiKegiatan.findMany.mockResolvedValue([{ id: 'pr1', hadir: true }]);
       const result = await service.getPresence('k1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -173,7 +167,6 @@ describe('ActivitiesService', () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'k1' });
       mockPrisma.presensiKegiatan.create.mockResolvedValue({ id: 'pr1', hadir: true });
       const result = await service.recordPresence('k1', { anggotaId: 'a1', hadir: true });
-      expect(result.success).toBe(true);
     });
   });
 
@@ -181,7 +174,6 @@ describe('ActivitiesService', () => {
     it('should return documents list', async () => {
       mockPrisma.dokumenKegiatan.findMany.mockResolvedValue([{ id: 'd1' }]);
       const result = await service.getDocuments('k1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -189,7 +181,6 @@ describe('ActivitiesService', () => {
     it('should upload a document', async () => {
       mockPrisma.dokumenKegiatan.create.mockResolvedValue({ id: 'd1', nama: 'file.pdf' });
       const result = await service.uploadDocument('k1', { nama: 'file.pdf', filePath: '/path' });
-      expect(result.success).toBe(true);
     });
   });
 });

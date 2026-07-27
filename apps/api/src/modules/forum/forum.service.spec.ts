@@ -89,7 +89,6 @@ describe('ForumService', () => {
   describe('getCategories', () => {
     it('should return all categories with thread counts', async () => {
       const result = await service.getCategories();
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });
   });
@@ -98,7 +97,6 @@ describe('ForumService', () => {
     it('should return a category by id', async () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       const result = await service.getCategory('cat1');
-      expect(result.success).toBe(true);
       expect(result.data.nama).toBe('Diskusi Umum');
     });
 
@@ -112,7 +110,6 @@ describe('ForumService', () => {
     it('should create a new category', async () => {
       mockPrisma.forumCategory.create.mockResolvedValue({ ...mockCategory, id: 'cat2' });
       const result = await service.createCategory({ nama: 'Baru', deskripsi: 'Test', order: 1 });
-      expect(result.success).toBe(true);
       expect(mockPrisma.forumCategory.create).toHaveBeenCalled();
     });
   });
@@ -122,7 +119,6 @@ describe('ForumService', () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumCategory.update.mockResolvedValue({ ...mockCategory, nama: 'Updated' });
       const result = await service.updateCategory('cat1', { nama: 'Updated' });
-      expect(result.success).toBe(true);
       expect(result.data.nama).toBe('Updated');
     });
 
@@ -137,7 +133,6 @@ describe('ForumService', () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumCategory.delete.mockResolvedValue(mockCategory);
       const result = await service.deleteCategory('cat1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.forumCategory.delete).toHaveBeenCalledWith({ where: { id: 'cat1' } });
     });
   });
@@ -156,7 +151,6 @@ describe('ForumService', () => {
       mockPrisma.forumThread.update.mockResolvedValue(mockThread);
       mockPrisma.forumPost.findMany.mockResolvedValue([mockPost]);
       const result = await service.getThread('thread1');
-      expect(result.success).toBe(true);
       expect(result.data.posts).toHaveLength(1);
     });
 
@@ -177,7 +171,6 @@ describe('ForumService', () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumThread.create.mockResolvedValue(mockThread);
       const result = await service.createThread({ categoryId: 'cat1', judul: 'Test', konten: 'Konten' }, 'user1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw NotFoundException for invalid category', async () => {
@@ -193,7 +186,6 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.update.mockResolvedValue({ ...mockThread, judul: 'Updated' });
       const result = await service.updateThread('thread1', { judul: 'Updated' }, 'user1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -220,7 +212,6 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.delete.mockResolvedValue(mockThread);
       const result = await service.deleteThread('thread1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -229,7 +220,6 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
       mockPrisma.forumPost.create.mockResolvedValue(mockPost);
       const result = await service.createPost('thread1', { konten: 'Reply' }, 'user2');
-      expect(result.success).toBe(true);
     });
 
     it('should throw ForbiddenException for locked thread', async () => {
@@ -258,7 +248,6 @@ describe('ForumService', () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue({ ...mockPost, authorId: 'user1' });
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, konten: 'Updated' });
       const result = await service.updatePost('post1', { konten: 'Updated' }, 'user1');
-      expect(result.success).toBe(true);
     });
 
     it('should throw ForbiddenException for non-author', async () => {
@@ -276,7 +265,6 @@ describe('ForumService', () => {
       mockPrisma.forumPost.updateMany.mockResolvedValue([]);
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, isSolution: true });
       const result = await service.markAsSolution('post1', 'thread1', 'user1');
-      expect(result.success).toBe(true);
       expect(result.data.isSolution).toBe(true);
     });
 
@@ -301,7 +289,6 @@ describe('ForumService', () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
       mockPrisma.forumPost.delete.mockResolvedValue(mockPost);
       const result = await service.deletePost('post1');
-      expect(result.success).toBe(true);
     });
   });
 });

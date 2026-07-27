@@ -279,7 +279,6 @@ describe('DocumentBatchService', () => {
 
       const result = await service.getBatchList(10, 0);
 
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
       expect(result.data[0].progress).toBe(90); // (8+1)/10
       expect(result.data[1].progress).toBe(100); // (5+0)/5

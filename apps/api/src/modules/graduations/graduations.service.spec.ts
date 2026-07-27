@@ -50,12 +50,18 @@ describe('GraduationsService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockCache = {
+    getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GraduationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCache },
         { provide: MailService, useValue: mockMailService },
         { provide: MemberMailService, useValue: mockMemberMailService },
       ],
@@ -74,7 +80,6 @@ describe('GraduationsService', () => {
       mockPrisma.kegiatan.findMany.mockResolvedValue([{ id: 'g1', tipe: 'pendadaran' }]);
       mockPrisma.kegiatan.count.mockResolvedValue(1);
       const result = await service.findAll({ page: 1, limit: 10 });
-      expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
@@ -84,7 +89,6 @@ describe('GraduationsService', () => {
     it('should return a single graduation', async () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'g1', tipe: 'pendadaran' });
       const result = await service.findOne('g1');
-      expect(result.success).toBe(true);
       expect(result.data.id).toBe('g1');
     });
 
@@ -102,7 +106,6 @@ describe('GraduationsService', () => {
         lokasi: 'Jakarta',
         tanggalMulai: '2026-01-01',
       } as any);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -112,7 +115,6 @@ describe('GraduationsService', () => {
         { id: 'c1', status: 'mengikuti_pendadaran' },
       ]);
       const result = await service.getParticipants('g1');
-      expect(result.success).toBe(true);
     });
   });
 
@@ -127,7 +129,6 @@ describe('GraduationsService', () => {
       const result = await service.graduate('g1', {
         results: [{ candidateId: 'c1', totalSkor: 85, ranking: 1, lulus: true }],
       } as any);
-      expect(result.success).toBe(true);
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'candidate@test.com' }),

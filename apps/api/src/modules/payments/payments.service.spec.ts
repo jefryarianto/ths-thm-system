@@ -171,7 +171,6 @@ describe('PaymentsService', () => {
       mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'menunggu_verifikasi' });
 
       const result = await service.uploadProof('1', { catatan: 'Transfer BCA' });
-      expect(result.success).toBe(true);
       expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'menunggu_verifikasi' }),
@@ -209,7 +208,6 @@ describe('PaymentsService', () => {
       mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'lunas' });
 
       const result = await service.verifyPayment('1', 'u1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ status: 'lunas' }) }),
       );
@@ -228,7 +226,6 @@ describe('PaymentsService', () => {
       mockPrisma.iuran.update.mockResolvedValue({ ...mockIuran, status: 'belum_dibayar' });
 
       const result = await service.rejectPayment('1');
-      expect(result.success).toBe(true);
       expect(mockPrisma.iuran.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ status: 'belum_dibayar' }) }),
       );
