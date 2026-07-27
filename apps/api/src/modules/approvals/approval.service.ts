@@ -27,7 +27,7 @@ export class ApprovalService {
 
     if (levels.length === 0) {
       // Auto-approve if no levels configured
-      return { message: 'Tidak ada level approval, langsung disetujui', data: { autoApproved: true } };
+      return { autoApproved: true };
     }
 
     // Create approval request
@@ -56,10 +56,8 @@ export class ApprovalService {
     // Send notification to first-level approvers
     await this.notifyApprovers(request.id, levels[0].id, scope);
 
-    return {
-      data: { id: request.id, status: request.status },
-      message: 'Pengajuan berhasil dikirim untuk persetujuan',
-    };
+    return { id: request.id, status: request.status };
+  }
   }
 
   async approve(requestId: string, userId: string, note?: string, scope?: UserScope) {
@@ -99,7 +97,6 @@ export class ApprovalService {
       await this.notifyApprovers(requestId, nextLevel.approvalLevelId, scope);
     }
 
-    return { message: 'Pengajuan disetujui' };
   }
 
   async reject(requestId: string, userId: string, note?: string) {
@@ -127,7 +124,6 @@ export class ApprovalService {
     });
 
     this.logger.log(`Approval rejected: ${requestId}`);
-    return { message: 'Pengajuan ditolak' };
   }
 
   async findOne(id: string, scope?: UserScope) {
@@ -142,7 +138,7 @@ export class ApprovalService {
     });
 
     if (!request) throw new NotFoundException('Pengajuan tidak ditemukan');
-    return { data: request };
+    return request;
   }
 
   async getPending(scope?: UserScope) {
@@ -160,7 +156,7 @@ export class ApprovalService {
       take: 50,
     });
 
-    return { data: requests };
+    return requests;
   }
 
   private async notifyApprovers(requestId: string, levelId: string, scope?: UserScope) {

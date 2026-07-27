@@ -131,7 +131,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
     }
 
-    return { data: candidate, message: 'Peserta berhasil didaftarkan' };
+    return candidate;
   }
 
   async unregisterParticipant(_graduationId: string, dto: RegisterParticipantDto) {
@@ -140,7 +140,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       data: { status: 'diusulkan' },
     });
 
-    return { message: 'Peserta berhasil dibatalkan' };
+    // void — interceptor returns { success: true }
   }
 
   async getParticipants(_graduationId: string) {
@@ -173,7 +173,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    return { data: { imported }, message: `${imported} peserta berhasil diimpor` };
+    return { imported };
   }
 
   async graduate(graduationId: string, dto: GraduateDto, scope?: UserScope) {
@@ -213,7 +213,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    return { message: 'Hasil pendadaran berhasil disimpan' };
+    // void — interceptor returns { success: true }
   }
 
   async generateDocuments(graduationId: string) {
@@ -221,9 +221,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       where: { kegiatanId: graduationId, statusKelulusan: 'lulus' },
     });
 
-    return {
-      data: { totalGraduates: graduates.length, message: 'Dokumen dalam antrian generate' },
-    };
+    return { totalGraduates: graduates.length };
   }
 
   // ═══════════════════════════════════════════════════════════

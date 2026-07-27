@@ -129,7 +129,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
       data: { isActive: false },
     });
     this.invalidateCache();
-    return { message: 'Penguji dinonaktifkan' };
+    // void — interceptor returns { success: true }
   }
 
   // ── Domain: import CSV ───────────────────────────────────
@@ -152,7 +152,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
         /* skip duplicate email */
       }
     }
-    return { data: { imported, total: data.length } };
+    return { imported, total: data.length };
   }
 
   // ── Domain: assign examiner to kegiatan ──────────────────
@@ -193,7 +193,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
     // Send assignment notification
     this.sendAssignmentEmail(examiner, kegiatan, dto.peran || 'penguji');
 
-    return { data: assignment, message: 'Penguji berhasil ditugaskan' };
+    return assignment;
   }
 
   // ── Domain: get assignments for an examiner ──────────────
@@ -209,7 +209,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
       },
       orderBy: { createdAt: 'desc' },
     });
-    return { data: assignments };
+    return assignments;
   }
 
   // ── Domain: get upcoming schedules for an examiner ───────
@@ -233,7 +233,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
       orderBy: { kegiatan: { tanggalMulai: 'asc' } },
     });
     const schedules = assignments.filter((a: { kegiatan: { tanggalMulai: Date } }) => a.kegiatan.tanggalMulai >= new Date());
-    return { data: schedules };
+    return schedules;
   }
 
   // ── Private helpers ──────────────────────────────────────

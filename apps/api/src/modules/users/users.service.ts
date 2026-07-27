@@ -157,7 +157,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
       data: { isActive: false },
     });
     this.invalidateCache();
-    return { message: 'User dinonaktifkan' };
+    // void — interceptor returns { success: true }
   }
 
   // ═══════════════════════════════════════════════════════════

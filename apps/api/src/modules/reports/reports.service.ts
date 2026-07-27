@@ -39,12 +39,9 @@ export class ReportsService {
       }),
     ]);
     return {
-      success: true,
-      data: {
-        total,
-        byStatus,
-        byRanting: byRanting.map((r) => ({ ranting: r.nama, count: r._count.anggota })),
-      },
+      total,
+      byStatus,
+      byRanting: byRanting.map((r) => ({ ranting: r.nama, count: r._count.anggota })),
     };
   }
 
@@ -68,7 +65,7 @@ export class ReportsService {
         itemPenilaian: { select: { namaItem: true, aspek: { select: { namaAspek: true } } } },
       },
     });
-    return { success: true, data };
+    return data;
   }
 
   async dashboardStats(scope?: UserScope) {
@@ -133,25 +130,22 @@ export class ReportsService {
     ]);
 
     return {
-      success: true,
-      data: {
-        totalMembers,
-        totalCandidates,
-        totalGraduated,
-        totalDuesCollected: totalDuesCollected._sum.jumlah || 0,
-        pendingValidasi,
-        incompleteData,
-        totalKegiatan: Number(totalKegiatan),
-        totalLatihan: Number(totalLatihan),
-        totalKlaim: Number(totalKlaim),
-        totalDokumen: Number(totalDokumen),
-        totalPendaftaran: Number(totalPendaftaran),
-        totalUsers: Number(totalUsers),
-        memberStatus: byStatus.map((s) => ({ status: s.statusKeanggotaan, count: s._count })),
-        monthlyDues,
-        recentNotifications,
-        emailSummary,
-      },
+      totalMembers,
+      totalCandidates,
+      totalGraduated,
+      totalDuesCollected: totalDuesCollected._sum.jumlah || 0,
+      pendingValidasi,
+      incompleteData,
+      totalKegiatan: Number(totalKegiatan),
+      totalLatihan: Number(totalLatihan),
+      totalKlaim: Number(totalKlaim),
+      totalDokumen: Number(totalDokumen),
+      totalPendaftaran: Number(totalPendaftaran),
+      totalUsers: Number(totalUsers),
+      memberStatus: byStatus.map((s) => ({ status: s.statusKeanggotaan, count: s._count })),
+      monthlyDues,
+      recentNotifications,
+      emailSummary,
     };
   }
 
@@ -324,21 +318,18 @@ export class ReportsService {
       ]);
 
     return {
-      success: true,
-      data: {
-        totalAbsensi,
-        totalDokumen,
-        activeKegiatan,
-        absensiHarian,
-        recentAbsensi: recentAbsensi.map((a) => ({
-          namaAnggota: a.anggota?.namaLengkap || '-',
-          nomorAnggota: a.anggota?.nomorAnggota || '-',
-          kegiatan: a.latihan?.kegiatan?.nama || a.latihan?.jenisMateri || '-',
-          hadir: a.hadir,
-          catatan: a.catatan,
-          tanggal: a.createdAt,
-        })),
-      },
+      totalAbsensi,
+      totalDokumen,
+      activeKegiatan,
+      absensiHarian,
+      recentAbsensi: recentAbsensi.map((a) => ({
+        namaAnggota: a.anggota?.namaLengkap || '-',
+        nomorAnggota: a.anggota?.nomorAnggota || '-',
+        kegiatan: a.latihan?.kegiatan?.nama || a.latihan?.jenisMateri || '-',
+        hadir: a.hadir,
+        catatan: a.catatan,
+        tanggal: a.createdAt,
+      })),
     };
   }
 
@@ -422,6 +413,6 @@ export class ReportsService {
         data = await this.prisma.calonAnggota.findMany({ where: { status: 'lulus' } });
         break;
     }
-    return { success: true, data };
+    return data;
   }
 }

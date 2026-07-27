@@ -93,7 +93,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     await this.prismaDelegate.update({ where: { id }, data: { status: 'disetujui' } });
     this.sendClaimStatusEmail(claim.anggota, 'disetujui');
     this.invalidateCache();
-    return { message: 'Klaim disetujui, dokumen dalam antrian generate' };
+    // void — interceptor returns { success: true }
   }
 
   async reject(id: string, reason?: string, scope?: UserScope) {
@@ -109,7 +109,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     await this.prismaDelegate.update({ where: { id }, data: updateData });
     this.sendClaimStatusEmail(claim.anggota, 'ditolak', reason);
     this.invalidateCache();
-    return { message: reason || 'Klaim ditolak' };
+    // void — interceptor returns { success: true }
   }
 
   async process(id: string, scope?: UserScope) {
@@ -123,7 +123,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     const updated = await this.prismaDelegate.update({ where: { id }, data: { status: 'diproses' } });
     this.sendClaimStatusEmail(claim.anggota, 'diproses');
     this.invalidateCache();
-    return { data: updated, message: 'Klaim sedang diproses' };
+    return updated;
   }
 
   // ── Email Helper ──────────────────────────────────────

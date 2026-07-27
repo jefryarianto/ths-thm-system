@@ -100,10 +100,10 @@ describe('ReportsService', () => {
       ]);
 
       const result = await service.membersReport();
-      expect(result.data.total).toBe(50);
-      expect(result.data.byStatus).toHaveLength(2);
-      expect(result.data.byRanting).toHaveLength(2);
-      expect(result.data.byRanting[0]).toEqual({ ranting: 'Ranting A', count: 25 });
+      expect(result.total).toBe(50);
+      expect(result.byStatus).toHaveLength(2);
+      expect(result.byRanting).toHaveLength(2);
+      expect(result.byRanting[0]).toEqual({ ranting: 'Ranting A', count: 25 });
     });
 
     it('should apply scope filter for ranting level', async () => {
@@ -137,13 +137,13 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.dashboardStats();
-      expect(result.data.totalMembers).toBe(100);
-      expect(result.data.totalCandidates).toBe(20);
-      expect(result.data.totalGraduated).toBe(12);
-      expect(result.data.totalDuesCollected).toBe(5000000);
-      expect(result.data.pendingValidasi).toBe(5);
-      expect(result.data.incompleteData).toBe(3);
-      expect(result.data.memberStatus).toHaveLength(1);
+      expect(result.totalMembers).toBe(100);
+      expect(result.totalCandidates).toBe(20);
+      expect(result.totalGraduated).toBe(12);
+      expect(result.totalDuesCollected).toBe(5000000);
+      expect(result.pendingValidasi).toBe(5);
+      expect(result.incompleteData).toBe(3);
+      expect(result.memberStatus).toHaveLength(1);
     });
 
     it('should apply scope filter for ranting level', async () => {
@@ -183,10 +183,10 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.scanStats();
-      expect(result.data.totalAbsensi).toBe(150);
-      expect(result.data.totalDokumen).toBe(30);
-      expect(result.data.activeKegiatan).toBe(3);
-      expect(result.data.recentAbsensi).toHaveLength(1);
+      expect(result.totalAbsensi).toBe(150);
+      expect(result.totalDokumen).toBe(30);
+      expect(result.activeKegiatan).toBe(3);
+      expect(result.recentAbsensi).toHaveLength(1);
     });
 
     it('should handle empty recent absensi', async () => {
@@ -198,8 +198,8 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
 
       const result = await service.scanStats();
-      expect(result.data.totalAbsensi).toBe(0);
-      expect(result.data.recentAbsensi).toHaveLength(0);
+      expect(result.totalAbsensi).toBe(0);
+      expect(result.recentAbsensi).toHaveLength(0);
     });
   });
 
@@ -216,9 +216,9 @@ describe('ReportsService', () => {
       ]);
 
       const result = await service.scanStats();
-      expect(result.data.absensiHarian).toHaveLength(2);
-      expect(result.data.absensiHarian[0]).toEqual({ tanggal: '2026-05-15', count: 3 });
-      expect(result.data.absensiHarian[1]).toEqual({ tanggal: '2026-05-16', count: 7 });
+      expect(result.absensiHarian).toHaveLength(2);
+      expect(result.absensiHarian[0]).toEqual({ tanggal: '2026-05-15', count: 3 });
+      expect(result.absensiHarian[1]).toEqual({ tanggal: '2026-05-16', count: 7 });
     });
 
     it('should return empty array when raw query fails', async () => {
@@ -229,7 +229,7 @@ describe('ReportsService', () => {
       mockPrisma.$queryRawUnsafe.mockRejectedValue(new Error('Table does not exist'));
 
       const result = await service.scanStats();
-      expect(result.data.absensiHarian).toEqual([]);
+      expect(result.absensiHarian).toEqual([]);
     });
   });
 
@@ -238,7 +238,7 @@ describe('ReportsService', () => {
     it('should export members data', async () => {
       mockPrisma.anggota.findMany.mockResolvedValue([{ namaLengkap: 'Budi' }]);
       const result = await service.exportReport('members', {});
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
       expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith({
         where: { deletedAt: null },
         include: { ranting: true },
@@ -248,13 +248,13 @@ describe('ReportsService', () => {
     it('should export dues data', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ jumlah: 100000 }]);
       const result = await service.exportReport('dues', {});
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
 
     it('should export graduates data', async () => {
       mockPrisma.calonAnggota.findMany.mockResolvedValue([{ namaLengkap: 'Lulusan' }]);
       const result = await service.exportReport('graduates', {});
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
       expect(mockPrisma.calonAnggota.findMany).toHaveBeenCalledWith({
         where: { status: 'lulus' },
       });
@@ -262,7 +262,7 @@ describe('ReportsService', () => {
 
     it('should return empty array for unknown type', async () => {
       const result = await service.exportReport('unknown', {});
-      expect(result.data).toEqual([]);
+      expect(result).toEqual([]);
     });
 
     it('should apply scope filter for members export', async () => {

@@ -255,7 +255,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     });
 
     this.invalidateCache();
-    return { data: results };
+    return results;
   }
 
   async validate(id: string) {
@@ -315,7 +315,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
 
     this.invalidateCache();
     this.cache.invalidatePrefix('members:');
-    return { data: member, message: 'Calon anggota disetujui dan menjadi anggota' };
+    return member;
   }
 
   async reject(id: string, reason?: string) {
@@ -340,7 +340,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     }
 
     this.invalidateCache();
-    return { message: reason || 'Calon anggota ditolak' };
+    // void — interceptor returns { success: true }
   }
 
   async exportCsv(_filter: CandidateFilterDto, scope?: UserScope): Promise<string> {

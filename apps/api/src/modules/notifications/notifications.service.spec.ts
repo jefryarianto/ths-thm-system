@@ -91,8 +91,8 @@ describe('NotificationsService', () => {
       mockPrisma.deviceToken.findMany.mockResolvedValue([]);
 
       const result = await service.broadcast({ judul: 'Broadcast', isi: 'Hello all' });
-      expect(result.data.sentTo).toBe(2);
-      expect(result.data.total).toBe(2);
+      expect(result.sentTo).toBe(2);
+      expect(result.total).toBe(2);
       // Should use createMany for batch insert
       expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
         data: expect.arrayContaining([
@@ -121,7 +121,7 @@ describe('NotificationsService', () => {
 
       const result = await service.broadcast({ judul: 'Broadcast', isi: 'Hello' });
       // Only u2 should receive (u1 disabled 'umum')
-      expect(result.data.sentTo).toBe(1);
+      expect(result.sentTo).toBe(1);
       expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
         data: [expect.objectContaining({ userId: 'u2' })],
       });
@@ -131,7 +131,7 @@ describe('NotificationsService', () => {
       mockPrisma.user.findMany.mockResolvedValue([]);
 
       const result = await service.broadcast({ judul: 'Empty', isi: 'No users' });
-      expect(result.data.sentTo).toBe(0);
+      expect(result.sentTo).toBe(0);
       // createMany should not be called with empty array
       expect(mockPrisma.notifikasi.createMany).not.toHaveBeenCalled();
     });
@@ -170,7 +170,7 @@ describe('NotificationsService', () => {
         judul: 'Role broadcast',
         isi: 'Only admins',
       });
-      expect(result.data.sentTo).toBe(2);
+      expect(result.sentTo).toBe(2);
       // Verify role filter was applied
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
         where: { role: 'admin_distrik', isActive: true },
@@ -197,7 +197,7 @@ describe('NotificationsService', () => {
         isi: 'Time for training',
         tipe: 'reminder_latihan',
       });
-      expect(result.data.sentTo).toBe(1);
+      expect(result.sentTo).toBe(1);
     });
   });
 
@@ -205,7 +205,7 @@ describe('NotificationsService', () => {
     it('should return unread count', async () => {
       mockPrisma.notifikasi.count.mockResolvedValue(5);
       const result = await service.getUnreadCount('u1');
-      expect(result.data.count).toBe(5);
+      expect(result.count).toBe(5);
     });
   });
 
@@ -290,7 +290,7 @@ describe('NotificationsService', () => {
     it('should return notification when userId matches', async () => {
       mockPrisma.notifikasi.findUnique.mockResolvedValue({ id: 'n1', judul: 'Test', userId: 'u1' });
       const result = await service.findOne('n1', 'u1');
-      expect(result.data.userId).toBe('u1');
+      expect(result.userId).toBe('u1');
     });
   });
 
@@ -343,8 +343,7 @@ describe('NotificationsService', () => {
         isi: 'Hello',
         tipe: 'umum',
       });
-      expect(result.data).toBeNull();
-      expect(result.message).toContain('ditunda');
+      expect(result).toBeNull();
     });
   });
 
@@ -353,8 +352,8 @@ describe('NotificationsService', () => {
       mockPrisma.setting.findUnique.mockResolvedValue(null);
       const result = await service.getPreferences('u1');
       // All default to { inApp: true, email: true }
-      expect(result.data.welcome).toEqual({ inApp: true, email: true });
-      expect(result.data.umum).toEqual({ inApp: true, email: true });
+      expect(result.prefs.welcome).toEqual({ inApp: true, email: true });
+      expect(result.prefs.umum).toEqual({ inApp: true, email: true });
     });
 
     it('should return saved preferences', async () => {
@@ -362,8 +361,8 @@ describe('NotificationsService', () => {
         value: { umum: { inApp: false, email: true }, welcome: { inApp: true, email: true } },
       });
       const result = await service.getPreferences('u1');
-      expect(result.data.umum).toEqual({ inApp: false, email: true });
-      expect(result.data.welcome).toEqual({ inApp: true, email: true });
+      expect(result.prefs.umum).toEqual({ inApp: false, email: true });
+      expect(result.prefs.welcome).toEqual({ inApp: true, email: true });
     });
   });
 

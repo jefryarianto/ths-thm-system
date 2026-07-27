@@ -274,7 +274,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     });
 
     this.invalidateCache();
-    return { data: results };
+    return results;
   }
 
   // ── Domain: export CSV ───────────────────────────────────
@@ -299,7 +299,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       take: 10_000,
     });
 
-    return { data: members };
+    return members;
   }
 
   // ── Domain: findByEmail ──────────────────────────────────
@@ -314,10 +314,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     });
 
     if (!member) {
-      return { success: false, message: 'Anggota tidak ditemukan untuk email ini' };
+      throw new NotFoundException('Anggota tidak ditemukan untuk email ini');
     }
 
-    return { data: member };
+    return member;
   }
 
   // ── Domain: getDocuments ─────────────────────────────────
@@ -329,7 +329,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       orderBy: { createdAt: 'desc' },
     });
 
-    return { data: documents };
+    return documents;
   }
 
   // ── Domain: getDues ──────────────────────────────────────
@@ -341,7 +341,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       orderBy: { createdAt: 'desc' },
     });
 
-    return { data: dues };
+    return dues;
   }
 
   // ── Private helpers ──────────────────────────────────────

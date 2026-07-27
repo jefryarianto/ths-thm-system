@@ -50,7 +50,7 @@ export class MembersWorkflowService {
         where: { id },
         data: { statusData: 'incomplete', missingFields },
       });
-      return { success: true, data: { valid: false, missingFields } };
+      return { valid: false, missingFields };
     }
 
     await this.prisma.anggota.update({
@@ -59,7 +59,7 @@ export class MembersWorkflowService {
       data: { statusData: 'complete', missingFields: undefined as any },
     });
 
-    return { success: true, data: { valid: true } };
+    return { valid: true };
   }
 
   async approve(id: string, scope?: UserScope) {
@@ -77,7 +77,7 @@ export class MembersWorkflowService {
       data: { statusValidasi: 'approved', statusKeanggotaan: 'aktif' },
     });
 
-    return { success: true, message: 'Anggota berhasil disetujui' };
+    // void — interceptor returns { success: true }
   }
 
   async suspend(id: string, scope?: UserScope) {
@@ -95,7 +95,7 @@ export class MembersWorkflowService {
       data: { statusKeanggotaan: 'nonaktif' },
     });
 
-    return { success: true, message: 'Anggota berhasil ditangguhkan' };
+    // void — interceptor returns { success: true }
   }
 
   async reactivate(id: string, scope?: UserScope) {
@@ -113,6 +113,6 @@ export class MembersWorkflowService {
       data: { statusKeanggotaan: 'aktif' },
     });
 
-    return { success: true, message: 'Anggota berhasil diaktifkan kembali' };
+    // void — interceptor returns { success: true }
   }
 }

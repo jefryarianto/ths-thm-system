@@ -185,7 +185,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     }
 
     this.invalidateCache();
-    return { data: attendance, message: 'Kehadiran tercatat' };
+    return attendance;
   }
 
   async importAttendance(
@@ -201,7 +201,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
       .filter(Boolean) as string[];
 
     if (allAnggotaIds.length === 0) {
-      return { data: { imported: 0 }, message: 'Tidak ada data kehadiran untuk diimpor' };
+      return { imported: 0 };
     }
 
     const existingRecords = await this.prisma.absensiLatihan.findMany({
@@ -226,10 +226,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
       await this.prisma.absensiLatihan.createMany({ data: toCreate });
     }
 
-    return {
-      data: { imported: toCreate.length },
-      message: `${toCreate.length} kehadiran berhasil diimpor`,
-    };
+    return { imported: toCreate.length };
   }
 
   async getEvaluations(trainingId: string) {
@@ -254,7 +251,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
       },
     });
     this.invalidateCache();
-    return { data: evaluation, message: 'Evaluasi berhasil disimpan' };
+    return evaluation;
   }
 
   async updateEvaluation(trainingId: string, evaluationId: string, dto: UpdateEvaluationDto) {
@@ -267,13 +264,13 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
       data,
     });
     this.invalidateCache();
-    return { data: evaluation, message: 'Evaluasi berhasil diperbarui' };
+    return evaluation;
   }
 
   async removeEvaluation(trainingId: string, evaluationId: string) {
     await this.prisma.evaluasiLatihan.delete({ where: { id: evaluationId } });
     this.invalidateCache();
-    return { message: 'Evaluasi berhasil dihapus' };
+    // void — interceptor returns { success: true }
   }
 
   // ── Private helpers ──────────────────────────────────────

@@ -167,12 +167,12 @@ export class LettersService {
 
   async incomingExport() {
     const letters = await this.prisma.suratMasuk.findMany();
-    return { data: letters };
+    return letters;
   }
 
   async outgoingExport() {
     const letters = await this.prisma.suratKeluar.findMany();
-    return { data: letters };
+    return letters;
   }
 
   // ── Private Helpers ─────────────────────────────────

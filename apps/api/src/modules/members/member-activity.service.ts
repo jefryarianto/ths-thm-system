@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -19,13 +19,13 @@ export class MemberActivityService {
       select: { id: true, rantingId: true, namaLengkap: true },
     });
     if (!member) {
-      return { success: false, message: 'Anggota tidak ditemukan' };
+      throw new NotFoundException('Anggota tidak ditemukan');
     }
     if (
       scope &&
       !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
     ) {
-      return { success: false, message: 'Akses ditolak' };
+      throw new ForbiddenException('Akses ditolak');
     }
 
     // Gather activities from multiple tables in parallel
@@ -118,16 +118,13 @@ export class MemberActivityService {
     const paginated = activities.slice(start, start + limit);
 
     return {
-      success: true,
-      data: {
-        member: { id: member.id, namaLengkap: member.namaLengkap },
-        activities: paginated,
-        meta: {
-          total: activities.length,
-          page,
-          limit,
-          totalPages: Math.ceil(activities.length / limit),
-        },
+      member: { id: member.id, namaLengkap: member.namaLengkap },
+      activities: paginated,
+      meta: {
+        total: activities.length,
+        page,
+        limit,
+        totalPages: Math.ceil(activities.length / limit),
       },
     };
   }

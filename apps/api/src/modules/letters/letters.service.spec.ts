@@ -186,7 +186,7 @@ describe('LettersService', () => {
     it('should export all incoming letters', async () => {
       mockPrisma.suratMasuk.findMany.mockResolvedValue([{ id: 'sm1' }]);
       const result = await service.incomingExport();
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
   });
 
@@ -194,7 +194,7 @@ describe('LettersService', () => {
     it('should export all outgoing letters', async () => {
       mockPrisma.suratKeluar.findMany.mockResolvedValue([{ id: 'sk1' }]);
       const result = await service.outgoingExport();
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
   });
 });

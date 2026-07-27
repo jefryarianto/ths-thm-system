@@ -69,7 +69,7 @@ export class AssessmentsService {
 
   async importFromList(data: ImportRow[]) {
     if (!data || data.length === 0) {
-      return { data: { importedAspects: 0, importedItems: 0, total: 0 } };
+      return { importedAspects: 0, importedItems: 0, total: 0 };
     }
 
     const aspekMap = new Map<string, ImportRow[]>();
@@ -139,7 +139,7 @@ export class AssessmentsService {
   async importFromCsvText(csvText: string) {
     const lines = csvText.trim().split('\n');
     if (lines.length < 2) {
-      return { data: { importedAspects: 0, importedItems: 0, total: 0 } };
+      return { importedAspects: 0, importedItems: 0, total: 0 };
     }
 
     const headerLine = lines[0].trim().toLowerCase();

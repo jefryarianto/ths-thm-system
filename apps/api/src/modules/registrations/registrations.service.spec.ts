@@ -133,7 +133,7 @@ describe('RegistrationsService', () => {
       });
 
       const result = await service.verify('1');
-      expect(result.data.valid).toBe(true);
+      expect(result.valid).toBe(true);
     });
 
     it('should return invalid with missing fields', async () => {
@@ -144,9 +144,9 @@ describe('RegistrationsService', () => {
       });
 
       const result = await service.verify('2');
-      expect(result.data.valid).toBe(false);
-      expect(result.data.missingFields).toContain('nama_lengkap');
-      expect(result.data.missingFields).toContain('jenis_kelamin');
+      expect(result.valid).toBe(false);
+      expect(result.missingFields).toContain('nama_lengkap');
+      expect(result.missingFields).toContain('jenis_kelamin');
     });
 
     it('should throw NotFoundException', async () => {
@@ -172,7 +172,7 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
       const result = await service.approve('1', 'user1');
-      expect(result.data.id).toBe('ca1');
+      expect(result.id).toBe('ca1');
       expect(mockPrisma.calonAnggota.create).toHaveBeenCalled();
       expect(mockPrisma.pendaftaran.update).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -199,8 +199,7 @@ describe('RegistrationsService', () => {
       });
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
-      const result = await service.reject('1', 'Data tidak lengkap');
-      expect(result.message).toBe('Data tidak lengkap');
+      await service.reject('1', 'Data tidak lengkap');
       expect(mockPrisma.pendaftaran.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: { status: 'rejected', catatan: 'Data tidak lengkap' },
@@ -219,8 +218,7 @@ describe('RegistrationsService', () => {
       });
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
-      const result = await service.reject('1');
-      expect(result.message).toBe('Pendaftaran ditolak');
+      await service.reject('1');
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
     });
   });
@@ -234,7 +232,7 @@ describe('RegistrationsService', () => {
         { name: 'Siti', no_hp: '082' },
       ];
       const result = await service.importCsv(data);
-      expect(result.data.imported).toBe(2);
+      expect(result.imported).toBe(2);
     });
 
     it('should skip rows that fail', async () => {
@@ -244,7 +242,7 @@ describe('RegistrationsService', () => {
 
       const data = [{ nama_lengkap: 'Budi' }, { nama_lengkap: 'Siti' }];
       const result = await service.importCsv(data);
-      expect(result.data.imported).toBe(1);
+      expect(result.imported).toBe(1);
     });
   });
 });

@@ -152,7 +152,7 @@ describe('ExaminersService', () => {
       });
 
       const result = await service.assign('u1', { kegiatanId: 'k1', peran: 'penguji' });
-      expect(result.data.kegiatanId).toBe('k1');
+      expect(result.kegiatanId).toBe('k1');
     });
 
     it('should throw NotFoundException when examiner not found', async () => {
@@ -188,7 +188,7 @@ describe('ExaminersService', () => {
     it('should return assignments for an examiner', async () => {
       mockPrisma.penugasanPenguji.findMany.mockResolvedValue([{ id: 'a1', kegiatanId: 'k1' }]);
       const result = await service.getAssignments('u1');
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
   });
 
@@ -210,7 +210,7 @@ describe('ExaminersService', () => {
         },
       ]);
       const result = await service.getSchedules('u1');
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
 
     it('should filter out past schedules', async () => {
@@ -229,7 +229,7 @@ describe('ExaminersService', () => {
         },
       ]);
       const result = await service.getSchedules('u1');
-      expect(result.data).toHaveLength(0);
+      expect(result).toHaveLength(0);
     });
   });
 });

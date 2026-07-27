@@ -93,9 +93,9 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
     if (!reg.namaLengkap) missing.push('nama_lengkap');
     if (!reg.jenisKelamin) missing.push('jenis_kelamin');
     if (missing.length > 0) {
-      return { data: { valid: false, missingFields: missing } };
+      return { valid: false, missingFields: missing };
     }
-    return { data: { valid: true } };
+    return { valid: true };
   }
 
   async approve(id: string, userId?: string) {
@@ -127,7 +127,7 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
       );
     }
 
-    return { data: candidate, message: 'Pendaftaran disetujui, calon anggota berhasil dibuat' };
+    return candidate;
   }
 
   async reject(id: string, reason?: string) {
@@ -147,7 +147,7 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
       );
     }
 
-    return { message: reason || 'Pendaftaran ditolak' };
+    // void — interceptor returns { success: true }
   }
 
   async importCsv(data: Record<string, unknown>[]) {
@@ -170,7 +170,7 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
         /* skip */
       }
     }
-    return { data: { imported, total: data.length } };
+    return { imported, total: data.length };
   }
 
   // ── Email Helpers ──────────────────────────────────────

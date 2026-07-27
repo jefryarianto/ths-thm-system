@@ -29,7 +29,7 @@ export class NotificationsService {
     const tipe = dto.tipe || 'umum';
     const enabled = await this.isPreferenceEnabled(userId, tipe);
     if (!enabled) {
-      return { data: null, message: 'Notifikasi ditunda (user mematikan notifikasi ini)' };
+      return null;
     }
 
     const notification = await this.prisma.notifikasi.create({
@@ -49,7 +49,7 @@ export class NotificationsService {
     this.eventsGateway?.sendUnreadCount(userId, count);
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
 
-    return { data: notification, message: 'Notifikasi berhasil dikirim' };
+    return notification;
   }
 
   async broadcast(dto: BroadcastNotificationDto) {
@@ -92,10 +92,7 @@ export class NotificationsService {
       }),
     );
 
-    return {
-      data: { sentTo: allowedUsers.length, total: users.length },
-      message: `Notifikasi broadcast ke ${allowedUsers.length}/${users.length} user`,
-    };
+    return { sentTo: allowedUsers.length, total: users.length };
   }
 
   async sendToRole(dto: SendToRoleDto) {
@@ -138,10 +135,7 @@ export class NotificationsService {
       }),
     );
 
-    return {
-      data: { sentTo: allowedUsers.length, total: users.length },
-      message: `Notifikasi ke role ${dto.role} berhasil (${allowedUsers.length}/${users.length} menerima)`,
-    };
+    return { sentTo: allowedUsers.length, total: users.length };
   }
 
   async findAll(userId: string, query: NotificationFilterDto) {
@@ -199,7 +193,7 @@ export class NotificationsService {
 
   async getUnreadCount(userId: string) {
     const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
-    return { data: { count } };
+    return { count };
   }
 
   async markAsRead(id: string, userId?: string) {
@@ -213,7 +207,6 @@ export class NotificationsService {
     }
     await this.prisma.notifikasi.update({ where: { id }, data: { isRead: true } });
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
-    return { message: 'Notifikasi ditandai dibaca' };
   }
 
   async findOne(id: string, userId?: string) {
@@ -222,7 +215,7 @@ export class NotificationsService {
     if (userId && notif.userId !== userId) {
       throw new NotFoundException('Notifikasi tidak ditemukan');
     }
-    return { data: notif };
+    return notif;
   }
 
   async markAllAsRead(userId: string) {
@@ -231,7 +224,6 @@ export class NotificationsService {
       data: { isRead: true },
     });
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
-    return { message: 'Semua notifikasi ditandai dibaca' };
   }
 
   async delete(id: string, userId?: string) {
@@ -245,7 +237,6 @@ export class NotificationsService {
     }
     await this.prisma.notifikasi.delete({ where: { id } });
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
-    return { message: 'Notifikasi berhasil dihapus' };
   }
 
   // ─── Stats ───
@@ -276,13 +267,11 @@ export class NotificationsService {
     }
 
     return {
-      data: {
-        total,
-        unread,
-        read: total - unread,
-        byType: typeStats,
-        types: NotificationsService.NOTIFICATION_TYPES,
-      },
+      total,
+      unread,
+      read: total - unread,
+      byType: typeStats,
+      types: NotificationsService.NOTIFICATION_TYPES,
     };
   }
 
@@ -327,7 +316,7 @@ export class NotificationsService {
           : { inApp: true, email: true };
     }
 
-    return { data: prefs, types: NotificationsService.NOTIFICATION_TYPES };
+    return { prefs, types: NotificationsService.NOTIFICATION_TYPES };
   }
 
   async updatePreferences(userId: string, data: Record<string, unknown>) {
@@ -353,12 +342,11 @@ export class NotificationsService {
       update: { value: normalized as never },
       create: { key: this.prefKey(userId), value: normalized as never },
     });
-    return { message: 'Pengaturan notifikasi berhasil disimpan' };
   }
 
   private async isChannelEnabled(userId: string, tipe: string, channel: 'inApp' | 'email'): Promise<boolean> {
     const prefs = await this.getPreferences(userId);
-    const p = prefs.data as Record<string, { inApp: boolean; email: boolean }>;
+    const p = prefs.prefs as Record<string, { inApp: boolean; email: boolean }>;
     const pref = p[tipe];
     return pref?.[channel] !== false;
   }
@@ -434,7 +422,7 @@ export class NotificationsService {
       this.logger.warn(`sendIncompleteNotifications: ${failed}/${membersWithEmail.length} emails failed`);
     }
 
-    return { data: { sent, noEmail, failed, total: members.length } };
+    return { sent, noEmail, failed, total: members.length };
   }
 
   async registerDeviceToken(userId: string, token: string, platform: string) {
@@ -449,7 +437,6 @@ export class NotificationsService {
       data: { fcmToken: token },
     });
 
-    return { message: 'Device token berhasil didaftarkan' };
   }
 
   async unregisterDeviceToken(tokenId: string) {
@@ -457,7 +444,6 @@ export class NotificationsService {
       where: { id: tokenId },
       data: { isActive: false },
     });
-    return { message: 'Device token berhasil dihapus' };
   }
 
   private async sendEmailNotification(userId: string, judul: string, isi: string, tipe?: string): Promise<void> {

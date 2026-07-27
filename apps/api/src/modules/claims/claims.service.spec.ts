@@ -185,7 +185,7 @@ describe('ClaimsService', () => {
       });
       mockPrisma.klaim.update.mockResolvedValue({ id: 'cl1', status: 'diproses' });
       const result = await service.process('cl1');
-      expect(result.data.status).toBe('diproses');
+      expect(result.status).toBe('diproses');
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
     });
   });

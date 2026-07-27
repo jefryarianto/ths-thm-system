@@ -32,7 +32,7 @@ export class UjianPraktekService {
       },
       orderBy: { createdAt: 'asc' },
     });
-    return { data };
+    return data;
   }
 
   async findOne(id: string) {
@@ -51,7 +51,7 @@ export class UjianPraktekService {
       },
     });
     if (!data) throw new NotFoundException('Ujian praktek tidak ditemukan');
-    return { data };
+    return data;
   }
 
   async create(kegiatanId: string, dto: CreateUjianPraktekDto) {
@@ -68,7 +68,7 @@ export class UjianPraktekService {
         status: 'draft',
       },
     });
-    return { data, message: 'Ujian praktek berhasil dibuat' };
+    return data;
   }
 
   async update(id: string, dto: UpdateUjianPraktekDto) {
@@ -83,14 +83,14 @@ export class UjianPraktekService {
     if (dto.status !== undefined) updateData.status = dto.status;
 
     const data = await this.prisma.ujianPraktek.update({ where: { id }, data: updateData });
-    return { data, message: 'Ujian praktek berhasil diperbarui' };
+    return data;
   }
 
   async remove(id: string) {
     const existing = await this.prisma.ujianPraktek.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Ujian praktek tidak ditemukan');
     await this.prisma.ujianPraktek.delete({ where: { id } });
-    return { message: 'Ujian praktek berhasil dihapus' };
+    // void — interceptor returns { success: true }
   }
 
   // ─── Examiner Management ─────────────────────────────────
@@ -111,7 +111,7 @@ export class UjianPraktekService {
         },
         include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
       });
-      return { data, message: 'Penguji berhasil ditambahkan' };
+      return data;
     } catch (err: unknown) {
       if ((err as { code?: string }).code === 'P2002') {
         throw new BadRequestException('Penguji sudah ditugaskan ke ujian ini');
@@ -126,7 +126,7 @@ export class UjianPraktekService {
     });
     if (!existing) throw new NotFoundException('Penugasan penguji tidak ditemukan');
     await this.prisma.ujianPraktekPenilai.delete({ where: { id: existing.id } });
-    return { message: 'Penguji berhasil dihapus' };
+    // void — interceptor returns { success: true }
   }
 
   // ─── Assessment Items Management ─────────────────────────
@@ -147,7 +147,7 @@ export class UjianPraktekService {
         },
         include: { itemPenilaian: { include: { aspek: true } } },
       });
-      return { data, message: 'Item penilaian berhasil ditambahkan' };
+      return data;
     } catch (err: unknown) {
       if ((err as { code?: string }).code === 'P2002') {
         throw new BadRequestException('Item penilaian sudah ditambahkan');
@@ -162,7 +162,7 @@ export class UjianPraktekService {
     });
     if (!existing) throw new NotFoundException('Item penilaian tidak ditemukan');
     await this.prisma.ujianPraktekItem.delete({ where: { id: existing.id } });
-    return { message: 'Item penilaian berhasil dihapus' };
+    // void — interceptor returns { success: true }
   }
 
   // ─── Scoring ─────────────────────────────────────────────
@@ -177,7 +177,7 @@ export class UjianPraktekService {
       },
       orderBy: [{ calonAnggotaId: 'asc' }, { createdAt: 'asc' }],
     });
-    return { data };
+    return data;
   }
 
   async scoreCandidate(ujianPraktekId: string, dto: BulkScoreDto, pengujiUserId: string) {
@@ -238,10 +238,7 @@ export class UjianPraktekService {
       }
     }
 
-    return {
-      data: { scored: results.length },
-      message: `${results.length} nilai berhasil disimpan`,
-    };
+    return { scored: results.length };
   }
 
   // ─── Available Assessment Items ──────────────────────────
@@ -252,7 +249,7 @@ export class UjianPraktekService {
       include: { aspek: true },
       orderBy: [{ aspek: { namaAspek: 'asc' } }, { urutan: 'asc' }],
     });
-    return { data };
+    return data;
   }
 
   async getAvailableExaminers(kegiatanId: string) {
@@ -269,10 +266,8 @@ export class UjianPraktekService {
     ]);
 
     return {
-      data: {
-        assignedToKegiatan: assigned.map((a) => a.pengujiUser),
-        allPenguji,
-      },
+      assignedToKegiatan: assigned.map((a) => a.pengujiUser),
+      allPenguji,
     };
   }
 }

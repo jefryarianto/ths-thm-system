@@ -110,7 +110,7 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
       data: { isActive: !(existing as any).isActive },
     });
     this.invalidateCache();
-    return { data: alert };
+    return alert;
   }
 
   // ── Domain: Alert Evaluation ────────────────────────
