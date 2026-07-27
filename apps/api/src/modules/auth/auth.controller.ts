@@ -31,8 +31,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login pengguna' })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     // Pass `res` so the service sets the HttpOnly cookie internally
-    const { data: result } = await this.authService.login(dto, res);
-    // When `res` is provided, login() omits refreshToken from the response body
+    const result = await this.authService.login(dto, res);
     return result;
   }
 
@@ -47,7 +46,7 @@ export class AuthController {
   @Public()
   @ApiOperation({ summary: 'Refresh token akses' })
   async refresh(@Body() dto: RefreshDto, @Res({ passthrough: true }) res: Response) {
-    const { data: result } = await this.authService.refreshToken(dto);
+    const result = await this.authService.refreshToken(dto);
     this.authService.setRefreshTokenCookie(res, result.refreshToken);
     // Hapus refresh token dari body respons
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

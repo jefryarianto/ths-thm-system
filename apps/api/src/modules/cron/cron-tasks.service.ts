@@ -356,7 +356,7 @@ export class CronTasksService {
     // Send batch emails via existing service (this handles all email dispatch)
     try {
       const emailResult = await this.notificationsService.sendIncompleteNotifications();
-      emailed = emailResult?.data?.sent || 0;
+      emailed = emailResult?.sent || 0;
     } catch (error) {
       this.logger.warn(`Incomplete data email batch failed: ${(error as Error).message}`);
     }

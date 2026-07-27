@@ -58,7 +58,6 @@ export class ApprovalService {
 
     return { id: request.id, status: request.status };
   }
-  }
 
   async approve(requestId: string, userId: string, note?: string, scope?: UserScope) {
     const request = await this.prisma.approvalRequest.findUnique({
