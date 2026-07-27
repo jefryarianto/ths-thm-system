@@ -33,7 +33,7 @@ export class AuthController {
     // Pass `res` so the service sets the HttpOnly cookie internally
     const { data: result } = await this.authService.login(dto, res);
     // When `res` is provided, login() omits refreshToken from the response body
-    return { success: true, data: result };
+    return result;
   }
 
   @Post('register')
@@ -52,7 +52,7 @@ export class AuthController {
     // Hapus refresh token dari body respons
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refreshToken: _, ...rest } = result;
-    return { success: true, data: rest };
+    return rest;
   }
 
   @Post('forgot')

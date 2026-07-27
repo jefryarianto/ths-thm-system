@@ -1,12 +1,11 @@
 import { Controller, Post, Get, Patch, Delete, Body, Param, Req, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { PaymentsService, CreateBankInfoDto, UpdateBankInfoDto } from './payments.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, resolve } from 'path';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 function buildProofStorage() {
@@ -37,36 +36,31 @@ export class PaymentsController {
   // ── Bank Info Management (Admin) ──
 
   @Get('bank-info')
-  @ApiOperation({ summary: 'Dapatkan daftar rekening bank & QRIS aktif' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Dapatkan daftar rekening bank & QRIS aktif' })
   getBankInfo() {
     return this.service.getBankInfo();
   }
 
   @Get('bank-info/all')
-  @ApiOperation({ summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
   getAllBankInfo() {
     return this.service.getAllBankInfo();
   }
 
   @Post('bank-info')
-  @ApiOperation({ summary: 'Tambah rekening bank baru — Admin' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Tambah rekening bank baru — Admin' })
   createBankInfo(@Body() dto: CreateBankInfoDto) {
     return this.service.createBankInfo(dto);
   }
 
   @Patch('bank-info/:id')
-  @ApiOperation({ summary: 'Ubah rekening bank — Admin' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Ubah rekening bank — Admin' })
   updateBankInfo(@Param('id') id: string, @Body() dto: UpdateBankInfoDto) {
     return this.service.updateBankInfo(id, dto);
   }
 
   @Delete('bank-info/:id')
-  @ApiOperation({ summary: 'Hapus rekening bank — Admin' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus rekening bank — Admin' })
   deleteBankInfo(@Param('id') id: string) {
     return this.service.deleteBankInfo(id);
   }
@@ -74,18 +68,14 @@ export class PaymentsController {
   // ── Payment Flow ──
 
   @Get(':id')
-  @ApiOperation({ summary: 'Ambil detail pembayaran iuran' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail pembayaran iuran' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
   }
 
   @Post(':id/upload-proof')
-  @ApiOperation({ summary: 'Upload bukti pembayaran manual' })
   @ApiConsumes('multipart/form-data')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Upload bukti pembayaran manual' })
   @UseInterceptors(
     FileInterceptor('bukti', {
       storage: buildProofStorage(),
@@ -102,25 +92,21 @@ export class PaymentsController {
   )
   async uploadProof(
     @Param('id') id: string,
+    @Req() req: ScopedRequest,
     @UploadedFile() file?: Express.Multer.File,
     @Body('catatan') catatan?: string,
-    @Req() req: ScopedRequest,
   ) {
     return this.service.uploadProof(id, { catatan, file }, req.scope);
   }
 
   @Patch(':id/verify')
-  @ApiOperation({ summary: 'Verifikasi pembayaran (admin)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Verifikasi pembayaran (admin)' })
   verifyPayment(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.verifyPayment(id, req.user.id, req.scope);
   }
 
   @Patch(':id/reject')
-  @ApiOperation({ summary: 'Tolak pembayaran (admin)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tolak pembayaran (admin)' })
   rejectPayment(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.rejectPayment(id, req.scope);
   }

@@ -1,5 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
@@ -10,63 +9,130 @@ import {
   AssignExaminerDto,
 } from './dto/examiner.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { paginate } from '../../common/utils/pagination';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
-export class ExaminersService {
-  private readonly logger = new Logger(ExaminersService.name);
-
+export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateExaminerDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
     private readonly mailService: MailService,
-  ) {}
-
-  async findAll(query: ExaminerFilterDto) {
-    const where: Record<string, unknown> = { role: 'penguji', isActive: true };
-    if (query.search) where.namaLengkap = { contains: query.search };
-
-    return paginate(this.prisma.user, where, {
-      page: query.page,
-      limit: query.limit,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, email: true, namaLengkap: true, createdAt: true },
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'user',
+      prefix: 'examiners:',
+      notFound: 'Penguji tidak ditemukan',
     });
   }
 
-  async findOne(id: string) {
-    const examiner = await this.prisma.user.findUnique({ where: { id, role: 'penguji' } });
-    if (!examiner) throw new NotFoundException('Penguji tidak ditemukan');
-    return { success: true, data: examiner };
-  }
+  // ── Hook: transform DTO before create ────────────────────
+  // bcrypt password, set role='penguji'
 
-  async create(dto: CreateExaminerDto) {
+  protected async beforeCreate(
+    dto: CreateExaminerDto,
+  ): Promise<Record<string, unknown>> {
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
-    const examiner = await this.prisma.user.create({
-      data: { email: dto.email, namaLengkap: dto.namaLengkap, role: 'penguji', passwordHash },
-    });
-    const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(examiner.email)}`;
-    this.sendWelcomeEmail(examiner.email, examiner.namaLengkap, setPasswordUrl);
-    return { success: true, data: examiner, message: 'Penguji berhasil ditambahkan' };
+    return {
+      email: dto.email,
+      namaLengkap: dto.namaLengkap,
+      role: 'penguji',
+      passwordHash,
+    };
   }
+
+  // ── Hook: send welcome email after create ────────────────
+
+  protected async afterCreate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result: any,
+    _dto: CreateExaminerDto,
+  ): Promise<void> {
+    const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(result.email)}`;
+    this.sendWelcomeEmail(result.email, result.namaLengkap, setPasswordUrl);
+  }
+
+  // ── Hook: transform DTO before update ────────────────────
+  // Only include defined fields; bcrypt password if changed.
+
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateExaminerDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
+    if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
+    return data;
+  }
+
+  // ── CRUD: findAll ────────────────────────────────────────
+  // Override to filter by role='penguji' + isActive
+
+  async findAll(query: ExaminerFilterDto) {
+    return this.baseFindAll(
+      `examiners:list:${query.page || 1}:${query.limit || 10}:${query.search || ''}`,
+      async () => {
+        const where: Record<string, unknown> = { role: 'penguji', isActive: true };
+        if (query.search) where.namaLengkap = { contains: query.search };
+        return where;
+      },
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, email: true, namaLengkap: true, createdAt: true },
+      },
+      30,
+    );
+  }
+
+  // ── CRUD: findOne ────────────────────────────────────────
+  // Override to filter by role='penguji'
+
+  async findOne(id: string) {
+    const examiner = await this.prismaDelegate.findUnique({
+      where: { id, role: 'penguji' },
+    });
+    if (!examiner) throw new NotFoundException('Penguji tidak ditemukan');
+    return examiner;
+  }
+
+  // ── CRUD: create ─────────────────────────────────────────
+
+  async create(dto: CreateExaminerDto) {
+    return this.baseCreate(dto, undefined, undefined, 'Penguji berhasil ditambahkan');
+  }
+
+  // ── CRUD: update ─────────────────────────────────────────
 
   async update(id: string, dto: UpdateExaminerDto) {
-    const data: Record<string, unknown> = {};
-    if (dto.email) data.email = dto.email;
-    if (dto.namaLengkap) data.namaLengkap = dto.namaLengkap;
-    if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
-
-    const examiner = await this.prisma.user.update({ where: { id }, data });
-    return { success: true, data: examiner, message: 'Data penguji diperbarui' };
+    return this.baseUpdate(id, dto, undefined, 'Data penguji diperbarui');
   }
+
+  // ── CRUD: remove ─────────────────────────────────────────
+  // Soft delete via isActive=false (not deletedAt)
 
   async remove(id: string) {
-    await this.prisma.user.update({ where: { id }, data: { isActive: false } });
-    return { success: true, message: 'Penguji dinonaktifkan' };
+    const exists = await this.prismaDelegate.findUnique({
+      where: { id, role: 'penguji' },
+    });
+    if (!exists) throw new NotFoundException('Penguji tidak ditemukan');
+
+    await this.prismaDelegate.update({
+      where: { id },
+      data: { isActive: false },
+    });
+    this.invalidateCache();
+    return { message: 'Penguji dinonaktifkan' };
   }
+
+  // ── Domain: import CSV ───────────────────────────────────
 
   async importCsv(data: Record<string, unknown>[]) {
     let imported = 0;
@@ -76,7 +142,7 @@ export class ExaminersService {
       try {
         const email = row.email as string;
         const nama = (row.nama || row.name) as string;
-        await this.prisma.user.create({
+        await this.prismaDelegate.create({
           data: { email, namaLengkap: nama, role: 'penguji', passwordHash },
         });
         const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(email)}`;
@@ -86,14 +152,23 @@ export class ExaminersService {
         /* skip duplicate email */
       }
     }
-    return { success: true, data: { imported, total: data.length } };
+    return { data: { imported, total: data.length } };
   }
 
+  // ── Domain: assign examiner to kegiatan ──────────────────
+
   async assign(id: string, dto: AssignExaminerDto, scope?: UserScope) {
-    const examiner = await this.prisma.user.findUnique({ where: { id, role: 'penguji' } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const examiner = await (this.prisma as any).user.findUnique({
+      where: { id, role: 'penguji' },
+    });
     if (!examiner) throw new NotFoundException('Penguji tidak ditemukan');
+
     const kegiatanId = dto.kegiatanId || dto.graduationId;
-    const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const kegiatan = await (this.prisma as any).kegiatan.findUnique({
+      where: { id: kegiatanId },
+    });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
 
     // Scope verification: verify kegiatan is within scope
@@ -105,7 +180,8 @@ export class ExaminersService {
       );
     }
 
-    const assignment = await this.prisma.penugasanPenguji.create({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const assignment = await (this.prisma as any).penugasanPenguji.create({
       data: {
         pengujiUserId: id,
         kegiatanId: kegiatanId!,
@@ -117,8 +193,50 @@ export class ExaminersService {
     // Send assignment notification
     this.sendAssignmentEmail(examiner, kegiatan, dto.peran || 'penguji');
 
-    return { success: true, data: assignment, message: 'Penguji berhasil ditugaskan' };
+    return { data: assignment, message: 'Penguji berhasil ditugaskan' };
   }
+
+  // ── Domain: get assignments for an examiner ──────────────
+
+  async getAssignments(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const assignments = await (this.prisma as any).penugasanPenguji.findMany({
+      where: { pengujiUserId: id },
+      include: {
+        kegiatan: {
+          select: { id: true, nama: true, tipe: true, tanggalMulai: true, status: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { data: assignments };
+  }
+
+  // ── Domain: get upcoming schedules for an examiner ───────
+
+  async getSchedules(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const assignments = await (this.prisma as any).penugasanPenguji.findMany({
+      where: { pengujiUserId: id },
+      include: {
+        kegiatan: {
+          select: {
+            id: true,
+            nama: true,
+            tipe: true,
+            tanggalMulai: true,
+            tanggalSelesai: true,
+            lokasi: true,
+          },
+        },
+      },
+      orderBy: { kegiatan: { tanggalMulai: 'asc' } },
+    });
+    const schedules = assignments.filter((a: { kegiatan: { tanggalMulai: Date } }) => a.kegiatan.tanggalMulai >= new Date());
+    return { data: schedules };
+  }
+
+  // ── Private helpers ──────────────────────────────────────
 
   private sendWelcomeEmail(email: string, nama: string, setPasswordUrl: string) {
     this.mailService
@@ -157,12 +275,7 @@ export class ExaminersService {
     this.mailService
       .renderWithOverride(
         'examinerAssignmentEmail',
-        () => examinerAssignmentEmail(
-          examiner.namaLengkap,
-          kegiatan.nama,
-          tanggal,
-          peran,
-        ),
+        () => examinerAssignmentEmail(examiner.namaLengkap, kegiatan.nama, tanggal, peran),
         {
           nama: examiner.namaLengkap,
           kegiatanNama: kegiatan.nama,
@@ -185,39 +298,5 @@ export class ExaminersService {
       .catch(() => {
         this.logger.warn(`Failed to send assignment email to ${examiner.email}`);
       });
-  }
-
-  async getAssignments(id: string) {
-    const assignments = await this.prisma.penugasanPenguji.findMany({
-      where: { pengujiUserId: id },
-      include: {
-        kegiatan: {
-          select: { id: true, nama: true, tipe: true, tanggalMulai: true, status: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return { success: true, data: assignments };
-  }
-
-  async getSchedules(id: string) {
-    const assignments = await this.prisma.penugasanPenguji.findMany({
-      where: { pengujiUserId: id },
-      include: {
-        kegiatan: {
-          select: {
-            id: true,
-            nama: true,
-            tipe: true,
-            tanggalMulai: true,
-            tanggalSelesai: true,
-            lokasi: true,
-          },
-        },
-      },
-      orderBy: { kegiatan: { tanggalMulai: 'asc' } },
-    });
-    const schedules = assignments.filter((a) => a.kegiatan.tanggalMulai >= new Date());
-    return { success: true, data: schedules };
   }
 }

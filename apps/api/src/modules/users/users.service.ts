@@ -1,108 +1,175 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { userWelcomeEmail } from '../../mail/email-templates';
-import { CreateUserDto, UpdateUserDto, UserFilterDto } from './dto/user.dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserFilterDto,
+} from './dto/user.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { paginate } from '../../common/utils/pagination';
 import bcrypt from 'bcryptjs';
 
 @Injectable()
-export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
-
+export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
     private readonly mailService: MailService,
-  ) {}
-
-  async findAll(query: UserFilterDto, scope?: UserScope) {
-    const where: Record<string, unknown> = {};
-    if (query.role) where.role = query.role;
-    if (query.search) where.namaLengkap = { contains: query.search };
-
-    // Scope filtering: user → rantingId
-    if (scope?.rantingId) {
-      where.rantingId = scope.rantingId;
-    } else if (scope?.wilayahId) {
-      where.ranting = { wilayahId: scope.wilayahId };
-    } else if (scope?.distrikId) {
-      where.ranting = { wilayah: { distrikId: scope.distrikId } };
-    }
-
-    return paginate(this.prisma.user, where, {
-      page: query.page,
-      limit: query.limit,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        email: true,
-        namaLengkap: true,
-        role: true,
-        rantingId: true,
-        isActive: true,
-        createdAt: true,
-      },
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'user',
+      prefix: 'users:',
+      notFound: 'User tidak ditemukan',
+      scopeStrategy: 'ranting',
     });
   }
 
-  async findOne(id: string, scope?: UserScope) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        namaLengkap: true,
-        role: true,
-        rantingId: true,
-        isActive: true,
-        createdAt: true,
-      },
-    });
-    if (!user) throw new NotFoundException('User tidak ditemukan');
+  // ═══════════════════════════════════════════════════════════
+  //  HOOKS
+  // ═══════════════════════════════════════════════════════════
 
-    // Scope verification
-    if (
-      scope &&
-      !(await this.scopeHelper.hasAccessToResourceAsync(
-        this.prisma,
-        scope,
-        user.rantingId ?? undefined,
-      ))
-    ) {
-      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-    }
-
-    return { success: true, data: user };
-  }
-
-  async create(dto: CreateUserDto, scope?: UserScope) {
-    // Auto-assign rantingId from scope if not provided
+  /**
+   * Before create: hash password, auto-assign rantingId from scope.
+   * Eliminates the `as never` cast on `role` — Prisma accepts
+   * `Record<string, unknown>` so no cast is needed.
+   */
+  protected async beforeCreate(
+    dto: CreateUserDto,
+    scope?: UserScope,
+    _userId?: string,
+  ): Promise<Record<string, unknown>> {
     const rantingId = dto.rantingId || scope?.rantingId;
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        namaLengkap: dto.namaLengkap,
-        role: dto.role as never,
-        rantingId,
-        passwordHash,
-      },
-    });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: _, ...result } = user;
 
-    const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(result.email)}`;
-    this.sendWelcomeEmail(result.email, result.namaLengkap, result.role, setPasswordUrl);
-
-    return { success: true, data: result, message: 'User berhasil dibuat' };
+    return {
+      email: dto.email,
+      namaLengkap: dto.namaLengkap,
+      role: dto.role,                    // ← no more `as never`
+      rantingId,
+      passwordHash,
+    };
   }
 
-  private sendWelcomeEmail(email: string, nama: string, role: string, setPasswordUrl: string) {
+  /**
+   * After create: send welcome email with password setup link.
+   * Fails silently — just logs a warning.
+   */
+  protected async afterCreate(
+    result: any,
+    _dto: CreateUserDto,
+  ): Promise<void> {
+    const setPasswordUrl = `${env.frontendUrl}/forgot-password?email=${encodeURIComponent(result.email)}`;
+    this.sendWelcomeEmail(result.email, result.namaLengkap, result.role, setPasswordUrl);
+  }
+
+  /**
+   * Before update: sparse field mapping with bcrypt for password changes.
+   * Only includes fields that are explicitly provided.
+   */
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateUserDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
+    if (dto.role !== undefined) data.role = dto.role;              // ← no more `as never`
+    if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
+    return data;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  STANDARD CRUD
+  // ═══════════════════════════════════════════════════════════
+
+  async findAll(query: UserFilterDto, scope?: UserScope) {
+    return this.baseFindAll(
+      `users:list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}`,
+      async () => {
+        const where: Record<string, unknown> = {};
+
+        // Search & role filters
+        if (query.role) where.role = query.role;
+        if (query.search) where.namaLengkap = { contains: query.search };
+
+        // Scope filtering — User has a direct `rantingId` field AND
+        // a `ranting` relation for wilayah/distrik level filtering.
+        Object.assign(where, this.buildScopeFilter(scope));
+
+        return where;
+      },
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          email: true,
+          namaLengkap: true,
+          role: true,
+          rantingId: true,
+          isActive: true,
+          createdAt: true,
+        },
+      },
+    );
+  }
+
+  async findOne(id: string, scope?: UserScope) {
+    // baseFindOne handles scope verification + NotFoundException
+    // select excludes passwordHash from response
+    return this.baseFindOne(id, scope, undefined, {
+      id: true,
+      email: true,
+      namaLengkap: true,
+      role: true,
+      rantingId: true,
+      isActive: true,
+      createdAt: true,
+    });
+  }
+
+  async create(dto: CreateUserDto, scope?: UserScope, userId?: string) {
+    return this.baseCreate(dto, scope, userId, 'User berhasil dibuat');
+  }
+
+  async update(id: string, dto: UpdateUserDto, scope?: UserScope) {
+    return this.baseUpdate(id, dto, scope, 'User berhasil diperbarui');
+  }
+
+  /**
+   * Soft-delete: set isActive = false (not a real delete).
+   * Overrides baseRemove because we use `isActive` instead of `deletedAt`.
+   */
+  async remove(id: string, scope?: UserScope) {
+    await this.verifyScope(id, scope);
+    await this.prismaDelegate.update({
+      where: { id },
+      data: { isActive: false },
+    });
+    this.invalidateCache();
+    return { message: 'User dinonaktifkan' };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PRIVATE HELPERS
+  // ═══════════════════════════════════════════════════════════
+
+  private sendWelcomeEmail(
+    email: string,
+    nama: string,
+    role: string,
+    setPasswordUrl: string,
+  ): void {
     const { subject, html } = userWelcomeEmail(nama, email, role, setPasswordUrl);
     this.mailService
       .sendMail({
@@ -114,49 +181,5 @@ export class UsersService {
       .catch(() => {
         this.logger.warn(`Failed to send welcome email to user ${email}`);
       });
-  }
-
-  async update(id: string, dto: UpdateUserDto, scope?: UserScope) {
-    if (scope) {
-      await this.scopeHelper.verifyResourceAccess(
-        this.prisma,
-        scope,
-        id,
-        (prisma, rid) =>
-          prisma.user.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-        'User tidak ditemukan',
-      );
-    }
-
-    const data: Record<string, unknown> = {};
-    if (dto.email) data.email = dto.email;
-    if (dto.namaLengkap) data.namaLengkap = dto.namaLengkap;
-    if (dto.role) data.role = dto.role;
-    if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
-    if (dto.isActive !== undefined) data.isActive = dto.isActive;
-    if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
-
-    const user = await this.prisma.user.update({
-      where: { id },
-      data,
-      select: { id: true, email: true, namaLengkap: true, role: true, isActive: true },
-    });
-    return { success: true, data: user, message: 'User berhasil diperbarui' };
-  }
-
-  async remove(id: string, scope?: UserScope) {
-    if (scope) {
-      await this.scopeHelper.verifyResourceAccess(
-        this.prisma,
-        scope,
-        id,
-        (prisma, rid) =>
-          prisma.user.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-        'User tidak ditemukan',
-      );
-    }
-
-    await this.prisma.user.update({ where: { id }, data: { isActive: false } });
-    return { success: true, message: 'User dinonaktifkan' };
   }
 }

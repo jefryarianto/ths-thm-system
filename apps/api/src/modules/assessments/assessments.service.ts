@@ -154,7 +154,6 @@ export class AssessmentsService {
               aspekId: aspek.id,
               kodeItem,
               namaItem: row.item.trim(),
-              deskripsi: row.deskripsi || null,
               skorMaksimal: row.skorMaksimal || 100,
               bobot: 1,
               urutan,

@@ -50,11 +50,9 @@ export class ReportsController {
       {} as Record<string, number>,
     );
 
-    const result = Object.entries(grouped)
+    return Object.entries(grouped)
       .map(([month, count]) => ({ month, count }))
       .sort((a, b) => a.month.localeCompare(b.month));
-
-    return { success: true, data: result };
   }
 
   @Get('chart/training-attendance')
@@ -82,11 +80,9 @@ export class ReportsController {
       {} as Record<string, number>,
     );
 
-    const result = Object.entries(monthly)
+    return Object.entries(monthly)
       .map(([month, count]) => ({ month, count }))
       .sort((a, b) => a.month.localeCompare(b.month));
-
-    return { success: true, data: result };
   }
 
   @Get('export/:type')

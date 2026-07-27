@@ -86,7 +86,7 @@ export class DocumentsController {
   @RequireScope('branch')
   async estimateBatch(@Query() q: BatchEstimateQueryDto) {
     const count = await this.service.estimateBatch(q.range, q.rantingId);
-    return { success: true, data: { count } };
+    return { count };
   }
 
   @Get('batch/list')
@@ -120,7 +120,7 @@ export class DocumentsController {
     if (!progress) {
       return { success: false, message: 'Batch tidak ditemukan' };
     }
-    return { success: true, data: progress };
+    return progress;
   }
 
   @Get('batch/:batchId/export')
@@ -143,7 +143,6 @@ export class DocumentsController {
   async retryBatch(@Param('batchId') batchId: string, @Body() dto: BatchRetryDto) {
     const result = await this.batchService.retryBatch(batchId, dto.jobIds);
     return {
-      success: true,
       data: result,
       message: `${result.retried} job di-queue ulang`,
     };
@@ -159,7 +158,7 @@ export class DocumentsController {
     if (!cancelled) {
       return { success: false, message: 'Batch tidak ditemukan atau sudah selesai' };
     }
-    return { success: true, message: 'Batch dibatalkan' };
+    return { message: 'Batch dibatalkan' };
   }
 
   @Patch('batch/:batchId/cancel')

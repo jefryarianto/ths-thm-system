@@ -6,6 +6,9 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 export interface Reward {
@@ -32,20 +35,60 @@ export interface Redemption {
   createdAt: string;
 }
 
+export interface CreateRewardInput {
+  name: string;
+  description?: string;
+  icon?: string;
+  pointCost: number;
+  stock?: number;
+}
+
+export interface UpdateRewardInput {
+  name?: string;
+  description?: string;
+  icon?: string;
+  pointCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
 @Injectable()
-export class RewardsService {
+export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRewardInput> {
   constructor(
-    private readonly prisma: PrismaService,
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
     @Inject(forwardRef(() => NotificationsService))
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'gamificationReward',
+      prefix: 'rewards:',
+      notFound: 'Reward tidak ditemukan',
+    });
+  }
 
-  /** Get all active rewards */
+  // ── Hook: transform DTO before create ──────────────
+
+  protected async beforeCreate(
+    dto: CreateRewardInput,
+  ): Promise<Record<string, unknown>> {
+    return {
+      name: dto.name,
+      description: dto.description ?? null,
+      icon: dto.icon || '🎁',
+      pointCost: dto.pointCost,
+      stock: dto.stock ?? 0,
+    };
+  }
+
+  // ── CRUD: Get all active rewards ───────────────────
+
   async getRewards(): Promise<Reward[]> {
-    const rewards = await this.prisma.gamificationReward.findMany({
+    const rewards = await this.prismaDelegate.findMany({
       orderBy: { pointCost: 'asc' },
     });
-    return rewards.map((r) => ({
+    return rewards.map((r: any) => ({
       id: r.id,
       name: r.name,
       description: r.description ?? undefined,
@@ -57,81 +100,37 @@ export class RewardsService {
     }));
   }
 
-  /** Create a new reward (admin) */
-  async createReward(data: {
-    name: string;
-    description?: string;
-    icon?: string;
-    pointCost: number;
-    stock?: number;
-  }): Promise<Reward> {
-    const reward = await this.prisma.gamificationReward.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        icon: data.icon || '🎁',
-        pointCost: data.pointCost,
-        stock: data.stock ?? 0,
-      },
-    });
-    return {
-      id: reward.id,
-      name: reward.name,
-      description: reward.description ?? undefined,
-      icon: reward.icon,
-      pointCost: reward.pointCost,
-      stock: reward.stock,
-      isActive: reward.isActive,
-      createdAt: reward.createdAt.toISOString(),
-    };
+  // ── CRUD: Create reward ────────────────────────────
+
+  async createReward(data: CreateRewardInput): Promise<Reward> {
+    const result = await this.baseCreate(data, undefined, undefined, 'Reward berhasil dibuat');
+    return this.toRewardDto((result as any).data);
   }
 
-  /** Update a reward (admin) */
-  async updateReward(
-    id: string,
-    data: Partial<{
-      name: string;
-      description: string;
-      icon: string;
-      pointCost: number;
-      stock: number;
-      isActive: boolean;
-    }>,
-  ): Promise<Reward> {
-    const existing = await this.prisma.gamificationReward.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Reward tidak ditemukan');
+  // ── CRUD: Update reward ────────────────────────────
 
-    const reward = await this.prisma.gamificationReward.update({
-      where: { id },
-      data,
-    });
-    return {
-      id: reward.id,
-      name: reward.name,
-      description: reward.description ?? undefined,
-      icon: reward.icon,
-      pointCost: reward.pointCost,
-      stock: reward.stock,
-      isActive: reward.isActive,
-      createdAt: reward.createdAt.toISOString(),
-    };
+  async updateReward(id: string, data: UpdateRewardInput): Promise<Reward> {
+    const result = await this.baseUpdate(id, data, undefined, 'Reward berhasil diperbarui');
+    return this.toRewardDto((result as any).data);
   }
 
-  /** Delete a reward (admin) */
+  // ── CRUD: Delete reward ────────────────────────────
+
   async deleteReward(id: string): Promise<void> {
-    const existing = await this.prisma.gamificationReward.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Reward tidak ditemukan');
-    await this.prisma.gamificationReward.delete({ where: { id } });
+    await this.baseRemove(id, undefined, 'Reward berhasil dihapus');
   }
 
-  /** Redeem a reward with points */
+  // ── Domain: Redeem reward with points ──────────────
+
   async redeemReward(anggotaId: string, rewardId: string): Promise<Redemption> {
-    const reward = await this.prisma.gamificationReward.findUnique({ where: { id: rewardId } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reward = await (this.prisma as any).gamificationReward.findUnique({ where: { id: rewardId } });
     if (!reward) throw new NotFoundException('Reward tidak ditemukan');
     if (!reward.isActive) throw new BadRequestException('Reward tidak aktif');
     if (reward.stock <= 0) throw new BadRequestException('Stok reward habis');
 
-    const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const profile = await (this.prisma as any).gamificationProfile.findUnique({ where: { anggotaId } });
     if (!profile) throw new NotFoundException('Profil gamifikasi tidak ditemukan');
     if (profile.points < reward.pointCost) {
       throw new BadRequestException(
@@ -139,9 +138,9 @@ export class RewardsService {
       );
     }
 
-    // Deduct points and stock in transaction
-    const [redemption] = await this.prisma.$transaction([
-      this.prisma.gamificationRedemption.create({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [redemption] = await (this.prisma as any).$transaction([
+      (this.prisma as any).gamificationRedemption.create({
         data: {
           rewardId: reward.id,
           anggotaId,
@@ -149,16 +148,15 @@ export class RewardsService {
           status: 'pending',
         },
       }),
-      this.prisma.gamificationProfile.update({
+      (this.prisma as any).gamificationProfile.update({
         where: { id: profile.id },
         data: { points: profile.points - reward.pointCost },
       }),
-      this.prisma.gamificationReward.update({
+      (this.prisma as any).gamificationReward.update({
         where: { id: reward.id },
         data: { stock: reward.stock - 1 },
       }),
-      // Record event
-      this.prisma.gamificationEvent.create({
+      (this.prisma as any).gamificationEvent.create({
         data: {
           profileId: profile.id,
           anggotaId,
@@ -169,7 +167,8 @@ export class RewardsService {
       }),
     ]);
 
-    const anggota = await this.prisma.anggota.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anggota = await (this.prisma as any).anggota.findUnique({
       where: { id: anggotaId },
       select: { namaLengkap: true },
     });
@@ -188,15 +187,17 @@ export class RewardsService {
     };
   }
 
-  /** Get redemptions for a member */
+  // ── Domain: Get member's redemptions ───────────────
+
   async getMemberRedemptions(anggotaId: string): Promise<Redemption[]> {
-    const redemptions = await this.prisma.gamificationRedemption.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const redemptions = await (this.prisma as any).gamificationRedemption.findMany({
       where: { anggotaId },
       orderBy: { createdAt: 'desc' },
       include: { reward: { select: { name: true, icon: true } } },
     });
 
-    return redemptions.map((r) => ({
+    return redemptions.map((r: any) => ({
       id: r.id,
       rewardId: r.rewardId,
       rewardName: r.reward.name,
@@ -209,9 +210,11 @@ export class RewardsService {
     }));
   }
 
-  /** Get all redemptions (admin) */
+  // ── Domain: Get all redemptions (admin) ────────────
+
   async getAllRedemptions(): Promise<Redemption[]> {
-    const redemptions = await this.prisma.gamificationRedemption.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const redemptions = await (this.prisma as any).gamificationRedemption.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
         reward: { select: { name: true, icon: true } },
@@ -219,7 +222,7 @@ export class RewardsService {
       },
     });
 
-    return redemptions.map((r) => ({
+    return redemptions.map((r: any) => ({
       id: r.id,
       rewardId: r.rewardId,
       rewardName: r.reward.name,
@@ -233,21 +236,25 @@ export class RewardsService {
     }));
   }
 
-  /** Update redemption status (admin) */
+  // ── Domain: Update redemption status ───────────────
+
   async updateRedemptionStatus(id: string, status: string, notes?: string): Promise<Redemption> {
-    const existing = await this.prisma.gamificationRedemption.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (this.prisma as any).gamificationRedemption.findUnique({
       where: { id },
       include: { reward: { select: { name: true, icon: true } } },
     });
     if (!existing) throw new NotFoundException('Redemption tidak ditemukan');
 
-    const updated = await this.prisma.gamificationRedemption.update({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updated = await (this.prisma as any).gamificationRedemption.update({
       where: { id },
       data: { status, notes },
       include: { reward: { select: { name: true, icon: true } } },
     });
 
-    const anggota = await this.prisma.anggota.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anggota = await (this.prisma as any).anggota.findUnique({
       where: { id: existing.anggotaId },
       select: { namaLengkap: true },
     });
@@ -278,7 +285,21 @@ export class RewardsService {
     };
   }
 
-  /** Send notification when redemption status changes */
+  // ── Private Helpers ─────────────────────────────────
+
+  private toRewardDto(reward: any): Reward {
+    return {
+      id: reward.id,
+      name: reward.name,
+      description: reward.description ?? undefined,
+      icon: reward.icon,
+      pointCost: reward.pointCost,
+      stock: reward.stock,
+      isActive: reward.isActive,
+      createdAt: reward.createdAt instanceof Date ? reward.createdAt.toISOString() : reward.createdAt,
+    };
+  }
+
   private async sendRedemptionNotification(
     anggotaId: string,
     rewardName: string,
@@ -288,14 +309,15 @@ export class RewardsService {
     notes?: string,
   ): Promise<void> {
     try {
-      // Find users in same ranting as the member
-      const anggota = await this.prisma.anggota.findUnique({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anggota = await (this.prisma as any).anggota.findUnique({
         where: { id: anggotaId },
         select: { rantingId: true, namaLengkap: true, email: true },
       });
       if (!anggota) return;
 
-      const users = await this.prisma.user.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const users = await (this.prisma as any).user.findMany({
         where: { rantingId: anggota.rantingId, isActive: true },
         select: { id: true },
       });
@@ -317,9 +339,9 @@ export class RewardsService {
         });
       }
 
-      // Also send personal notification to the member who redeemed
       if (anggota.email) {
-        const memberUser = await this.prisma.user.findFirst({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const memberUser = await (this.prisma as any).user.findFirst({
           where: { email: anggota.email, isActive: true },
           select: { id: true },
         });
@@ -341,7 +363,7 @@ export class RewardsService {
         }
       }
     } catch (error) {
-      console.warn('Failed to send redemption notification:', (error as Error).message);
+      this.logger.warn(`Failed to send redemption notification: ${(error as Error).message}`);
     }
   }
 }

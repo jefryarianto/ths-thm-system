@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { BaseCrudController } from '../../common/utils/base-crud.controller';
 import { OrgDocumentsService } from './org-documents.service';
 import {
   CreateOrgDocumentDto,
@@ -8,91 +9,98 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
 } from './dto/org-document.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 
 @ApiTags('Org-Documents')
 @Controller('org-documents')
 @ApiBearerAuth()
-export class OrgDocumentsController {
-  constructor(private readonly service: OrgDocumentsService) {}
+export class OrgDocumentsController extends BaseCrudController {
+  constructor(service: OrgDocumentsService) {
+    super(service);
+  }
+
+  // ── CRUD overrides ──
+  // Before: @Roles(...) + @RequireScope('branch') + @ApiOperation(...) = 3 lines
+  // After:  @CrudAuth(...) = 1 line
 
   @Get()
-  @ApiOperation({ summary: 'Ambil semua dokumen organisasi' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil semua dokumen organisasi',
+  })
   findAll(@Query() q: OrgDocumentFilterDto) {
-    return this.service.findAll(q);
+    return super.findAll(q);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Ambil detail dokumen organisasi' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil detail dokumen organisasi',
+  })
   findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+    return super.findOne(id);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Tambah dokumen organisasi baru' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Tambah dokumen organisasi baru',
+  })
   create(@Body() dto: CreateOrgDocumentDto) {
-    return this.service.create(dto);
+    return super.create(dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Perbarui dokumen organisasi' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Perbarui dokumen organisasi',
+  })
   update(@Param('id') id: string, @Body() dto: UpdateOrgDocumentDto) {
-    return this.service.update(id, dto);
+    return super.update(id, dto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Hapus dokumen organisasi' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', {
+    summary: 'Hapus dokumen organisasi',
+  })
   remove(@Param('id') id: string) {
-    return this.service.remove(id);
+    return super.remove(id);
   }
 
+  // ── Category endpoints (domain methods) ──
+
   @Get('categories/list')
-  @ApiOperation({ summary: 'Ambil semua kategori dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil semua kategori dokumen',
+  })
   getCategories() {
     return this.service.getCategories();
   }
 
   @Get('categories/:id')
-  @ApiOperation({ summary: 'Ambil detail kategori dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Ambil detail kategori dokumen',
+  })
   getCategory(@Param('id') id: string) {
     return this.service.getCategory(id);
   }
 
   @Post('categories')
-  @ApiOperation({ summary: 'Tambah kategori dokumen baru' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Tambah kategori dokumen baru',
+  })
   createCategory(@Body() dto: CreateCategoryDto) {
     return this.service.createCategory(dto);
   }
 
   @Patch('categories/:id')
-  @ApiOperation({ summary: 'Perbarui kategori dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
+    summary: 'Perbarui kategori dokumen',
+  })
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.service.updateCategory(id, dto);
   }
 
   @Delete('categories/:id')
-  @ApiOperation({ summary: 'Hapus kategori dokumen' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', {
+    summary: 'Hapus kategori dokumen',
+  })
   deleteCategory(@Param('id') id: string) {
     return this.service.deleteCategory(id);
   }

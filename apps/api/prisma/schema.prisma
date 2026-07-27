@@ -254,6 +254,7 @@ model User {
   kegiatanDibuat              Kegiatan[]          @relation("KegiatanCreatedBy")
   kegiatanAdminKegiatan       Kegiatan[]          @relation("AdminKegiatan")
   penugasanPengujis           PenugasanPenguji[]
+  ujianPraktekPenilais        UjianPraktekPenilai[]
   latihansDipelatih           Latihan[]           @relation("LatihanPelatih")
   nilaiPendadaranPenguji      NilaiPendadaran[]   @relation("NilaiPendadaranPenguji")
   hasilPendadaranDivValidated HasilPendadaran[]   @relation("HasilPendadaranValidasi")
@@ -540,6 +541,7 @@ model ItemPenilaian {
 
   aspek            AspekPenilaian    @relation(fields: [aspekId], references: [id])
   nilaiPendadarans NilaiPendadaran[]
+  ujianPraktekItems UjianPraktekItem[]
 
   @@index([kodeItem])
   @@map("item_penilaian")

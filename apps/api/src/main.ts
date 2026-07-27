@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger-scope';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -40,6 +41,9 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  // Global exception filter — wraps errors in { success: false, message }
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Configure Socket.IO with Redis adapter for cross-instance WebSocket state
   app.useWebSocketAdapter(new RedisIoAdapter(app));

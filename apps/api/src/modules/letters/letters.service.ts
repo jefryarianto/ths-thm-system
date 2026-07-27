@@ -14,6 +14,7 @@ import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class LettersService {
+  private readonly CACHE_PREFIX = 'letters:';
   private readonly logger = new Logger(LettersService.name);
 
   constructor(
@@ -42,13 +43,14 @@ export class LettersService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      success: true,
       data: combined.slice(0, limit),
       meta: { total, page, limit, totalPages },
     };
   }
 
   async incomingFindAll(query: LetterFilterDto) {
+    const cacheKey = `${this.CACHE_PREFIX}incoming:${query.page || 1}:${query.limit || 10}`;
+    // Use prisma directly for paginated query — no cache for paginated results
     return paginate(
       this.prisma.suratMasuk,
       {},
@@ -59,7 +61,7 @@ export class LettersService {
   async incomingFindOne(id: string) {
     const letter = await this.prisma.suratMasuk.findUnique({ where: { id } });
     if (!letter) throw new NotFoundException('Surat tidak ditemukan');
-    return { success: true, data: letter };
+    return { data: letter };
   }
 
   async incomingCreate(dto: CreateIncomingLetterDto) {
@@ -74,7 +76,7 @@ export class LettersService {
         status: 'diterima',
       },
     });
-    return { success: true, data: letter, message: 'Surat masuk berhasil dicatat' };
+    return { data: letter, message: 'Surat masuk berhasil dicatat' };
   }
 
   async incomingUpdate(id: string, dto: UpdateIncomingLetterDto) {
@@ -87,12 +89,12 @@ export class LettersService {
     if (dto.fileScanPath) data.fileScanPath = dto.fileScanPath;
 
     const letter = await this.prisma.suratMasuk.update({ where: { id }, data });
-    return { success: true, data: letter, message: 'Surat masuk berhasil diperbarui' };
+    return { data: letter, message: 'Surat masuk berhasil diperbarui' };
   }
 
   async incomingRemove(id: string) {
     await this.prisma.suratMasuk.delete({ where: { id } });
-    return { success: true, message: 'Surat masuk berhasil dihapus' };
+    return { message: 'Surat masuk berhasil dihapus' };
   }
 
   async createDisposition(suratMasukId: string, dto: CreateDispositionDto) {
@@ -105,10 +107,9 @@ export class LettersService {
       },
     });
 
-    // Send disposition notification email
     this.sendDispositionEmail(suratMasukId, dto);
 
-    return { success: true, data: disposition, message: 'Disposisi berhasil dicatat' };
+    return { data: disposition, message: 'Disposisi berhasil dicatat' };
   }
 
   async outgoingFindAll(query: LetterFilterDto) {
@@ -122,7 +123,7 @@ export class LettersService {
   async outgoingFindOne(id: string) {
     const letter = await this.prisma.suratKeluar.findUnique({ where: { id } });
     if (!letter) throw new NotFoundException('Surat tidak ditemukan');
-    return { success: true, data: letter };
+    return { data: letter };
   }
 
   async outgoingCreate(dto: CreateOutgoingLetterDto) {
@@ -137,7 +138,7 @@ export class LettersService {
         status: 'draft',
       },
     });
-    return { success: true, data: letter, message: 'Draft surat keluar berhasil dibuat' };
+    return { data: letter, message: 'Draft surat keluar berhasil dibuat' };
   }
 
   async outgoingUpdate(id: string, dto: UpdateOutgoingLetterDto) {
@@ -150,12 +151,12 @@ export class LettersService {
     if (dto.status) data.status = dto.status;
 
     const letter = await this.prisma.suratKeluar.update({ where: { id }, data });
-    return { success: true, data: letter, message: 'Surat keluar berhasil diperbarui' };
+    return { data: letter, message: 'Surat keluar berhasil diperbarui' };
   }
 
   async outgoingRemove(id: string) {
     await this.prisma.suratKeluar.delete({ where: { id } });
-    return { success: true, message: 'Surat keluar berhasil dihapus' };
+    return { message: 'Surat keluar berhasil dihapus' };
   }
 
   async outgoingSend(id: string) {
@@ -163,13 +164,20 @@ export class LettersService {
       where: { id },
       data: { status: 'terkirim' },
     });
-    return { success: true, data: letter, message: 'Surat berhasil dikirim' };
+    return { data: letter, message: 'Surat berhasil dikirim' };
   }
 
   async incomingExport() {
     const letters = await this.prisma.suratMasuk.findMany();
-    return { success: true, data: letters };
+    return { data: letters };
   }
+
+  async outgoingExport() {
+    const letters = await this.prisma.suratKeluar.findMany();
+    return { data: letters };
+  }
+
+  // ── Private Helpers ─────────────────────────────────
 
   private async sendDispositionEmail(suratMasukId: string, dto: CreateDispositionDto) {
     try {
@@ -215,10 +223,5 @@ export class LettersService {
     } catch (error) {
       this.logger.warn(`Failed to send disposition email: ${(error as Error).message}`);
     }
-  }
-
-  async outgoingExport() {
-    const letters = await this.prisma.suratKeluar.findMany();
-    return { success: true, data: letters };
   }
 }

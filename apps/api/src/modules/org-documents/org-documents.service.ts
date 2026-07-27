@@ -1,5 +1,8 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import {
   CreateOrgDocumentDto,
@@ -8,97 +11,115 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
 } from './dto/org-document.dto';
-import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
-export class OrgDocumentsService {
-  private readonly logger = new Logger(OrgDocumentsService.name);
-
+export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, UpdateOrgDocumentDto> {
   constructor(
-    private readonly prisma: PrismaService,
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
     private readonly mailService: MailService,
-  ) {}
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'dokumenOrganisasi',
+      prefix: 'org-documents:',
+      notFound: 'Dokumen tidak ditemukan',
+    });
+  }
+
+  // ── Hook: notify admins after create ─────────────────
+
+  protected async afterCreate(
+    result: any,
+    dto: CreateOrgDocumentDto,
+  ): Promise<void> {
+    this.notifyAdminsNewDocument(dto.judul || 'Dokumen Baru');
+  }
+
+  // ── CRUD Overrides ──────────────────────────────────
 
   async findAll(query: OrgDocumentFilterDto) {
-    const where: Record<string, unknown> = {};
-    if (query.kategoriId) where.kategoriId = query.kategoriId;
-    if (query.search) where.judul = { contains: query.search };
+    const cacheKey = `${this.CACHE_PREFIX}list:${query.page || 1}:${query.limit || 10}:${query.kategoriId || ''}:${query.search || ''}`;
 
-    return paginate(this.prisma.dokumenOrganisasi, where, {
-      page: query.page,
-      limit: query.limit,
-      orderBy: { createdAt: 'desc' },
-      include: { kategori: true, uploader: { select: { id: true, namaLengkap: true } } },
-    });
+    return this.baseFindAll(
+      cacheKey,
+      async () => {
+        const where: Record<string, unknown> = {};
+        if (query.kategoriId) where.kategoriId = query.kategoriId;
+        if (query.search) where.judul = { contains: query.search };
+        return where;
+      },
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { createdAt: 'desc' },
+        include: { kategori: true, uploader: { select: { id: true, namaLengkap: true } } },
+      },
+      30,
+    );
   }
 
   async findOne(id: string) {
-    const doc = await this.prisma.dokumenOrganisasi.findUnique({
-      where: { id },
-      include: { kategori: true },
+    return this.baseFindOne(id, undefined, {
+      kategori: true,
     });
-    if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
-    return { success: true, data: doc };
   }
 
   async create(dto: CreateOrgDocumentDto) {
-    const doc = await this.prisma.dokumenOrganisasi.create({
-      data: {
-        kategoriId: dto.kategoriId,
-        judul: dto.judul,
-        deskripsi: dto.deskripsi,
-        filePath: dto.filePath,
-        uploadedBy: dto.uploadedBy,
-      },
-    });
-
-    // Notify admins about new org document (method handles errors internally)
-    this.notifyAdminsNewDocument(dto.judul || 'Dokumen Baru');
-
-    return { success: true, data: doc, message: 'Dokumen berhasil diupload' };
+    return this.baseCreate(dto, undefined, undefined, 'Dokumen berhasil diupload');
   }
 
   async update(id: string, dto: UpdateOrgDocumentDto) {
-    const doc = await this.prisma.dokumenOrganisasi.update({ where: { id }, data: dto });
-    return { success: true, data: doc, message: 'Dokumen berhasil diperbarui' };
+    return this.baseUpdate(id, dto, undefined, 'Dokumen berhasil diperbarui');
   }
 
   async remove(id: string) {
-    await this.prisma.dokumenOrganisasi.delete({ where: { id } });
-    return { success: true, message: 'Dokumen berhasil dihapus' };
+    return this.baseRemove(id, undefined, 'Dokumen berhasil dihapus');
   }
+
+  // ── Domain: Categories ──────────────────────────────
 
   async getCategories() {
-    const categories = await this.prisma.kategoriDokumen.findMany({
+    const categories = await (this.prisma as any).kategoriDokumen.findMany({
       include: { _count: { select: { dokumen: true } } },
     });
-    return { success: true, data: categories };
-  }
-
-  async createCategory(dto: CreateCategoryDto) {
-    const cat = await this.prisma.kategoriDokumen.create({ data: dto });
-    return { success: true, data: cat, message: 'Kategori berhasil dibuat' };
+    return { data: categories };
   }
 
   async getCategory(id: string) {
-    const cat = await this.prisma.kategoriDokumen.findUnique({ where: { id } });
+    const cat = await (this.prisma as any).kategoriDokumen.findUnique({
+      where: { id },
+    });
     if (!cat) throw new NotFoundException('Kategori tidak ditemukan');
-    return { success: true, data: cat };
+    return { data: cat };
+  }
+
+  async createCategory(dto: CreateCategoryDto) {
+    const cat = await (this.prisma as any).kategoriDokumen.create({
+      data: dto as any,
+    });
+    return { data: cat, message: 'Kategori berhasil dibuat' };
   }
 
   async updateCategory(id: string, dto: UpdateCategoryDto) {
-    const cat = await this.prisma.kategoriDokumen.update({ where: { id }, data: dto });
-    return { success: true, data: cat, message: 'Kategori berhasil diperbarui' };
+    const cat = await (this.prisma as any).kategoriDokumen.update({
+      where: { id },
+      data: dto as Record<string, unknown>,
+    });
+    return { data: cat, message: 'Kategori berhasil diperbarui' };
   }
 
   async deleteCategory(id: string) {
-    await this.prisma.kategoriDokumen.delete({ where: { id } });
-    return { success: true, message: 'Kategori berhasil dihapus' };
+    await (this.prisma as any).kategoriDokumen.delete({ where: { id } });
+    return { message: 'Kategori berhasil dihapus' };
   }
+
+  // ── Private Helpers ─────────────────────────────────
 
   private async notifyAdminsNewDocument(judul: string): Promise<void> {
     try {
-      const admins = await this.prisma.user.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const admins = await (this.prisma as any).user.findMany({
         where: {
           role: { in: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'] },
           isActive: true,

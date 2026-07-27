@@ -1,12 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Inject,
-  forwardRef,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { attendanceConfirmationEmail } from '../../mail/email-templates';
 import {
@@ -18,140 +14,135 @@ import {
   UpdateEvaluationDto,
 } from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
-import { paginate } from '../../common/utils/pagination';
+
+const CRUD_CONFIG: CrudConfig = {
+  model: 'latihan',
+  prefix: 'trainings:',
+  notFound: 'Latihan tidak ditemukan',
+  softDelete: false,
+};
 
 @Injectable()
-export class TrainingsService {
-  private readonly logger = new Logger(TrainingsService.name);
-  private readonly CACHE_PREFIX = 'trainings:';
-
+export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateTrainingDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
-    private readonly cache: CacheService,
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
     private readonly mailService: MailService,
     private readonly memberMailService: MemberMailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
-  ) {}
+  ) {
+    super(prisma, scopeHelper, cache, CRUD_CONFIG);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  HOOKS — invoked automatically by base CRUD methods
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Transform DTO → Prisma data before creation.
+   * Handles auto-scope assignment, field validation, and date conversion.
+   */
+  protected async beforeCreate(
+    dto: CreateTrainingDto,
+    scope?: UserScope,
+    userId?: string,
+  ): Promise<Record<string, unknown>> {
+    // Resolve rantingId from DTO or user scope
+    const rantingId = dto.rantingId || scope?.rantingId;
+    if (!rantingId) throw new BadRequestException('rantingId diperlukan');
+    const pelatihId = userId || dto.pelatihId;
+    if (!pelatihId) throw new BadRequestException('pelatihId diperlukan');
+
+    return {
+      rantingId,
+      kegiatanId: dto.kegiatanId,
+      pelatihId,
+      hariTanggal: new Date(dto.hariTanggal),
+      lokasi: dto.lokasi,
+      jenisMateri: dto.jenisMateri,
+      hasilLatihanGlobal: dto.hasilLatihanGlobal,
+      rekomendasiLatihanBerikutnya: dto.rekomendasiBerikutnya,
+    };
+  }
+
+  /**
+   * Transform DTO → Prisma update data before updating.
+   * Only includes fields that are explicitly provided.
+   */
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateTrainingDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.lokasi) data.lokasi = dto.lokasi;
+    if (dto.jenisMateri) data.jenisMateri = dto.jenisMateri;
+    if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
+    if (dto.rekomendasiBerikutnya !== undefined) data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
+    if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
+    return data;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  STANDARD CRUD — minimal wrappers that delegate to base
+  // ═══════════════════════════════════════════════════════════
 
   async findAll(query: TrainingFilterDto, scope?: UserScope) {
     const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.rantingId || ''}`;
 
-    return this.cache.getOrSet(
+    return this.baseFindAll(
       cacheKey,
-      async () => {
-        const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
-        const where: Record<string, unknown> = { ...scopeFilter };
+      () => {
+        const where: Record<string, unknown> = this.buildScopeFilter(scope);
         if (query.rantingId) where.rantingId = query.rantingId;
-
-        return paginate(this.prisma.latihan, where, {
-          page: query.page,
-          limit: query.limit,
-          orderBy: { hariTanggal: 'desc' },
-          include: { ranting: true, pelatih: { select: { id: true, namaLengkap: true } } },
-        });
+        return where;
+      },
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { hariTanggal: 'desc' },
+        include: {
+          ranting: true,
+          pelatih: { select: { id: true, namaLengkap: true } },
+        },
       },
       30,
     );
   }
 
   async findOne(id: string, scope?: UserScope) {
-    const training = await this.prisma.latihan.findUnique({
-      where: { id },
-      include: {
-        ranting: true,
-        pelatih: { select: { id: true, namaLengkap: true } },
-        absensi: {
-          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
-        },
-        evaluasi: {
-          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
-        },
+    return this.baseFindOne(id, scope, {
+      ranting: true,
+      pelatih: { select: { id: true, namaLengkap: true } },
+      absensi: {
+        include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
+      },
+      evaluasi: {
+        include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
       },
     });
-    if (!training) throw new NotFoundException('Latihan tidak ditemukan');
-    if (
-      scope &&
-      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, training.rantingId))
-    ) {
-      throw new NotFoundException('Latihan tidak ditemukan');
-    }
-    return { success: true, data: training };
   }
 
   async create(dto: CreateTrainingDto, scope?: UserScope, userId?: string) {
-    if (scope?.rantingId && !dto.rantingId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (dto as any).rantingId = scope.rantingId;
-    }
-    // Resolve rantingId and pelatihId with runtime validation
-    const rantingId = dto.rantingId || scope?.rantingId;
-    if (!rantingId) throw new BadRequestException('rantingId diperlukan');
-    const pelatihId = userId || dto.pelatihId;
-    if (!pelatihId) throw new BadRequestException('pelatihId diperlukan');
-
-    const training = await this.prisma.latihan.create({
-      data: {
-        rantingId,
-        kegiatanId: dto.kegiatanId,
-        pelatihId,
-        hariTanggal: new Date(dto.hariTanggal),
-        lokasi: dto.lokasi,
-        jenisMateri: dto.jenisMateri,
-        hasilLatihanGlobal: dto.hasilLatihanGlobal,
-        rekomendasiLatihanBerikutnya: dto.rekomendasiBerikutnya,
-      },
-    });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: training, message: 'Latihan berhasil dibuat' };
+    // `beforeCreate` hook handles validation + data transformation
+    return this.baseCreate(dto, scope, userId, 'Latihan berhasil dibuat');
   }
 
   async update(id: string, dto: UpdateTrainingDto, scope?: UserScope) {
-    if (scope) {
-      await this.scopeHelper.verifyResourceAccess(
-        this.prisma,
-        scope,
-        id,
-        (prisma, rid) =>
-          prisma.latihan.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-        'Latihan tidak ditemukan',
-      );
-    }
-
-    const data: Record<string, unknown> = {};
-    if (dto.lokasi) data.lokasi = dto.lokasi;
-    if (dto.jenisMateri) data.jenisMateri = dto.jenisMateri;
-    if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
-    if (dto.rekomendasiBerikutnya !== undefined)
-      data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
-    if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
-
-    const training = await this.prisma.latihan.update({ where: { id }, data });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: training, message: 'Latihan berhasil diperbarui' };
+    // `beforeUpdate` hook handles field mapping
+    return this.baseUpdate(id, dto, scope, 'Latihan berhasil diperbarui');
   }
 
   async remove(id: string, scope?: UserScope) {
-    if (scope) {
-      await this.scopeHelper.verifyResourceAccess(
-        this.prisma,
-        scope,
-        id,
-        (prisma, rid) =>
-          prisma.latihan.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-        'Latihan tidak ditemukan',
-      );
-    }
-
-    await this.prisma.latihan.delete({ where: { id } });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, message: 'Latihan berhasil dihapus' };
+    return this.baseRemove(id, scope, 'Latihan berhasil dihapus');
   }
+
+  // ═══════════════════════════════════════════════════════════
+  //  DOMAIN METHODS — attendances, evaluations
+  // ═══════════════════════════════════════════════════════════
 
   async getAttendances(trainingId: string) {
     const attendances = await this.prisma.absensiLatihan.findMany({
@@ -159,7 +150,7 @@ export class TrainingsService {
       include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    return { success: true, data: attendances };
+    return attendances;
   }
 
   async recordAttendance(trainingId: string, dto: RecordAttendanceDto) {
@@ -179,51 +170,46 @@ export class TrainingsService {
 
     const hadir = dto.hadir !== false;
 
-    // Auto-award gamification points for training attendance
+    // Auto-award gamification points
     if (hadir && dto.anggotaId) {
       try {
         await this.gamificationService.recordTraining(dto.anggotaId);
       } catch (error) {
-        this.logger.warn(
-          'Failed to award gamification points for training:',
-          (error as Error).message,
-        );
+        this.logger.warn('Failed to award gamification points:', (error as Error).message);
       }
     }
 
-    // Send attendance confirmation email (method handles errors internally)
+    // Send confirmation email
     if (dto.anggotaId) {
       this.sendAttendanceConfirmation(dto.anggotaId, latihan.jenisMateri || '', hadir);
     }
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: attendance, message: 'Kehadiran tercatat' };
+    this.invalidateCache();
+    return { data: attendance, message: 'Kehadiran tercatat' };
   }
 
   async importAttendance(
     trainingId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Array<{ anggotaId?: string; memberId?: string; hadir?: boolean; catatan?: string }>,
   ) {
     const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
     if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
 
-    // Collect all valid anggotaIds for batch check
     const allAnggotaIds = data
       .map((row) => row.anggotaId || row.memberId)
       .filter(Boolean) as string[];
 
     if (allAnggotaIds.length === 0) {
-      return { success: true, data: { imported: 0 }, message: 'Tidak ada data kehadiran untuk diimpor' };
+      return { data: { imported: 0 }, message: 'Tidak ada data kehadiran untuk diimpor' };
     }
 
-    // Batch check existing attendance records (single query instead of N)
     const existingRecords = await this.prisma.absensiLatihan.findMany({
       where: { latihanId: trainingId, anggotaId: { in: allAnggotaIds } },
       select: { anggotaId: true },
     });
     const existingSet = new Set(existingRecords.map((r) => r.anggotaId));
 
-    // Filter only non-existing rows
     const toCreate = data
       .filter((row) => {
         const id = row.anggotaId || row.memberId;
@@ -236,13 +222,11 @@ export class TrainingsService {
         catatan: row.catatan,
       }));
 
-    // Batch insert all new attendance records (single query instead of N)
     if (toCreate.length > 0) {
       await this.prisma.absensiLatihan.createMany({ data: toCreate });
     }
 
     return {
-      success: true,
       data: { imported: toCreate.length },
       message: `${toCreate.length} kehadiran berhasil diimpor`,
     };
@@ -254,7 +238,7 @@ export class TrainingsService {
       include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    return { success: true, data: evaluations };
+    return evaluations;
   }
 
   async createEvaluation(trainingId: string, dto: CreateEvaluationDto) {
@@ -269,8 +253,8 @@ export class TrainingsService {
         catatan: dto.catatan,
       },
     });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: evaluation, message: 'Evaluasi berhasil disimpan' };
+    this.invalidateCache();
+    return { data: evaluation, message: 'Evaluasi berhasil disimpan' };
   }
 
   async updateEvaluation(trainingId: string, evaluationId: string, dto: UpdateEvaluationDto) {
@@ -282,27 +266,30 @@ export class TrainingsService {
       where: { id: evaluationId },
       data,
     });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: evaluation, message: 'Evaluasi berhasil diperbarui' };
+    this.invalidateCache();
+    return { data: evaluation, message: 'Evaluasi berhasil diperbarui' };
   }
 
   async removeEvaluation(trainingId: string, evaluationId: string) {
     await this.prisma.evaluasiLatihan.delete({ where: { id: evaluationId } });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, message: 'Evaluasi berhasil dihapus' };
+    this.invalidateCache();
+    return { message: 'Evaluasi berhasil dihapus' };
   }
 
-  private sendAttendanceConfirmation(anggotaId: string, jenisMateri: string, hadir: boolean): void {
+  // ── Private helpers ──────────────────────────────────────
+
+  private sendAttendanceConfirmation(
+    anggotaId: string,
+    jenisMateri: string,
+    hadir: boolean,
+  ): void {
     this.memberMailService.sendToMemberWithArgs(
       anggotaId,
       attendanceConfirmationEmail,
       [jenisMateri, hadir],
       { template: 'attendanceConfirmationEmail' },
       'trainings',
-      {
-        jenisMateri,
-        hadir: hadir ? 'Hadir' : 'Tidak Hadir',
-      },
+      { jenisMateri, hadir: hadir ? 'Hadir' : 'Tidak Hadir' },
     );
   }
 }

@@ -1,5 +1,8 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
 import {
@@ -10,97 +13,113 @@ import {
   GraduateDto,
 } from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { MemberMailService } from '../../common/services/member-mail.service';
-import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
-export class GraduationsService {
-  private readonly logger = new Logger(GraduationsService.name);
-
+export class GraduationsService extends BaseCrudService<CreateGraduationDto, UpdateGraduationDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
     private readonly mailService: MailService,
-    private readonly memberMailService: MemberMailService,
-  ) {}
-
-  async findAll(query: GraduationFilterDto, scope?: UserScope) {
-    const where: Record<string, unknown> = { tipe: 'pendadaran' };
-
-    if (scope?.rantingId) {
-      where.OR = [
-        { scopeType: 'ranting', scopeId: scope.rantingId },
-        { scopeType: 'unit_latihan', scopeId: scope.rantingId },
-      ];
-    } else if (scope?.wilayahId) {
-      where.OR = [{ scopeType: 'wilayah', scopeId: scope.wilayahId }, { scopeType: 'ranting' }];
-    } else if (scope?.distrikId) {
-      where.OR = [
-        { scopeType: 'distrik', scopeId: scope.distrikId },
-        { scopeType: 'wilayah' },
-        { scopeType: 'ranting' },
-      ];
-    }
-
-    if (query.status) where.status = query.status;
-
-    return paginate(this.prisma.kegiatan, where, {
-      page: query.page,
-      limit: query.limit,
-      orderBy: { tanggalMulai: 'desc' },
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'kegiatan',
+      prefix: 'graduations:',
+      notFound: 'Pendadaran tidak ditemukan',
+      scopeStrategy: 'kegiatan',
     });
   }
 
-  async findOne(id: string, scope?: UserScope) {
-    const graduation = await this.prisma.kegiatan.findUnique({ where: { id } });
-    if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
-    this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
-    return { success: true, data: graduation };
+  // ═══════════════════════════════════════════════════════════
+  //  HOOKS
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Before create: auto-resolve scope, convert dates, set fixed fields.
+   * Eliminates the `as never` cast on the entire data object.
+   */
+  protected async beforeCreate(
+    dto: CreateGraduationDto,
+    scope?: UserScope,
+    userId?: string,
+  ): Promise<Record<string, unknown>> {
+    const resolvedScopeType =
+      dto.scopeType ||
+      (scope?.rantingId ? 'ranting' : scope?.wilayahId ? 'wilayah' : scope?.distrikId ? 'distrik' : 'nasional');
+    const resolvedScopeId =
+      dto.scopeId || scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'national';
+
+    return {
+      nama: dto.nama,
+      lokasi: dto.lokasi,
+      tanggalMulai: new Date(dto.tanggalMulai),
+      // tanggalSelesai is required in schema — fall back to tanggalMulai if not provided
+      tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : new Date(dto.tanggalMulai),
+      scopeType: resolvedScopeType,
+      scopeId: resolvedScopeId,
+      createdBy: userId || 'system',
+      adminKegiatanId: dto.adminKegiatanId || null,
+      tipe: 'pendadaran',
+      status: 'draft',
+    };
   }
 
-  async update(id: string, dto: UpdateGraduationDto) {
-    const existing = await this.prisma.kegiatan.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Pendadaran tidak ditemukan');
-
+  /**
+   * Before update: sparse field mapping with date conversion.
+   */
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateGraduationDto,
+  ): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
     if (dto.nama !== undefined) data.nama = dto.nama;
     if (dto.lokasi !== undefined) data.lokasi = dto.lokasi;
     if (dto.tanggalMulai !== undefined) data.tanggalMulai = new Date(dto.tanggalMulai);
     if (dto.tanggalSelesai !== undefined) data.tanggalSelesai = new Date(dto.tanggalSelesai);
     if (dto.status !== undefined) data.status = dto.status;
+    return data;
+  }
 
-    const updated = await this.prisma.kegiatan.update({ where: { id }, data });
-    return { success: true, data: updated, message: 'Pendadaran berhasil diperbarui' };
+  // ═══════════════════════════════════════════════════════════
+  //  STANDARD CRUD
+  // ═══════════════════════════════════════════════════════════
+
+  async findAll(query: GraduationFilterDto, scope?: UserScope) {
+    return this.baseFindAll(
+      `graduations:list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || 'all'}`,
+      async () => {
+        const where: Record<string, unknown> = { tipe: 'pendadaran' };
+
+        // Apply kegiatan-based scope filter
+        Object.assign(where, this.buildKegiatanScopeFilter(scope));
+
+        if (query.status) where.status = query.status;
+
+        return where;
+      },
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { tanggalMulai: 'desc' },
+      },
+    );
+  }
+
+  async findOne(id: string, scope?: UserScope) {
+    return this.baseFindOne(id, scope);
   }
 
   async create(dto: CreateGraduationDto, scope?: UserScope, userId?: string) {
-    // Auto-resolve scope from user context if not explicitly provided
-    const resolvedScopeType = dto.scopeType || (scope?.rantingId ? 'ranting' : scope?.wilayahId ? 'wilayah' : scope?.distrikId ? 'distrik' : 'nasional');
-    const resolvedScopeId = dto.scopeId || scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'national';
-
-    const graduation = await this.prisma.kegiatan.create({
-      data: {
-        nama: dto.nama,
-        lokasi: dto.lokasi,
-        tanggalMulai: new Date(dto.tanggalMulai),
-        // tanggalSelesai is required in schema — fall back to tanggalMulai if not provided
-        tanggalSelesai: dto.tanggalSelesai ? new Date(dto.tanggalSelesai) : new Date(dto.tanggalMulai),
-        scopeType: resolvedScopeType as
-          | 'nasional'
-          | 'distrik'
-          | 'wilayah'
-          | 'ranting'
-          | 'unit_latihan',
-        scopeId: resolvedScopeId,
-        createdBy: userId || 'system',
-        adminKegiatanId: dto.adminKegiatanId || null,
-        tipe: 'pendadaran',
-        status: 'draft',
-      } as never,
-    });
-    return { success: true, data: graduation, message: 'Pendadaran berhasil dibuat' };
+    return this.baseCreate(dto, scope, userId, 'Pendadaran berhasil dibuat');
   }
+
+  async update(id: string, dto: UpdateGraduationDto, scope?: UserScope) {
+    return this.baseUpdate(id, dto, scope, 'Pendadaran berhasil diperbarui');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  DOMAIN METHODS
+  // ═══════════════════════════════════════════════════════════
 
   async registerParticipant(graduationId: string, dto: RegisterParticipantDto) {
     const candidate = await this.prisma.calonAnggota.update({
@@ -112,7 +131,7 @@ export class GraduationsService {
       this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
     }
 
-    return { success: true, data: candidate, message: 'Peserta berhasil didaftarkan' };
+    return { data: candidate, message: 'Peserta berhasil didaftarkan' };
   }
 
   async unregisterParticipant(_graduationId: string, dto: RegisterParticipantDto) {
@@ -120,7 +139,8 @@ export class GraduationsService {
       where: { id: dto.candidateId },
       data: { status: 'diusulkan' },
     });
-    return { success: true, message: 'Peserta berhasil dibatalkan' };
+
+    return { message: 'Peserta berhasil dibatalkan' };
   }
 
   async getParticipants(_graduationId: string) {
@@ -128,7 +148,8 @@ export class GraduationsService {
       where: { status: 'mengikuti_pendadaran' },
       include: { ranting: true },
     });
-    return { success: true, data: participants };
+
+    return participants;
   }
 
   async importParticipants(
@@ -151,7 +172,8 @@ export class GraduationsService {
         imported++;
       }
     }
-    return { success: true, data: { imported }, message: `${imported} peserta berhasil diimpor` };
+
+    return { data: { imported }, message: `${imported} peserta berhasil diimpor` };
   }
 
   async graduate(graduationId: string, dto: GraduateDto, scope?: UserScope) {
@@ -191,7 +213,7 @@ export class GraduationsService {
       }
     }
 
-    return { success: true, message: 'Hasil pendadaran berhasil disimpan' };
+    return { message: 'Hasil pendadaran berhasil disimpan' };
   }
 
   async generateDocuments(graduationId: string) {
@@ -200,10 +222,13 @@ export class GraduationsService {
     });
 
     return {
-      success: true,
       data: { totalGraduates: graduates.length, message: 'Dokumen dalam antrian generate' },
     };
   }
+
+  // ═══════════════════════════════════════════════════════════
+  //  PRIVATE HELPERS
+  // ═══════════════════════════════════════════════════════════
 
   private async sendGraduationRegisteredEmail(
     nama: string,

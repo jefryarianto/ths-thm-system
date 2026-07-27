@@ -1,118 +1,132 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 import { MailService } from '../../mail/mail.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { claimStatusEmail } from '../../mail/email-templates';
 import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { MemberMailService } from '../../common/services/member-mail.service';
-import { paginate } from '../../common/utils/pagination';
+
+const CLAIM_INCLUDE = {
+  anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
+};
 
 @Injectable()
-export class ClaimsService {
-  private readonly logger = new Logger(ClaimsService.name);
-
+export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
     private readonly mailService: MailService,
-    private readonly memberMailService: MemberMailService,
-  ) {}
-
-  private async verifyClaimAccess(id: string, scope?: UserScope) {
-    const claim = await this.prisma.klaim.findUnique({
-      where: { id },
-      include: {
-        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
-      },
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'klaim',
+      prefix: 'claims:',
+      notFound: 'Klaim tidak ditemukan',
+      scopeStrategy: 'anggota_indirect',
     });
-    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
-
-    if (
-      scope &&
-      !(await this.scopeHelper.hasAccessToResourceAsync(
-        this.prisma,
-        scope,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (claim as any).anggota?.rantingId,
-      ))
-    ) {
-      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-    }
-
-    return claim;
   }
 
+  // ── Hooks ──────────────────────────────────────────────
+
+  protected async beforeCreate(dto: CreateClaimDto): Promise<Record<string, unknown>> {
+    return {
+      ...dto,
+      status: 'pending',
+    };
+  }
+
+  protected async beforeUpdate(_id: string, dto: UpdateClaimDto): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.catatan !== undefined) data.catatan = dto.catatan;
+    return data;
+  }
+
+  // ── CRUD overrides ─────────────────────────────────────
+
   async findAll(query: ClaimFilterDto, scope?: UserScope) {
-    const where: Record<string, unknown> = {};
-    if (query.status) where.status = query.status;
-    if (query.tipe) where.tipe = query.tipe;
-
-    const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
-    Object.assign(where, scopeFilter);
-
-    return paginate(this.prisma.klaim, where, {
-      page: query.page,
-      limit: query.limit,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
+    return this.baseFindAll(
+      `claims:${JSON.stringify(query)}`,
+      async () => {
+        const where: Record<string, unknown> = {};
+        if (query.status) where.status = query.status;
+        if (query.tipe) where.tipe = query.tipe;
+        Object.assign(where, this.buildIndirectScopeFilter(scope, 'anggota'));
+        return where;
       },
-    });
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { createdAt: 'desc' },
+        include: CLAIM_INCLUDE,
+      },
+    );
   }
 
   async findOne(id: string, scope?: UserScope) {
-    const claim = await this.verifyClaimAccess(id, scope);
-    return { success: true, data: claim };
+    return this.baseFindOne(id, scope, CLAIM_INCLUDE);
   }
 
   async create(dto: CreateClaimDto) {
-    const claim = await this.prisma.klaim.create({
-      data: {
-        anggotaId: dto.anggotaId,
-        tipe: dto.tipe as never,
-        catatan: dto.catatan,
-        status: 'pending',
-      },
-    });
-    return { success: true, data: claim, message: 'Klaim berhasil diajukan' };
+    return this.baseCreate(dto, undefined, undefined, 'Klaim berhasil diajukan');
   }
 
   async update(id: string, dto: UpdateClaimDto, scope?: UserScope) {
-    await this.verifyClaimAccess(id, scope);
-
-    const data: Record<string, unknown> = {};
-    if (dto.catatan !== undefined) data.catatan = dto.catatan;
-    const claim = await this.prisma.klaim.update({ where: { id }, data });
-    return { success: true, data: claim, message: 'Klaim berhasil diperbarui' };
+    return this.baseUpdate(id, dto, scope, 'Klaim berhasil diperbarui');
   }
 
   async remove(id: string, scope?: UserScope) {
-    await this.verifyClaimAccess(id, scope);
-    await this.prisma.klaim.delete({ where: { id } });
-    return { success: true, message: 'Klaim berhasil dihapus' };
+    return this.baseRemove(id, scope, 'Klaim berhasil dihapus');
   }
 
+  // ── Domain Methods ─────────────────────────────────────
+
   async approve(id: string, scope?: UserScope) {
-    const claim = await this.verifyClaimAccess(id, scope);
-    await this.prisma.klaim.update({ where: { id }, data: { status: 'disetujui' } });
+    await this.verifyScope(id, scope);
+    const claim = await this.prismaDelegate.findUnique({
+      where: { id },
+      include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true } } },
+    });
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+
+    await this.prismaDelegate.update({ where: { id }, data: { status: 'disetujui' } });
     this.sendClaimStatusEmail(claim.anggota, 'disetujui');
-    return { success: true, message: 'Klaim disetujui, dokumen dalam antrian generate' };
+    this.invalidateCache();
+    return { message: 'Klaim disetujui, dokumen dalam antrian generate' };
   }
 
   async reject(id: string, reason?: string, scope?: UserScope) {
-    const claim = await this.verifyClaimAccess(id, scope);
-    await this.prisma.klaim.update({ where: { id }, data: { status: 'ditolak', catatan: reason } });
+    await this.verifyScope(id, scope);
+    const claim = await this.prismaDelegate.findUnique({
+      where: { id },
+      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
+    });
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+
+    const updateData: Record<string, unknown> = { status: 'ditolak' };
+    if (reason) updateData.catatan = reason;
+    await this.prismaDelegate.update({ where: { id }, data: updateData });
     this.sendClaimStatusEmail(claim.anggota, 'ditolak', reason);
-    return { success: true, message: reason || 'Klaim ditolak' };
+    this.invalidateCache();
+    return { message: reason || 'Klaim ditolak' };
   }
 
   async process(id: string, scope?: UserScope) {
-    const claim = await this.verifyClaimAccess(id, scope);
-    const updated = await this.prisma.klaim.update({ where: { id }, data: { status: 'diproses' } });
+    await this.verifyScope(id, scope);
+    const claim = await this.prismaDelegate.findUnique({
+      where: { id },
+      include: { anggota: { select: { id: true, namaLengkap: true, email: true, rantingId: true } } },
+    });
+    if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
+
+    const updated = await this.prismaDelegate.update({ where: { id }, data: { status: 'diproses' } });
     this.sendClaimStatusEmail(claim.anggota, 'diproses');
-    return { success: true, data: updated, message: 'Klaim sedang diproses' };
+    this.invalidateCache();
+    return { data: updated, message: 'Klaim sedang diproses' };
   }
+
+  // ── Email Helper ──────────────────────────────────────
 
   private sendClaimStatusEmail(
     anggota: { namaLengkap?: string; email?: string } | null | undefined,

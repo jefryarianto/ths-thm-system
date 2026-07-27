@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { RegistrationsService } from './registrations.service';
 import {
@@ -17,16 +16,14 @@ export class RegistrationsController {
   constructor(private readonly service: RegistrationsService) {}
 
   @Get()
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Daftar semua registrasi' })
   @ApiBearerAuth()
   findAll(@Query() q: RegistrationFilterDto) {
     return this.service.findAll(q);
   }
 
   @Get(':id')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Detail registrasi' })
   @ApiBearerAuth()
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
@@ -34,54 +31,47 @@ export class RegistrationsController {
 
   @Post()
   @Public()
-  @ApiOperation({ summary: 'Public registration — no auth required' })
   create(@Body() dto: CreateRegistrationDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui registrasi' })
   @ApiBearerAuth()
   update(@Param('id') id: string, @Body() dto: UpdateRegistrationDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus registrasi' })
   @ApiBearerAuth()
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
 
   @Post(':id/verify')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Verifikasi registrasi' })
   @ApiBearerAuth()
   verify(@Param('id') id: string) {
     return this.service.verify(id);
   }
 
   @Post(':id/approve')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Setujui registrasi' })
   @ApiBearerAuth()
   approve(@Param('id') id: string) {
     return this.service.approve(id);
   }
 
   @Post(':id/reject')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tolak registrasi' })
   @ApiBearerAuth()
   reject(@Param('id') id: string, @Body() b: RejectRegistrationDto) {
     return this.service.reject(id, b?.reason);
   }
 
   @Post('import')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Impor data registrasi' })
   @ApiBearerAuth()
   importCsv(@Body() importDto: { data: Record<string, unknown>[] }) {
     return this.service.importCsv(importDto.data);

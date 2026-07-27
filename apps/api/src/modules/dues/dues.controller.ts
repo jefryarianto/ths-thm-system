@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DuesService } from './dues.service';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import {
   CreateDueDto,
   UpdateDueDto,
@@ -9,7 +9,6 @@ import {
   BatchPaymentDto,
   PaymentConfirmationDto,
 } from './dto/dues.dto';
-import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Dues')
@@ -19,105 +18,85 @@ export class DuesController {
   constructor(private readonly service: DuesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Daftar semua iuran' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Daftar semua iuran' })
   findAll(@Query() query: DueFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(query, req.scope);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Buat iuran baru' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Buat iuran baru' })
   create(@Body() dto: CreateDueDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update iuran' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Update iuran' })
   update(@Param('id') id: string, @Body() dto: UpdateDueDto, @Req() req: ScopedRequest) {
     return this.service.update(id, dto, req.scope);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Hapus iuran' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus iuran' })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.remove(id, req.scope);
   }
 
   @Get('members/me')
-  @ApiOperation({ summary: 'Daftar iuran saya (anggota login)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar iuran saya (anggota login)' })
   getMyDues(@Req() req: ScopedRequest) {
     return this.service.getMyDues(req.user);
   }
 
   @Get('members/:memberId')
-  @ApiOperation({ summary: 'Daftar iuran per anggota' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar iuran per anggota' })
   getMemberDues(@Param('memberId') memberId: string) {
     return this.service.getMemberDues(memberId);
   }
 
   @Get('arrears')
-  @ApiOperation({ summary: 'Daftar iuran menunggak' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('district')
+  @CrudAuth('superadmin', 'admin_distrik', { scope: 'district', summary: 'Daftar iuran menunggak' })
   getArrears() {
-    return this.service.getArrears({});
+    return this.service.getArrears();
   }
 
   @Get('report')
-  @ApiOperation({ summary: 'Laporan iuran' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('district')
+  @CrudAuth('superadmin', 'admin_distrik', { scope: 'district', summary: 'Laporan iuran' })
   getReport() {
-    return this.service.getReport({});
+    return this.service.getReport();
   }
 
   @Get('report/export')
-  @ApiOperation({ summary: 'Export laporan iuran' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Export laporan iuran' })
   exportReport() {
-    return this.service.exportReport({});
+    return this.service.exportReport();
   }
 
   @Post('import')
-  @ApiOperation({ summary: 'Import iuran dari CSV' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Import iuran dari CSV' })
   importDues(@Body() importDto: { data: Record<string, unknown>[] }) {
     return this.service.importDues(importDto.data);
   }
 
   @Patch('batch')
-  @ApiOperation({ summary: 'Batch payment untuk banyak anggota' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Batch payment untuk banyak anggota' })
   batchPayment(@Body() dto: BatchPaymentDto) {
     return this.service.batchPayment(dto);
   }
 
   @Get('dashboard/stats')
-  @ApiOperation({ summary: 'Statistik dashboard iuran' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Statistik dashboard iuran' })
   getDashboardStats() {
     return this.service.getDashboardStats();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Detail iuran' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Detail iuran' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
   }
 
   @Post(':id/payments')
-  @ApiOperation({ summary: 'Konfirmasi pembayaran manual' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Konfirmasi pembayaran manual' })
   submitPaymentConfirmation(@Param('id') id: string, @Body() dto: PaymentConfirmationDto) {
     return this.service.submitPaymentConfirmation(id, dto);
   }

@@ -1,38 +1,112 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { welcomeMemberEmail, escapeHtml } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
-import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
-export class MembersService {
-  private readonly logger = new Logger(MembersService.name);
-  private readonly CACHE_PREFIX = 'members:';
-  private readonly CACHE_TTL = 30_000; // 30 seconds
-
+export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMemberDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
-    private readonly cache: CacheService,
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
     private readonly csvImportService: CsvImportService,
     private readonly memberMailService: MemberMailService,
     private readonly nraService: NraService,
-  ) {}
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'anggota',
+      prefix: 'members:',
+      notFound: 'Anggota tidak ditemukan',
+      softDelete: true,
+      scopeStrategy: 'ranting',
+    });
+  }
+
+  // ── Hook: transform DTO before create ────────────────────
+  // Assigns rantingId from scope, generates NRA, parses dates.
+
+  protected async beforeCreate(
+    dto: CreateMemberDto,
+    scope?: UserScope,
+  ): Promise<Record<string, unknown>> {
+    const rantingId = dto.rantingId || scope?.rantingId;
+
+    return {
+      ...dto,
+      rantingId,
+      tanggalLahir: dto.tanggalLahir
+        ? parseDateSafe(dto.tanggalLahir)
+        : undefined,
+      nomorAnggota: await this.nraService.generateMemberNumber(
+        rantingId || '',
+        dto.tahunDadar || undefined,
+      ),
+      statusData: 'complete',
+      statusValidasi: 'pending',
+    };
+  }
+
+  // ── Hook: side-effect after create ────────────────────────
+  // Sends welcome email if member has an email address.
+
+  protected async afterCreate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result: any,
+    _dto: CreateMemberDto,
+  ): Promise<void> {
+    if (result?.email) {
+      this.memberMailService.sendToMember(
+        result.id,
+        (nama: string) => welcomeMemberEmail(nama),
+        { template: 'welcomeMemberEmail', email: result.email },
+        'members',
+      );
+    }
+  }
+
+  // ── Hook: transform DTO before update ────────────────────
+  // Only includes fields that are defined, parses tanggalLahir.
+
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateMemberDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
+    if (dto.jenisKelamin !== undefined) data.jenisKelamin = dto.jenisKelamin;
+    if (dto.tempatLahir !== undefined) data.tempatLahir = dto.tempatLahir;
+    if (dto.tanggalLahir !== undefined) {
+      data.tanggalLahir = parseDateSafe(dto.tanggalLahir);
+    }
+    if (dto.tempatDadar !== undefined) data.tempatDadar = dto.tempatDadar;
+    if (dto.tahunDadar !== undefined) data.tahunDadar = dto.tahunDadar;
+    if (dto.alamat !== undefined) data.alamat = dto.alamat;
+    if (dto.noHp !== undefined) data.noHp = dto.noHp;
+    if (dto.email !== undefined) data.email = dto.email;
+    if (dto.tingkat !== undefined) data.tingkat = dto.tingkat;
+    if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
+    if (dto.fotoPath !== undefined) data.fotoPath = dto.fotoPath;
+    return data;
+  }
+
+  // ── CRUD: findAll ────────────────────────────────────────
+  // Override for custom caching key + search/filter + deletedAt.
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}`;
+    const cacheKey = `members:list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}`;
 
-    return this.cache.getOrSet(
+    return this.baseFindAll(
       cacheKey,
       async () => {
-        const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+        const scopeFilter = this.buildScopeFilter(scope);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const where: any = { deletedAt: null, ...scopeFilter };
 
@@ -47,19 +121,25 @@ export class MembersService {
         if (filter.statusKeanggotaan) where.statusKeanggotaan = filter.statusKeanggotaan;
         if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;
 
-        return paginate(this.prisma.anggota, where, {
-          page: filter.page,
-          limit: filter.limit,
-          orderBy: { createdAt: 'desc' },
-          include: { ranting: true },
-        });
+        return where;
       },
-      this.CACHE_TTL,
+      {
+        page: filter.page,
+        limit: filter.limit,
+        orderBy: { createdAt: 'desc' },
+        include: { ranting: true },
+      },
+      30,
     );
   }
 
+  // ── CRUD: findOne ────────────────────────────────────────
+  // Override for custom includes + deletedAt filter.
+
   async findOne(id: string, scope?: UserScope) {
-    const member = await this.prisma.anggota.findUnique({
+    // Use prismaDelegate directly to pass deletedAt in where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const member = await (this.prisma as any).anggota.findUnique({
       where: { id, deletedAt: null },
       include: {
         ranting: { include: { wilayah: { include: { distrik: true } } } },
@@ -67,50 +147,22 @@ export class MembersService {
         iuran: true,
       },
     });
-
-    if (!member) throw new NotFoundException('Anggota tidak ditemukan');
-
-    // Verify scope access (async for region/district hierarchy check)
-    if (
-      scope &&
-      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
-    ) {
-      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    if (!member) {
+      throw new NotFoundException('Anggota tidak ditemukan');
     }
 
-    return { success: true, data: member };
+    if (scope) {
+      await this.verifyScope(id, scope);
+    }
+
+    return member;
   }
 
+  // ── CRUD: create (with P2002 handling) ───────────────────
+
   async create(dto: CreateMemberDto, scope?: UserScope) {
-    // Auto-assign rantingId from scope for branch-level users
-    if (scope?.rantingId && !dto.rantingId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (dto as any).rantingId = scope.rantingId;
-    }
     try {
-      const member = await this.prisma.anggota.create({
-        data: {
-          ...dto,
-          tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
-          nomorAnggota: await this.nraService.generateMemberNumber(dto.rantingId || scope?.rantingId || ''),
-          statusData: 'complete',
-          statusValidasi: 'pending',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
-      });
-
-      // Send welcome email if email address is provided
-      if (member.email) {
-        this.memberMailService.sendToMember(
-          member.id,
-          (nama) => welcomeMemberEmail(nama),
-          { template: 'welcomeMemberEmail', email: member.email },
-          'members',
-        );
-      }
-
-      this.cache.invalidatePrefix(this.CACHE_PREFIX);
-      return { success: true, data: member, message: 'Anggota berhasil ditambahkan' };
+      return await this.baseCreate(dto, scope, undefined, 'Anggota berhasil ditambahkan');
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('Email sudah terdaftar sebagai anggota');
@@ -119,46 +171,19 @@ export class MembersService {
     }
   }
 
+  // ── CRUD: update ─────────────────────────────────────────
+
   async update(id: string, dto: UpdateMemberDto, scope?: UserScope) {
-    await this.scopeHelper.verifyResourceAccess(
-      this.prisma,
-      scope,
-      id,
-      (prisma, rid) =>
-        prisma.anggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-      'Anggota tidak ditemukan',
-    );
-
-    const updated = await this.prisma.anggota.update({
-      where: { id },
-      data: {
-        ...dto,
-        tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
-      } as any,
-    });
-
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: updated, message: 'Data anggota berhasil diperbarui' };
+    return this.baseUpdate(id, dto, scope, 'Data anggota berhasil diperbarui');
   }
+
+  // ── CRUD: remove (soft delete via config) ────────────────
 
   async remove(id: string, scope?: UserScope) {
-    await this.scopeHelper.verifyResourceAccess(
-      this.prisma,
-      scope,
-      id,
-      (prisma, rid) =>
-        prisma.anggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-      'Anggota tidak ditemukan',
-    );
-
-    await this.prisma.anggota.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
-
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, message: 'Anggota berhasil dihapus' };
+    return this.baseRemove(id, scope, 'Anggota berhasil dihapus');
   }
+
+  // ── Domain: import CSV ───────────────────────────────────
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async importCsv(data: any[], scope?: UserScope) {
@@ -195,7 +220,8 @@ export class MembersService {
           );
         }
 
-        const member = await this.prisma.anggota.create({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const member = await (this.prisma as any).anggota.create({
           data: {
             nomorAnggota,
             namaLengkap: row.nama_lengkap || row.nama || row.name,
@@ -218,14 +244,11 @@ export class MembersService {
           } as any,
         });
 
-        // Intra-CSV duplicates tracked automatically by CsvImportService on success
-
         if (missingFields.length > 0) {
-          // Kirim notifikasi data incomplete
           if (member.email) {
             this.memberMailService.sendToMember(
               member.id,
-              (nama) => ({
+              (nama: string) => ({
                 subject: 'Data Anggota Belum Lengkap — THS-THM',
                 html: `<h2>Halo ${escapeHtml(nama)},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${escapeHtml(f.replace(/_/g, ' '))}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
                 text: `Halo ${nama},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke sistem untuk melengkapi data.`,
@@ -234,15 +257,13 @@ export class MembersService {
               'members',
             );
           }
-          // Incomplete rows counted separately by CsvImportService
           return { success: true, skip: true };
         }
 
-        // Send welcome email
         if (member.email) {
           this.memberMailService.sendToMember(
             member.id,
-            (nama) => welcomeMemberEmail(nama),
+            (nama: string) => welcomeMemberEmail(nama),
             { template: 'welcomeMemberEmail', email: member.email },
             'members',
           );
@@ -252,13 +273,16 @@ export class MembersService {
       },
     });
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: results };
+    this.invalidateCache();
+    return { data: results };
   }
 
+  // ── Domain: export CSV ───────────────────────────────────
+
   async exportCsv(filter: MemberFilterDto, scope?: UserScope) {
-    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
-    const members = await this.prisma.anggota.findMany({
+    const scopeFilter = this.buildScopeFilter(scope);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const members = await (this.prisma as any).anggota.findMany({
       where: { deletedAt: null, ...scopeFilter },
       select: {
         nomorAnggota: true,
@@ -275,11 +299,14 @@ export class MembersService {
       take: 10_000,
     });
 
-    return { success: true, data: members };
+    return { data: members };
   }
 
+  // ── Domain: findByEmail ──────────────────────────────────
+
   async findByEmail(email: string) {
-    const member = await this.prisma.anggota.findFirst({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const member = await (this.prisma as any).anggota.findFirst({
       where: { email, deletedAt: null },
       include: {
         ranting: { include: { wilayah: { include: { distrik: true } } } },
@@ -290,26 +317,34 @@ export class MembersService {
       return { success: false, message: 'Anggota tidak ditemukan untuk email ini' };
     }
 
-    return { success: true, data: member };
+    return { data: member };
   }
+
+  // ── Domain: getDocuments ─────────────────────────────────
 
   async getDocuments(id: string) {
-    const documents = await this.prisma.dokumen.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const documents = await (this.prisma as any).dokumen.findMany({
       where: { anggotaId: id },
       orderBy: { createdAt: 'desc' },
     });
 
-    return { success: true, data: documents };
+    return { data: documents };
   }
+
+  // ── Domain: getDues ──────────────────────────────────────
 
   async getDues(id: string) {
-    const dues = await this.prisma.iuran.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dues = await (this.prisma as any).iuran.findMany({
       where: { anggotaId: id },
       orderBy: { createdAt: 'desc' },
     });
 
-    return { success: true, data: dues };
+    return { data: dues };
   }
+
+  // ── Private helpers ──────────────────────────────────────
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private validateCsvRow(row: any): string[] {
@@ -323,4 +358,12 @@ export class MembersService {
 
     return missing;
   }
+}
+
+/**
+ * Safely parse a date string — returns undefined for invalid dates.
+ */
+function parseDateSafe(value: string): Date | undefined {
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? undefined : d;
 }

@@ -8,7 +8,7 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ForumService } from './forum.service';
 import {
   CreateThreadDto,
@@ -19,7 +19,7 @@ import {
   UpdateCategoryDto,
   ThreadFilterDto,
 } from './dto/forum.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
@@ -32,36 +32,31 @@ export class ForumController {
   // ── Categories ────────────────────────────────────────
 
   @Get('categories')
-  @ApiOperation({ summary: 'Daftar kategori forum' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar kategori forum' })
   getCategories() {
     return this.service.getCategories();
   }
 
   @Get('categories/:id')
-  @ApiOperation({ summary: 'Detail kategori forum' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Detail kategori forum' })
   getCategory(@Param('id') id: string) {
     return this.service.getCategory(id);
   }
 
   @Post('categories')
-  @ApiOperation({ summary: 'Buat kategori forum (admin)' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Buat kategori forum (admin)' })
   createCategory(@Body() dto: CreateCategoryDto) {
     return this.service.createCategory(dto);
   }
 
   @Patch('categories/:id')
-  @ApiOperation({ summary: 'Perbarui kategori forum (admin)' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Perbarui kategori forum (admin)' })
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
     return this.service.updateCategory(id, dto);
   }
 
   @Delete('categories/:id')
-  @ApiOperation({ summary: 'Hapus kategori forum (admin)' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus kategori forum (admin)' })
   deleteCategory(@Param('id') id: string) {
     return this.service.deleteCategory(id);
   }
@@ -69,8 +64,7 @@ export class ForumController {
   // ── Threads ───────────────────────────────────────────
 
   @Get('categories/:categoryId/threads')
-  @ApiOperation({ summary: 'Thread dalam kategori' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Thread dalam kategori' })
   getThreads(
     @Param('categoryId') categoryId: string,
     @Query() filter: ThreadFilterDto,
@@ -79,22 +73,19 @@ export class ForumController {
   }
 
   @Get('threads/:id')
-  @ApiOperation({ summary: 'Detail thread + balasan' })
   @Public()
   getThread(@Param('id') id: string) {
     return this.service.getThread(id);
   }
 
   @Post('threads')
-  @ApiOperation({ summary: 'Buat thread baru' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Buat thread baru' })
   createThread(@Body() dto: CreateThreadDto, @CurrentUser() user: { id: string }) {
     return this.service.createThread(dto, user.id);
   }
 
   @Patch('threads/:id')
-  @ApiOperation({ summary: 'Perbarui thread' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Perbarui thread' })
   updateThread(
     @Param('id') id: string,
     @Body() dto: UpdateThreadDto,
@@ -104,22 +95,19 @@ export class ForumController {
   }
 
   @Patch('threads/:id/pin')
-  @ApiOperation({ summary: 'Pin/unpin thread (admin)' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Pin/unpin thread (admin)' })
   togglePin(@Param('id') id: string) {
     return this.service.togglePin(id);
   }
 
   @Patch('threads/:id/lock')
-  @ApiOperation({ summary: 'Lock/unlock thread (admin)' })
-  @Roles('superadmin', 'admin_distrik')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Lock/unlock thread (admin)' })
   toggleLock(@Param('id') id: string) {
     return this.service.toggleLock(id);
   }
 
   @Delete('threads/:id')
-  @ApiOperation({ summary: 'Hapus thread' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Hapus thread' })
   deleteThread(@Param('id') id: string) {
     return this.service.deleteThread(id);
   }
@@ -127,8 +115,7 @@ export class ForumController {
   // ── Posts ─────────────────────────────────────────────
 
   @Post('threads/:id/posts')
-  @ApiOperation({ summary: 'Balas thread' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Balas thread' })
   createPost(
     @Param('id') id: string,
     @Body() dto: CreatePostDto,
@@ -138,8 +125,7 @@ export class ForumController {
   }
 
   @Patch('posts/:id')
-  @ApiOperation({ summary: 'Perbarui balasan' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Perbarui balasan' })
   updatePost(
     @Param('id') id: string,
     @Body() dto: UpdatePostDto,
@@ -149,8 +135,7 @@ export class ForumController {
   }
 
   @Patch('posts/:id/solution')
-  @ApiOperation({ summary: 'Tandai sebagai solusi' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Tandai sebagai solusi' })
   markAsSolution(
     @Param('id') postId: string,
     @Query('threadId') threadId: string,
@@ -160,8 +145,7 @@ export class ForumController {
   }
 
   @Delete('posts/:id')
-  @ApiOperation({ summary: 'Hapus balasan' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Hapus balasan' })
   deletePost(@Param('id') id: string) {
     return this.service.deletePost(id);
   }

@@ -11,6 +11,7 @@ import { ScopeGuard } from './common/guards/scope.guard';
 import { ApiKeyStore, ApiKeyGuard } from './common/guards/api-key.guard';
 import { ScopeModule } from './common/scope.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { MembersModule } from './modules/members/members.module';
@@ -120,6 +121,10 @@ import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
     },
   ],
 })

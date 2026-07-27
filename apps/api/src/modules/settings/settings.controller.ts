@@ -9,7 +9,7 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from './settings.service';
@@ -17,8 +17,7 @@ import {
   CreatePeriodDto,
   UpdatePeriodDto,
 } from './dto/setting.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -30,9 +29,7 @@ export class SettingsController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Ambil semua pengaturan' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('national')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil semua pengaturan' })
   async getAllSettings() {
     const settings = await this.prisma.setting.findMany();
     const config = settings.reduce(
@@ -43,97 +40,69 @@ export class SettingsController {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {} as Record<string, any>,
     );
-    return { success: true, data: config };
+    return config;
   }
 
   @Patch()
-  @ApiOperation({ summary: 'Perbarui pengaturan organisasi (bulk via key-value)' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui pengaturan organisasi (bulk via key-value)' })
   async updateSettings(@Body() dto: Record<string, unknown>) {
     return this.settingsService.updateSettings(dto);
   }
 
-  // ─── Periods ───
-
   @Get('periods')
-  @ApiOperation({ summary: 'Ambil daftar periode' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('national')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil daftar periode' })
   async getPeriods() {
     return this.settingsService.getPeriods();
   }
 
   @Post('periods')
-  @ApiOperation({ summary: 'Tambah periode baru' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Tambah periode baru' })
   async createPeriod(@Body() dto: CreatePeriodDto) {
     return this.settingsService.createPeriod(dto);
   }
 
   @Patch('periods/:id')
-  @ApiOperation({ summary: 'Perbarui periode' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui periode' })
   async updatePeriod(@Param('id') id: string, @Body() dto: UpdatePeriodDto) {
     return this.settingsService.updatePeriod(id, dto);
   }
 
   @Delete('periods/:id')
-  @ApiOperation({ summary: 'Hapus periode' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Hapus periode' })
   async deletePeriod(@Param('id') id: string) {
     return this.settingsService.deletePeriod(id);
   }
 
-  // ─── Signatures ───
-
   @Get('signatures')
-  @ApiOperation({ summary: 'Ambil daftar tanda tangan' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('national')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil daftar tanda tangan' })
   async getSignatures() {
     return this.settingsService.getSignatures();
   }
 
   @Delete('signatures/:id')
-  @ApiOperation({ summary: 'Hapus tanda tangan' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Hapus tanda tangan' })
   async deleteSignature(@Param('id') id: string) {
     return this.settingsService.deleteSignature(id);
   }
 
-  // ─── Stamp ───
-
   @Get('stamp')
-  @ApiOperation({ summary: 'Ambil stempel aktif' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('national')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil stempel aktif' })
   async getStamp() {
     return this.settingsService.getStamp();
   }
 
-  // ─── Key-value settings ───
-
   @Get(':key')
-  @ApiOperation({ summary: 'Ambil pengaturan by key' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('national')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil pengaturan by key' })
   async getSetting(@Param('key') key: string) {
     const setting = await this.prisma.setting.findUnique({ where: { key } });
     if (!setting) {
       return { success: false, message: 'Setting not found' };
     }
-    return { success: true, data: setting.value };
+    return setting.value;
   }
 
   @Post(':key')
-  @ApiOperation({ summary: 'Perbarui pengaturan by key' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui pengaturan by key' })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async updateSetting(@Param('key') key: string, @Body() body: { value: any }) {
     await this.prisma.setting.upsert({
@@ -141,13 +110,11 @@ export class SettingsController {
       create: { key, value: body.value },
       update: { value: body.value },
     });
-    return { success: true, message: 'Setting updated' };
+    return { message: 'Setting updated' };
   }
 
   @Get('branding/colors')
-  @ApiOperation({ summary: 'Ambil warna branding' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('national')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil warna branding' })
   async getBrandingColors() {
     const setting = await this.prisma.setting.findUnique({ where: { key: 'branding' } });
     const colors = setting?.value || {
@@ -155,26 +122,22 @@ export class SettingsController {
       secondary: '#004c99',
       accent: '#ff6600',
     };
-    return { success: true, data: colors };
+    return colors;
   }
 
   @Post('branding/colors')
-  @ApiOperation({ summary: 'Perbarui warna branding' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui warna branding' })
   async updateBrandingColors(@Body() body: { primary: string; secondary: string; accent: string }) {
     await this.prisma.setting.upsert({
       where: { key: 'branding' },
       create: { key: 'branding', value: body },
       update: { value: body },
     });
-    return { success: true, message: 'Branding updated' };
+    return { message: 'Branding updated' };
   }
 
   @Get('export/audit')
-  @ApiOperation({ summary: 'Ekspor log audit' })
-  @Roles('superadmin')
-  @RequireScope('national')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Ekspor log audit' })
   async exportAudit(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {
     const logs = await this.prisma.emailLog.findMany({
       where: { createdAt: { gte: new Date(from), lte: new Date(to) } },

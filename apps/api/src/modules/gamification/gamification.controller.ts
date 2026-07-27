@@ -33,10 +33,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get all available badges' })
   getAllBadges() {
-    return {
-      success: true,
-      data: this.gamificationService.getAllBadges(),
-    };
+    return this.gamificationService.getAllBadges();
   }
 
   /**
@@ -57,10 +54,7 @@ export class GamificationController {
   async getProfile(@Param('anggotaId') anggotaId: string) {
     const profile = await this.gamificationService.getProfile(anggotaId);
     const badges = await this.gamificationService.getBadges(anggotaId);
-    return {
-      success: true,
-      data: { ...profile, badges },
-    };
+    return { ...profile, badges };
   }
 
   /**
@@ -79,14 +73,10 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get member recent point events' })
   async getRecentEvents(@Param('anggotaId') anggotaId: string, @Query('limit') limit?: string) {
-    const events = await this.gamificationService.getRecentEvents(
+    return this.gamificationService.getRecentEvents(
       anggotaId,
       limit ? parseInt(limit) : 20,
     );
-    return {
-      success: true,
-      data: events,
-    };
   }
 
   /**
@@ -105,13 +95,9 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get global recent point events (activity feed)' })
   async getGlobalRecentEvents(@Query('limit') limit?: string) {
-    const events = await this.gamificationService.getGlobalRecentEvents(
+    return this.gamificationService.getGlobalRecentEvents(
       limit ? parseInt(limit) : 20,
     );
-    return {
-      success: true,
-      data: events,
-    };
   }
 
   /**
@@ -130,10 +116,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get member points history by month' })
   async getPointsHistory(@Param('anggotaId') anggotaId: string) {
-    return {
-      success: true,
-      data: await this.gamificationService.getPointsHistory(anggotaId),
-    };
+    return this.gamificationService.getPointsHistory(anggotaId);
   }
 
   /**
@@ -153,16 +136,13 @@ export class GamificationController {
       search,
       skip ? parseInt(skip) : undefined,
     );
-    return {
-      success: true,
-      data: leaderboard.map((p, i) => ({
-        rank: i + 1,
-        namaLengkap: p.namaLengkap,
-        points: p.points,
-        badges: p.badges.length,
-        streaks: p.streaks,
-      })),
-    };
+    return leaderboard.map((p, i) => ({
+      rank: i + 1,
+      namaLengkap: p.namaLengkap,
+      points: p.points,
+      badges: p.badges.length,
+      streaks: p.streaks,
+    }));
   }
 
   /**
@@ -181,8 +161,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get org structure (distrik → wilayah → ranting) for filters' })
   async getOrgStructure() {
-    const data = await this.gamificationService.getOrgStructure();
-    return { success: true, data };
+    return this.gamificationService.getOrgStructure();
   }
 
   /**
@@ -225,17 +204,14 @@ export class GamificationController {
       search,
       skip ? parseInt(skip) : undefined,
     );
-    return {
-      success: true,
-      data: leaderboard.map((p, i) => ({
-        rank: i + 1,
-        anggotaId: p.anggotaId,
-        namaLengkap: p.namaLengkap,
-        points: p.points,
-        badges: p.badges.length,
-        streaks: p.streaks,
-      })),
-    };
+    return leaderboard.map((p, i) => ({
+      rank: i + 1,
+      anggotaId: p.anggotaId,
+      namaLengkap: p.namaLengkap,
+      points: p.points,
+      badges: p.badges.length,
+      streaks: p.streaks,
+    }));
   }
 
   /**
@@ -254,10 +230,9 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get real points breakdown per module for scoreboard' })
   async getScoreboardBreakdown(@Query('period') period?: string) {
-    const data = await this.gamificationService.getScoreboardBreakdown(
+    return this.gamificationService.getScoreboardBreakdown(
       (period as 'all' | 'weekly' | 'monthly') || 'all',
     );
-    return { success: true, data };
   }
 
   /**
@@ -268,10 +243,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get gamification statistics' })
   async getStats() {
-    return {
-      success: true,
-      data: await this.gamificationService.getStats(),
-    };
+    return this.gamificationService.getStats();
   }
 
   /**
@@ -282,8 +254,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get points distribution by level' })
   async getPointsDistribution() {
-    const data = await this.gamificationService.getPointsDistribution();
-    return { success: true, data };
+    return this.gamificationService.getPointsDistribution();
   }
 
   /**
@@ -294,8 +265,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get top reward redemptions' })
   async getTopRedemptions(@Query('limit') limit?: string) {
-    const data = await this.gamificationService.getTopRedemptions(limit ? parseInt(limit) : 10);
-    return { success: true, data };
+    return this.gamificationService.getTopRedemptions(limit ? parseInt(limit) : 10);
   }
 
   /**
@@ -306,11 +276,10 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get points report for a period' })
   async getPointsReport(@Query('period') period?: string, @Query('limit') limit?: string) {
-    const data = await this.gamificationService.getPointsReport(
+    return this.gamificationService.getPointsReport(
       (period as 'weekly' | 'monthly') || 'monthly',
       limit ? parseInt(limit) : 20,
     );
-    return { success: true, data };
   }
 
   /**
@@ -320,8 +289,7 @@ export class GamificationController {
   @Public()
   @ApiOperation({ summary: 'Get gamification config for sync (no auth required)' })
   async getSyncConfig() {
-    const data = await this.gamificationService.getSyncConfig();
-    return { success: true, data };
+    return this.gamificationService.getSyncConfig();
   }
 
   /**
@@ -332,8 +300,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get gamification configuration' })
   async getConfig() {
-    const data = await this.gamificationService.getConfig();
-    return { success: true, data };
+    return this.gamificationService.getConfig();
   }
 
   /**
@@ -345,7 +312,7 @@ export class GamificationController {
   @ApiOperation({ summary: 'Update gamification configuration' })
   async updateConfig(@Body() body: Record<string, unknown>) {
     await this.gamificationService.updateConfig(body);
-    return { success: true, message: 'Konfigurasi berhasil diperbarui' };
+    return { message: 'Konfigurasi berhasil diperbarui' };
   }
 
   /**
@@ -364,8 +331,7 @@ export class GamificationController {
   @RequireScope('branch')
   @ApiOperation({ summary: 'Get weekly gamification summary for a member' })
   async getWeeklySummary(@Param('anggotaId') anggotaId: string) {
-    const data = await this.gamificationService.getWeeklySummary(anggotaId);
-    return { success: true, data };
+    return this.gamificationService.getWeeklySummary(anggotaId);
   }
 
   /**
@@ -377,7 +343,6 @@ export class GamificationController {
   async sendWeeklySummaryNotification(@Param('anggotaId') anggotaId: string) {
     const result = await this.gamificationService.sendWeeklySummaryNotification(anggotaId);
     return {
-      success: true,
       data: result,
       message: result.sent
         ? 'Ringkasan mingguan berhasil dikirim'
@@ -395,7 +360,6 @@ export class GamificationController {
   async recordTraining(@Param('anggotaId') anggotaId: string) {
     const result = await this.gamificationService.recordTraining(anggotaId);
     return {
-      success: true,
       data: {
         profile: result.profile,
         newBadges: result.newBadges,
@@ -423,7 +387,6 @@ export class GamificationController {
       body.onTime !== false,
     );
     return {
-      success: true,
       data: {
         profile: result.profile,
         newBadges: result.newBadges,

@@ -1,12 +1,15 @@
 import {
   Injectable,
-  NotFoundException,
-  ForbiddenException,
   Inject,
   forwardRef,
   Logger,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { paymentConfirmationEmail } from '../../mail/email-templates';
 import {
   CreateDueDto,
@@ -16,212 +19,178 @@ import {
   PaymentConfirmationDto,
 } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
-import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
-export class DuesService {
-  private readonly logger = new Logger(DuesService.name);
-  private readonly CACHE_PREFIX = 'dues:';
-  private readonly CACHE_TTL = 30_000;
+export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
+  private readonly CACHE_TTL = 30_000; // ms
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
-    private readonly cache: CacheService,
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
     private readonly memberMailService: MemberMailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
-  ) {}
-
-  async findAll(query: DueFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
-
-    return this.cache.getOrSet(
-      cacheKey,
-      async () => {
-        const scopeFilter = this.scopeHelper.buildIndirectScopeFilter(scope || {}, 'anggota');
-        const where: Record<string, unknown> = { ...scopeFilter };
-        if (query.status) where.status = query.status;
-        if (query.periode) where.periode = query.periode;
-
-        return paginate(this.prisma.iuran, where, {
-          page: query.page,
-          limit: query.limit,
-          orderBy: { createdAt: 'desc' },
-          include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
-        });
-      },
-      this.CACHE_TTL,
-    );
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'iuran',
+      prefix: 'dues:',
+      scopeStrategy: 'anggota_indirect',
+    });
   }
 
-  async create(dto: CreateDueDto) {
-    const due = await this.prisma.iuran.create({ data: dto as never });
+  // ── Hooks ───────────────────────────────────────────────
 
+  protected async beforeCreate(
+    dto: CreateDueDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = { ...dto };
+    if (dto.tanggalBayar) {
+      data.tanggalBayar = new Date(dto.tanggalBayar);
+    }
+    return data;
+  }
+
+  protected async afterCreate(
+    result: any,
+    dto: CreateDueDto,
+  ): Promise<void> {
+    // Award gamification points for paid dues
     if (dto.status === 'lunas' && dto.anggotaId) {
       try {
         await this.gamificationService.recordDuesPayment(dto.anggotaId, true);
       } catch (error) {
-        console.warn('Failed to award gamification points for dues:', (error as Error).message);
+        this.logger.warn(
+          'Failed to award gamification points for dues:',
+          (error as Error).message,
+        );
       }
     }
 
+    // Send payment confirmation email
     if (dto.anggotaId) {
       this.sendPaymentEmail(dto.anggotaId, dto.jumlah, dto.periode, dto.status);
     }
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    return { success: true, data: due, message: 'Pembayaran iuran berhasil dicatat' };
   }
 
-  async findOne(id: string, scope?: UserScope) {
-    const due = await this.prisma.iuran.findUnique({
-      where: { id },
-      include: {
-        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
-      },
-    });
-    if (!due) throw new NotFoundException('Iuran tidak ditemukan');
-    if (
-      scope &&
-      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, due.anggota?.rantingId))
-    ) {
-      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-    }
-    return { success: true, data: due };
-  }
-
-  async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
-    if (scope) {
-      const existing = await this.prisma.iuran.findUnique({
-        where: { id },
-        include: { anggota: { select: { rantingId: true } } },
-      });
-      if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
-      if (
-        !(await this.scopeHelper.hasAccessToResourceAsync(
-          this.prisma,
-          scope,
-          existing.anggota?.rantingId,
-        ))
-      ) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
-
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateDueDto,
+  ): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
-    let statusChangedToLunas = false;
-    if (dto.periode) data.periode = dto.periode;
+    if (dto.periode !== undefined) data.periode = dto.periode;
     if (dto.jumlah !== undefined) data.jumlah = dto.jumlah;
-    if (dto.tanggalBayar) data.tanggalBayar = new Date(dto.tanggalBayar);
-    if (dto.metodeBayar) data.metodeBayar = dto.metodeBayar;
-    if (dto.status) {
-      data.status = dto.status;
-      if (dto.status === 'lunas') statusChangedToLunas = true;
-    }
-    if (dto.buktiBayarPath) data.buktiBayarPath = dto.buktiBayarPath;
+    if (dto.tanggalBayar !== undefined) data.tanggalBayar = new Date(dto.tanggalBayar);
+    if (dto.metodeBayar !== undefined) data.metodeBayar = dto.metodeBayar;
+    if (dto.status !== undefined) data.status = dto.status;
+    if (dto.buktiBayarPath !== undefined) data.buktiBayarPath = dto.buktiBayarPath;
+    return data;
+  }
 
-    const due = await this.prisma.iuran.update({ where: { id }, data });
-
-    if (statusChangedToLunas) {
+  protected async afterUpdate(
+    result: any,
+    dto: UpdateDueDto,
+  ): Promise<void> {
+    // Award gamification points if status changed to lunas
+    if (dto.status === 'lunas' && result?.anggotaId) {
       try {
-        const existingDue = await this.prisma.iuran.findUnique({
-          where: { id },
-          select: { anggotaId: true },
-        });
-        if (existingDue?.anggotaId) {
-          await this.gamificationService.recordDuesPayment(existingDue.anggotaId, true);
-          this.sendPaymentEmail(existingDue.anggotaId, dto.jumlah, dto.periode, 'lunas');
-        }
+        await this.gamificationService.recordDuesPayment(result.anggotaId, true);
+        this.sendPaymentEmail(result.anggotaId, dto.jumlah, dto.periode, 'lunas');
       } catch (error) {
-        console.warn(
+        this.logger.warn(
           'Failed to award gamification points for dues update:',
           (error as Error).message,
         );
       }
     }
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    return { success: true, data: due, message: 'Data iuran berhasil diperbarui' };
   }
 
-  private sendPaymentEmail(
-    anggotaId: string,
-    jumlah?: number,
-    periode?: string,
-    status?: string,
-  ): void {
-    this.memberMailService.sendToMemberWithArgs(
-      anggotaId,
-      paymentConfirmationEmail,
-      [jumlah, periode, status === 'lunas'],
-      { template: 'paymentConfirmationEmail' },
-      'dues',
-      {
-        jumlah: String(jumlah || 0),
-        periode: periode || '',
+  protected async afterRemove(_id: string): Promise<void> {
+    this.cache.invalidatePrefix('reports:');
+  }
+
+  // ── CRUD Overrides ──────────────────────────────────────
+
+  async findAll(query: DueFilterDto, scope?: UserScope) {
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
+
+    return this.baseFindAll(
+      cacheKey,
+      async () => {
+        const scopeFilter = this.buildIndirectScopeFilter(scope, 'anggota');
+        const where: Record<string, unknown> = { ...scopeFilter };
+        if (query.status) where.status = query.status;
+        if (query.periode) where.periode = query.periode;
+        return where;
       },
+      {
+        page: query.page,
+        limit: query.limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } },
+        },
+      },
+      this.CACHE_TTL / 1000,
     );
   }
 
-  async remove(id: string, scope?: UserScope) {
-    if (scope) {
-      const existing = await this.prisma.iuran.findUnique({
-        where: { id },
-        include: { anggota: { select: { rantingId: true } } },
-      });
-      if (!existing) throw new NotFoundException('Iuran tidak ditemukan');
-      if (
-        !(await this.scopeHelper.hasAccessToResourceAsync(
-          this.prisma,
-          scope,
-          existing.anggota?.rantingId,
-        ))
-      ) {
-        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-      }
-    }
-
-    await this.prisma.iuran.delete({ where: { id } });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    this.cache.invalidatePrefix('reports:');
-    return { success: true, message: 'Data iuran berhasil dihapus' };
+  async findOne(id: string, scope?: UserScope) {
+    return this.baseFindOne(id, scope, {
+      anggota: {
+        select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true },
+      },
+    });
   }
 
+  async create(dto: CreateDueDto) {
+    return this.baseCreate(dto, undefined, undefined, 'Pembayaran iuran berhasil dicatat');
+  }
+
+  async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
+    return this.baseUpdate(id, dto, scope, 'Data iuran berhasil diperbarui');
+  }
+
+  async remove(id: string, scope?: UserScope) {
+    return this.baseRemove(id, scope, 'Data iuran berhasil dihapus');
+  }
+
+  // ── Domain Methods ──────────────────────────────────────
+
   async getMemberDues(memberId: string) {
-    const dues = await this.prisma.iuran.findMany({
+    const dues = await (this.prisma as any).iuran.findMany({
       where: { anggotaId: memberId },
       orderBy: { periode: 'desc' },
     });
-    return { success: true, data: dues };
+    return { data: dues };
   }
 
   async getMyDues(user: { id: string; email: string; role: string }) {
-    const anggota = await this.prisma.anggota.findFirst({
+    const anggota = await (this.prisma as any).anggota.findFirst({
       where: { email: user.email, deletedAt: null },
       select: { id: true },
     });
 
     if (!anggota) {
-      return { success: true, data: [] };
+      return { data: [] };
     }
 
-    const dues = await this.prisma.iuran.findMany({
+    const dues = await (this.prisma as any).iuran.findMany({
       where: { anggotaId: anggota.id },
       orderBy: { periode: 'desc' },
     });
 
-    return { success: true, data: dues };
+    return { data: dues };
   }
 
-  async getArrears(_query: Record<string, unknown>) {
-    const arrears = await this.prisma.iuran.findMany({
+  async getArrears() {
+    const arrears = await (this.prisma as any).iuran.findMany({
       where: { status: 'menunggak' },
       include: {
         anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } },
@@ -230,9 +199,9 @@ export class DuesService {
       take: 10_000,
     });
 
-    const totalArrears = arrears.reduce((sum, i) => sum + Number(i.jumlah), 0);
+    const totalArrears = arrears.reduce((sum: number, i: any) => sum + Number(i.jumlah), 0);
 
-    return { success: true, data: { items: arrears, totalArrears, count: arrears.length } };
+    return { data: { items: arrears, totalArrears, count: arrears.length } };
   }
 
   async getDashboardStats() {
@@ -247,22 +216,30 @@ export class DuesService {
 
         const [totalIuran, totalLunas, totalMenunggak, iuranBulanIni, anggotaAktif] =
           await Promise.all([
-            this.prisma.iuran.aggregate({ _sum: { jumlah: true }, _count: true }),
-            this.prisma.iuran.aggregate({ _sum: { jumlah: true }, where: { status: 'lunas' } }),
-            this.prisma.iuran.aggregate({ _sum: { jumlah: true }, where: { status: 'menunggak' } }),
-            this.prisma.iuran.findMany({
+            (this.prisma as any).iuran.aggregate({ _sum: { jumlah: true }, _count: true }),
+            (this.prisma as any).iuran.aggregate({
+              _sum: { jumlah: true },
+              where: { status: 'lunas' },
+            }),
+            (this.prisma as any).iuran.aggregate({
+              _sum: { jumlah: true },
+              where: { status: 'menunggak' },
+            }),
+            (this.prisma as any).iuran.findMany({
               where: { periode },
               select: { jumlah: true, status: true },
             }),
-            this.prisma.anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
+            (this.prisma as any).anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
           ]);
 
-        const iuranBulanIniTotal = iuranBulanIni.reduce((sum, i) => sum + Number(i.jumlah), 0);
-        const lunasBulanIni = iuranBulanIni.filter((i) => i.status === 'lunas').length;
+        const iuranBulanIniTotal = iuranBulanIni.reduce(
+          (sum: number, i: any) => sum + Number(i.jumlah),
+          0,
+        );
+        const lunasBulanIni = iuranBulanIni.filter((i: any) => i.status === 'lunas').length;
         const belumBayarBulanIni = anggotaAktif - iuranBulanIni.length;
 
         return {
-          success: true,
           data: {
             totalIuran: Number(totalIuran._sum.jumlah || 0),
             totalTransaksi: totalIuran._count,
@@ -275,33 +252,33 @@ export class DuesService {
           },
         };
       },
-      this.CACHE_TTL,
+      this.CACHE_TTL, // ms — direct cache.getOrSet call
     );
   }
 
-  async getReport(_query: Record<string, unknown>) {
-    const stats = await this.prisma.iuran.groupBy({
+  async getReport() {
+    const stats = await (this.prisma as any).iuran.groupBy({
       by: ['status'],
       _count: true,
       _sum: { jumlah: true },
     });
 
-    return { success: true, data: stats };
+    return { data: stats };
   }
 
-  async exportReport(_query: Record<string, unknown>) {
-    const dues = await this.prisma.iuran.findMany({
+  async exportReport() {
+    const dues = await (this.prisma as any).iuran.findMany({
       include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
       take: 10_000,
     });
-    return { success: true, data: dues };
+    return { data: dues };
   }
 
   async importDues(data: Record<string, unknown>[]) {
     let success = 0;
     for (const row of data) {
       try {
-        await this.prisma.iuran.create({
+        await (this.prisma as any).iuran.create({
           data: {
             anggotaId: row.anggota_id as string,
             periode: row.periode as string,
@@ -320,13 +297,13 @@ export class DuesService {
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
-    return { success: true, data: { imported: success, failed: data.length - success } };
+    return { data: { imported: success, failed: data.length - success } };
   }
 
   async batchPayment(dto: BatchPaymentDto) {
     const { memberIds, periode, jumlah } = dto;
     for (const memberId of memberIds) {
-      await this.prisma.iuran.create({
+      await (this.prisma as any).iuran.create({
         data: {
           anggotaId: memberId,
           periode,
@@ -340,24 +317,25 @@ export class DuesService {
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
     return {
-      success: true,
       message: `Pembayaran massal untuk ${memberIds.length} anggota berhasil`,
     };
   }
 
   async submitPaymentConfirmation(id: string, dto: PaymentConfirmationDto) {
-    const iuran = await this.prisma.iuran.findUnique({
+    const iuran = await this.prismaDelegate.findUnique({
       where: { id },
       include: { anggota: { select: { id: true, rantingId: true } } },
     });
 
-    if (!iuran) throw new NotFoundException('Iuran tidak ditemukan');
+    if (!iuran) {
+      throw new NotFoundException('Iuran tidak ditemukan');
+    }
 
     if (iuran.status === 'lunas') {
       throw new ForbiddenException('Iuran ini sudah lunas');
     }
 
-    const updated = await this.prisma.iuran.update({
+    const updated = await this.prismaDelegate.update({
       where: { id },
       data: {
         status: 'menunggu_verifikasi',
@@ -370,9 +348,29 @@ export class DuesService {
     this.cache.invalidatePrefix('reports:');
 
     return {
-      success: true,
       data: updated,
       message: 'Konfirmasi pembayaran berhasil dikirim. Menunggu verifikasi admin.',
     };
+  }
+
+  // ── Private Helpers ─────────────────────────────────────
+
+  private sendPaymentEmail(
+    anggotaId: string,
+    jumlah?: number,
+    periode?: string,
+    status?: string,
+  ): void {
+    this.memberMailService.sendToMemberWithArgs(
+      anggotaId,
+      paymentConfirmationEmail,
+      [jumlah, periode, status === 'lunas'],
+      { template: 'paymentConfirmationEmail' },
+      'dues',
+      {
+        jumlah: String(jumlah || 0),
+        periode: periode || '',
+      },
+    );
   }
 }

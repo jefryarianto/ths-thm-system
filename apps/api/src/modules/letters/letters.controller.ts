@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { LettersService } from './letters.service';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import {
   LetterFilterDto,
   CreateIncomingLetterDto,
@@ -19,121 +18,91 @@ export class LettersController {
   constructor(private readonly service: LettersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Ambil semua surat (gabungan)' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua surat (gabungan)' })
   findAllCombined(@Query() query: LetterFilterDto) {
     return this.service.findAllCombined(query);
   }
 
   @Get('incoming')
-  @ApiOperation({ summary: 'Ambil semua surat masuk' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua surat masuk' })
   incomingFindAll(@Query() query: LetterFilterDto) {
     return this.service.incomingFindAll(query);
   }
 
   @Get('incoming/:id')
-  @ApiOperation({ summary: 'Ambil detail surat masuk' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail surat masuk' })
   incomingFindOne(@Param('id') id: string) {
     return this.service.incomingFindOne(id);
   }
 
   @Post('incoming')
-  @ApiOperation({ summary: 'Tambah surat masuk' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah surat masuk' })
   incomingCreate(@Body() dto: CreateIncomingLetterDto) {
     return this.service.incomingCreate(dto);
   }
 
   @Patch('incoming/:id')
-  @ApiOperation({ summary: 'Perbarui surat masuk' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui surat masuk' })
   incomingUpdate(@Param('id') id: string, @Body() dto: UpdateIncomingLetterDto) {
     return this.service.incomingUpdate(id, dto);
   }
 
   @Delete('incoming/:id')
-  @ApiOperation({ summary: 'Hapus surat masuk' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus surat masuk' })
   incomingRemove(@Param('id') id: string) {
     return this.service.incomingRemove(id);
   }
 
   @Post('incoming/:id/disposition')
-  @ApiOperation({ summary: 'Tambah disposisi surat' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Tambah disposisi surat' })
   createDisposition(@Param('id') id: string, @Body() dto: CreateDispositionDto) {
     return this.service.createDisposition(id, dto);
   }
 
   @Get('outgoing')
-  @ApiOperation({ summary: 'Ambil semua surat keluar' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua surat keluar' })
   outgoingFindAll(@Query() query: LetterFilterDto) {
     return this.service.outgoingFindAll(query);
   }
 
   @Get('outgoing/:id')
-  @ApiOperation({ summary: 'Ambil detail surat keluar' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail surat keluar' })
   outgoingFindOne(@Param('id') id: string) {
     return this.service.outgoingFindOne(id);
   }
 
   @Post('outgoing')
-  @ApiOperation({ summary: 'Tambah surat keluar' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah surat keluar' })
   outgoingCreate(@Body() dto: CreateOutgoingLetterDto) {
     return this.service.outgoingCreate(dto);
   }
 
   @Patch('outgoing/:id')
-  @ApiOperation({ summary: 'Perbarui surat keluar' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui surat keluar' })
   outgoingUpdate(@Param('id') id: string, @Body() dto: UpdateOutgoingLetterDto) {
     return this.service.outgoingUpdate(id, dto);
   }
 
   @Delete('outgoing/:id')
-  @ApiOperation({ summary: 'Hapus surat keluar' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus surat keluar' })
   outgoingRemove(@Param('id') id: string) {
     return this.service.outgoingRemove(id);
   }
 
   @Post('outgoing/:id/send')
-  @ApiOperation({ summary: 'Kirim surat keluar' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Kirim surat keluar' })
   outgoingSend(@Param('id') id: string) {
     return this.service.outgoingSend(id);
   }
 
   @Get('incoming/export/csv')
-  @ApiOperation({ summary: 'Ekspor surat masuk' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Ekspor surat masuk' })
   incomingExport() {
     return this.service.incomingExport();
   }
 
   @Get('outgoing/export/csv')
-  @ApiOperation({ summary: 'Ekspor surat keluar' })
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Ekspor surat keluar' })
   outgoingExport() {
     return this.service.outgoingExport();
   }

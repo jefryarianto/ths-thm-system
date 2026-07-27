@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { RewardsService } from './rewards.service';
 
 @ApiTags('Gamification')
@@ -11,17 +10,13 @@ export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
   @Get('rewards')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Get all available rewards' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Get all available rewards' })
   async getRewards() {
-    return { success: true, data: await this.rewardsService.getRewards() };
+    return this.rewardsService.getRewards();
   }
 
   @Post('rewards')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Create a new reward (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Create a new reward (admin)' })
   async createReward(
     @Body()
     body: {
@@ -32,13 +27,11 @@ export class RewardsController {
       stock?: number;
     },
   ) {
-    return { success: true, data: await this.rewardsService.createReward(body) };
+    return this.rewardsService.createReward(body);
   }
 
   @Patch('rewards/:id')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Update a reward (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Update a reward (admin)' })
   async updateReward(
     @Param('id') id: string,
     @Body()
@@ -51,54 +44,41 @@ export class RewardsController {
       isActive?: boolean;
     },
   ) {
-    return { success: true, data: await this.rewardsService.updateReward(id, body) };
+    return this.rewardsService.updateReward(id, body);
   }
 
   @Delete('rewards/:id')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Delete a reward (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Delete a reward (admin)' })
   async deleteReward(@Param('id') id: string) {
     await this.rewardsService.deleteReward(id);
-    return { success: true, message: 'Reward berhasil dihapus' };
+    return { message: 'Reward berhasil dihapus' };
   }
 
   @Post('rewards/:rewardId/redeem')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Redeem a reward with points' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Redeem a reward with points' })
   async redeemReward(@Param('rewardId') rewardId: string, @Body() body: { anggotaId: string }) {
     const result = await this.rewardsService.redeemReward(body.anggotaId, rewardId);
-    return { success: true, data: result, message: 'Reward berhasil diredeem' };
+    return { data: result, message: 'Reward berhasil diredeem' };
   }
 
   @Get('redemptions/:anggotaId')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Get member redemptions' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Get member redemptions' })
   async getMemberRedemptions(@Param('anggotaId') anggotaId: string) {
-    return { success: true, data: await this.rewardsService.getMemberRedemptions(anggotaId) };
+    return this.rewardsService.getMemberRedemptions(anggotaId);
   }
 
   @Get('redemptions')
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Get all redemptions (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Get all redemptions (admin)' })
   async getAllRedemptions() {
-    return { success: true, data: await this.rewardsService.getAllRedemptions() };
+    return this.rewardsService.getAllRedemptions();
   }
 
   @Patch('redemptions/:id/status')
-  @Roles('superadmin', 'admin_distrik')
-  @RequireScope('branch')
-  @ApiOperation({ summary: 'Update redemption status (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Update redemption status (admin)' })
   async updateRedemptionStatus(
     @Param('id') id: string,
     @Body() body: { status: string; notes?: string },
   ) {
-    return {
-      success: true,
-      data: await this.rewardsService.updateRedemptionStatus(id, body.status, body.notes),
-    };
+    return this.rewardsService.updateRedemptionStatus(id, body.status, body.notes);
   }
 }

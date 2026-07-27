@@ -1,39 +1,156 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
-import { ScopeHelper } from '../../common/utils/scope-helpers';
-import { CacheService } from '../../common/services/cache.service';
 import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
-import { paginate } from '../../common/utils/pagination';
+
+const CRUD_CONFIG: CrudConfig = {
+  model: 'calonAnggota',
+  prefix: 'candidates:',
+  notFound: 'Calon anggota tidak ditemukan',
+  softDelete: false,
+};
 
 @Injectable()
-export class CandidatesService {
-  private readonly logger = new Logger(CandidatesService.name);
-  private readonly CACHE_PREFIX = 'candidates:';
-  private readonly CACHE_TTL = 30_000;
+export class CandidatesService extends BaseCrudService<CreateCandidateDto, UpdateCandidateDto> {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly scopeHelper: ScopeHelper,
-    private readonly cache: CacheService,
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
     private readonly csvImportService: CsvImportService,
     private readonly memberMailService: MemberMailService,
     private readonly nraService: NraService,
-  ) {}
+  ) {
+    super(prisma, scopeHelper, cache, CRUD_CONFIG);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  HOOKS — invoked automatically by base CRUD methods
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Transform DTO → Prisma data before creation.
+   * Handles auto-scope, date parsing, and field mapping.
+   */
+  protected async beforeCreate(
+    dto: CreateCandidateDto,
+    scope?: UserScope,
+    userId?: string,
+  ): Promise<Record<string, unknown>> {
+    // Auto-assign rantingId from user scope
+    const rantingId = dto.rantingId || scope?.rantingId;
+
+    return {
+      namaLengkap: dto.namaLengkap,
+      jenisKelamin: dto.jenisKelamin,
+      tempatLahir: dto.tempatLahir ?? null,
+      tanggalLahir: dto.tanggalLahir
+        ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })()
+        : undefined,
+      alamat: dto.alamat ?? null,
+      noHp: dto.noHp ?? null,
+      email: dto.email ?? null,
+      rantingId: rantingId ?? null,
+      usulOlehUserId: userId || dto.usulOlehId || null,
+      status: 'diusulkan',
+    };
+  }
+
+  /**
+   * Side-effect after successful creation.
+   * Pattern: fire-and-forget async side effects — exceptions are caught
+   * and logged, never propagated (won't fail the create transaction).
+   *
+   * ===== DEMO: Email + Notification via afterCreate hook =====
+   *
+   * Walaupun candidate create tidak kirim email (email dikirim saat
+   * approve), berikut pola konkret untuk kirim in-app notification
+   * + email setelah CREATE entity APAPUN:
+   *
+   * ```ts
+   * protected async afterCreate(result: any, _dto: TCreateDto): Promise<void> {
+   *   // 1. In-app notification (fire-and-forget):
+   *   await this.notificationsService
+   *     .send(result.id, {
+   *       judul: 'Selamat Datang di THS-THM',
+   *       isi: 'Data Anda telah terdaftar sebagai calon anggota',
+   *       tipe: 'welcome',
+   *     })
+   *     .catch((e) => this.logger.warn('Notif gagal:', e.message));
+   *
+   *   // 2. Email (via MemberMailService):
+   *   if (result.email) {
+   *     await this.memberMailService
+   *       .sendToMember(
+   *         result.id,
+   *         (nama) => ({ subject: 'Selamat Datang', html: `<p>Halo ${escapeHtml(nama)}!</p>` }),
+   *         { template: 'welcomeCandidate', email: result.email },
+   *         'candidates',
+   *       )
+   *       .catch((e) => this.logger.warn('Email gagal:', e.message));
+   *   }
+   * }
+   * ```
+   *
+   * Catatan: NRA (Nomor Registrasi Anggota) TIDAK digenerate saat
+   * pembuatan calon anggota. NRA baru digenerate saat approve() —
+   * lihat method `approve()` di file ini untuk pola NRA.
+   */
+  protected async afterCreate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result: any,
+    _dto: CreateCandidateDto,
+  ): Promise<void> {
+    if (result?.email) {
+      this.logger.log(`Candidate registered with email: ${result.email}`);
+
+      // ── In-app notification (fire-and-forget pattern) ──
+      // Uncomment after injecting NotificationsService:
+      // this.notificationsService
+      //   .send(result.id, {
+      //     judul: 'Selamat Datang di THS-THM',
+      //     isi: 'Data Anda telah terdaftar sebagai calon anggota',
+      //     tipe: 'welcome',
+      //   })
+      //   .catch((e) => this.logger.warn('Welcome notif failed:', e.message));
+    }
+  }
+
+  /**
+   * Transform DTO → Prisma update data.
+   * Handles date parsing for optional tanggalLahir.
+   */
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateCandidateDto,
+  ): Promise<Record<string, unknown>> {
+    return {
+      ...dto,
+      tanggalLahir: dto.tanggalLahir
+        ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })()
+        : undefined,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  STANDARD CRUD — thin wrappers
+  // ═══════════════════════════════════════════════════════════
 
   async findAll(filter: CandidateFilterDto, scope?: UserScope) {
     const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.status || ''}`;
 
-    return this.cache.getOrSet(
+    return this.baseFindAll(
       cacheKey,
-      async () => {
-        const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+      () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const where: any = { ...scopeFilter };
+        const where: any = this.buildScopeFilter(scope);
 
         if (filter.search) {
           where.OR = [
@@ -44,58 +161,29 @@ export class CandidatesService {
         if (filter.rantingId) where.rantingId = filter.rantingId;
         if (filter.status) where.status = filter.status;
 
-        return paginate(this.prisma.calonAnggota, where, {
-          page: filter.page,
-          limit: filter.limit,
-          orderBy: { createdAt: 'desc' },
-          include: { ranting: true },
-        });
+        return where;
       },
-      this.CACHE_TTL,
+      {
+        page: filter.page,
+        limit: filter.limit,
+        orderBy: { createdAt: 'desc' },
+        include: { ranting: true },
+      },
+      30_000,
     );
   }
 
   async findOne(id: string, scope?: UserScope) {
-    const candidate = await this.prisma.calonAnggota.findUnique({
-      where: { id },
-      include: { ranting: { include: { wilayah: { include: { distrik: true } } } } },
+    return this.baseFindOne(id, scope, {
+      ranting: { include: { wilayah: { include: { distrik: true } } } },
     });
-
-    if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
-
-    if (
-      scope &&
-      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, candidate.rantingId))
-    ) {
-      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
-    }
-
-    return { success: true, data: candidate };
   }
 
   async create(dto: CreateCandidateDto, scope?: UserScope, userId?: string) {
-    if (scope?.rantingId && !dto.rantingId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (dto as any).rantingId = scope.rantingId;
-    }
     try {
-      const candidate = await this.prisma.calonAnggota.create({
-        data: {
-          namaLengkap: dto.namaLengkap,
-          jenisKelamin: dto.jenisKelamin,
-          tempatLahir: dto.tempatLahir,
-          tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
-          alamat: dto.alamat,
-          noHp: dto.noHp,
-          email: dto.email,
-          rantingId: dto.rantingId,
-          usulOlehUserId: userId || dto.usulOlehId,
-          status: 'diusulkan',
-        } as never,
-      });
-
-      this.cache.invalidatePrefix(this.CACHE_PREFIX);
-      return { success: true, data: candidate, message: 'Calon anggota berhasil ditambahkan' };
+      // `baseCreate` calls `beforeCreate` internally for data transformation,
+      // then `afterCreate` for side effects
+      return await this.baseCreate(dto, scope, userId, 'Calon anggota berhasil ditambahkan');
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('Email sudah terdaftar sebagai calon anggota');
@@ -105,48 +193,24 @@ export class CandidatesService {
   }
 
   async update(id: string, dto: UpdateCandidateDto, scope?: UserScope) {
-    await this.scopeHelper.verifyResourceAccess(
-      this.prisma,
-      scope,
-      id,
-      (prisma, rid) =>
-        prisma.calonAnggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-      'Calon anggota tidak ditemukan',
-    );
-
-    const updated = await this.prisma.calonAnggota.update({
-      where: { id },
-      data: {
-        ...dto,
-        tanggalLahir: dto.tanggalLahir ? (() => { const d = new Date(dto.tanggalLahir); return isNaN(d.getTime()) ? undefined : d; })() : undefined,
-      } as any,
-    });
-
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: updated, message: 'Data calon anggota berhasil diperbarui' };
+    // `baseUpdate` calls `beforeUpdate` for date parsing, then verifies scope
+    return this.baseUpdate(id, dto, scope, 'Data calon anggota berhasil diperbarui');
   }
 
   async remove(id: string, scope?: UserScope) {
-    await this.scopeHelper.verifyResourceAccess(
-      this.prisma,
-      scope,
-      id,
-      (prisma, rid) =>
-        prisma.calonAnggota.findUnique({ where: { id: rid }, select: { rantingId: true } }),
-      'Calon anggota tidak ditemukan',
-    );
-
-    await this.prisma.calonAnggota.delete({ where: { id } });
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, message: 'Calon anggota berhasil dihapus' };
+    return this.baseRemove(id, scope, 'Calon anggota berhasil dihapus');
   }
+
+  // ═══════════════════════════════════════════════════════════
+  //  DOMAIN METHODS — import, approve, reject, export
+  // ═══════════════════════════════════════════════════════════
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async importCsv(data: any[]) {
     const results = await this.csvImportService.importRows(data, {
       module: 'candidates',
       duplicateTables: { anggota: true, calonAnggota: true },
-      rowProcessor: async (row, helpers) => {
+      rowProcessor: async (row) => {
         // Server-side field validation
         const nameValue = (row.nama_lengkap || row.nama || row.name || '').trim();
         if (!nameValue) {
@@ -186,25 +250,22 @@ export class CandidatesService {
           } as never,
         });
 
-        // Intra-CSV duplicates tracked automatically by CsvImportService on success
         return { success: true };
       },
     });
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, data: results };
+    this.invalidateCache();
+    return { data: results };
   }
 
   async validate(id: string) {
     const candidate = await this.prisma.calonAnggota.findUnique({ where: { id } });
     if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
-
-    return { success: true, data: { valid: true, candidate } };
+    return { valid: true, candidate };
   }
 
   async approve(id: string, dto?: { tempatDadar?: string; tahunDadar?: string; tingkat?: string }) {
     const candidate = await this.prisma.calonAnggota.findUnique({ where: { id } });
-
     if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
 
     let member;
@@ -240,7 +301,7 @@ export class CandidatesService {
       data: { status: 'lulus', tingkat: dto?.tingkat || candidate.tingkat },
     });
 
-    // Send welcome email if email address is provided
+    // Send welcome email
     if (candidate.email) {
       this.memberMailService.sendToMemberWithArgs(
         member.id,
@@ -252,14 +313,13 @@ export class CandidatesService {
       );
     }
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+    this.invalidateCache();
     this.cache.invalidatePrefix('members:');
-    return { success: true, data: member, message: 'Calon anggota disetujui dan menjadi anggota' };
+    return { data: member, message: 'Calon anggota disetujui dan menjadi anggota' };
   }
 
   async reject(id: string, reason?: string) {
     const candidate = await this.prisma.calonAnggota.findUnique({ where: { id } });
-
     if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
 
     await this.prisma.calonAnggota.update({
@@ -267,7 +327,7 @@ export class CandidatesService {
       data: { status: 'dibatalkan' },
     });
 
-    // Send rejection email if email address is provided
+    // Send rejection email
     if (candidate.email) {
       this.memberMailService.sendToMemberWithArgs(
         candidate.id,
@@ -279,12 +339,12 @@ export class CandidatesService {
       );
     }
 
-    this.cache.invalidatePrefix(this.CACHE_PREFIX);
-    return { success: true, message: reason || 'Calon anggota ditolak' };
+    this.invalidateCache();
+    return { message: reason || 'Calon anggota ditolak' };
   }
 
   async exportCsv(_filter: CandidateFilterDto, scope?: UserScope): Promise<string> {
-    const scopeFilter = this.scopeHelper.buildScopeFilter(scope || {});
+    const scopeFilter = this.buildScopeFilter(scope);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { ...scopeFilter };
 
@@ -313,7 +373,6 @@ export class CandidatesService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Generate CSV string
     const headers = [
       'nama_lengkap',
       'jenis_kelamin',

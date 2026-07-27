@@ -1,6 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import * as os from 'os';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { CreateMonitoringAlertDto, UpdateMonitoringAlertDto } from './dto/monitoring-alert.dto';
 
@@ -13,100 +16,111 @@ interface HealthSnapshot {
 }
 
 @Injectable()
-export class MonitoringService {
-  private readonly logger = new Logger(MonitoringService.name);
-
+export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto, UpdateMonitoringAlertDto> {
   constructor(
-    private readonly prisma: PrismaService,
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
     private readonly mailService: MailService,
-  ) {}
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'monitoringAlert',
+      prefix: 'monitoring:',
+      notFound: 'Alert tidak ditemukan',
+    });
+  }
 
-  // ── CRUD ─────────────────────────────────────────────
+  // ── Hooks: transform DTO before create/update ───────
+  // Eliminates the 3 `as never` casts for metric and channels
+
+  protected async beforeCreate(
+    dto: CreateMonitoringAlertDto,
+  ): Promise<Record<string, unknown>> {
+    return {
+      name: dto.name,
+      metric: dto.metric,
+      operator: dto.operator,
+      threshold: dto.threshold,
+      duration: dto.duration ?? 0,
+      channels: dto.channels,
+      telegramBotToken: dto.telegramBotToken,
+      telegramChatId: dto.telegramChatId,
+      emailRecipients: dto.emailRecipients,
+      cooldown: dto.cooldown ?? 300,
+      isActive: dto.isActive ?? true,
+    };
+  }
+
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdateMonitoringAlertDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.metric !== undefined) data.metric = dto.metric;
+    if (dto.operator !== undefined) data.operator = dto.operator;
+    if (dto.threshold !== undefined) data.threshold = dto.threshold;
+    if (dto.duration !== undefined) data.duration = dto.duration;
+    if (dto.channels !== undefined) data.channels = dto.channels;
+    if (dto.telegramBotToken !== undefined) data.telegramBotToken = dto.telegramBotToken;
+    if (dto.telegramChatId !== undefined) data.telegramChatId = dto.telegramChatId;
+    if (dto.emailRecipients !== undefined) data.emailRecipients = dto.emailRecipients;
+    if (dto.cooldown !== undefined) data.cooldown = dto.cooldown;
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    return data;
+  }
+
+  // ── CRUD Overrides ──────────────────────────────────
 
   async findAll() {
-    const alerts = await this.prisma.monitoringAlert.findMany({
-      orderBy: { metric: 'asc' },
-    });
-    return { success: true, data: alerts };
+    return this.baseFindAll(
+      `${this.CACHE_PREFIX}list`,
+      async () => ({}),
+      {
+        orderBy: { metric: 'asc' },
+      },
+      30,
+    );
   }
 
   async findOne(id: string) {
-    const alert = await this.prisma.monitoringAlert.findUnique({ where: { id } });
-    if (!alert) return { success: false, message: 'Alert not found' };
-    return { success: true, data: alert };
+    return this.baseFindOne(id);
   }
 
   async create(dto: CreateMonitoringAlertDto) {
-    const alert = await this.prisma.monitoringAlert.create({
-      data: {
-        name: dto.name,
-        metric: dto.metric as never,
-        operator: dto.operator,
-        threshold: dto.threshold,
-        duration: dto.duration ?? 0,
-        channels: dto.channels as never,
-        telegramBotToken: dto.telegramBotToken,
-        telegramChatId: dto.telegramChatId,
-        emailRecipients: dto.emailRecipients,
-        cooldown: dto.cooldown ?? 300,
-        isActive: dto.isActive ?? true,
-      },
-    });
-    return { success: true, data: alert };
+    return this.baseCreate(dto);
   }
 
   async update(id: string, dto: UpdateMonitoringAlertDto) {
-    const existing = await this.prisma.monitoringAlert.findUnique({ where: { id } });
-    if (!existing) return { success: false, message: 'Alert not found' };
-
-    const alert = await this.prisma.monitoringAlert.update({
-      where: { id },
-      data: {
-        ...(dto.name !== undefined ? { name: dto.name } : {}),
-        ...(dto.metric !== undefined ? { metric: dto.metric as never } : {}),
-        ...(dto.operator !== undefined ? { operator: dto.operator } : {}),
-        ...(dto.threshold !== undefined ? { threshold: dto.threshold } : {}),
-        ...(dto.duration !== undefined ? { duration: dto.duration } : {}),
-        ...(dto.channels !== undefined ? { channels: dto.channels as never } : {}),
-        ...(dto.telegramBotToken !== undefined ? { telegramBotToken: dto.telegramBotToken } : {}),
-        ...(dto.telegramChatId !== undefined ? { telegramChatId: dto.telegramChatId } : {}),
-        ...(dto.emailRecipients !== undefined ? { emailRecipients: dto.emailRecipients } : {}),
-        ...(dto.cooldown !== undefined ? { cooldown: dto.cooldown } : {}),
-        ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
-      },
-    });
-    return { success: true, data: alert };
+    return this.baseUpdate(id, dto);
   }
 
   async delete(id: string) {
-    const existing = await this.prisma.monitoringAlert.findUnique({ where: { id } });
-    if (!existing) return { success: false, message: 'Alert not found' };
-    await this.prisma.monitoringAlert.delete({ where: { id } });
-    return { success: true, message: 'Alert deleted' };
+    return this.baseRemove(id);
   }
+
+  // ── Domain: toggle alert active state ───────────────
 
   async toggle(id: string) {
-    const existing = await this.prisma.monitoringAlert.findUnique({ where: { id } });
-    if (!existing) return { success: false, message: 'Alert not found' };
-    const alert = await this.prisma.monitoringAlert.update({
+    const existing = await this.prismaDelegate.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Alert tidak ditemukan');
+
+    const alert = await this.prismaDelegate.update({
       where: { id },
-      data: { isActive: !existing.isActive },
+      data: { isActive: !(existing as any).isActive },
     });
-    return { success: true, data: alert };
+    this.invalidateCache();
+    return { data: alert };
   }
 
-  // ── Alert Evaluation ────────────────────────────────
+  // ── Domain: Alert Evaluation ────────────────────────
 
-  /**
-   * Evaluate all active alerts against the current health snapshot.
-   * Called by the HealthController on each SSE tick.
-   * Returns the list of triggered alerts for notification dispatching.
-   */
   async evaluateAlerts(health: HealthSnapshot): Promise<{
     triggered: { alertName: string; metric: string; currentValue: number; threshold: number }[];
     sent: number;
   }> {
-    const activeAlerts = await this.prisma.monitoringAlert.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const activeAlerts = await (this.prisma as any).monitoringAlert.findMany({
       where: { isActive: true },
     });
 
@@ -125,7 +139,6 @@ export class MonitoringService {
       const isTriggered = this.compareThreshold(currentValue, alert.threshold, alert.operator);
 
       if (isTriggered) {
-        // Check cooldown
         if (alert.lastTriggeredAt) {
           const elapsed = (Date.now() - alert.lastTriggeredAt.getTime()) / 1000;
           if (elapsed < alert.cooldown) continue;
@@ -138,11 +151,10 @@ export class MonitoringService {
           threshold: alert.threshold,
         });
 
-        // Send notifications
         await this.sendNotifications(alert, currentValue);
 
-        // Update last triggered
-        await this.prisma.monitoringAlert.update({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.prisma as any).monitoringAlert.update({
           where: { id: alert.id },
           data: { lastTriggeredAt: new Date() },
         });
@@ -157,14 +169,12 @@ export class MonitoringService {
   private extractMetric(health: HealthSnapshot, metric: string): number | null {
     switch (metric) {
       case 'cpu_percent': {
-        // Use 1-minute load average / CPU count as rough CPU usage %
         const cpuCount = os.cpus().length;
         if (cpuCount === 0) return null;
-        const load1 = os.loadavg()[0]; // 1-minute load average
+        const load1 = os.loadavg()[0];
         return Math.min(Math.round((load1 / cpuCount) * 100), 100);
       }
       case 'memory_percent':
-        // Parse "128 MB used / 512 MB total" into percentage
         return this.parseMemoryPercent(health.memory);
       case 'db_down':
         return health.database.status === 'connected' ? 0 : 1;

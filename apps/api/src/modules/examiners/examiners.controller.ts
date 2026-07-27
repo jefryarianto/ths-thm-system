@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { BaseCrudController } from '../../common/utils/base-crud.controller';
 import { ExaminersService } from './examiners.service';
 import {
   CreateExaminerDto,
@@ -7,75 +8,67 @@ import {
   ExaminerFilterDto,
   AssignExaminerDto,
 } from './dto/examiner.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RequireScope } from '../../common/decorators/scope.decorator';
+import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Examiners')
 @Controller('examiners')
 @ApiBearerAuth()
-export class ExaminersController {
-  constructor(private readonly service: ExaminersService) {}
+export class ExaminersController extends BaseCrudController {
+  constructor(service: ExaminersService) {
+    super(service);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Ambil semua penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil semua penguji' })
   findAll(@Query() q: ExaminerFilterDto) {
-    return this.service.findAll(q);
+    return super.findAll(q);
   }
+
   @Get(':id')
-  @ApiOperation({ summary: 'Ambil detail penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil detail penguji' })
   findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+    return super.findOne(id);
   }
+
   @Post()
-  @ApiOperation({ summary: 'Tambah penguji baru' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah penguji baru' })
   create(@Body() dto: CreateExaminerDto) {
-    return this.service.create(dto);
+    return super.create(dto);
   }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Perbarui penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui penguji' })
   update(@Param('id') id: string, @Body() dto: UpdateExaminerDto) {
-    return this.service.update(id, dto);
+    return super.update(id, dto);
   }
+
   @Delete(':id')
-  @ApiOperation({ summary: 'Hapus penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus penguji' })
   remove(@Param('id') id: string) {
-    return this.service.remove(id);
+    return super.remove(id);
   }
+
   @Post('import')
-  @ApiOperation({ summary: 'Impor data penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Impor data penguji' })
   importCsv(@Body() importDto: { data: Record<string, unknown>[] }) {
     return this.service.importCsv(importDto.data);
   }
+
   @Post(':id/assign')
-  @ApiOperation({ summary: 'Tugaskan penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tugaskan penguji' })
   assign(@Param('id') id: string, @Body() dto: AssignExaminerDto, @Req() req: ScopedRequest) {
     return this.service.assign(id, dto, req.scope);
   }
+
   @Get(':id/assignments')
-  @ApiOperation({ summary: 'Ambil penugasan penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil penugasan penguji' })
   getAssignments(@Param('id') id: string) {
     return this.service.getAssignments(id);
   }
+
   @Get(':id/schedules')
-  @ApiOperation({ summary: 'Ambil jadwal penguji' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
-  @RequireScope('branch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil jadwal penguji' })
   getSchedules(@Param('id') id: string) {
     return this.service.getSchedules(id);
   }

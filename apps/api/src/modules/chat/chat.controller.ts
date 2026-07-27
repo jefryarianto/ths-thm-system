@@ -25,13 +25,12 @@ export class ChatController {
     @Body() body: { content: string; type?: string },
     @CurrentUser() user: { id: string; email: string; role: string },
   ) {
-    const message = await this.chatService.saveMessage({
+    return this.chatService.saveMessage({
       roomId,
       senderId: user.id,
       content: body.content,
       type: body.type,
     });
-    return { success: true, data: message };
   }
 
   @Get('rooms/:roomId/messages')
@@ -42,12 +41,11 @@ export class ChatController {
     @Query('limit') limit?: string,
     @Query('before') before?: string,
   ) {
-    const messages = await this.chatService.getMessages(
+    return this.chatService.getMessages(
       roomId,
       limit ? parseInt(limit, 10) : 50,
       before,
     );
-    return { success: true, data: messages };
   }
 
   @Delete('messages/:id')
