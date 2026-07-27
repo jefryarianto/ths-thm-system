@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MailService } from '../../mail/mail.service';
 import { activityInvitationEmail } from '../../mail/email-templates';
 import {
   CreateActivityDto,
@@ -22,7 +21,6 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     protected readonly prisma: PrismaService,
     protected readonly scopeHelper: ScopeHelper,
     protected readonly cache: CacheService,
-    private readonly mailService: MailService,
     private readonly memberMailService: MemberMailService,
   ) {
     super(prisma, scopeHelper, cache, {
