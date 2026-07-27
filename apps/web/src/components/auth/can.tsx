@@ -179,3 +179,7 @@ export function CanDelete({ module, children, fallback }: CanButtonProps) {
 export function CanExport({ module, children, fallback }: CanButtonProps) {
   return <Can module={module} action="export" fallback={fallback}>{children}</Can>;
 }
+
+export function CanAdmin({ module, children, fallback }: CanButtonProps) {
+  return <Can module={module} action="admin" fallback={fallback}>{children}</Can>;
+}
