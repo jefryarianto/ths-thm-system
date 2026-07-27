@@ -231,11 +231,13 @@ describe('CandidatesService', () => {
 
   describe('create', () => {
     it('should create a candidate', async () => {
-      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1', status: 'diusulkan' });      const result = await service.create({ namaLengkap: 'Budi' } as any);
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1', status: 'diusulkan' });
+      const result = await service.create({ namaLengkap: 'Budi' } as any);
       expect(result.status).toBe('diusulkan');
     });
+  });
 
-    it('should update a candidate', async () => {, () => {
+  describe('update', () => {
     it('should update a candidate', async () => {
       mockPrisma.calonAnggota.update.mockResolvedValue({ id: 'c1', namaLengkap: 'Updated' });
       const result = await service.update('c1', { namaLengkap: 'Updated' } as any);

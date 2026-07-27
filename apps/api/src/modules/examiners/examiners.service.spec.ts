@@ -5,6 +5,7 @@ import { ExaminersService } from './examiners.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 jest.mock('bcryptjs', () => ({
   hash: jest.fn().mockResolvedValue('hashed-password'),
