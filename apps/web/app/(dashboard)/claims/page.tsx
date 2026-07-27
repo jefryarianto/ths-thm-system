@@ -15,7 +15,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { STATUS_COLORS, STATUS_OPTIONS } from '@/components/claims/constants';
-
+import { useToast } from '@/components/ui/toast';
 
 interface ClaimRow {
   id: string;
@@ -27,7 +27,7 @@ interface ClaimRow {
 
 export default function ClaimsPage() {
   const router = useRouter();
-  const {
+  const toast = useToast();
     page,
     setPage,
     search,
@@ -58,7 +58,7 @@ export default function ClaimsPage() {
       await apiClient.post(`/claims/${id}/${action}`, body);
       await refetch();
     } catch {
-      alert(`Gagal ${action} klaim`);
+      toast('error', `Gagal ${action} klaim`);
     } finally {
       setActionLoading(null);
     }

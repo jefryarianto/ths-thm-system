@@ -9,6 +9,7 @@ import { Plus, Calendar, Edit3, Trash2, CheckCircle, XCircle, Eye, RefreshCw } f
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import SummaryBar from '@/components/ui/summary-bar';
+import { useToast } from '@/components/ui/toast';
 
 
 interface PeriodRow {
@@ -20,6 +21,7 @@ interface PeriodRow {
 }
 
 export default function PeriodsPage() {
+  const toast = useToast();
   const [data, setData] = useState<PeriodRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +43,7 @@ export default function PeriodsPage() {
       await apiClient.patch(`/settings/periods/${row.id}`, { isActive: !row.isActive });
       fetchData();
     } catch {
-      alert('Gagal mengubah status periode');
+      toast('error', 'Gagal mengubah status periode');
     }
   };
 
@@ -51,7 +53,7 @@ export default function PeriodsPage() {
       await apiClient.delete(`/settings/periods/${row.id}`);
       fetchData();
     } catch {
-      alert('Gagal menghapus periode');
+      toast('error', 'Gagal menghapus periode');
     }
   };
 

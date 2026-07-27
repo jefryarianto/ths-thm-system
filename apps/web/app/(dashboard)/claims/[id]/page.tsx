@@ -8,12 +8,12 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
   ArrowLeft, User, FileText, Calendar, CheckCircle2,
   XCircle, RefreshCw, AlertCircle, Clock, ThumbsUp,
   ThumbsDown, MessageSquare, Activity,
 } from 'lucide-react';
 import { formatDate } from '@/components/members/constants';
+import { useToast } from '@/components/ui/toast';
 
 interface ClaimDetail {
   id: string;
@@ -55,6 +55,7 @@ const CLAIM_STATUS_LABELS: Record<string, string> = {
 };
 
 export default function ClaimDetailPage() {
+  const toast = useToast();
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -99,7 +100,7 @@ export default function ClaimDetailPage() {
       setRejectReason('');
       await fetchClaim();
     } catch {
-      alert('Gagal memproses klaim');
+      toast('error', 'Gagal memproses klaim');
     }
     setActionLoading(null);
   };

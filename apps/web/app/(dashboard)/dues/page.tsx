@@ -15,6 +15,7 @@ import { Plus, CreditCard, Trash2, ExternalLink } from 'lucide-react';
 import ExportMenu from '@/components/ui/export-menu';
 import { CanCreate, CanDelete, CanExport } from '@/components/auth/can';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useToast } from '@/components/ui/toast';
 
 // ─── Types ───
 
@@ -77,6 +78,7 @@ function formatShortDate(dateStr: string) {
 // ─── Page ───
 
 export default function DuesPage() {
+  const toast = useToast();
   const router = useRouter();
   const [stats, setStats] = useState<DuesStats | null>(null);
   const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrend[]>([]);
@@ -189,7 +191,7 @@ export default function DuesPage() {
                       try {
                         await apiClient.delete(`/dues/${d.id}`);
                         refetch();
-                      } catch { alert('Gagal menghapus iuran'); }
+                      } catch { toast('error', 'Gagal menghapus iuran'); }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                     title="Hapus"

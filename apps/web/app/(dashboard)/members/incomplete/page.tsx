@@ -19,9 +19,11 @@ import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
 import { formatDate } from '@/components/members/constants';
+import { useToast } from '@/components/ui/toast';
 
 export default function IncompleteMembersPage() {
   const router = useRouter();
+  const toast = useToast();
   const [sendingAll, setSendingAll] = useState(false);
   const [sendResult, setSendResult] = useState<{ sent: number; noEmail: number } | null>(null);
 
@@ -57,14 +59,14 @@ export default function IncompleteMembersPage() {
       const { data: res } = await apiClient.post('/notifications/send-incomplete', {});
       setSendResult(res.data || { sent: 0, noEmail: 0 });
     } catch {
-      alert('Gagal mengirim notifikasi');
+       toast('error', 'Gagal mengirim notifikasi');
     }
     setSendingAll(false);
   };
 
   const handleSendNotification = async (memberId: string, email: string | null) => {
     if (!email) {
-      alert('Anggota ini tidak memiliki alamat email');
+      toast('error', 'Anggota ini tidak memiliki alamat email');
       return;
     }
     try {
@@ -72,7 +74,7 @@ export default function IncompleteMembersPage() {
       await apiClient.post('/notifications/send-incomplete', { memberIds: [memberId] });
       refetch();
     } catch {
-      alert('Gagal mengirim notifikasi');
+       toast('error', 'Gagal mengirim notifikasi');
     }
   };
 

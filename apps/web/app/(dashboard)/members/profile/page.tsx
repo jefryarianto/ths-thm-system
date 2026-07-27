@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Users,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface MemberProfile {
   id: string;
@@ -50,6 +51,7 @@ interface MemberProfile {
 }
 
 export default function ProfilePage() {
+  const toast = useToast();
   const [member, setMember] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,10 +145,10 @@ export default function ProfilePage() {
       if (data.success) {
         await fetchProfile();
       } else {
-        alert(data.message || 'Gagal upload foto');
+        toast('error', data.message || 'Gagal upload foto');
       }
     } catch {
-      alert('Gagal upload foto');
+       toast('error', 'Gagal upload foto');
     }
   };
 

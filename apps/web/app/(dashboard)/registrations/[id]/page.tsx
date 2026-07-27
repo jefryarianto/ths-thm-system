@@ -10,6 +10,7 @@ import { ArrowLeft, User } from 'lucide-react';
 import { StatusBadge } from '@/components/members/constants';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 interface RegistrationDetail {
   id: string;
@@ -27,6 +28,7 @@ interface RegistrationDetail {
 
 export default function RegistrationDetailPage() {
   const router = useRouter();
+  const toast = useToast();
   const params = useParams();
   const id = params?.id as string;
   const [reg, setReg] = useState<RegistrationDetail | null>(null);
@@ -42,14 +44,14 @@ export default function RegistrationDetailPage() {
 
   const handleApprove = async () => {
     try { await apiClient.post(`/registrations/${id}/approve`); router.push('/registrations'); }
-    catch { alert('Gagal menyetujui'); }
+    catch { toast('error', 'Gagal menyetujui'); }
   };
 
   const handleReject = async () => {
     const catatan = prompt('Alasan penolakan:');
     if (!catatan) return;
     try { await apiClient.post(`/registrations/${id}/reject`, { catatan }); router.push('/registrations'); }
-    catch { alert('Gagal menolak'); }
+    catch { toast('error', 'Gagal menolak'); }
   };
 
   if (loading) return <div className="p-8 text-sm text-gray-500">Memuat...</div>;

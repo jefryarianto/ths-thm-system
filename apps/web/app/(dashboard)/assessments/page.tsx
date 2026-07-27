@@ -14,6 +14,7 @@ import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import { useToast } from '@/components/ui/toast';
 
 
 interface AssessmentRow {
@@ -38,6 +39,7 @@ interface ItemRow {
 type Tab = 'aspek' | 'item';
 
 export default function AssessmentsPage() {
+  const toast = useToast();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('aspek');
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
@@ -178,7 +180,7 @@ export default function AssessmentsPage() {
                         const newStatus = !row.isActive;
                         await apiClient.patch(`/assessments/aspects/${row.id}`, { isActive: newStatus });
                         refetchAspek();
-                      } catch { alert('Gagal mengubah status aspek'); }
+                      } catch { toast('error', 'Gagal mengubah status aspek'); }
                     }}
                     className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
                     title={row.isActive ? 'Nonaktifkan' : 'Aktifkan'}
@@ -191,7 +193,7 @@ export default function AssessmentsPage() {
                       try {
                         await apiClient.delete(`/assessments/aspects/${row.id}`);
                         refetchAspek();
-                      } catch { alert('Gagal menghapus aspek'); }
+                      } catch { toast('error', 'Gagal menghapus aspek'); }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                     title="Hapus"
@@ -272,7 +274,7 @@ export default function AssessmentsPage() {
                       try {
                         await apiClient.delete(`/assessments/items/${row.id}`);
                         refetchItems();
-                      } catch { alert('Gagal menghapus item'); }
+                      } catch { toast('error', 'Gagal menghapus item'); }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                     title="Hapus"

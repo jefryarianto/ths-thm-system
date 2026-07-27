@@ -25,6 +25,7 @@ import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { BatchHistoryPanel } from '@/components/ui/batch-history';
 import BatchGenerateModal from '@/components/documents/BatchGenerateModal';
+import { useToast } from '@/components/ui/toast';
 
 interface DocumentRow {
   id: string;
@@ -53,6 +54,7 @@ const STATUS_COLORS: Record<string, string> = {
 type Tab = 'documents' | 'batch';
 
 export default function DocumentsPage() {
+  const toast = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('documents');
   const [showBatchModal, setShowBatchModal] = useState(false);
@@ -91,7 +93,7 @@ export default function DocumentsPage() {
       await apiClient.delete(`/documents/${id}`);
       await refetch();
     } catch {
-      alert('Gagal menghapus dokumen');
+      toast('error', 'Gagal menghapus dokumen');
     }
   };
 

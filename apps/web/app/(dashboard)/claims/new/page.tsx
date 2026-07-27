@@ -9,6 +9,7 @@ import { useDebounce } from '@/lib/hooks/use-debounce';
 import { ArrowLeft, Save, Search, RefreshCw } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 interface Member {
   id: string;
@@ -18,6 +19,7 @@ interface Member {
 
 export default function NewClaimPage() {
   const router = useRouter();
+  const toast = useToast();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [memberSearch, setMemberSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Member[]>([]);
@@ -44,7 +46,7 @@ export default function NewClaimPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMember) {
-      alert('Pilih anggota terlebih dahulu');
+      toast('error', 'Pilih anggota terlebih dahulu');
       return;
     }
     setSaving(true);
@@ -56,7 +58,7 @@ export default function NewClaimPage() {
       });
       router.push('/claims');
     } catch {
-      alert('Gagal menyimpan');
+      toast('error', 'Gagal menyimpan');
     }
     setSaving(false);
   };

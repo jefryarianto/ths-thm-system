@@ -8,6 +8,7 @@ import apiClient from '@/lib/api-client';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 interface Post {
   id: string;
@@ -31,6 +32,7 @@ interface Thread {
 }
 
 export default function ThreadDetailPage() {
+  const toast = useToast();
   const params = useParams();
   const threadId = params.threadId as string;
   const [thread, setThread] = useState<Thread | null>(null);
@@ -64,7 +66,7 @@ export default function ThreadDetailPage() {
       await fetchThread();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal mengirim balasan');
+      toast('error', err?.response?.data?.message || 'Gagal mengirim balasan');
     }
     setSubmitting(false);
   };
@@ -98,7 +100,7 @@ export default function ThreadDetailPage() {
       setEditContent('');
       await fetchThread();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal memperbarui balasan');
+      toast('error', err?.response?.data?.message || 'Gagal memperbarui balasan');
     }
   };
 
@@ -107,7 +109,7 @@ export default function ThreadDetailPage() {
       await apiClient.patch(`/forum/posts/${postId}/solution?threadId=${threadId}`);
       await fetchThread();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menandai solusi');
+      toast('error', err?.response?.data?.message || 'Gagal menandai solusi');
     }
   };
 

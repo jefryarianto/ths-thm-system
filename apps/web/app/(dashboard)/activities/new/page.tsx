@@ -8,9 +8,11 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 export default function NewActivityPage() {
   const router = useRouter();
+  const toast = useToast();
   const [form, setForm] = useState({ nama: '', tipe: 'latihan', lokasi: '', tanggalMulai: '', tanggalSelesai: '' });
   const [saving, setSaving] = useState(false);
 
@@ -20,7 +22,7 @@ export default function NewActivityPage() {
     try {
       await apiClient.post('/activities', form);
       router.push('/activities');
-    } catch { alert('Gagal menyimpan'); }
+    } catch { toast('error', 'Gagal menyimpan'); }
     setSaving(false);
   };
 

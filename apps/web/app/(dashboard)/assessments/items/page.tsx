@@ -14,6 +14,7 @@ import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
+import { useToast } from '@/components/ui/toast';
 
 
 interface ItemRow {
@@ -28,6 +29,7 @@ interface ItemRow {
 }
 
 export default function ItemsPage() {
+  const toast = useToast();
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -145,7 +147,7 @@ export default function ItemsPage() {
                               await apiClient.delete(`/assessments/items/${row.id}`);
                               refetch();
                             } catch {
-                              alert('Gagal menghapus item');
+                              toast('error', 'Gagal menghapus item');
                             }
                           }}
                           className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"

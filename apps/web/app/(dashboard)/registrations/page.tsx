@@ -15,6 +15,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { STATUS_OPTIONS, StatusBadge } from '@/components/registrations/constants';
+import { useToast } from '@/components/ui/toast';
 
 
 interface RegistrationRow {
@@ -29,6 +30,7 @@ interface RegistrationRow {
 }
 
 export default function RegistrationsPage() {
+  const toast = useToast();
   const router = useRouter();
   const {
     page,
@@ -62,7 +64,7 @@ export default function RegistrationsPage() {
       });
       await refetch();
     } catch {
-      alert(`Gagal ${action} pendaftaran`);
+      toast('error', `Gagal ${action} pendaftaran`);
     } finally {
       setActionLoading(null);
     }

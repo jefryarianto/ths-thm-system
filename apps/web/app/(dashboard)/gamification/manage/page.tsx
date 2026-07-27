@@ -9,7 +9,6 @@ import DataTable from '@/components/ui/data-table';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import {
-
   Zap,
   Plus,
   Edit3,
@@ -22,6 +21,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface Reward {
   id: string;
@@ -56,6 +56,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 
 export default function ManageRewardsPage() {
   const router = useRouter();
+  const toast = useToast();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +99,7 @@ export default function ManageRewardsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name || form.pointCost <= 0) return alert('Nama dan poin wajib diisi');
+    if (!form.name || form.pointCost <= 0) return toast('error', 'Nama dan poin wajib diisi');
     setSaving(true);
     try {
       if (editingReward) {
@@ -112,7 +113,7 @@ export default function ManageRewardsPage() {
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      alert(msg || 'Gagal menyimpan');
+       toast(msg || 'Gagal menyimpan');
     } finally {
       setSaving(false);
     }
@@ -125,7 +126,7 @@ export default function ManageRewardsPage() {
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      alert(msg || 'Gagal menghapus');
+       toast(msg || 'Gagal menghapus');
     }
   };
 
@@ -135,7 +136,7 @@ export default function ManageRewardsPage() {
       await fetchData();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      alert(msg || 'Gagal update status');
+       toast(msg || 'Gagal update status');
     }
   };
 

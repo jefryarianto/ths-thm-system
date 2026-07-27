@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import apiClient, { unwrap } from '@/lib/api-client';
 import DataTable from '@/components/ui/data-table';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 import {
 
   Gift,
@@ -50,6 +51,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof Clo
 
 export default function RewardsPage() {
   const router = useRouter();
+  const toast = useToast();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ export default function RewardsPage() {
 
   const handleRedeem = async (rewardId: string) => {
     if (!userAnggotaId) {
-      alert('Silakan login terlebih dahulu');
+      toast('error', 'Silakan login terlebih dahulu');
       return;
     }
     setRedeemingId(rewardId);
@@ -98,7 +100,7 @@ export default function RewardsPage() {
       setRewards(unwrap(rewardsRes));
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      alert(msg || 'Gagal redeem reward');
+      toast(msg || 'Gagal redeem reward');
     } finally {
       setRedeemingId(null);
     }

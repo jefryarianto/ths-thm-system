@@ -12,6 +12,7 @@ import {
   ArrowLeft, CreditCard, CheckCircle, Clock, XCircle, User, Building2, Calendar,
   AlertCircle, RefreshCw, Download, FileText, Ban,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface PaymentDetail {
   id: string;
@@ -49,6 +50,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 };
 
 export default function PaymentDetailPage() {
+  const toast = useToast();
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -81,7 +83,7 @@ export default function PaymentDetailPage() {
     try {
       await apiClient.patch(`/payments/${payment.id}/verify`);
       await fetchPayment();
-    } catch { alert('Gagal memverifikasi pembayaran'); }
+     } catch { toast('error', 'Gagal memverifikasi pembayaran'); }
     setActionLoading(null);
   };
 
@@ -92,7 +94,7 @@ export default function PaymentDetailPage() {
     try {
       await apiClient.patch(`/payments/${payment.id}/reject`);
       await fetchPayment();
-    } catch { alert('Gagal menolak pembayaran'); }
+     } catch { toast('error', 'Gagal menolak pembayaran'); }
     setActionLoading(null);
   };
 

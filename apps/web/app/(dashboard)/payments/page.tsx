@@ -11,6 +11,7 @@ import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
+import { useToast } from '@/components/ui/toast';
 
 
 interface DuesRecord {
@@ -38,6 +39,7 @@ interface BankInfo {
 }
 
 export default function PaymentsPage() {
+  const toast = useToast();
   const [stats, setStats] = useState<StatsData>({
     totalCollected: 0,
     pendingCount: 0,
@@ -75,7 +77,7 @@ export default function PaymentsPage() {
       refetch();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal verifikasi');
+      toast('error', err?.response?.data?.message || 'Gagal verifikasi');
     }
   };
 
@@ -86,7 +88,7 @@ export default function PaymentsPage() {
       refetch();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menolak');
+      toast('error', err?.response?.data?.message || 'Gagal menolak');
     }
   };
 
@@ -281,7 +283,7 @@ export default function PaymentsPage() {
                       try {
                         await apiClient.delete(`/dues/${due.id}`);
                         refetch();
-                      } catch { alert('Gagal menghapus iuran'); }
+                      } catch { toast('error', 'Gagal menghapus iuran'); }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                     title="Hapus"

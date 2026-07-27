@@ -8,10 +8,10 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
   ArrowLeft, CheckCircle, XCircle, Clock, AlertTriangle, User, FileText,
   AlertCircle, RefreshCw, ShieldCheck, Send,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface ApprovalLevel {
   id: string;
@@ -62,6 +62,7 @@ const requestTypeLabels: Record<string, string> = {
 };
 
 export default function ApprovalDetailPage() {
+  const toast = useToast();
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -96,7 +97,7 @@ export default function ApprovalDetailPage() {
       await fetchApproval();
       setNote('');
     } catch {
-      alert(`Gagal ${action === 'approve' ? 'menyetujui' : 'menolak'} pengajuan`);
+      toast(`Gagal ${action === 'approve' ? 'menyetujui' : 'menolak'} pengajuan`);
     }
     setActionLoading(null);
   };

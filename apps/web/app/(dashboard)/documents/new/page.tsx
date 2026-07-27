@@ -8,9 +8,11 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 export default function NewDocumentPage() {
   const router = useRouter();
+  const toast = useToast();
   const [form, setForm] = useState({ anggotaId: '', tipe: 'kartu_anggota' });
   const [saving, setSaving] = useState(false);
 
@@ -18,7 +20,7 @@ export default function NewDocumentPage() {
     e.preventDefault();
     setSaving(true);
     try { await apiClient.post('/documents', form); router.push('/documents'); }
-    catch { alert('Gagal menyimpan'); }
+    catch { toast('error', 'Gagal menyimpan'); }
     setSaving(false);
   };
 

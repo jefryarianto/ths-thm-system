@@ -11,6 +11,7 @@ import InfoRow from '@/components/ui/info-row';
 import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 interface OrgSettings {
   nama: string;
@@ -42,6 +43,7 @@ interface Stamp {
 }
 
 export default function SettingsPage() {
+  const toast = useToast();
   const [org, setOrg] = useState<OrgSettings | null>(null);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -157,7 +159,7 @@ export default function SettingsPage() {
       await apiClient.delete(`/settings/periods/${id}`);
       setPeriods((prev) => prev.filter((p) => p.id !== id));
     } catch {
-      alert('Gagal menghapus periode');
+      toast('error', 'Gagal menghapus periode');
     }
   };
 
@@ -168,7 +170,7 @@ export default function SettingsPage() {
       await apiClient.delete(`/settings/signatures/${id}`);
       setSignatures((prev) => prev.filter((s) => s.id !== id));
     } catch {
-      alert('Gagal menghapus tanda tangan');
+      toast('error', 'Gagal menghapus tanda tangan');
     }
   };
 

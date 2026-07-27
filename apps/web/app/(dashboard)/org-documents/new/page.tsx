@@ -8,9 +8,11 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 export default function NewOrgDocumentPage() {
   const router = useRouter();
+  const toast = useToast();
   const [form, setForm] = useState({ judul: '', kategoriId: '', deskripsi: '' });
   const [saving, setSaving] = useState(false);
 
@@ -18,7 +20,7 @@ export default function NewOrgDocumentPage() {
     e.preventDefault();
     setSaving(true);
     try { await apiClient.post('/org-documents', form); router.push('/org-documents'); }
-    catch { alert('Gagal menyimpan'); }
+    catch { toast('error', 'Gagal menyimpan'); }
     setSaving(false);
   };
 

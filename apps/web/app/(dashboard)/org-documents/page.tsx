@@ -15,6 +15,7 @@ import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import { useToast } from '@/components/ui/toast';
 
 
 interface OrgDocumentRow {
@@ -26,6 +27,7 @@ interface OrgDocumentRow {
 }
 
 export default function OrgDocumentsPage() {
+  const toast = useToast();
   const router = useRouter();
   const [categories, setCategories] = useState<{ id: string; nama: string }[]>([]);
   const {
@@ -144,7 +146,7 @@ export default function OrgDocumentsPage() {
                               const response = await fetch(`/api/org-documents/${row.id}`, {
                                 headers: { Authorization: `Bearer ${token}` },
                               });
-                              if (!response.ok) { alert('Gagal memuat dokumen'); return; }
+                              if (!response.ok) { toast('error', 'Gagal memuat dokumen'); return; }
                               const data = await response.json();
                               if (data?.data?.fileUrl) {
                                 window.open(data.data.fileUrl, '_blank');
@@ -153,7 +155,7 @@ export default function OrgDocumentsPage() {
                                 const dlResponse = await fetch(`/api/org-documents/${row.id}/download`, {
                                   headers: { Authorization: `Bearer ${token2}` },
                                 });
-                                if (!dlResponse.ok) { alert('Dokumen tidak tersedia untuk didownload'); return; }
+                                if (!dlResponse.ok) { toast('error', 'Dokumen tidak tersedia untuk didownload'); return; }
                                 const blob = await dlResponse.blob();
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement('a');
@@ -162,7 +164,7 @@ export default function OrgDocumentsPage() {
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }
-                            } catch { alert('Gagal mendownload dokumen'); }
+                            } catch { toast('error', 'Gagal mendownload dokumen'); }
                           }}
                           className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
                           title="Download"
@@ -182,7 +184,7 @@ export default function OrgDocumentsPage() {
                             try {
                               await apiClient.delete(`/org-documents/${row.id}`);
                               refetch();
-                            } catch { alert('Gagal menghapus dokumen'); }
+                            } catch { toast('error', 'Gagal menghapus dokumen'); }
                           }}
                           className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                           title="Hapus"

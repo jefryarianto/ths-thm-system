@@ -8,9 +8,11 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 export default function NewExaminerPage() {
   const router = useRouter();
+  const toast = useToast();
   const [form, setForm] = useState({ userId: '', peran: 'penguji', catatan: '' });
   const [saving, setSaving] = useState(false);
 
@@ -18,7 +20,7 @@ export default function NewExaminerPage() {
     e.preventDefault();
     setSaving(true);
     try { await apiClient.post('/examiners', form); router.push('/examiners'); }
-    catch { alert('Gagal menyimpan'); }
+    catch { toast('error', 'Gagal menyimpan'); }
     setSaving(false);
   };
 

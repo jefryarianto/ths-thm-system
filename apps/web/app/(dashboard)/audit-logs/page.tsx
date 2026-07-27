@@ -19,6 +19,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import FilterSelect from '@/components/ui/filter-select';
+import { useToast } from '@/components/ui/toast';
 
 // ─── Types ───
 
@@ -83,6 +84,7 @@ function formatTimestamp(ts: string) {
 // ─── Page ───
 
 export default function AuditLogsPage() {
+  const toast = useToast();
   const [newEntryHighlight, setNewEntryHighlight] = useState(false);
   const [data, setData] = useState<AuditEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -215,7 +217,7 @@ export default function AuditLogsPage() {
       link.click();
       URL.revokeObjectURL(downloadUrl);
     } catch {
-      alert('Gagal export CSV');
+      toast('error', 'Gagal export CSV');
     }
     setExporting(false);
   };

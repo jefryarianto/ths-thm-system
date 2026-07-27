@@ -16,6 +16,7 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import { MATERI_OPTIONS } from '@/components/trainings/constants';
+import { useToast } from '@/components/ui/toast';
 
 
 interface TrainingRow {
@@ -29,6 +30,7 @@ interface TrainingRow {
 }
 
 export default function TrainingsPage() {
+  const toast = useToast();
   const router = useRouter();
   const {
     page,
@@ -165,7 +167,7 @@ export default function TrainingsPage() {
                       try {
                         await apiClient.delete(`/trainings/${row.id}`);
                         refetch();
-                      } catch { alert('Gagal menghapus latihan'); }
+                      } catch { toast('error', 'Gagal menghapus latihan'); }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                     title="Hapus"

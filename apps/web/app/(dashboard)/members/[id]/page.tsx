@@ -34,8 +34,7 @@ import {
   Save,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
-import {
-  StatusBadge,
+import { StatusBadge,
   InfoRow,
   DetailStats,
   DetailSkeleton,
@@ -45,6 +44,7 @@ import {
   formatDate,
   formatRupiah,
 } from '@/components/members/constants';
+import { useToast } from '@/components/ui/toast';
 
 // ─── Types ───
 
@@ -123,6 +123,7 @@ function BackPreview({ label, value }: { label: string; value: string }) {
 // ─── Page Component ───
 
 export default function MemberDetailPage() {
+  const toast = useToast();
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
@@ -229,7 +230,7 @@ export default function MemberDetailPage() {
       });
       const data = await response.json();
       if (!data.success) {
-        alert('Gagal memuat data KTA');
+         toast('error', 'Gagal memuat data KTA');
         return;
       }
 
@@ -350,7 +351,7 @@ export default function MemberDetailPage() {
       win.document.close();
     } catch (err) {
       console.error('KTA error:', err);
-      alert('Gagal memuat KTA. Silakan coba lagi.');
+       toast('error', 'Gagal memuat KTA. Silakan coba lagi.');
     }
   };
 
@@ -449,9 +450,9 @@ export default function MemberDetailPage() {
                       });
                       const data = await res.json();
                       if (data.success) await fetchMember();
-                      else alert(data.message || 'Gagal upload foto');
+                       else toast('error', data.message || 'Gagal upload foto');
                     } catch {
-                      alert('Gagal upload foto. Silakan coba lagi.');
+                       toast('error', 'Gagal upload foto. Silakan coba lagi.');
                     }
                   },
                 }}

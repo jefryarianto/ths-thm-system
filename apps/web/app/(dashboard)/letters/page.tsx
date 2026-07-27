@@ -16,6 +16,7 @@ import type { LetterRow, TabValue } from './shared';
 import Link from 'next/link';
 import { statusColors, TAB_VALUES } from './shared';
 import LetterDetailPanel from './letter-detail-panel';
+import { useToast } from '@/components/ui/toast';
 
 
 const columns = [
@@ -67,6 +68,7 @@ const columns = [
 ];
 
 export default function LettersPage() {
+  const toast = useToast();
   const [tab, setTab] = useState<TabValue>('all');
   const [data, setData] = useState<LetterRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +129,7 @@ export default function LettersPage() {
       setSelectedLetter(null);
       fetchData();
     } catch (err: unknown) {
-      alert(
+       toast(
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           'Gagal menghapus surat',
       );

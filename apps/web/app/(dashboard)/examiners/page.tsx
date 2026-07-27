@@ -15,6 +15,7 @@ import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import Modal from '@/components/ui/modal';
+import { useToast } from '@/components/ui/toast';
 
 
 interface Examiner {
@@ -25,6 +26,7 @@ interface Examiner {
 }
 
 export default function ExaminersPage() {
+  const toast = useToast();
   const router = useRouter();
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
@@ -55,7 +57,7 @@ export default function ExaminersPage() {
       setDeleteTarget(null);
       refetch();
     } catch {
-      alert('Gagal menghapus penguji');
+      toast('error', 'Gagal menghapus penguji');
     }
     setDeleteLoading(false);
   };

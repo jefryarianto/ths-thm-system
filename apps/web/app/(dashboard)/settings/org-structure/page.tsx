@@ -10,6 +10,7 @@ import Modal from '@/components/ui/modal';
 // ─── Types ───
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 interface Distrik {
   id: string;
@@ -201,6 +202,7 @@ function OrgFormModal({
 // ─── Main Page ───
 
 export default function OrgStructureSettingsPage() {
+  const toast = useToast();
   const [distriks, setDistriks] = useState<Distrik[]>([]);
   const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
   const [rantings, setRantings] = useState<Ranting[]>([]);
@@ -289,7 +291,7 @@ export default function OrgStructureSettingsPage() {
       await apiClient.delete(`/org-structure/${level}/${id}`);
       await fetchData();
     } catch {
-      alert('Gagal menghapus');
+      toast('error', 'Gagal menghapus');
     }
   };
 

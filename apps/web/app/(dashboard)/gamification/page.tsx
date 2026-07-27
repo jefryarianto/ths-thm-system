@@ -13,8 +13,10 @@ import BadgeGrid from '@/components/gamification/BadgeGrid';
 import OrgFilterBar from '@/components/gamification/OrgFilterBar';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { useToast } from '@/components/ui/toast';
 
 export default function GamificationPage() {
+  const toast = useToast();
   // Org hierarchy filter (Distrik → Wilayah → Ranting)
   const {
     distrikId: selectedDistrik,
@@ -104,7 +106,7 @@ export default function GamificationPage() {
                         await navigator.share({ title: 'THS-THM Leaderboard', text });
                       } else {
                         await navigator.clipboard.writeText(text);
-                        alert('Leaderboard disalin ke clipboard!');
+                        toast('success', 'Leaderboard disalin ke clipboard!');
                       }
                     }}
                     className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition"
