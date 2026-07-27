@@ -1,11 +1,9 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ArrowLeft } from 'lucide-react';
-import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
