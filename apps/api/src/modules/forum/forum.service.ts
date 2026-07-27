@@ -1,12 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateThreadDto,
   CreatePostDto,
   UpdateThreadDto,
   UpdatePostDto,
-  CreateCategoryDto,
-  UpdateCategoryDto,
   ThreadFilterDto,
 } from './dto/forum.dto';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -14,58 +12,12 @@ import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
 export class ForumService {
+  private readonly logger = new Logger(ForumService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
-
-  // ─────────────────────────────────────────────────────────
-  //  CATEGORIES
-  // ─────────────────────────────────────────────────────────
-
-  async getCategories() {
-    const categories = await this.prisma.forumCategory.findMany({
-      orderBy: { order: 'asc' },
-      include: { _count: { select: { threads: true } } },
-    });
-    return { data: categories };
-  }
-
-  async getCategory(id: string) {
-    const category = await this.prisma.forumCategory.findUnique({ where: { id } });
-    if (!category) throw new NotFoundException('Kategori tidak ditemukan');
-    return { data: category };
-  }
-
-  async createCategory(dto: CreateCategoryDto) {
-    const category = await this.prisma.forumCategory.create({
-      data: { nama: dto.nama, deskripsi: dto.deskripsi, order: dto.order ?? 0 },
-    });
-    return { data: category, message: 'Kategori berhasil dibuat' };
-  }
-
-  async updateCategory(id: string, dto: UpdateCategoryDto) {
-    const category = await this.prisma.forumCategory.findUnique({ where: { id } });
-    if (!category) throw new NotFoundException('Kategori tidak ditemukan');
-
-    const updated = await this.prisma.forumCategory.update({
-      where: { id },
-      data: {
-        ...(dto.nama !== undefined && { nama: dto.nama }),
-        ...(dto.deskripsi !== undefined && { deskripsi: dto.deskripsi }),
-        ...(dto.order !== undefined && { order: dto.order }),
-      },
-    });
-
-    return { data: updated, message: 'Kategori berhasil diperbarui' };
-  }
-
-  async deleteCategory(id: string) {
-    const category = await this.prisma.forumCategory.findUnique({ where: { id } });
-    if (!category) throw new NotFoundException('Kategori tidak ditemukan');
-    await this.prisma.forumCategory.delete({ where: { id } });
-    return { message: 'Kategori berhasil dihapus' };
-  }
 
   // ─────────────────────────────────────────────────────────
   //  THREADS
@@ -98,7 +50,7 @@ export class ForumService {
         where,
         skip,
         take: limit,
-        orderBy: orderBy as never,
+        orderBy: orderBy as unknown as Record<string, 'asc' | 'desc'>[],
         include: {
           author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
           category: { select: { id: true, nama: true } },

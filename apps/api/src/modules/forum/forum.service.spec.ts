@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ForumService } from './forum.service';
+import { ForumCategoryService } from './forum-category.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('ForumService', () => {
   let service: ForumService;
@@ -73,68 +76,36 @@ describe('ForumService', () => {
     send: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockScopeHelper = {
+    buildScopeFilter: jest.fn().mockReturnValue({}),
+    buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
+    verifyResourceAccess: jest.fn().mockResolvedValue(true),
+    hasAccessToResource: jest.fn().mockReturnValue(true),
+    hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
+    verifyKegiatanScope: jest.fn().mockResolvedValue(true),
+  };
+
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    getOrSet: jest.fn(),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ForumService,
+        ForumCategoryService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 
     service = module.get<ForumService>(ForumService);
     jest.clearAllMocks();
-  });
-
-  describe('getCategories', () => {
-    it('should return all categories with thread counts', async () => {
-      const result = await service.getCategories();
-      expect(result.data).toHaveLength(1);
-    });
-  });
-
-  describe('getCategory', () => {
-    it('should return a category by id', async () => {
-      mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
-      const result = await service.getCategory('cat1');
-      expect(result.data.nama).toBe('Diskusi Umum');
-    });
-
-    it('should throw NotFoundException if category not found', async () => {
-      mockPrisma.forumCategory.findUnique.mockResolvedValue(null);
-      await expect(service.getCategory('invalid')).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('createCategory', () => {
-    it('should create a new category', async () => {
-      mockPrisma.forumCategory.create.mockResolvedValue({ ...mockCategory, id: 'cat2' });
-      const result = await service.createCategory({ nama: 'Baru', deskripsi: 'Test', order: 1 });
-      expect(mockPrisma.forumCategory.create).toHaveBeenCalled();
-    });
-  });
-
-  describe('updateCategory', () => {
-    it('should update an existing category', async () => {
-      mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
-      mockPrisma.forumCategory.update.mockResolvedValue({ ...mockCategory, nama: 'Updated' });
-      const result = await service.updateCategory('cat1', { nama: 'Updated' });
-      expect(result.data.nama).toBe('Updated');
-    });
-
-    it('should throw NotFoundException for non-existent category', async () => {
-      mockPrisma.forumCategory.findUnique.mockResolvedValue(null);
-      await expect(service.updateCategory('invalid', { nama: 'X' })).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('deleteCategory', () => {
-    it('should delete a category', async () => {
-      mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
-      mockPrisma.forumCategory.delete.mockResolvedValue(mockCategory);
-      const result = await service.deleteCategory('cat1');
-      expect(mockPrisma.forumCategory.delete).toHaveBeenCalledWith({ where: { id: 'cat1' } });
-    });
   });
 
   describe('getThreads', () => {
@@ -171,6 +142,7 @@ describe('ForumService', () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumThread.create.mockResolvedValue(mockThread);
       const result = await service.createThread({ categoryId: 'cat1', judul: 'Test', konten: 'Konten' }, 'user1');
+      expect(result.data).toBeDefined();
     });
 
     it('should throw NotFoundException for invalid category', async () => {
@@ -186,6 +158,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.update.mockResolvedValue({ ...mockThread, judul: 'Updated' });
       const result = await service.updateThread('thread1', { judul: 'Updated' }, 'user1');
+      expect(result.data).toBeDefined();
     });
   });
 
@@ -212,6 +185,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.delete.mockResolvedValue(mockThread);
       const result = await service.deleteThread('thread1');
+      expect(result.message).toBeDefined();
     });
   });
 
@@ -220,6 +194,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
       mockPrisma.forumPost.create.mockResolvedValue(mockPost);
       const result = await service.createPost('thread1', { konten: 'Reply' }, 'user2');
+      expect(result.data).toBeDefined();
     });
 
     it('should throw ForbiddenException for locked thread', async () => {
@@ -248,6 +223,7 @@ describe('ForumService', () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue({ ...mockPost, authorId: 'user1' });
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, konten: 'Updated' });
       const result = await service.updatePost('post1', { konten: 'Updated' }, 'user1');
+      expect(result.data).toBeDefined();
     });
 
     it('should throw ForbiddenException for non-author', async () => {
@@ -289,6 +265,7 @@ describe('ForumService', () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
       mockPrisma.forumPost.delete.mockResolvedValue(mockPost);
       const result = await service.deletePost('post1');
+      expect(result.message).toBeDefined();
     });
   });
 });

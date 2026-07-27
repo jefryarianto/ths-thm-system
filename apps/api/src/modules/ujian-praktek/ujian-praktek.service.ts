@@ -32,7 +32,7 @@ export class UjianPraktekService {
       },
       orderBy: { createdAt: 'asc' },
     });
-    return { success: true, data };
+    return { data };
   }
 
   async findOne(id: string) {
@@ -51,7 +51,7 @@ export class UjianPraktekService {
       },
     });
     if (!data) throw new NotFoundException('Ujian praktek tidak ditemukan');
-    return { success: true, data };
+    return { data };
   }
 
   async create(kegiatanId: string, dto: CreateUjianPraktekDto) {
@@ -68,7 +68,7 @@ export class UjianPraktekService {
         status: 'draft',
       },
     });
-    return { success: true, data, message: 'Ujian praktek berhasil dibuat' };
+    return { data, message: 'Ujian praktek berhasil dibuat' };
   }
 
   async update(id: string, dto: UpdateUjianPraktekDto) {
@@ -83,14 +83,14 @@ export class UjianPraktekService {
     if (dto.status !== undefined) updateData.status = dto.status;
 
     const data = await this.prisma.ujianPraktek.update({ where: { id }, data: updateData });
-    return { success: true, data, message: 'Ujian praktek berhasil diperbarui' };
+    return { data, message: 'Ujian praktek berhasil diperbarui' };
   }
 
   async remove(id: string) {
     const existing = await this.prisma.ujianPraktek.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Ujian praktek tidak ditemukan');
     await this.prisma.ujianPraktek.delete({ where: { id } });
-    return { success: true, message: 'Ujian praktek berhasil dihapus' };
+    return { message: 'Ujian praktek berhasil dihapus' };
   }
 
   // ─── Examiner Management ─────────────────────────────────
@@ -111,7 +111,7 @@ export class UjianPraktekService {
         },
         include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
       });
-      return { success: true, data, message: 'Penguji berhasil ditambahkan' };
+      return { data, message: 'Penguji berhasil ditambahkan' };
     } catch (err: unknown) {
       if ((err as { code?: string }).code === 'P2002') {
         throw new BadRequestException('Penguji sudah ditugaskan ke ujian ini');
@@ -126,7 +126,7 @@ export class UjianPraktekService {
     });
     if (!existing) throw new NotFoundException('Penugasan penguji tidak ditemukan');
     await this.prisma.ujianPraktekPenilai.delete({ where: { id: existing.id } });
-    return { success: true, message: 'Penguji berhasil dihapus' };
+    return { message: 'Penguji berhasil dihapus' };
   }
 
   // ─── Assessment Items Management ─────────────────────────
@@ -147,7 +147,7 @@ export class UjianPraktekService {
         },
         include: { itemPenilaian: { include: { aspek: true } } },
       });
-      return { success: true, data, message: 'Item penilaian berhasil ditambahkan' };
+      return { data, message: 'Item penilaian berhasil ditambahkan' };
     } catch (err: unknown) {
       if ((err as { code?: string }).code === 'P2002') {
         throw new BadRequestException('Item penilaian sudah ditambahkan');
@@ -162,7 +162,7 @@ export class UjianPraktekService {
     });
     if (!existing) throw new NotFoundException('Item penilaian tidak ditemukan');
     await this.prisma.ujianPraktekItem.delete({ where: { id: existing.id } });
-    return { success: true, message: 'Item penilaian berhasil dihapus' };
+    return { message: 'Item penilaian berhasil dihapus' };
   }
 
   // ─── Scoring ─────────────────────────────────────────────
@@ -177,7 +177,7 @@ export class UjianPraktekService {
       },
       orderBy: [{ calonAnggotaId: 'asc' }, { createdAt: 'asc' }],
     });
-    return { success: true, data };
+    return { data };
   }
 
   async scoreCandidate(ujianPraktekId: string, dto: BulkScoreDto, pengujiUserId: string) {
@@ -199,7 +199,7 @@ export class UjianPraktekService {
             calonAnggotaId: scoreDto.calonAnggotaId,
             itemPenilaianId: item.itemPenilaianId,
             pengujiUserId,
-          } as never,
+          },
         };
         const existing = await this.prisma.nilaiPendadaran.findFirst({
           where: {
@@ -239,7 +239,6 @@ export class UjianPraktekService {
     }
 
     return {
-      success: true,
       data: { scored: results.length },
       message: `${results.length} nilai berhasil disimpan`,
     };
@@ -253,7 +252,7 @@ export class UjianPraktekService {
       include: { aspek: true },
       orderBy: [{ aspek: { namaAspek: 'asc' } }, { urutan: 'asc' }],
     });
-    return { success: true, data };
+    return { data };
   }
 
   async getAvailableExaminers(kegiatanId: string) {
@@ -270,7 +269,6 @@ export class UjianPraktekService {
     ]);
 
     return {
-      success: true,
       data: {
         assignedToKegiatan: assigned.map((a) => a.pengujiUser),
         allPenguji,

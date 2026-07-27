@@ -177,7 +177,7 @@ export class PaymentsService {
       }
     }
 
-    return { success: true, data: iuran };
+    return { data: iuran };
   }
 
   async uploadProof(
@@ -228,7 +228,6 @@ export class PaymentsService {
     this.cache.invalidatePrefix('reports:');
 
     return {
-      success: true,
       data: updated,
       message: 'Bukti pembayaran berhasil dikirim. Menunggu verifikasi admin.',
     };
@@ -274,7 +273,6 @@ export class PaymentsService {
     this.logger.log(`Payment verified for iuran ${iuranId} by user ${userId}`);
 
     return {
-      success: true,
       data: updated,
       message: 'Pembayaran berhasil diverifikasi',
     };
@@ -312,7 +310,6 @@ export class PaymentsService {
     this.cache.invalidatePrefix('reports:');
 
     return {
-      success: true,
       data: updated,
       message: 'Pembayaran ditolak. Status dikembalikan ke belum dibayar.',
     };

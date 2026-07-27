@@ -2,8 +2,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
+import { AspectService } from './aspect.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('AssessmentsService', () => {
   let service: AssessmentsService;
@@ -26,6 +28,9 @@ describe('AssessmentsService', () => {
       count: jest.fn(),
       create: jest.fn(),
     },
+    kegiatan: {
+      findUnique: jest.fn(),
+    },
   };
 
   const mockScopeHelper = {
@@ -36,12 +41,21 @@ describe('AssessmentsService', () => {
     verifyKegiatanScope: jest.fn(),
   };
 
+  const mockCache = {
+    get: jest.fn(),
+    set: jest.fn(),
+    getOrSet: jest.fn(),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AssessmentsService,
+        AspectService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
@@ -53,37 +67,32 @@ describe('AssessmentsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('getAspects', () => {
-    it('should return all aspects', async () => {
-      mockPrisma.aspekPenilaian.findMany.mockResolvedValue([{ id: 'a1', nama: 'Teknik' }]);
-      const result = await service.getAspects({});
-      expect(result.data).toHaveLength(1);
-    });
-  });
-
-  describe('getAspect', () => {
-    it('should return a single aspect', async () => {
-      mockPrisma.aspekPenilaian.findUnique.mockResolvedValue({ id: 'a1', nama: 'Teknik' });
-      const result = await service.getAspect('a1');
-    });
-
-    it('should throw NotFoundException', async () => {
-      mockPrisma.aspekPenilaian.findUnique.mockResolvedValue(null);
-      await expect(service.getAspect('a1')).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('createAspect', () => {
-    it('should create an aspect', async () => {
-      mockPrisma.aspekPenilaian.create.mockResolvedValue({ id: 'a1', nama: 'Teknik' });
-      const result = await service.createAspect({ nama: 'Teknik', deskripsi: 'Desc' } as any);
-    });
-  });
-
   describe('getItems', () => {
     it('should return items', async () => {
       mockPrisma.itemPenilaian.findMany.mockResolvedValue([{ id: 'i1', nama: 'Tendangan' }]);
       const result = await service.getItems({});
+      expect(result.data).toHaveLength(1);
+    });
+  });
+
+  describe('getItem', () => {
+    it('should return a single item', async () => {
+      mockPrisma.itemPenilaian.findUnique.mockResolvedValue({ id: 'i1', nama: 'Tendangan' });
+      const result = await service.getItem('i1');
+      expect(result.data).toBeDefined();
+    });
+
+    it('should throw NotFoundException', async () => {
+      mockPrisma.itemPenilaian.findUnique.mockResolvedValue(null);
+      await expect(service.getItem('i1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('createItem', () => {
+    it('should create an item', async () => {
+      mockPrisma.itemPenilaian.create.mockResolvedValue({ id: 'i1', namaItem: 'Tendangan' });
+      const result = await service.createItem({ namaItem: 'Tendangan', skorMaksimal: 100 } as any);
+      expect(result.data).toBeDefined();
     });
   });
 
@@ -106,6 +115,7 @@ describe('AssessmentsService', () => {
         pengujiUserId: 'u1',
         skor: 85,
       } as any);
+      expect(result.data).toBeDefined();
     });
   });
 });

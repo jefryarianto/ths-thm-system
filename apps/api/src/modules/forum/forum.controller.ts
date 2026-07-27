@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ForumService } from './forum.service';
+import { ForumCategoryService } from './forum-category.service';
 import {
   CreateThreadDto,
   CreatePostDto,
@@ -27,38 +28,41 @@ import { Public } from '../../common/decorators/public.decorator';
 @Controller('forum')
 @ApiBearerAuth()
 export class ForumController {
-  constructor(private readonly service: ForumService) {}
+  constructor(
+    private readonly service: ForumService,
+    private readonly categoryService: ForumCategoryService,
+  ) {}
 
-  // ── Categories ────────────────────────────────────────
+  // ── Categories (via ForumCategoryService / BaseCrudService) ──
 
   @Get('categories')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar kategori forum' })
   getCategories() {
-    return this.service.getCategories();
+    return this.categoryService.findAll();
   }
 
   @Get('categories/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Detail kategori forum' })
   getCategory(@Param('id') id: string) {
-    return this.service.getCategory(id);
+    return this.categoryService.findOne(id);
   }
 
   @Post('categories')
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Buat kategori forum (admin)' })
   createCategory(@Body() dto: CreateCategoryDto) {
-    return this.service.createCategory(dto);
+    return this.categoryService.create(dto);
   }
 
   @Patch('categories/:id')
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Perbarui kategori forum (admin)' })
   updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
-    return this.service.updateCategory(id, dto);
+    return this.categoryService.update(id, dto);
   }
 
   @Delete('categories/:id')
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus kategori forum (admin)' })
   deleteCategory(@Param('id') id: string) {
-    return this.service.deleteCategory(id);
+    return this.categoryService.remove(id);
   }
 
   // ── Threads ───────────────────────────────────────────

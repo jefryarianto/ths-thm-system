@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Uploaded
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { AssessmentsService, ImportRow } from './assessments.service';
+import { AspectService } from './aspect.service';
 import {
   CreateAspectDto,
   UpdateAspectDto,
@@ -18,37 +19,44 @@ import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 @Controller('assessments')
 @ApiBearerAuth()
 export class AssessmentsController {
-  constructor(private readonly service: AssessmentsService) {}
+  constructor(
+    private readonly service: AssessmentsService,
+    private readonly aspectService: AspectService,
+  ) {}
+
+  // ── Aspects (via AspectService / BaseCrudService) ────
 
   @Get('aspects')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil semua aspek penilaian' })
   getAspects(@Query() q: AssessmentFilterDto) {
-    return this.service.getAspects(q);
+    return this.aspectService.findAll(q);
   }
 
   @Get('aspects/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil detail aspek penilaian' })
   getAspect(@Param('id') id: string) {
-    return this.service.getAspect(id);
+    return this.aspectService.findOne(id);
   }
 
   @Post('aspects')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah aspek penilaian baru' })
   createAspect(@Body() dto: CreateAspectDto) {
-    return this.service.createAspect(dto);
+    return this.aspectService.create(dto);
   }
 
   @Patch('aspects/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Perbarui aspek penilaian' })
   updateAspect(@Param('id') id: string, @Body() dto: UpdateAspectDto) {
-    return this.service.updateAspect(id, dto);
+    return this.aspectService.update(id, dto);
   }
 
   @Delete('aspects/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus aspek penilaian' })
   deleteAspect(@Param('id') id: string) {
-    return this.service.deleteAspect(id);
+    return this.aspectService.remove(id);
   }
+
+  // ── Items ────────────────────────────────────────────
 
   @Get('items')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil semua item penilaian' })
@@ -80,6 +88,8 @@ export class AssessmentsController {
     return this.service.deleteItem(id);
   }
 
+  // ── Import ────────────────────────────────────────────
+
   @Post('import-from-list')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Import aspek & item penilaian dari list JSON' })
   importFromList(@Body() body: { data: ImportRow[] }) {
@@ -100,6 +110,8 @@ export class AssessmentsController {
     const csvText = file.buffer.toString('utf-8');
     return this.service.importFromCsvText(csvText);
   }
+
+  // ── Scores ────────────────────────────────────────────
 
   @Get('scores')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil semua nilai' })
