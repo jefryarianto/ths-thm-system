@@ -105,7 +105,7 @@ function StatCard({
   sub,
   color,
 }: {
-  icon: LucideIcon;
+  icon: React.ComponentType<LucideProps>;
   label: string;
   value: string;
   sub?: string;
