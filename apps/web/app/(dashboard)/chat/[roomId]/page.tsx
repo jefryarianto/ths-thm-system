@@ -8,6 +8,7 @@ import { getSocket, disconnectSocket } from '@/lib/socket';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useToast } from '@/components/ui/toast';
 
 interface Message {
   id: string;
@@ -39,6 +40,7 @@ export default function ChatRoomPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const toast = useToast();
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -147,8 +149,7 @@ export default function ChatRoomPage() {
       });
       setContent('');
     } catch (err) {
-      // eslint-disable-next-line no-alert
-      alert(err?.response?.data?.message || 'Gagal mengirim pesan');
+      toast('error', err?.response?.data?.message || 'Gagal mengirim pesan');
     }
     setSending(false);
   };
@@ -166,7 +167,7 @@ export default function ChatRoomPage() {
       await apiClient.delete(`/chat/messages/${messageId}`);
       await fetchMessages();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menghapus pesan');
+      toast('error', err?.response?.data?.message || 'Gagal menghapus pesan');
     }
   };
 

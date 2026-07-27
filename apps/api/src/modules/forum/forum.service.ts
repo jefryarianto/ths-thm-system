@@ -98,20 +98,39 @@ export class ForumService {
       where.authorId = filter.authorId;
     }
 
-    const orderBy = filter.isPinned ? [{ isPinned: 'desc' as const }, { createdAt: 'desc' as const }] : { createdAt: 'desc' as const };
+    const orderBy = filter.isPinned
+      ? [{ isPinned: 'desc' as const }, { createdAt: 'desc' as const }]
+      : { createdAt: 'desc' as const };
 
-    const result = await paginate(this.prisma.forumThread, where, {
-      page: filter.page || 1,
-      limit: filter.limit || 20,
-      orderBy,
-      include: {
-        author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
-        category: { select: { id: true, nama: true } },
-        _count: { select: { posts: true } },
+    const page = filter.page || 1;
+    const limit = filter.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.forumThread.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: orderBy as never,
+        include: {
+          author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
+          category: { select: { id: true, nama: true } },
+          _count: { select: { posts: true } },
+        },
+      }),
+      this.prisma.forumThread.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-    });
-
-    return result;
+    };
   }
 
   async getThread(id: string) {
@@ -246,6 +265,7 @@ export class ForumService {
     if (thread.authorId !== authorId) {
       try {
         await this.notificationsService.send(thread.authorId, {
+          userId: thread.authorId,
           judul: 'Balasan Baru di Thread Anda',
           isi: `${post.author.namaLengkap} membalas thread "${thread.judul}"`,
           tipe: 'forum_reply',
@@ -305,6 +325,7 @@ export class ForumService {
     if (post.authorId !== userId) {
       try {
         await this.notificationsService.send(post.authorId, {
+          userId: post.authorId,
           judul: 'Balasan Anda Ditandai Solusi',
           isi: `Balasan Anda di thread "${thread.judul}" telah ditandai sebagai solusi`,
           tipe: 'forum_solution',

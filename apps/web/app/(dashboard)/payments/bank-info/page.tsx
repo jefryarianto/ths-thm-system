@@ -7,6 +7,7 @@ import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/toast';
 
 interface BankInfo {
   id: string;
@@ -34,6 +35,7 @@ const emptyForm: BankFormData = {
 };
 
 export default function BankInfoPage() {
+  const toast = useToast();
   const [banks, setBanks] = useState<BankInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -76,7 +78,7 @@ export default function BankInfoPage() {
 
   const handleSubmit = async () => {
     if (!form.bankName.trim() || !form.accountNumber.trim() || !form.accountName.trim()) {
-      alert('Bank, nomor rekening, dan nama rekening wajib diisi');
+      toast('error', 'Bank, nomor rekening, dan nama rekening wajib diisi');
       return;
     }
     setSubmitting(true);
@@ -96,8 +98,9 @@ export default function BankInfoPage() {
       }
       await fetchBanks();
       resetForm();
+      toast('success', editingId ? 'Rekening berhasil diperbarui' : 'Rekening berhasil ditambahkan');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menyimpan');
+      toast('error', err?.response?.data?.message || 'Gagal menyimpan');
     }
     setSubmitting(false);
   };
@@ -107,8 +110,9 @@ export default function BankInfoPage() {
     try {
       await apiClient.delete(`/payments/bank-info/${id}`);
       await fetchBanks();
+      toast('success', 'Rekening berhasil dihapus');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menghapus');
+      toast('error', err?.response?.data?.message || 'Gagal menghapus');
     }
   };
 
@@ -116,8 +120,9 @@ export default function BankInfoPage() {
     try {
       await apiClient.patch(`/payments/bank-info/${bank.id}`, { isActive: !bank.isActive });
       await fetchBanks();
+      toast('success', bank.isActive ? 'Rekening dinonaktifkan' : 'Rekening diaktifkan');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal memperbarui');
+      toast('error', err?.response?.data?.message || 'Gagal memperbarui');
     }
   };
 

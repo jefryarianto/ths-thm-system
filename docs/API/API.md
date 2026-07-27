@@ -155,6 +155,24 @@ Authorization: Bearer <access_token>
 | GET | `/graduations/:id/participants` | Peserta pendadaran | Admin/Penguji |
 | GET | `/graduations/:id/evaluations` | Nilai evaluasi pendadaran | Admin/Penguji |
 
+## Ujian Praktek
+
+| Method | Endpoint | Deskripsi | Akses |
+|--------|----------|-----------|-------|
+| GET | `/graduations/:kegiatanId/ujian-praktek` | Daftar ujian praktek dalam pendadaran | Admin/Penguji |
+| GET | `/graduations/:kegiatanId/ujian-praktek/:id` | Detail ujian praktek | Admin/Penguji |
+| POST | `/graduations/:kegiatanId/ujian-praktek` | Buat ujian praktek baru | Admin |
+| PATCH | `/graduations/:kegiatanId/ujian-praktek/:id` | Perbarui ujian praktek | Admin |
+| DELETE | `/graduations/:kegiatanId/ujian-praktek/:id` | Hapus ujian praktek | Admin |
+| POST | `/graduations/:kegiatanId/ujian-praktek/:id/examiners` | Tugaskan penguji ke ujian praktek | Admin |
+| DELETE | `/graduations/:kegiatanId/ujian-praktek/:id/examiners` | Hapus penguji dari ujian praktek | Admin |
+| POST | `/graduations/:kegiatanId/ujian-praktek/:id/items` | Tambah item penilaian ke ujian praktek | Admin |
+| DELETE | `/graduations/:kegiatanId/ujian-praktek/:id/items/:itemPenilaianId` | Hapus item penilaian dari ujian praktek | Admin |
+| GET | `/graduations/:kegiatanId/ujian-praktek/:id/scores` | Ambil nilai ujian praktek | Admin/Penguji |
+| POST | `/graduations/:kegiatanId/ujian-praktek/:id/score` | Input nilai ujian praktek (bulk per penguji) | Admin/Penguji |
+| GET | `/graduations/:kegiatanId/ujian-praktek/available-items` | Ambil item penilaian yang tersedia | Admin |
+| GET | `/graduations/:kegiatanId/ujian-praktek/available-examiners` | Ambil penguji yang tersedia | Admin |
+
 ---
 
 ## Activities

@@ -7,6 +7,7 @@ import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/toast';
 
 interface Category {
   id: string;
@@ -25,6 +26,7 @@ interface CategoryForm {
 const emptyForm: CategoryForm = { nama: '', deskripsi: '', order: 0 };
 
 export default function ForumAdminCategoriesPage() {
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -65,7 +67,7 @@ export default function ForumAdminCategoriesPage() {
 
   const handleSubmit = async () => {
     if (!form.nama.trim()) {
-      alert('Nama kategori wajib diisi');
+      toast('error', 'Nama kategori wajib diisi');
       return;
     }
     setSubmitting(true);
@@ -84,7 +86,7 @@ export default function ForumAdminCategoriesPage() {
       await fetchCategories();
       resetForm();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menyimpan');
+      toast('error', err?.response?.data?.message || 'Gagal menyimpan');
     }
     setSubmitting(false);
   };
@@ -94,8 +96,9 @@ export default function ForumAdminCategoriesPage() {
     try {
       await apiClient.delete(`/forum/categories/${id}`);
       await fetchCategories();
+      toast('success', 'Kategori berhasil dihapus');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal menghapus');
+      toast('error', err?.response?.data?.message || 'Gagal menghapus');
     }
   };
 

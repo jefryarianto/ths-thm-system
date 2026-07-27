@@ -6,6 +6,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
+import { useToast } from '@/components/ui/toast';
 
 interface DuesRecord {
   id: string;
@@ -25,6 +26,7 @@ interface BankInfo {
 }
 
 export default function MemberDuesPage() {
+  const toast = useToast();
   const [dues, setDues] = useState<DuesRecord[]>([]);
   const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function MemberDuesPage() {
     const note = proofNotes[id]?.trim() || '';
 
     if (!file && !note) {
-      alert('Sertakan bukti foto atau catatan pembayaran');
+      toast('error', 'Sertakan bukti foto atau catatan pembayaran');
       return;
     }
 
@@ -78,8 +80,9 @@ export default function MemberDuesPage() {
       await fetchData();
       setProofFiles((prev) => ({ ...prev, [id]: null }));
       setProofNotes((prev) => ({ ...prev, [id]: '' }));
+      toast('success', 'Bukti pembayaran berhasil dikirim');
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal mengirim bukti');
+      toast('error', err?.response?.data?.message || 'Gagal mengirim bukti');
     }
     setUploadingId(null);
   };
