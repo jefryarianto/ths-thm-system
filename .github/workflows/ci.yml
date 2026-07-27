@@ -61,6 +61,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=critical
+
       - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
 
@@ -74,6 +77,12 @@ jobs:
 
       - name: Run API Tests
         run: pnpm --filter @ths-thm/api test
+
+      - name: Typecheck Web
+        run: pnpm --filter @ths-thm/web typecheck
+
+      - name: Typecheck Mobile
+        run: pnpm --filter @ths-thm/mobile typecheck
 
       - name: Run Lint
         run: pnpm -r run lint

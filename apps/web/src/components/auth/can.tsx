@@ -57,6 +57,7 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   'org-chart':      { view: 'anggota', admin: 'admin_ranting' },
   'org-documents':  { view: 'anggota', create: 'admin_ranting', edit: 'admin_ranting' },
   calendar:         { ...DEFAULT_MODULE, view: 'anggota' },
+  chat:             { ...DEFAULT_MODULE, view: 'anggota' },
   forum:            { ...DEFAULT_MODULE, view: 'anggota' },
   'scan-stats':     { ...DEFAULT_MODULE, admin: 'admin_ranting' },
   users:            { view: 'admin_ranting', create: 'superadmin', edit: 'superadmin', delete: 'superadmin' },

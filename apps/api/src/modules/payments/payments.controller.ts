@@ -1,9 +1,32 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Get, Patch, Delete, Body, Param, Req, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { PaymentsService, CreateBankInfoDto, UpdateBankInfoDto } from './payments.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, resolve } from 'path';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+
+function buildProofStorage() {
+  const rawDir = process.env.UPLOAD_DIR || './uploads';
+  const proofDir = resolve(rawDir, 'proofs');
+  if (!existsSync(proofDir)) {
+    mkdirSync(proofDir, { recursive: true });
+  }
+  return diskStorage({
+    destination: (_req, _file, cb) => {
+      if (!existsSync(proofDir)) mkdirSync(proofDir, { recursive: true });
+      cb(null, proofDir);
+    },
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = extname(file.originalname).toLowerCase();
+      cb(null, `proof-${uniqueSuffix}${ext}`);
+    },
+  });
+}
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -60,14 +83,30 @@ export class PaymentsController {
 
   @Post(':id/upload-proof')
   @ApiOperation({ summary: 'Upload bukti pembayaran manual' })
+  @ApiConsumes('multipart/form-data')
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
   @RequireScope('branch')
-  uploadProof(
+  @UseInterceptors(
+    FileInterceptor('bukti', {
+      storage: buildProofStorage(),
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/pdf'];
+        if (!allowed.includes(file.mimetype)) {
+          cb(new BadRequestException('Format file tidak didukung. Gunakan JPEG, PNG, WebP, atau PDF'), false);
+          return;
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  async uploadProof(
     @Param('id') id: string,
-    @Body() payload: { catatan: string; buktiBayarPath?: string },
+    @UploadedFile() file?: Express.Multer.File,
+    @Body('catatan') catatan?: string,
     @Req() req: ScopedRequest,
   ) {
-    return this.service.uploadProof(id, payload, req.scope);
+    return this.service.uploadProof(id, { catatan, file }, req.scope);
   }
 
   @Patch(':id/verify')

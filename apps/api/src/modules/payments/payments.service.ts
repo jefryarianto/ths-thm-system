@@ -182,7 +182,7 @@ export class PaymentsService {
 
   async uploadProof(
     iuranId: string,
-    payload: { catatan: string; buktiBayarPath?: string },
+    payload: { catatan?: string; file?: Express.Multer.File },
     scope?: UserScope,
   ) {
     const iuran = await this.prisma.iuran.findUnique({
@@ -208,12 +208,19 @@ export class PaymentsService {
       throw new ForbiddenException('Iuran ini sudah lunas');
     }
 
+    let buktiPath: string | null = iuran.buktiBayarPath;
+    if (payload.file) {
+      buktiPath = `/api/uploads/proofs/${payload.file.filename}`;
+    } else if (payload.catatan) {
+      buktiPath = payload.catatan;
+    }
+
     const updated = await this.prisma.iuran.update({
       where: { id: iuranId },
       data: {
         status: 'menunggu_verifikasi',
         metodeBayar: 'transfer',
-        buktiBayarPath: payload.buktiBayarPath || payload.catatan || null,
+        buktiBayarPath: buktiPath,
       },
     });
 

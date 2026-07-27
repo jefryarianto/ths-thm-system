@@ -49,6 +49,13 @@ export class DuesController {
     return this.service.remove(id, req.scope);
   }
 
+  @Get('members/me')
+  @ApiOperation({ summary: 'Daftar iuran saya (anggota login)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')
+  getMyDues(@Req() req: ScopedRequest) {
+    return this.service.getMyDues(req.user);
+  }
+
   @Get('members/:memberId')
   @ApiOperation({ summary: 'Daftar iuran per anggota' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota')

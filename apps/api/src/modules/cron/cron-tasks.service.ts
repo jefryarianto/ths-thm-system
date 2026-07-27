@@ -326,7 +326,7 @@ export class CronTasksService {
   //  Send to members with statusData = 'incomplete'
   // ─────────────────────────────────────────────────────────
 
-  @Cron(CronExpression.EVERY_WEEK)
+  @Cron('0 9 * * 1')
   async sendIncompleteDataReminders(): Promise<void> {
     this.logger.log('Checking for members with incomplete data...');
 

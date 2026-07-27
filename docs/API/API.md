@@ -387,24 +387,33 @@ Authorization: Bearer <access_token>
 | Method | Endpoint | Deskripsi | Akses |
 |--------|----------|-----------|-------|
 | GET | `/forum/categories` | Daftar kategori forum | Auth |
+| GET | `/forum/categories/:id` | Detail kategori forum | Auth |
+| POST | `/forum/categories` | Buat kategori forum | Admin |
+| PATCH | `/forum/categories/:id` | Perbarui kategori forum | Admin |
+| DELETE | `/forum/categories/:id` | Hapus kategori forum | Admin |
+| GET | `/forum/categories/:categoryId/threads` | Thread dalam kategori (search, filter) | Auth |
+| GET | `/forum/threads/:id` | Detail thread + posts (public) | **Public** |
 | POST | `/forum/threads` | Buat thread baru | Auth |
-| GET | `/forum/categories/:categoryId/threads` | Thread dalam kategori | Auth |
-| GET | `/forum/threads/:id` | Detail thread + posts | Auth |
-| POST | `/forum/threads/:id/posts` | Balas thread | Auth |
-| PATCH | `/forum/threads/:id/pin` | Pin thread (admin only) | Admin |
-| PATCH | `/forum/threads/:id/lock` | Lock thread (admin only) | Admin |
-| DELETE | `/forum/threads/:id` | Hapus thread | Admin |
-| DELETE | `/forum/posts/:id` | Hapus post | Admin |
+| PATCH | `/forum/threads/:id` | Perbarui thread | Auth |
+| PATCH | `/forum/threads/:id/pin` | Pin/unpin thread (admin) | Admin |
+| PATCH | `/forum/threads/:id/lock` | Lock/unlock thread (admin) | Admin |
+| DELETE | `/forum/threads/:id` | Hapus thread | Auth |
+| POST | `/forum/threads/:id/posts` | Balas thread (kirim notifikasi ke author) | Auth |
+| PATCH | `/posts/:id` | Perbarui balasan (milik sendiri) | Auth |
+| PATCH | `/posts/:id/solution` | Tandai balasan sebagai solusi | Auth |
+| DELETE | `/posts/:id` | Hapus post | Auth |
 
 ---
 
 ## Chat
+
 
 | Method | Endpoint | Deskripsi | Akses |
 |--------|----------|-----------|-------|
 | GET | `/chat/rooms` | Daftar ruang chat user | Auth |
 | POST | `/chat/rooms/:roomId/messages` | Kirim pesan | Auth |
 | GET | `/chat/rooms/:roomId/messages` | Ambil pesan (limit, before cursor) | Auth |
+| DELETE | `/chat/messages/:id` | Hapus pesan sendiri | Auth |
 | POST | `/chat/rooms/:roomId/read` | Tandai pesan terbaca | Auth |
 
 ---

@@ -202,6 +202,24 @@ export class DuesService {
     return { success: true, data: dues };
   }
 
+  async getMyDues(user: { id: string; email: string; role: string }) {
+    const anggota = await this.prisma.anggota.findFirst({
+      where: { email: user.email, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!anggota) {
+      return { success: true, data: [] };
+    }
+
+    const dues = await this.prisma.iuran.findMany({
+      where: { anggotaId: anggota.id },
+      orderBy: { periode: 'desc' },
+    });
+
+    return { success: true, data: dues };
+  }
+
   async getArrears(_query: Record<string, unknown>) {
     const arrears = await this.prisma.iuran.findMany({
       where: { status: 'menunggak' },

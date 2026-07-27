@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -45,6 +46,7 @@ export default function DuesDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [showPayForm, setShowPayForm] = useState(false);
   const [catatan, setCatatan] = useState('');
+  const [proofFile, setProofFile] = useState<{ uri: string; name: string; type: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchData = async () => {
@@ -65,20 +67,54 @@ export default function DuesDetailScreen() {
     fetchData();
   }, [id]);
 
-  const handleSubmitProof = async () => {
-    if (!catatan.trim()) {
-      Alert.alert(
-        'Error',
-        'Catatan pembayaran harus diisi (misal: nama pengirim, tanggal transfer)',
-      );
+  const pickProof = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Izin dibutuhkan', 'Akses galeri diperlukan untuk memilih bukti pembayaran');
       return;
     }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      selectionLimit: 1,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setProofFile({
+        uri: asset.uri,
+        name: asset.uri.split('/').pop() || 'proof.jpg',
+        type: asset.mimeType || 'image/jpeg',
+      });
+    }
+  };
+
+  const handleSubmitProof = async () => {
     setSubmitting(true);
     try {
-      await apiClient.post(`/payments/${id}/upload-proof`, { catatan: catatan.trim() });
+      if (proofFile) {
+        const form = new FormData();
+        form.append('bukti', {
+          uri: proofFile.uri,
+          name: proofFile.name,
+          type: proofFile.type,
+        } as any);
+        if (catatan.trim()) {
+          form.append('catatan', catatan.trim());
+        }
+        await apiClient.post(`/payments/${id}/upload-proof`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else if (catatan.trim()) {
+        await apiClient.post(`/payments/${id}/upload-proof`, { catatan: catatan.trim() });
+      } else {
+        Alert.alert('Error', 'Sertakan catatan atau bukti foto');
+        setSubmitting(false);
+        return;
+      }
       Alert.alert('Berhasil', 'Bukti pembayaran berhasil dikirim. Menunggu verifikasi admin.');
       setShowPayForm(false);
       setCatatan('');
+      setProofFile(null);
       setLoading(true);
       await fetchData();
     } catch (err: any) {
@@ -205,9 +241,20 @@ export default function DuesDetailScreen() {
           <View style={styles.payForm}>
             <Text style={styles.payFormTitle}>Konfirmasi Pembayaran</Text>
             <Text style={styles.payFormHint}>
-              Isi catatan transfer (nama pengirim, bank asal, tanggal transfer) untuk verifikasi
-              admin
+              Lampirkan bukti transfer (foto/screenshot) dan isi catatan untuk verifikasi admin
             </Text>
+
+            <TouchableOpacity style={styles.uploadBtn} onPress={pickProof}>
+              <Ionicons name="cloud-upload-outline" size={18} color="#2563eb" />
+              <Text style={styles.uploadBtnText}>
+                {proofFile ? 'Ganti Bukti Foto' : 'Pilih Bukti Foto'}
+              </Text>
+            </TouchableOpacity>
+
+            {proofFile && (
+              <Image source={{ uri: proofFile.uri }} style={styles.previewImage} resizeMode="contain" />
+            )}
+
             <TextInput
               style={styles.payInput}
               placeholder="Contoh: Transfer dari BCA a.n. Budi, 17 Juni 2026"
@@ -223,6 +270,7 @@ export default function DuesDetailScreen() {
                 onPress={() => {
                   setShowPayForm(false);
                   setCatatan('');
+                  setProofFile(null);
                 }}
               >
                 <Text style={styles.cancelSmallBtnText}>Batal</Text>
@@ -346,6 +394,20 @@ const styles = StyleSheet.create({
   },
   payFormTitle: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 4 },
   payFormHint: { fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 18 },
+  uploadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
+    marginBottom: 12,
+  },
+  uploadBtnText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
+  previewImage: { width: '100%', height: 180, borderRadius: 10, marginBottom: 12 },
   payInput: {
     backgroundColor: '#f9fafb',
     borderWidth: 1,

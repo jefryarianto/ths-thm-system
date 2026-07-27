@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -48,6 +48,13 @@ export class ChatController {
       before,
     );
     return { success: true, data: messages };
+  }
+
+  @Delete('messages/:id')
+  @ApiOperation({ summary: 'Hapus pesan' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  async deleteMessage(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    return this.chatService.deleteMessage(id, user.id);
   }
 
   @Post('rooms/:roomId/read')

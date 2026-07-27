@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -105,5 +105,19 @@ export class ChatService {
       create: { roomId, anggotaId },
     });
     return { success: true };
+  }
+
+  /**
+   * Delete a chat message (only by sender).
+   */
+  async deleteMessage(id: string, senderId: string) {
+    const message = await this.prisma.chatMessage.findUnique({ where: { id } });
+    if (!message) throw new NotFoundException('Pesan tidak ditemukan');
+    if (message.senderId !== senderId) {
+      throw new ForbiddenException('Anda hanya dapat menghapus pesan sendiri');
+    }
+
+    await this.prisma.chatMessage.delete({ where: { id } });
+    return { success: true, message: 'Pesan berhasil dihapus' };
   }
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageSquare, FolderOpen, Plus } from 'lucide-react';
+import { MessageSquare, FolderOpen, Plus, Settings } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { CanAdmin } from '@/components/auth/can';
 import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -42,6 +43,14 @@ export default function ForumPage() {
         >
           <Plus size={16} /> Buat Thread
         </Link>
+        <CanAdmin module="forum">
+          <Link
+            href="/forum/admin/categories"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+          >
+            <Settings size={16} /> Kelola Kategori
+          </Link>
+        </CanAdmin>
       </PageHeader>
 
       {loading ? (
