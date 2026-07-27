@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Optional, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/services/cache.service';
 import { MailService } from '../../mail/mail.service';
 import { generalNotificationEmail, escapeHtml } from '../../mail/email-templates';
 import { EventsGateway } from './events.gateway';
@@ -10,7 +11,6 @@ import {
   NotificationFilterDto,
 } from './dto/notification.dto';
 import { Role } from '@prisma/client';
-import { CacheService } from '../../common/services/cache.service';
 import { paginate } from '../../common/utils/pagination';
 
 @Injectable()
@@ -26,15 +26,10 @@ export class NotificationsService {
   ) {}
 
   async send(userId: string, dto: SendNotificationDto) {
-    // Check user notification preferences
     const tipe = dto.tipe || 'umum';
     const enabled = await this.isPreferenceEnabled(userId, tipe);
     if (!enabled) {
-      return {
-        success: true,
-        data: null,
-        message: 'Notifikasi ditunda (user mematikan notifikasi ini)',
-      };
+      return { data: null, message: 'Notifikasi ditunda (user mematikan notifikasi ini)' };
     }
 
     const notification = await this.prisma.notifikasi.create({
@@ -47,51 +42,38 @@ export class NotificationsService {
       },
     });
 
-    // Send email notification if user has email (method handles errors internally)
     this.sendEmailNotification(userId, dto.judul, dto.isi, tipe);
-
-    // Push FCM to device tokens
     await this.pushFCM(userId, dto.judul, dto.isi);
-
-    // Emit real-time via WebSocket
     this.eventsGateway?.sendNotification(userId, notification);
     const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
     this.eventsGateway?.sendUnreadCount(userId, count);
-
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
-    return { success: true, data: notification, message: 'Notifikasi berhasil dikirim' };
+
+    return { data: notification, message: 'Notifikasi berhasil dikirim' };
   }
 
   async broadcast(dto: BroadcastNotificationDto) {
     const users = await this.prisma.user.findMany({ where: { isActive: true } });
-
-    // Batch filter users by 'umum' preference (single query)
-    const allowedIds = await this.batchCheckPreference(
-      users.map((u) => u.id),
-      'umum',
-    );
+    const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), 'umum');
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
-    // Batch insert all notifications in a single query
     if (allowedUsers.length > 0) {
       await this.prisma.notifikasi.createMany({
         data: allowedUsers.map((user) => ({
           userId: user.id,
           judul: dto.judul,
           isi: dto.isi,
-          tipe: 'umum',
+          tipe: 'umum' as never,
         })),
       });
     }
 
-    // Push FCM to filtered users
     await this.pushBroadcast(
       dto.judul,
       dto.isi,
       allowedUsers.map((u) => u.id),
     );
 
-    // Emit real-time via WebSocket — parallelized with Promise.allSettled
     const countResults = await this.prisma.notifikasi.groupBy({
       by: ['userId'],
       where: { userId: { in: allowedUsers.map((u) => u.id) }, isRead: false },
@@ -104,14 +86,13 @@ export class NotificationsService {
         this.eventsGateway?.sendNotification(user.id, {
           judul: dto.judul,
           isi: dto.isi,
-          tipe: 'umum',
+          tipe: 'umum' as never,
         });
         this.eventsGateway?.sendUnreadCount(user.id, countMap.get(user.id) || 0);
       }),
     );
 
     return {
-      success: true,
       data: { sentTo: allowedUsers.length, total: users.length },
       message: `Notifikasi broadcast ke ${allowedUsers.length}/${users.length} user`,
     };
@@ -123,15 +104,9 @@ export class NotificationsService {
     });
 
     const tipe = dto.tipe || 'umum';
-
-    // Batch filter users by notification preference (single query)
-    const allowedIds = await this.batchCheckPreference(
-      users.map((u) => u.id),
-      tipe,
-    );
+    const allowedIds = await this.batchCheckPreference(users.map((u) => u.id), tipe);
     const allowedUsers = users.filter((u) => allowedIds.has(u.id));
 
-    // Batch insert all notifications in a single query
     if (allowedUsers.length > 0) {
       await this.prisma.notifikasi.createMany({
         data: allowedUsers.map((user) => ({
@@ -143,14 +118,12 @@ export class NotificationsService {
       });
     }
 
-    // Push FCM to filtered users
     await this.pushBroadcast(
       dto.judul,
       dto.isi,
       allowedUsers.map((u) => u.id),
     );
 
-    // Emit real-time via WebSocket — parallelized with Promise.allSettled
     const countResults = await this.prisma.notifikasi.groupBy({
       by: ['userId'],
       where: { userId: { in: allowedUsers.map((u) => u.id) }, isRead: false },
@@ -166,7 +139,6 @@ export class NotificationsService {
     );
 
     return {
-      success: true,
       data: { sentTo: allowedUsers.length, total: users.length },
       message: `Notifikasi ke role ${dto.role} berhasil (${allowedUsers.length}/${users.length} menerima)`,
     };
@@ -222,15 +194,12 @@ export class NotificationsService {
     });
 
     const unreadCount = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
-
     return { ...result, meta: { ...result.meta, unreadCount } };
   }
 
   async getUnreadCount(userId: string) {
-    const count = await this.prisma.notifikasi.count({
-      where: { userId, isRead: false },
-    });
-    return { success: true, data: { count } };
+    const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
+    return { data: { count } };
   }
 
   async markAsRead(id: string, userId?: string) {
@@ -244,7 +213,7 @@ export class NotificationsService {
     }
     await this.prisma.notifikasi.update({ where: { id }, data: { isRead: true } });
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
-    return { success: true, message: 'Notifikasi ditandai dibaca' };
+    return { message: 'Notifikasi ditandai dibaca' };
   }
 
   async findOne(id: string, userId?: string) {
@@ -253,7 +222,7 @@ export class NotificationsService {
     if (userId && notif.userId !== userId) {
       throw new NotFoundException('Notifikasi tidak ditemukan');
     }
-    return { success: true, data: notif };
+    return { data: notif };
   }
 
   async markAllAsRead(userId: string) {
@@ -262,7 +231,7 @@ export class NotificationsService {
       data: { isRead: true },
     });
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
-    return { success: true, message: 'Semua notifikasi ditandai dibaca' };
+    return { message: 'Semua notifikasi ditandai dibaca' };
   }
 
   async delete(id: string, userId?: string) {
@@ -276,7 +245,7 @@ export class NotificationsService {
     }
     await this.prisma.notifikasi.delete({ where: { id } });
     this.cache?.invalidatePrefix(this.CACHE_PREFIX + notif.userId);
-    return { success: true, message: 'Notifikasi berhasil dihapus' };
+    return { message: 'Notifikasi berhasil dihapus' };
   }
 
   // ─── Stats ───
@@ -292,7 +261,6 @@ export class NotificationsService {
       }),
     ]);
 
-    // Aggregate by type
     const typeStats: Record<string, { total: number; unread: number }> = {};
     for (const t of NotificationsService.NOTIFICATION_TYPES) {
       typeStats[t.key] = { total: 0, unread: 0 };
@@ -308,7 +276,6 @@ export class NotificationsService {
     }
 
     return {
-      success: true,
       data: {
         total,
         unread,
@@ -321,48 +288,15 @@ export class NotificationsService {
 
   // ─── Notification Preferences ───
 
-  /**
-   * Per-tipe notifikasi dengan channel inApp dan email.
-   * Format value: { inApp: boolean, email: boolean }
-   * Backward compatible: nilai boolean lama dianggap sama untuk kedua channel.
-   */
   static readonly NOTIFICATION_TYPES = [
-    {
-      key: 'welcome',
-      label: 'Selamat Datang',
-      description: 'Notifikasi saat pertama kali mendaftar',
-    },
-    {
-      key: 'data_incomplete',
-      label: 'Data Tidak Lengkap',
-      description: 'Pengingat untuk melengkapi data diri',
-    },
-    {
-      key: 'reminder_latihan',
-      label: 'Pengingat Latihan',
-      description: 'Pengingat jadwal latihan rutin',
-    },
-    {
-      key: 'reminder_pendadaran',
-      label: 'Pengingat Pendadaran',
-      description: 'Pengingat jadwal ujian pendadaran',
-    },
+    { key: 'welcome', label: 'Selamat Datang', description: 'Notifikasi saat pertama kali mendaftar' },
+    { key: 'data_incomplete', label: 'Data Tidak Lengkap', description: 'Pengingat untuk melengkapi data diri' },
+    { key: 'reminder_latihan', label: 'Pengingat Latihan', description: 'Pengingat jadwal latihan rutin' },
+    { key: 'reminder_pendadaran', label: 'Pengingat Pendadaran', description: 'Pengingat jadwal ujian pendadaran' },
     { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat pembayaran iuran' },
-    {
-      key: 'status_klaim',
-      label: 'Status Klaim',
-      description: 'Update status pengajuan klaim dokumen',
-    },
-    {
-      key: 'dokumen_ready',
-      label: 'Dokumen Siap',
-      description: 'Notifikasi dokumen telah selesai diproses',
-    },
-    {
-      key: 'badge_earned',
-      label: 'Badge Gamifikasi',
-      description: 'Notifikasi saat mendapat badge baru',
-    },
+    { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
+    { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
+    { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
   ];
 
@@ -370,19 +304,13 @@ export class NotificationsService {
     return `notif_pref:${userId}`;
   }
 
-  /**
-   * Normalize a preference value — supports both old (boolean) and new ({ inApp, email }) formats.
-   */
   private normalizePref(value: unknown): { inApp: boolean; email: boolean } {
     if (typeof value === 'boolean') {
       return { inApp: value, email: value };
     }
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, unknown>;
-      return {
-        inApp: obj.inApp !== false,
-        email: obj.email !== false,
-      };
+      return { inApp: obj.inApp !== false, email: obj.email !== false };
     }
     return { inApp: true, email: true };
   }
@@ -399,23 +327,20 @@ export class NotificationsService {
           : { inApp: true, email: true };
     }
 
-    return { success: true, data: prefs, types: NotificationsService.NOTIFICATION_TYPES };
+    return { data: prefs, types: NotificationsService.NOTIFICATION_TYPES };
   }
 
   async updatePreferences(userId: string, data: Record<string, unknown>) {
-    // Fetch existing preferences once — avoid N+1 queries inside the loop
     const existingSetting = await this.prisma.setting.findUnique({
       where: { key: this.prefKey(userId) },
     });
     const existingData = (existingSetting?.value as Record<string, unknown>) || {};
 
-    // Normalize incoming data to the new format
     const normalized: Record<string, { inApp: boolean; email: boolean }> = {};
     for (const t of NotificationsService.NOTIFICATION_TYPES) {
       if (data[t.key] !== undefined) {
         normalized[t.key] = this.normalizePref(data[t.key]);
       } else {
-        // Keep existing value for types not sent in the request
         normalized[t.key] =
           existingData[t.key] !== undefined
             ? this.normalizePref(existingData[t.key])
@@ -428,17 +353,10 @@ export class NotificationsService {
       update: { value: normalized as never },
       create: { key: this.prefKey(userId), value: normalized as never },
     });
-    return { success: true, message: 'Pengaturan notifikasi berhasil disimpan' };
+    return { message: 'Pengaturan notifikasi berhasil disimpan' };
   }
 
-  /**
-   * Check if a specific notification channel (inApp/email) is enabled for a type.
-   */
-  private async isChannelEnabled(
-    userId: string,
-    tipe: string,
-    channel: 'inApp' | 'email',
-  ): Promise<boolean> {
+  private async isChannelEnabled(userId: string, tipe: string, channel: 'inApp' | 'email'): Promise<boolean> {
     const prefs = await this.getPreferences(userId);
     const p = prefs.data as Record<string, { inApp: boolean; email: boolean }>;
     const pref = p[tipe];
@@ -472,9 +390,7 @@ export class NotificationsService {
     return allowed;
   }
 
-  private normalizeSavedPrefs(
-    saved: Record<string, unknown>,
-  ): Record<string, { inApp: boolean; email: boolean }> {
+  private normalizeSavedPrefs(saved: Record<string, unknown>): Record<string, { inApp: boolean; email: boolean }> {
     const result: Record<string, { inApp: boolean; email: boolean }> = {};
     for (const key of Object.keys(saved)) {
       result[key] = this.normalizePref(saved[key]);
@@ -483,52 +399,42 @@ export class NotificationsService {
   }
 
   async sendIncompleteNotifications(memberIds?: string[]) {
-    const where: any = { statusData: 'incomplete', email: { not: null } };
+    const where: Record<string, unknown> = { statusData: 'incomplete', email: { not: null } };
     if (memberIds && memberIds.length > 0) {
       where.id = { in: memberIds };
     }
 
     const members = await this.prisma.anggota.findMany({
-      where,
+      where: where as any,
       select: { id: true, namaLengkap: true, email: true, missingFields: true },
     });
 
     const noEmail = members.filter((m) => !m.email).length;
     const membersWithEmail = members.filter((m): m is typeof m & { email: string } => !!m.email);
 
-    // Send all emails in parallel instead of sequential loop
     const results = await Promise.allSettled(
       membersWithEmail.map(async (member) => {
         const missingFields = (member.missingFields as string[]) || ['data diri'];
-
         const tpl = {
           subject: 'Data Anggota Belum Lengkap — THS-THM',
           html: `<h2>Halo ${escapeHtml(member.namaLengkap)},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${escapeHtml(f.replace(/_/g, ' '))}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
           text: `Halo ${member.namaLengkap},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke sistem untuk melengkapi data.`,
         };
-
         await this.mailService.sendMail({
           to: member.email,
           ...tpl,
-          metadata: {
-            module: 'notifications',
-            template: 'dataIncompleteEmail',
-            memberId: member.id,
-          },
+          metadata: { module: 'notifications', template: 'dataIncompleteEmail', memberId: member.id },
         });
       }),
     );
 
     const sent = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
-
     if (failed > 0) {
-      this.logger.warn(
-        `sendIncompleteNotifications: ${failed}/${membersWithEmail.length} emails failed`,
-      );
+      this.logger.warn(`sendIncompleteNotifications: ${failed}/${membersWithEmail.length} emails failed`);
     }
 
-    return { success: true, data: { sent, noEmail, failed, total: members.length } };
+    return { data: { sent, noEmail, failed, total: members.length } };
   }
 
   async registerDeviceToken(userId: string, token: string, platform: string) {
@@ -543,7 +449,7 @@ export class NotificationsService {
       data: { fcmToken: token },
     });
 
-    return { success: true, message: 'Device token berhasil didaftarkan' };
+    return { message: 'Device token berhasil didaftarkan' };
   }
 
   async unregisterDeviceToken(tokenId: string) {
@@ -551,17 +457,11 @@ export class NotificationsService {
       where: { id: tokenId },
       data: { isActive: false },
     });
-    return { success: true, message: 'Device token berhasil dihapus' };
+    return { message: 'Device token berhasil dihapus' };
   }
 
-  private async sendEmailNotification(
-    userId: string,
-    judul: string,
-    isi: string,
-    tipe?: string,
-  ): Promise<void> {
+  private async sendEmailNotification(userId: string, judul: string, isi: string, tipe?: string): Promise<void> {
     try {
-      // Check email preference for this notification type
       if (tipe) {
         const emailEnabled = await this.isEmailPreferenceEnabled(userId, tipe);
         if (!emailEnabled) {
@@ -586,17 +486,10 @@ export class NotificationsService {
         to: user.email,
         subject: tpl.subject,
         html: tpl.html,
-        metadata: {
-          module: 'notifications',
-          template: 'generalNotificationEmail',
-          userId,
-          notifType: tipe,
-        },
+        metadata: { module: 'notifications', template: 'generalNotificationEmail', userId, notifType: tipe },
       });
     } catch (error) {
-      this.logger.error(
-        `sendEmailNotification failed for user ${userId}: ${(error as Error).message}`,
-      );
+      this.logger.error(`sendEmailNotification failed for user ${userId}: ${(error as Error).message}`);
     }
   }
 
@@ -620,7 +513,7 @@ export class NotificationsService {
         admin.initializeApp({
           credential: admin.credential.cert({
             projectId: process.env.FCM_PROJECT_ID,
-            privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\\\n/g, '\n'),
             clientEmail: process.env.FCM_CLIENT_EMAIL,
           }),
         });
@@ -643,15 +536,9 @@ export class NotificationsService {
         if (response.failureCount > 0) {
           response.responses.forEach(
             (resp: { success: boolean; error?: { code?: string } }, idx: number) => {
-              if (
-                !resp.success &&
-                resp.error?.code === 'messaging/registration-token-not-registered'
-              ) {
+              if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
                 this.prisma.deviceToken
-                  .updateMany({
-                    where: { token: batch[idx].token },
-                    data: { isActive: false },
-                  })
+                  .updateMany({ where: { token: batch[idx].token }, data: { isActive: false } })
                   .catch(() => {});
               }
             },
@@ -659,10 +546,7 @@ export class NotificationsService {
         }
       }
     } catch (error) {
-      this.logger.warn(
-        'FCM push failed (firebase-admin not configured):',
-        (error as Error).message,
-      );
+      this.logger.warn('FCM push failed (firebase-admin not configured):', (error as Error).message);
     }
   }
 }

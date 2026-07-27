@@ -3,10 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { badgeEarnedEmail, levelUpEmail } from '../../mail/email-templates';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CacheService } from '../../common/services/cache.service';
 
-/**
- * Badge definition.
- */
 export interface Badge {
   id: string;
   name: string;
@@ -16,25 +14,16 @@ export interface Badge {
   category: 'latihan' | 'iuran' | 'prestasi' | 'keaktifan';
 }
 
-/**
- * Member gamification profile (API response shape).
- */
 export interface GamificationProfile {
   anggotaId: string;
   namaLengkap?: string;
   points: number;
   level: { name: string; icon: string; color: string };
   badges: string[];
-  streaks: {
-    latihan: number;
-    iuran: number;
-  };
+  streaks: { latihan: number; iuran: number };
   lastActivity: string;
 }
 
-/**
- * Point event for tracking.
- */
 export interface PointEvent {
   id: string;
   anggotaId: string;
@@ -45,7 +34,6 @@ export interface PointEvent {
   timestamp: string;
 }
 
-/** Default level definitions — can be overridden via DB config */
 const DEFAULT_LEVELS = [
   { name: 'Bronze', minPoints: 0, icon: '🥉', color: '#cd7f32' },
   { name: 'Silver', minPoints: 100, icon: '🥈', color: '#c0c0c0' },
@@ -56,106 +44,24 @@ const DEFAULT_LEVELS = [
 
 type LevelDef = { name: string; minPoints: number; icon: string; color: string };
 
-/** All available badges */
 const BADGES: Badge[] = [
-  {
-    id: 'latihan_5',
-    name: 'Pemula Latihan',
-    description: 'Mengikuti 5 latihan',
-    icon: '🥋',
-    threshold: 5,
-    category: 'latihan',
-  },
-  {
-    id: 'latihan_20',
-    name: 'Aktif Latihan',
-    description: 'Mengikuti 20 latihan',
-    icon: '💪',
-    threshold: 20,
-    category: 'latihan',
-  },
-  {
-    id: 'latihan_50',
-    name: 'Master Latihan',
-    description: 'Mengikuti 50 latihan',
-    icon: '🏆',
-    threshold: 50,
-    category: 'latihan',
-  },
-  {
-    id: 'iuran_3',
-    name: 'Tepat Waktu',
-    description: 'Bayar iuran 3 bulan berturut-turut',
-    icon: '⏰',
-    threshold: 3,
-    category: 'iuran',
-  },
-  {
-    id: 'iuran_6',
-    name: 'Disiplin',
-    description: 'Bayar iuran 6 bulan berturut-turut',
-    icon: '⭐',
-    threshold: 6,
-    category: 'iuran',
-  },
-  {
-    id: 'iuran_12',
-    name: 'Setia',
-    description: 'Bayar iuran 12 bulan berturut-turut',
-    icon: '👑',
-    threshold: 12,
-    category: 'iuran',
-  },
-  {
-    id: 'prestasi_1',
-    name: 'Berprestasi',
-    description: 'Memiliki 1 sertifikat',
-    icon: '🎓',
-    threshold: 1,
-    category: 'prestasi',
-  },
-  {
-    id: 'prestasi_3',
-    name: 'Juara',
-    description: 'Memiliki 3 sertifikat',
-    icon: '🥇',
-    threshold: 3,
-    category: 'prestasi',
-  },
-  {
-    id: 'keaktifan_100',
-    name: 'Angel Points',
-    description: 'Mengumpulkan 100 poin',
-    icon: '😈',
-    threshold: 100,
-    category: 'keaktifan',
-  },
-  {
-    id: 'keaktifan_500',
-    name: 'Legend',
-    description: 'Mengumpulkan 500 poin',
-    icon: '🔥',
-    threshold: 500,
-    category: 'keaktifan',
-  },
+  { id: 'latihan_5', name: 'Pemula Latihan', description: 'Mengikuti 5 latihan', icon: '🥋', threshold: 5, category: 'latihan' },
+  { id: 'latihan_20', name: 'Aktif Latihan', description: 'Mengikuti 20 latihan', icon: '💪', threshold: 20, category: 'latihan' },
+  { id: 'latihan_50', name: 'Master Latihan', description: 'Mengikuti 50 latihan', icon: '🏆', threshold: 50, category: 'latihan' },
+  { id: 'iuran_3', name: 'Tepat Waktu', description: 'Bayar iuran 3 bulan berturut-turut', icon: '⏰', threshold: 3, category: 'iuran' },
+  { id: 'iuran_6', name: 'Disiplin', description: 'Bayar iuran 6 bulan berturut-turut', icon: '⭐', threshold: 6, category: 'iuran' },
+  { id: 'iuran_12', name: 'Setia', description: 'Bayar iuran 12 bulan berturut-turut', icon: '👑', threshold: 12, category: 'iuran' },
+  { id: 'prestasi_1', name: 'Berprestasi', description: 'Memiliki 1 sertifikat', icon: '🎓', threshold: 1, category: 'prestasi' },
+  { id: 'prestasi_3', name: 'Juara', description: 'Memiliki 3 sertifikat', icon: '🥇', threshold: 3, category: 'prestasi' },
+  { id: 'keaktifan_100', name: 'Angel Points', description: 'Mengumpulkan 100 poin', icon: '😈', threshold: 100, category: 'keaktifan' },
+  { id: 'keaktifan_500', name: 'Legend', description: 'Mengumpulkan 500 poin', icon: '🔥', threshold: 500, category: 'keaktifan' },
 ];
 
-/**
- * Database-backed gamification service.
- *
- * Tracks points, badges, and streaks for members via PostgreSQL.
- * Points are earned through training attendance, on-time dues payments, and achievements.
- * Points values and level thresholds are configurable via DB settings (gamification_*).
- */
 @Injectable()
 export class GamificationService {
   private readonly logger = new Logger(GamificationService.name);
-
-  // ── Config Cache (60-second TTL) ──
   private readonly configCache = new Map<string, { value: number; expiresAt: number }>();
   private readonly CONFIG_CACHE_TTL_MS = 60_000;
-
-  // ── Level Cache (loaded lazily from DB) ──
   private cachedLevels: LevelDef[] | null = null;
   private levelsLoadedAt = 0;
   private readonly LEVELS_CACHE_TTL_MS = 60_000;
@@ -165,26 +71,20 @@ export class GamificationService {
     @Inject(forwardRef(() => NotificationsService))
     private readonly notificationsService: NotificationsService,
     private readonly mailService: MailService,
+    private readonly cache: CacheService,
   ) {}
 
   // ═══════════════════════════════════════════════
   //  CONFIG HELPERS
   // ═══════════════════════════════════════════════
 
-  /**
-   * Read a numeric config value from DB with fallback default.
-   * Results are cached for 60 seconds to avoid excessive DB queries.
-   */
   private async getNumericConfig(key: string, defaultVal: number): Promise<number> {
     const cacheKey = `gamification_${key}`;
     const cached = this.configCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.value;
-    }
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
     try {
-      const setting = await this.prisma.setting.findUnique({
-        where: { key: cacheKey },
-      });
+      const setting = await this.prisma.setting.findUnique({ where: { key: cacheKey } });
       if (setting && setting.value !== null && setting.value !== undefined) {
         const parsed = Number(setting.value);
         if (!isNaN(parsed)) {
@@ -193,36 +93,22 @@ export class GamificationService {
         }
       }
     } catch {
-      // If DB lookup fails, fall back to default
+      // fall back to default
     }
     this.configCache.set(cacheKey, { value: defaultVal, expiresAt: Date.now() + this.CONFIG_CACHE_TTL_MS });
     return defaultVal;
   }
 
-  /**
-   * Load level thresholds from DB config, with TTL caching.
-   * Falls back to DEFAULT_LEVELS if no config found or on error.
-   */
   private async getLevels(): Promise<LevelDef[]> {
-    if (this.cachedLevels && Date.now() - this.levelsLoadedAt < this.LEVELS_CACHE_TTL_MS) {
-      return this.cachedLevels;
-    }
+    if (this.cachedLevels && Date.now() - this.levelsLoadedAt < this.LEVELS_CACHE_TTL_MS) return this.cachedLevels;
     try {
-      const settings = await this.prisma.setting.findMany({
-        where: { key: { startsWith: 'gamification_level_' } },
-      });
+      const settings = await this.prisma.setting.findMany({ where: { key: { startsWith: 'gamification_level_' } } });
       if (settings.length > 0) {
         const configMap = new Map(settings.map((s) => [s.key, s.value as string]));
         this.cachedLevels = DEFAULT_LEVELS.map((l) => {
           const configKey = `gamification_level_${l.name.toLowerCase()}_min`;
           const configVal = configMap.get(configKey);
-          if (configVal) {
-            const parsed = Number(configVal);
-            if (!isNaN(parsed)) {
-              return { ...l, minPoints: parsed };
-            }
-          }
-          return l;
+          return configVal && !isNaN(Number(configVal)) ? { ...l, minPoints: Number(configVal) } : l;
         });
       } else {
         this.cachedLevels = DEFAULT_LEVELS;
@@ -234,7 +120,6 @@ export class GamificationService {
     return this.cachedLevels;
   }
 
-  /** Determine a member's level based on total points, using configurable thresholds. */
   private async getLevel(points: number): Promise<{ name: string; icon: string; color: string }> {
     const levels = await this.getLevels();
     let level = levels[0];
@@ -248,123 +133,61 @@ export class GamificationService {
   //  PROFILE
   // ═══════════════════════════════════════════════
 
-  /** Get or create a member's gamification profile */
   private async getOrCreate(anggotaId: string) {
-    let profile = await this.prisma.gamificationProfile.findUnique({
-      where: { anggotaId },
-    });
-
+    let profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
     if (!profile) {
       profile = await this.prisma.gamificationProfile.create({
-        data: {
-          anggotaId,
-          points: 0,
-          latihanStreak: 0,
-          iuranStreak: 0,
-        },
+        data: { anggotaId, points: 0, latihanStreak: 0, iuranStreak: 0 },
       });
     }
-
     return profile;
   }
 
-  /** Add points to a member and check for new badges */
-  async addPoints(
-    anggotaId: string,
-    type: string,
-    points: number,
-    description: string,
-  ): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
+  async addPoints(anggotaId: string, type: string, points: number, description: string): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
     const profile = await this.getOrCreate(anggotaId);
-
-    // Get existing badge IDs
     const existingBadges = await this.prisma.gamificationBadge.findMany({
-      where: { profileId: profile.id },
-      select: { badgeId: true },
+      where: { profileId: profile.id }, select: { badgeId: true },
     });
     const existingBadgeIds = new Set(existingBadges.map((b) => b.badgeId));
-
-    // Calculate old level for level-up detection
     const oldLevel = await this.getLevel(profile.points);
 
-    // Add points
     const updatedProfile = await this.prisma.gamificationProfile.update({
       where: { id: profile.id },
-      data: {
-        points: profile.points + points,
-        lastActivity: new Date(),
-      },
+      data: { points: profile.points + points, lastActivity: new Date() },
     });
 
-    // Send level-up notification if level changed
     const newLevel = await this.getLevel(updatedProfile.points);
     if (newLevel.name !== oldLevel.name) {
       await this.sendLevelUpNotification(anggotaId, oldLevel, newLevel);
     }
 
-    // Record event
     await this.prisma.gamificationEvent.create({
-      data: {
-        profileId: profile.id,
-        anggotaId,
-        type,
-        points,
-        description,
-      },
+      data: { profileId: profile.id, anggotaId, type, points, description },
     });
 
-    // Check for new badges
     const newBadges: Badge[] = [];
-    const badgesToAward: Array<{
-      badgeId: string;
-      name: string;
-      description: string;
-      icon: string;
-      category: string;
-    }> = [];
+    const badgesToAward: Array<{ badgeId: string; name: string; description: string; icon: string; category: string }> = [];
 
     for (const badge of BADGES) {
       if (existingBadgeIds.has(badge.id)) continue;
-
-      let earned = false;
       if (badge.category === 'keaktifan' && updatedProfile.points >= badge.threshold) {
-        earned = true;
-      }
-
-      if (earned) {
         newBadges.push(badge);
-        badgesToAward.push({
-          badgeId: badge.id,
-          name: badge.name,
-          description: badge.description,
-          icon: badge.icon,
-          category: badge.category,
-        });
+        badgesToAward.push({ badgeId: badge.id, name: badge.name, description: badge.description, icon: badge.icon, category: badge.category });
       }
     }
 
-    // Persist new badges
     if (badgesToAward.length > 0) {
       await this.prisma.gamificationBadge.createMany({
-        data: badgesToAward.map((b) => ({
-          profileId: profile.id,
-          badgeId: b.badgeId,
-          name: b.name,
-          description: b.description,
-          icon: b.icon,
-          category: b.category,
-        })),
+        data: badgesToAward.map((b) => ({ profileId: profile.id, badgeId: b.badgeId, name: b.name, description: b.description, icon: b.icon, category: b.category })),
       });
-
-      // Send badge notifications
       await this.sendBadgeNotifications(anggotaId, badgesToAward);
     }
 
-    // Reload profile with all badges
     const fullBadges = await this.prisma.gamificationBadge.findMany({
-      where: { profileId: profile.id },
-      select: { badgeId: true },
+      where: { profileId: profile.id }, select: { badgeId: true },
     });
+
+    this.cache.invalidatePrefix('gamification:');
 
     return {
       profile: {
@@ -372,10 +195,7 @@ export class GamificationService {
         points: updatedProfile.points,
         level: await this.getLevel(updatedProfile.points),
         badges: fullBadges.map((b) => b.badgeId),
-        streaks: {
-          latihan: updatedProfile.latihanStreak,
-          iuran: updatedProfile.iuranStreak,
-        },
+        streaks: { latihan: updatedProfile.latihanStreak, iuran: updatedProfile.iuranStreak },
         lastActivity: updatedProfile.lastActivity.toISOString(),
       },
       newBadges,
@@ -386,65 +206,35 @@ export class GamificationService {
   //  RECORD ACTIVITIES
   // ═══════════════════════════════════════════════
 
-  /** Award a training attendance point */
-  async recordTraining(
-    anggotaId: string,
-  ): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
+  async recordTraining(anggotaId: string): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
     const profile = await this.getOrCreate(anggotaId);
-
-    // Increment latihan streak
     const updatedProfile = await this.prisma.gamificationProfile.update({
       where: { id: profile.id },
-      data: {
-        latihanStreak: profile.latihanStreak + 1,
-      },
+      data: { latihanStreak: profile.latihanStreak + 1 },
     });
 
     const trainingPoints = await this.getNumericConfig('points_training', 10);
     const result = await this.addPoints(anggotaId, 'training', trainingPoints, 'Latihan rutin');
-
-    // Check training streak badges
     const existingBadgeIds = new Set(result.profile.badges);
     const newStreakBadges: Badge[] = [];
-    const badgesToAward: Array<{
-      badgeId: string;
-      name: string;
-      description: string;
-      icon: string;
-      category: string;
-    }> = [];
+    const badgesToAward: Array<{ badgeId: string; name: string; description: string; icon: string; category: string }> = [];
 
     for (const badge of BADGES) {
       if (badge.category !== 'latihan' || existingBadgeIds.has(badge.id)) continue;
       if (updatedProfile.latihanStreak >= badge.threshold) {
         newStreakBadges.push(badge);
-        badgesToAward.push({
-          badgeId: badge.id,
-          name: badge.name,
-          description: badge.description,
-          icon: badge.icon,
-          category: badge.category,
-        });
+        badgesToAward.push({ badgeId: badge.id, name: badge.name, description: badge.description, icon: badge.icon, category: badge.category });
       }
     }
 
     if (badgesToAward.length > 0) {
       await this.prisma.gamificationBadge.createMany({
-        data: badgesToAward.map((b) => ({
-          profileId: profile.id,
-          badgeId: b.badgeId,
-          name: b.name,
-          description: b.description,
-          icon: b.icon,
-          category: b.category,
-        })),
+        data: badgesToAward.map((b) => ({ profileId: profile.id, badgeId: b.badgeId, name: b.name, description: b.description, icon: b.icon, category: b.category })),
       });
     }
 
-    // Reload final badges
     const allBadges = await this.prisma.gamificationBadge.findMany({
-      where: { profileId: profile.id },
-      select: { badgeId: true },
+      where: { profileId: profile.id }, select: { badgeId: true },
     });
 
     return {
@@ -453,30 +243,21 @@ export class GamificationService {
       profile: {
         ...result.profile,
         badges: allBadges.map((b) => b.badgeId),
-        streaks: {
-          latihan: updatedProfile.latihanStreak,
-          iuran: result.profile.streaks.iuran,
-        },
+        streaks: { latihan: updatedProfile.latihanStreak, iuran: result.profile.streaks.iuran },
       },
     };
   }
 
-  /** Record an on-time dues payment */
-  async recordDuesPayment(
-    anggotaId: string,
-    onTime: boolean,
-  ): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
+  async recordDuesPayment(anggotaId: string, onTime: boolean): Promise<{ profile: GamificationProfile; newBadges: Badge[] }> {
     const profile = await this.getOrCreate(anggotaId);
 
     if (onTime) {
       await this.prisma.gamificationProfile.update({
-        where: { id: profile.id },
-        data: { iuranStreak: profile.iuranStreak + 1 },
+        where: { id: profile.id }, data: { iuranStreak: profile.iuranStreak + 1 },
       });
     } else {
       await this.prisma.gamificationProfile.update({
-        where: { id: profile.id },
-        data: { iuranStreak: 0 },
+        where: { id: profile.id }, data: { iuranStreak: 0 },
       });
     }
 
@@ -485,59 +266,29 @@ export class GamificationService {
       this.getNumericConfig('points_dues_late', 5),
     ]);
     const points = onTime ? onTimePoints : latePoints;
-    const result = await this.addPoints(
-      anggotaId,
-      'dues',
-      points,
-      onTime ? 'Iuran tepat waktu' : 'Iuran terlambat',
-    );
-
-    // Check iuran streak badges
+    const result = await this.addPoints(anggotaId, 'dues', points, onTime ? 'Iuran tepat waktu' : 'Iuran terlambat');
     const existingBadgeIds = new Set(result.profile.badges);
     const newStreakBadges: Badge[] = [];
-    const badgesToAward: Array<{
-      badgeId: string;
-      name: string;
-      description: string;
-      icon: string;
-      category: string;
-    }> = [];
+    const badgesToAward: Array<{ badgeId: string; name: string; description: string; icon: string; category: string }> = [];
 
-    const updatedProfile = await this.prisma.gamificationProfile.findUnique({
-      where: { anggotaId },
-    });
+    const updatedProfile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
 
     for (const badge of BADGES) {
       if (badge.category !== 'iuran' || existingBadgeIds.has(badge.id)) continue;
       if (updatedProfile && updatedProfile.iuranStreak >= badge.threshold) {
         newStreakBadges.push(badge);
-        badgesToAward.push({
-          badgeId: badge.id,
-          name: badge.name,
-          description: badge.description,
-          icon: badge.icon,
-          category: badge.category,
-        });
+        badgesToAward.push({ badgeId: badge.id, name: badge.name, description: badge.description, icon: badge.icon, category: badge.category });
       }
     }
 
     if (badgesToAward.length > 0) {
       await this.prisma.gamificationBadge.createMany({
-        data: badgesToAward.map((b) => ({
-          profileId: profile.id,
-          badgeId: b.badgeId,
-          name: b.name,
-          description: b.description,
-          icon: b.icon,
-          category: b.category,
-        })),
+        data: badgesToAward.map((b) => ({ profileId: profile.id, badgeId: b.badgeId, name: b.name, description: b.description, icon: b.icon, category: b.category })),
       });
     }
 
-    // Reload final badges
     const allBadges = await this.prisma.gamificationBadge.findMany({
-      where: { profileId: profile.id },
-      select: { badgeId: true },
+      where: { profileId: profile.id }, select: { badgeId: true },
     });
 
     return {
@@ -546,10 +297,7 @@ export class GamificationService {
       profile: {
         ...result.profile,
         badges: allBadges.map((b) => b.badgeId),
-        streaks: {
-          latihan: result.profile.streaks.latihan,
-          iuran: updatedProfile?.iuranStreak ?? 0,
-        },
+        streaks: { latihan: result.profile.streaks.latihan, iuran: updatedProfile?.iuranStreak ?? 0 },
       },
     };
   }
@@ -558,18 +306,13 @@ export class GamificationService {
   //  GETTERS
   // ═══════════════════════════════════════════════
 
-  /** Get a member's gamification profile */
   async getProfile(anggotaId: string): Promise<GamificationProfile> {
     const profile = await this.getOrCreate(anggotaId);
     const badges = await this.prisma.gamificationBadge.findMany({
-      where: { profileId: profile.id },
-      select: { badgeId: true },
+      where: { profileId: profile.id }, select: { badgeId: true },
     });
-
-    // Get member name
     const anggota = await this.prisma.anggota.findUnique({
-      where: { id: anggotaId },
-      select: { namaLengkap: true },
+      where: { id: anggotaId }, select: { namaLengkap: true },
     });
 
     return {
@@ -578,26 +321,20 @@ export class GamificationService {
       points: profile.points,
       level: await this.getLevel(profile.points),
       badges: badges.map((b) => b.badgeId),
-      streaks: {
-        latihan: profile.latihanStreak,
-        iuran: profile.iuranStreak,
-      },
+      streaks: { latihan: profile.latihanStreak, iuran: profile.iuranStreak },
       lastActivity: profile.lastActivity.toISOString(),
     };
   }
 
-  /** Get all badges a member has earned with full details */
   async getBadges(anggotaId: string): Promise<Badge[]> {
     const profile = await this.getOrCreate(anggotaId);
     const earned = await this.prisma.gamificationBadge.findMany({
-      where: { profileId: profile.id },
-      select: { badgeId: true },
+      where: { profileId: profile.id }, select: { badgeId: true },
     });
     const earnedIds = new Set(earned.map((b) => b.badgeId));
     return BADGES.filter((b) => earnedIds.has(b.id));
   }
 
-  /** Get all available badges */
   getAllBadges(): Badge[] {
     return [...BADGES];
   }
@@ -606,22 +343,15 @@ export class GamificationService {
   //  NOTIFICATIONS
   // ═══════════════════════════════════════════════
 
-  /** Send level-up notification when a member reaches a new tier */
-  private async sendLevelUpNotification(
-    anggotaId: string,
-    oldLevel: { name: string; icon: string },
-    newLevel: { name: string; icon: string },
-  ): Promise<void> {
+  private async sendLevelUpNotification(anggotaId: string, oldLevel: { name: string; icon: string }, newLevel: { name: string; icon: string }): Promise<void> {
     try {
       const anggota = await this.prisma.anggota.findUnique({
-        where: { id: anggotaId },
-        select: { namaLengkap: true, rantingId: true, email: true },
+        where: { id: anggotaId }, select: { namaLengkap: true, rantingId: true, email: true },
       });
       if (!anggota) return;
 
       const users = await this.prisma.user.findMany({
-        where: { rantingId: anggota.rantingId, isActive: true },
-        select: { id: true },
+        where: { rantingId: anggota.rantingId, isActive: true }, select: { id: true },
       });
 
       for (const user of users) {
@@ -634,28 +364,15 @@ export class GamificationService {
         });
       }
 
-      // Also send personal email to the member
       if (anggota.email) {
         const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
         const tpl = await this.mailService.renderWithOverride(
           'levelUpEmail',
-          () => levelUpEmail(
-            anggota.namaLengkap,
-            oldLevel.name,
-            newLevel.name,
-            profile?.points ?? 0,
-          ),
-          {
-            nama: anggota.namaLengkap,
-            oldLevel: oldLevel.name,
-            newLevel: newLevel.name,
-            points: String(profile?.points ?? 0),
-          },
+          () => levelUpEmail(anggota.namaLengkap, oldLevel.name, newLevel.name, profile?.points ?? 0),
+          { nama: anggota.namaLengkap, oldLevel: oldLevel.name, newLevel: newLevel.name, points: String(profile?.points ?? 0) },
         );
         await this.mailService.sendMail({
-          to: anggota.email,
-          subject: tpl.subject,
-          html: tpl.html,
+          to: anggota.email, subject: tpl.subject, html: tpl.html,
           metadata: { module: 'gamification', template: 'levelUpEmail' },
         });
       }
@@ -664,26 +381,17 @@ export class GamificationService {
     }
   }
 
-  /** Send badge earned notifications to users in the same ranting */
-  private async sendBadgeNotifications(
-    anggotaId: string,
-    badges: Array<{ name: string; description: string; icon: string }>,
-  ): Promise<void> {
+  private async sendBadgeNotifications(anggotaId: string, badges: Array<{ name: string; description: string; icon: string }>): Promise<void> {
     try {
-      // Get the anggota's rantingId and email
       const anggota = await this.prisma.anggota.findUnique({
-        where: { id: anggotaId },
-        select: { namaLengkap: true, rantingId: true, email: true },
+        where: { id: anggotaId }, select: { namaLengkap: true, rantingId: true, email: true },
       });
       if (!anggota) return;
 
-      // Find users in the same ranting
       const users = await this.prisma.user.findMany({
-        where: { rantingId: anggota.rantingId, isActive: true },
-        select: { id: true },
+        where: { rantingId: anggota.rantingId, isActive: true }, select: { id: true },
       });
 
-      // Send notification to each user in the ranting
       for (const user of users) {
         for (const badge of badges) {
           await this.notificationsService.send(user.id, {
@@ -696,12 +404,9 @@ export class GamificationService {
         }
       }
 
-      // Also send personal notification + email to the member who earned the badge
       if (anggota.email) {
-        // In-app notification
         const memberUser = await this.prisma.user.findFirst({
-          where: { email: anggota.email, isActive: true },
-          select: { id: true },
+          where: { email: anggota.email, isActive: true }, select: { id: true },
         });
         if (memberUser) {
           for (const badge of badges) {
@@ -715,27 +420,14 @@ export class GamificationService {
           }
         }
 
-        // Email for each badge
         for (const badge of badges) {
           const tpl = await this.mailService.renderWithOverride(
             'badgeEarnedEmail',
-            () => badgeEarnedEmail(
-              anggota.namaLengkap,
-              badge.name,
-              badge.icon,
-              badge.description,
-            ),
-            {
-              nama: anggota.namaLengkap,
-              badgeName: badge.name,
-              badgeIcon: badge.icon,
-              description: badge.description,
-            },
+            () => badgeEarnedEmail(anggota.namaLengkap, badge.name, badge.icon, badge.description),
+            { nama: anggota.namaLengkap, badgeName: badge.name, badgeIcon: badge.icon, description: badge.description },
           );
           await this.mailService.sendMail({
-            to: anggota.email,
-            subject: tpl.subject,
-            html: tpl.html,
+            to: anggota.email, subject: tpl.subject, html: tpl.html,
             metadata: { module: 'gamification', template: 'badgeEarnedEmail' },
           });
         }
@@ -749,44 +441,20 @@ export class GamificationService {
   //  LEADERBOARD & REPORTS
   // ═══════════════════════════════════════════════
 
-  /** Get leaderboard — top members by points */
-  async getLeaderboard(
-    limit: number = 10,
-    scope?: { rantingId?: string; wilayahId?: string; distrikId?: string },
-    search?: string,
-    skip?: number,
-  ): Promise<GamificationProfile[]> {
+  async getLeaderboard(limit: number = 10, scope?: { rantingId?: string; wilayahId?: string; distrikId?: string }, search?: string, skip?: number): Promise<GamificationProfile[]> {
     const where: Record<string, unknown> = {};
+    if (scope?.rantingId) where.anggota = { rantingId: scope.rantingId };
+    else if (scope?.wilayahId) where.anggota = { ranting: { wilayahId: scope.wilayahId } };
+    else if (scope?.distrikId) where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
 
-    if (scope?.rantingId) {
-      where.anggota = { rantingId: scope.rantingId };
-    } else if (scope?.wilayahId) {
-      where.anggota = { ranting: { wilayahId: scope.wilayahId } };
-    } else if (scope?.distrikId) {
-      where.anggota = { ranting: { wilayah: { distrikId: scope.distrikId } } };
-    }
-
-    // Add search filter for member name
     if (search?.trim()) {
-      const anggotaFilter: Record<string, unknown> = {
-        namaLengkap: { contains: search.trim(), mode: 'insensitive' },
-      };
-      if (where.anggota) {
-        where.anggota = { ...(where.anggota as Record<string, unknown>), ...anggotaFilter };
-      } else {
-        where.anggota = anggotaFilter;
-      }
+      const anggotaFilter: Record<string, unknown> = { namaLengkap: { contains: search.trim(), mode: 'insensitive' } };
+      where.anggota = where.anggota ? { ...(where.anggota as Record<string, unknown>), ...anggotaFilter } : anggotaFilter;
     }
 
     const profiles = await this.prisma.gamificationProfile.findMany({
-      where,
-      orderBy: { points: 'desc' },
-      skip: skip || 0,
-      take: limit,
-      include: {
-        badges: { select: { badgeId: true } },
-        anggota: { select: { namaLengkap: true, rantingId: true } },
-      },
+      where, orderBy: { points: 'desc' }, skip: skip || 0, take: limit,
+      include: { badges: { select: { badgeId: true } }, anggota: { select: { namaLengkap: true, rantingId: true } } },
     });
 
     const result: GamificationProfile[] = [];
@@ -797,167 +465,92 @@ export class GamificationService {
         points: p.points,
         level: await this.getLevel(p.points),
         badges: p.badges.map((b) => b.badgeId),
-        streaks: {
-          latihan: p.latihanStreak,
-          iuran: p.iuranStreak,
-        },
+        streaks: { latihan: p.latihanStreak, iuran: p.iuranStreak },
         lastActivity: p.lastActivity.toISOString(),
       });
     }
     return result;
   }
 
-  /** Get recent point events for a member */
   async getRecentEvents(anggotaId: string, limit: number = 20): Promise<PointEvent[]> {
-    const profile = await this.prisma.gamificationProfile.findUnique({
-      where: { anggotaId },
-    });
-
+    const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
     if (!profile) return [];
 
     const events = await this.prisma.gamificationEvent.findMany({
-      where: { profileId: profile.id },
-      orderBy: { timestamp: 'desc' },
-      take: limit,
+      where: { profileId: profile.id }, orderBy: { timestamp: 'desc' }, take: limit,
     });
 
-    // Get member names for each event
     const anggotaIds = [...new Set(events.map((e) => e.anggotaId))];
     const anggotas = await this.prisma.anggota.findMany({
-      where: { id: { in: anggotaIds } },
-      select: { id: true, namaLengkap: true },
+      where: { id: { in: anggotaIds } }, select: { id: true, namaLengkap: true },
     });
     const namaMap = new Map(anggotas.map((a) => [a.id, a.namaLengkap]));
 
     return events.map((e) => ({
-      id: e.id,
-      anggotaId: e.anggotaId,
-      namaLengkap: namaMap.get(e.anggotaId) ?? undefined,
-      type: e.type,
-      points: e.points,
-      description: e.description,
-      timestamp: e.timestamp.toISOString(),
+      id: e.id, anggotaId: e.anggotaId, namaLengkap: namaMap.get(e.anggotaId) ?? undefined,
+      type: e.type, points: e.points, description: e.description, timestamp: e.timestamp.toISOString(),
     }));
   }
 
-  /** Get recent point events across all members */
   async getGlobalRecentEvents(limit: number = 20): Promise<PointEvent[]> {
     const events = await this.prisma.gamificationEvent.findMany({
-      orderBy: { timestamp: 'desc' },
-      take: limit,
-      include: {
-        anggota: { select: { namaLengkap: true } },
-      },
+      orderBy: { timestamp: 'desc' }, take: limit,
+      include: { anggota: { select: { namaLengkap: true } } },
     });
 
     return events.map((e) => ({
-      id: e.id,
-      anggotaId: e.anggotaId,
-      namaLengkap: e.anggota?.namaLengkap ?? undefined,
-      type: e.type,
-      points: e.points,
-      description: e.description,
-      timestamp: e.timestamp.toISOString(),
+      id: e.id, anggotaId: e.anggotaId, namaLengkap: e.anggota?.namaLengkap ?? undefined,
+      type: e.type, points: e.points, description: e.description, timestamp: e.timestamp.toISOString(),
     }));
   }
 
-  /** Get points history aggregated by month for a member */
-  async getPointsHistory(
-    anggotaId: string,
-  ): Promise<Array<{ month: string; points: number; cumulative: number; count: number }>> {
-    const profile = await this.prisma.gamificationProfile.findUnique({
-      where: { anggotaId },
-    });
+  async getPointsHistory(anggotaId: string): Promise<Array<{ month: string; points: number; cumulative: number; count: number }>> {
+    const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
     if (!profile) return [];
 
     const events = await this.prisma.gamificationEvent.findMany({
-      where: { profileId: profile.id },
-      orderBy: { timestamp: 'asc' },
-      select: { points: true, timestamp: true },
+      where: { profileId: profile.id }, orderBy: { timestamp: 'asc' }, select: { points: true, timestamp: true },
     });
 
-    // Aggregate by month
     const monthlyMap = new Map<string, { points: number; count: number }>();
     for (const event of events) {
-      const key = event.timestamp.toISOString().slice(0, 7); // YYYY-MM
+      const key = event.timestamp.toISOString().slice(0, 7);
       const existing = monthlyMap.get(key) || { points: 0, count: 0 };
       existing.points += event.points;
       existing.count += 1;
       monthlyMap.set(key, existing);
     }
 
-    // Build cumulative points over time
     let cumulative = 0;
     const result: Array<{ month: string; points: number; cumulative: number; count: number }> = [];
-    const sortedKeys = [...monthlyMap.keys()].sort();
-    for (const key of sortedKeys) {
+    for (const key of [...monthlyMap.keys()].sort()) {
       const data = monthlyMap.get(key)!;
       cumulative += data.points;
       result.push({ month: key, points: data.points, cumulative, count: data.count });
     }
-
     return result;
   }
 
-  /** Get organization structure for filter dropdowns */
-  async getOrgStructure(): Promise<
-    Array<{
-      id: string;
-      nama: string;
-      wilayahs: Array<{ id: string; nama: string; rantings: Array<{ id: string; nama: string }> }>;
-    }>
-  > {
+  async getOrgStructure(): Promise<Array<{ id: string; nama: string; wilayahs: Array<{ id: string; nama: string; rantings: Array<{ id: string; nama: string }> }> }>> {
     const distriks = await this.prisma.distrik.findMany({
-      include: {
-        wilayahs: {
-          include: {
-            rantings: { select: { id: true, nama: true } },
-          },
-        },
-      },
+      include: { wilayahs: { include: { rantings: { select: { id: true, nama: true } } } } },
       orderBy: { nama: 'asc' },
     });
 
     return distriks.map((d) => ({
-      id: d.id,
-      nama: d.nama,
-      wilayahs: d.wilayahs.map((w) => ({
-        id: w.id,
-        nama: w.nama,
-        rantings: w.rantings.map((r) => ({ id: r.id, nama: r.nama })),
-      })),
+      id: d.id, nama: d.nama,
+      wilayahs: d.wilayahs.map((w) => ({ id: w.id, nama: w.nama, rantings: w.rantings.map((r) => ({ id: r.id, nama: r.nama })) })),
     }));
   }
 
-  /** Get points report — top earners for a period with CSV-friendly format */
-  async getPointsReport(
-    period: 'weekly' | 'monthly' = 'monthly',
-    limit: number = 20,
-  ): Promise<
-    Array<{
-      rank: number;
-      namaLengkap: string;
-      points: number;
-      level: string;
-      events: number;
-      lastActive: string;
-    }>
-  > {
+  async getPointsReport(period: 'weekly' | 'monthly' = 'monthly', limit: number = 20): Promise<Array<{ rank: number; namaLengkap: string; points: number; level: string; events: number; lastActive: string }>> {
     const now = new Date();
-    let since: Date;
-    if (period === 'weekly') {
-      since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    } else {
-      since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    }
+    const since = new Date(now.getTime() - (period === 'weekly' ? 7 : 30) * 24 * 60 * 60 * 1000);
 
-    // Get events in period grouped by anggotaId
     const events = await this.prisma.gamificationEvent.findMany({
-      where: { timestamp: { gte: since } },
-      select: { anggotaId: true, points: true },
+      where: { timestamp: { gte: since } }, select: { anggotaId: true, points: true },
     });
 
-    // Aggregate points per member
     const memberMap = new Map<string, { points: number; events: number }>();
     for (const e of events) {
       const existing = memberMap.get(e.anggotaId) || { points: 0, events: 0 };
@@ -966,54 +559,30 @@ export class GamificationService {
       memberMap.set(e.anggotaId, existing);
     }
 
-    // Get member names and profiles
     const anggotaIds = [...memberMap.keys()];
     const anggotas = await this.prisma.anggota.findMany({
-      where: { id: { in: anggotaIds } },
-      select: { id: true, namaLengkap: true },
+      where: { id: { in: anggotaIds } }, select: { id: true, namaLengkap: true },
     });
     const namaMap = new Map(anggotas.map((a) => [a.id, a.namaLengkap]));
 
     const profiles = await this.prisma.gamificationProfile.findMany({
-      where: { anggotaId: { in: anggotaIds } },
-      select: { anggotaId: true, points: true, lastActivity: true },
+      where: { anggotaId: { in: anggotaIds } }, select: { anggotaId: true, points: true, lastActivity: true },
     });
     const profileMap = new Map(profiles.map((p) => [p.anggotaId, p]));
 
-    // Build result sorted by points earned in period
     const result = [...memberMap.entries()]
       .map(([anggotaId, data]) => {
         const profile = profileMap.get(anggotaId);
-        return {
-          rank: 0,
-          namaLengkap: namaMap.get(anggotaId) || anggotaId,
-          points: data.points,
-          totalPts: profile ? profile.points : 0,
-          events: data.events,
-          lastActive: profile?.lastActivity?.toISOString() ?? '',
-        };
+        return { rank: 0, namaLengkap: namaMap.get(anggotaId) || anggotaId, points: data.points, totalPts: profile ? profile.points : 0, events: data.events, lastActive: profile?.lastActivity?.toISOString() ?? '' };
       })
       .sort((a, b) => b.points - a.points)
       .slice(0, limit);
 
-    // Resolve level names using configurable thresholds
-    const resolved: Array<{
-      rank: number;
-      namaLengkap: string;
-      points: number;
-      level: string;
-      events: number;
-      lastActive: string;
-    }> = [];
+    const resolved: Array<{ rank: number; namaLengkap: string; points: number; level: string; events: number; lastActive: string }> = [];
     for (const item of result) {
       const level = await this.getLevel(item.totalPts);
-      resolved.push({
-        ...item,
-        rank: resolved.length + 1,
-        level: level.name,
-      });
+      resolved.push({ ...item, rank: resolved.length + 1, level: level.name });
     }
-
     return resolved;
   }
 
@@ -1021,21 +590,14 @@ export class GamificationService {
   //  GAMIFICATION CONFIG
   // ═══════════════════════════════════════════════
 
-  /** Get points distribution — how many members are at each level */
-  async getPointsDistribution(): Promise<
-    Array<{ level: string; icon: string; color: string; count: number }>
-  > {
+  async getPointsDistribution(): Promise<Array<{ level: string; icon: string; color: string; count: number }>> {
     const [profiles, levels] = await Promise.all([
-      this.prisma.gamificationProfile.findMany({
-        select: { points: true },
-      }),
+      this.prisma.gamificationProfile.findMany({ select: { points: true } }),
       this.getLevels(),
     ]);
 
     const distribution = new Map<string, { icon: string; color: string; count: number }>();
-    for (const l of levels) {
-      distribution.set(l.name, { icon: l.icon, color: l.color, count: 0 });
-    }
+    for (const l of levels) distribution.set(l.name, { icon: l.icon, color: l.color, count: 0 });
 
     for (const p of profiles) {
       const level = await this.getLevel(p.points);
@@ -1043,65 +605,33 @@ export class GamificationService {
       if (entry) entry.count++;
     }
 
-    return levels.map((l) => ({
-      level: l.name,
-      icon: l.icon,
-      color: l.color,
-      count: distribution.get(l.name)?.count ?? 0,
-    }));
+    return levels.map((l) => ({ level: l.name, icon: l.icon, color: l.color, count: distribution.get(l.name)?.count ?? 0 }));
   }
 
-  /** Get top reward redemptions with member info */
-  async getTopRedemptions(limit: number = 10): Promise<
-    Array<{
-      id: string;
-      rewardName: string;
-      rewardIcon: string;
-      namaLengkap: string;
-      pointsSpent: number;
-      status: string;
-      createdAt: string;
-    }>
-  > {
+  async getTopRedemptions(limit: number = 10): Promise<Array<{ id: string; rewardName: string; rewardIcon: string; namaLengkap: string; pointsSpent: number; status: string; createdAt: string }>> {
     const redemptions = await this.prisma.gamificationRedemption.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      include: {
-        reward: { select: { name: true, icon: true } },
-        anggota: { select: { namaLengkap: true } },
-      },
+      orderBy: { createdAt: 'desc' }, take: limit,
+      include: { reward: { select: { name: true, icon: true } }, anggota: { select: { namaLengkap: true } } },
     });
 
     return redemptions.map((r) => ({
-      id: r.id,
-      rewardName: r.reward.name,
-      rewardIcon: r.reward.icon,
-      namaLengkap: r.anggota.namaLengkap,
-      pointsSpent: r.pointsSpent,
-      status: r.status,
-      createdAt: r.createdAt.toISOString(),
+      id: r.id, rewardName: r.reward.name, rewardIcon: r.reward.icon, namaLengkap: r.anggota.namaLengkap,
+      pointsSpent: r.pointsSpent, status: r.status, createdAt: r.createdAt.toISOString(),
     }));
   }
 
-  /** Get gamification configuration settings */
   async getConfig(): Promise<Record<string, unknown>> {
-    const settings = await this.prisma.setting.findMany({
-      where: { key: { startsWith: 'gamification_' } },
-    });
+    const settings = await this.prisma.setting.findMany({ where: { key: { startsWith: 'gamification_' } } });
     const config: Record<string, unknown> = {};
-    for (const s of settings) {
-      config[s.key.replace('gamification_', '')] = s.value;
-    }
+    for (const s of settings) config[s.key.replace('gamification_', '')] = s.value;
     return config;
   }
 
-  /** Get sync config — returns config + timestamp for mobile auto-sync */
   async getSyncConfig(): Promise<{ config: Record<string, unknown>; syncTimestamp: string }> {
     const config = await this.getConfig();
     return { config, syncTimestamp: new Date().toISOString() };
   }
 
-  /** Update gamification configuration settings */
   async updateConfig(data: Record<string, unknown>): Promise<void> {
     for (const [key, value] of Object.entries(data)) {
       await this.prisma.setting.upsert({
@@ -1111,17 +641,13 @@ export class GamificationService {
       });
     }
 
-    // Invalidate caches so next read picks up new values
     this.configCache.clear();
     this.cachedLevels = null;
+    this.cache.invalidatePrefix('gamification:');
 
-    // Auto-sync: send notification to admin users about config change
     try {
       const adminUsers = await this.prisma.user.findMany({
-        where: {
-          isActive: true,
-          role: { in: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'] },
-        },
+        where: { isActive: true, role: { in: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'] } },
         select: { id: true, namaLengkap: true },
       });
 
@@ -1143,70 +669,37 @@ export class GamificationService {
   //  WEEKLY SUMMARY & STATS
   // ═══════════════════════════════════════════════
 
-  /** Get weekly summary for a member */
-  async getWeeklySummary(anggotaId: string): Promise<{
-    pointsEarned: number;
-    events: number;
-    badgesEarned: number;
-    level: string;
-    currentPoints: number;
-    periodStart: string;
-    periodEnd: string;
-  }> {
+  async getWeeklySummary(anggotaId: string): Promise<{ pointsEarned: number; events: number; badgesEarned: number; level: string; currentPoints: number; periodStart: string; periodEnd: string }> {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const profile = await this.prisma.gamificationProfile.findUnique({
-      where: { anggotaId },
-    });
+    const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
 
     const events = await this.prisma.gamificationEvent.findMany({
-      where: {
-        anggotaId,
-        timestamp: { gte: weekAgo },
-      },
-      select: { points: true },
+      where: { anggotaId, timestamp: { gte: weekAgo } }, select: { points: true },
     });
-
     const pointsEarned = events.reduce((sum, e) => sum + e.points, 0);
 
     const badges = await this.prisma.gamificationBadge.findMany({
-      where: {
-        profileId: profile?.id ?? '',
-        earnedAt: { gte: weekAgo },
-      },
+      where: { profileId: profile?.id ?? '', earnedAt: { gte: weekAgo } },
     });
 
     const level = await this.getLevel(profile?.points ?? 0);
 
-    return {
-      pointsEarned,
-      events: events.length,
-      badgesEarned: badges.length,
-      level: level.name,
-      currentPoints: profile?.points ?? 0,
-      periodStart: weekAgo.toISOString(),
-      periodEnd: now.toISOString(),
-    };
+    return { pointsEarned, events: events.length, badgesEarned: badges.length, level: level.name, currentPoints: profile?.points ?? 0, periodStart: weekAgo.toISOString(), periodEnd: now.toISOString() };
   }
 
-  /** Send weekly summary notification to a member via email matching */
-  async sendWeeklySummaryNotification(
-    anggotaId: string,
-  ): Promise<{ sent: boolean; summary: unknown }> {
+  async sendWeeklySummaryNotification(anggotaId: string): Promise<{ sent: boolean; summary: unknown }> {
     const summary = await this.getWeeklySummary(anggotaId);
     let sent = false;
 
     try {
       const anggota = await this.prisma.anggota.findUnique({
-        where: { id: anggotaId },
-        select: { email: true, namaLengkap: true },
+        where: { id: anggotaId }, select: { email: true, namaLengkap: true },
       });
 
       if (anggota?.email) {
         const user = await this.prisma.user.findFirst({
-          where: { email: anggota.email, isActive: true },
-          select: { id: true },
+          where: { email: anggota.email, isActive: true }, select: { id: true },
         });
 
         if (user) {
@@ -1214,7 +707,7 @@ export class GamificationService {
             userId: user.id,
             judul: `📊 Ringkasan Mingguan Gamifikasi`,
             isi: `Minggu ini: +${summary.pointsEarned} poin dari ${summary.events} aktivitas, ${summary.badgesEarned} badge baru. Level ${summary.level} (${summary.currentPoints} total poin)`,
-            tipe: 'badge_earned' as never,
+            tipe: 'badge_earned',
             data: { anggotaId, type: 'weekly_summary', ...summary },
           });
           sent = true;
@@ -1227,12 +720,7 @@ export class GamificationService {
     return { sent, summary };
   }
 
-  /** Get scoreboard breakdown — real points aggregated by event type per period */
-  async getScoreboardBreakdown(
-    period: 'all' | 'weekly' | 'monthly' = 'all',
-  ): Promise<
-    Array<{ module: string; label: string; points: number; percentage: number; color: string }>
-  > {
+  async getScoreboardBreakdown(period: 'all' | 'weekly' | 'monthly' = 'all'): Promise<Array<{ module: string; label: string; points: number; percentage: number; color: string }>> {
     const now = new Date();
     let since: Date | undefined;
     if (period === 'weekly') since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -1241,15 +729,10 @@ export class GamificationService {
     const where: Record<string, unknown> = {};
     if (since) where.timestamp = { gte: since };
 
-    const events = await this.prisma.gamificationEvent.findMany({
-      where,
-      select: { type: true, points: true },
-    });
+    const events = await this.prisma.gamificationEvent.findMany({ where, select: { type: true, points: true } });
 
     const moduleMap = new Map<string, number>();
-    for (const e of events) {
-      moduleMap.set(e.type, (moduleMap.get(e.type) || 0) + e.points);
-    }
+    for (const e of events) moduleMap.set(e.type, (moduleMap.get(e.type) || 0) + e.points);
 
     const moduleConfig: Record<string, { label: string; color: string }> = {
       training: { label: 'Latihan', color: '#3b82f6' },
@@ -1259,35 +742,14 @@ export class GamificationService {
     };
 
     const totalPoints = events.reduce((sum, e) => sum + e.points, 0);
-    const result: Array<{
-      module: string;
-      label: string;
-      points: number;
-      percentage: number;
-      color: string;
-    }> = [];
-
-    for (const [type, config] of Object.entries(moduleConfig)) {
-      const points = moduleMap.get(type) || 0;
-      result.push({
-        module: type,
-        label: config.label,
-        points,
-        percentage: totalPoints > 0 ? Math.round((points / totalPoints) * 100) : 0,
-        color: config.color,
-      });
-    }
-
-    return result.sort((a, b) => b.points - a.points);
+    return Object.entries(moduleConfig).map(([type, config]) => ({
+      module: type, label: config.label, points: moduleMap.get(type) || 0,
+      percentage: totalPoints > 0 ? Math.round(((moduleMap.get(type) || 0) / totalPoints) * 100) : 0,
+      color: config.color,
+    })).sort((a, b) => b.points - a.points);
   }
 
-  /** Get gamification stats */
-  async getStats(): Promise<{
-    totalMembers: number;
-    totalEvents: number;
-    totalPointsAwarded: number;
-    badgesAwarded: number;
-  }> {
+  async getStats(): Promise<{ totalMembers: number; totalEvents: number; totalPointsAwarded: number; badgesAwarded: number }> {
     const [totalMembers, totalEvents, pointsAgg, badgesCount] = await Promise.all([
       this.prisma.gamificationProfile.count(),
       this.prisma.gamificationEvent.count(),
@@ -1295,11 +757,6 @@ export class GamificationService {
       this.prisma.gamificationBadge.count(),
     ]);
 
-    return {
-      totalMembers,
-      totalEvents,
-      totalPointsAwarded: pointsAgg._sum.points ?? 0,
-      badgesAwarded: badgesCount,
-    };
+    return { totalMembers, totalEvents, totalPointsAwarded: pointsAgg._sum.points ?? 0, badgesAwarded: badgesCount };
   }
 }

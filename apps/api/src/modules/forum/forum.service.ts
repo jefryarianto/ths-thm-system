@@ -28,24 +28,20 @@ export class ForumService {
       orderBy: { order: 'asc' },
       include: { _count: { select: { threads: true } } },
     });
-    return { success: true, data: categories };
+    return { data: categories };
   }
 
   async getCategory(id: string) {
     const category = await this.prisma.forumCategory.findUnique({ where: { id } });
     if (!category) throw new NotFoundException('Kategori tidak ditemukan');
-    return { success: true, data: category };
+    return { data: category };
   }
 
   async createCategory(dto: CreateCategoryDto) {
     const category = await this.prisma.forumCategory.create({
-      data: {
-        nama: dto.nama,
-        deskripsi: dto.deskripsi,
-        order: dto.order ?? 0,
-      },
+      data: { nama: dto.nama, deskripsi: dto.deskripsi, order: dto.order ?? 0 },
     });
-    return { success: true, data: category, message: 'Kategori berhasil dibuat' };
+    return { data: category, message: 'Kategori berhasil dibuat' };
   }
 
   async updateCategory(id: string, dto: UpdateCategoryDto) {
@@ -61,15 +57,14 @@ export class ForumService {
       },
     });
 
-    return { success: true, data: updated, message: 'Kategori berhasil diperbarui' };
+    return { data: updated, message: 'Kategori berhasil diperbarui' };
   }
 
   async deleteCategory(id: string) {
     const category = await this.prisma.forumCategory.findUnique({ where: { id } });
     if (!category) throw new NotFoundException('Kategori tidak ditemukan');
-
     await this.prisma.forumCategory.delete({ where: { id } });
-    return { success: true, message: 'Kategori berhasil dihapus' };
+    return { message: 'Kategori berhasil dihapus' };
   }
 
   // ─────────────────────────────────────────────────────────
@@ -86,17 +81,9 @@ export class ForumService {
       ];
     }
 
-    if (filter.isPinned !== undefined) {
-      where.isPinned = filter.isPinned;
-    }
-
-    if (filter.isLocked !== undefined) {
-      where.isLocked = filter.isLocked;
-    }
-
-    if (filter.authorId) {
-      where.authorId = filter.authorId;
-    }
+    if (filter.isPinned !== undefined) where.isPinned = filter.isPinned;
+    if (filter.isLocked !== undefined) where.isLocked = filter.isLocked;
+    if (filter.authorId) where.authorId = filter.authorId;
 
     const orderBy = filter.isPinned
       ? [{ isPinned: 'desc' as const }, { createdAt: 'desc' as const }]
@@ -122,14 +109,8 @@ export class ForumService {
     ]);
 
     return {
-      success: true,
       data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -156,29 +137,22 @@ export class ForumService {
       },
     });
 
-    return { success: true, data: { ...thread, posts } };
+    return { data: { ...thread, posts } };
   }
 
   async createThread(dto: CreateThreadDto, authorId: string) {
-    const category = await this.prisma.forumCategory.findUnique({
-      where: { id: dto.categoryId },
-    });
+    const category = await this.prisma.forumCategory.findUnique({ where: { id: dto.categoryId } });
     if (!category) throw new NotFoundException('Kategori tidak ditemukan');
 
     const thread = await this.prisma.forumThread.create({
-      data: {
-        categoryId: dto.categoryId,
-        authorId,
-        judul: dto.judul,
-        konten: dto.konten,
-      },
+      data: { categoryId: dto.categoryId, authorId, judul: dto.judul, konten: dto.konten },
       include: {
         author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
         category: { select: { id: true, nama: true } },
       },
     });
 
-    return { success: true, data: thread, message: 'Thread berhasil dibuat' };
+    return { data: thread, message: 'Thread berhasil dibuat' };
   }
 
   async updateThread(id: string, dto: UpdateThreadDto, userId: string) {
@@ -197,7 +171,7 @@ export class ForumService {
       },
     });
 
-    return { success: true, data: updated, message: 'Thread berhasil diperbarui' };
+    return { data: updated, message: 'Thread berhasil diperbarui' };
   }
 
   async togglePin(id: string) {
@@ -209,11 +183,7 @@ export class ForumService {
       data: { isPinned: !thread.isPinned },
     });
 
-    return {
-      success: true,
-      data: updated,
-      message: updated.isPinned ? 'Thread dipin' : 'Thread unpin',
-    };
+    return { data: updated, message: updated.isPinned ? 'Thread dipin' : 'Thread unpin' };
   }
 
   async toggleLock(id: string) {
@@ -225,19 +195,14 @@ export class ForumService {
       data: { isLocked: !thread.isLocked },
     });
 
-    return {
-      success: true,
-      data: updated,
-      message: updated.isLocked ? 'Thread dikunci' : 'Thread dibuka',
-    };
+    return { data: updated, message: updated.isLocked ? 'Thread dikunci' : 'Thread dibuka' };
   }
 
   async deleteThread(id: string) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
-
     await this.prisma.forumThread.delete({ where: { id } });
-    return { success: true, message: 'Thread berhasil dihapus' };
+    return { message: 'Thread berhasil dihapus' };
   }
 
   // ─────────────────────────────────────────────────────────
@@ -247,21 +212,13 @@ export class ForumService {
   async createPost(threadId: string, dto: CreatePostDto, authorId: string) {
     const thread = await this.prisma.forumThread.findUnique({ where: { id: threadId } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
-    if (thread.isLocked)
-      throw new ForbiddenException('Thread ini dikunci. Tidak dapat menambah balasan.');
+    if (thread.isLocked) throw new ForbiddenException('Thread ini dikunci. Tidak dapat menambah balasan.');
 
     const post = await this.prisma.forumPost.create({
-      data: {
-        threadId,
-        authorId,
-        konten: dto.konten,
-      },
-      include: {
-        author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
-      },
+      data: { threadId, authorId, konten: dto.konten },
+      include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
-    // Notify thread author on new reply
     if (thread.authorId !== authorId) {
       try {
         await this.notificationsService.send(thread.authorId, {
@@ -276,7 +233,7 @@ export class ForumService {
       }
     }
 
-    return { success: true, data: post, message: 'Balasan berhasil dikirim' };
+    return { data: post, message: 'Balasan berhasil dikirim' };
   }
 
   async updatePost(id: string, dto: UpdatePostDto, userId: string) {
@@ -285,26 +242,21 @@ export class ForumService {
       include: { author: { select: { id: true } } },
     });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
-    if (post.authorId !== userId) {
-      throw new ForbiddenException('Anda hanya dapat mengedit balasan sendiri');
-    }
+    if (post.authorId !== userId) throw new ForbiddenException('Anda hanya dapat mengedit balasan sendiri');
 
     const updated = await this.prisma.forumPost.update({
       where: { id },
       data: { konten: dto.konten! },
-      include: {
-        author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
-      },
+      include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
-    return { success: true, data: updated, message: 'Balasan berhasil diperbarui' };
+    return { data: updated, message: 'Balasan berhasil diperbarui' };
   }
 
   async markAsSolution(postId: string, threadId: string, userId: string) {
     const post = await this.prisma.forumPost.findUnique({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
-    if (post.threadId !== threadId)
-      throw new ForbiddenException('Post tidak termasuk dalam thread ini');
+    if (post.threadId !== threadId) throw new ForbiddenException('Post tidak termasuk dalam thread ini');
 
     const thread = await this.prisma.forumThread.findUnique({ where: { id: threadId } });
     if (!thread) throw new NotFoundException('Thread tidak ditemukan');
@@ -317,9 +269,7 @@ export class ForumService {
     const updated = await this.prisma.forumPost.update({
       where: { id: postId },
       data: { isSolution: true },
-      include: {
-        author: { select: { id: true, namaLengkap: true, nomorAnggota: true } },
-      },
+      include: { author: { select: { id: true, namaLengkap: true, nomorAnggota: true } } },
     });
 
     if (post.authorId !== userId) {
@@ -336,14 +286,13 @@ export class ForumService {
       }
     }
 
-    return { success: true, data: updated, message: 'Solusi berhasil ditandai' };
+    return { data: updated, message: 'Solusi berhasil ditandai' };
   }
 
   async deletePost(id: string) {
     const post = await this.prisma.forumPost.findUnique({ where: { id } });
     if (!post) throw new NotFoundException('Post tidak ditemukan');
-
     await this.prisma.forumPost.delete({ where: { id } });
-    return { success: true, message: 'Balasan berhasil dihapus' };
+    return { message: 'Balasan berhasil dihapus' };
   }
 }

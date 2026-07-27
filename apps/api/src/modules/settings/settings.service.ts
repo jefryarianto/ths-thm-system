@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
+import { BaseCrudService } from '../../common/utils/base-crud.service';
 import {
   CreatePeriodDto,
   UpdatePeriodDto,
@@ -8,12 +11,24 @@ import {
 } from './dto/setting.dto';
 
 @Injectable()
-export class SettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeriodDto> {
+  constructor(
+    protected readonly prisma: PrismaService,
+    protected readonly scopeHelper: ScopeHelper,
+    protected readonly cache: CacheService,
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'periode',
+      prefix: 'settings:',
+      notFound: 'Periode tidak ditemukan',
+    });
+  }
+
+  // ── Key-Value Settings ──────────────────────────────
 
   async getSettings() {
     const settings = await this.prisma.setting.findMany();
-    return { success: true, data: settings };
+    return { data: settings };
   }
 
   async updateSettings(dto: Record<string, unknown>) {
@@ -24,23 +39,22 @@ export class SettingsService {
         create: { key, value: value as never },
       });
     }
-    return { success: true, message: 'Konfigurasi berhasil diperbarui' };
+    return { message: 'Konfigurasi berhasil diperbarui' };
   }
+
+  // ── Period CRUD (via BaseCrudService) ──────────────
 
   async getPeriods() {
     const periods = await this.prisma.periode.findMany({ orderBy: { tglMulai: 'desc' } });
-    return { success: true, data: periods };
+    return { data: periods };
   }
 
   async getPeriod(id: string) {
-    const period = await this.prisma.periode.findUnique({ where: { id } });
-    if (!period) throw new NotFoundException('Periode tidak ditemukan');
-    return { success: true, data: period };
+    return this.baseFindOne(id);
   }
 
   async createPeriod(dto: CreatePeriodDto) {
-    const period = await this.prisma.periode.create({ data: dto });
-    return { success: true, data: period, message: 'Periode berhasil dibuat' };
+    return this.baseCreate(dto);
   }
 
   async updatePeriod(id: string, dto: UpdatePeriodDto) {
@@ -49,19 +63,18 @@ export class SettingsService {
     if (dto.tglMulai) data.tglMulai = new Date(dto.tglMulai);
     if (dto.tglSelesai) data.tglSelesai = new Date(dto.tglSelesai);
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
-
-    const period = await this.prisma.periode.update({ where: { id }, data });
-    return { success: true, data: period, message: 'Periode berhasil diperbarui' };
+    return this.baseUpdate(id, { ...dto, ...data } as UpdatePeriodDto);
   }
 
   async deletePeriod(id: string) {
-    await this.prisma.periode.delete({ where: { id } });
-    return { success: true, message: 'Periode berhasil dihapus' };
+    await this.baseRemove(id);
+    return { message: 'Periode berhasil dihapus' };
   }
+
+  // ── Roles ─────────────────────────────────────────
 
   async getRoles() {
     return {
-      success: true,
       data: [
         { role: 'superadmin', label: 'Super Admin', permissions: ['*'] },
         {
@@ -86,30 +99,32 @@ export class SettingsService {
     };
   }
 
+  // ── Signatures & Stamps ───────────────────────────
+
   async uploadSignature(dto: CreateSignatureDto) {
     const sig = await this.prisma.tandaTangan.create({ data: dto });
-    return { success: true, data: sig, message: 'Tanda tangan berhasil diupload' };
+    return { data: sig, message: 'Tanda tangan berhasil diupload' };
   }
 
   async getSignatures() {
     const sigs = await this.prisma.tandaTangan.findMany({
       include: { user: { select: { namaLengkap: true } } },
     });
-    return { success: true, data: sigs };
+    return { data: sigs };
   }
 
   async deleteSignature(id: string) {
     await this.prisma.tandaTangan.delete({ where: { id } });
-    return { success: true, message: 'Tanda tangan berhasil dihapus' };
+    return { message: 'Tanda tangan berhasil dihapus' };
   }
 
   async uploadStamp(dto: CreateStampDto) {
     const stamp = await this.prisma.stempel.create({ data: dto });
-    return { success: true, data: stamp, message: 'Stempel berhasil diupload' };
+    return { data: stamp, message: 'Stempel berhasil diupload' };
   }
 
   async getStamp() {
     const stamp = await this.prisma.stempel.findFirst({ where: { isActive: true } });
-    return { success: true, data: stamp };
+    return { data: stamp };
   }
 }
