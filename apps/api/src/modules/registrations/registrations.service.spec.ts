@@ -34,6 +34,12 @@ describe('RegistrationsService', () => {
     getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
     invalidatePrefix: jest.fn(),
   };
+  const mockScopeHelper = {
+    buildScopeFilter: jest.fn().mockReturnValue({}),
+    buildIndirectScopeFilter: jest.fn().mockReturnValue({}),
+    hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
+    verifyKegiatanScope: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,6 +48,7 @@ describe('RegistrationsService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
         { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
+        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: mockScopeHelper },
       ],
     }).compile();
 

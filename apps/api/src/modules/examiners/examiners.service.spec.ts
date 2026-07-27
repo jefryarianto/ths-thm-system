@@ -132,6 +132,7 @@ describe('ExaminersService', () => {
 
   describe('remove', () => {
     it('should soft-delete by setting isActive false', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
       await service.remove('u1');
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },

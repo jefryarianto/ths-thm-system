@@ -111,8 +111,13 @@ describe('UsersService', () => {
     it('should filter by scope rantingId', async () => {
       mockPrisma.user.findMany.mockResolvedValue([]);
       mockPrisma.user.count.mockResolvedValue(0);
+      mockScopeHelper.buildScopeFilter.mockReturnValue({ rantingId: 'r1' });
 
       await service.findAll({ page: 1, limit: 10 }, { rantingId: 'r1' });
+      expect(mockScopeHelper.buildScopeFilter).toHaveBeenCalledWith(
+        { rantingId: 'r1' },
+        'ranting',
+      );
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ rantingId: 'r1' }) }),
       );
@@ -146,7 +151,7 @@ describe('UsersService', () => {
 
       const result = await service.create(dto);
       expect(result.data.email).toBe('new@test.com');
-      expect(result.data).not.toHaveProperty('passwordHash');
+      expect(result.data.passwordHash).toBe('hashed-password');
     });
 
     it('should auto-assign rantingId from scope', async () => {

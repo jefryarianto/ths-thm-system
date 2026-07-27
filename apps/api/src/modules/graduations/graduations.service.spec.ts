@@ -5,6 +5,7 @@ import { GraduationsService } from './graduations.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 
 describe('GraduationsService', () => {
@@ -89,7 +90,7 @@ describe('GraduationsService', () => {
     it('should return a single graduation', async () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'g1', tipe: 'pendadaran' });
       const result = await service.findOne('g1');
-      expect(result.data.id).toBe('g1');
+      expect(result.id).toBe('g1');
     });
 
     it('should throw NotFoundException when not found', async () => {

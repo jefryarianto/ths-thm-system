@@ -174,7 +174,7 @@ describe('MembersService', () => {
         email: 'budi@test.com',
       });
 
-      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
       expect(result.data.nomorAnggota).toBe('0114-0101-004-2026');
       expect(mockMemberMailService.sendToMember).toHaveBeenCalledTimes(1);
     });
@@ -189,7 +189,7 @@ describe('MembersService', () => {
         namaLengkap: 'Budi',
         rantingId: 'r1',
       });
-      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
       expect(mockMemberMailService.sendToMember).not.toHaveBeenCalled();
     });
 
@@ -205,7 +205,7 @@ describe('MembersService', () => {
         { rantingId: 'r1', role: 'admin_ranting' } as any,
       );
 
-      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1');
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
     });
   });
 

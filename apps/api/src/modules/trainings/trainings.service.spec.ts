@@ -114,7 +114,7 @@ describe('TrainingsService', () => {
     it('should return a training with relations', async () => {
       mockPrisma.latihan.findUnique.mockResolvedValue({ id: '1', jenisMateri: 'Tendangan' });
       const result = await service.findOne('1');
-      expect(result.data.id).toBe('1');
+      expect(result.id).toBe('1');
     });
 
     it('should throw NotFoundException', async () => {

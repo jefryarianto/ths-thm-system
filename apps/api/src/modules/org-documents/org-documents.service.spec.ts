@@ -91,7 +91,7 @@ describe('OrgDocumentsService', () => {
       mockPrisma.dokumenOrganisasi.findUnique.mockResolvedValue(mockDoc);
 
       const result = await service.findOne('1');
-      expect(result.data).toEqual(mockDoc);
+      expect(result).toEqual(mockDoc);
     });
 
     it('should throw NotFoundException', async () => {

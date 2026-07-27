@@ -332,7 +332,7 @@ describe('CandidatesService', () => {
     it('should return valid true when candidate exists', async () => {
       mockPrisma.calonAnggota.findUnique.mockResolvedValue({ id: 'c1' });
       const result = await service.validate('c1');
-      expect(result.data.valid).toBe(true);
+      expect(result.valid).toBe(true);
     });
 
     it('should throw NotFoundException when not found', async () => {
