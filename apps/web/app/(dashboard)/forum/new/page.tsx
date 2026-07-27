@@ -5,10 +5,12 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ArrowLeft } from 'lucide-react';
+import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/toast';
 
 
 interface Category {
@@ -18,6 +20,7 @@ interface Category {
 
 export default function NewThreadPage() {
   const router = useRouter();
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState('');
   const [judul, setJudul] = useState('');
@@ -52,7 +55,7 @@ export default function NewThreadPage() {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Gagal membuat thread');
+      toast('error', err?.response?.data?.message || 'Gagal membuat thread');
     }
     setSubmitting(false);
   };
