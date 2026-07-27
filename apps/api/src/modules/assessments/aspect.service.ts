@@ -28,9 +28,9 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
   /** Include item child relations by default. */
   protected readonly DEFAULT_INCLUDE = { itemPenilaian: true };
 
-  async findAll(_query: Record<string, unknown> = {}) {
+  async findAll(_query?: Record<string, unknown>) {
     return this.baseFindAll(
-      `aspects:all`,
+      'aspects:all',
       () => ({}),
       { include: this.DEFAULT_INCLUDE },
     );
