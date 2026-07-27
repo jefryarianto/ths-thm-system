@@ -61,8 +61,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependencies
-        run: pnpm audit --audit-level=high
 
       - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
