@@ -32,6 +32,7 @@ import {
   User,
   Lock,
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/hooks/use-auth';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
@@ -44,7 +45,7 @@ interface DashboardLayoutProps {
 interface MenuItem {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: string | number; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   /** If true, only show to users with admin-level roles */
   adminOnly?: boolean;
   /** If true, open in a new tab (external/API-hosted pages like Bull Board) */
@@ -171,7 +172,7 @@ function DropdownItem({
   href,
   onClick,
 }: {
-  icon: React.ComponentType<{ size?: string | number; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   label: string;
   href: string;
   onClick: () => void;

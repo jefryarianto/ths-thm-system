@@ -36,6 +36,7 @@ import {
   ScrollText,
   Wallet,
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import Link from 'next/link';
 
 // ─── Types ───
@@ -60,7 +61,7 @@ interface DashboardData {
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   href: string;
   gradient: string;
   subtitle?: string;
@@ -98,7 +99,7 @@ function StatCard({ label, value, icon: Icon, href, gradient, subtitle }: StatCa
 
 interface QuickLinkProps {
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   href: string;
   description: string;
 }
@@ -130,7 +131,7 @@ function QuickLink({ label, icon: Icon, href, description }: QuickLinkProps) {
 
 interface SectionCardProps {
   title: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   children: React.ReactNode;
   className?: string;
 }

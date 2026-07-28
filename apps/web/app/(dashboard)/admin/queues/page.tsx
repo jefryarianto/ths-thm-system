@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   RefreshCw,
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 
@@ -48,7 +49,7 @@ interface RecentJob {
 interface StatCardProps {
   label: string;
   value: number;
-  icon: React.ComponentType<{ size?: number | string; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   color: string;
   darkColor: string;
   subtitle?: string;

@@ -16,6 +16,7 @@ import {
   WifiOff,
   Radio,
 } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -47,7 +48,7 @@ type StatusType = 'healthy' | 'degraded' | 'down';
 
 interface HealthCheck {
   label: string;
-  icon: React.ComponentType<{ size?: number | string; className?: string }>;
+  icon: React.ElementType<LucideProps>;
   status: StatusType;
   detail: string;
 }
