@@ -83,6 +83,8 @@ export default function ClaimsPage() {
 
       <SummaryBar icon={FileText} label="Total Klaim" total={meta.total} />
 
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Daftar Klaim</p>
+
       <SearchBar
         search={search}
         onSearchChange={setSearch}

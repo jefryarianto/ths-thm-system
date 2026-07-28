@@ -72,13 +72,15 @@ export default function ChatPage() {
           </button>
         </PageHeader>
 
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Ruang Chat</p>
+
         {loading ? (
           <div className="text-center py-16 text-gray-500">Memuat ruang chat...</div>
-        ) : rooms.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <MessageSquare size={48} className="mx-auto mb-4 opacity-30" />
-            <p>Belum ada ruang chat</p>
-          </div>
+      ) : rooms.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <MessageSquare size={48} className="mx-auto mb-4 opacity-30" />
+          <p>Belum ada Ruang Chat</p>
+        </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rooms.map((room) => (

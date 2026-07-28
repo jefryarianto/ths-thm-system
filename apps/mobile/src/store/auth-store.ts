@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient, { setTokens, clearTokens } from '../lib/api-client';
+import { registerForPushNotifications } from '../lib/fcm';
 
 interface User {
   id: string;
@@ -46,6 +47,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const userStr = await AsyncStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
       set({ user, isAuthenticated: !!user, isLoading: false });
+      if (user) {
+        registerForPushNotifications().catch(() => {
+          /* ignore FCM registration errors on cold start */
+        });
+      }
     } catch {
       set({ isLoading: false });
     }

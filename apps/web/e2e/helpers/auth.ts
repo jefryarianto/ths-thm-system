@@ -24,10 +24,10 @@ const MOCK_REFRESH_TOKEN = 'mock-refresh-token-for-e2e-tests';
 
 /**
  * Derive the web app base URL from environment (settable via E2E_BASE_URL).
- * This ensures the navigation bypass works regardless of which port the
- * dev server runs on (local=3000, CI=3002).
+ * This ensures the navigation bypass works regardless of which host the
+ * test runner uses (local=3002, Docker/CI=web-e2e:3000 via E2E_BASE_URL).
  */
-const E2E_BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+const E2E_BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3002';
 
 /**
  * Set up auth mocking for an authenticated test.
@@ -115,7 +115,7 @@ export async function mockAuth(
   // ── 4. Catch-all navigation handler (registered last) ──
   // For navigation requests, fetch page content with bypass header.
   // Non-navigation requests pass through to more specific handlers (registered above).
-  await page.route(`${E2E_BASE_URL}**`, async (route) => {
+  await page.route(`${E2E_BASE_URL}/**`, async (route) => {
     const request = route.request();
     if (request.isNavigationRequest()) {
       const url = request.url();

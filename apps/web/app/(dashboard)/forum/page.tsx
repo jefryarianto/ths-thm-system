@@ -53,6 +53,8 @@ export default function ForumPage() {
         </CanAdmin>
       </PageHeader>
 
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Kategori Forum</p>
+
       {loading ? (
         <div className="text-center py-16 text-gray-500">Memuat...</div>
       ) : (
