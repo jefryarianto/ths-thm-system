@@ -1,50 +1,87 @@
-# Dependencies
+# ─── Dependencies ─────────────────────────────────────────────
 node_modules
 **/node_modules
 .pnpm-store/
 
-# Build output
+# ─── Build output (root + nested) ────────────────────────────
 dist/
+**/dist/
 .next/
+**/.next/
 coverage/
 build/
 storybook-static/
 
-# Environment
+# ─── Environment & Secrets ───────────────────────────────────
 .env
 .env.local
 .env.*.local
 .env.development
 .env.production
 
-# IDE
+# ─── IDE ─────────────────────────────────────────────────────
 .idea/
+**/.idea/
 .vscode/
+**/.vscode/
 *.swp
 *.swo
 *~
 
-# OS files
+# ─── OS files ────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 *.log
 
-# Git
+# ─── Git ─────────────────────────────────────────────────────
 .git/
 .gitignore
 
-# Docker
+# ─── Docker (dev-only Dockerfiles not for production) ────────
 .dockerignore
+Dockerfile.dev
+Dockerfile.dev.quick
 
-# Test results
+# ─── Test results (root + nested) ────────────────────────────
 test-results/
+**/test-results/
 playwright-report/
+**/playwright-report/
 
-# Temp
+# ─── Mobile (not used in Docker builds) ──────────────────────
+apps/mobile/
+
+# ─── Documentation & Planning ────────────────────────────────
+docs/
+.kilo/
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+
+# ─── Scripts & Deployment Config ─────────────────────────────
+scripts/
+*.ps1
+render.yaml
+
+# ─── Uploaded / Generated Files ──────────────────────────────
+apps/api/storage/
+
+# ─── SSH Keys & Sensitive Files ──────────────────────────────
+*.pem
+temp_key.pem
+
+# ─── Windows Junk ────────────────────────────────────────────
+NUL
+
+# ─── GitHub Workflows ────────────────────────────────────────
+.github/
+
+# ─── Temp ────────────────────────────────────────────────────
 tmp/
 temp/
 uploads/*
 !uploads/.gitkeep
 
-# TypeScript
+# ─── TypeScript ──────────────────────────────────────────────
 *.tsbuildinfo
+**/*.tsbuildinfo
