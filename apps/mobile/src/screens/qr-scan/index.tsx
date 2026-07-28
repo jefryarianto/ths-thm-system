@@ -81,7 +81,8 @@ export default function QRScanScreen() {
     setHistory([]);
   };
 
-  // ─── Fetch active activities and trainings ───    const fetchActiveKegiatan = async () => {
+  // ─── Fetch active activities and trainings ───
+  const fetchActiveKegiatan = async () => {
     setLoadingKegiatan(true);
     try {
       const [actRes, trainRes] = await Promise.all([
