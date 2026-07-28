@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -17,6 +17,14 @@ import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Request, Response } from 'express';
 import { env } from '../../config/env.validation';
+
+function parseCookie(cookieHeader: string, name: string): string | undefined {
+  const cookies = cookieHeader.split(';').map((c) => c.trim().split('='));
+  for (const [key, value] of cookies) {
+    if (key === name) return decodeURIComponent(value);
+  }
+  return undefined;
+}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -45,11 +53,13 @@ export class AuthController {
   @Post('refresh')
   @Public()
   @ApiOperation({ summary: 'Refresh token akses' })
-  async refresh(@Body() dto: RefreshDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.refreshToken(dto);
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token tidak ditemukan');
+    }
+    const result = await this.authService.refreshToken(refreshToken);
     this.authService.setRefreshTokenCookie(res, result.refreshToken);
-    // Hapus refresh token dari body respons
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refreshToken: _, ...rest } = result;
     return rest;
   }
@@ -126,11 +136,10 @@ export class AuthController {
       );
     }
 
-    // Set refresh token as HttpOnly cookie
-    this.authService.setRefreshTokenCookie(res, user.refreshToken);
+    const tokens = await this.authService.generateTokens(user);
+    this.authService.setRefreshTokenCookie(res, tokens.refreshToken);
 
-    // Redirect with only access token
-    const redirectUrl = `${this.envConfig.frontendUrl}/login?token=${user.accessToken}`;
+    const redirectUrl = `${this.envConfig.frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`;
     return res.redirect(redirectUrl);
   }
 

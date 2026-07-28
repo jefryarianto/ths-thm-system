@@ -197,7 +197,6 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.data.user));
 
         document.cookie = `accessToken=${data.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
-        document.cookie = `refreshToken=${data.data.refreshToken}; path=/; max-age=604800; SameSite=Lax`;
 
         if (rememberMe) {
           localStorage.setItem('rememberedEmail', email);

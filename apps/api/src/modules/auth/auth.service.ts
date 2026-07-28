@@ -57,7 +57,7 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
-      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken };
+      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
     }
     return { user: await this.sanitizeUser(user), ...tokens };
   }
@@ -80,18 +80,18 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
-      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken };
+      return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
     }
     return { user: await this.sanitizeUser(user), ...tokens };
   }
 
-  async refreshToken(dto: RefreshDto) {
+  async refreshToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(dto.refreshToken, {
+      const payload = this.jwtService.verify(refreshToken, {
         secret: this.envConfig.jwtRefreshSecret,
       });
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (!user || user.refreshToken !== dto.refreshToken)
+      if (!user || user.refreshToken !== refreshToken)
         throw new UnauthorizedException('Token tidak valid');
       const tokens = await this.generateTokens(user);
       return tokens;
@@ -257,7 +257,7 @@ export class AuthService {
     }
   }
 
-  private async generateTokens(user: UserPayload & { refreshToken?: string | null }) {
+  async generateTokens(user: UserPayload & { refreshToken?: string | null }) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {

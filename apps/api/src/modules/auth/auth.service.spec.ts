@@ -357,7 +357,7 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-rt' });
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
 
-      const result = await service.refreshToken({ refreshToken: 'valid-rt' });
+      const result = await service.refreshToken('valid-rt');
       expect(result.accessToken).toBe('mock-jwt-token');
     });
 
@@ -366,7 +366,7 @@ describe('AuthService', () => {
         throw new Error('invalid');
       });
 
-      await expect(service.refreshToken({ refreshToken: 'invalid-rt' })).rejects.toThrow(
+      await expect(service.refreshToken('invalid-rt')).rejects.toThrow(
         UnauthorizedException,
       );
     });
