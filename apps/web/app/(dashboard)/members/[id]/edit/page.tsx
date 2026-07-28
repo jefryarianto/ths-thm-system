@@ -9,6 +9,7 @@ import { ArrowLeft, Save, AlertCircle, RefreshCw } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { TINGKAT_OPTIONS } from '@/components/members/constants';
 
 interface MemberDetail {
   id: string;
@@ -277,10 +278,15 @@ export default function EditMemberPage() {
                           <option value="P">Perempuan</option>
                         </select>
                       </FormField>
-                      <FormField label="Tingkat">
-                        <input type="text" value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })} placeholder="Tamtama"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
-                      </FormField>
+                       <FormField label="Tingkat">
+                         <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
+                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition">
+                           <option value="">Pilih Tingkat</option>
+                           {TINGKAT_OPTIONS.map((t) => (
+                             <option key={t} value={t}>{t}</option>
+                           ))}
+                         </select>
+                       </FormField>
                       <FormField label="Tempat Lahir">
                         <input type="text" value={form.tempatLahir} onChange={(e) => setForm({ ...form, tempatLahir: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />

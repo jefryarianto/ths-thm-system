@@ -8,6 +8,7 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { TINGKAT_OPTIONS } from '@/components/members/constants';
 
 export default function NewMemberPage() {
   const router = useRouter();
@@ -82,8 +83,13 @@ export default function NewMemberPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkat</label>
-                    <input type="text" value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })} placeholder="Tamtama"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
+                    <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+                      <option value="">Pilih Tingkat</option>
+                      {TINGKAT_OPTIONS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>

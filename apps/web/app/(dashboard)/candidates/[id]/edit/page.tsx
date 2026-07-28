@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import FormField from '@/components/ui/form-field';
 import { DetailSkeleton, ErrorPage, FormLayout } from '@/components/crud';
+import { TINGKAT_OPTIONS } from '@/components/members/constants';
 
 interface CandidateDetail {
   id: string;
@@ -121,8 +122,13 @@ export default function EditCandidatePage() {
                   </select>
                 </FormField>
                 <FormField label="Tingkat">
-                  <input type="text" value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })} placeholder="Tamtama"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
+                  <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition">
+                    <option value="">Pilih Tingkat</option>
+                    {TINGKAT_OPTIONS.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </FormField>
                 <FormField label="Tempat Lahir">
                   <input type="text" value={form.tempatLahir} onChange={(e) => setForm({ ...form, tempatLahir: e.target.value })}
