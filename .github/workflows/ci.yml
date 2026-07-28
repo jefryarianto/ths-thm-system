@@ -75,6 +75,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_test
 
+      - name: TypeScript cache-busting check (tsc --noEmit)
+        run: pnpm --filter @ths-thm/api tsc:check
+
       - name: Run TypeScript type check
         run: pnpm --filter @ths-thm/api typecheck
 

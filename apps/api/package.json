@@ -22,6 +22,7 @@
     "swagger:export": "ts-node scripts/generate-swagger.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
+    "tsc:check": "tsc --noEmit",
     "typecheck": "nest build"
   },
   "dependencies": {

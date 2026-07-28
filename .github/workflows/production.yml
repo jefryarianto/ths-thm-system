@@ -28,6 +28,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ths-thm/api prisma:generate
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -62,6 +78,11 @@ jobs:
             type=raw,value=latest
             type=sha,prefix=,suffix=,format=short
             type=raw,value=${{ env.IMAGE_TAG }}
+
+      - name: TypeScript cache-busting check (tsc --noEmit)
+        run: pnpm --filter @ths-thm/api tsc:check
+        env:
+          NODE_ENV: production
 
       - name: Build and push API image (with retry)
         shell: bash

@@ -402,6 +402,9 @@ jobs:
         run: pnpm --filter @ths-thm/api prisma:seed
         continue-on-error: true
 
+      - name: TypeScript cache-busting check (tsc --noEmit)
+        run: pnpm --filter @ths-thm/api tsc:check
+
       - name: Build API
         working-directory: apps/api
         run: |
