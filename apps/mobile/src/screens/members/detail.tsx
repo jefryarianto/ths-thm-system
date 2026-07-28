@@ -361,7 +361,7 @@ export default function MemberDetailScreen() {
   };
 
   return (
-    <ScreenShell title="Detail Anggota" variant="detail">
+    <ScreenShell title="Detail Anggota" variant="detail" badgeLabel={statusLabel} badgeColor={statusColor} badgeBg={member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2'}>
 
       <ProfileCard
         name={member.namaLengkap}

@@ -64,6 +64,31 @@ export default function TrainingDetailScreen() {
       </View>
     );
 
+  // Derive training status from date
+  const trainingDate = new Date(training.hariTanggal);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const trainingDay = new Date(trainingDate);
+  trainingDay.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((trainingDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  let badgeLabel = '';
+  let badgeColor = '';
+  let badgeBg = '';
+  if (diffDays > 0) {
+    badgeLabel = 'Akan Datang';
+    badgeColor = '#d97706';
+    badgeBg = '#fef3c7';
+  } else if (diffDays === 0) {
+    badgeLabel = 'Hari Ini';
+    badgeColor = '#16a34a';
+    badgeBg = '#ecfdf5';
+  } else {
+    badgeLabel = 'Sudah';
+    badgeColor = '#6b7280';
+    badgeBg = '#f3f4f6';
+  }
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -95,7 +120,7 @@ export default function TrainingDetailScreen() {
   ];
 
   return (
-    <ScreenShell title={training.jenisMateri || 'Detail Latihan'} variant="detail">
+    <ScreenShell title={training.jenisMateri || 'Detail Latihan'} variant="detail" badgeLabel={badgeLabel} badgeColor={badgeColor} badgeBg={badgeBg}>
 
       <TabBar tabs={tabs} activeKey={activeTab} onChange={(key) => setActiveTab(key as typeof activeTab)} />
 

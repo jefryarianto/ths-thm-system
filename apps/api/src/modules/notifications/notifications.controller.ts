@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, Patch, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { EventsGateway } from './events.gateway';
@@ -25,6 +25,9 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Kirim notifikasi' })
   @Roles('superadmin', 'admin_distrik')
   send(@Body() dto: SendNotificationDto) {
+    if (!dto.userId) {
+      throw new BadRequestException('userId wajib diisi');
+    }
     return this.service.send(dto.userId, dto);
   }
 

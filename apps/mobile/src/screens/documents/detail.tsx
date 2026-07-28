@@ -71,7 +71,7 @@ export default function DocumentDetailScreen() {
   };
 
   return (
-    <ScreenShell title="Detail Dokumen" variant="detail">
+    <ScreenShell title="Detail Dokumen" variant="detail" badgeLabel={ss.label} badgeColor={ss.color} badgeBg={ss.bg}>
 
       <View style={styles.section}>
         <View style={referenceStyles.cardSection}>

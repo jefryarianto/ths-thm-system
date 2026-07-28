@@ -81,7 +81,7 @@ export default function LetterDetailScreen() {
   };
 
   return (
-    <ScreenShell title="Detail Surat" variant="detail">
+    <ScreenShell title="Detail Surat" variant="detail" badgeLabel={statusStyle.label} badgeColor={statusStyle.color} badgeBg={statusStyle.bg}>
 
       <View style={styles.section}>
         {/* Status & Number */}

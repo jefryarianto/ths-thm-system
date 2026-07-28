@@ -53,7 +53,7 @@ export default function AssessmentDetailScreen() {
   ];
 
   return (
-    <ScreenShell title={aspect.nama} variant="detail">
+    <ScreenShell title={aspect.nama} variant="detail" badgeLabel={ss.label} badgeColor={ss.color} badgeBg={ss.bg}>
 
       <View style={styles.section}>
         <View style={styles.infoCard}>

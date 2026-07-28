@@ -151,7 +151,7 @@ export default function CandidateDetailScreen() {
   const isPending = actionLoading !== '';
 
   return (
-    <ScreenShell title="Detail Calon" variant="detail">
+    <ScreenShell title="Detail Calon" variant="detail" badgeLabel={ss.label} badgeColor={ss.color} badgeBg={ss.bg}>
 
       <View style={styles.section}>
         <ProfileCard
