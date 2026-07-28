@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView, InfoRow, ScreenShell, referenceStyles } from '../../components/ui/shared';
+import { LoadingView, InfoRow, ScreenShell, TabBar, referenceStyles } from '../../components/ui/shared';
 
 interface TrainingDetail {
   id: string;
@@ -97,25 +97,7 @@ export default function TrainingDetailScreen() {
   return (
     <ScreenShell title={training.jenisMateri || 'Detail Latihan'} variant="detail">
 
-      {/* Tab Selector */}
-      <View style={styles.tabContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => setActiveTab(tab.key as any)}
-          >
-            <Ionicons
-              name={tab.icon}
-              size={14}
-              color={activeTab === tab.key ? '#fff' : '#6b7280'}
-            />
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <TabBar tabs={tabs} activeKey={activeTab} onChange={(key) => setActiveTab(key as typeof activeTab)} />
 
       {/* Info Tab */}
       {activeTab === 'info' && (
@@ -218,27 +200,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
 
-  // Tabs
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
-    margin: 16,
-    marginBottom: 0,
-    borderRadius: 10,
-    padding: 3,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  tabActive: { backgroundColor: '#2563eb' },
-  tabText: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
-  tabTextActive: { color: '#fff' },
+  // Tabs removed — using shared TabBar component
 
   section: { padding: 16 },
   subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },

@@ -50,7 +50,7 @@ export default function ReferenceCandidateScreen() {
   const genderLabel = candidate.jenisKelamin === 'L' ? 'Laki-laki' : candidate.jenisKelamin === 'P' ? 'Perempuan' : candidate.jenisKelamin;
 
   return (
-    <ScreenShell title="Detail Calon" variant="reference" onRefresh={refetch}>
+    <ScreenShell title="Detail Calon" variant="reference" onRefresh={refetch} badgeLabel={ss.label} badgeColor={ss.color} badgeBg={ss.bg}>
       <ProfileCard
         name={candidate.namaLengkap}
         initial={candidate.namaLengkap.charAt(0)}

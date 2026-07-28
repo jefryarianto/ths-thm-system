@@ -66,7 +66,7 @@ export default function ReferenceClaimScreen() {
   const st = CLAIM_STATUS_STYLES[claim.status] || { color: '#6b7280', bg: '#f3f4f6', icon: 'help-circle' };
 
   return (
-    <ScreenShell title="Detail Klaim" variant="reference" onRefresh={refetch}>
+    <ScreenShell title="Detail Klaim" variant="reference" onRefresh={refetch} badgeLabel={CLAIM_STATUS_LABELS[claim.status] || claim.status} badgeColor={st.color} badgeBg={st.bg}>
       <StatusCard
         icon={st.icon}
         color={st.color}

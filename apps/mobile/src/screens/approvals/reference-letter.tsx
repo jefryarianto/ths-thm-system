@@ -52,7 +52,7 @@ export default function ReferenceLetterScreen() {
   const st = STATUS_STYLES[letter.status] || { label: letter.status, bg: '#f3f4f6', color: '#6b7280', icon: 'document' };
 
   return (
-    <ScreenShell title="Detail Surat" variant="reference" onRefresh={refetch}>
+    <ScreenShell title="Detail Surat" variant="reference" onRefresh={refetch} badgeLabel={st.label} badgeColor={st.color} badgeBg={st.bg}>
       <StatusCard
         variant="centered"
         icon={st.icon}

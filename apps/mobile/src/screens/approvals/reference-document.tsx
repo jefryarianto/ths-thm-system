@@ -50,7 +50,7 @@ export default function ReferenceDocumentScreen() {
   };
 
   return (
-    <ScreenShell title="Detail Dokumen" variant="reference" onRefresh={refetch}>
+    <ScreenShell title="Detail Dokumen" variant="reference" onRefresh={refetch} badgeLabel={st.label} badgeColor={st.color} badgeBg={st.bg}>
       <StatusCard
         icon={st.icon}
         color={st.color}

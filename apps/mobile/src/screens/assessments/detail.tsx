@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView, StatusBadge, ScreenShell } from '../../components/ui/shared';
+import { LoadingView, StatusBadge, ScreenShell, TabBar } from '../../components/ui/shared';
 import { STATUS_STYLES } from '../../hooks/use-assessments';
 import type { AssessmentsAspect, AssessmentsItem, AssessmentsScore } from '../../types';
 
@@ -83,24 +83,7 @@ export default function AssessmentDetailScreen() {
         </View>
       </View>
 
-      <View style={styles.tabContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => setActiveTab(tab.key as any)}
-          >
-            <Ionicons
-              name={tab.icon}
-              size={14}
-              color={activeTab === tab.key ? '#fff' : '#6b7280'}
-            />
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <TabBar tabs={tabs} activeKey={activeTab} onChange={(key) => setActiveTab(key as typeof activeTab)} />
 
       {activeTab === 'items' && (
         <View style={styles.section}>
@@ -197,26 +180,7 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
   infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
 
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
-    margin: 16,
-    marginBottom: 0,
-    borderRadius: 10,
-    padding: 3,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  tabActive: { backgroundColor: '#2563eb' },
-  tabText: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
-  tabTextActive: { color: '#fff' },
+  // Tabs removed — using shared TabBar component
 
   itemCard: {
     flexDirection: 'row',

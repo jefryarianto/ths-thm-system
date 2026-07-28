@@ -42,7 +42,7 @@ export default function ReferenceMemberScreen() {
   const genderLabel = member.jenisKelamin === 'L' ? 'Laki-laki' : member.jenisKelamin === 'P' ? 'Perempuan' : undefined;
 
   return (
-    <ScreenShell title="Detail Anggota" variant="reference" onRefresh={refetch}>
+    <ScreenShell title="Detail Anggota" variant="reference" onRefresh={refetch} badgeLabel={statusLabel} badgeColor={statusColor} badgeBg={isActive ? '#ecfdf5' : '#fef2f2'}>
       <ProfileCard
         name={member.namaLengkap}
         initial={member.namaLengkap.charAt(0)}

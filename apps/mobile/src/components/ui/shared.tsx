@@ -262,16 +262,20 @@ interface ScreenShellProps {
   children: React.ReactNode;
   variant: 'detail' | 'reference';
   onRefresh?: () => void;
+  badgeLabel?: string;
+  badgeColor?: string;
+  badgeBg?: string;
 }
 
 /**
  * Wraps content with the standard blue header (back button + title +
- * optional refresh button for 'reference' variant) and a ScrollView.
+ * optional refresh button for 'reference' variant, optional status badge
+ * for glanceable status at the top of the screen) and a ScrollView.
  *
- * - 'detail' variant: static back+title header, paddingTop 60
- * - 'reference' variant: back+title+refresh header, paddingTop 54
+ * - 'detail' variant: static back+title header, paddingTop 60, no badge
+ * - 'reference' variant: back+title+refresh button, paddingTop 54, supports badge
  */
-export function ScreenShell({ title, children, variant, onRefresh }: ScreenShellProps) {
+export function ScreenShell({ title, children, variant, onRefresh, badgeLabel, badgeColor, badgeBg }: ScreenShellProps) {
   return (
     <View style={shellStyles.container}>
       <View style={[shellStyles.header, variant === 'detail' ? shellStyles.headerDetail : shellStyles.headerReference]}>
@@ -281,6 +285,11 @@ export function ScreenShell({ title, children, variant, onRefresh }: ScreenShell
         <Text style={shellStyles.headerTitle} numberOfLines={1}>
           {title}
         </Text>
+        {badgeLabel && badgeColor && badgeBg && (
+          <View style={[shellStyles.headerBadge, { backgroundColor: badgeBg }]}>
+            <Text style={[shellStyles.headerBadgeText, { color: badgeColor }]}>{badgeLabel}</Text>
+          </View>
+        )}
         {variant === 'reference' && onRefresh && (
           <TouchableOpacity onPress={onRefresh} style={shellStyles.refreshBtn}>
             <Ionicons name="refresh" size={20} color="#bfdbfe" />
@@ -370,6 +379,70 @@ export function ReferenceScreenState({
   return null;
 }
 
+// ─── TabBar (shared tab selector) ─────────────────────────────
+
+interface Tab {
+  key: string;
+  label: string;
+  icon: string;
+}
+
+interface TabBarProps {
+  tabs: Tab[];
+  activeKey: string;
+  onChange: (key: string) => void;
+}
+
+/**
+ * Gray-background tab bar with blue active state, icon + label per tab.
+ * Used in activities/detail, trainings/detail, graduations/detail, assessments/detail.
+ */
+export function TabBar({ tabs, activeKey, onChange }: TabBarProps) {
+  return (
+    <View style={tabStyles.container}>
+      {tabs.map((tab) => (
+        <TouchableOpacity
+          key={tab.key}
+          style={[tabStyles.tab, activeKey === tab.key && tabStyles.active]}
+          onPress={() => onChange(tab.key)}
+        >
+          <Ionicons
+            name={tab.icon as any}
+            size={14}
+            color={activeKey === tab.key ? '#fff' : '#6b7280'}
+          />
+          <Text style={[tabStyles.label, activeKey === tab.key && tabStyles.activeLabel]}>
+            {tab.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+const tabStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#e5e7eb',
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 10,
+    padding: 3,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  active: { backgroundColor: '#2563eb' },
+  label: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
+  activeLabel: { color: '#fff' },
+});
+
 // ─── Merged shell styles (used by ScreenShell) ──────────────────
 
 const shellStyles = StyleSheet.create({
@@ -397,6 +470,13 @@ const shellStyles = StyleSheet.create({
     fontWeight: '700',
     flex: 1,
   },
+  headerBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  headerBadgeText: { fontSize: 11, fontWeight: '600' },
   refreshBtn: { padding: 4 },
   scroll: { flex: 1 },
 });
