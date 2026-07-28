@@ -20,7 +20,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: 🔍 1. TypeScript Compilation
+      - name: Generate Prisma Client
+        run: pnpm --filter @ths-thm/api prisma:generate
+
+      - name: 🔍 1a. TypeScript cache-busting (API — tsc --noEmit)
+        run: pnpm --filter @ths-thm/api tsc:check
+
+      - name: 🔍 1b. TypeScript Compilation (all workspaces)
         run: pnpm run typecheck
 
       - name: 🧹 2. Lint & Format

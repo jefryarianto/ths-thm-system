@@ -40,7 +40,7 @@ interface Incident {
 
 type Severity = 'all' | 'short' | 'medium' | 'long' | 'critical';
 
-const COMPONENT_ICONS: Record<string, React.ComponentType<LucideProps>> = {
+const COMPONENT_ICONS: Record<string, React.ElementType<LucideProps>> = {
   queue: Network,
   database: Database,
   api: Cpu,
@@ -105,7 +105,7 @@ function StatCard({
   sub,
   color,
 }: {
-  icon: React.ComponentType<LucideProps>;
+  icon: React.ElementType<LucideProps>;
   label: string;
   value: string;
   sub?: string;
