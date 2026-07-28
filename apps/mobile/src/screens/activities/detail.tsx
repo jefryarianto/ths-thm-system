@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingView, ScreenShell } from '../../components/ui/shared';
 
 interface ActivityDetail {
   id: string;
@@ -126,22 +126,7 @@ export default function ActivityDetailScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {activity.nama}
-          </Text>
-          <View style={[styles.headerBadge, { backgroundColor: statusStyle.bg }]}>
-            <Text style={[styles.headerBadgeText, { color: statusStyle.color }]}>
-              {statusStyle.label}
-            </Text>
-          </View>
-        </View>
-      </View>
+    <ScreenShell title={activity.nama} variant="detail">
 
       {/* Tab Selector */}
       <View style={styles.tabContainer}>
@@ -209,6 +194,25 @@ export default function ActivityDetailScreen() {
               </View>
             )}
           </View>
+
+          {/* QR Code for Check-in */}
+          {activity.status === 'published' && (
+            <View style={styles.qrSection}>
+              <View style={styles.qrCard}>
+                <View style={styles.qrHeader}>
+                  <Ionicons name="qr-code" size={18} color="#2563eb" />
+                  <Text style={styles.qrTitle}>QR Check-in</Text>
+                </View>
+                <Text style={styles.qrHint}>Scan QR ini untuk check-in kegiatan</Text>
+                <View style={styles.qrContainer}>
+                  <QRCode
+                    value={JSON.stringify({ id: activity.id, type: 'activity' })}
+                    size={140}
+                  />
+                </View>
+              </View>
+            </View>
+          )}
         </View>
       )}
 
@@ -273,35 +277,13 @@ export default function ActivityDetailScreen() {
         </View>
       )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerContent: { flex: 1 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  headerBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginTop: 6,
-  },
-  headerBadgeText: { fontSize: 11, fontWeight: '600' },
 
   tabContainer: {
     flexDirection: 'row',
@@ -384,4 +366,25 @@ const styles = StyleSheet.create({
   docType: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
 
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+
+  // QR Code
+  qrSection: { padding: 16, paddingBottom: 0 },
+  qrCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  qrHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  qrTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  qrHint: { fontSize: 12, color: '#6b7280', marginBottom: 16, textAlign: 'center' },
+  qrContainer: {
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
 });

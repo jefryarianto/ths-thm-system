@@ -67,6 +67,7 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   wsMonitor:        { view: 'superadmin', admin: 'superadmin' },
   queues:           { view: 'superadmin', admin: 'superadmin' },
   monitoring:       { view: 'admin_ranting', admin: 'admin_ranting' },
+  admin:            { view: 'superadmin', admin: 'superadmin' },
 };
 
 // ─── Can Component ───

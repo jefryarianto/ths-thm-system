@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingView, ScreenShell } from '../../components/ui/shared';
+import { useRole } from '../../hooks/use-role';
 import type { Graduation, GraduationParticipant, GraduationEvaluation } from '../../types';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
@@ -15,6 +16,7 @@ const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }
 
 export default function GraduationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { isAdmin, isPenguji, role } = useRole();
   const [graduation, setGraduation] = useState<Graduation | null>(null);
   const [participants, setParticipants] = useState<GraduationParticipant[]>([]);
   const [evaluations, setEvaluations] = useState<GraduationEvaluation[]>([]);
@@ -80,15 +82,7 @@ export default function GraduationDetailScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {graduation.nama}
-        </Text>
-      </View>
+    <ScreenShell title={graduation.nama} variant="detail">
 
       <View style={styles.tabContainer}>
         {tabs.map((tab) => (
@@ -202,6 +196,22 @@ export default function GraduationDetailScreen() {
 
       {activeTab === 'evaluations' && (
         <View style={styles.section}>
+          {/* Input Nilai Button — visible for penguji, admin, and admin_kegiatan */}
+          {(isPenguji || isAdmin || role === 'admin_kegiatan') && (
+            <TouchableOpacity
+              style={styles.inputNilaiBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push(`/graduations/input-score?id=${graduation.id}` as any)}
+            >
+              <Ionicons name="create" size={20} color="#fff" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inputNilaiTitle}>Input Nilai</Text>
+                <Text style={styles.inputNilaiSub}>Pilih peserta dan isi nilai ujian praktek</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#93c5fd" />
+            </TouchableOpacity>
+          )}
+
           {evaluations.length > 0 ? (
             evaluations.map((ev) => (
               <View key={ev.id} style={styles.evalCard}>
@@ -232,26 +242,13 @@ export default function GraduationDetailScreen() {
         </View>
       )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
 
   tabContainer: {
     flexDirection: 'row',
@@ -362,4 +359,21 @@ const styles = StyleSheet.create({
   evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
 
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+
+  // Input Nilai Button
+  inputNilaiBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  inputNilaiTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  inputNilaiSub: { color: '#bfdbfe', fontSize: 12, marginTop: 2 },
 });

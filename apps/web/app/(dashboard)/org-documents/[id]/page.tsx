@@ -115,7 +115,7 @@ export default function OrgDocumentDetailPage() {
   }
 
   return (
-      <PermissionGuard module="orgDocuments" action="view">
+      <PermissionGuard module="org-documents" action="view">
         <Breadcrumbs suffix={{ href: '#', label: doc?.judul || 'Detail' }} />
         <div className="space-y-6">
               {/* Back */}

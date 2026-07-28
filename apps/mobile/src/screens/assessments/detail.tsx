@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView, StatusBadge } from '../../components/ui/shared';
+import { LoadingView, StatusBadge, ScreenShell } from '../../components/ui/shared';
 import { STATUS_STYLES } from '../../hooks/use-assessments';
 import type { AssessmentsAspect, AssessmentsItem, AssessmentsScore } from '../../types';
 
@@ -53,15 +53,7 @@ export default function AssessmentDetailScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {aspect.nama}
-        </Text>
-      </View>
+    <ScreenShell title={aspect.nama} variant="detail">
 
       <View style={styles.section}>
         <View style={styles.infoCard}>
@@ -176,26 +168,13 @@ export default function AssessmentDetailScreen() {
         </View>
       )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
 
   section: { padding: 16 },
 

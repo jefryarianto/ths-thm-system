@@ -3,15 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingView, ScreenShell } from '../../components/ui/shared';
 
 interface LetterDetail {
   id: string;
@@ -82,13 +81,7 @@ export default function LetterDetailScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Surat</Text>
-      </View>
+    <ScreenShell title="Detail Surat" variant="detail">
 
       <View style={styles.section}>
         {/* Status & Number */}
@@ -179,26 +172,13 @@ export default function LetterDetailScreen() {
         )}
       </View>
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
 
   section: { padding: 16 },
   statusCard: {

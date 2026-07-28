@@ -25,7 +25,7 @@ export default function NewOrgDocumentPage() {
   };
 
   return (
-      <PermissionGuard module="orgDocuments" action="create">
+      <PermissionGuard module="org-documents" action="create">
         <Breadcrumbs />
         <div className="max-w-2xl mx-auto space-y-6">
               <div className="flex items-center gap-2">

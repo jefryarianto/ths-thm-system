@@ -71,7 +71,7 @@ export default function OrgDocumentsPage() {
   };
 
   return (
-      <PermissionGuard module="orgDocuments" action="view">
+      <PermissionGuard module="org-documents" action="view">
         <PageContainer>
               <PageHeader title="Dokumen Organisasi" onRefresh={refetch}>
                 <button

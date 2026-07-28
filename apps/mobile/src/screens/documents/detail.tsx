@@ -3,16 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Alert,
   Linking,
   Image,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingView, InfoRow, StatusBadge, ScreenShell, referenceStyles } from '../../components/ui/shared';
 import type { Document } from '../../types';
 
 const TIPE_LABELS: Record<string, string> = {
@@ -72,55 +71,19 @@ export default function DocumentDetailScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Dokumen</Text>
-      </View>
+    <ScreenShell title="Detail Dokumen" variant="detail">
 
       <View style={styles.section}>
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <Ionicons name="document-text" size={18} color="#2563eb" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Tipe</Text>
-              <Text style={styles.infoValue}>{TIPE_LABELS[document.tipe] || document.tipe}</Text>
-            </View>
-          </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="document" size={18} color="#2563eb" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Nomor Dokumen</Text>
-              <Text style={styles.infoValue}>{document.nomorDokumen}</Text>
-            </View>
-          </View>
-          {document.anggota && (
-            <View style={styles.infoRow}>
-              <Ionicons name="person" size={18} color="#2563eb" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Anggota</Text>
-                <Text style={styles.infoValue}>{document.anggota.namaLengkap}</Text>
-              </View>
-            </View>
-          )}
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar" size={18} color="#2563eb" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Tanggal Generate</Text>
-              <Text style={styles.infoValue}>
-                {new Date(document.createdAt).toLocaleDateString('id-ID')}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="flag" size={18} color="#2563eb" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Status</Text>
-              <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
-                <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
-              </View>
+        <View style={referenceStyles.cardSection}>
+          <InfoRow icon="document-text" label="Tipe" value={TIPE_LABELS[document.tipe] || document.tipe} />
+          <InfoRow icon="document" label="Nomor Dokumen" value={document.nomorDokumen} />
+          {document.anggota && <InfoRow icon="person" label="Anggota" value={document.anggota.namaLengkap} />}
+          <InfoRow icon="calendar" label="Tanggal Generate" value={new Date(document.createdAt).toLocaleDateString('id-ID')} />
+          <View style={styles.statusRow}>
+            <Ionicons name="flag" size={15} color="#9ca3af" />
+            <View style={{ flex: 1 }}>
+              <Text style={referenceStyles.infoLabel}>Status</Text>
+              <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
             </View>
           </View>
         </View>
@@ -144,54 +107,22 @@ export default function DocumentDetailScreen() {
         </View>
       )}
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
 
   section: { padding: 16 },
-
-  infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  infoRow: {
+  statusRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
+    alignItems: 'center',
+    gap: 10,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    paddingHorizontal: 12,
   },
-  infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  statusText: { fontSize: 11, fontWeight: '600' },
 
   downloadBtn: {
     backgroundColor: '#2563eb',

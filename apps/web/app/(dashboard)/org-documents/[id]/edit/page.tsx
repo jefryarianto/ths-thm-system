@@ -77,7 +77,7 @@ export default function EditOrgDocumentPage() {
   if (fetchError) return <ErrorPage message={fetchError} backHref={`/org-documents/${id}`} backLabel="Kembali" />;
 
   return (
-      <PermissionGuard module="orgDocuments" action="edit">
+      <PermissionGuard module="org-documents" action="edit">
         <FormLayout
               backHref={`/org-documents/${id}`}
               title="Edit Dokumen Organisasi"

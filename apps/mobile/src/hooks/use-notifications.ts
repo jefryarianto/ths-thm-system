@@ -30,6 +30,7 @@ export const TYPE_ICONS: Record<string, string> = {
   status_klaim: '📋',
   dokumen_ready: '✅',
   badge_earned: '🏅',
+  approval_request: '✅',
   umum: '📢',
 };
 

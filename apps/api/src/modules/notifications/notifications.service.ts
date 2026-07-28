@@ -286,6 +286,7 @@ export class NotificationsService {
     { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
     { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
     { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
+    { key: 'approval_request', label: 'Persetujuan', description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui' },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
   ];
 

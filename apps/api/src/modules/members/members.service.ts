@@ -344,6 +344,41 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     return dues;
   }
 
+  // ── Domain: search members for picker ─────────────────────
+
+  async searchMembers(q?: string, rantingId?: string, wilayahId?: string) {
+    const where: any = { deletedAt: null, statusKeanggotaan: 'aktif' };
+
+    if (rantingId) where.rantingId = rantingId;
+    if (wilayahId) where.ranting = { wilayahId };
+
+    if (q && q.length >= 2) {
+      where.OR = [
+        { namaLengkap: { contains: q } },
+        { nomorAnggota: { contains: q } },
+        { email: { contains: q } },
+      ];
+    }
+
+    const members = await (this.prisma as any).anggota.findMany({
+      where,
+      select: {
+        id: true,
+        namaLengkap: true,
+        nomorAnggota: true,
+        email: true,
+        rantingId: true,
+        ranting: {
+          select: { id: true, nama: true, wilayah: { select: { id: true, nama: true } } },
+        },
+      },
+      take: 20,
+      orderBy: { namaLengkap: 'asc' },
+    });
+
+    return members;
+  }
+
   // ── Private helpers ──────────────────────────────────────
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

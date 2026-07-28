@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingView, InfoRow, ScreenShell, referenceStyles } from '../../components/ui/shared';
 
 interface TrainingDetail {
   id: string;
@@ -94,15 +95,7 @@ export default function TrainingDetailScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {training.jenisMateri || 'Detail Latihan'}
-        </Text>
-      </View>
+    <ScreenShell title={training.jenisMateri || 'Detail Latihan'} variant="detail">
 
       {/* Tab Selector */}
       <View style={styles.tabContainer}>
@@ -127,50 +120,29 @@ export default function TrainingDetailScreen() {
       {/* Info Tab */}
       {activeTab === 'info' && (
         <View style={styles.section}>
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={18} color="#2563eb" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Tanggal</Text>
-                <Text style={styles.infoValue}>{formatDate(training.hariTanggal)}</Text>
+          <View style={referenceStyles.cardSection}>
+            <InfoRow icon="calendar" label="Tanggal" value={formatDate(training.hariTanggal)} />
+            {training.lokasi && <InfoRow icon="location" label="Lokasi" value={training.lokasi} />}
+            {training.pelatih && <InfoRow icon="person" label="Pelatih" value={training.pelatih.namaLengkap} />}
+            {training.ranting && <InfoRow icon="flag" label="Ranting" value={training.ranting.nama} />}
+            {training.hasilLatihanGlobal && <InfoRow icon="document-text" label="Hasil Latihan" value={training.hasilLatihanGlobal} />}
+          </View>
+
+          {/* QR Code for Check-in */}
+          <View style={styles.qrSection}>
+            <View style={styles.qrCard}>
+              <View style={styles.qrHeader}>
+                <Ionicons name="qr-code" size={18} color="#2563eb" />
+                <Text style={styles.qrTitle}>QR Check-in</Text>
+              </View>
+              <Text style={styles.qrHint}>Scan QR ini untuk check-in latihan</Text>
+              <View style={styles.qrContainer}>
+                <QRCode
+                  value={JSON.stringify({ id: training.id, type: 'training' })}
+                  size={140}
+                />
               </View>
             </View>
-            {training.lokasi && (
-              <View style={styles.infoRow}>
-                <Ionicons name="location" size={18} color="#2563eb" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Lokasi</Text>
-                  <Text style={styles.infoValue}>{training.lokasi}</Text>
-                </View>
-              </View>
-            )}
-            {training.pelatih && (
-              <View style={styles.infoRow}>
-                <Ionicons name="person" size={18} color="#2563eb" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Pelatih</Text>
-                  <Text style={styles.infoValue}>{training.pelatih.namaLengkap}</Text>
-                </View>
-              </View>
-            )}
-            {training.ranting && (
-              <View style={styles.infoRow}>
-                <Ionicons name="flag" size={18} color="#2563eb" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Ranting</Text>
-                  <Text style={styles.infoValue}>{training.ranting.nama}</Text>
-                </View>
-              </View>
-            )}
-            {training.hasilLatihanGlobal && (
-              <View style={styles.infoRow}>
-                <Ionicons name="document-text" size={18} color="#2563eb" />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Hasil Latihan</Text>
-                  <Text style={styles.infoValue}>{training.hasilLatihanGlobal}</Text>
-                </View>
-              </View>
-            )}
           </View>
         </View>
       )}
@@ -237,7 +209,7 @@ export default function TrainingDetailScreen() {
       )}
 
       <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
@@ -245,17 +217,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
 
   // Tabs
   tabContainer: {
@@ -280,26 +241,6 @@ const styles = StyleSheet.create({
   tabTextActive: { color: '#fff' },
 
   section: { padding: 16 },
-
-  // Info
-  infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
   subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
 
   // Attendance
@@ -353,4 +294,25 @@ const styles = StyleSheet.create({
   evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
 
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+
+  // QR Code
+  qrSection: { padding: 16, paddingBottom: 0 },
+  qrCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  qrHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  qrTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  qrHint: { fontSize: 12, color: '#6b7280', marginBottom: 16, textAlign: 'center' },
+  qrContainer: {
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
 });

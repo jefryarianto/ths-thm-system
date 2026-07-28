@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { ProfileCard, ScreenShell } from '../../components/ui/shared';
 
 interface CandidateDetail {
   id: string;
@@ -151,28 +151,17 @@ export default function CandidateDetailScreen() {
   const isPending = actionLoading !== '';
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          Detail Calon
-        </Text>
-      </View>
+    <ScreenShell title="Detail Calon" variant="detail">
 
       <View style={styles.section}>
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatarLarge}>
-            <Text style={styles.avatarText}>{candidate.namaLengkap.charAt(0)}</Text>
-          </View>
-          <Text style={styles.name}>{candidate.namaLengkap}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
-            <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
-          </View>
-          {candidate.ranting && <Text style={styles.ranting}>{candidate.ranting.nama}</Text>}
-        </View>
+        <ProfileCard
+          name={candidate.namaLengkap}
+          initial={candidate.namaLengkap.charAt(0)}
+          badgeLabel={ss.label}
+          badgeColor={ss.color}
+          badgeBg={ss.bg}
+          subtitle={candidate.ranting?.nama}
+        />
 
         {/* Detail Info */}
         <View style={styles.infoCard}>
@@ -274,7 +263,7 @@ export default function CandidateDetailScreen() {
       </View>
 
       <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
 }
 
@@ -282,42 +271,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
 
   section: { padding: 16 },
-  profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  avatarLarge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#eff6ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  avatarText: { fontSize: 24, fontWeight: '700', color: '#2563eb' },
-  name: { fontSize: 20, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  statusBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, marginTop: 8 },
-  statusText: { fontSize: 12, fontWeight: '600' },
-  ranting: { fontSize: 13, color: '#6b7280', marginTop: 6 },
+
 
   infoCard: {
     backgroundColor: '#fff',

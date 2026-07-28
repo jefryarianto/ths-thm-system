@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Res, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseCrudController } from '../../common/utils/base-crud.controller';
 import { OrgDocumentsService } from './org-documents.service';
@@ -61,6 +61,21 @@ export class OrgDocumentsController extends BaseCrudController {
   })
   remove(@Param('id') id: string) {
     return super.remove(id);
+  }
+
+  // ── Download endpoint ──
+
+  @Get(':id/download')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+    summary: 'Download file dokumen organisasi',
+  })
+  async download(@Param('id') id: string, @Res() res: any) {
+    const doc = await this.service.findOne(id);
+    if (!doc || !doc.filePath) {
+      throw new NotFoundException('File tidak ditemukan');
+    }
+    // Send the file directly
+    res.sendFile(doc.filePath, { root: process.cwd() });
   }
 
   // ── Category endpoints (domain methods) ──

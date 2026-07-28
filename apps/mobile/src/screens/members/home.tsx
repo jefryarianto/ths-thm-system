@@ -28,6 +28,7 @@ const adminItems = [
   { icon: 'stats-chart', label: 'Laporan', route: '/reports' },
   { icon: 'clipboard', label: 'Aspek', route: '/assessments' },
   { icon: 'cloud-upload', label: 'Import', route: '/member-import' },
+  { icon: 'shield-checkmark', label: 'Persetujuan', route: '/approvals' },
 ];
 
 export default function HomeScreen() {

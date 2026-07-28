@@ -3,14 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { ProfileCard, ScreenShell } from '../../components/ui/shared';
 
 interface MemberDetail {
   id: string;
@@ -361,34 +361,17 @@ export default function MemberDetailScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          Detail Anggota
-        </Text>
-      </View>
+    <ScreenShell title="Detail Anggota" variant="detail">
 
-      <View style={styles.profileCard}>
-        <View style={styles.avatarLarge}>
-          <Text style={styles.avatarText}>{member.namaLengkap.charAt(0)}</Text>
-        </View>
-        <Text style={styles.name}>{member.namaLengkap}</Text>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor: member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2',
-              marginTop: 8,
-            },
-          ]}
-        >
-          <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
-        </View>
-        {member.ranting && <Text style={styles.ranting}>{member.ranting.nama}</Text>}
-      </View>
+      <ProfileCard
+        name={member.namaLengkap}
+        initial={member.namaLengkap.charAt(0)}
+        badgeLabel={statusLabel}
+        badgeColor={statusColor}
+        badgeBg={member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2'}
+        subtitle={member.ranting?.nama}
+        containerStyle={{ margin: 16, marginBottom: 0 }}
+      />
 
       <View style={styles.tabRow}>
         {TABS.map((tab) => (
@@ -411,51 +394,11 @@ export default function MemberDetailScreen() {
 
       <View style={styles.tabContent}>{tabContent()}</View>
 
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </ScreenShell>
   );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+}const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#ef4444' },
-  header: {
-    backgroundColor: '#2563eb',
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
-
-  profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    margin: 16,
-    marginBottom: 0,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  avatarLarge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#eff6ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  avatarText: { fontSize: 24, fontWeight: '700', color: '#2563eb' },
-  name: { fontSize: 20, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  ranting: { fontSize: 13, color: '#6b7280', marginTop: 6 },
-  statusBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12 },
-  statusText: { fontSize: 12, fontWeight: '600' },
 
   tabRow: {
     flexDirection: 'row',
@@ -481,6 +424,10 @@ const styles = StyleSheet.create({
   tabLabelActive: { color: '#2563eb', fontWeight: '600' },
 
   tabContent: { paddingHorizontal: 16, marginTop: 12 },
+
+  // Used by renderDues() and renderTrainings() list items
+  statusBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12 },
+  statusText: { fontSize: 12, fontWeight: '600' },
 
   infoCard: {
     backgroundColor: '#fff',

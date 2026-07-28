@@ -133,7 +133,7 @@ export default function ImportAssessmentsPage() {
           skorMaksimal: row.skorMaksimal || undefined,
         })),
       });
-      setResult(res.data.data);
+      setResult(res.data);
     } catch (err) {
       setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Gagal import data');
     }

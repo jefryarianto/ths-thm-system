@@ -29,6 +29,16 @@ export class MembersController {
     return member;
   }
 
+  @Get('search')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Cari anggota untuk picker' })
+  searchMembers(
+    @Query('q') q?: string,
+    @Query('rantingId') rantingId?: string,
+    @Query('wilayahId') wilayahId?: string,
+  ) {
+    return this.membersService.searchMembers(q, rantingId, wilayahId);
+  }
+
   @Get()
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil semua anggota' })
   findAll(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {

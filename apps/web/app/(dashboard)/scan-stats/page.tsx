@@ -119,7 +119,7 @@ export default function ScanStatsPage() {
     : [];
 
   return (
-      <PermissionGuard module="scanStats" action="view">
+      <PermissionGuard module="scan-stats" action="view">
         <PageContainer>
               <PageHeader
                 title="Statistik Scan"

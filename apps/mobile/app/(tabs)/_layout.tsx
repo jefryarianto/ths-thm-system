@@ -32,6 +32,7 @@ const badgeStyles = StyleSheet.create({
 
 export default function TabLayout() {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activeKegiatanCount, setActiveKegiatanCount] = useState(0);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -42,7 +43,20 @@ export default function TabLayout() {
         /* ignore */
       }
     };
+
+    const fetchActiveKegiatan = async () => {
+      try {
+        // Fetch active (published) activities — trainings don't have status field
+        const actRes = await apiClient.get('/activities', { params: { status: 'published', limit: 5 } });
+        const actCount = Array.isArray(actRes.data?.data) ? actRes.data.data.length : 0;
+        setActiveKegiatanCount(actCount);
+      } catch {
+        /* ignore */
+      }
+    };
+
     fetchCount();
+    fetchActiveKegiatan();
 
     // Try WebSocket for real-time updates
     let cleanupFn: (() => void) | undefined;
@@ -65,7 +79,10 @@ export default function TabLayout() {
     })();
 
     // Fallback: poll every 30s
-    const interval = setInterval(fetchCount, 30000);
+    const interval = setInterval(() => {
+      fetchCount();
+      fetchActiveKegiatan();
+    }, 30000);
     return () => {
       clearInterval(interval);
       cleanupFn?.();
@@ -127,7 +144,12 @@ export default function TabLayout() {
         name="qr-scan"
         options={{
           tabBarLabel: 'Scan QR',
-          tabBarIcon: ({ color, size }) => <Ionicons name="qr-code" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <View>
+              <Ionicons name="qr-code" size={size} color={color} />
+              <Badge count={activeKegiatanCount} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen

@@ -37,8 +37,8 @@ export default function NotificationPreferencesPage() {
     setError(null);
     try {
       const { data: res } = await apiClient.get('/notifications/preferences');
-      setPrefs(res.data);
-      setTypes(res.types);
+      setPrefs(res.data?.prefs || {});
+      setTypes(res.data?.types || []);
     } catch {
       setError('Gagal memuat pengaturan notifikasi');
     }

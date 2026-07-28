@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface SubmitApprovalDto {
   requestType: 'member_create' | 'member_update' | 'claim' | 'letter' | 'certificate';
@@ -16,6 +17,7 @@ export class ApprovalService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {}
 
   async submit(dto: SubmitApprovalDto, userId: string, scope?: UserScope) {
@@ -54,7 +56,7 @@ export class ApprovalService {
     this.logger.log(`Approval request created: ${request.id} type=${dto.requestType}`);
 
     // Send notification to first-level approvers
-    await this.notifyApprovers(request.id, levels[0].id, scope);
+    await this.notifyApprovers(request.id, levels[0].id, scope, dto.requestType);
 
     return { id: request.id, status: request.status };
   }
@@ -93,7 +95,7 @@ export class ApprovalService {
     } else {
       // Notify next level approvers
       const nextLevel = remainingLevels[0];
-      await this.notifyApprovers(requestId, nextLevel.approvalLevelId, scope);
+      await this.notifyApprovers(requestId, nextLevel.approvalLevelId, scope, request.requestType);
     }
 
   }
@@ -158,7 +160,7 @@ export class ApprovalService {
     return requests;
   }
 
-  private async notifyApprovers(requestId: string, levelId: string, scope?: UserScope) {
+  private async notifyApprovers(requestId: string, levelId: string, scope?: UserScope, requestType?: string) {
     try {
       const level = await this.prisma.approvalLevel.findUnique({ where: { id: levelId } });
       if (!level) return;
@@ -168,19 +170,36 @@ export class ApprovalService {
         select: { id: true },
       });
 
+      const requestTypeLabel = this.getRequestTypeLabel(requestType || 'umum');
+
       for (const approver of approvers) {
-        await this.prisma.notifikasi.create({
+        // NotificationsService.send() handles: in-app notif, preference check,
+        // socket.io events, email notification, FCM push, & cache invalidation — one call
+        this.notificationsService?.send(approver.id, {
+          judul: '✅ Persetujuan Dibutuhkan',
+          isi: `${level.name}: ${requestTypeLabel}`,
+          tipe: 'approval_request',
           data: {
-            userId: approver.id,
-            tipe: 'umum' as never,
-            judul: 'Persetujuan Dibutuhkan',
-            isi: `Ada pengajuan baru yang membutuhkan persetujuan Anda (Level: ${level.name})`,
+            approvalId: requestId,
+            screen: 'approvals',
+            screenId: requestId,
           },
-        });
+        }).catch((err) => this.logger.error(`Push notif failed for ${approver.id}: ${err.message}`));
       }
     } catch (error) {
       this.logger.error(`Failed to notify approvers: ${(error as Error).message}`);
     }
+  }
+
+  private getRequestTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      member_create: 'Pembuatan Anggota Baru',
+      member_update: 'Perubahan Data Anggota',
+      claim: 'Klaim',
+      letter: 'Surat',
+      certificate: 'Sertifikat',
+    };
+    return labels[type] || type;
   }
 
   private async finalizeApproval(request: { requestType: string; itemId: string }) {
