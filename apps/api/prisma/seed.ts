@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Create admin user
-  const passwordHash = await bcrypt.hash('password123', 12);
+  // Create admin user — password matches E2E smoke test login
+  const passwordHash = await bcrypt.hash('admin123', 12);
 
   const admin = await prisma.user.upsert({
     where: { email: 'superadmin@ths-thm.org' },
