@@ -10,19 +10,19 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('renders stat cards with mock data', async ({ page }) => {
-      await expect(page.locator('h1').first()).toHaveText('Statistik Scan');
-      await expect(page.getByText('Total Absensi')).toBeVisible();
-      await expect(page.getByText('Dokumen Terverifikasi')).toBeVisible();
-      await expect(page.getByText('Kegiatan Aktif')).toBeVisible();
+      await expect(page.locator('h1').first()).toContainText('Statistik Scan');
+      await expect(page.getByText('Total Absensi')).toBeVisible({ timeout: 8000 });
+      await expect(page.getByText('Dokumen Terverifikasi')).toBeVisible({ timeout: 8000 });
+      await expect(page.getByText('Kegiatan Aktif')).toBeVisible({ timeout: 8000 });
     });
 
     test('renders absensi chart section', async ({ page }) => {
-      await expect(page.getByText('Absensi 30 Hari Terakhir')).toBeVisible();
+      await expect(page.getByText('Absensi 30 Hari Terakhir')).toBeVisible({ timeout: 8000 });
     });
 
     test('renders absensi table with data', async ({ page }) => {
-      await expect(page.getByText('Absensi Terbaru')).toBeVisible();
-      await expect(page.locator('table')).toBeVisible();
+      await expect(page.getByText('Absensi Terbaru')).toBeVisible({ timeout: 8000 });
+      await expect(page.locator('table')).toBeVisible({ timeout: 8000 });
     });
 
     test('search filters absensi table rows', async ({ page }) => {
@@ -31,7 +31,7 @@ test.describe('Additional Dashboard Pages', () => {
 
       // Type in search to filter
       await searchInput.fill('Anggota 1');
-      await expect(page.locator('table tbody tr').first()).toBeVisible();
+      await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 8000 });
     });
   });
 

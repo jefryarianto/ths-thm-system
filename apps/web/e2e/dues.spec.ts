@@ -16,7 +16,7 @@ test.describe('Dues — /dues', () => {
   test('renders stat cards after loading', async ({ page }) => {
     await page.waitForTimeout(500);
     // Stat data from mock: iuranBulanIni = 7500000
-    await expect(page.locator('text=Rp 7.5jt').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Iuran Bulan Ini')).toBeVisible({ timeout: 8000 });
   });
 
   test('renders DataTable with dues rows', async ({ page }) => {

@@ -155,7 +155,7 @@ export async function registerDocumentsMocks(page: Page) {
   });
 
   // ── GET /documents/batch/list — batch history ──
-  await page.route(/\/api\/documents\/batch\/list/, async (route) => {
+  await page.route(/\/api\/documents\/batch\/list(\/|\?|$)/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

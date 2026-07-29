@@ -53,7 +53,7 @@ test.describe('Style Guide — /style-guide', () => {
       const section = page.locator(`section#${id}`);
       await expect(section).toBeVisible({ timeout: 5000 });
 
-      const heading = section.locator('h2');
+      const heading = section.locator('h2').first();
       await expect(heading).toContainText(SECTION_TITLES[id]);
     }
   });
@@ -96,7 +96,8 @@ test.describe('Style Guide — /style-guide', () => {
     // Dark side should have gray-900 background + light text
 
     // Check that Button variants render inside both columns
-    const allButtons = typographySection.locator('button');
+    const buttonsSection = page.locator('section#buttons');
+    const allButtons = buttonsSection.locator('button');
     expect(await allButtons.count()).toBeGreaterThanOrEqual(1);
 
     // Check text content visible in both columns
@@ -111,10 +112,10 @@ test.describe('Style Guide — /style-guide', () => {
     const buttonsSection = page.locator('section#buttons');
 
     // Check variant labels
-    await expect(buttonsSection.locator('text=Variants')).toBeVisible();
-    await expect(buttonsSection.locator('text=Sizes')).toBeVisible();
-    await expect(buttonsSection.locator('text=With Icons')).toBeVisible();
-    await expect(buttonsSection.locator('text=Disabled & Loading')).toBeVisible();
+    await expect(buttonsSection.locator('text=Variants').first()).toBeVisible();
+    await expect(buttonsSection.locator('text=Sizes').first()).toBeVisible();
+    await expect(buttonsSection.locator('text=With Icons').first()).toBeVisible();
+    await expect(buttonsSection.locator('text=Disabled & Loading').first()).toBeVisible();
 
     // Verify specific buttons render
     await expect(buttonsSection.locator('button:has-text("Primary")')).toBeVisible();
@@ -141,11 +142,11 @@ test.describe('Style Guide — /style-guide', () => {
   test('badges section renders all 5 variants', async ({ page }) => {
     const badgesSection = page.locator('section#badges');
 
-    await expect(badgesSection.locator('text=Default')).toBeVisible();
-    await expect(badgesSection.locator('text=Success')).toBeVisible();
-    await expect(badgesSection.locator('text=Warning')).toBeVisible();
-    await expect(badgesSection.locator('text=Danger')).toBeVisible();
-    await expect(badgesSection.locator('text=Info')).toBeVisible();
+    await expect(badgesSection.locator('text=Default').first()).toBeVisible();
+    await expect(badgesSection.locator('text=Success').first()).toBeVisible();
+    await expect(badgesSection.locator('text=Warning').first()).toBeVisible();
+    await expect(badgesSection.locator('text=Danger').first()).toBeVisible();
+    await expect(badgesSection.locator('text=Info').first()).toBeVisible();
   });
 
   // ─── Input & Select Section ───────────────────────

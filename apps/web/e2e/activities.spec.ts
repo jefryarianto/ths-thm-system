@@ -18,9 +18,9 @@ test.describe('Activities — /activities', () => {
   });
 
   test('renders DataTable with activity rows', async ({ page }) => {
-    await expect(page.locator('text=Nama Kegiatan').first()).toBeVisible();
-    await expect(page.locator('text=Tipe').first()).toBeVisible();
-    await expect(page.locator('text=Status').first()).toBeVisible();
+    await expect(page.locator('th:has-text("Nama Kegiatan")')).toBeVisible();
+    await expect(page.locator('th:has-text("Tipe")')).toBeVisible();
+    await expect(page.locator('th:has-text("Status")')).toBeVisible();
 
     await page.waitForTimeout(500);
     // Activity data from mock
@@ -42,7 +42,7 @@ test.describe('Activities — /activities', () => {
   test('status badges render with color', async ({ page }) => {
     await page.waitForTimeout(500);
     // Mock data has statuses: draft, published, closed, cancelled
-    const statusBadge = page.locator('text=published').first();
+    const statusBadge = page.locator('span:has-text("published")').first();
     await expect(statusBadge).toBeVisible({ timeout: 8000 });
   });
 });
