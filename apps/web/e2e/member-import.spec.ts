@@ -3,7 +3,7 @@ import { mockAuth } from './helpers';
 
 test.describe('Member CSV Import Flow', () => {
   test('admin can upload CSV and see results', async ({ page }) => {
-    await mockAuth(page, { mockImport: true });
+    await mockAuth(page, { mockImport: true, mockDashboardPages: true });
     await page.goto('/members/import');
     await expect(page).toHaveURL(/\/members\/import/);
 

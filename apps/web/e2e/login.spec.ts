@@ -20,8 +20,55 @@ test.describe('Login Flow', () => {
   });
 
   test('logs in with valid credentials and redirects to dashboard', async ({ page }) => {
-    // Login flow: mockAuth sets up cookies + auth intercept, login form submits via mockLoginError
-    await mockAuth(page);
+    // IMPORTANT: Do NOT call mockAuth() here — mockAuth sets localStorage tokens,
+    // which causes the login page to auto-redirect to /members before the form renders.
+    // Instead, register only the login POST + auth/me mocks WITHOUT localStorage.
+
+    // Mock login POST endpoint
+    await page.route(/\/api\/auth\/login/, async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              accessToken: 'mock-access-token',
+              refreshToken: 'mock-refresh-token',
+              user: {
+                id: 'mock-user-1',
+                email: 'superadmin@ths-thm.org',
+                namaLengkap: 'Super Admin',
+                role: 'superadmin',
+                isActive: true,
+              },
+            },
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock auth/me (called after login redirect to dashboard)
+    await page.route(/\/api\/auth\/me/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 'mock-user-1',
+            email: 'superadmin@ths-thm.org',
+            namaLengkap: 'Super Admin',
+            role: 'superadmin',
+            isActive: true,
+          },
+        }),
+      });
+    });
+
+    // Navigate to login — NO tokens in localStorage, so form is visible
     await page.goto('/login');
     await page.fill('[data-testid="email-input"]', 'superadmin@ths-thm.org');
     await page.fill('[data-testid="password-input"]', 'password123');

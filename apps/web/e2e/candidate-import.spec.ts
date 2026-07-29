@@ -3,7 +3,7 @@ import { mockAuth } from './helpers';
 
 test.describe('Candidate CSV Import Flow', () => {
   test('admin can upload CSV and see import results', async ({ page }) => {
-    await mockAuth(page, { mockCandidates: true });
+    await mockAuth(page, { mockCandidates: true, mockDashboardPages: true });
     await page.goto('/candidates/import');
     await expect(page).toHaveURL(/\/candidates\/import/);
 
@@ -39,7 +39,7 @@ test.describe('Candidate CSV Import Flow', () => {
   });
 
   test('shows error when CSV has no header row', async ({ page }) => {
-    await mockAuth(page, { mockCandidates: true });
+    await mockAuth(page, { mockCandidates: true, mockDashboardPages: true });
     await page.goto('/candidates/import');
 
     const fileInput = page.locator('input[type="file"]');
@@ -55,7 +55,7 @@ test.describe('Candidate CSV Import Flow', () => {
   });
 
   test('shows column mapping preview with matched columns', async ({ page }) => {
-    await mockAuth(page, { mockCandidates: true });
+    await mockAuth(page, { mockCandidates: true, mockDashboardPages: true });
     await page.goto('/candidates/import');
 
     // Before upload - Nama Lengkap should show as required (red)
