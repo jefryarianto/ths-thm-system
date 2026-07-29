@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -61,9 +62,18 @@ export default function DuesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.totalLabel}>Total Pembayaran</Text>
-        <Text style={styles.totalAmount}>Rp {total.toLocaleString('id-ID')}</Text>
-        <Text style={styles.countLabel}>{dues.length} transaksi</Text>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={styles.totalLabel}>Total Pembayaran</Text>
+          <Text style={styles.totalAmount}>Rp {total.toLocaleString('id-ID')}</Text>
+          <Text style={styles.countLabel}>{dues.length} transaksi</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.addBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push('/payments/create')}
+        >
+          <Ionicons name="add" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <FilterChips
@@ -125,7 +135,8 @@ export default function DuesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, alignItems: 'center' },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, flexDirection: 'row', alignItems: 'center' },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', position: 'absolute', right: 24, top: 60 },
   totalLabel: { color: '#bfdbfe', fontSize: 13 },
   totalAmount: { color: '#fff', fontSize: 28, fontWeight: '700', marginTop: 4 },
   countLabel: { color: '#bfdbfe', fontSize: 12, marginTop: 6 },

@@ -12,12 +12,9 @@ export default function RootLayout() {
     loadUser();
   }, []);
 
-  // ─── FCM deep link handler ───
   useEffect(() => {
     const cleanup = setupNotificationListeners(
-      // Received while app is in foreground — badge count handled by socket
       undefined,
-      // Tapped from notification tray → navigate to deep link
       (response) => {
         const data = response.notification?.request?.content?.data as
           | { screen?: string; screenId?: string }
@@ -40,18 +37,23 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="trainings" />
           <Stack.Screen name="trainings/[id]" />
+          <Stack.Screen name="trainings/create" />
           <Stack.Screen name="activities" />
           <Stack.Screen name="activities/[id]" />
+          <Stack.Screen name="activities/create" />
           <Stack.Screen name="candidates" />
           <Stack.Screen name="candidates/[id]" />
           <Stack.Screen name="letters" />
           <Stack.Screen name="letters/[id]" />
+          <Stack.Screen name="letters/create" />
           <Stack.Screen name="assessments" />
           <Stack.Screen name="assessments/[id]" />
+          <Stack.Screen name="assessments/create" />
           <Stack.Screen name="graduations" />
           <Stack.Screen name="graduations/[id]" />
           <Stack.Screen name="graduations/input-score" />
           <Stack.Screen name="dues/[id]" />
+          <Stack.Screen name="payments/create" />
           <Stack.Screen name="documents/[id]" />
           <Stack.Screen name="member-import" />
           <Stack.Screen name="reports" />
@@ -61,6 +63,7 @@ export default function RootLayout() {
           <Stack.Screen name="public-leaderboard" />
           <Stack.Screen name="members" />
           <Stack.Screen name="members/[id]" />
+          <Stack.Screen name="members/create" />
           <Stack.Screen name="forgot-password" />
           <Stack.Screen name="approvals" />
           <Stack.Screen name="approvals/[id]" />

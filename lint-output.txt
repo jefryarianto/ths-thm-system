@@ -1,0 +1,2 @@
+FINDSTR: Cannot open -A
+FINDSTR: Cannot open 200

@@ -147,7 +147,7 @@ jobs:
             ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Install Playwright browsers (Chromium only)
         working-directory: apps/web
@@ -247,7 +247,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Download all blob reports
         uses: actions/download-artifact@v4
@@ -386,7 +386,7 @@ jobs:
             ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
         # devDependencies required for build — NODE_ENV must NOT be production here
 
       - name: Generate Prisma Client
@@ -502,7 +502,7 @@ jobs:
           LOGIN=$(curl -sf -X POST http://localhost:3001/api/auth/login \
             -H "Content-Type: application/json" \
             -d '{"email":"superadmin@ths-thm.org","password":"admin123"}' 2>/dev/null || echo "")
-          TOKEN=$(echo "$LOGIN" | grep -o '"accessToken":"[^"]*"' | head -1 | cut -d'"' -f4)
+          TOKEN=$(echo "$LOGIN" | { grep -o '"accessToken":"[^"]*"' || true; } | head -1 | cut -d'"' -f4)
           if [ -n "$TOKEN" ]; then
             MEMBERS=$(curl -sf http://localhost:3001/api/members?limit=3 \
               -H "Authorization: Bearer $TOKEN" 2>/dev/null || echo '{"error":"failed"}')

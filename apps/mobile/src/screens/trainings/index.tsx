@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -68,8 +69,17 @@ export default function TrainingsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Latihan</Text>
-        <Text style={styles.headerSub}>{trainings.length} sesi latihan</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Latihan</Text>
+          <Text style={styles.headerSub}>{trainings.length} sesi latihan</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.addBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push('/trainings/create')}
+        >
+          <Ionicons name="add" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <SearchBar value={search} onChangeText={setSearch} placeholder="Cari latihan..." />
@@ -139,7 +149,8 @@ export default function TrainingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
   card: {

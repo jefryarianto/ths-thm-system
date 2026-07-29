@@ -109,8 +109,17 @@ export default function LettersScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Surat</Text>
-        <Text style={styles.headerSub}>{currentData.length} surat</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Surat</Text>
+          <Text style={styles.headerSub}>{currentData.length} surat</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.addBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push('/letters/create')}
+        >
+          <Ionicons name="add" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {/* Search */}
@@ -211,7 +220,8 @@ export default function LettersScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', position: 'absolute', right: 24, top: 60 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
   searchContainer: {
