@@ -75,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       shard_count: ${{ steps.shard_count.outputs.value }}
+      shard_list: ${{ steps.shard_count.outputs.shard_list }}
 
     steps:
       - id: shard_count
