@@ -120,7 +120,7 @@ test.describe('Style Guide — Visual Regression', () => {
     await page.waitForTimeout(200);
 
     // Open the modal
-    await modalsSection.locator('button:has-text("Buka Modal")').click();
+    await modalsSection.locator('button:has-text("Buka Modal")').first().click();
     await page.waitForTimeout(300);
 
     // Full page screenshot captures the modal overlay
@@ -136,7 +136,7 @@ test.describe('Style Guide — Visual Regression', () => {
     await page.waitForTimeout(200);
 
     // Open the confirm dialog
-    await modalsSection.locator('button:has-text("Buka Konfirmasi")').click();
+    await modalsSection.locator('button:has-text("Buka Konfirmasi")').first().click();
     await page.waitForTimeout(300);
 
     // Full page screenshot captures the confirm overlay
@@ -154,7 +154,7 @@ test.describe('Style Guide — Visual Regression', () => {
     await page.waitForTimeout(200);
 
     // Click page 2
-    const page2Btn = paginationSection.locator('button:has-text("2")');
+    const page2Btn = paginationSection.locator('button:has-text("2")').first();
     await page2Btn.click();
     await page.waitForTimeout(200);
 
@@ -173,7 +173,7 @@ test.describe('Style Guide — Visual Regression', () => {
     await page.waitForTimeout(200);
 
     // Type text into the search bar
-    const searchInput = searchSection.locator('input[placeholder="Cari anggota..."]');
+    const searchInput = searchSection.locator('input[placeholder="Cari anggota..."]').first();
     await searchInput.fill('test query');
     await page.waitForTimeout(100);
 
