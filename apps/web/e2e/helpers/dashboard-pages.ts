@@ -328,7 +328,7 @@ export async function registerDashboardPageMocks(page: Page) {
   });
 
   // ── Assessments / Aspek Penilaian ──
-  await page.route(/\/api\/aspects(\?|$)/, async (route) => {
+  await page.route(/\/api\/assessments\/aspects(\?|$)/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -350,6 +350,28 @@ export async function registerDashboardPageMocks(page: Page) {
           })),
         })),
         meta: { total: 8, totalPages: 1, page: 1, limit: 10 },
+      }),
+    });
+  });
+
+  // ── Assessments / Item Penilaian (separate endpoint) ──
+  await page.route(/\/api\/assessments\/items(\?|$)/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: Array.from({ length: 12 }, (_, i) => ({
+          id: `item-${i + 1}`,
+          aspekId: `aspect-${Math.floor(i / 3) + 1}`,
+          aspek: { namaAspek: `Aspek ${Math.floor(i / 3) + 1}` },
+          kodeItem: `ITM-${i + 1}`,
+          namaItem: `Item ${i + 1}`,
+          skorMaksimal: 100,
+          bobot: 1,
+          isActive: true,
+        })),
+        meta: { total: 12, totalPages: 2, page: 1, limit: 10 },
       }),
     });
   });

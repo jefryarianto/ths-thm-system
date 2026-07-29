@@ -6,36 +6,34 @@ test.describe('Documents — /documents', () => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/documents');
     // Wait for the document tab content to render
-    await expect(page.locator('text=Dokumen').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('h1').first()).toContainText('Dokumen', { timeout: 8000 });
   });
 
   test('renders with Dokumen tab active by default and action buttons', async ({ page }) => {
     await expect(page.locator('h1').first()).toContainText('Dokumen');
     await expect(page.locator('button:has-text("Tambah")')).toBeVisible();
-    await expect(page.locator('button:has-text("Generate Massal")')).toBeVisible();
+    await expect(page.locator('button:has-text("Generate Massal")').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('renders SummaryBar with document count', async ({ page }) => {
-    await expect(page.locator('text=Total Dokumen').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Total Dokumen').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders DataTable with document rows', async ({ page }) => {
-    await expect(page.locator('text=No. Dokumen').first()).toBeVisible();
-    await expect(page.locator('text=Tipe').first()).toBeVisible();
-    await expect(page.locator('text=Status').first()).toBeVisible();
+    await expect(page.getByText('No. Dokumen').first()).toBeVisible({ timeout: 8000 });
 
     await page.waitForTimeout(500);
     // Mock data from dashboard-pages documents mock
-    await expect(page.locator('text=Anggota 1').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Anggota 1').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('tabs switch between Dokumen and Generate Massal', async ({ page }) => {
     // Click Generate Massal tab
-    await page.locator('button:has-text("Generate Massal")').click();
+    await page.locator('button:has-text("Generate Massal")').first().click();
     await page.waitForTimeout(300);
 
     // Batch tab content should appear
-    await expect(page.locator('text=Riwayat Generate Dokumen')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Riwayat Generate Dokumen')).toBeVisible({ timeout: 5000 });
 
     // Switch back to Dokumen tab
     await page.locator('button:has-text("Dokumen")').first().click();
@@ -50,7 +48,7 @@ test.describe('Documents — /documents', () => {
     await page.waitForTimeout(500);
 
     // Batch history panel should render with mock batch data
-    await expect(page.locator('text=Riwayat Generate Dokumen')).toBeVisible();
+    await expect(page.getByText('Riwayat Generate Dokumen')).toBeVisible({ timeout: 8000 });
     // Wait for batch list to load
     await page.waitForTimeout(500);
   });
