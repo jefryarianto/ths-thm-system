@@ -61,6 +61,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install eslint-plugin-react-hooks (not in lockfile yet)
+        run: pnpm add -D eslint-plugin-react-hooks@^4.6.0 --filter @ths-thm/mobile
 
       - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
@@ -113,6 +115,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install eslint-plugin-react-hooks (not in lockfile yet)
+        run: pnpm add -D eslint-plugin-react-hooks@^4.6.0 --filter @ths-thm/mobile
 
       - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
