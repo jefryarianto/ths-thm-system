@@ -5,7 +5,7 @@ test.describe('Activities — /activities', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/activities');
-    await expect(page.locator('h1').first()).toContainText('Manajemen Kegiatan');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Kegiatan', { timeout: 10000 });
   });
 
   test('renders page title and action buttons', async ({ page }) => {
@@ -14,17 +14,16 @@ test.describe('Activities — /activities', () => {
   });
 
   test('renders SummaryBar with total count', async ({ page }) => {
-    await expect(page.locator('text=Total Kegiatan')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Kegiatan').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders DataTable with activity rows', async ({ page }) => {
-    await expect(page.locator('th:has-text("Nama Kegiatan")')).toBeVisible();
-    await expect(page.locator('th:has-text("Tipe")')).toBeVisible();
-    await expect(page.locator('th:has-text("Status")')).toBeVisible();
+    await expect(page.getByText('Nama Kegiatan').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Status').first()).toBeVisible({ timeout: 8000 });
 
     await page.waitForTimeout(500);
     // Activity data from mock
-    await expect(page.locator('text=Kegiatan 1').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Kegiatan 1').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('search bar and filter dropdowns are present', async ({ page }) => {

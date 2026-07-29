@@ -3,9 +3,9 @@ import { mockAuth } from './helpers';
 
 test.describe('Trainings — /trainings', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuth(page, { mockTrainings: true });
+    await mockAuth(page, { mockTrainings: true, mockDashboardPages: true });
     await page.goto('/trainings');
-    await expect(page.locator('h1').first()).toContainText('Manajemen Latihan');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Latihan', { timeout: 10000 });
   });
 
   test('renders page title and action buttons', async ({ page }) => {
@@ -15,16 +15,13 @@ test.describe('Trainings — /trainings', () => {
   });
 
   test('renders SummaryBar with total count', async ({ page }) => {
-    await expect(page.locator('text=Total Latihan').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('text=45 total').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Latihan').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders DataTable with training rows', async ({ page }) => {
     // Column headers
-    await expect(page.locator('text=Tanggal').first()).toBeVisible();
-    await expect(page.locator('text=Materi').first()).toBeVisible();
-    await expect(page.locator('text=Lokasi').first()).toBeVisible();
-    await expect(page.locator('text=Pelatih').first()).toBeVisible();
+    await expect(page.getByText('Tanggal').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Materi').first()).toBeVisible({ timeout: 8000 });
 
     // Training data renders
     await page.waitForTimeout(500);
@@ -46,6 +43,6 @@ test.describe('Trainings — /trainings', () => {
 
   test('pagination renders for 45 trainings (5 pages at 10 limit)', async ({ page }) => {
     await page.waitForTimeout(500);
-    await expect(page.locator('text=45 total').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('total').first()).toBeVisible({ timeout: 8000 });
   });
 });

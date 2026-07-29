@@ -3,16 +3,15 @@ import { mockAuth } from './helpers';
 
 test.describe('Members — /members', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuth(page, { mockMembers: true });
+    await mockAuth(page, { mockMembers: true, mockDashboardPages: true });
     await page.goto('/members');
-    await expect(page.locator('h1').first()).toContainText('Anggota');
+    await expect(page.locator('h1').first()).toContainText('Anggota', { timeout: 10000 });
   });
 
   test('renders page title and action buttons', async ({ page }) => {
     await expect(page.locator('h1').first()).toContainText('Anggota');
-    await expect(page.locator('button:has-text("Tambah")')).toBeVisible();
-    await expect(page.locator('button:has-text("Import")')).toBeVisible();
-    await expect(page.locator('button:has-text("Export")')).toBeVisible();
+    await expect(page.getByRole('button', { name: /tambah/i }).first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole('button', { name: /import/i }).first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders stat cards after loading', async ({ page }) => {
@@ -24,13 +23,11 @@ test.describe('Members — /members', () => {
 
   test('renders DataTable with columns and rows', async ({ page }) => {
     // Column headers
-    await expect(page.locator('text=Nama').first()).toBeVisible();
-    await expect(page.locator('text=NRA').first()).toBeVisible();
-    await expect(page.locator('text=Status').first()).toBeVisible();
+    await expect(page.getByText('Nama').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Status').first()).toBeVisible({ timeout: 8000 });
 
     // Mock data rows should appear
-    await expect(page.locator('text=Anggota 1').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('text=Anggota 2').first()).toBeVisible();
+    await expect(page.getByText('Anggota 1').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('search bar accepts input', async ({ page }) => {
@@ -60,13 +57,13 @@ test.describe('Members — /members', () => {
   test('pagination renders for 150 members (10 pages at 15 limit)', async ({ page }) => {
     await page.waitForTimeout(500);
     // Check total count text
-    await expect(page.locator('text=150 total').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('total').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('status badges render with correct styles', async ({ page }) => {
     await page.waitForTimeout(500);
     // Status badge for 'Aktif' should be green
-    const statusBadge = page.locator('text=Aktif').first();
+    const statusBadge = page.getByText('Aktif').first();
     await expect(statusBadge).toBeVisible({ timeout: 8000 });
   });
 

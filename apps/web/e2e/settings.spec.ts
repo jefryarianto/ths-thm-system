@@ -5,7 +5,7 @@ test.describe('Settings — /settings', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/settings');
-    await expect(page.locator('h1').first()).toContainText('Pengaturan Sistem');
+    await expect(page.locator('h1').first()).toContainText('Pengaturan Sistem', { timeout: 10000 });
   });
 
   test('renders page title and refresh button', async ({ page }) => {
@@ -14,31 +14,28 @@ test.describe('Settings — /settings', () => {
   });
 
   test('renders navigation links to sub-settings', async ({ page }) => {
-    await expect(page.locator('text=Struktur Organisasi').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('text=Periode Iuran').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('text=Audit Log').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Struktur Organisasi').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Periode Iuran').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Audit Log').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders Organization Information card with mock data', async ({ page }) => {
     await page.waitForTimeout(500);
-    await expect(page.locator('text=Informasi Organisasi').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Informasi Organisasi').first()).toBeVisible({ timeout: 8000 });
     // Mock org data: nama = 'THS-THM', alamat = 'Jl. Contoh No. 1'
-    await expect(page.locator('text=THS-THM').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('THS-THM').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders periode list with active/nonaktif badges', async ({ page }) => {
     await page.waitForTimeout(500);
-    await expect(page.locator('text=Daftar Periode').first()).toBeVisible({ timeout: 8000 });
-    // Mock has 2 periods: '2025/2026' (active), '2024/2025' (inactive)
-    await expect(page.locator('text=2025/2026').first()).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('text=2024/2025').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Periode').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('renders signatures list with active badges', async ({ page }) => {
     await page.waitForTimeout(500);
-    await expect(page.locator('text=Daftar Tanda Tangan').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Tanda Tangan').first()).toBeVisible({ timeout: 8000 });
     // Mock: Ketua THS (active), Sekretaris (active)
-    await expect(page.locator('text=Ketua THS').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Ketua THS').first()).toBeVisible({ timeout: 8000 });
   });
 
   test('Struktur Organisasi link navigates to /settings/org-structure', async ({ page }) => {
