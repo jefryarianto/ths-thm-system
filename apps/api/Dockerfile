@@ -20,6 +20,11 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
+# Clean up pnpm-created workspace node_modules before copying source
+# pnpm with shamefully-hoist=true creates symlinks in apps/api/node_modules/
+# that conflict with Docker COPY overlay ("cannot copy to non-directory")
+RUN rm -rf apps/api/node_modules packages/templates/node_modules 2>/dev/null; exit 0
+
 # Copy source files
 COPY apps/api/ ./apps/api/
 COPY packages/templates/ ./packages/templates/
