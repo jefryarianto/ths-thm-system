@@ -117,23 +117,23 @@ test.describe('Style Guide — /style-guide', () => {
     await expect(buttonsSection.locator('text=With Icons').first()).toBeVisible();
     await expect(buttonsSection.locator('text=Disabled & Loading').first()).toBeVisible();
 
-    // Verify specific buttons render
-    await expect(buttonsSection.locator('button:has-text("Primary")')).toBeVisible();
-    await expect(buttonsSection.locator('button:has-text("Secondary")')).toBeVisible();
-    await expect(buttonsSection.locator('button:has-text("Danger")')).toBeVisible();
-    await expect(buttonsSection.locator('button:has-text("Ghost")')).toBeVisible();
+    // Verify specific buttons render (DualThemePreview renders each twice)
+    await expect(buttonsSection.locator('button:has-text("Primary")').first()).toBeVisible();
+    await expect(buttonsSection.locator('button:has-text("Secondary")').first()).toBeVisible();
+    await expect(buttonsSection.locator('button:has-text("Danger")').first()).toBeVisible();
+    await expect(buttonsSection.locator('button:has-text("Ghost")').first()).toBeVisible();
 
     // Size buttons
-    await expect(buttonsSection.locator('button:has-text("Small")')).toBeVisible();
-    await expect(buttonsSection.locator('button:has-text("Medium")')).toBeVisible();
-    await expect(buttonsSection.locator('button:has-text("Large")')).toBeVisible();
+    await expect(buttonsSection.locator('button:has-text("Small")').first()).toBeVisible();
+    await expect(buttonsSection.locator('button:has-text("Medium")').first()).toBeVisible();
+    await expect(buttonsSection.locator('button:has-text("Large")').first()).toBeVisible();
 
     // Disabled button should have disabled attribute
-    const disabledBtn = buttonsSection.locator('button:has-text("Disabled")');
+    const disabledBtn = buttonsSection.locator('button:has-text("Disabled")').first();
     await expect(disabledBtn).toBeDisabled();
 
     // Loading button should be disabled
-    const loadingBtn = buttonsSection.locator('button:has-text("Loading")');
+    const loadingBtn = buttonsSection.locator('button:has-text("Loading")').first();
     await expect(loadingBtn).toBeDisabled();
   });
 
@@ -154,10 +154,10 @@ test.describe('Style Guide — /style-guide', () => {
   test('input section renders all input variants', async ({ page }) => {
     const inputsSection = page.locator('section#inputs');
 
-    await expect(inputsSection.locator('text=Nama Lengkap')).toBeVisible();
-    await expect(inputsSection.locator('text=Dengan Error')).toBeVisible();
-    await expect(inputsSection.locator('text=Disabled')).toBeVisible();
-    await expect(inputsSection.locator('text=Pilih Ranting')).toBeVisible();
+    await expect(inputsSection.locator('text=Nama Lengkap').first()).toBeVisible();
+    await expect(inputsSection.locator('text=Dengan Error').first()).toBeVisible();
+    await expect(inputsSection.locator('text=Disabled').first()).toBeVisible();
+    await expect(inputsSection.locator('text=Pilih Ranting').first()).toBeVisible();
   });
 
   // ─── Data Table Section ───────────────────────────
@@ -165,16 +165,16 @@ test.describe('Style Guide — /style-guide', () => {
   test('data table section renders rows with mock data', async ({ page }) => {
     const tablesSection = page.locator('section#tables');
 
-    // Check column headers
-    await expect(tablesSection.locator('text=Nama')).toBeVisible();
-    await expect(tablesSection.locator('text=No. Anggota')).toBeVisible();
-    await expect(tablesSection.locator('text=Status')).toBeVisible();
-    await expect(tablesSection.locator('text=Email')).toBeVisible();
+    // Check column headers (DualThemePreview renders each twice)
+    await expect(tablesSection.locator('text=Nama').first()).toBeVisible();
+    await expect(tablesSection.locator('text=No. Anggota').first()).toBeVisible();
+    await expect(tablesSection.locator('text=Status').first()).toBeVisible();
+    await expect(tablesSection.locator('text=Email').first()).toBeVisible();
 
     // Check mock data rows render
-    await expect(tablesSection.locator('text=Ahmad Fauzi')).toBeVisible();
-    await expect(tablesSection.locator('text=Siti Nurhaliza')).toBeVisible();
-    await expect(tablesSection.locator('text=Budi Santoso')).toBeVisible();
+    await expect(tablesSection.locator('text=Ahmad Fauzi').first()).toBeVisible();
+    await expect(tablesSection.locator('text=Siti Nurhaliza').first()).toBeVisible();
+    await expect(tablesSection.locator('text=Budi Santoso').first()).toBeVisible();
 
     // Status badges
     await expect(tablesSection.locator('text=aktif').first()).toBeVisible();
@@ -186,8 +186,8 @@ test.describe('Style Guide — /style-guide', () => {
   test('modal opens and closes on button click', async ({ page }) => {
     const modalsSection = page.locator('section#modals');
 
-    // Click "Buka Modal" button
-    const openModalBtn = modalsSection.locator('button:has-text("Buka Modal")');
+    // Click "Buka Modal" button (first one — DualThemePreview renders twice)
+    const openModalBtn = modalsSection.locator('button:has-text("Buka Modal")').first();
     await openModalBtn.click();
     await page.waitForTimeout(200);
 
@@ -199,7 +199,7 @@ test.describe('Style Guide — /style-guide', () => {
     await expect(page.locator('text=Nama').first()).toBeVisible();
 
     // Click "Batal" button to close
-    const closeBtn = page.locator('button:has-text("Batal")');
+    const closeBtn = page.locator('button:has-text("Batal")').first();
     await closeBtn.click();
     await page.waitForTimeout(200);
 
@@ -210,8 +210,8 @@ test.describe('Style Guide — /style-guide', () => {
   test('confirm dialog opens and closes', async ({ page }) => {
     const modalsSection = page.locator('section#modals');
 
-    // Click "Buka Konfirmasi" button
-    const openConfirmBtn = modalsSection.locator('button:has-text("Buka Konfirmasi")');
+    // Click "Buka Konfirmasi" button (first one — DualThemePreview)
+    const openConfirmBtn = modalsSection.locator('button:has-text("Buka Konfirmasi")').first();
     await openConfirmBtn.click();
     await page.waitForTimeout(200);
 
@@ -220,7 +220,7 @@ test.describe('Style Guide — /style-guide', () => {
     await expect(page.locator('text=Apakah Anda yakin ingin menghapus')).toBeVisible();
 
     // Click "Batal" to close
-    const cancelBtn = page.locator('button:has-text("Batal")');
+    const cancelBtn = page.locator('button:has-text("Batal")').first();
     await cancelBtn.click();
     await page.waitForTimeout(200);
 
@@ -231,8 +231,8 @@ test.describe('Style Guide — /style-guide', () => {
   test('modal opens, fills form, and submits via Simpan', async ({ page }) => {
     const modalsSection = page.locator('section#modals');
 
-    // Open modal
-    await modalsSection.locator('button:has-text("Buka Modal")').click();
+    // Open modal (first button — DualThemePreview)
+    await modalsSection.locator('button:has-text("Buka Modal")').first().click();
     await page.waitForTimeout(200);
 
     // Fill the input fields
@@ -243,7 +243,7 @@ test.describe('Style Guide — /style-guide', () => {
     await emailInput.fill('e2e@test.com');
 
     // Click Simpan to close
-    const simpanBtn = page.locator('button:has-text("Simpan")');
+    const simpanBtn = page.locator('button:has-text("Simpan")').first();
     await simpanBtn.click();
     await page.waitForTimeout(200);
 
@@ -257,17 +257,17 @@ test.describe('Style Guide — /style-guide', () => {
     const paginationSection = page.locator('section#pagination');
 
     // The "Default" showcase has a working Pagination with 5 pages, 47 total
-    // It should show total count
-    await expect(paginationSection.locator('text=47 total')).toBeVisible();
+    // It should show total count (DualThemePreview renders twice)
+    await expect(paginationSection.locator('text=47 total').first()).toBeVisible();
 
-    // Click page 2
-    const page2Btn = paginationSection.locator('button:has-text("2")');
+    // Click page 2 (first one — DualThemePreview)
+    const page2Btn = paginationSection.locator('button:has-text("2")').first();
     await page2Btn.click();
     await page.waitForTimeout(100);
 
     // Page 2 should now be active (highlighted)
     // The active page button has bg-blue-600 class
-    const activePage = paginationSection.locator('button.bg-blue-600');
+    const activePage = paginationSection.locator('button.bg-blue-600').first();
     await expect(activePage).toContainText('2');
   });
 
@@ -275,12 +275,7 @@ test.describe('Style Guide — /style-guide', () => {
     const paginationSection = page.locator('section#pagination');
 
     // The "Edge — Single Page" showcase shows 1 page, 3 total
-    // Pagination component returns null when totalPages <= 1
-    // Verify the label exists but no page-number buttons are rendered
-    await expect(paginationSection.locator('text=Edge — Single Page')).toBeVisible();
-
-    // Pagination component returns null when totalPages <= 1 — no DOM rendered
-    // Verify the showcase label renders to confirm the section exists
+    await expect(paginationSection.locator('text=Edge — Single Page').first()).toBeVisible();
   });
 
   // ─── Search Bar Interaction ───────────────────────
@@ -288,7 +283,7 @@ test.describe('Style Guide — /style-guide', () => {
   test('search bar accepts input and reset clears it', async ({ page }) => {
     const searchSection = page.locator('section#search-bar');
 
-    // Find the first search input (default showcase)
+    // Find the first search input (default showcase — DualThemePreview)
     const searchInput = searchSection.locator('input[placeholder="Cari anggota..."]').first();
     await expect(searchInput).toBeVisible();
 
@@ -296,7 +291,7 @@ test.describe('Style Guide — /style-guide', () => {
     await searchInput.fill('test search');
     await expect(searchInput).toHaveValue('test search');
 
-    // Click the Reset button
+    // Click the Reset button (first one)
     const resetBtn = searchSection.locator('button:has-text("Reset")').first();
     await resetBtn.click();
     await page.waitForTimeout(100);
@@ -310,14 +305,14 @@ test.describe('Style Guide — /style-guide', () => {
   test('avatar section renders initials-based avatars with size labels', async ({ page }) => {
     const avatarSection = page.locator('section#avatars');
 
-    // Size labels should be visible
+    // Size labels should be visible (DualThemePreview renders twice)
     await expect(avatarSection.locator('text=sm').first()).toBeVisible();
     await expect(avatarSection.locator('text=md').first()).toBeVisible();
     await expect(avatarSection.locator('text=lg').first()).toBeVisible();
 
     // Profile card should render with admin info
-    await expect(avatarSection.locator('text=Super Admin')).toBeVisible();
-    await expect(avatarSection.locator('text=admin@ths-thm.org')).toBeVisible();
+    await expect(avatarSection.locator('text=Super Admin').first()).toBeVisible();
+    await expect(avatarSection.locator('text=admin@ths-thm.org').first()).toBeVisible();
   });
 
   // ─── Info Row & Detail Row Section ────────────────
@@ -325,14 +320,14 @@ test.describe('Style Guide — /style-guide', () => {
   test('info row and detail row sections display data correctly', async ({ page }) => {
     const infoSection = page.locator('section#info-rows');
 
-    // InfoRow labels
-    await expect(infoSection.locator('text=Nama Lengkap')).toBeVisible();
-    await expect(infoSection.locator('text=No. Anggota')).toBeVisible();
-    await expect(infoSection.locator('text=0114-0101-001-2026')).toBeVisible();
+    // InfoRow labels (DualThemePreview + InfoRow+DetailRow = multiple matches)
+    await expect(infoSection.locator('text=Nama Lengkap').first()).toBeVisible();
+    await expect(infoSection.locator('text=No. Anggota').first()).toBeVisible();
+    await expect(infoSection.locator('text=0114-0101-001-2026').first()).toBeVisible();
 
     // DetailRow labels
-    await expect(infoSection.locator('text=Siti Nurhaliza')).toBeVisible();
-    await expect(infoSection.locator('text=siti@example.com')).toBeVisible();
+    await expect(infoSection.locator('text=Siti Nurhaliza').first()).toBeVisible();
+    await expect(infoSection.locator('text=siti@example.com').first()).toBeVisible();
   });
 
   // ─── Page Header Section ──────────────────────────
@@ -340,17 +335,17 @@ test.describe('Style Guide — /style-guide', () => {
   test('page header section renders all variants', async ({ page }) => {
     const headerSection = page.locator('section#page-header');
 
-    // Default variant
-    await expect(headerSection.locator('text=Daftar Anggota')).toBeVisible();
-    await expect(headerSection.locator('text=Kelola data anggota THS-THM')).toBeVisible();
+    // Default variant (DualThemePreview renders twice)
+    await expect(headerSection.locator('text=Daftar Anggota').first()).toBeVisible();
+    await expect(headerSection.locator('text=Kelola data anggota THS-THM').first()).toBeVisible();
 
     // With Back Link variant
-    await expect(headerSection.locator('text=Detail Anggota')).toBeVisible();
+    await expect(headerSection.locator('text=Detail Anggota').first()).toBeVisible();
 
     // With Tabs variant
-    await expect(headerSection.locator('text=Pengaturan Email')).toBeVisible();
-    const tabButtons = headerSection.locator('button:has-text("Konfigurasi")');
-    await expect(tabButtons.first()).toBeVisible();
+    await expect(headerSection.locator('text=Pengaturan Email').first()).toBeVisible();
+    const tabButtons = headerSection.locator('button:has-text("Konfigurasi")').first();
+    await expect(tabButtons).toBeVisible();
   });
 
   // ─── Colors Section ───────────────────────────────
@@ -358,11 +353,11 @@ test.describe('Style Guide — /style-guide', () => {
   test('colors section renders semantic color swatches', async ({ page }) => {
     const colorsSection = page.locator('section#colors');
 
-    // Color labels
-    await expect(colorsSection.locator('text=Primary')).toBeVisible();
-    await expect(colorsSection.locator('text=Success')).toBeVisible();
-    await expect(colorsSection.locator('text=Warning')).toBeVisible();
-    await expect(colorsSection.locator('text=Danger')).toBeVisible();
+    // Color labels (DualThemePreview renders twice)
+    await expect(colorsSection.locator('text=Primary').first()).toBeVisible();
+    await expect(colorsSection.locator('text=Success').first()).toBeVisible();
+    await expect(colorsSection.locator('text=Warning').first()).toBeVisible();
+    await expect(colorsSection.locator('text=Danger').first()).toBeVisible();
 
     // Status badge backgrounds
     await expect(colorsSection.locator('text=Aktif').first()).toBeVisible();
