@@ -4,7 +4,7 @@ import { registerDocumentsMocks } from './helpers/documents';
 
 test.describe('CSV Export for Batch Generation', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuth(page);
+    await mockAuth(page, { mockDashboardPages: true });
     await registerDocumentsMocks(page);
   });
 

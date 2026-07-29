@@ -384,7 +384,7 @@ test.describe('Style Guide — /style-guide', () => {
 
   test('Breadcrumbs render on the page', async ({ page }) => {
     // Breadcrumbs component renders a <nav> with aria-label
-    const breadcrumbNav = page.locator('nav[aria-label="Breadcrumb"]');
+    const breadcrumbNav = page.locator('nav[aria-label="Breadcrumb"]').first();
     await expect(breadcrumbNav).toBeVisible();
   });
 });
