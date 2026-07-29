@@ -5,11 +5,11 @@ test.describe('Notifications — /notifications', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/notifications');
-    await expect(page.locator('h1')).toContainText('Notifikasi');
+    await expect(page.locator('h1').first()).toContainText('Notifikasi');
   });
 
   test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Notifikasi');
+    await expect(page.locator('h1').first()).toContainText('Notifikasi');
     await expect(page.locator('button:has-text("Kirim")')).toBeVisible();
     await expect(page.locator('a:has-text("Laporan")')).toBeVisible();
     await expect(page.locator('a:has-text("Pengaturan")')).toBeVisible();

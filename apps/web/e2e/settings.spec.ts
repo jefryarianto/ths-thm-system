@@ -5,11 +5,11 @@ test.describe('Settings — /settings', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/settings');
-    await expect(page.locator('h1')).toContainText('Pengaturan Sistem');
+    await expect(page.locator('h1').first()).toContainText('Pengaturan Sistem');
   });
 
   test('renders page title and refresh button', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Pengaturan Sistem');
+    await expect(page.locator('h1').first()).toContainText('Pengaturan Sistem');
     await expect(page.locator('button:has-text("Refresh")')).toBeVisible();
   });
 

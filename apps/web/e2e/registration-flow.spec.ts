@@ -4,7 +4,7 @@ import { registerRegistrationMocks } from './helpers';
 test.describe('Public Registration Flow', () => {
   test('can access public registration page', async ({ page }) => {
     await page.goto('/daftar');
-    await expect(page.locator('h1')).toContainText('Pendaftaran Anggota Baru');
+    await expect(page.locator('h1').first()).toContainText('Pendaftaran Anggota Baru');
   });
 
   test('shows validation for required fields', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Public Registration Flow', () => {
     await page.goto('/daftar');
 
     // Verify form UI renders
-    await expect(page.locator('h1')).toContainText('Pendaftaran Anggota Baru');
+    await expect(page.locator('h1').first()).toContainText('Pendaftaran Anggota Baru');
     await expect(page.locator('button[type="submit"]')).toContainText('Daftar Sekarang');
 
     // Fill the form
@@ -62,7 +62,7 @@ test.describe('Public Registration Flow', () => {
     await page.locator('button[type="submit"]').click();
 
     // Should see success page
-    await expect(page.locator('h1')).toContainText('Pendaftaran Berhasil', { timeout: 10000 });
+    await expect(page.locator('h1').first()).toContainText('Pendaftaran Berhasil', { timeout: 10000 });
     await expect(page.locator('a[href="/login"]')).toContainText('Kembali ke Login');
   });
 });

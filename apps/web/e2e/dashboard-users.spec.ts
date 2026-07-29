@@ -131,7 +131,7 @@ test.describe('Users Dashboard Page', () => {
 
   test('shows user list with summary bar', async ({ page }) => {
     await page.goto('/users');
-    await expect(page.locator('h1')).toHaveText('Manajemen User');
+    await expect(page.locator('h1').first()).toHaveText('Manajemen User');
     await expect(page.getByText(/Total User/)).toBeVisible();
     await expect(page.getByText('Admin Utama')).toBeVisible();
     await expect(page.getByText('Budi Santoso')).toBeVisible();

@@ -10,7 +10,7 @@ test.describe('Documents — /documents', () => {
   });
 
   test('renders with Dokumen tab active by default and action buttons', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Dokumen');
+    await expect(page.locator('h1').first()).toContainText('Dokumen');
     await expect(page.locator('button:has-text("Tambah")')).toBeVisible();
     await expect(page.locator('button:has-text("Generate Massal")')).toBeVisible();
   });
@@ -42,7 +42,7 @@ test.describe('Documents — /documents', () => {
     await page.waitForTimeout(300);
 
     // Dokumen content should be visible again
-    await expect(page.locator('h1')).toContainText('Dokumen');
+    await expect(page.locator('h1').first()).toContainText('Dokumen');
   });
 
   test('Generate Massal tab shows batch history', async ({ page }) => {

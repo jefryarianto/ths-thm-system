@@ -5,11 +5,11 @@ test.describe('Trainings — /trainings', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockTrainings: true });
     await page.goto('/trainings');
-    await expect(page.locator('h1')).toContainText('Manajemen Latihan');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Latihan');
   });
 
   test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Manajemen Latihan');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Latihan');
     await expect(page.locator('a:has-text("Jadwal Latihan")')).toBeVisible();
     await expect(page.locator('button:has-text("Export")')).toBeVisible();
   });

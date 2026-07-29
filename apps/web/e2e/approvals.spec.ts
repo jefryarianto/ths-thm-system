@@ -6,11 +6,11 @@ test.describe('Approvals — /approvals', () => {
     await mockAuth(page);
     await registerApprovalsMocks(page);
     await page.goto('/approvals');
-    await expect(page.locator('h1')).toContainText('Persetujuan');
+    await expect(page.locator('h1').first()).toContainText('Persetujuan');
   });
 
   test('renders page title', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Persetujuan');
+    await expect(page.locator('h1').first()).toContainText('Persetujuan');
   });
 
   test('renders SummaryBar with pending count', async ({ page }) => {

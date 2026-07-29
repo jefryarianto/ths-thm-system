@@ -5,11 +5,11 @@ test.describe('Activities — /activities', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/activities');
-    await expect(page.locator('h1')).toContainText('Manajemen Kegiatan');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Kegiatan');
   });
 
   test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Manajemen Kegiatan');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Kegiatan');
     await expect(page.locator('button:has-text("Tambah")')).toBeVisible();
   });
 

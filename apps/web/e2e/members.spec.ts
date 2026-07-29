@@ -5,11 +5,11 @@ test.describe('Members — /members', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockMembers: true });
     await page.goto('/members');
-    await expect(page.locator('h1')).toContainText('Anggota');
+    await expect(page.locator('h1').first()).toContainText('Anggota');
   });
 
   test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Anggota');
+    await expect(page.locator('h1').first()).toContainText('Anggota');
     await expect(page.locator('button:has-text("Tambah")')).toBeVisible();
     await expect(page.locator('button:has-text("Import")')).toBeVisible();
     await expect(page.locator('button:has-text("Export")')).toBeVisible();

@@ -5,11 +5,11 @@ test.describe('Assessments — /assessments', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockDashboardPages: true });
     await page.goto('/assessments');
-    await expect(page.locator('h1')).toContainText('Aspek & Item Penilaian');
+    await expect(page.locator('h1').first()).toContainText('Aspek & Item Penilaian');
   });
 
   test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Aspek & Item Penilaian');
+    await expect(page.locator('h1').first()).toContainText('Aspek & Item Penilaian');
     // Aspek tab is default — should see "Tambah Aspek" button
     await expect(page.locator('button:has-text("Tambah Aspek")')).toBeVisible();
   });

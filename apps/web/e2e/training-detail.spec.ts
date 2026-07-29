@@ -9,7 +9,7 @@ test.describe('Training Detail Flow', () => {
 
   test('should display training list page', async ({ page }) => {
     // Check page loads - use h1 directly (more specific than .or())
-    await expect(page.locator('h1')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
 
     // Either there are training cards or empty state
     const hasCards = page.locator('table, .card, [class*="training"]').first();

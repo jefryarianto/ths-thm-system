@@ -10,7 +10,7 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('renders stat cards with mock data', async ({ page }) => {
-      await expect(page.locator('h1')).toHaveText('Statistik Scan');
+      await expect(page.locator('h1').first()).toHaveText('Statistik Scan');
       await expect(page.getByText('Total Absensi')).toBeVisible();
       await expect(page.getByText('Dokumen Terverifikasi')).toBeVisible();
       await expect(page.getByText('Kegiatan Aktif')).toBeVisible();
@@ -43,7 +43,7 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('renders overview tab by default with stat cards', async ({ page }) => {
-      await expect(page.locator('h1')).toContainText('Laporan');
+      await expect(page.locator('h1').first()).toContainText('Laporan');
       await expect(page.getByText('Ringkasan')).toBeVisible();
       // Wait for data to load - check the tab buttons exist
       await expect(page.getByText('Ringkasan')).toBeVisible();
@@ -81,7 +81,7 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('renders header and stat cards', async ({ page }) => {
-      await expect(page.locator('h1')).toHaveText('Gamifikasi');
+      await expect(page.locator('h1').first()).toHaveText('Gamifikasi');
       // Stat cards should appear
       await expect(page.getByText('Peserta Aktif')).toBeVisible();
       await expect(page.getByText('Total Poin')).toBeVisible();
@@ -114,7 +114,7 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('renders header and examiner list', async ({ page }) => {
-      await expect(page.locator('h1')).toContainText('Penguji');
+      await expect(page.locator('h1').first()).toContainText('Penguji');
       await expect(page.getByText('Daftar Penguji')).toBeVisible();
     });
 
@@ -131,7 +131,7 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('renders header and claims list', async ({ page }) => {
-      await expect(page.locator('h1')).toContainText('Klaim');
+      await expect(page.locator('h1').first()).toContainText('Klaim');
       await expect(page.getByText('Daftar Klaim')).toBeVisible();
     });
 
@@ -148,7 +148,7 @@ test.describe('Additional Dashboard Pages', () => {
     test('renders forum categories page', async ({ page }) => {
       await page.goto('/forum');
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('h1')).toContainText('Forum');
+      await expect(page.locator('h1').first()).toContainText('Forum');
       await expect(page.getByText('Kategori Forum')).toBeVisible();
     });
 
@@ -159,14 +159,14 @@ test.describe('Additional Dashboard Pages', () => {
       if (await firstCategory.count() > 0) {
         await firstCategory.click();
         await page.waitForLoadState('networkidle');
-        await expect(page.locator('h1')).toBeVisible();
+        await expect(page.locator('h1').first()).toBeVisible();
       }
     });
 
     test('renders new thread form', async ({ page }) => {
       await page.goto('/forum/new');
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('h1')).toContainText('Thread');
+      await expect(page.locator('h1').first()).toContainText('Thread');
       await expect(page.getByText('Judul')).toBeVisible();
     });
   });
@@ -179,7 +179,7 @@ test.describe('Additional Dashboard Pages', () => {
     test('renders chat rooms list', async ({ page }) => {
       await page.goto('/chat');
       await page.waitForLoadState('networkidle');
-      await expect(page.locator('h1')).toContainText('Chat');
+      await expect(page.locator('h1').first()).toContainText('Chat');
       await expect(page.getByText('Ruang Chat')).toBeVisible();
     });
 
@@ -190,7 +190,7 @@ test.describe('Additional Dashboard Pages', () => {
       if (await firstRoom.count() > 0) {
         await firstRoom.click();
         await page.waitForLoadState('networkidle');
-        await expect(page.locator('h1')).toBeVisible();
+        await expect(page.locator('h1').first()).toBeVisible();
       }
     });
   });

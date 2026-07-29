@@ -43,7 +43,7 @@ test.describe('Style Guide — /style-guide', () => {
     await mockAuth(page);
     await page.goto('/style-guide');
     // Wait for the page to be fully rendered — h1 confirms React hydration
-    await expect(page.locator('h1')).toContainText('Style Guide');
+    await expect(page.locator('h1').first()).toContainText('Style Guide');
   });
 
   // ─── Section Rendering ────────────────────────────
@@ -382,7 +382,7 @@ test.describe('Style Guide — /style-guide', () => {
   // ─── Page Structure ───────────────────────────────
 
   test('page has correct title and subtitle', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Style Guide / Design System');
+    await expect(page.locator('h1').first()).toContainText('Style Guide / Design System');
     await expect(page.locator('text=Referensi visual semua komponen UI')).toBeVisible();
   });
 

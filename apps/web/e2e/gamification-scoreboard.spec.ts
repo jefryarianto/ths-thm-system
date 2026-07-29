@@ -9,7 +9,7 @@ test.describe('Gamification Scoreboard Page', () => {
 
   test('should display scoreboard header and stats', async ({ page }) => {
     // Check header
-    await expect(page.locator('h1')).toContainText('Scoreboard Gamifikasi');
+    await expect(page.locator('h1').first()).toContainText('Scoreboard Gamifikasi');
 
     // Check stat cards are visible
     await expect(page.locator('text=Peserta Aktif')).toBeVisible({ timeout: 10000 });
@@ -92,6 +92,6 @@ test.describe('Gamification Scoreboard Page', () => {
     // Navigate with empty data scenario
     await page.goto('/gamification/scoreboard');
     // The page should still load without crashing
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
   });
 });

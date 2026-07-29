@@ -8,7 +8,7 @@ test.describe('Candidate Approve Flow', () => {
 
   test('can access candidates page with heading', async ({ page }) => {
     await page.goto('/candidates');
-    await expect(page.locator('h1')).toContainText('Manajemen Calon Anggota');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Calon Anggota');
   });
 
   test('candidates list renders data table', async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe('Candidate Approve Flow', () => {
 
   test('supports searching candidates', async ({ page }) => {
     await page.goto('/candidates');
-    await expect(page.locator('h1')).toContainText('Manajemen Calon Anggota');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Calon Anggota');
 
     // Search by name
     const searchInput = page.getByPlaceholder('Cari calon anggota...');
@@ -44,7 +44,7 @@ test.describe('Candidate Approve Flow', () => {
 
   test('status badges render correctly', async ({ page }) => {
     await page.goto('/candidates');
-    await expect(page.locator('h1')).toContainText('Manajemen Calon Anggota');
+    await expect(page.locator('h1').first()).toContainText('Manajemen Calon Anggota');
 
     // Check for status badges (they use status labels like "Diusulkan", "Pendadaran", etc.)
     await expect(page.getByText('Diusulkan').first()).toBeVisible();

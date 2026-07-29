@@ -9,7 +9,7 @@ test.describe('Dashboard Navigation', () => {
   test('navigates to members page after login', async ({ page }) => {
     await page.goto('/members');
     await expect(page).toHaveURL(/\/members/);
-    await expect(page.locator('h1')).toContainText('Anggota');
+    await expect(page.locator('h1').first()).toContainText('Anggota');
   });
 
   test('can navigate to activities page', async ({ page }) => {
