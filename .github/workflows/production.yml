@@ -169,6 +169,10 @@ jobs:
             # Export image tag so docker-compose picks it up
             export IMAGE_TAG=${IMAGE_TAG:-latest}
 
+            # Auto-cleanup Docker resources before pulling (prevents "no space left on device")
+            echo "   Cleaning up old Docker resources..."
+            docker system prune -af --filter "until=24h" 2>/dev/null || true
+
             # Pull latest images (build happens in CI — zero CPU on VPS)
             echo "   Pulling images..."
             docker compose -f docker-compose.production.yml pull
@@ -201,9 +205,9 @@ jobs:
               sleep 5
             done
 
-            # Clean up unused images (save disk space on 40GB VPS)
-            echo "   Cleaning up old images..."
-            docker image prune -af --filter "until=24h" 2>/dev/null || true
+            # Aggressive cleanup after deploy (save disk space on 40GB VPS)
+            echo "   Pruning old Docker resources..."
+            docker system prune -af --filter "until=24h" 2>/dev/null || true
 
             echo "✅ Deployment complete!"
             echo "   URL: https://ths-thm.cloud"
