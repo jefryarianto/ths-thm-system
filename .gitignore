@@ -67,3 +67,10 @@ docs/item.txt
 
 # Package node_modules (for monorepo packages that may accidentally have them)
 packages/templates/node_modules/
+
+# Debug / log files
+ci-lint-log.html
+lint-output.txt
+logs.zip
+raw-logs.txt
+raw-logs2.txt
