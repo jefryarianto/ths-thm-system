@@ -54,7 +54,7 @@ test.describe('Style Guide — Visual Regression', () => {
     await mockAuth(page);
     await page.goto('/style-guide');
     // Wait for the page to be fully rendered
-    await expect(page.locator('h1')).toContainText('Style Guide');
+    await expect(page.locator('h1').first()).toContainText('Style Guide');
     // Wait for all fonts and images to load
     await page.waitForLoadState('networkidle');
   });
