@@ -2,7 +2,7 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
@@ -27,16 +27,66 @@ export default function NewMemberPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // Org structure cascading dropdowns
+  const [distriks, setDistriks] = useState<{ id: string; nama: string }[]>([]);
+  const [wilayahs, setWilayahs] = useState<{ id: string; nama: string }[]>([]);
+  const [rantings, setRantings] = useState<{ id: string; nama: string }[]>([]);
+  const [orgLoading, setOrgLoading] = useState({ distrik: false, wilayah: false, ranting: false });
+  const [selectedDistrik, setSelectedDistrik] = useState('');
+  const [selectedWilayah, setSelectedWilayah] = useState('');
+  const [selectedRanting, setSelectedRanting] = useState('');
+
+  useEffect(() => {
+    setOrgLoading(prev => ({ ...prev, distrik: true }));
+    apiClient.get('/org-structure/distrik')
+      .then((r) => setDistriks(r.data.data || []))
+      .catch(() => {/* ignore */})
+      .finally(() => setOrgLoading(prev => ({ ...prev, distrik: false })));
+  }, []);
+
+  const handleDistrikChange = async (distrikId: string) => {
+    setSelectedDistrik(distrikId);
+    setSelectedWilayah('');
+    setSelectedRanting('');
+    setWilayahs([]);
+    setRantings([]);
+    if (!distrikId) return;
+    setOrgLoading(prev => ({ ...prev, wilayah: true }));
+    try {
+      const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+      setWilayahs(r.data.data || []);
+    } catch { /* ignore */ }
+    setOrgLoading(prev => ({ ...prev, wilayah: false }));
+  };
+
+  const handleWilayahChange = async (wilayahId: string) => {
+    setSelectedWilayah(wilayahId);
+    setSelectedRanting('');
+    setRantings([]);
+    if (!wilayahId) return;
+    setOrgLoading(prev => ({ ...prev, ranting: true }));
+    try {
+      const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+      setRantings(r.data.data || []);
+    } catch { /* ignore */ }
+    setOrgLoading(prev => ({ ...prev, ranting: false }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.namaLengkap) {
       setError('Nama lengkap harus diisi');
       return;
     }
+    if (!selectedRanting) {
+      setError('Pilih ranting terlebih dahulu');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const { data: res } = await apiClient.post('/members', form);
+      const payload = { ...form, rantingId: selectedRanting };
+      const { data: res } = await apiClient.post('/members', payload);
       router.push(`/members/${res.data.id}`);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -127,6 +177,69 @@ export default function NewMemberPage() {
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </div>
+        
+                  {/* Organisasi - Cascading dropdowns */}
+                  <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                      Organisasi <span className="text-red-500">*</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik</label>
+                        <select
+                          value={selectedDistrik}
+                          onChange={(e) => handleDistrikChange(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Pilih Distrik</option>
+                          {orgLoading.distrik ? (
+                            <option disabled>Memuat...</option>
+                          ) : (
+                            distriks.map((d) => (
+                              <option key={d.id} value={d.id}>{d.nama}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
+                        <select
+                          value={selectedWilayah}
+                          onChange={(e) => handleWilayahChange(e.target.value)}
+                          disabled={!selectedDistrik}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                        >
+                          <option value="">Pilih Wilayah</option>
+                          {orgLoading.wilayah ? (
+                            <option disabled>Memuat...</option>
+                          ) : (
+                            wilayahs.map((w) => (
+                              <option key={w.id} value={w.id}>{w.nama}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting <span className="text-red-500">*</span></label>
+                        <select
+                          value={selectedRanting}
+                          onChange={(e) => setSelectedRanting(e.target.value)}
+                          disabled={!selectedWilayah}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                        >
+                          <option value="">Pilih Ranting</option>
+                          {orgLoading.ranting ? (
+                            <option disabled>Memuat...</option>
+                          ) : (
+                            rantings.map((r) => (
+                              <option key={r.id} value={r.id}>{r.nama}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
         
                 <div className="flex justify-end gap-2 pt-2">
                   <button type="button" onClick={() => router.push('/members')}
