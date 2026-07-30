@@ -9,9 +9,12 @@ import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { TINGKAT_OPTIONS } from '@/components/members/constants';
+import { useOrgFilter } from '@/lib/hooks/use-org-filter';
 
 export default function NewMemberPage() {
   const router = useRouter();
+  const { orgTree, availableWilayahs, availableRantings, loading: loadingOrg, setDistrik, setWilayah, setRanting, distrikId, wilayahId, rantingId } = useOrgFilter();
+  
   const [form, setForm] = useState({
     namaLengkap: '',
     jenisKelamin: 'L' as 'L' | 'P',
@@ -23,6 +26,9 @@ export default function NewMemberPage() {
     noHp: '',
     email: '',
     tingkat: '',
+    distrikId: '',
+    wilayahId: '',
+    rantingId: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +37,10 @@ export default function NewMemberPage() {
     e.preventDefault();
     if (!form.namaLengkap) {
       setError('Nama lengkap harus diisi');
+      return;
+    }
+    if (!form.rantingId) {
+      setError('Asal Ranting harus dipilih');
       return;
     }
     setSaving(true);
@@ -58,6 +68,10 @@ export default function NewMemberPage() {
         
               <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-400">
                 NRA akan digenerate otomatis dengan format: <strong>[kode_distrik]-[kode_wilayah][kode_ranting]-[urut]-[tahun_dadar]</strong>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-400">
+                <strong>Penting:</strong> Pilih urutan <strong>Distrik → Wilayah → Ranting</strong> untuk menentukan asal anggota. Field ini wajib diisi.
               </div>
         
               {error && (
@@ -88,6 +102,48 @@ export default function NewMemberPage() {
                       <option value="">Pilih Tingkat</option>
                       {TINGKAT_OPTIONS.map((t) => (
                         <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik *</label>
+                    <select value={distrikId} onChange={(e) => {
+                      const dId = e.target.value;
+                      setDistrik(dId);
+                      setForm({ ...form, distrikId: dId, wilayahId: '', rantingId: '' });
+                    }} disabled={loadingOrg}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                      <option value="">Pilih Distrik</option>
+                      {orgTree.map((d) => (
+                        <option key={d.id} value={d.id}>{d.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah *</label>
+                    <select value={wilayahId} onChange={(e) => {
+                      const wId = e.target.value;
+                      setWilayah(wId);
+                      setForm({ ...form, wilayahId: wId, rantingId: '' });
+                    }} disabled={!distrikId || loadingOrg}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                      <option value="">Pilih Wilayah</option>
+                      {availableWilayahs.map((w) => (
+                        <option key={w.id} value={w.id}>{w.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting *</label>
+                    <select value={rantingId} onChange={(e) => {
+                      const rId = e.target.value;
+                      setRanting(rId);
+                      setForm({ ...form, rantingId: rId });
+                    }} disabled={!wilayahId || loadingOrg}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+                      <option value="">Pilih Ranting</option>
+                      {availableRantings.map((r) => (
+                        <option key={r.id} value={r.id}>{r.nama}</option>
                       ))}
                     </select>
                   </div>
