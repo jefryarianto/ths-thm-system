@@ -85,4 +85,16 @@ export class GraduationsController {
   generateDocs(@Param('id') id: string) {
     return this.service.generateDocuments(id);
   }
+
+  @Post(':id/validate')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Validasi hasil pendadaran' })
+  validateResults(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.validateResults(id, req.user?.id!);
+  }
+
+  @Get(':id/recapitulation')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Rekapitulasi hasil pendadaran' })
+  getRecapitulation(@Param('id') id: string) {
+    return this.service.getRecapitulation(id);
+  }
 }

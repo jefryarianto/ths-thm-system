@@ -51,10 +51,10 @@ export class CreateMemberDto {
   @IsString()
   rantingId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'ID tingkatan anggota' })
   @IsOptional()
   @IsString()
-  tingkat?: string;
+  tingkatanId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -108,10 +108,10 @@ export class UpdateMemberDto {
   @IsEmail()
   email?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'ID tingkatan anggota' })
   @IsOptional()
   @IsString()
-  tingkat?: string;
+  tingkatanId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

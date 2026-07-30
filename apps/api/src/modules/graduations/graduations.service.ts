@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -186,29 +186,85 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
     }
 
+    // Aggregate scores from Ujian Praktek for each candidate
+    const ujianPrakteks = await this.prisma.ujianPraktek.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        items: {
+          include: {
+            itemPenilaian: {
+              select: { skorMaksimal: true, bobot: true }
+            }
+          }
+        }
+      }
+    });
+
     for (const result of dto.results || []) {
+      // Calculate aggregated score from all ujian praktek if not provided
+      let calculatedTotalSkor = result.totalSkor;
+      
+      if (calculatedTotalSkor === undefined || calculatedTotalSkor === null) {
+        // Aggregate from nilai_pendadaran
+        const scores = await this.prisma.nilaiPendadaran.findMany({
+          where: {
+            kegiatanId: graduationId,
+            calonAnggotaId: result.candidateId,
+          },
+          include: {
+            itemPenilaian: {
+              select: { skorMaksimal: true, bobot: true }
+            }
+          }
+        });
+
+        if (scores.length > 0) {
+          // Calculate weighted score
+          let totalWeightedScore = 0;
+          let totalMaxWeight = 0;
+
+          for (const score of scores) {
+            const weight = score.itemPenilaian.bobot || 1;
+            const maxScore = score.itemPenilaian.skorMaksimal || 100;
+            const normalizedScore = (Number(score.skor) / maxScore) * 100;
+            totalWeightedScore += normalizedScore * weight;
+            totalMaxWeight += weight;
+          }
+
+          calculatedTotalSkor = totalMaxWeight > 0 
+            ? (totalWeightedScore / totalMaxWeight) * 100 
+            : 0;
+        } else {
+          calculatedTotalSkor = 0;
+        }
+      }
+
+      const isLulus = result.lulus !== undefined 
+        ? result.lulus 
+        : Number(calculatedTotalSkor) >= 70; // Default passing grade
+
       await this.prisma.hasilPendadaran.create({
         data: {
           kegiatanId: graduationId,
           calonAnggotaId: result.candidateId,
-          totalSkor: result.totalSkor,
+          totalSkor: calculatedTotalSkor,
           ranking: result.ranking,
-          statusKelulusan: result.lulus ? 'lulus' : 'gagal',
+          statusKelulusan: isLulus ? 'lulus' : 'gagal',
           statusValidasi: 'pending',
         },
       });
 
       const candidate = await this.prisma.calonAnggota.update({
         where: { id: result.candidateId },
-        data: { status: result.lulus ? 'lulus' : 'gagal' },
+        data: { status: isLulus ? 'lulus' : 'gagal' },
       });
 
       if (candidate.email) {
         this.sendGraduationResultEmail(
           candidate.namaLengkap,
           candidate.email,
-          result.lulus,
-          result.totalSkor,
+          isLulus,
+          Number(calculatedTotalSkor),
         );
       }
     }
@@ -222,6 +278,89 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     });
 
     return { totalGraduates: graduates.length };
+  }
+
+  /**
+   * Validate graduation results (Admin only)
+   */
+  async validateResults(graduationId: string, validatorUserId: string) {
+    const results = await this.prisma.hasilPendadaran.findMany({
+      where: { kegiatanId: graduationId, statusValidasi: 'pending' },
+    });
+
+    if (results.length === 0) {
+      throw new BadRequestException('Tidak ada hasil yang perlu divalidasi');
+    }
+
+    await this.prisma.hasilPendadaran.updateMany({
+      where: { kegiatanId: graduationId, statusValidasi: 'pending' },
+      data: {
+        statusValidasi: 'validated',
+        divalidasiOleh: validatorUserId,
+        divalidasiAt: new Date(),
+      },
+    });
+
+    // Update candidates to 'menunggu_pelantikan' if validated and passed
+    const passedCandidates = await this.prisma.hasilPendadaran.findMany({
+      where: { 
+        kegiatanId: graduationId, 
+        statusKelulusan: 'lulus',
+        statusValidasi: 'validated'
+      },
+      select: { calonAnggotaId: true }
+    });
+
+    for (const result of passedCandidates) {
+      await this.prisma.calonAnggota.update({
+        where: { id: result.calonAnggotaId },
+        data: { status: 'menunggu_pelantikan' },
+      });
+    }
+
+    return { validated: results.length };
+  }
+
+  /**
+   * Get recapitulation of graduation results
+   */
+  async getRecapitulation(graduationId: string) {
+    const results = await this.prisma.hasilPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        calonAnggota: {
+          select: {
+            id: true,
+            namaLengkap: true,
+            email: true,
+            ranting: { select: { nama: true } }
+          }
+        },
+        kegiatan: { select: { nama: true, tanggalMulai: true } }
+      },
+      orderBy: { totalSkor: 'desc' }
+    });
+
+    const total = results.length;
+    const lulus = results.filter(r => r.statusKelulusan === 'lulus').length;
+    const gagal = results.filter(r => r.statusKelulusan === 'gagal').length;
+    const validated = results.filter(r => r.statusValidasi === 'validated').length;
+    const pending = results.filter(r => r.statusValidasi === 'pending').length;
+
+    const averageScore = results.reduce((sum, r) => sum + Number(r.totalSkor), 0) / (total || 1);
+
+    return {
+      summary: {
+        total,
+        lulus,
+        gagal,
+        validated,
+        pending,
+        averageScore: Math.round(averageScore * 100) / 100,
+        passingRate: total > 0 ? Math.round((lulus / total) * 10000) / 100 : 0,
+      },
+      results,
+    };
   }
 
   // ═══════════════════════════════════════════════════════════

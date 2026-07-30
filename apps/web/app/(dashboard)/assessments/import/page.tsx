@@ -27,7 +27,9 @@ interface PreviewRow {
 interface ImportResult {
   importedAspects: number;
   importedItems: number;
+  skippedItems?: number;
   total: number;
+  errors?: string[];
 }
 
 export default function ImportAssessmentsPage() {
@@ -188,12 +190,25 @@ export default function ImportAssessmentsPage() {
           <div className="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <CheckCircle2 size={20} className="text-emerald-600 mt-0.5 shrink-0" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">Import Berhasil!</p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                   {result.importedAspects} aspek dan {result.importedItems} item penilaian berhasil diimport
+                  {result.skippedItems ? ` (${result.skippedItems} item sudah ada)` : ''}
                   (total {result.total} baris)
                 </p>
+                {result.errors && result.errors.length > 0 && (
+                  <div className="mt-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <p className="text-xs font-medium text-red-700 dark:text-red-400 mb-2">
+                      ⚠️ Ada {result.errors.length} error:
+                    </p>
+                    <ul className="text-xs text-red-600 dark:text-red-300 space-y-1 max-h-40 overflow-y-auto">
+                      {result.errors.map((err, idx) => (
+                        <li key={idx} className="break-words">• {err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <button
                   onClick={() => router.push('/assessments')}
                   className="mt-3 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:underline"
@@ -354,17 +369,37 @@ function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
+  
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
+    const nextChar = line[i + 1];
+    
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        // Escaped quote inside quoted field
+        current += '"';
+        i++; // Skip next quote
+      } else if (char === '"') {
+        // End of quoted field
+        inQuotes = false;
+      } else {
+        current += char;
+      }
     } else {
-      current += char;
+      if (char === '"') {
+        // Start of quoted field
+        inQuotes = true;
+      } else if (char === ',') {
+        // Field separator
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
     }
   }
-  result.push(current);
+  
+  // Push the last field
+  result.push(current.trim());
   return result;
 }

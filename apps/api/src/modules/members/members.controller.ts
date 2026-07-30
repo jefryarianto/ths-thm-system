@@ -4,6 +4,7 @@ import { MembersService } from './members.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
 import { MembersWorkflowService } from './members-workflow.service';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
+import { BulkImportAnggotaDto } from './dto/import-anggota.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { Response } from 'express';
@@ -73,6 +74,12 @@ export class MembersController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Impor data anggota' })
   importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
     return this.membersService.importCsv(data, req.scope);
+  }
+
+  @Post('import-historis')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Impor data anggota historis THS-THM' })
+  importAnggotaHistoris(@Body() dto: BulkImportAnggotaDto, @Req() req: ScopedRequest) {
+    return this.membersService.importAnggotaHistoris(dto, req.scope);
   }
 
   @Get('export/csv')

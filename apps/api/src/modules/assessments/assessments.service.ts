@@ -69,44 +69,73 @@ export class AssessmentsService {
 
   async importFromList(data: ImportRow[]) {
     if (!data || data.length === 0) {
-      return { importedAspects: 0, importedItems: 0, total: 0 };
+      return { importedAspects: 0, importedItems: 0, total: 0, errors: [] };
     }
 
-    const aspekMap = new Map<string, ImportRow[]>();
+    const errors: string[] = [];
+    const aspekMap = new Map<string, { no: number; rows: ImportRow[] }>();
+    
+    // Group by aspek name and track the first 'no' for each aspect
     for (const row of data) {
       const key = row.aspek.trim().toUpperCase();
       if (!aspekMap.has(key)) {
-        aspekMap.set(key, []);
+        aspekMap.set(key, { no: row.no, rows: [] });
       }
-      aspekMap.get(key)!.push(row);
+      aspekMap.get(key)!.rows.push(row);
     }
 
     let importedAspects = 0;
     let importedItems = 0;
+    let skippedItems = 0;
 
-    for (const [aspekName, rows] of aspekMap) {
-      const no = rows[0].no;
+    for (const [aspekName, { no, rows }] of aspekMap.entries()) {
+      if (!no || no < 1) {
+        errors.push(`Aspek "${aspekName}" memiliki nomor tidak valid: ${no}`);
+        continue;
+      }
+
       const kodeAspek = `A${String(no).padStart(2, '0')}`;
 
-      let aspek = await this.prisma.aspekPenilaian.findUnique({
+      // Check if kodeAspek already exists with different name
+      const existingAspekByCode = await this.prisma.aspekPenilaian.findUnique({
         where: { kodeAspek },
       });
 
+      if (existingAspekByCode && existingAspekByCode.namaAspek.toUpperCase() !== aspekName) {
+        errors.push(`Kode aspek ${kodeAspek} sudah digunakan untuk aspek lain: "${existingAspekByCode.namaAspek}"`);
+        continue;
+      }
+
+      let aspek = existingAspekByCode;
+
       if (!aspek) {
-        const bobot = Math.round(100 / aspekMap.size);
-        aspek = await this.prisma.aspekPenilaian.create({
-          data: {
-            kodeAspek,
-            namaAspek: aspekName,
-            bobot,
-            deskripsi: `Aspek ${aspekName}`,
-          },
-        });
-        importedAspects++;
+        const totalAspects = aspekMap.size;
+        const bobot = parseFloat((1 / totalAspects).toFixed(4)); // Normalize to 4 decimal places
+        
+        try {
+          aspek = await this.prisma.aspekPenilaian.create({
+            data: {
+              kodeAspek,
+              namaAspek: aspekName,
+              bobot,
+              deskripsi: `Aspek ${aspekName}`,
+              isActive: true,
+            },
+          });
+          importedAspects++;
+        } catch (err) {
+          errors.push(`Gagal membuat aspek "${aspekName}": ${(err as Error).message}`);
+          continue;
+        }
       }
 
       let urutan = 1;
       for (const row of rows) {
+        if (!row.item || row.item.trim() === '') {
+          errors.push(`Item kosong pada aspek "${aspekName}" baris ${row.no}`);
+          continue;
+        }
+
         const kodeItem = `I${String(no).padStart(2, '0')}${String(urutan).padStart(2, '0')}`;
 
         const existing = await this.prisma.itemPenilaian.findUnique({
@@ -114,26 +143,38 @@ export class AssessmentsService {
         });
 
         if (!existing) {
-          await this.prisma.itemPenilaian.create({
-            data: {
-              aspekId: aspek.id,
-              kodeItem,
-              namaItem: row.item.trim(),
-              skorMaksimal: row.skorMaksimal || 100,
-              bobot: 1,
-              urutan,
-              isActive: true,
-            },
-          });
-          importedItems++;
+          try {
+            await this.prisma.itemPenilaian.create({
+              data: {
+                aspekId: aspek.id,
+                kodeItem,
+                namaItem: row.item.trim(),
+                skorMaksimal: row.skorMaksimal || 100,
+                bobot: 1,
+                urutan,
+                isActive: true,
+              },
+            });
+            importedItems++;
+          } catch (err) {
+            errors.push(`Gagal membuat item "${row.item}": ${(err as Error).message}`);
+          }
+        } else {
+          skippedItems++;
         }
         urutan++;
       }
     }
 
-    this.logger.log(`Import completed: ${importedAspects} aspects, ${importedItems} items`);
+    this.logger.log(`Import completed: ${importedAspects} aspects, ${importedItems} items, ${skippedItems} skipped, ${errors.length} errors`);
 
-    return { importedAspects, importedItems, total: data.length };
+    return { 
+      importedAspects, 
+      importedItems, 
+      skippedItems,
+      total: data.length,
+      errors 
+    };
   }
 
   async importFromCsvText(csvText: string) {
@@ -181,16 +222,35 @@ export class AssessmentsService {
 
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
+      const nextChar = line[i + 1];
+
+      if (inQuotes) {
+        if (char === '"' && nextChar === '"') {
+          // Escaped quote inside quoted field
+          current += '"';
+          i++; // Skip next quote
+        } else if (char === '"') {
+          // End of quoted field
+          inQuotes = false;
+        } else {
+          current += char;
+        }
       } else {
-        current += char;
+        if (char === '"') {
+          // Start of quoted field
+          inQuotes = true;
+        } else if (char === ',') {
+          // Field separator
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
       }
     }
-    result.push(current);
+
+    // Push the last field
+    result.push(current.trim());
     return result;
   }
 

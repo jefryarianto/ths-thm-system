@@ -102,6 +102,26 @@ enum StatusKelulusan {
   gagal
 }
 
+// ═══════════════════════════════════════════════════════════
+//  TINGKATAN ANGGOTA (SABUK/TAEGRAD)
+// ═══════════════════════════════════════════════════════════
+
+enum TipeTingkatan {
+  geup    // Tingkat dasar (sabuk berwarna) - dari 10 Geup hingga 1 Geup
+  dan     // Tingkat ahli (sabuk hitam) - dari 1 Dan hingga 9 Dan
+  honorary // Tingkatan kehormatan
+}
+
+enum WarnaSabuk {
+  putih
+  kuning
+  hijau
+  biru
+  merah
+  hitam
+  lainnya
+}
+
 enum TipeDokumen {
   kartu_anggota
   sertifikat_pendadaran
@@ -281,7 +301,7 @@ model Anggota {
   email             String?           @unique
   fotoPath          String?           @map("foto_path")
   statusKeanggotaan StatusKeanggotaan @default(aktif) @map("status_keanggotaan")
-  tingkat           String?
+  tingkatanId       String?           @map("tingkatan_id")
   statusData        StatusData        @default(complete) @map("status_data")
   statusValidasi    StatusValidasi    @default(pending) @map("status_validasi")
   missingFields     Json?             @map("missing_fields")
@@ -290,6 +310,7 @@ model Anggota {
   deletedAt         DateTime?         @map("deleted_at")
 
   ranting                 Ranting                  @relation(fields: [rantingId], references: [id])
+  tingkatan               Tingkatan?               @relation(fields: [tingkatanId], references: [id])
   klaims                  Klaim[]
   dokumen                 Dokumen[]
   iuran                   Iuran[]
@@ -311,6 +332,7 @@ model Anggota {
   memberReferralsAsReferrer MemberReferral[] @relation("Referrer")
   memberReferralsAsReferred MemberReferral[] @relation("Referred")
 
+  @@index([tingkatanId])
   @@index([statusData])
   @@map("anggota")
 }
@@ -574,6 +596,7 @@ model HasilPendadaran {
   id              String          @id @default(uuid())
   kegiatanId      String          @map("kegiatan_id")
   calonAnggotaId  String          @map("calon_anggota_id")
+  tingkatanId     String?         @map("tingkatan_id")
   totalSkor       Decimal         @map("total_skor") @db.Decimal(65, 30)
   ranking         Int?
   statusKelulusan StatusKelulusan @map("status_kelulusan")
@@ -585,8 +608,10 @@ model HasilPendadaran {
 
   kegiatan       Kegiatan     @relation(fields: [kegiatanId], references: [id])
   calonAnggota   CalonAnggota @relation(fields: [calonAnggotaId], references: [id])
+  tingkatan      Tingkatan?   @relation(fields: [tingkatanId], references: [id])
   divalidasiUser User?        @relation("HasilPendadaranValidasi", fields: [divalidasiOleh], references: [id])
 
+  @@index([tingkatanId])
   @@map("hasil_pendadaran")
 }
 
@@ -889,6 +914,35 @@ model EmailTemplate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("email_templates")
+}
+
+// ── Document Templates (Kartu, Piagam, Sertifikat) ────────
+
+enum TemplateType {
+  kartu_anggota
+  sertifikat_pendadaran
+  sertifikat_pelatihan
+  piagam_prestasi
+}
+
+model DocumentTemplate {
+  id          String       @id @default(uuid())
+  name        String       // Nama template (misal: "Kartu Anggota Default")
+  type        TemplateType @map("type")
+  description String?
+  filePath    String       @map("file_path") // Path ke file template (HTML/PDF/SVG)
+  thumbnailPath String?    @map("thumbnail_path")
+  variables   Json?        // Daftar variabel yang tersedia: ["nama", "nomor_anggota", ...]
+  isActive    Boolean      @default(true) @map("is_active")
+  isDefault   Boolean      @default(false) @map("is_default")
+  createdBy   String?      @map("created_by")
+  updatedBy   String?      @map("updated_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([isActive])
+  @@map("document_templates")
 }
 
 // ── Audit Trail ─────────────────────────────────────────────
@@ -1550,4 +1604,25 @@ model RiskFlag {
 
   @@index([anggotaId])
   @@map("risk_flags")
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TINGKATAN ANGGOTA (REFERENSI SABUK/TAEGRAD)
+// ═══════════════════════════════════════════════════════════
+
+model Tingkatan {
+  id          String      @id @default(uuid())
+  kodeTingkat String      @unique @map("kode_tingkat") // Kode unik tingkatan (YUNIOR, PRATAMA, TAMTAMA, MUDA, MADYA, UTAMA)
+  urutan      Int         @default(0) @map("urutan") // Urutan kenaikan (semakin kecil semakin rendah)
+  namaTingkat String      @map("nama_tingkat") // Nama tingkatan (Anggota Yunior, Pratama, Tamtama, Muda, Madya, Utama)
+  warnaSabuk  WarnaSabuk  @map("warna_sabuk") // Warna sabuk (putih, kuning, biru, dll)
+  statusAktif Boolean     @default(true) @map("status_aktif") // Status aktif tingkatan
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  hasilPendadarans HasilPendadaran[]
+
+  @@index([urutan])
+  @@index([statusAktif])
+  @@map("tingkatan")
 }

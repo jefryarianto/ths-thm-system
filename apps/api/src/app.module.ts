@@ -45,6 +45,8 @@ import { UploadModule } from './modules/upload/upload.module';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module';
+import { DocumentTemplatesModule } from './modules/document-templates/document-templates.module';
+import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
 
 @Module({
   imports: [
@@ -94,6 +96,8 @@ import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module
     QueueDashboardModule,
     MonitoringModule,
     UjianPraktekModule,
+    DocumentTemplatesModule,
+    TingkatanModule,
   ],
   controllers: [HealthController],
   providers: [

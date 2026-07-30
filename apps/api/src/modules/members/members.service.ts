@@ -1,7 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { welcomeMemberEmail, escapeHtml } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
+import { BulkImportAnggotaDto } from './dto/import-anggota.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -91,7 +92,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     if (dto.alamat !== undefined) data.alamat = dto.alamat;
     if (dto.noHp !== undefined) data.noHp = dto.noHp;
     if (dto.email !== undefined) data.email = dto.email;
-    if (dto.tingkat !== undefined) data.tingkat = dto.tingkat;
+    if (dto.tingkatanId !== undefined) data.tingkatanId = dto.tingkatanId;
     if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
     if (dto.fotoPath !== undefined) data.fotoPath = dto.fotoPath;
     return data;
@@ -127,7 +128,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         page: filter.page,
         limit: filter.limit,
         orderBy: { createdAt: 'desc' },
-        include: { ranting: true },
+        include: { 
+          ranting: true,
+          tingkatan: true,
+        },
       },
       30,
     );
@@ -143,6 +147,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       where: { id, deletedAt: null },
       include: {
         ranting: { include: { wilayah: { include: { distrik: true } } } },
+        tingkatan: true,
         dokumen: true,
         iuran: true,
       },
@@ -181,6 +186,107 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async remove(id: string, scope?: UserScope) {
     return this.baseRemove(id, scope, 'Anggota berhasil dihapus');
+  }
+
+  // ── Domain: import CSV historis anggota dengan format khusus THS-THM ───────────────────────────────────
+
+  async importAnggotaHistoris(data: BulkImportAnggotaDto, scope?: UserScope) {
+    const results = await this.csvImportService.importRows(data.data, {
+      module: 'members-historis',
+      duplicateTables: { anggota: true, calonAnggota: true, anggotaDeletedFilter: true },
+      rowProcessor: async (row) => {
+        // Parse TTL (Tempat, Tanggal Bulan Tahun)
+        let tempatLahir: string | null = null;
+        let tanggalLahir: Date | null = null;
+        
+        if (row.ttl) {
+          const ttlParts = row.ttl.split(',');
+          if (ttlParts.length >= 2) {
+            tempatLahir = ttlParts[0].trim();
+            const tanggalStr = ttlParts.slice(1).join(',').trim();
+            tanggalLahir = this.csvImportService.parseDateField(tanggalStr);
+          } else {
+            tempatLahir = row.ttl.trim();
+          }
+        }
+
+        // Parse Dadar (Ranting - Tahun)
+        let tahunDadar: string | null = null;
+        if (row.dadar) {
+          const dadarParts = row.dadar.split('-');
+          if (dadarParts.length >= 2) {
+            tahunDadar = dadarParts[dadarParts.length - 1].trim();
+          }
+        }
+
+        // Find ranting by name
+        let rantingId: string | null = null;
+        if (row.ranting) {
+          const ranting = await (this.prisma as any).ranting.findFirst({
+            where: { 
+              nama: {
+                contains: row.ranting,
+                mode: 'insensitive'
+              } 
+            },
+            include: { wilayah: { include: { distrik: true } } }
+          });
+          rantingId = ranting?.id || null;
+        }
+
+        // Find tingkatan by name
+        let tingkatanId: string | null = null;
+        if (row.tingkatan) {
+          const tingkatan = await (this.prisma as any).tingkatan.findFirst({
+            where: { 
+              namaTingkat: {
+                equals: row.tingkatan,
+                mode: 'insensitive'
+              } 
+            }
+          });
+          if (!tingkatan) {
+            throw new BadRequestException(`Tingkatan "${row.tingkatan}" tidak ditemukan. Pastikan nama tingkatan sesuai dengan data master.`);
+          }
+          tingkatanId = tingkatan.id;
+        }
+
+        // Generate or use existing NIA
+        let nomorAnggota = row.nia?.trim();
+        if (!nomorAnggota && rantingId) {
+          nomorAnggota = await this.nraService.generateMemberNumber(
+            rantingId,
+            tahunDadar || undefined,
+          );
+        }
+
+        // Create member
+        const member = await (this.prisma as any).anggota.create({
+          data: {
+            nomorAnggota,
+            namaLengkap: row.nama.trim(),
+            jenisKelamin: 'L', // Default, bisa disesuaikan jika ada kolom gender
+            tempatLahir,
+            tanggalLahir,
+            tempatDadar: null,
+            tahunDadar,
+            fotoPath: row.foto || null,
+            noHp: null,
+            email: null,
+            alamat: null,
+            rantingId: rantingId || undefined,
+            tingkatanId,
+            statusData: 'complete',
+            statusValidasi: 'pending',
+          },
+        });
+
+        return { success: true, data: member };
+      },
+    });
+
+    this.invalidateCache();
+    return results;
   }
 
   // ── Domain: import CSV ───────────────────────────────────
@@ -235,7 +341,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             email: row.email || null,
             alamat: row.alamat || row.address || null,
             rantingId: rantingId || undefined,
-            tingkat: row.tingkat || row.tingkatan || null,
+            tingkatanId: row.tingkatan_id || row.tingkatanId || null,
             statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
             statusValidasi: 'pending',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -294,7 +400,14 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         noHp: true,
         email: true,
         statusKeanggotaan: true,
-        tingkat: true,
+        tingkatan: {
+          select: {
+            kodeTingkat: true,
+            namaTingkat: true,
+            urutan: true,
+            warnaSabuk: true,
+          }
+        },
       },
       take: 10_000,
     });
