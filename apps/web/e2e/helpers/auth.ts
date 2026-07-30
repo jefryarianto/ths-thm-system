@@ -65,7 +65,29 @@ export async function mockAuth(
     },
   );
 
-  // ── 2. Auth API interceptors (registered first so they take priority) ──
+  // ── 2. Catch-all navigation handler (registered FIRST, acts as fallback) ──
+  // IMPORTANT: In Playwright, the LAST registered route handler runs FIRST.
+  // By registering the catch-all FIRST, domain-specific API mocks (registered
+  // below in step 3) take precedence and intercept API calls before the catch-all.
+  // The catch-all only handles requests that don't match any API mock.
+  await page.route(`${E2E_BASE_URL}/**`, async (route) => {
+    const request = route.request();
+    if (request.isNavigationRequest()) {
+      const url = request.url();
+      const response = await page.request.get(url, {
+        headers: { 'x-e2e-bypass': 'true' },
+      });
+      await route.fulfill({
+        status: response.status(),
+        headers: response.headers(),
+        body: await response.body(),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  // ── 3. Auth API interceptors ──
   await page.route(/\/api\/auth\/me/, async (route) => {
     await route.fulfill({
       status: 200,
@@ -104,33 +126,13 @@ export async function mockAuth(
     }
   });
 
-  // ── 3. Optional domain-specific API mocks ──
+  // ── 4. Optional domain-specific API mocks (registered LAST, take priority) ──
   if (options?.mockMembers) await registerMembersMocks(page);
   if (options?.mockTrainings) await registerTrainingsMocks(page);
   if (options?.mockGamification) await registerGamificationMocks(page);
   if (options?.mockImport) await registerImportMocks(page);
   if (options?.mockCandidates) await registerCandidatesMocks(page);
   if (options?.mockDashboardPages) await registerDashboardPageMocks(page);
-
-  // ── 4. Catch-all navigation handler (registered last) ──
-  // For navigation requests, fetch page content with bypass header.
-  // Non-navigation requests pass through to more specific handlers (registered above).
-  await page.route(`${E2E_BASE_URL}/**`, async (route) => {
-    const request = route.request();
-    if (request.isNavigationRequest()) {
-      const url = request.url();
-      const response = await page.request.get(url, {
-        headers: { 'x-e2e-bypass': 'true' },
-      });
-      await route.fulfill({
-        status: response.status(),
-        headers: response.headers(),
-        body: await response.body(),
-      });
-    } else {
-      await route.continue();
-    }
-  });
 }
 
 /** Mock login error (returns 400 to avoid axios 401 interceptor redirect) */
