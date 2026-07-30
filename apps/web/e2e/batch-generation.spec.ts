@@ -16,14 +16,17 @@ test.describe('Batch Document Generation Flow', () => {
     // Verify page loaded — the "Generate Massal" tab exists
     await expect(page.getByText('Generate Massal').first()).toBeVisible();
 
-    // Click "Generate Massal" button (either in doc tab header or batch tab header)
+    // Click "Generate Massal" button — there are 2 buttons with this text:
+    // 1. The tab button (first in DOM) — switches to batch tab
+    // 2. The header button (last in DOM) — opens the modal
+    // Use .last() to click the header button and open the modal
     const generateButtons = page.locator('button:has-text("Generate Massal")');
-    await expect(generateButtons.first()).toBeVisible();
-    await generateButtons.first().click();
+    await expect(generateButtons.last()).toBeVisible();
+    await generateButtons.last().click();
 
     await page.waitForTimeout(500);
     // Modal should appear with form title
-    const modalTitle = page.getByText('Generate Dokumen Massal');
+    const modalTitle = page.getByText('Generate Dokumen Massal').first();
     await expect(modalTitle).toBeVisible({ timeout: 5000 });
 
     // Document type options
@@ -48,9 +51,9 @@ test.describe('Batch Document Generation Flow', () => {
     await page.goto('/documents');
     await page.waitForLoadState('networkidle');
 
-    // Open modal
-    await page.locator('button:has-text("Generate Massal")').first().click();
-    await expect(page.getByText('Generate Dokumen Massal')).toBeVisible();
+    // Open modal — click the header button (last) to open modal
+    await page.locator('button:has-text("Generate Massal")').last().click();
+    await expect(page.getByText('Generate Dokumen Massal').first()).toBeVisible();
 
     // KTA should be default selected (blue border style)
     const ktaCard = page.locator('button:has-text("Kartu Tanda Anggota (KTA)")');
@@ -88,8 +91,8 @@ test.describe('Batch Document Generation Flow', () => {
     await page.goto('/documents');
     await page.waitForLoadState('networkidle');
 
-    // Open modal
-    await page.locator('button:has-text("Generate Massal")').first().click();
+    // Open modal — click the header button (last) to open modal
+    await page.locator('button:has-text("Generate Massal")').last().click();
     await page.waitForTimeout(300); // Wait for modal animation
 
     // Select "Semua Anggota Aktif" (default) and click Lanjut
@@ -120,7 +123,8 @@ test.describe('Batch Document Generation Flow', () => {
 
     // Click "Tutup" to close modal
     await page.locator('button:has-text("Tutup")').click();
-    await expect(page.getByText('Generate Dokumen Massal')).not.toBeVisible();
+    // Use heading role to only match the modal's h3, not the batch tab description paragraph
+    await expect(page.getByRole('heading', { name: /Generate Dokumen Massal/i })).not.toBeVisible();
   });
 
   test('shows expandable job list with status icons', async ({ page }) => {
@@ -128,7 +132,7 @@ test.describe('Batch Document Generation Flow', () => {
     await page.waitForLoadState('networkidle');
 
     // Open modal and go to progress step quickly
-    await page.locator('button:has-text("Generate Massal")').first().click();
+    await page.locator('button:has-text("Generate Massal")').last().click();
     await page.locator('button:has-text("Lanjut")').click();
     await page.waitForTimeout(500);
 
@@ -176,7 +180,7 @@ test.describe('Batch Document Generation Flow', () => {
     await page.waitForLoadState('networkidle');
 
     // Open modal and go to progress step
-    await page.locator('button:has-text("Generate Massal")').first().click();
+    await page.locator('button:has-text("Generate Massal")').last().click();
     await page.locator('button:has-text("Lanjut")').click();
     await page.waitForTimeout(500);
 
@@ -210,7 +214,8 @@ test.describe('Batch Document Generation Flow', () => {
     await page.waitForLoadState('networkidle');
 
     // Switch to the "Generate Massal" tab to see batch history
-    await page.getByRole('button', { name: /Generate Massal/ }).last().click();
+    // The tab button is the FIRST button with "Generate Massal" text in DOM order
+    await page.getByRole('button', { name: /Generate Massal/ }).first().click();
 
     // Wait for the batch history panel to load
     await expect(page.getByText('Riwayat Generate Dokumen')).toBeVisible({ timeout: 5000 });
@@ -253,7 +258,8 @@ test.describe('Batch Document Generation Flow', () => {
     const batchId = getMockBatchId();
 
     // ── Step 2: Select Piagam Prestasi and by_ranting ──
-    await page.locator('button:has-text("Generate Massal")').first().click();
+    // Open modal — click the header button (last) to open modal
+    await page.locator('button:has-text("Generate Massal")').last().click();
     await page.getByText('Piagam Prestasi').click();
     await page.getByText('Per Ranting').click();
 

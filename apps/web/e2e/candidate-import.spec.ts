@@ -33,8 +33,8 @@ test.describe('Candidate CSV Import Flow', () => {
     await importBtn.waitFor({ state: 'visible', timeout: 5000 });
     await importBtn.click();
 
-    // Wait for result summary
-    await expect(page.locator('text=Import Selesai')).toBeVisible({ timeout: 10000 });
+    // Wait for result summary — actual text is "Import Berhasil" (no errors)
+    await expect(page.locator('text=Import Berhasil')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=2 berhasil')).toBeVisible();
   });
 
