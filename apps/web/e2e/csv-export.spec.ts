@@ -137,18 +137,19 @@ test.describe('CSV Export for Batch Generation', () => {
     }
     await page.waitForTimeout(500);
 
-    // Set up waitForResponse BEFORE clicking download
-    const exportResponsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('/documents/batch/batch-history-1/export') &&
-        resp.request().method() === 'GET',
-    );
-
     // Click Download CSV
     const downloadButton = page.locator('button:has-text("Download CSV")').first();
     const dlVisible = await downloadButton.isVisible().catch(() => false);
     if (dlVisible) {
       await expect(downloadButton).toBeVisible({ timeout: 5000 });
+
+      // Set up waitForResponse BEFORE clicking (inside the if block so no dangling promise when not visible)
+      const exportResponsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('/documents/batch/batch-history-1/export') &&
+          resp.request().method() === 'GET',
+      );
+
       await downloadButton.click();
 
       // Wait for the export request
@@ -204,15 +205,15 @@ test.describe('CSV Export for Batch Generation', () => {
     }
     await page.waitForTimeout(500);
 
-    // Capture export response
-    const exportResponsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('/documents/batch/batch-history-1/export') &&
-        resp.request().method() === 'GET',
-    );
-
     const dlBtn = page.locator('button:has-text("Download CSV")').first();
     if (await dlBtn.isVisible().catch(() => false)) {
+      // Set up waitForResponse BEFORE clicking (inside the if block so no dangling promise)
+      const exportResponsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('/documents/batch/batch-history-1/export') &&
+          resp.request().method() === 'GET',
+      );
+
       await dlBtn.click();
       const exportResponse = await exportResponsePromise;
 
@@ -272,14 +273,15 @@ test.describe('CSV Export for Batch Generation', () => {
     }
     await page.waitForTimeout(500);
 
-    const exportResponsePromise = page.waitForResponse(
-      (resp) =>
-        resp.url().includes('/documents/batch/batch-history-1/export') &&
-        resp.request().method() === 'GET',
-    );
-
     const dlBtn = page.locator('button:has-text("Download CSV")').first();
     if (await dlBtn.isVisible().catch(() => false)) {
+      // Set up waitForResponse BEFORE clicking (inside the if block so no dangling promise)
+      const exportResponsePromise = page.waitForResponse(
+        (resp) =>
+          resp.url().includes('/documents/batch/batch-history-1/export') &&
+          resp.request().method() === 'GET',
+      );
+
       await dlBtn.click();
       const exportResponse = await exportResponsePromise;
       const csvText = (await exportResponse.body()).toString('utf-8');

@@ -105,8 +105,9 @@ test.describe('Batch Document Generation Flow', () => {
     // Wait for estimate to load (mock returns 25)
     await expect(page.getByText('25').first()).toBeVisible({ timeout: 5000 });
 
-    // Click Generate button
-    const generateButton = page.locator('button:has-text("Generate")');
+    // Click Generate button — use .last() to pick the modal's submit button
+    // (3 elements match: tab "Generate Massal", header "Generate Massal", modal "Generate")
+    const generateButton = page.locator('button:has-text("Generate")').last();
     await expect(generateButton).toBeEnabled();
     await generateButton.click();
 
@@ -138,7 +139,7 @@ test.describe('Batch Document Generation Flow', () => {
 
     // Wait for estimate and submit
     await expect(page.getByText('Konfirmasi Generate Massal')).toBeVisible();
-    await page.locator('button:has-text("Generate")').click();
+    await page.locator('button:has-text("Generate")').last().click();
     await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
     // Expand job list by clicking the "25 job" toggle button
@@ -185,7 +186,7 @@ test.describe('Batch Document Generation Flow', () => {
     await page.waitForTimeout(500);
 
     await expect(page.getByText('Konfirmasi Generate Massal')).toBeVisible();
-    await page.locator('button:has-text("Generate")').click();
+    await page.locator('button:has-text("Generate")').last().click();
     await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
     // Wait for progress to load, then click "Batalkan"
@@ -280,7 +281,7 @@ test.describe('Batch Document Generation Flow', () => {
     await expect(page.getByText('25').first()).toBeVisible({ timeout: 5000 });
 
     // ── Step 4: Generate ──
-    await page.locator('button:has-text("Generate")').click();
+    await page.locator('button:has-text("Generate")').last().click();
     await expect(page.getByText('Memproses Generate Massal')).toBeVisible({ timeout: 5000 });
 
     // Progress stats visible
