@@ -24,7 +24,7 @@ test.describe('Sidebar Collapse', () => {
     await expect(sidebar).toBeVisible();
 
     // The brand text "THS-THM" should be visible when expanded
-    await expect(page.getByText('THS-THM')).toBeVisible();
+    await expect(page.getByText('THS-THM').first()).toBeVisible();
 
     // The collapse button should show PanelLeftClose (collapse icon)
     const toggleBtn = page.locator('button[aria-label="Ciutkan sidebar"]');
@@ -39,7 +39,7 @@ test.describe('Sidebar Collapse', () => {
     await toggleBtn.click();
 
     // After collapse: brand text "THS-THM" should be hidden
-    await expect(page.getByText('THS-THM')).not.toBeVisible();
+    await expect(page.getByText('THS-THM').first()).not.toBeVisible();
 
     // Toggle button should now show PanelLeft (expand icon)
     await expect(page.locator('button[aria-label="Perluas sidebar"]')).toBeVisible();
@@ -66,7 +66,7 @@ test.describe('Sidebar Collapse', () => {
     await page.reload();
 
     // Sidebar should still be collapsed
-    await expect(page.getByText('THS-THM')).not.toBeVisible();
+    await expect(page.getByText('THS-THM').first()).not.toBeVisible();
     await expect(page.locator('button[aria-label="Perluas sidebar"]')).toBeVisible();
 
     // localStorage should still be 'true'
@@ -85,7 +85,7 @@ test.describe('Sidebar Collapse', () => {
 
     // Expand
     await page.locator('button[aria-label="Perluas sidebar"]').click();
-    await expect(page.getByText('THS-THM')).toBeVisible();
+    await expect(page.getByText('THS-THM').first()).toBeVisible();
     await expect(page.locator('button[aria-label="Ciutkan sidebar"]')).toBeVisible();
 
     // localStorage should now be 'false'
@@ -99,13 +99,13 @@ test.describe('Sidebar Collapse', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Sidebar starts expanded
-    await expect(page.getByText('THS-THM')).toBeVisible();
+    await expect(page.getByText('THS-THM').first()).toBeVisible();
 
     // Resize to tablet width (< 1024px)
     await page.setViewportSize({ width: 800, height: 800 });
 
     // Sidebar should auto-collapse — THS-THM text hidden
-    await expect(page.getByText('THS-THM')).not.toBeVisible();
+    await expect(page.getByText('THS-THM').first()).not.toBeVisible();
     await expect(page.locator('button[aria-label="Perluas sidebar"]')).toBeVisible();
   });
 
@@ -118,13 +118,13 @@ test.describe('Sidebar Collapse', () => {
 
     // Resize to tablet
     await page.setViewportSize({ width: 800, height: 800 });
-    await expect(page.getByText('THS-THM')).not.toBeVisible();
+    await expect(page.getByText('THS-THM').first()).not.toBeVisible();
 
     // Resize back to desktop
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Should restore the collapsed preference (we collapsed it before)
-    await expect(page.getByText('THS-THM')).not.toBeVisible();
+    await expect(page.getByText('THS-THM').first()).not.toBeVisible();
     await expect(page.locator('button[aria-label="Perluas sidebar"]')).toBeVisible();
   });
 

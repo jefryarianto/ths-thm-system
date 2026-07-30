@@ -74,7 +74,7 @@ test.describe('CSV Export for Batch Generation', () => {
     await page.waitForLoadState('networkidle');
 
     // Switch to Generate Massal tab
-    const genTab = page.getByRole('button', { name: /Generate Massal/ }).last();
+    const genTab = page.getByRole('button', { name: /Generate Massal/ }).first();
     if (await genTab.isVisible().catch(() => false)) {
       await genTab.click();
     }
@@ -126,7 +126,7 @@ test.describe('CSV Export for Batch Generation', () => {
     await page.waitForLoadState('networkidle');
 
     // Switch to Generate Massal tab and expand batch
-    const genTab = page.getByRole('button', { name: /Generate Massal/ }).last();
+    const genTab = page.getByRole('button', { name: /Generate Massal/ }).first();
     if (await genTab.isVisible().catch(() => false)) {
       await genTab.click();
     }
@@ -193,7 +193,7 @@ test.describe('CSV Export for Batch Generation', () => {
     await page.waitForLoadState('networkidle');
 
     // Navigate to batch tab and expand
-    const genTab = page.getByRole('button', { name: /Generate Massal/ }).last();
+    const genTab = page.getByRole('button', { name: /Generate Massal/ }).first();
     if (await genTab.isVisible().catch(() => false)) {
       await genTab.click();
     }
@@ -261,7 +261,7 @@ test.describe('CSV Export for Batch Generation', () => {
     await page.goto('/documents');
     await page.waitForLoadState('networkidle');
 
-    const genTab = page.getByRole('button', { name: /Generate Massal/ }).last();
+    const genTab = page.getByRole('button', { name: /Generate Massal/ }).first();
     if (await genTab.isVisible().catch(() => false)) {
       await genTab.click();
     }

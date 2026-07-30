@@ -44,7 +44,7 @@ test.describe('Documents — /documents', () => {
   });
 
   test('Generate Massal tab shows batch history', async ({ page }) => {
-    await page.locator('button:has-text("Generate Massal")').click();
+    await page.locator('button:has-text("Generate Massal")').first().click();
     await page.waitForTimeout(500);
 
     // Batch history panel should render with mock batch data
