@@ -264,7 +264,7 @@ test.describe('Sidebar Collapse', () => {
     await expect(page.getByText('superadmin@ths-thm.org').first()).toBeVisible();
     await expect(page.getByText('Profil Saya')).toBeVisible();
     await expect(page.getByText('Ubah Password')).toBeVisible();
-    await expect(page.getByText('Keluar')).toBeVisible();
+    await expect(page.getByText('Keluar').first()).toBeVisible();
 
     // Click outside to close dropdown
     await page.locator('header h2').click();
