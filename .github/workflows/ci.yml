@@ -40,10 +40,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install pnpm
+      - name: Install pnpm (version from package.json packageManager)
         uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.4
 
       - name: Get pnpm store directory
         shell: bash
@@ -105,10 +103,8 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install pnpm
+      - name: Install pnpm (version from package.json packageManager)
         uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.4
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile

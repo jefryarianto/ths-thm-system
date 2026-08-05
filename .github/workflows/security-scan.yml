@@ -34,7 +34,6 @@ on:
 
 env:
   NODE_VERSION: '22'
-  PNPM_VERSION: '9.15.4'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,10 +53,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install pnpm ${{ env.PNPM_VERSION }}
+      - name: Install pnpm (version from package.json packageManager)
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -146,10 +143,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install pnpm ${{ env.PNPM_VERSION }}
+      - name: Install pnpm (version from package.json packageManager)
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -293,10 +288,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install pnpm ${{ env.PNPM_VERSION }}
+      - name: Install pnpm (version from package.json packageManager)
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
