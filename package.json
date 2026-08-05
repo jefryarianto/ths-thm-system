@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "THS-THM System Manajemen - Monorepo",
   "private": true,
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@11.18.0",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
@@ -41,15 +41,16 @@
   },
   "devDependencies": {
     "@types/passport-google-oauth20": "^2.0.17",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "concurrently": "^9.0.0",
+    "eslint": "^8.57.1",
     "prettier": "^3.3.3",
     "typescript": "^5.5.0"
   },
-  "pnpm": {
-    "overrides": {
-      "react": "18.2.0",
-      "react-dom": "18.2.0",
-      "@types/react": "18.2.0"
-    }
+  "overrides": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "@types/react": "18.2.0"
   }
 }
