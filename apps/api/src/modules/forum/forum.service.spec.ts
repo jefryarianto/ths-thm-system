@@ -47,6 +47,22 @@ describe('ForumService', () => {
   };
 
   const mockPrisma = {
+    user: {
+      findUnique: jest.fn().mockImplementation(({ where: { id } }: { where: { id: string } }) =>
+        Promise.resolve({ id, email: `${id}@test.com` }),
+      ),
+      findFirst: jest.fn().mockImplementation(({ where: { email } }: { where: { email: string } }) =>
+        Promise.resolve({ id: email.split('@')[0] }),
+      ),
+    },
+    anggota: {
+      findFirst: jest.fn().mockImplementation(({ where: { email } }: { where: { email: string } }) =>
+        Promise.resolve({ id: email.split('@')[0] }),
+      ),
+      findUnique: jest.fn().mockImplementation(({ where: { id } }: { where: { id: string } }) =>
+        Promise.resolve({ id, email: `${id}@test.com` }),
+      ),
+    },
     forumCategory: {
       findMany: jest.fn().mockResolvedValue([mockCategory]),
       findUnique: jest.fn(),
@@ -71,6 +87,10 @@ describe('ForumService', () => {
       delete: jest.fn(),
     },
   };
+
+  // Standard authed user helpers — authorId (Anggota.id) = "user1"
+  const author = { id: 'user1', role: 'anggota' };
+  const otherUser = { id: 'user2', role: 'anggota' };
 
   const mockNotificationsService = {
     send: jest.fn().mockResolvedValue(undefined),
@@ -141,24 +161,31 @@ describe('ForumService', () => {
     it('should create a new thread', async () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.forumThread.create.mockResolvedValue(mockThread);
-      const result = await service.createThread({ categoryId: 'cat1', judul: 'Test', konten: 'Konten' }, 'user1');
+      const result = await service.createThread({ categoryId: 'cat1', judul: 'Test', konten: 'Konten' }, author);
       expect(result).toBeDefined();
     });
 
     it('should throw NotFoundException for invalid category', async () => {
       mockPrisma.forumCategory.findUnique.mockResolvedValue(null);
       await expect(
-        service.createThread({ categoryId: 'invalid', judul: 'Test', konten: 'Konten' }, 'user1'),
+        service.createThread({ categoryId: 'invalid', judul: 'Test', konten: 'Konten' }, author),
       ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('updateThread', () => {
-    it('should update a thread', async () => {
+    it('should update own thread', async () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.update.mockResolvedValue({ ...mockThread, judul: 'Updated' });
-      const result = await service.updateThread('thread1', { judul: 'Updated' }, 'user1');
+      const result = await service.updateThread('thread1', { judul: 'Updated' }, author);
       expect(result).toBeDefined();
+    });
+
+    it('should throw ForbiddenException for non-author', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
+      await expect(
+        service.updateThread('thread1', { judul: 'Updated' }, otherUser),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -181,10 +208,15 @@ describe('ForumService', () => {
   });
 
   describe('deleteThread', () => {
-    it('should delete a thread', async () => {
+    it('should delete own thread', async () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumThread.delete.mockResolvedValue(mockThread);
-      await service.deleteThread('thread1');
+      await service.deleteThread('thread1', author);
+    });
+
+    it('should throw ForbiddenException for non-author', async () => {
+      mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
+      await expect(service.deleteThread('thread1', otherUser)).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -192,13 +224,13 @@ describe('ForumService', () => {
     it('should create a post in unlocked thread', async () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false });
       mockPrisma.forumPost.create.mockResolvedValue(mockPost);
-      const result = await service.createPost('thread1', { konten: 'Reply' }, 'user2');
+      const result = await service.createPost('thread1', { konten: 'Reply' }, otherUser);
       expect(result).toBeDefined();
     });
 
     it('should throw ForbiddenException for locked thread', async () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: true });
-      await expect(service.createPost('thread1', { konten: 'Reply' }, 'user2')).rejects.toThrow(
+      await expect(service.createPost('thread1', { konten: 'Reply' }, otherUser)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -206,7 +238,7 @@ describe('ForumService', () => {
     it('should notify thread author on new reply', async () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue({ ...mockThread, isLocked: false, authorId: 'user1' });
       mockPrisma.forumPost.create.mockResolvedValue({ ...mockPost, author: { id: 'user2', namaLengkap: 'Replyer' } });
-      await service.createPost('thread1', { konten: 'Reply' }, 'user2');
+      await service.createPost('thread1', { konten: 'Reply' }, otherUser);
       expect(mockNotificationsService.send).toHaveBeenCalledWith('user1', {
         userId: 'user1',
         judul: 'Balasan Baru di Thread Anda',
@@ -221,26 +253,34 @@ describe('ForumService', () => {
     it('should allow author to update their post', async () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue({ ...mockPost, authorId: 'user1' });
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, konten: 'Updated' });
-      const result = await service.updatePost('post1', { konten: 'Updated' }, 'user1');
+      const result = await service.updatePost('post1', { konten: 'Updated' }, author);
       expect(result).toBeDefined();
     });
 
     it('should throw ForbiddenException for non-author', async () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue({ ...mockPost, authorId: 'user1' });
-      await expect(service.updatePost('post1', { konten: 'Hack' }, 'user2')).rejects.toThrow(
+      await expect(service.updatePost('post1', { konten: 'Hack' }, otherUser)).rejects.toThrow(
         ForbiddenException,
       );
     });
   });
 
   describe('markAsSolution', () => {
-    it('should mark a post as solution and clear others', async () => {
+    it('should allow thread author to mark a solution', async () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumPost.updateMany.mockResolvedValue([]);
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, isSolution: true });
-      const result = await service.markAsSolution('post1', 'thread1', 'user1');
+      const result = await service.markAsSolution('post1', 'thread1', author);
       expect(result.isSolution).toBe(true);
+    });
+
+    it('should throw ForbiddenException for non-thread-author', async () => {
+      mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
+      mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
+      await expect(service.markAsSolution('post1', 'thread1', otherUser)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should notify post author when marked as solution', async () => {
@@ -248,7 +288,7 @@ describe('ForumService', () => {
       mockPrisma.forumThread.findUnique.mockResolvedValue(mockThread);
       mockPrisma.forumPost.updateMany.mockResolvedValue([]);
       mockPrisma.forumPost.update.mockResolvedValue({ ...mockPost, isSolution: true });
-      await service.markAsSolution('post1', 'thread1', 'user1');
+      await service.markAsSolution('post1', 'thread1', author);
       expect(mockNotificationsService.send).toHaveBeenCalledWith('user2', {
         userId: 'user2',
         judul: 'Balasan Anda Ditandai Solusi',
@@ -260,10 +300,15 @@ describe('ForumService', () => {
   });
 
   describe('deletePost', () => {
-    it('should delete a post', async () => {
+    it('should delete own post', async () => {
       mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
       mockPrisma.forumPost.delete.mockResolvedValue(mockPost);
-      await service.deletePost('post1');
+      await service.deletePost('post1', author);
+    });
+
+    it('should throw ForbiddenException for non-author', async () => {
+      mockPrisma.forumPost.findUnique.mockResolvedValue(mockPost);
+      await expect(service.deletePost('post1', otherUser)).rejects.toThrow(ForbiddenException);
     });
   });
 });

@@ -72,6 +72,10 @@ export default function RootLayout() {
           <Stack.Screen name="approvals/reference-document" />
           <Stack.Screen name="approvals/reference-member" />
           <Stack.Screen name="approvals/reference-candidate" />
+          <Stack.Screen name="forum" />
+          <Stack.Screen name="forum/create" />
+          <Stack.Screen name="forum/c/[categoryId]" />
+          <Stack.Screen name="forum/t/[threadId]" />
           <Stack.Screen name="org-documents" />
         </Stack>
       </>

@@ -102,8 +102,8 @@ export class ForumController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Buat thread baru' })
   @ApiBody({ type: CreateThreadDto, description: 'Data thread baru' })
   @ApiCreatedResponse({ description: 'Thread berhasil dibuat' })
-  createThread(@Body() dto: CreateThreadDto, @CurrentUser() user: { id: string }) {
-    return this.service.createThread(dto, user.id);
+  createThread(@Body() dto: CreateThreadDto, @CurrentUser() user: { id: string; role: string }) {
+    return this.service.createThread(dto, user);
   }
 
   @Patch('threads/:id')
@@ -114,9 +114,9 @@ export class ForumController {
   updateThread(
     @Param('id') id: string,
     @Body() dto: UpdateThreadDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; role: string },
   ) {
-    return this.service.updateThread(id, dto, user.id);
+    return this.service.updateThread(id, dto, user);
   }
 
   @Patch('threads/:id/pin')
@@ -139,8 +139,8 @@ export class ForumController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Hapus thread' })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiOkResponse({ description: 'Thread berhasil dihapus' })
-  deleteThread(@Param('id') id: string) {
-    return this.service.deleteThread(id);
+  deleteThread(@Param('id') id: string, @CurrentUser() user: { id: string; role: string }) {
+    return this.service.deleteThread(id, user);
   }
 
   // ── Posts ─────────────────────────────────────────────
@@ -153,9 +153,9 @@ export class ForumController {
   createPost(
     @Param('id') id: string,
     @Body() dto: CreatePostDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; role: string },
   ) {
-    return this.service.createPost(id, dto, user.id);
+    return this.service.createPost(id, dto, user);
   }
 
   @Patch('posts/:id')
@@ -166,9 +166,9 @@ export class ForumController {
   updatePost(
     @Param('id') id: string,
     @Body() dto: UpdatePostDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; role: string },
   ) {
-    return this.service.updatePost(id, dto, user.id);
+    return this.service.updatePost(id, dto, user);
   }
 
   @Patch('posts/:id/solution')
@@ -179,16 +179,16 @@ export class ForumController {
   markAsSolution(
     @Param('id') postId: string,
     @Query('threadId') threadId: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; role: string },
   ) {
-    return this.service.markAsSolution(postId, threadId, user.id);
+    return this.service.markAsSolution(postId, threadId, user);
   }
 
   @Delete('posts/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Hapus balasan' })
   @ApiParam({ name: 'id', description: 'ID Post/Balasan', required: true })
   @ApiOkResponse({ description: 'Balasan berhasil dihapus' })
-  deletePost(@Param('id') id: string) {
-    return this.service.deletePost(id);
+  deletePost(@Param('id') id: string, @CurrentUser() user: { id: string; role: string }) {
+    return this.service.deletePost(id, user);
   }
 }

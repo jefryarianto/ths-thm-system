@@ -317,6 +317,28 @@ async function main() {
   }
   console.log(`Seeded ${gamificationSettings.length} gamification settings`);
 
+  // ── Seeder Forum Categories ──
+  const forumCategories = [
+    { nama: 'Pengumuman', deskripsi: 'Pengumuman resmi organisasi THS-THM', order: 0 },
+    { nama: 'Diskusi Umum', deskripsi: 'Tempat diskusi bebas antar anggota', order: 1 },
+    { nama: 'Latihan & Teknik', deskripsi: 'Diskusi seputar latihan, teknik, dan materi Tapak Suci', order: 2 },
+    { nama: 'Organisasi & Kepengurusan', deskripsi: 'Pembahasan organisasi, kepengurusan, dan administrasi', order: 3 },
+    { nama: 'Kegiatan & Acara', deskripsi: 'Informasi dan diskusi kegiatan, acara, dan pendadaran', order: 4 },
+    { nama: 'Saran & Masukan', deskripsi: 'Kritik, saran, dan masukan untuk kemajuan organisasi', order: 5 },
+  ];
+
+  const existingCategoryCount = await prisma.forumCategory.count();
+  if (existingCategoryCount === 0) {
+    let seeded = 0;
+    for (const cat of forumCategories) {
+      await prisma.forumCategory.create({ data: cat });
+      seeded++;
+    }
+    console.log(`Seeded ${seeded} forum categories`);
+  } else {
+    console.log(`Forum categories sudah ada (${existingCategoryCount}). Lewati seed forum.`);
+  }
+
   console.log('Seeding completed!');
 }
 

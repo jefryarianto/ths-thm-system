@@ -26,6 +26,7 @@ const adminItems = [
   { icon: 'school', label: 'Pendadaran', route: '/graduations' },
   { icon: 'mail', label: 'Surat', route: '/letters' },
   { icon: 'stats-chart', label: 'Laporan', route: '/reports' },
+  { icon: 'chatbubbles', label: 'Forum', route: '/forum' },
   { icon: 'clipboard', label: 'Aspek', route: '/assessments' },
   { icon: 'cloud-upload', label: 'Import', route: '/member-import' },
   { icon: 'shield-checkmark', label: 'Persetujuan', route: '/approvals' },

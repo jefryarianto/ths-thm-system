@@ -287,6 +287,8 @@ export class NotificationsService {
     { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
     { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
     { key: 'approval_request', label: 'Persetujuan', description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui' },
+    { key: 'forum_reply', label: 'Balasan Forum', description: 'Notifikasi saat ada balasan baru di thread forum' },
+    { key: 'forum_solution', label: 'Solusi Forum', description: 'Notifikasi saat balasan ditandai sebagai solusi' },
     { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
   ];
 

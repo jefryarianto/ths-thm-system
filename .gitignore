@@ -50,11 +50,8 @@ blob-report/
 playwright-report/
 
 # Prisma migrations must be tracked in git (needed for CI's prisma migrate deploy)
-# All migration files within subdirectories are included
-!apps/api/prisma/migrations/**/
-apps/api/prisma/migrations/*/
-!apps/api/prisma/migrations/*/migration.sql
-!apps/api/prisma/migrations/migration_lock.toml
+# NOTE: do NOT ignore migration directories here — git cannot re-include
+# migration.sql inside an ignored directory (new migrations would be lost).
 
 # Security sensitive files (MUST NOT be committed)
 check.sql

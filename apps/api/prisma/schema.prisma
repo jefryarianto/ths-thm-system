@@ -150,6 +150,8 @@ enum TipeNotifikasi {
   reminder_iuran
   status_klaim
   dokumen_ready
+  forum_reply
+  forum_solution
   umum
 }
 

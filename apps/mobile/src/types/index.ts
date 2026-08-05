@@ -91,3 +91,38 @@ export interface Document {
   createdAt: string;
   updatedAt?: string;
 }
+
+export interface ForumCategory {
+  id: string;
+  nama: string;
+  deskripsi: string | null;
+  order: number;
+  _count?: { threads: number };
+}
+
+export interface ForumThread {
+  id: string;
+  categoryId: string;
+  authorId: string;
+  judul: string;
+  konten: string;
+  isPinned: boolean;
+  isLocked: boolean;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  author: { id: string; namaLengkap: string; nomorAnggota: string };
+  category?: { id: string; nama: string };
+  _count?: { posts: number };
+}
+
+export interface ForumPost {
+  id: string;
+  threadId: string;
+  authorId: string;
+  konten: string;
+  isSolution: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author: { id: string; namaLengkap: string; nomorAnggota: string };
+}
