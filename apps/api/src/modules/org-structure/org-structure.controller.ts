@@ -18,7 +18,7 @@ export class OrgStructureController {
   constructor(private readonly service: OrgStructureService) {}
 
   @Get('distrik')
-  @CrudAuth('superadmin', { summary: 'Daftar semua distrik' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar semua distrik' })
   getAllDistrik() {
     return this.service.getAllDistrik();
   }
@@ -48,7 +48,7 @@ export class OrgStructureController {
   }
 
   @Get('wilayah')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Daftar wilayah (opsional filter by distrikId)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar wilayah (opsional filter by distrikId)' })
   getAllWilayah(@Query('distrikId') distrikId?: string) {
     return this.service.getAllWilayah(distrikId);
   }
@@ -78,7 +78,7 @@ export class OrgStructureController {
   }
 
   @Get('ranting')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Daftar ranting (opsional filter by wilayahId)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar ranting (opsional filter by wilayahId)' })
   getAllRanting(@Query('wilayahId') wilayahId?: string) {
     return this.service.getAllRanting(wilayahId);
   }

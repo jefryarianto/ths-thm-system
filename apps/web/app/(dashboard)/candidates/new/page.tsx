@@ -2,7 +2,7 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
@@ -33,6 +33,8 @@ export default function NewCandidatePage() {
   const [selectedDistrik, setSelectedDistrik] = useState('');
   const [selectedWilayah, setSelectedWilayah] = useState('');
   const [selectedRanting, setSelectedRanting] = useState('');
+  // Guards against stale async responses when the user re-picks a parent quickly
+  const orgReqSeq = useRef(0);
 
   useEffect(() => {
     setOrgLoading(prev => ({ ...prev, distrik: true }));
@@ -43,6 +45,7 @@ export default function NewCandidatePage() {
   }, []);
 
   const handleDistrikChange = async (distrikId: string) => {
+    const seq = ++orgReqSeq.current;
     setSelectedDistrik(distrikId);
     setSelectedWilayah('');
     setSelectedRanting('');
@@ -52,12 +55,16 @@ export default function NewCandidatePage() {
     setOrgLoading(prev => ({ ...prev, wilayah: true }));
     try {
       const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+      if (seq !== orgReqSeq.current) return; // stale response — user moved on
       setWilayahs(r.data.data || []);
     } catch { /* ignore */ }
-    setOrgLoading(prev => ({ ...prev, wilayah: false }));
+    if (seq === orgReqSeq.current) {
+      setOrgLoading(prev => ({ ...prev, wilayah: false }));
+    }
   };
 
   const handleWilayahChange = async (wilayahId: string) => {
+    const seq = ++orgReqSeq.current;
     setSelectedWilayah(wilayahId);
     setSelectedRanting('');
     setRantings([]);
@@ -65,9 +72,12 @@ export default function NewCandidatePage() {
     setOrgLoading(prev => ({ ...prev, ranting: true }));
     try {
       const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+      if (seq !== orgReqSeq.current) return; // stale response — user moved on
       setRantings(r.data.data || []);
     } catch { /* ignore */ }
-    setOrgLoading(prev => ({ ...prev, ranting: false }));
+    if (seq === orgReqSeq.current) {
+      setOrgLoading(prev => ({ ...prev, ranting: false }));
+    }
   };
 
   const validateForm = (): boolean => {
@@ -116,7 +126,10 @@ export default function NewCandidatePage() {
         setError(data.message || 'Gagal menambah calon anggota');
       }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      // apiClient normalizes errors to { status, message, data } — the real
+      // server message (e.g. 'Email sudah terdaftar') lives on `err.message`.
+      const raw = (err as { message?: string | string[] })?.message;
+      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
       setError(msg || 'Gagal menambah calon anggota. Silakan coba lagi.');
     } finally {
       setLoading(false);

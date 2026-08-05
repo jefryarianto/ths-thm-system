@@ -2,7 +2,7 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
@@ -35,6 +35,8 @@ export default function NewMemberPage() {
   const [selectedDistrik, setSelectedDistrik] = useState('');
   const [selectedWilayah, setSelectedWilayah] = useState('');
   const [selectedRanting, setSelectedRanting] = useState('');
+  // Guards against stale async responses when the user re-picks a parent quickly
+  const orgReqSeq = useRef(0);
 
   useEffect(() => {
     setOrgLoading(prev => ({ ...prev, distrik: true }));
@@ -45,6 +47,7 @@ export default function NewMemberPage() {
   }, []);
 
   const handleDistrikChange = async (distrikId: string) => {
+    const seq = ++orgReqSeq.current;
     setSelectedDistrik(distrikId);
     setSelectedWilayah('');
     setSelectedRanting('');
@@ -54,12 +57,16 @@ export default function NewMemberPage() {
     setOrgLoading(prev => ({ ...prev, wilayah: true }));
     try {
       const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+      if (seq !== orgReqSeq.current) return; // stale response — user moved on
       setWilayahs(r.data.data || []);
     } catch { /* ignore */ }
-    setOrgLoading(prev => ({ ...prev, wilayah: false }));
+    if (seq === orgReqSeq.current) {
+      setOrgLoading(prev => ({ ...prev, wilayah: false }));
+    }
   };
 
   const handleWilayahChange = async (wilayahId: string) => {
+    const seq = ++orgReqSeq.current;
     setSelectedWilayah(wilayahId);
     setSelectedRanting('');
     setRantings([]);
@@ -67,9 +74,12 @@ export default function NewMemberPage() {
     setOrgLoading(prev => ({ ...prev, ranting: true }));
     try {
       const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+      if (seq !== orgReqSeq.current) return; // stale response — user moved on
       setRantings(r.data.data || []);
     } catch { /* ignore */ }
-    setOrgLoading(prev => ({ ...prev, ranting: false }));
+    if (seq === orgReqSeq.current) {
+      setOrgLoading(prev => ({ ...prev, ranting: false }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,11 +95,33 @@ export default function NewMemberPage() {
     setSaving(true);
     setError('');
     try {
-      const payload = { ...form, rantingId: selectedRanting };
+      // Only include filled fields — empty strings (e.g. email: '') fail backend
+      // validation (@IsEmail rejects '') and would break the create request.
+      const payload: Record<string, unknown> = {
+        namaLengkap: form.namaLengkap,
+        jenisKelamin: form.jenisKelamin,
+        rantingId: selectedRanting,
+      };
+      if (form.tempatLahir) payload.tempatLahir = form.tempatLahir;
+      if (form.tanggalLahir) payload.tanggalLahir = form.tanggalLahir;
+      if (form.tempatDadar) payload.tempatDadar = form.tempatDadar;
+      if (form.tahunDadar) payload.tahunDadar = form.tahunDadar;
+      if (form.alamat) payload.alamat = form.alamat;
+      if (form.noHp) payload.noHp = form.noHp;
+      if (form.email) payload.email = form.email;
+      if (form.tingkat) payload.tingkat = form.tingkat;
+
       const { data: res } = await apiClient.post('/members', payload);
-      router.push(`/members/${res.data.id}`);
+      if (res?.data?.id) {
+        router.push(`/members/${res.data.id}`);
+      } else {
+        router.push('/members');
+      }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      // apiClient normalizes errors to { status, message, data } — the real
+      // server message (e.g. 'Email sudah terdaftar') lives on `err.message`.
+      const raw = (err as { message?: string | string[] })?.message;
+      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
       setError(msg || 'Gagal menambah anggota');
     }
     setSaving(false);

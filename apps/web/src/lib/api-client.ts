@@ -118,6 +118,27 @@ export const clearTokens = () => {
   localStorage.removeItem('refreshToken');
 };
 
+/**
+ * Extract a readable error message from an apiClient rejection.
+ *
+ * apiClient's response interceptor normalizes every rejection to
+ * `{ status, message, data }` — so page-level `err.response?.data?.message`
+ * access is dead code and always yields `undefined`. The real server message
+ * (e.g. 'Email sudah terdaftar') lives on `err.message`, which NestJS
+ * ValidationPipe may provide as an array of strings — joined here.
+ *
+ * Returns `''` when no message is available so callers can keep the idiomatic
+ * `extractErrorMessage(err) || 'Fallback text'` pattern.
+ *
+ * @param err      The rejected value (usually `unknown` from a catch clause)
+ * @param fallback Message shown when no server message is available
+ */
+export function extractErrorMessage(err: unknown, fallback?: string): string {
+  const raw = (err as { message?: string | string[] } | null)?.message;
+  const msg = Array.isArray(raw) ? raw.join(', ') : raw;
+  return msg?.trim() ? msg : (fallback ?? '');
+}
+
 // ─── Response Helpers ───
 
 /** Standard API response wrapper from the backend */

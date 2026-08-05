@@ -2,7 +2,7 @@
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle, RefreshCw } from 'lucide-react';
@@ -60,6 +60,8 @@ export default function EditMemberPage() {
   const [selectedWilayahId, setSelectedWilayahId] = useState('');
   const [rantings, setRantings] = useState<Array<{ id: string; nama: string; kodeRanting: string }>>([]);
   const [orgLoading, setOrgLoading] = useState(false);
+  // Guards against stale async responses when the user re-picks a parent quickly
+  const orgReqSeq = useRef(0);
 
   // ── Load member data ──────────────────────────────
   useEffect(() => {
@@ -128,6 +130,7 @@ export default function EditMemberPage() {
   };
 
   const handleDistrikChange = async (distrikId: string) => {
+    const seq = ++orgReqSeq.current;
     setSelectedDistrikId(distrikId);
     setSelectedWilayahId('');
     setRantings([]);
@@ -135,16 +138,19 @@ export default function EditMemberPage() {
     if (!distrikId) return;
     try {
       const { data: res } = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+      if (seq !== orgReqSeq.current) return; // stale response — user moved on
       setWilayahs(res.data || []);
     } catch { /* ignore */ }
   };
 
   const handleWilayahChange = async (wilayahId: string) => {
+    const seq = ++orgReqSeq.current;
     setSelectedWilayahId(wilayahId);
     setForm((f) => ({ ...f, rantingId: '' }));
     if (!wilayahId) return;
     try {
       const { data: res } = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+      if (seq !== orgReqSeq.current) return; // stale response — user moved on
       setRantings(res.data || []);
     } catch { /* ignore */ }
   };
@@ -185,7 +191,10 @@ export default function EditMemberPage() {
       await apiClient.patch(`/members/${id}`, payload);
       router.push(`/members/${id}`);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      // apiClient normalizes errors to { status, message, data } — the real
+      // server message (e.g. 'Email sudah terdaftar') lives on `err.message`.
+      const raw = (err as { message?: string | string[] })?.message;
+      const msg = Array.isArray(raw) ? raw.join(', ') : raw;
       setError(msg || 'Gagal menyimpan perubahan');
     }
     setSaving(false);
