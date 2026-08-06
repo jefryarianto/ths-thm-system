@@ -17,6 +17,29 @@ export class MembersDigitalCardService {
   ) {}
 
   /**
+   * Baca foto anggota dari disk sebagai data URL base64 untuk ditanam di PDF.
+   * Fallback ke null bila file tidak ada / gagal dibaca (placeholder 'FOTO' dipakai).
+   */
+  private async resolvePhotoDataUrl(fotoPath?: string | null): Promise<string | null> {
+    if (!fotoPath) return null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path');
+      const uploadDir = process.env.UPLOAD_DIR || './uploads';
+      const filePath = path.join(uploadDir, fotoPath);
+      if (!fs.existsSync(filePath)) return null;
+      const ext = path.extname(filePath).toLowerCase();
+      const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+      const base64 = fs.readFileSync(filePath).toString('base64');
+      return `data:${mime};base64,${base64}`;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Resolve nama penandatangan: prioritas dari tabel `penandatangans` (yang aktif),
    * fallback ke env SIGNER_NAME/SIGNER_TITLE, lalu default.
    */
@@ -80,6 +103,9 @@ export class MembersDigitalCardService {
           tempatLahir: memberData.tempatLahir,
           tanggalLahir: memberData.tanggalLahir,
           jenisKelamin: memberData.jenisKelamin || 'L',
+          tingkat: memberData.tingkat,
+          tempatDadar: memberData.tempatDadar,
+          tahunDadar: memberData.tahunDadar,
           ranting: memberData.ranting,
           wilayah: memberData.wilayah,
           distrik: memberData.distrik,
@@ -89,9 +115,10 @@ export class MembersDigitalCardService {
           nomorDokumen: card.nomorDokumen,
           qrDataUrl,
           verificationUrl: card.verificationUrl,
-          signerName: process.env.SIGNER_NAME || 'Koordinator Distrik',
-          signerTitle: process.env.SIGNER_TITLE || 'THS-THM',
+          signerName: card.signerName,
+          signerTitle: card.signerTitle,
         },
+        photoDataUrl: await this.resolvePhotoDataUrl(memberData.fotoPath),
       });
 
       const pdfBuffer = await ReactPDF.renderToBuffer(pdfDoc);
@@ -154,6 +181,9 @@ export class MembersDigitalCardService {
       email: member.email,
       fotoPath: member.fotoPath,
       statusKeanggotaan: member.statusKeanggotaan,
+      tingkat: member.tingkat,
+      tempatDadar: member.tempatDadar,
+      tahunDadar: member.tahunDadar,
       ranting: member.ranting?.nama,
       wilayah: member.ranting?.wilayah?.nama,
       distrik: member.ranting?.wilayah?.distrik?.nama,

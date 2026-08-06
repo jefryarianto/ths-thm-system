@@ -2,12 +2,25 @@
 const React = require('react');
 const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
 
-// Colors
+// ── Palette (sesuai template desain kartu) ──
 const BLUE_900 = '#1e3a5f';
 const BLUE_800 = '#1e4a7a';
-const CYAN_500 = '#06b6d4';
-const YELLOW_400 = '#facc15';
 const WHITE = '#ffffff';
+const YELLOW_500 = '#eab308';
+const SLATE_800 = '#1e293b';
+
+/** Tingkat Tapak Suci → visual balok pada kartu (identik dengan web & mobile). */
+const TINGKAT_LEVEL: Record<string, { stripCount: number; color: string; label: string }> = {
+  Pratama: { stripCount: 2, color: '#b91c1c', label: 'Balok Merah II' },
+  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Balok Biru II' },
+  Muda:    { stripCount: 2, color: '#ca8a04', label: 'Balok Kuning II' },
+  Madya:   { stripCount: 2, color: '#15803d', label: 'Balok Hijau II' },
+  Utama:   { stripCount: 2, color: '#1e293b', label: 'Balok Hitam II' },
+};
+
+function getLevelVisual(tingkat?: string | null) {
+  return (tingkat && TINGKAT_LEVEL[tingkat]) || { stripCount: 1, color: '#94a3b8', label: 'Balok' };
+}
 
 const styles = StyleSheet.create({
   // ── Front Side ──
@@ -18,148 +31,264 @@ const styles = StyleSheet.create({
     backgroundColor: WHITE,
     position: 'relative',
   },
-  headerBar: {
-    height: 60,
-    backgroundColor: BLUE_900,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    gap: 12,
-  },
-  logoCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: YELLOW_400,
-    borderWidth: 2,
-    borderColor: BLUE_900,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoInner: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: WHITE,
-    borderWidth: 1,
-    borderColor: BLUE_800,
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: BLUE_900,
-  },
-  orgName: {
-    color: WHITE,
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  distrikName: {
-    color: WHITE,
-    fontSize: 13,
-    opacity: 0.9,
-  },
-  titleBar: {
+  bgCircle1: {
     position: 'absolute',
-    top: 72,
+    top: -80,
+    right: -80,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: 'rgba(6,182,212,0.15)',
+  },
+  bgCircle2: {
+    position: 'absolute',
+    bottom: -110,
+    left: -80,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: 'rgba(29,78,216,0.08)',
+  },
+  topBar: {
+    position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-  },
-  titleBadge: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingHorizontal: 24,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: YELLOW_400,
-  },
-  titleText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: BLUE_900,
-    letterSpacing: 3,
-  },
-  photoBox: {
-    position: 'absolute',
-    left: 30,
-    top: 135,
-    width: 160,
-    height: 200,
-    borderRadius: 8,
-    borderWidth: 3,
-    borderColor: WHITE,
-    backgroundColor: '#e2e8f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoPlaceholder: {
-    color: '#94a3b8',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  infoSection: {
-    position: 'absolute',
-    left: 220,
-    top: 130,
-    right: 30,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    alignItems: 'flex-start',
-  },
-  infoLabel: {
-    width: 100,
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: BLUE_900,
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: 'semibold',
-    color: '#1e293b',
-  },
-  infoValueStrong: {
-    fontSize: 20,
-    fontWeight: 'black',
-    color: BLUE_900,
+    height: 64,
+    backgroundColor: BLUE_900,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 70,
-    backgroundColor: BLUE_900,
-    flexDirection: 'row',
+    height: 80,
+    backgroundColor: BLUE_800,
+  },
+  borderInner: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    top: 18,
+    bottom: 18,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(250,204,21,0.6)',
+  },
+  watermark: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 30,
+    justifyContent: 'center',
+  },
+  watermarkText: {
+    fontSize: 100,
+    fontWeight: 'heavy',
+    color: BLUE_900,
+    opacity: 0.06,
+  },
+  headerRow: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 20,
+    paddingHorizontal: 40,
+    paddingTop: 24,
+  },
+  logo: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fde047',
+    borderWidth: 4,
+    borderColor: '#0f172a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoInner: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: WHITE,
+    borderWidth: 1,
+    borderColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 9,
+    fontWeight: 'heavy',
+    color: BLUE_900,
+  },
+  orgName: {
+    color: WHITE,
+    fontSize: 22,
+    fontWeight: 'heavy',
+    letterSpacing: 0.5,
+    lineHeight: 1.1,
+  },
+  distrikName: {
+    color: WHITE,
+    fontSize: 17,
+    fontWeight: 'semibold',
+    opacity: 0.95,
+    marginTop: 2,
+  },
+  titleBar: {
+    position: 'absolute',
+    top: 92,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  titleBadge: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 32,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: YELLOW_500,
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: 'heavy',
+    color: BLUE_900,
+    letterSpacing: 4,
+  },
+  photoBox: {
+    position: 'absolute',
+    left: 40,
+    top: 165,
+    width: 185,
+    height: 235,
+    borderRadius: 16,
+    borderWidth: 4,
+    borderColor: WHITE,
+    backgroundColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  photoImage: {
+    width: 177,
+    height: 227,
+  },
+  photoPlaceholder: {
+    color: '#94a3b8',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  levelStrips: {
+    position: 'absolute',
+    left: 40,
+    top: 412,
+    width: 185,
+  },
+  levelStrip: {
+    height: 14,
+    marginBottom: 6,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.25)',
+  },
+  infoSection: {
+    position: 'absolute',
+    left: 255,
+    top: 162,
+    right: 40,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginTop: 12,
+    alignItems: 'flex-start',
+  },
+  infoLabel: {
+    width: 120,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e3a5f',
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'semibold',
+    color: SLATE_800,
+  },
+  infoValueStrong: {
+    flex: 1,
+    fontSize: 25,
+    fontWeight: 'heavy',
+    color: '#1e3a5f',
+  },
+  bottomInfo: {
+    position: 'absolute',
+    left: 40,
+    bottom: 40,
   },
   validUntil: {
     color: WHITE,
-    fontSize: 12,
+    fontSize: 15,
     opacity: 0.9,
   },
   validUntilValue: {
     color: WHITE,
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: 'heavy',
+    marginTop: 2,
   },
-  signerSection: {
+  signature: {
+    position: 'absolute',
+    right: 48,
+    bottom: 36,
     alignItems: 'center',
+  },
+  sigWrap: {
+    position: 'relative',
+    width: 192,
+    height: 80,
+  },
+  sigText: {
+    position: 'absolute',
+    left: 32,
+    top: 0,
+    fontSize: 38,
+    fontStyle: 'italic',
+    transform: 'rotate(-8deg)',
+    color: 'rgba(15,23,42,0.8)',
+  },
+  stamp: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    borderColor: 'rgba(191,219,254,0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#dbeafe',
+    transform: 'rotate(-12deg)',
   },
   signerName: {
     color: WHITE,
-    fontSize: 13,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: 'heavy',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.6)',
+    paddingTop: 4,
   },
   signerTitle: {
     color: WHITE,
-    fontSize: 10,
-    opacity: 0.9,
+    fontSize: 13,
+    fontWeight: 'semibold',
+    opacity: 0.95,
+    marginTop: 2,
   },
 
   // ── Back Side ──
@@ -172,89 +301,106 @@ const styles = StyleSheet.create({
   },
   backTitle: {
     position: 'absolute',
-    top: 24,
+    top: 28,
     left: 0,
     right: 0,
     textAlign: 'center',
     color: WHITE,
-    fontSize: 22,
-    fontWeight: 'bold',
-    letterSpacing: 2,
+    fontSize: 28,
+    fontWeight: 'heavy',
+    letterSpacing: 4,
   },
   backSubtitle: {
     position: 'absolute',
-    top: 52,
+    top: 66,
     left: 0,
     right: 0,
     textAlign: 'center',
     color: WHITE,
-    fontSize: 12,
-    opacity: 0.85,
+    fontSize: 15,
+    opacity: 0.9,
   },
   qrSection: {
     position: 'absolute',
-    left: 40,
-    top: 100,
-    width: 180,
-    height: 180,
+    left: 48,
+    top: 145,
+    width: 210,
+    height: 210,
     backgroundColor: WHITE,
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: 16,
+    borderWidth: 4,
+    borderColor: BLUE_900,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrImage: {
-    width: 160,
-    height: 160,
+    width: 170,
+    height: 170,
   },
   backInfo: {
     position: 'absolute',
-    left: 260,
-    top: 100,
-    right: 30,
+    left: 300,
+    top: 145,
+    right: 48,
     backgroundColor: 'rgba(255,255,255,0.85)',
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(191,219,254,0.5)',
+    padding: 24,
+  },
+  backDesc: {
+    fontSize: 18,
+    lineHeight: 1.5,
+    color: '#334155',
+    marginBottom: 16,
   },
   backRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 12,
+    alignItems: 'flex-start',
   },
   backLabel: {
-    width: 80,
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: BLUE_900,
+    width: 105,
+    fontSize: 18,
+    fontWeight: 'heavy',
+    color: '#1e3a5f',
   },
   backValue: {
-    fontSize: 14,
-    color: '#1e293b',
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'semibold',
+    color: SLATE_800,
   },
   backFooter: {
     position: 'absolute',
-    left: 30,
-    right: 30,
-    bottom: 24,
+    left: 48,
+    right: 48,
+    bottom: 32,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
   footerText: {
     color: WHITE,
-    fontSize: 11,
-    opacity: 0.9,
-    maxWidth: 500,
+    fontSize: 15,
+    opacity: 0.95,
+    maxWidth: 610,
+    lineHeight: 1.4,
   },
-  footerUrl: {
-    color: WHITE,
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'right',
+  footerUrlBox: {
+    alignItems: 'flex-end',
   },
   footerUrlLabel: {
     color: WHITE,
-    fontSize: 10,
-    opacity: 0.7,
+    fontSize: 13,
+    opacity: 0.8,
+  },
+  footerUrl: {
+    color: WHITE,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 2,
   },
 });
 
@@ -265,6 +411,9 @@ interface MemberCardPdfProps {
     tempatLahir?: string | null;
     tanggalLahir?: string | null;
     jenisKelamin: string;
+    tingkat?: string | null;
+    tempatDadar?: string | null;
+    tahunDadar?: string | null;
     ranting?: string;
     wilayah?: string;
     distrik?: string;
@@ -277,11 +426,13 @@ interface MemberCardPdfProps {
     signerName: string;
     signerTitle: string;
   };
+  /** Data URL foto anggota (base64) — opsional, fallback ke placeholder "FOTO". */
+  photoDataUrl?: string | null;
 }
 
 const h = React.createElement;
 
-export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
+export function buildMemberCardPdf({ member, cardConfig, photoDataUrl }: MemberCardPdfProps) {
   const tanggalLahirStr = member.tanggalLahir
     ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -294,23 +445,46 @@ export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
     ? `${member.tempatLahir}, ${tanggalLahirStr}`
     : tanggalLahirStr;
 
+  const dadar = [member.tempatDadar, member.tahunDadar].filter(Boolean).join(', ') || '-';
+
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
+  const validUntilStr = validUntil.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   const distrik = member.distrik || member.wilayah || 'THS-THM';
 
+  const lv = getLevelVisual(member.tingkat);
+  const levelStrips = Array.from({ length: lv.stripCount }, (_, i) =>
+    h(View, { key: i, style: [styles.levelStrip, { backgroundColor: lv.color }] }),
+  );
+
   return h(Document, null, [
-    // Front side
+    // ── Front side ──
     h(
       Page,
       { size: [856, 540], style: styles.pageFront, key: 'front' },
-      // Header bar
+      // Backgrounds
+      h(View, { style: styles.bgCircle1 }),
+      h(View, { style: styles.bgCircle2 }),
+      h(View, { style: styles.topBar }),
+      h(View, { style: styles.bottomBar }),
+      h(View, { style: styles.borderInner }),
       h(
         View,
-        { style: styles.headerBar },
+        { style: styles.watermark },
+        h(Text, { style: styles.watermarkText }, 'THS'),
+      ),
+      // Header
+      h(
+        View,
+        { style: styles.headerRow },
         h(
           View,
-          { style: styles.logoCircle },
+          { style: styles.logo },
           h(View, { style: styles.logoInner }, h(Text, null, 'THS')),
         ),
         h(
@@ -334,8 +508,12 @@ export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
       h(
         View,
         { style: styles.photoBox },
-        h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
+        photoDataUrl
+          ? h(Image, { src: photoDataUrl, style: styles.photoImage })
+          : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
       ),
+      // Level strips (balok tingkat — sesuai template desain)
+      h(View, { style: styles.levelStrips }, levelStrips),
       // Info
       h(
         View,
@@ -344,63 +522,59 @@ export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
           View,
           { style: styles.infoRow },
           h(Text, { style: styles.infoLabel }, 'Nama'),
-          h(Text, { style: styles.infoValueStrong }, member.namaLengkap),
+          h(Text, { style: styles.infoValueStrong }, `: ${member.namaLengkap}`),
         ),
         h(
           View,
           { style: styles.infoRow },
           h(Text, { style: styles.infoLabel }, 'No. Anggota'),
-          h(Text, { style: styles.infoValue }, member.nomorAnggota),
+          h(Text, { style: styles.infoValue }, `: ${member.nomorAnggota}`),
         ),
         h(
           View,
           { style: styles.infoRow },
           h(Text, { style: styles.infoLabel }, 'Ranting'),
-          h(Text, { style: styles.infoValue }, member.ranting || '-'),
+          h(Text, { style: styles.infoValue }, `: ${member.ranting || '-'}`),
         ),
         h(
           View,
           { style: styles.infoRow },
           h(Text, { style: styles.infoLabel }, 'Wilayah'),
-          h(Text, { style: styles.infoValue }, member.wilayah || '-'),
+          h(Text, { style: styles.infoValue }, `: ${member.wilayah || '-'}`),
         ),
         h(
           View,
           { style: styles.infoRow },
           h(Text, { style: styles.infoLabel }, 'Distrik'),
-          h(Text, { style: styles.infoValue }, distrik),
+          h(Text, { style: styles.infoValue }, `: ${distrik}`),
         ),
       ),
-      // Bottom bar
+      // Bottom left — masa berlaku
       h(
         View,
-        { style: styles.bottomBar },
+        { style: styles.bottomInfo },
+        h(Text, { style: styles.validUntil }, 'Berlaku sampai'),
+        h(Text, { style: styles.validUntilValue }, validUntilStr),
+      ),
+      // Bottom right — penandatangan + stempel
+      h(
+        View,
+        { style: styles.signature },
         h(
           View,
-          null,
-          h(Text, { style: styles.validUntil }, 'Berlaku sampai'),
-          h(
-            Text,
-            { style: styles.validUntilValue },
-            validUntil.toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            }),
-          ),
+          { style: styles.sigWrap },
+          h(Text, { style: styles.sigText }, 'ttd'),
+          h(View, { style: styles.stamp }, h(Text, { style: styles.stampText }, 'STEMPEL')),
         ),
-        h(
-          View,
-          { style: styles.signerSection },
-          h(Text, { style: styles.signerName }, cardConfig.signerName),
-          h(Text, { style: styles.signerTitle }, cardConfig.signerTitle),
-        ),
+        h(Text, { style: styles.signerName }, cardConfig.signerName),
+        h(Text, { style: styles.signerTitle }, cardConfig.signerTitle),
       ),
     ),
-    // Back side
+    // ── Back side ──
     h(
       Page,
       { size: [856, 540], style: styles.pageBack, key: 'back' },
+      h(View, { style: styles.borderInner }),
       h(Text, { style: styles.backTitle }, 'VERIFIKASI KARTU ANGGOTA'),
       h(Text, { style: styles.backSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),
       // QR Code
@@ -414,10 +588,21 @@ export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
         View,
         { style: styles.backInfo },
         h(
+          Text,
+          { style: styles.backDesc },
+          'Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.',
+        ),
+        h(
           View,
           { style: styles.backRow },
           h(Text, { style: styles.backLabel }, 'TTL'),
           h(Text, { style: styles.backValue }, `: ${ttl}`),
+        ),
+        h(
+          View,
+          { style: styles.backRow },
+          h(Text, { style: styles.backLabel }, 'DADAR'),
+          h(Text, { style: styles.backValue }, `: ${dadar}`),
         ),
         h(
           View,
@@ -428,8 +613,8 @@ export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
         h(
           View,
           { style: styles.backRow },
-          h(Text, { style: styles.backLabel }, 'No. Dok'),
-          h(Text, { style: styles.backValue }, `: ${cardConfig.nomorDokumen}`),
+          h(Text, { style: styles.backLabel }, 'Valid s/d'),
+          h(Text, { style: styles.backValue }, `: ${validUntilStr}`),
         ),
       ),
       // Footer
@@ -443,7 +628,7 @@ export function buildMemberCardPdf({ member, cardConfig }: MemberCardPdfProps) {
         ),
         h(
           View,
-          null,
+          { style: styles.footerUrlBox },
           h(Text, { style: styles.footerUrlLabel }, 'URL Verifikasi'),
           h(Text, { style: styles.footerUrl }, cardConfig.verificationUrl),
         ),
