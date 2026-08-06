@@ -31,6 +31,7 @@ import {
   PanelLeft,
   User,
   Lock,
+  PenLine,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -154,6 +155,7 @@ const menuGroups: MenuGroup[] = [
       { href: '/monitoring/incidents', label: 'Incidents', icon: AlertTriangle, minRole: 'admin_ranting' },
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
+      { href: '/settings/penandatangan', label: 'Penandatangan', icon: PenLine, minRole: 'admin_distrik' },
       {
         href: '/admin/queues',
         label: 'Antrean',

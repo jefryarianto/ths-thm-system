@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import Card from '@/components/cards/card';
@@ -237,6 +237,26 @@ export default function SettingsPage() {
           </div>
         </div>
         <ArrowRight size={18} className="text-gray-400 group-hover:text-green-500 group-hover:translate-x-0.5 transition" />
+      </Link>
+
+      <Link
+        href="/settings/penandatangan"
+        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950">
+            <PenLine size={20} className="text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+              Penandatangan
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Kelola penandatangan untuk kartu anggota digital
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={18} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition" />
       </Link>
 
       <Link
