@@ -3,8 +3,10 @@ import { MembersController } from './members.controller';
 import { MembersService } from './members.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
 import { MembersWorkflowService } from './members-workflow.service';
+import { PenandatanganModule } from '../penandatangan/penandatangan.module';
 
 @Module({
+  imports: [PenandatanganModule],
   controllers: [MembersController],
   providers: [MembersService, MembersDigitalCardService, MembersWorkflowService],
   exports: [MembersService],

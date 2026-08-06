@@ -45,11 +45,13 @@ import { UploadModule } from './modules/upload/upload.module';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module';
+import { PenandatanganModule } from './modules/penandatangan/penandatangan.module';
 
 @Module({
   imports: [
     ChatModule,
     ForumModule,
+    PenandatanganModule,
     CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,

@@ -72,6 +72,18 @@ Authorization: Bearer <access_token>
 
 ---
 
+## Penandatangan
+
+| Method | Endpoint | Deskripsi | Akses |
+|--------|----------|-----------|-------|
+| GET | `/penandatangan` | Daftar penandatangan | Admin |
+| GET | `/penandatangan/active` | Penandatangan aktif (dipakai kartu) | Admin |
+| POST | `/penandatangan` | Tambah penandatangan baru | Superadmin/Admin Distrik |
+| PATCH | `/penandatangan/:id` | Update penandatangan | Superadmin/Admin Distrik |
+| DELETE | `/penandatangan/:id` | Hapus penandatangan | Superadmin |
+
+---
+
 ## Candidates
 
 | Method | Endpoint | Deskripsi | Akses |

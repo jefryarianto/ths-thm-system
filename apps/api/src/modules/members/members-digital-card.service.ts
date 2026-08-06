@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,7 +13,27 @@ export class MembersDigitalCardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly penandatanganService: PenandatanganService,
   ) {}
+
+  /**
+   * Resolve nama penandatangan: prioritas dari tabel `penandatangans` (yang aktif),
+   * fallback ke env SIGNER_NAME/SIGNER_TITLE, lalu default.
+   */
+  private async resolveSigner() {
+    try {
+      const active = await this.penandatanganService.findActive();
+      if (active) {
+        return { signerName: active.nama, signerTitle: active.jabatan };
+      }
+    } catch {
+      // tabel belum ada / belum migrate — lanjut ke fallback env
+    }
+    return {
+      signerName: process.env.SIGNER_NAME || 'Koordinator Distrik',
+      signerTitle: process.env.SIGNER_TITLE || 'THS-THM',
+    };
+  }
 
   async getDigitalCard(memberId: string, scope?: UserScope) {
     const { card, memberData, verificationUrl } = await this.prepareDigitalCardData(memberId, scope);
@@ -138,13 +159,14 @@ export class MembersDigitalCardService {
       distrik: member.ranting?.wilayah?.distrik?.nama,
     };
 
+    const signer = await this.resolveSigner();
     const card = {
       id: existingCard.id,
       nomorDokumen: existingCard.nomorDokumen,
       verificationUrl: existingCard.verificationUrl || '',
       status: existingCard.status,
-      signerName: process.env.SIGNER_NAME || 'Koordinator Distrik',
-      signerTitle: process.env.SIGNER_TITLE || 'THS-THM',
+      signerName: signer.signerName,
+      signerTitle: signer.signerTitle,
     };
 
     return { card, memberData, verificationUrl: card.verificationUrl };

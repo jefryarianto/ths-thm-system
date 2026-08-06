@@ -339,6 +339,17 @@ async function main() {
     console.log(`Forum categories sudah ada (${existingCategoryCount}). Lewati seed forum.`);
   }
 
+  // ── Seeder Penandatangan ──
+  const existingSignerCount = await prisma.penandatangan.count();
+  if (existingSignerCount === 0) {
+    await prisma.penandatangan.create({
+      data: { nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik', isActive: true },
+    });
+    console.log('Seeded 1 penandatangan');
+  } else {
+    console.log(`Penandatangan sudah ada (${existingSignerCount}). Lewati seed penandatangan.`);
+  }
+
   console.log('Seeding completed!');
 }
 
