@@ -190,7 +190,7 @@ export default function MemberDetailPage() {
   const [editRantings, setEditRantings] = useState<Array<{ id: string; nama: string }>>([]);
   const [editWilayahLoading, setEditWilayahLoading] = useState(false);
   const [editRantingLoading, setEditRantingLoading] = useState(false);
-  const [cardData, setCardData] = useState<{ qrCode: string } | null>(null);
+  const [cardData, setCardData] = useState<{ qrCode: string; signerName?: string; signerTitle?: string } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const fetchMember = useCallback(async () => {
@@ -225,7 +225,13 @@ export default function MemberDetailPage() {
       })
         .then((r) => r.json())
         .then((data) => {
-          if (data.success) setCardData({ qrCode: data.data.qrCode });
+          if (data.success) {
+            setCardData({
+              qrCode: data.data.qrCode,
+              signerName: data.data.card?.signerName,
+              signerTitle: data.data.card?.signerTitle,
+            });
+          }
         })
         .catch(() => {})
         .finally(() => setCardLoading(false));
@@ -276,6 +282,8 @@ export default function MemberDetailPage() {
       const photoHtml = m.fotoPath
         ? `<img src="${window.location.origin}/api/uploads/${m.fotoPath}" alt="Foto" style="width:100%;height:100%;object-fit:cover"/>`
         : 'FOTO';
+      const signerName = data.data.card?.signerName || 'Koordinator Distrik';
+      const signerTitle = data.data.card?.signerTitle || 'THS-THM';
 
       const win = window.open('', '_blank');
       if (!win) return;
@@ -367,8 +375,8 @@ export default function MemberDetailPage() {
         <div class="sig">ttd</div>
         <div class="stamp">STEMPEL</div>
       </div>
-      <div class="title">Koordinator Distrik</div>
-      <div class="subtitle">THS-THM</div>
+      <div class="title">${signerName}</div>
+      <div class="subtitle">${signerTitle}</div>
     </div>
   </div>
 </div>
@@ -876,8 +884,8 @@ export default function MemberDetailPage() {
                             <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
                             <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
                           </div>
-                          <div className="text-[16px] font-black border-t border-white/60 pt-1">Koordinator Distrik</div>
-                          <div className="text-[13px] font-semibold opacity-95">THS-THM</div>
+                          <div className="text-[16px] font-black border-t border-white/60 pt-1">{cardData?.signerName || 'Koordinator Distrik'}</div>
+                          <div className="text-[13px] font-semibold opacity-95">{cardData?.signerTitle || 'THS-THM'}</div>
                         </div>
                       </div>
                     </div>

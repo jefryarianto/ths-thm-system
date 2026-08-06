@@ -143,6 +143,8 @@ export class MembersDigitalCardService {
       nomorDokumen: existingCard.nomorDokumen,
       verificationUrl: existingCard.verificationUrl || '',
       status: existingCard.status,
+      signerName: process.env.SIGNER_NAME || 'Koordinator Distrik',
+      signerTitle: process.env.SIGNER_TITLE || 'THS-THM',
     };
 
     return { card, memberData, verificationUrl: card.verificationUrl };
