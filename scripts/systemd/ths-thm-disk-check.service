@@ -1,0 +1,57 @@
+# ═══════════════════════════════════════════════════════════════
+# THS-THM Disk Space Monitor Service
+#
+# This service runs the check-disk.sh script. It is triggered by
+# the corresponding .timer unit (every hour).
+#
+# Install:
+#   sudo cp ths-thm-disk-check.service /etc/systemd/system/
+#   sudo cp ths-thm-disk-check.timer    /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable ths-thm-disk-check.timer
+#   sudo systemctl start  ths-thm-disk-check.timer
+#
+# Verify:
+#   sudo systemctl status ths-thm-disk-check.service
+#   sudo systemctl status ths-thm-disk-check.timer
+#   sudo journalctl -u ths-thm-disk-check.service -n 30 --no-pager
+#   sudo systemctl list-timers --all | grep ths-thm
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=THS-THM Disk Space Monitor
+Documentation=https://github.com/jefryarianto/ths-thm-system
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ths-thm
+Group=ths-thm
+
+# ── Environment ──────────────────────────────────────────────
+# Override these defaults in check-disk.sh.
+# Alert email goes to the org admin; AUTO_CLEANUP runs docker prune.
+Environment=THRESHOLD_PCT=85
+Environment=ALERT_EMAIL=jefryarianto@gmail.com
+Environment=AUTO_CLEANUP=true
+Environment=ENV_DIR=/opt/ths-thm
+
+# ── Execution ────────────────────────────────────────────────
+ExecStart=/opt/ths-thm/scripts/check-disk.sh
+
+# ── Resource limits ──────────────────────────────────────────
+MemoryMax=128M
+
+# ── Logging ──────────────────────────────────────────────────
+StandardOutput=journal
+StandardError=journal
+
+# ── Failure handling ─────────────────────────────────────────
+Restart=on-failure
+RestartSec=60
+StartLimitInterval=600
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

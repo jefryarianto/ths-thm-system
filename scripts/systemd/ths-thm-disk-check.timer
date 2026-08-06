@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════════════════
+# THS-THM Disk Space Monitor Timer
+#
+# Triggers ths-thm-disk-check.service every hour (on the hour).
+# Also runs once shortly after boot to catch high usage early.
+#
+# Verify:
+#   sudo systemctl status ths-thm-disk-check.timer
+#   sudo systemctl list-timers --all | grep ths-thm
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=THS-THM Hourly Disk Space Check
+Documentation=https://github.com/jefryarianto/ths-thm-system
+
+[Timer]
+# Run every hour (minutes :00, on the hour)
+OnCalendar=*-*-* *:00:00
+FixedRandomDelay=5m
+
+# Also run 5 minutes after boot to catch high usage early
+OnBootSec=5min
+
+# If the system was powered off during the scheduled time,
+# run immediately on next boot
+Persistent=true
+
+# Prevent multiple concurrent runs
+Unit=ths-thm-disk-check.service
+
+[Install]
+WantedBy=timers.target
