@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getHomePathForRole } from '@/lib/role-redirect';
 
 export default function HomePage() {
   const router = useRouter();
@@ -10,7 +11,14 @@ export default function HomePage() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
-      router.replace('/members');
+      let role: string | null = null;
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) role = (JSON.parse(raw) as { role?: string })?.role ?? null;
+      } catch {
+        /* ignore */
+      }
+      router.replace(getHomePathForRole(role));
     } else {
       router.replace('/login');
     }

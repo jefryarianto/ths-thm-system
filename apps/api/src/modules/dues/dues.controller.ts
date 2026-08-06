@@ -42,7 +42,7 @@ export class DuesController {
   }
 
   @Get('members/me')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar iuran saya (anggota login)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Daftar iuran saya (anggota login)' })
   getMyDues(@Req() req: ScopedRequest) {
     return this.service.getMyDues(req.user);
   }

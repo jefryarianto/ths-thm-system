@@ -36,14 +36,14 @@ export class ForumController {
   // ── Categories (via ForumCategoryService / BaseCrudService) ──
 
   @Get('categories')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar kategori forum' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Daftar kategori forum' })
   @ApiOkResponse({ description: 'Daftar semua kategori forum dengan jumlah thread per kategori' })
   getCategories() {
     return this.categoryService.findAll();
   }
 
   @Get('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Detail kategori forum' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Detail kategori forum' })
   @ApiParam({ name: 'id', description: 'ID Kategori Forum', required: true })
   @ApiOkResponse({ description: 'Detail kategori forum' })
   getCategory(@Param('id') id: string) {
@@ -78,7 +78,7 @@ export class ForumController {
   // ── Threads ───────────────────────────────────────────
 
   @Get('categories/:categoryId/threads')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Thread dalam kategori' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Thread dalam kategori' })
   @ApiParam({ name: 'categoryId', description: 'ID Kategori Forum', required: true })
   @ApiQuery({ name: 'search', required: false, description: 'Cari thread berdasarkan judul/konten' })
   @ApiQuery({ name: 'isPinned', required: false, description: 'Filter thread yang dipin' })
@@ -99,7 +99,7 @@ export class ForumController {
   }
 
   @Post('threads')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Buat thread baru' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Buat thread baru' })
   @ApiBody({ type: CreateThreadDto, description: 'Data thread baru' })
   @ApiCreatedResponse({ description: 'Thread berhasil dibuat' })
   createThread(@Body() dto: CreateThreadDto, @CurrentUser() user: { id: string; role: string }) {
@@ -107,7 +107,7 @@ export class ForumController {
   }
 
   @Patch('threads/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Perbarui thread' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Perbarui thread' })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiBody({ type: UpdateThreadDto, description: 'Data thread yang diperbarui' })
   @ApiOkResponse({ description: 'Thread berhasil diperbarui' })
@@ -136,7 +136,7 @@ export class ForumController {
   }
 
   @Delete('threads/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Hapus thread' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Hapus thread' })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiOkResponse({ description: 'Thread berhasil dihapus' })
   deleteThread(@Param('id') id: string, @CurrentUser() user: { id: string; role: string }) {
@@ -146,7 +146,7 @@ export class ForumController {
   // ── Posts ─────────────────────────────────────────────
 
   @Post('threads/:id/posts')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Balas thread' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Balas thread' })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiBody({ type: CreatePostDto, description: 'Konten balasan' })
   @ApiCreatedResponse({ description: 'Balasan berhasil dikirim' })
@@ -159,7 +159,7 @@ export class ForumController {
   }
 
   @Patch('posts/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Perbarui balasan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Perbarui balasan' })
   @ApiParam({ name: 'id', description: 'ID Post/Balasan', required: true })
   @ApiBody({ type: UpdatePostDto, description: 'Konten balasan yang diperbarui' })
   @ApiOkResponse({ description: 'Balasan berhasil diperbarui' })
@@ -172,7 +172,7 @@ export class ForumController {
   }
 
   @Patch('posts/:id/solution')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Tandai sebagai solusi' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Tandai sebagai solusi' })
   @ApiParam({ name: 'id', description: 'ID Post/Balasan', required: true })
   @ApiQuery({ name: 'threadId', required: true, description: 'ID Thread yang berisi post ini' })
   @ApiOkResponse({ description: 'Post ditandai sebagai solusi' })
@@ -185,7 +185,7 @@ export class ForumController {
   }
 
   @Delete('posts/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Hapus balasan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Hapus balasan' })
   @ApiParam({ name: 'id', description: 'ID Post/Balasan', required: true })
   @ApiOkResponse({ description: 'Balasan berhasil dihapus' })
   deletePost(@Param('id') id: string, @CurrentUser() user: { id: string; role: string }) {

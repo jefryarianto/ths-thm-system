@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import apiClient, { setTokens } from '@/lib/api-client';
+import { getHomePathForRole } from '@/lib/role-redirect';
 
 const API_URL = '';
 
@@ -44,7 +45,7 @@ function OAuthCallbackHandler() {
         .then(({ data }) => {
           if (data.success) {
             localStorage.setItem('user', JSON.stringify(data.data));
-            router.replace('/members');
+            router.replace(getHomePathForRole(data.data.role));
           }
         })
         .catch(() => {
@@ -205,7 +206,7 @@ export default function LoginPage() {
         }
 
         setSuccessMessage('Login berhasil! Mengalihkan...');
-        setTimeout(() => router.push('/members'), 800);
+        setTimeout(() => router.push(getHomePathForRole(data.data.user.role)), 800);
       }
     } catch (err: unknown) {
       const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data

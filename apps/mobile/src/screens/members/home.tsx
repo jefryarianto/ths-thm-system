@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { useAuthStore } from '../../store/auth-store';
 
 const memberItems = [
+  { icon: 'chatbubbles', label: 'Forum', route: '/forum' },
   { icon: 'person', label: 'Profil Saya', route: '/(tabs)/settings' },
   { icon: 'card', label: 'Kartu Digital', route: '/digital-card' },
   { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
@@ -26,7 +27,6 @@ const adminItems = [
   { icon: 'school', label: 'Pendadaran', route: '/graduations' },
   { icon: 'mail', label: 'Surat', route: '/letters' },
   { icon: 'stats-chart', label: 'Laporan', route: '/reports' },
-  { icon: 'chatbubbles', label: 'Forum', route: '/forum' },
   { icon: 'clipboard', label: 'Aspek', route: '/assessments' },
   { icon: 'cloud-upload', label: 'Import', route: '/member-import' },
   { icon: 'shield-checkmark', label: 'Persetujuan', route: '/approvals' },

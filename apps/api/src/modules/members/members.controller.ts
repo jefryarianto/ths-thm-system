@@ -19,7 +19,7 @@ export class MembersController {
   ) {}
 
   @Get('me')
-  @CrudAuth('anggota', 'penguji', 'admin_ranting', 'admin_wilayah', 'admin_distrik', 'superadmin', { summary: 'Ambil data anggota untuk user yang login' })
+  @CrudAuth('anggota', 'penguji', 'admin_ranting', 'admin_wilayah', 'admin_distrik', 'superadmin', { scope: 'self', summary: 'Ambil data anggota untuk user yang login' })
   async getMe(@Req() req: ScopedRequest) {
     const user = (req as any).user;
     if (!user?.email) {
