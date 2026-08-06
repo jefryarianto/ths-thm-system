@@ -1,8 +1,8 @@
 # Build Stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 RUN apk add --no-cache openssl libc6-compat python3 make g++
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app
 
@@ -34,10 +34,10 @@ RUN cd apps/api && pnpm exec prisma generate
 RUN cd apps/api && pnpm run build
 
 # Production Stage
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 RUN apk add --no-cache openssl libc6-compat dumb-init
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app
 

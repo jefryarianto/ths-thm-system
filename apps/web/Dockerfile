@@ -1,8 +1,8 @@
 # Build Stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 RUN apk add --no-cache openssl libc6-compat
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ COPY packages/ ./packages/
 RUN NEXT_PUBLIC_ENABLE_REALTIME=true pnpm --filter @ths-thm/web build
 
 # Production Stage
-FROM node:20-alpine
+FROM node:22-alpine
 
 RUN apk add --no-cache dumb-init wget
 
@@ -38,7 +38,7 @@ COPY --from=builder /app/apps/web/next.config.* ./
 # Install only production dependencies
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/package.json
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate && \
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate && \
     echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --prod --ignore-scripts && \
     rm -f .npmrc
 
