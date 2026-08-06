@@ -72,6 +72,9 @@ export default function ImportAssessmentsPage() {
       }
 
       const rows: PreviewRow[] = [];
+      // Forward-fill untuk sel ASPEK kosong (pola merged-cell Excel): baris
+      // berurutan tanpa nama aspek memakai aspek terakhir yang terisi.
+      let lastAspek = '';
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -79,10 +82,15 @@ export default function ImportAssessmentsPage() {
         // Parse CSV line with quote handling
         const values = parseCSVLine(line);
         if (values.length >= Math.max(colIndices.aspek, colIndices.item) + 1) {
+          const aspek = values[colIndices.aspek]?.trim() || '';
+          const item = values[colIndices.item]?.trim() || '';
+          if (aspek) lastAspek = aspek;
+          // Skip baris sampah: aspek & item keduanya kosong
+          if (!lastAspek || !item) continue;
           rows.push({
             no: colIndices.no !== undefined ? parseInt(values[colIndices.no]?.trim() || '0', 10) || i : i,
-            aspek: values[colIndices.aspek]?.trim() || '',
-            item: values[colIndices.item]?.trim() || '',
+            aspek: lastAspek,
+            item,
             deskripsi: colIndices.deskripsi !== undefined ? values[colIndices.deskripsi]?.trim() || '' : '',
             skorMaksimal: colIndices.skorMax !== undefined ? parseInt(values[colIndices.skorMax]?.trim() || '100', 10) || 100 : 100,
           });
@@ -133,7 +141,8 @@ export default function ImportAssessmentsPage() {
           skorMaksimal: row.skorMaksimal || undefined,
         })),
       });
-      setResult(res.data);
+      // Response dinormalisasi oleh TransformInterceptor → hasil import ada di res.data.data
+      setResult(res.data?.data ?? res.data);
     } catch (err) {
       setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Gagal import data');
     }

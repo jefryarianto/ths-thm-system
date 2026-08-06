@@ -22,6 +22,7 @@ describe('AssessmentsService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     nilaiPendadaran: {
       findMany: jest.fn(),
@@ -68,10 +69,12 @@ describe('AssessmentsService', () => {
   });
 
   describe('getItems', () => {
-    it('should return items', async () => {
+    it('should return paginated items', async () => {
       mockPrisma.itemPenilaian.findMany.mockResolvedValue([{ id: 'i1', nama: 'Tendangan' }]);
+      mockPrisma.itemPenilaian.count.mockResolvedValue(1);
       const result = await service.getItems({});
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.meta.total).toBe(1);
     });
   });
 

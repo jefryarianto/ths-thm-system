@@ -9,6 +9,7 @@ import {
 } from './dto/assessment.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { CacheService } from '../../common/services/cache.service';
 import { paginate } from '../../common/utils/pagination';
 
 export interface ImportRow {
@@ -26,6 +27,7 @@ export class AssessmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    private readonly cache: CacheService,
   ) {}
 
   // ── Items ─────────────────────────────────────────────
@@ -33,12 +35,16 @@ export class AssessmentsService {
   async getItems(query: AssessmentFilterDto) {
     const where: Record<string, unknown> = {};
     if (query.aspekId) where.aspekId = query.aspekId;
-    const data = await this.prisma.itemPenilaian.findMany({
-      where,
-      include: { aspek: true },
+    if (query.search) {
+      where.namaItem = { contains: query.search, mode: 'insensitive' };
+    }
+    return paginate(this.prisma.itemPenilaian, where, {
+      page: query.page,
+      // Default besar untuk konsumen yang tidak kirim limit (mobile scoring butuh SEMUA item per aspek)
+      limit: query.limit || 100,
       orderBy: { urutan: 'asc' },
+      include: { aspek: true },
     });
-    return data;
   }
 
   async getItem(id: string) {
@@ -72,13 +78,25 @@ export class AssessmentsService {
       return { importedAspects: 0, importedItems: 0, total: 0 };
     }
 
+    // Kelompokkan per aspek, dengan forward-fill untuk sel ASPEK kosong
+    // (pola merged-cell Excel) dan skip baris yang aspek & item-nya kosong.
     const aspekMap = new Map<string, ImportRow[]>();
+    let lastAspek = '';
+    let processedRows = 0;
     for (const row of data) {
-      const key = row.aspek.trim().toUpperCase();
+      const aspekName = row.aspek?.trim();
+      if (aspekName) {
+        lastAspek = aspekName;
+      }
+      const itemName = row.item?.trim();
+      if (!lastAspek || !itemName) continue; // baris sampah / kosong
+
+      const key = lastAspek.toUpperCase();
       if (!aspekMap.has(key)) {
         aspekMap.set(key, []);
       }
-      aspekMap.get(key)!.push(row);
+      aspekMap.get(key)!.push({ ...row, aspek: lastAspek, item: itemName });
+      processedRows++;
     }
 
     let importedAspects = 0;
@@ -118,7 +136,7 @@ export class AssessmentsService {
             data: {
               aspekId: aspek.id,
               kodeItem,
-              namaItem: row.item.trim(),
+              namaItem: row.item,
               skorMaksimal: row.skorMaksimal || 100,
               bobot: 1,
               urutan,
@@ -131,9 +149,14 @@ export class AssessmentsService {
       }
     }
 
-    this.logger.log(`Import completed: ${importedAspects} aspects, ${importedItems} items`);
+    // List aspek di-cache — pastikan data baru langsung tampil tanpa menunggu TTL
+    this.cache.invalidatePrefix('aspects:');
 
-    return { importedAspects, importedItems, total: data.length };
+    this.logger.log(
+      `Import completed: ${importedAspects} aspects, ${importedItems} items (${processedRows} rows)`,
+    );
+
+    return { importedAspects, importedItems, total: processedRows };
   }
 
   async importFromCsvText(csvText: string) {

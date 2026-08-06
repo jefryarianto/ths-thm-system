@@ -29,8 +29,8 @@ export class AssessmentsController {
   @Get('aspects')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Ambil semua aspek penilaian' })
   @ApiOkResponse({ description: 'Daftar semua aspek penilaian beserta item-itemnya' })
-  getAspects(@Query() _q: AssessmentFilterDto) {
-    return this.aspectService.findAll();
+  getAspects(@Query() q: AssessmentFilterDto) {
+    return this.aspectService.findAll(q);
   }
 
   @Get('aspects/:id')

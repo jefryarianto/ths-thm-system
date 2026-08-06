@@ -30,9 +30,15 @@ export default function MemberActions({
   const toggleMenu = () => {
     if (!showMenu && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      // ~7 item menu × 36px — bila ruang di bawah tidak cukup (baris terakhir
+      // halaman), buka menu ke atas agar seluruh menu tetap terlihat.
+      const estimatedMenuHeight = 260;
       setMenuStyle({
         position: 'fixed' as const,
-        top: rect.bottom + 4,
+        ...(spaceBelow < estimatedMenuHeight
+          ? { bottom: window.innerHeight - rect.top + 4 }
+          : { top: rect.bottom + 4 }),
         right: window.innerWidth - rect.right,
         zIndex: 9999,
       });

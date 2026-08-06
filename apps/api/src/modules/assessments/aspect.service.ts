@@ -6,6 +6,7 @@ import { BaseCrudService } from '../../common/utils/base-crud.service';
 import {
   CreateAspectDto,
   UpdateAspectDto,
+  AssessmentFilterDto,
 } from './dto/assessment.dto';
 
 @Injectable()
@@ -28,11 +29,16 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
   /** Include item child relations by default. */
   protected readonly DEFAULT_INCLUDE = { itemPenilaian: true };
 
-  async findAll() {
+  async findAll(query?: AssessmentFilterDto) {
+    const limit = query?.limit || 10;
+    const page = query?.page || 1;
+    const where = query?.search
+      ? { namaAspek: { contains: query.search, mode: 'insensitive' as const } }
+      : {};
     return this.baseFindAll(
-      'aspects:all',
-      () => ({}),
-      { include: this.DEFAULT_INCLUDE },
+      `aspects:all:${limit}:${page}`,
+      () => where,
+      { page, limit, include: this.DEFAULT_INCLUDE },
     );
   }
 
