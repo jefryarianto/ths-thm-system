@@ -199,8 +199,11 @@ test.describe('Style Guide — /style-guide', () => {
       // Modal should have input fields
       await expect(page.getByText('Nama').first()).toBeVisible({ timeout: 5000 });
 
-      // Click "Batal" button to close
-      const closeBtn = page.locator('button:has-text("Batal")').first();
+      // Click "Batal" inside the ACTUAL open modal (the DualThemePreview also
+      // renders static "Batal" buttons in non-modal sample content, so we must
+      // scope to the open modal container to avoid the backdrop intercepting clicks)
+      const modalDialog = page.locator('div.fixed.inset-0.z-50', { hasText: 'Contoh Modal' });
+      const closeBtn = modalDialog.locator('button:has-text("Batal")');
       if (await closeBtn.isVisible().catch(() => false)) {
         await closeBtn.click();
         await page.waitForTimeout(300);
@@ -225,8 +228,10 @@ test.describe('Style Guide — /style-guide', () => {
       await expect(hapusTitle).toBeVisible({ timeout: 5000 });
       await expect(page.getByText('Apakah Anda yakin').first()).toBeVisible({ timeout: 5000 });
 
-      // Click "Batal" to close
-      const cancelBtn = page.locator('button:has-text("Batal")').first();
+      // Click "Batal" inside the ACTUAL open confirm dialog (scope to avoid the
+      // static "Batal" buttons in the DualThemePreview sample content)
+      const confirmDialog = page.locator('div.fixed.inset-0.z-50', { hasText: 'Hapus Data' });
+      const cancelBtn = confirmDialog.locator('button:has-text("Batal")');
       if (await cancelBtn.isVisible().catch(() => false)) {
         await cancelBtn.click();
         await page.waitForTimeout(300);
@@ -244,19 +249,21 @@ test.describe('Style Guide — /style-guide', () => {
       await openBtn.click();
       await page.waitForTimeout(300);
 
-      // Fill the input fields
-      const nameInput = page.locator('input[placeholder="Masukkan nama..."]').first();
+      // Fill the input fields (scoped to the open modal so we don't hit the
+      // static inputs/buttons rendered in the DualThemePreview sample content)
+      const modalDialog = page.locator('div.fixed.inset-0.z-50', { hasText: 'Contoh Modal' });
+      const nameInput = modalDialog.locator('input[placeholder="Masukkan nama..."]');
       if (await nameInput.isVisible().catch(() => false)) {
         await nameInput.fill('E2E Test User');
       }
 
-      const emailInput = page.locator('input[placeholder="email@example.com"]').first();
+      const emailInput = modalDialog.locator('input[placeholder="email@example.com"]');
       if (await emailInput.isVisible().catch(() => false)) {
         await emailInput.fill('e2e@test.com');
       }
 
       // Click Simpan to close
-      const simpanBtn = page.locator('button:has-text("Simpan")').first();
+      const simpanBtn = modalDialog.locator('button:has-text("Simpan")');
       if (await simpanBtn.isVisible().catch(() => false)) {
         await simpanBtn.click();
         await page.waitForTimeout(300);
