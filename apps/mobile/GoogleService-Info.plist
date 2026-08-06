@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCleXvZ7Lm2H7PFXyELbmPvwbUWr_pJFy0</string>
+	<string>AIzaSyApBHIFon08bD75GyowLZ4Vfl9oB-kSsDk</string>
 	<key>GCM_SENDER_ID</key>
-	<string>287904471765</string>
+	<string>272409262780</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.thsthm.mobile</string>
+	<string>org.thsthm.mobile</string>
 	<key>PROJECT_ID</key>
-	<string>thsthm-project</string>
+	<string>ths-thm-system-aa82a</string>
 	<key>STORAGE_BUCKET</key>
-	<string>thsthm-project.firebasestorage.app</string>
+	<string>ths-thm-system-aa82a.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:287904471765:ios:4c898c7693dadc772ba05c</string>
+	<string>1:272409262780:ios:877ea6367c972eede9eeb9</string>
 </dict>
 </plist>
