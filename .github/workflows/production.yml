@@ -168,8 +168,23 @@ jobs:
             export IMAGE_TAG=${IMAGE_TAG:-latest}
 
             # Auto-cleanup Docker resources before pulling (prevents "no space left on device")
+            # Aggressive: remove ALL unused images regardless of age. The old `--filter "until=24h"`
+            # skipped freshly-pulled layers, letting the 40GB disk fill to 97%.
+            echo "   Disk before cleanup:"
+            df -h / | tail -1
             echo "   Cleaning up old Docker resources..."
-            docker system prune -af --filter "until=24h" 2>/dev/null || true
+            docker image prune -af 2>/dev/null || true
+            docker builder prune -af 2>/dev/null || true
+            docker container prune -f 2>/dev/null || true
+            echo "   Disk after cleanup:"
+            df -h / | tail -1
+
+            # Guard: fail fast if disk is still critically low (avoids confusing mid-pull failure)
+            avail_kb=$(df -k / | tail -1 | awk '{print $4}')
+            if [ -n "$avail_kb" ] && [ "$avail_kb" -lt 2097152 ]; then
+              echo "   ❌ Disk space still below 2GB after cleanup — aborting deploy"
+              exit 1
+            fi
 
             # Pull latest images (build happens in CI — zero CPU on VPS)
             echo "   Pulling images..."
@@ -205,7 +220,11 @@ jobs:
 
             # Aggressive cleanup after deploy (save disk space on 40GB VPS)
             echo "   Pruning old Docker resources..."
-            docker system prune -af --filter "until=24h" 2>/dev/null || true
+            docker image prune -af 2>/dev/null || true
+            docker builder prune -af 2>/dev/null || true
+            docker container prune -f 2>/dev/null || true
+            echo "   Disk after deploy:"
+            df -h / | tail -1
 
             echo "✅ Deployment complete!"
             echo "   URL: https://ths-thm.cloud"
