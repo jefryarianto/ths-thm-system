@@ -11,6 +11,7 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { paginate } from '../../common/utils/pagination';
+import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { DocumentBatchService } from './document-batch.service';
 import { JobPayload, JobResult } from '../../common/queue/queue.interface';
 import * as QRCode from 'qrcode';
@@ -57,6 +58,7 @@ export class DocumentsService {
     private readonly cache: CacheService,
     private readonly memberMailService: MemberMailService,
     private readonly batchService: DocumentBatchService,
+    private readonly penandatanganService: PenandatanganService,
   ) {
     this.outputDir = path.resolve('storage', 'documents');
     fs.mkdirSync(this.outputDir, { recursive: true });
@@ -136,11 +138,14 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
+      const signer = await this.resolveSigner();
       const PdfDoc = buildPdfDocument({
         type: dto.type,
         nomorDokumen,
         member,
         qrDataUrl,
+        signerName: signer.signerName,
+        signerTitle: signer.signerTitle,
       });
 
       if (PdfDoc) {
@@ -377,6 +382,15 @@ export class DocumentsService {
     };
   }
 
+  /**
+   * Resolve nama penandatangan untuk sertifikat/piagam: prioritas dari tabel
+   * `penandatangans` (yang aktif), fallback ke env SIGNER_NAME/SIGNER_TITLE,
+   * lalu default.
+   */
+  private async resolveSigner() {
+    return this.penandatanganService.resolveActive();
+  }
+
   // ── Generate Certificate (Sertifikat Pendadaran) ──
 
   async generateCertificate(dto: GenerateCertificateDto, scope?: UserScope) {
@@ -414,6 +428,7 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildCertificatePdf } = require('./pdf-templates/certificate');
 
+      const signer = await this.resolveSigner();
       const pdfDoc = buildCertificatePdf({
         recipientName: member.namaLengkap,
         certificateNumber: nomorDokumen,
@@ -430,8 +445,8 @@ export class DocumentsService {
           month: 'long',
           year: 'numeric',
         }),
-        signerName: dto.signerName || process.env.SIGNER_NAME || 'Koordinator Distrik',
-        signerTitle: dto.signerTitle || process.env.SIGNER_TITLE || 'THS-THM',
+        signerName: dto.signerName || signer.signerName,
+        signerTitle: dto.signerTitle || signer.signerTitle,
         pastorName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
         pastorTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
         aspects: dto.aspects,
@@ -475,6 +490,7 @@ export class DocumentsService {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { buildCertificatePdf } = require('./pdf-templates/certificate');
 
+    const signer = await this.resolveSigner();
     const pdfDoc = buildCertificatePdf({
       recipientName: member.namaLengkap,
       certificateNumber: nomorDokumen,
@@ -489,8 +505,8 @@ export class DocumentsService {
       issuedDate: new Date().toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric',
       }),
-      signerName: dto.signerName || process.env.SIGNER_NAME || 'Koordinator Distrik',
-      signerTitle: dto.signerTitle || process.env.SIGNER_TITLE || 'THS-THM',
+      signerName: dto.signerName || signer.signerName,
+      signerTitle: dto.signerTitle || signer.signerTitle,
       pastorName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
       pastorTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
       aspects: dto.aspects,
@@ -542,6 +558,7 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
+      const signer = await this.resolveSigner();
       const PdfDoc = buildPdfDocument({
         type: 'piagam_prestasi',
         nomorDokumen,
@@ -552,6 +569,8 @@ export class DocumentsService {
           ranting: member.ranting,
         },
         qrDataUrl,
+        signerName: dto.signerName || signer.signerName,
+        signerTitle: dto.signerTitle || signer.signerTitle,
       });
 
       if (PdfDoc) {

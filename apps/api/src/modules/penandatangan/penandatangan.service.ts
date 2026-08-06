@@ -20,6 +20,26 @@ export class PenandatanganService {
     });
   }
 
+  /**
+   * Resolve penandatangan yang dipakai pada dokumen (kartu, sertifikat, piagam):
+   * prioritas dari tabel `penandatangans` (yang aktif), fallback ke env
+   * SIGNER_NAME/SIGNER_TITLE, lalu default.
+   */
+  async resolveActive(): Promise<{ signerName: string; signerTitle: string }> {
+    try {
+      const active = await this.findActive();
+      if (active) {
+        return { signerName: active.nama, signerTitle: active.jabatan };
+      }
+    } catch {
+      // tabel belum ada / belum migrate — lanjut ke fallback env
+    }
+    return {
+      signerName: process.env.SIGNER_NAME || 'Koordinator Distrik',
+      signerTitle: process.env.SIGNER_TITLE || 'THS-THM',
+    };
+  }
+
   async create(dto: CreatePenandatanganDto) {
     return this.prisma.$transaction(async (tx) => {
       if (dto.isActive) {

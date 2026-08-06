@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
+import { PenandatanganService } from '../penandatangan/penandatangan.service';
 
 jest.mock('./pdf-generator', () => ({
   buildPdfDocument: jest.fn().mockReturnValue({}),
@@ -69,6 +70,11 @@ describe('DocumentsService', () => {
     cancelBatch: jest.fn(),
   };
 
+  const mockPenandatanganService = {
+    findActive: jest.fn().mockResolvedValue({ nama: 'Yoseph Pehan Betan', jabatan: 'Koordinator Distrik' }),
+    resolveActive: jest.fn().mockResolvedValue({ signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -78,6 +84,7 @@ describe('DocumentsService', () => {
         { provide: CacheService, useValue: mockCache },
         { provide: MemberMailService, useValue: mockMemberMailService },
         { provide: DocumentBatchService, useValue: mockBatchService },
+        { provide: PenandatanganService, useValue: mockPenandatanganService },
       ],
     }).compile();
 

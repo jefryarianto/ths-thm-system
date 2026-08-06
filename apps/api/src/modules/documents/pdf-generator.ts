@@ -41,11 +41,21 @@ interface PdfDocProps {
     ranting?: { nama: string } | null;
   } | null;
   qrDataUrl: string;
+  /** Nama & jabatan penandatangan (dari tabel penandatangans) — opsional. */
+  signerName?: string;
+  signerTitle?: string;
 }
 
 const h = React.createElement;
 
-export function buildPdfDocument({ type, nomorDokumen, member, qrDataUrl }: PdfDocProps) {
+export function buildPdfDocument({
+  type,
+  nomorDokumen,
+  member,
+  qrDataUrl,
+  signerName,
+  signerTitle,
+}: PdfDocProps) {
   return h(
     Document,
     null,
@@ -110,6 +120,17 @@ export function buildPdfDocument({ type, nomorDokumen, member, qrDataUrl }: PdfD
         h(Image, { src: qrDataUrl, style: styles.qrImage }),
         h(Text, { style: { fontSize: 8, marginTop: 4 } }, 'Scan untuk verifikasi'),
       ),
+      // Signer (dari tabel penandatangan) — tampil bila tersedia
+      ...(signerName
+        ? [
+            h(
+              View,
+              { key: 'signer', style: { alignItems: 'flex-end', marginTop: 28 } },
+              h(Text, { style: { fontSize: 12, fontWeight: 'bold' } }, signerName),
+              h(Text, { style: { fontSize: 10, color: '#555', marginTop: 2 } }, signerTitle),
+            ),
+          ]
+        : []),
       // Footer
       h(
         Text,

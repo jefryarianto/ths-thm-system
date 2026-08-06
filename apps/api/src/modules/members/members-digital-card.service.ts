@@ -44,18 +44,7 @@ export class MembersDigitalCardService {
    * fallback ke env SIGNER_NAME/SIGNER_TITLE, lalu default.
    */
   private async resolveSigner() {
-    try {
-      const active = await this.penandatanganService.findActive();
-      if (active) {
-        return { signerName: active.nama, signerTitle: active.jabatan };
-      }
-    } catch {
-      // tabel belum ada / belum migrate — lanjut ke fallback env
-    }
-    return {
-      signerName: process.env.SIGNER_NAME || 'Koordinator Distrik',
-      signerTitle: process.env.SIGNER_TITLE || 'THS-THM',
-    };
+    return this.penandatanganService.resolveActive();
   }
 
   async getDigitalCard(memberId: string, scope?: UserScope) {
