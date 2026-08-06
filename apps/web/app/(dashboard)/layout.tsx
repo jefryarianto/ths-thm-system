@@ -37,6 +37,8 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/hooks/use-auth';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { getHomePathForRole } from '@/lib/role-redirect';
+import type { Role } from '@/types';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -50,6 +52,8 @@ interface MenuItem {
   adminOnly?: boolean;
   /** If true, open in a new tab (external/API-hosted pages like Bull Board) */
   external?: boolean;
+  /** Minimum role level required to see this menu item (role-based filtering) */
+  minRole?: Role;
 }
 
 interface MenuGroup {
@@ -64,90 +68,92 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Utama',
     items: [
-      { href: '/members', label: 'Dashboard', icon: BarChart3 },
+      // Dashboard admin — anggota diarahkan ke /forum sebagai home.
+      // minRole 'penguji' karena role-redirect mengarahkan penguji ke /members juga.
+      { href: '/members', label: 'Dashboard', icon: BarChart3, minRole: 'penguji' },
     ],
   },
   {
     label: 'Keanggotaan',
     items: [
-      { href: '/members', label: 'Anggota', icon: Users },
-      { href: '/candidates', label: 'Calon', icon: UserPlus },
-      { href: '/registrations', label: 'Pendaftaran', icon: UserPlus },
-      { href: '/claims', label: 'Klaim', icon: ClipboardCheck },
+      { href: '/members', label: 'Anggota', icon: Users, minRole: 'admin_ranting' },
+      { href: '/candidates', label: 'Calon', icon: UserPlus, minRole: 'admin_ranting' },
+      { href: '/registrations', label: 'Pendaftaran', icon: UserPlus, minRole: 'admin_ranting' },
+      { href: '/claims', label: 'Klaim', icon: ClipboardCheck, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Pelatihan & Penilaian',
     items: [
-      { href: '/trainings', label: 'Latihan', icon: Dumbbell },
-      { href: '/graduations', label: 'Pendadaran', icon: GraduationCap },
-      { href: '/examiners', label: 'Penguji', icon: Shield },
-      { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck },
+      { href: '/trainings', label: 'Latihan', icon: Dumbbell, minRole: 'admin_ranting' },
+      { href: '/graduations', label: 'Pendadaran', icon: GraduationCap, minRole: 'admin_ranting' },
+      { href: '/examiners', label: 'Penguji', icon: Shield, minRole: 'admin_ranting' },
+      { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck, minRole: 'penguji' },
     ],
   },
   {
     label: 'Aktivitas',
     items: [
-      { href: '/activities', label: 'Kegiatan', icon: Calendar },
-      { href: '/calendar', label: 'Kalender', icon: Calendar },
-      { href: '/approvals', label: 'Persetujuan', icon: ClipboardCheck },
+      { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
+      { href: '/calendar', label: 'Kalender', icon: Calendar, minRole: 'anggota' },
+      { href: '/approvals', label: 'Persetujuan', icon: ClipboardCheck, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Organisasi',
     items: [
-      { href: '/org-chart', label: 'Peta Organisasi', icon: Shield },
-      { href: '/org-documents', label: 'Dokumen Org.', icon: FileText },
+      { href: '/org-chart', label: 'Peta Organisasi', icon: Shield, minRole: 'anggota' },
+      { href: '/org-documents', label: 'Dokumen Org.', icon: FileText, minRole: 'anggota' },
     ],
   },
   {
     label: 'Dokumen & Surat',
     items: [
-      { href: '/documents', label: 'Dokumen', icon: FileText },
-      { href: '/letters', label: 'Surat', icon: Mail },
+      { href: '/documents', label: 'Dokumen', icon: FileText, minRole: 'anggota' },
+      { href: '/letters', label: 'Surat', icon: Mail, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Keuangan',
     items: [
-      { href: '/dues', label: 'Iuran', icon: CreditCard },
-      { href: '/payments', label: 'Pembayaran', icon: Wallet },
+      { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
+      { href: '/payments', label: 'Pembayaran', icon: Wallet, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Gamifikasi',
     items: [
-      { href: '/gamification', label: 'Dasbor', icon: Trophy },
-      { href: '/gamification/admin', label: 'Admin', icon: Shield },
-      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp },
-      { href: '/gamification/report', label: 'Laporan', icon: BarChart3 },
-      { href: '/gamification/settings', label: 'Pengaturan', icon: Settings },
+      { href: '/gamification', label: 'Dasbor', icon: Trophy, minRole: 'admin_kegiatan' },
+      { href: '/gamification/admin', label: 'Admin', icon: Shield, minRole: 'admin_kegiatan' },
+      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'anggota' },
+      { href: '/gamification/report', label: 'Laporan', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/gamification/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Komunikasi',
     items: [
-      { href: '/forum', label: 'Forum', icon: MessageSquare },
-      { href: '/notifications', label: 'Notifikasi', icon: Bell },
-      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3 },
+      { href: '/forum', label: 'Forum', icon: MessageSquare, minRole: 'anggota' },
+      { href: '/notifications', label: 'Notifikasi', icon: Bell, minRole: 'anggota' },
+      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Laporan & Analitik',
     items: [
-      { href: '/reports', label: 'Laporan', icon: BarChart3 },
-      { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3 },
+      { href: '/reports', label: 'Laporan', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Sistem',
     items: [
-      { href: '/users', label: 'Users', icon: Shield },
-      { href: '/monitoring', label: 'Monitoring', icon: Activity },
-      { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: Bell },
-      { href: '/monitoring/incidents', label: 'Incidents', icon: AlertTriangle },
-      { href: '/settings', label: 'Pengaturan', icon: Settings },
-      { href: '/settings/email', label: 'Email Admin', icon: Mail },
+      { href: '/users', label: 'Users', icon: Shield, minRole: 'admin_ranting' },
+      { href: '/monitoring', label: 'Monitoring', icon: Activity, minRole: 'admin_ranting' },
+      { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: Bell, minRole: 'admin_ranting' },
+      { href: '/monitoring/incidents', label: 'Incidents', icon: AlertTriangle, minRole: 'admin_ranting' },
+      { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
+      { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
       {
         href: '/admin/queues',
         label: 'Antrean',
@@ -361,7 +367,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Brand + Toggle */}
         <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800 h-14 shrink-0">
           {collapsed ? (
-            <Link href="/members" className="mx-auto">
+            <Link href={user ? getHomePathForRole(user.role) : '/members'} className="mx-auto">
               <img
                 src="/logo.png"
                 alt=""
@@ -369,7 +375,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               />
             </Link>
           ) : (
-            <Link href="/members" className="flex items-center gap-2 min-w-0">
+            <Link href={user ? getHomePathForRole(user.role) : '/members'} className="flex items-center gap-2 min-w-0">
               <img
                 src="/logo.png"
                 alt=""
@@ -391,7 +397,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4">
-          {menuGroups.map((group) => (
+          {menuGroups.map((group) => {
+            const visibleItems = group.items.filter((item) => {
+              // Admin-only items (queues, WebSocket) → superadmin
+              if (item.adminOnly && mounted) {
+                if (!isAdmin) return false;
+              }
+              // Role-based filtering: hide if below the item's minimum role
+              if (item.minRole && mounted) {
+                if (!hasMinRole(item.minRole)) return false;
+              }
+              // Module-level view permission fallback
+              const moduleKey = getModuleKey(item.href);
+              if (moduleKey) {
+                const perms = MODULE_PERMISSIONS[moduleKey];
+                const requiredViewRole = perms?.view;
+                if (requiredViewRole && !hasMinRole(requiredViewRole)) {
+                  return false;
+                }
+              }
+              return true;
+            });
+
+            // Skip group entirely when nothing is visible (avoids stray labels)
+            if (visibleItems.length === 0) return null;
+
+            return (
             <div key={group.label}>
               {/* Group label — hidden when collapsed */}
               {!collapsed && (
@@ -400,22 +431,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </p>
               )}
 
-              {group.items
-                .filter((item) => {
-                  if (item.adminOnly && mounted) {
-                    if (!isAdmin) return false;
-                  }
-                  const moduleKey = getModuleKey(item.href);
-                  if (moduleKey) {
-                    const perms = MODULE_PERMISSIONS[moduleKey];
-                    const requiredViewRole = perms?.view;
-                    if (requiredViewRole && !hasMinRole(requiredViewRole)) {
-                      return false;
-                    }
-                  }
-                  return true;
-                })
-                .map((item) => {
+              {visibleItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname?.startsWith(item.href) || false;
 
@@ -488,7 +504,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   );
                 })}
             </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* User Profile — with dropdown menu */}
