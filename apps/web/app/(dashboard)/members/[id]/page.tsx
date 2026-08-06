@@ -100,11 +100,40 @@ interface DuesItem {
 
 // ─── Card Preview Helpers ───
 
+interface LevelVisual {
+  stripCount: number;
+  stripClass: string;
+  stripBorder: string;
+  stripColor: string;
+  label: string;
+}
+
+/** Tingkat Tapak Suci → visual balok pada kartu (sesuai template desain). */
+const TINGKAT_LEVEL: Record<string, LevelVisual> = {
+  Pratama: { stripCount: 2, stripClass: 'bg-red-700', stripBorder: 'border-red-900', stripColor: '#b91c1c', label: 'Balok Merah II' },
+  Tamtama: { stripCount: 2, stripClass: 'bg-blue-700', stripBorder: 'border-blue-900', stripColor: '#1d4ed8', label: 'Balok Biru II' },
+  Muda:    { stripCount: 2, stripClass: 'bg-yellow-600', stripBorder: 'border-yellow-800', stripColor: '#ca8a04', label: 'Balok Kuning II' },
+  Madya:   { stripCount: 2, stripClass: 'bg-green-700', stripBorder: 'border-green-900', stripColor: '#15803d', label: 'Balok Hijau II' },
+  Utama:   { stripCount: 2, stripClass: 'bg-slate-900', stripBorder: 'border-slate-950', stripColor: '#1e293b', label: 'Balok Hitam II' },
+};
+
+function getLevelVisual(tingkat?: string | null): LevelVisual {
+  return (
+    (tingkat && TINGKAT_LEVEL[tingkat]) || {
+      stripCount: 1,
+      stripClass: 'bg-slate-400',
+      stripBorder: 'border-slate-500',
+      stripColor: '#94a3b8',
+      label: 'Balok',
+    }
+  );
+}
+
 function InfoPreview({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="grid grid-cols-[100px_1fr] gap-1 mt-2 items-start">
-            <div className="text-sm font-bold text-blue-950">{label}</div>
-      <div className={`${strong ? 'text-lg font-black text-blue-950' : 'text-sm font-semibold text-slate-800'}`}>
+    <div className="grid grid-cols-[120px_1fr] gap-2 mt-3 items-start">
+      <div className="text-[18px] font-bold text-blue-950">{label}</div>
+      <div className={`${strong ? 'text-[25px] font-black text-blue-950' : 'text-[18px] font-semibold text-slate-800'}`}>
         : {value}
       </div>
     </div>
@@ -113,7 +142,7 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
 
 function BackPreview({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[80px_1fr] gap-2 text-sm mb-2">
+    <div className="grid grid-cols-[105px_1fr] gap-2 text-[18px] mb-3">
       <div className="font-black text-blue-950">{label}</div>
       <div className="font-semibold">: {value}</div>
     </div>
@@ -238,7 +267,15 @@ export default function MemberDetailPage() {
       const qr = data.data.qrCode;
       const distrik = m.distrik || 'THS-THM';
       const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-      const ttl = [m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID') : null].filter(Boolean).join(', ') || '-';
+      const ttl = [m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null].filter(Boolean).join(', ') || '-';
+      const dadar = [member?.tempatDadar, member?.tahunDadar].filter(Boolean).join(', ') || '-';
+      const lv = getLevelVisual(member?.tingkat);
+      const stripHtml = Array.from({ length: lv.stripCount })
+        .map(() => `<div class="level-strip" style="background:${lv.stripColor}"></div>`)
+        .join('');
+      const photoHtml = m.fotoPath
+        ? `<img src="${window.location.origin}/api/uploads/${m.fotoPath}" alt="Foto" style="width:100%;height:100%;object-fit:cover"/>`
+        : 'FOTO';
 
       const win = window.open('', '_blank');
       if (!win) return;
@@ -249,7 +286,7 @@ export default function MemberDetailPage() {
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
   @media print { body { padding: 0; } .page-break { page-break-after: always; } }
-  .card { width: 856px; height: 540px; position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15); flex-shrink: 0; }
+  .card { width: 856px; height: 540px; position: relative; border-radius: 28px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15); flex-shrink: 0; }
   .card.front { background: linear-gradient(135deg, #ecfeff, #fff, #dbeafe); border: 2px solid #e2e8f0; }
   .card.back { background: linear-gradient(135deg, #1e3a5f, #1e40af, #0891b2); border: 2px solid #1e3a5f; }
   .front .bg-circle1 { position: absolute; top: -80px; right: -80px; width: 320px; height: 320px; border-radius: 50%; background: rgba(6,182,212,0.15); }
@@ -258,41 +295,45 @@ export default function MemberDetailPage() {
   .front .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(90deg, #0f2b4a, #1e40af, #0891b2); }
   .front .border-inner, .back .border-inner { position: absolute; inset: 18px; border-radius: 20px; border: 2px solid rgba(250,204,21,0.6); }
   .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 100px; font-weight: 900; color: rgba(30,58,95,0.04); pointer-events: none; }
-  .content { position: relative; z-index: 10; height: 100%; padding: 32px; }
-  .header-row { display: flex; align-items: flex-start; gap: 16px; color: #fff; }
+  .content { position: relative; z-index: 10; height: 100%; padding: 0; }
+  .header-row { display: flex; align-items: flex-start; gap: 20px; padding: 24px 40px 0; color: #fff; }
   .logo { width: 48px; height: 48px; border-radius: 50%; background: #fde047; border: 4px solid #0f172a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .logo-inner { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #1e3a5f; }
   .header-text { line-height: 1.2; }
-  .header-text .org { font-size: 18px; font-weight: 900; letter-spacing: 0.02em; }
-  .header-text .sub { font-size: 14px; font-weight: 600; opacity: 0.9; }
-  .title-badge { position: absolute; left: 0; right: 0; text-align: center; top: 82px; }
-  .title-badge span { display: inline-block; padding: 6px 24px; border-radius: 999px; background: rgba(255,255,255,0.9); border: 1px solid #eab308; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 18px; font-weight: 900; letter-spacing: 0.18em; color: #1e3a5f; }
-  .photo { position: absolute; left: 32px; top: 140px; width: 160px; height: 200px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px; font-weight: 600; }
-  .info { position: absolute; left: 210px; top: 138px; right: 30px; }
-  .info-row { display: grid; grid-template-columns: 100px 1fr; gap: 4px; margin-top: 8px; align-items: start; }
-  .info-row.label { font-size: 14px; font-weight: 700; color: #1e3a5f; }
-  .info-row.name { font-size: 18px; font-weight: 900; color: #1e3a5f; }
-  .info-row.value { font-size: 14px; font-weight: 600; color: #1e293b; }
-  .bottom-info { position: absolute; left: 32px; bottom: 28px; color: #fff; font-size: 12px; }
-  .bottom-info .expiry { font-size: 18px; font-weight: 900; }
-  .signature { position: absolute; right: 40px; bottom: 24px; text-align: center; color: #fff; }
-  .signature .sig { font-size: 30px; font-family: cursive; transform: rotate(-8deg); color: rgba(15,23,42,0.8); margin-bottom: 4px; }
-  .signature .title { font-size: 13px; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.6); padding-top: 4px; }
-  .signature .subtitle { font-size: 10px; font-weight: 600; opacity: 0.9; }
-  .back .title { position: absolute; left: 0; right: 0; text-align: center; top: 24px; color: #fff; }
-  .back .title h2 { font-size: 22px; font-weight: 900; letter-spacing: 0.16em; }
-  .back .title p { font-size: 12px; opacity: 0.9; margin-top: 4px; }
-  .qr-box { position: absolute; left: 40px; top: 100px; width: 170px; height: 170px; background: #fff; border-radius: 16px; border: 4px solid #1e3a5f; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 12px; display: flex; align-items: center; justify-content: center; }
+  .header-text .org { font-size: 22px; font-weight: 900; letter-spacing: 0.02em; }
+  .header-text .sub { font-size: 17px; font-weight: 600; opacity: 0.95; }
+  .title-badge { position: absolute; left: 0; right: 0; text-align: center; top: 92px; }
+  .title-badge span { display: inline-block; padding: 8px 32px; border-radius: 999px; background: rgba(255,255,255,0.9); border: 1px solid #eab308; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 24px; font-weight: 900; letter-spacing: 0.18em; color: #1e3a5f; }
+  .photo { position: absolute; left: 40px; top: 165px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 18px; font-weight: 600; }
+  .level-strips { position: absolute; left: 40px; top: 412px; width: 185px; display: flex; flex-direction: column; gap: 6px; }
+  .level-strip { height: 14px; width: 100%; border-radius: 4px; border: 1px solid rgba(0,0,0,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .info { position: absolute; left: 255px; top: 162px; right: 40px; }
+  .info-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; margin-top: 12px; align-items: start; }
+  .info-row .label { font-size: 18px; font-weight: 700; color: #1e3a5f; }
+  .info-row .name { font-size: 25px; font-weight: 900; color: #1e3a5f; }
+  .info-row .value { font-size: 18px; font-weight: 600; color: #1e293b; }
+  .bottom-info { position: absolute; left: 40px; bottom: 40px; color: #fff; font-size: 15px; }
+  .bottom-info .expiry { font-size: 22px; font-weight: 900; }
+  .signature { position: absolute; right: 48px; bottom: 36px; text-align: center; color: #fff; }
+  .signature .sig-wrap { position: relative; height: 80px; width: 192px; margin-bottom: 4px; }
+  .signature .sig { position: absolute; left: 32px; top: 0; font-size: 38px; font-family: cursive; transform: rotate(-8deg); color: rgba(15,23,42,0.8); }
+  .signature .stamp { position: absolute; right: 0; top: 0; width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(191,219,254,0.8); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #dbeafe; transform: rotate(-12deg); }
+  .signature .title { font-size: 16px; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.6); padding-top: 4px; }
+  .signature .subtitle { font-size: 13px; font-weight: 600; opacity: 0.9; }
+  .back .title { position: absolute; left: 0; right: 0; text-align: center; top: 28px; color: #fff; }
+  .back .title h2 { font-size: 28px; font-weight: 900; letter-spacing: 0.16em; }
+  .back .title p { font-size: 15px; opacity: 0.9; margin-top: 4px; }
+  .qr-box { position: absolute; left: 48px; top: 145px; width: 210px; height: 210px; background: #fff; border-radius: 16px; border: 4px solid #1e3a5f; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 16px; display: flex; align-items: center; justify-content: center; }
   .qr-box img { width: 100%; height: 100%; }
-  .back-info { position: absolute; left: 240px; top: 100px; right: 30px; background: rgba(255,255,255,0.85); border-radius: 16px; border: 1px solid rgba(191,219,254,0.5); padding: 16px; color: #334155; }
-  .back-info .row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; font-size: 14px; margin-bottom: 8px; }
+  .back-info { position: absolute; left: 300px; top: 145px; right: 48px; background: rgba(255,255,255,0.85); border-radius: 16px; border: 1px solid rgba(191,219,254,0.5); padding: 24px; color: #334155; }
+  .back-info .row { display: grid; grid-template-columns: 105px 1fr; gap: 8px; font-size: 18px; margin-bottom: 12px; }
   .back-info .row .lbl { font-weight: 900; color: #1e3a5f; }
   .back-info .row .val { font-weight: 600; }
-  .back-info .desc { font-size: 14px; line-height: 1.5; margin-bottom: 12px; }
-  .back-footer { position: absolute; left: 30px; right: 30px; bottom: 24px; display: flex; align-items: flex-end; justify-content: space-between; color: #fff; font-size: 12px; }
+  .back-info .desc { font-size: 18px; line-height: 1.5; margin-bottom: 16px; }
+  .back-footer { position: absolute; left: 48px; right: 48px; bottom: 32px; display: flex; align-items: flex-end; justify-content: space-between; color: #fff; font-size: 15px; }
   .back-footer .url { text-align: right; }
-  .back-footer .url .u { font-size: 10px; opacity: 0.8; }
-  .back-footer .url .v { font-size: 13px; font-weight: 700; }
+  .back-footer .url .u { font-size: 13px; opacity: 0.8; }
+  .back-footer .url .v { font-size: 16px; font-weight: 700; }
 </style></head><body>
 <div class="card front">
   <div class="bg-circle1"></div><div class="bg-circle2"></div>
@@ -308,7 +349,8 @@ export default function MemberDetailPage() {
       </div>
     </div>
     <div class="title-badge"><span>KARTU TANDA ANGGOTA</span></div>
-    <div class="photo">FOTO</div>
+    <div class="photo">${photoHtml}</div>
+    <div class="level-strips">${stripHtml}</div>
     <div class="info">
       <div class="info-row"><span class="label">Nama</span><span class="name">: ${m.namaLengkap}</span></div>
       <div class="info-row"><span class="label">No. Anggota</span><span class="value">: ${m.nomorAnggota}</span></div>
@@ -321,7 +363,10 @@ export default function MemberDetailPage() {
       <div class="expiry">${expiry}</div>
     </div>
     <div class="signature">
-      <div class="sig">ttd</div>
+      <div class="sig-wrap">
+        <div class="sig">ttd</div>
+        <div class="stamp">STEMPEL</div>
+      </div>
       <div class="title">Koordinator Distrik</div>
       <div class="subtitle">THS-THM</div>
     </div>
@@ -338,7 +383,9 @@ export default function MemberDetailPage() {
     <div class="back-info">
       <p class="desc">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
       <div class="row"><span class="lbl">TTL</span><span class="val">: ${ttl}</span></div>
+      <div class="row"><span class="lbl">DADAR</span><span class="val">: ${dadar}</span></div>
       <div class="row"><span class="lbl">Status</span><span class="val">: ${m.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'}</span></div>
+      <div class="row"><span class="lbl">Valid s/d</span><span class="val">: ${expiry}</span></div>
     </div>
     <div class="back-footer">
       <div>Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
@@ -417,6 +464,18 @@ export default function MemberDetailPage() {
     [member.ranting?.wilayah?.distrik?.nama, member.ranting?.wilayah?.nama, member.ranting?.nama]
       .filter(Boolean)
       .join(' › ') || '-';
+
+  // ── Data turunan kartu (sesuai template desain) ──
+  const levelVisual = getLevelVisual(member.tingkat);
+  const validUntilText = new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const ttl = [member.tempatLahir, member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null]
+    .filter(Boolean)
+    .join(', ') || '-';
+  const dadar = [member.tempatDadar, member.tahunDadar].filter(Boolean).join(', ') || '-';
 
   return (
       <PermissionGuard module="members" action="view">
@@ -748,7 +807,7 @@ export default function MemberDetailPage() {
                   {/* Front Side Preview */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Depan</h4>
-                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[20px] overflow-hidden shadow-xl border border-gray-300 bg-white">
+                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border border-slate-300 bg-white">
                       {/* Background */}
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-white to-blue-100" />
                       <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-cyan-300/30" />
@@ -763,32 +822,43 @@ export default function MemberDetailPage() {
                       </div>
         
                       {/* Content */}
-                      <div className="relative z-10 h-full p-8">
+                      <div className="relative z-10 h-full">
                         {/* Header */}
-                        <div className="flex items-start gap-4 text-white">
-                          <div className="w-12 h-12 rounded-full bg-yellow-300 border-4 border-slate-900 flex items-center justify-center flex-shrink-0">
+                        <div className="px-10 pt-6 flex items-start gap-5 text-white">
+                          <div className="w-12 h-12 rounded-full bg-yellow-300 border-4 border-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
                             <div className="w-8 h-8 rounded-full bg-white border border-slate-700 flex items-center justify-center text-[9px] font-black text-blue-800">THS</div>
                           </div>
                           <div className="leading-tight">
-                            <div className="text-[18px] font-black tracking-wide">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
-                            <div className="text-[14px] font-semibold opacity-95">DISTRIK {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
+                            <div className="text-[22px] font-black tracking-wide">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
+                            <div className="text-[17px] font-semibold opacity-95">DISTRIK {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
                           </div>
                         </div>
         
                         {/* Title */}
-                        <div className="absolute left-0 right-0 text-center" style={{ top: '82px' }}>
-                          <div className="inline-block px-6 py-1.5 rounded-full bg-white/90 border border-yellow-500 shadow-sm">
-                            <span className="text-[18px] font-black tracking-[0.18em] text-blue-900">KARTU TANDA ANGGOTA</span>
+                        <div className="absolute top-[92px] left-0 right-0 text-center">
+                          <div className="inline-block px-8 py-2 rounded-full bg-white/90 border border-yellow-500 shadow-sm">
+                            <span className="text-[24px] font-black tracking-[0.18em] text-blue-900">KARTU TANDA ANGGOTA</span>
                           </div>
                         </div>
         
                         {/* Photo */}
-                        <div className="absolute left-8 rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden" style={{ top: '140px', width: '160px', height: '200px' }}>
-                          <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm">FOTO</div>
+                        <div className="absolute left-10 top-[165px] w-[185px] h-[235px] rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden">
+                          {member.fotoPath ? (
+                            <img src={`/api/uploads/${member.fotoPath}`} alt="Foto" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-100 flex items-center justify-center text-slate-500 font-bold text-lg">FOTO</div>
+                          )}
+                        </div>
+
+                        {/* Level strips — balok sesuai tingkat (sesuai template desain) */}
+                        <div className="absolute left-10 top-[412px] w-[185px] flex flex-col gap-[6px]">
+                          {Array.from({ length: levelVisual.stripCount }).map((_, i) => (
+                            <div key={i} className={`h-[14px] w-full rounded-sm border ${levelVisual.stripClass} ${levelVisual.stripBorder} shadow-sm`} />
+                          ))}
                         </div>
         
                         {/* Info */}
-                        <div className="absolute text-slate-800" style={{ left: '210px', top: '138px', right: '30px' }}>
+                        <div className="absolute left-[255px] top-[162px] right-10 text-slate-800">
                           <InfoPreview label="Nama" value={member.namaLengkap} strong />
                           <InfoPreview label="No. Anggota" value={member.nomorAnggota} />
                           <InfoPreview label="Ranting" value={member.ranting?.nama || '-'} />
@@ -797,17 +867,17 @@ export default function MemberDetailPage() {
                         </div>
         
                         {/* Bottom */}
-                        <div className="absolute left-8 text-white" style={{ bottom: '28px' }}>
-                          <div className="text-[12px] opacity-90">Berlaku sampai</div>
-                          <div className="text-[18px] font-black">{new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                        <div className="absolute left-10 bottom-10 text-white">
+                          <div className="text-[15px] opacity-90">Berlaku sampai</div>
+                          <div className="text-[22px] font-black">{validUntilText}</div>
                         </div>
-                        <div className="absolute text-center text-white" style={{ right: '40px', bottom: '24px' }}>
-                          <div className="relative h-16 w-36">
-                            <div className="absolute left-6 top-0 text-3xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
-                            <div className="absolute right-0 top-0 w-16 h-16 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[8px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
+                        <div className="absolute right-12 bottom-9 text-center text-white">
+                          <div className="relative h-20 w-48">
+                            <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
+                            <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
                           </div>
-                          <div className="text-[13px] font-black border-t border-white/60 pt-1">Koordinator Distrik</div>
-                          <div className="text-[10px] font-semibold opacity-95">THS-THM</div>
+                          <div className="text-[16px] font-black border-t border-white/60 pt-1">Koordinator Distrik</div>
+                          <div className="text-[13px] font-semibold opacity-95">THS-THM</div>
                         </div>
                       </div>
                     </div>
@@ -816,14 +886,14 @@ export default function MemberDetailPage() {
                   {/* Back Side Preview */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
-                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[20px] overflow-hidden shadow-xl border border-gray-300 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600">
+                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border border-slate-300 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600">
                       <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
-                      <div className="relative z-10 h-full p-8">
-                        <div className="absolute left-0 right-0 text-center" style={{ top: '24px' }}>
-                          <div className="text-[22px] font-black tracking-[0.16em] text-white">VERIFIKASI KARTU ANGGOTA</div>
-                          <div className="text-[12px] opacity-90 text-white mt-1">Scan QR untuk memeriksa keabsahan anggota</div>
+                      <div className="relative z-10 h-full">
+                        <div className="absolute top-7 left-0 right-0 text-center">
+                          <div className="text-[28px] font-black tracking-[0.16em] text-white">VERIFIKASI KARTU ANGGOTA</div>
+                          <div className="text-[15px] opacity-90 text-white mt-1">Scan QR untuk memeriksa keabsahan anggota</div>
                         </div>
-                        <div className="absolute bg-white rounded-2xl border-4 border-blue-900 shadow-lg p-3 flex items-center justify-center" style={{ left: '40px', top: '100px', width: '170px', height: '170px' }}>
+                        <div className="absolute left-12 top-[145px] w-[210px] h-[210px] bg-white rounded-2xl border-4 border-blue-900 shadow-lg p-4 flex items-center justify-center">
                           {cardData?.qrCode ? (
                             <img src={cardData.qrCode} alt="QR Code" className="w-full h-full" />
                           ) : (
@@ -834,16 +904,20 @@ export default function MemberDetailPage() {
                             </div>
                           )}
                         </div>
-                        <div className="absolute bg-white/85 rounded-2xl border border-blue-200 p-4 shadow-sm" style={{ left: '240px', top: '100px', right: '30px' }}>
-                          <p className="text-sm leading-relaxed text-slate-700 mb-3">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
-                          <BackPreview label="TTL" value={member.tempatLahir ? `${member.tempatLahir}, ${member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID') : '-'}` : member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID') : '-'} />
-                          <BackPreview label="Status" value={member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'} />
+                        <div className="absolute left-[300px] top-[145px] right-12 text-slate-800">
+                          <div className="bg-white/85 rounded-2xl border border-blue-200 p-6 shadow-sm">
+                            <p className="text-[18px] leading-relaxed text-slate-700 mb-4">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
+                            <BackPreview label="TTL" value={ttl} />
+                            <BackPreview label="DADAR" value={dadar} />
+                            <BackPreview label="Status" value={member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'} />
+                            <BackPreview label="Valid s/d" value={validUntilText} />
+                          </div>
                         </div>
-                        <div className="absolute text-white flex items-end justify-between gap-6" style={{ left: '30px', right: '30px', bottom: '24px' }}>
-                          <div className="text-xs leading-relaxed opacity-95 max-w-[500px]">Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
+                        <div className="absolute left-12 right-12 bottom-8 text-white flex items-end justify-between gap-6">
+                          <div className="max-w-[610px] text-[15px] leading-relaxed opacity-95">Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
                           <div className="text-right">
-                            <div className="text-[10px] opacity-80">URL Verifikasi</div>
-                            <div className="text-[13px] font-bold">/verify/member/token</div>
+                            <div className="text-[13px] opacity-80">URL Verifikasi</div>
+                            <div className="text-[16px] font-bold">/verify/member/token</div>
                           </div>
                         </div>
                       </div>
