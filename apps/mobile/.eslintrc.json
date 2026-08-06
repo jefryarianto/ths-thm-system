@@ -11,6 +11,7 @@
   },
   "rules": {
     "@typescript-eslint/no-require-imports": "off",
+    "@typescript-eslint/no-var-requires": "off",
     "react-hooks/exhaustive-deps": "off"
   }
 }
