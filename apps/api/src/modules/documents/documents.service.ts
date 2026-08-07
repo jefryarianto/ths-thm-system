@@ -138,14 +138,13 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
-      const signer = await this.resolveSigner();
+      const signers = await this.penandatanganService.resolveSigners(dto.type);
       const PdfDoc = buildPdfDocument({
         type: dto.type,
         nomorDokumen,
         member,
         qrDataUrl,
-        signerName: signer.signerName,
-        signerTitle: signer.signerTitle,
+        signers,
         template: await this.resolveTemplateTexts(dto.type),
       });
 
@@ -456,6 +455,16 @@ export class DocumentsService {
       const { buildCertificatePdf } = require('./pdf-templates/certificate');
 
       const signer = await this.resolveSigner();
+      const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran');
+      const signers = hasMapping
+        ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran')
+        : [
+            {
+              signerName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
+              signerTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
+            },
+            { signerName: dto.signerName || signer.signerName, signerTitle: dto.signerTitle || signer.signerTitle },
+          ];
       const pdfDoc = buildCertificatePdf({
         recipientName: member.namaLengkap,
         certificateNumber: nomorDokumen,
@@ -472,10 +481,7 @@ export class DocumentsService {
           month: 'long',
           year: 'numeric',
         }),
-        signerName: dto.signerName || signer.signerName,
-        signerTitle: dto.signerTitle || signer.signerTitle,
-        pastorName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
-        pastorTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
+        signers,
         aspects: dto.aspects,
         qrDataUrl,
         template: await this.resolveTemplateTexts('sertifikat_pendadaran'),
@@ -519,6 +525,16 @@ export class DocumentsService {
     const { buildCertificatePdf } = require('./pdf-templates/certificate');
 
     const signer = await this.resolveSigner();
+    const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran');
+    const signers = hasMapping
+      ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran')
+      : [
+          {
+            signerName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
+            signerTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
+          },
+          { signerName: dto.signerName || signer.signerName, signerTitle: dto.signerTitle || signer.signerTitle },
+        ];
     const pdfDoc = buildCertificatePdf({
       recipientName: member.namaLengkap,
       certificateNumber: nomorDokumen,
@@ -533,10 +549,7 @@ export class DocumentsService {
       issuedDate: new Date().toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric',
       }),
-      signerName: dto.signerName || signer.signerName,
-      signerTitle: dto.signerTitle || signer.signerTitle,
-      pastorName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
-      pastorTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
+      signers,
       aspects: dto.aspects,
       qrDataUrl,
       template: await this.resolveTemplateTexts('sertifikat_pendadaran'),
@@ -587,7 +600,9 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
-      const signer = await this.resolveSigner();
+      const signers = dto.signerName
+        ? [{ signerName: dto.signerName, signerTitle: dto.signerTitle || '' }]
+        : await this.penandatanganService.resolveSigners('piagam_prestasi');
       const PdfDoc = buildPdfDocument({
         type: 'piagam_prestasi',
         nomorDokumen,
@@ -598,8 +613,7 @@ export class DocumentsService {
           ranting: member.ranting,
         },
         qrDataUrl,
-        signerName: dto.signerName || signer.signerName,
-        signerTitle: dto.signerTitle || signer.signerTitle,
+        signers,
         template: await this.resolveTemplateTexts('piagam_prestasi'),
       });
 

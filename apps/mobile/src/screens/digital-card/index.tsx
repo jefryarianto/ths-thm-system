@@ -32,6 +32,8 @@ interface CardData {
   qrCode: string | null;
   signerName: string;
   signerTitle: string;
+  /** Penandatangan ganda (1-3) dari API — tampil berurutan. */
+  signers?: { signerName?: string; signerTitle?: string }[];
 }
 
 // ─── Tingkat → visual balok (sesuai template desain) ───
@@ -170,8 +172,15 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
               <Text style={styles.stampText}>STEMPEL</Text>
             </View>
           </View>
-          <Text style={styles.signerName} numberOfLines={1}>{cardData?.signerName || 'Koordinator Distrik'}</Text>
-          <Text style={styles.signerTitle} numberOfLines={1}>{cardData?.signerTitle || 'THS-THM'}</Text>
+          {(cardData?.signers && cardData.signers.length > 0
+            ? cardData.signers
+            : [{ signerName: cardData?.signerName || 'Koordinator Distrik', signerTitle: cardData?.signerTitle || 'THS-THM' }]
+          ).map((s, i) => (
+            <View key={i} style={styles.signerRow}>
+              <Text style={styles.signerName} numberOfLines={1}>{s.signerName || 'Koordinator Distrik'}</Text>
+              <Text style={styles.signerTitle} numberOfLines={1}>{s.signerTitle || ''}</Text>
+            </View>
+          ))}
         </View>
       </View>
     </CardShell>
@@ -243,15 +252,19 @@ export default function DigitalCardScreen() {
         if (me?.id) {
           try {
             const res = await apiClient.get(`/members/${me.id}/digital-card`);
-            const data = unwrap<{ qrCode: string; card?: { signerName?: string; signerTitle?: string } }>(res);
+            const data = unwrap<{
+              qrCode: string;
+              card?: { signerName?: string; signerTitle?: string; signers?: { signerName?: string; signerTitle?: string }[] };
+            }>(res);
             setCardData({
               qrCode: data.qrCode || null,
               signerName: data.card?.signerName || 'Koordinator Distrik',
               signerTitle: data.card?.signerTitle || 'THS-THM',
+              signers: data.card?.signers || [],
             });
           } catch {
             // QR/signer gagal dimuat — kartu tetap tampil (fallback nama default)
-            setCardData({ qrCode: null, signerName: 'Koordinator Distrik', signerTitle: 'THS-THM' });
+            setCardData({ qrCode: null, signerName: 'Koordinator Distrik', signerTitle: 'THS-THM', signers: [] });
           }
         }
       } catch {
@@ -388,6 +401,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-12deg' }],
   },
   stampText: { fontSize: 10, fontWeight: '900', color: '#dbeafe' },
+  signerRow: { alignItems: 'center', width: '100%', marginBottom: 6 },
   signerName: { fontSize: 16, fontWeight: '900', color: '#fff', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.6)', paddingTop: 4, maxWidth: 220 },
   signerTitle: { fontSize: 13, fontWeight: '600', color: '#fff', opacity: 0.95, marginTop: 2, maxWidth: 220 },
 

@@ -423,8 +423,10 @@ interface MemberCardPdfProps {
     nomorDokumen: string;
     qrDataUrl: string;
     verificationUrl: string;
-    signerName: string;
-    signerTitle: string;
+    /** Penandatangan kartu (1-3 orang). Jika kosong, pakai signerName/signerTitle lama. */
+    signers?: Array<{ signerName?: string; signerTitle?: string }>;
+    signerName?: string;
+    signerTitle?: string;
   };
   /** Data URL foto anggota (base64) — opsional, fallback ke placeholder "FOTO". */
   photoDataUrl?: string | null;
@@ -556,7 +558,7 @@ export function buildMemberCardPdf({ member, cardConfig, photoDataUrl }: MemberC
         h(Text, { style: styles.validUntil }, 'Berlaku sampai'),
         h(Text, { style: styles.validUntilValue }, validUntilStr),
       ),
-      // Bottom right — penandatangan + stempel
+      // Bottom right — penandatangan (1-3) + stempel
       h(
         View,
         { style: styles.signature },
@@ -566,8 +568,25 @@ export function buildMemberCardPdf({ member, cardConfig, photoDataUrl }: MemberC
           h(Text, { style: styles.sigText }, 'ttd'),
           h(View, { style: styles.stamp }, h(Text, { style: styles.stampText }, 'STEMPEL')),
         ),
-        h(Text, { style: styles.signerName }, cardConfig.signerName),
-        h(Text, { style: styles.signerTitle }, cardConfig.signerTitle),
+        ...(cardConfig.signers && cardConfig.signers.length > 0
+          ? cardConfig.signers
+              .filter((s) => s && (s.signerName || s.signerTitle))
+              .map((s, i) =>
+                h(
+                  View,
+                  { key: `sig-${i}`, style: { alignItems: 'center', marginTop: i === 0 ? 0 : 8, width: '100%' } },
+                  s.signerName
+                    ? h(Text, { style: styles.signerName }, s.signerName)
+                    : null,
+                  s.signerTitle
+                    ? h(Text, { style: styles.signerTitle }, s.signerTitle)
+                    : null,
+                ),
+              )
+          : [
+              h(Text, { key: 'sig-n', style: styles.signerName }, cardConfig.signerName),
+              h(Text, { key: 'sig-t', style: styles.signerTitle }, cardConfig.signerTitle),
+            ]),
       ),
     ),
     // ── Back side ──

@@ -1564,6 +1564,23 @@ model Penandatangan {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  dokumenPenandatangans DokumenPenandatangan[]
+
   @@index([isActive])
   @@map("penandatangans")
+}
+
+/// Penugasan penandatangan per tipe dokumen (1-3 orang, diurutkan via `urutan`).
+model DokumenPenandatangan {
+  id              String        @id @default(uuid())
+  dokumenType     String        @map("dokumen_type")
+  penandatanganId String        @map("penandatangan_id")
+  urutan          Int
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  penandatangan Penandatangan @relation(fields: [penandatanganId], references: [id], onDelete: Cascade)
+
+  @@unique([dokumenType, urutan])
+  @@index([dokumenType])
+  @@map("dokumen_penandatangans")
 }

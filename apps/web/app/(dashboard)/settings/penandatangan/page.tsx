@@ -36,6 +36,17 @@ export default function PenandatanganPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
+  // Penandatangan per tipe dokumen (1-3 orang)
+  const [docTypes, setDocTypes] = useState<
+    {
+      type: string;
+      label: string;
+      signers: { penandatanganId: string; nama: string; jabatan: string }[];
+    }[]
+  >([]);
+  const [docSlots, setDocSlots] = useState<Record<string, string[]>>({});
+  const [savingDoc, setSavingDoc] = useState<string | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -47,7 +58,33 @@ export default function PenandatanganPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const fetchDocAssignments = useCallback(async () => {
+    try {
+      const { data: res } = await apiClient.get('/penandatangan/dokumen');
+      const list = (res.data || []) as {
+        type: string;
+        label: string;
+        signers: { penandatanganId: string; nama: string; jabatan: string }[];
+      }[];
+      setDocTypes(list);
+      const slots: Record<string, string[]> = {};
+      for (const t of list) {
+        slots[t.type] = [
+          t.signers[0]?.penandatanganId || '',
+          t.signers[1]?.penandatanganId || '',
+          t.signers[2]?.penandatanganId || '',
+        ];
+      }
+      setDocSlots(slots);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    fetchDocAssignments();
+  }, [fetchData, fetchDocAssignments]);
 
   const activeCount = data.filter((s) => s.isActive).length;
 
@@ -116,6 +153,20 @@ export default function PenandatanganPage() {
     }
   };
 
+  const saveDocAssignment = async (type: string) => {
+    const ids = (docSlots[type] || []).filter(Boolean);
+    setSavingDoc(type);
+    try {
+      await apiClient.put(`/penandatangan/dokumen/${type}`, { penandatanganIds: ids });
+      toast('success', 'Penandatangan dokumen disimpan');
+      fetchDocAssignments();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal menyimpan penandatangan dokumen');
+    }
+    setSavingDoc(null);
+  };
+
   return (
     <PermissionGuard module="settings" action="view">
       <PageContainer>
@@ -140,9 +191,10 @@ export default function PenandatanganPage() {
         <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-400">
           <IdCard size={16} className="shrink-0 mt-0.5" />
           <p>
-            Penandatangan dengan status <strong>Aktif</strong> otomatis dipakai pada Kartu Anggota
-            Digital (KTA) dan dokumen lainnya. Hanya satu penandatangan yang bisa aktif — mengaktifkan
-            satu akan menonaktifkan yang lain.
+            Penandatangan dengan status <strong>Aktif</strong> dipakai sebagai bawaan pada dokumen.
+            Di bagian <strong>Penandatangan per Dokumen</strong> (bawah), Anda bisa mengatur 1-3
+            penandatangan khusus untuk tiap jenis dokumen (mis. moderator + koordinator distrik pada
+            KTA, atau koordinator distrik + ketua panitia pada piagam).
           </p>
         </div>
 
@@ -237,6 +289,76 @@ export default function PenandatanganPage() {
               : 'Belum ada penandatangan aktif — kartu akan memakai fallback default.'}
           </p>
         )}
+
+        {/* ─── Penandatangan per Dokumen (1-3) ─── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              Penandatangan per Dokumen
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Atur 1-3 penandatangan yang tampil di tiap jenis dokumen — urutan slot = posisi tanda
+              tangan. Kosongkan semua slot untuk memakai penandatangan aktif sebagai bawaan.
+            </p>
+          </div>
+
+          {docTypes.length === 0 ? (
+            <p className="text-sm text-gray-400 py-4">Memuat penugasan...</p>
+          ) : (
+            <div className="space-y-4">
+              {docTypes.map((t) => (
+                <div
+                  key={t.type}
+                  className="border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+                >
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t.label}</h4>
+                    <button
+                      onClick={() => saveDocAssignment(t.type)}
+                      disabled={savingDoc === t.type}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <Save size={13} />
+                      {savingDoc === t.type ? 'Menyimpan...' : 'Simpan'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i}>
+                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Tanda tangan {i + 1}
+                        </label>
+                        <select
+                          value={docSlots[t.type]?.[i] || ''}
+                          onChange={(e) =>
+                            setDocSlots((prev) => {
+                              const cur = [...(prev[t.type] || ['', '', ''])];
+                              cur[i] = e.target.value;
+                              return { ...prev, [t.type]: cur };
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">— Kosong —</option>
+                          {data.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.nama} ({s.jabatan})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                  {t.signers.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Saat ini: {t.signers.map((s) => s.nama).join(', ')}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* ─── Create / Edit Modal ─── */}
         <Modal

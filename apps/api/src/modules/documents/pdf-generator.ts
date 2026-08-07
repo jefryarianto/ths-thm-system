@@ -41,9 +41,8 @@ interface PdfDocProps {
     ranting?: { nama: string } | null;
   } | null;
   qrDataUrl: string;
-  /** Nama & jabatan penandatangan (dari tabel penandatangans) — opsional. */
-  signerName?: string;
-  signerTitle?: string;
+  /** Penandatangan dokumen (1-3 orang, dari penugasan per tipe) — opsional. */
+  signers?: Array<{ signerName?: string; signerTitle?: string }>;
   /** Override teks template dari pengaturan (halaman Settings → Template Dokumen). */
   template?: {
     orgNama?: string;
@@ -60,8 +59,7 @@ export function buildPdfDocument({
   nomorDokumen,
   member,
   qrDataUrl,
-  signerName,
-  signerTitle,
+  signers,
   template,
 }: PdfDocProps) {
   const orgNama = template?.orgNama || 'THS-THM System Manajemen';
@@ -138,14 +136,33 @@ export function buildPdfDocument({
         h(Image, { src: qrDataUrl, style: styles.qrImage }),
         h(Text, { style: { fontSize: 8, marginTop: 4 } }, 'Scan untuk verifikasi'),
       ),
-      // Signer (dari tabel penandatangan) — tampil bila tersedia
-      ...(signerName
+      // Penandatangan (1-3 blok) — dari penugasan per tipe dokumen
+      ...(signers && signers.length > 0
         ? [
             h(
               View,
-              { key: 'signer', style: { alignItems: 'flex-end', marginTop: 28 } },
-              h(Text, { style: { fontSize: 12, fontWeight: 'bold' } }, signerName),
-              h(Text, { style: { fontSize: 10, color: '#555', marginTop: 2 } }, signerTitle),
+              {
+                key: 'signers',
+                style: {
+                  flexDirection: 'row',
+                  justifyContent: signers.length === 1 ? 'flex-end' : 'space-between',
+                  alignItems: 'flex-end',
+                  marginTop: 28,
+                  gap: 24,
+                },
+              },
+              ...signers
+                .filter((s) => s && (s.signerName || s.signerTitle))
+                .map((s, i) =>
+                  h(
+                    View,
+                    { key: `signer-${i}`, style: { alignItems: 'center', minWidth: 160 } },
+                    h(Text, { style: { fontSize: 12, fontWeight: 'bold' } }, s.signerName),
+                    s.signerTitle
+                      ? h(Text, { style: { fontSize: 10, color: '#555', marginTop: 2 } }, s.signerTitle)
+                      : null,
+                  ),
+                ),
             ),
           ]
         : []),

@@ -347,10 +347,8 @@ interface CertificatePdfProps {
   predicate: string;
   status: string;
   issuedDate: string;
-  signerName: string;
-  signerTitle: string;
-  pastorName: string;
-  pastorTitle: string;
+  /** Penandatangan sertifikat (1-3 orang). */
+  signers: Array<{ signerName: string; signerTitle: string }>;
   aspects: AspectScore[];
   qrDataUrl?: string;
   hideBack?: boolean;
@@ -368,13 +366,34 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
   const {
     recipientName, certificateNumber, eventTitle, location,
     ranting, wilayah, distrik, finalScore, predicate, status,
-    issuedDate, signerName, signerTitle, pastorName, pastorTitle,
-    aspects, qrDataUrl, template,
+    issuedDate, signers, aspects, qrDataUrl, template,
   } = props;
 
   const orgName = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
   const judulText = template?.judul || 'SERTIFIKAT';
   const subJudulText = template?.subJudul || 'PENDADARAN';
+
+  const signerBlocks = (signers || []).map((s, i) =>
+    h(View, { key: `signer-${i}`, style: styles.signerBlock },
+      h(Text, { style: { fontSize: 13, color: '#475569', marginBottom: 4 } }, 'ttd'),
+      h(View, { style: styles.signerLine },
+        h(Text, { style: styles.signerName }, s.signerName),
+        h(Text, { style: styles.signerTitle }, s.signerTitle))),
+  );
+
+  // Tanggal di tengah untuk 2 penandatangan (mempertahankan tata letak klasik);
+  // untuk 1 atau 3 penandatangan, tanggal diposisikan absolut di atas baris.
+  const signerCount = signerBlocks.length;
+  const signerSectionChildren =
+    signerCount === 2
+      ? [
+          signerBlocks[0],
+          h(Text, { key: 'tgl', style: styles.tanggalText }, issuedDate),
+          signerBlocks[1],
+        ]
+      : signerCount === 1
+        ? [signerBlocks[0], h(Text, { key: 'tgl', style: styles.tanggalText }, issuedDate)]
+        : signerBlocks;
 
   const pages = [
     // Front side
@@ -427,19 +446,16 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
         h(View, { style: styles.infoBox },
           h(Text, { style: styles.infoLabel }, 'Status'),
           h(Text, { style: styles.infoValueHighlight }, status))),
-      // Signers
-      h(View, { style: styles.signerSection },
-        h(View, { style: styles.signerBlock },
-          h(Text, { style: { fontSize: 13, color: '#475569', marginBottom: 4 } }, 'ttd'),
-          h(View, { style: styles.signerLine },
-            h(Text, { style: styles.signerName }, pastorName),
-            h(Text, { style: styles.signerTitle }, pastorTitle))),
-        h(Text, { style: styles.tanggalText }, issuedDate),
-        h(View, { style: styles.signerBlock },
-          h(Text, { style: { fontSize: 13, color: '#475569', marginBottom: 4 } }, 'ttd'),
-          h(View, { style: styles.signerLine },
-            h(Text, { style: styles.signerName }, signerName),
-            h(Text, { style: styles.signerTitle }, signerTitle)))),
+      // Penandatangan (1-3 blok)
+      h(View, { style: styles.signerSection }, ...signerSectionChildren),
+      ...(signerCount !== 2 && signerCount > 0
+        ? [
+            h(Text, {
+              key: 'tgl-abs',
+              style: { ...styles.tanggalText, position: 'absolute' as const, right: 80, bottom: 150 },
+            }, issuedDate),
+          ]
+        : []),
     ),
     // Back side
     h(Page, { size: [1188, 840], style: styles.page, key: 'back' },

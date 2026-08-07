@@ -104,6 +104,7 @@ export class MembersDigitalCardService {
           nomorDokumen: card.nomorDokumen,
           qrDataUrl,
           verificationUrl: card.verificationUrl,
+          signers: card.signers,
           signerName: card.signerName,
           signerTitle: card.signerTitle,
         },
@@ -178,14 +179,16 @@ export class MembersDigitalCardService {
       distrik: member.ranting?.wilayah?.distrik?.nama,
     };
 
-    const signer = await this.resolveSigner();
+    const signers = await this.penandatanganService.resolveSigners('kartu_anggota');
     const card = {
       id: existingCard.id,
       nomorDokumen: existingCard.nomorDokumen,
       verificationUrl: existingCard.verificationUrl || '',
       status: existingCard.status,
-      signerName: signer.signerName,
-      signerTitle: signer.signerTitle,
+      // Backward-compat: signer pertama tetap di `signerName`/`signerTitle`.
+      signers,
+      signerName: signers[0]?.signerName,
+      signerTitle: signers[0]?.signerTitle,
     };
 
     return { card, memberData, verificationUrl: card.verificationUrl };
