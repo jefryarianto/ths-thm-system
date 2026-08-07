@@ -61,7 +61,7 @@ export class AssessmentsController {
   @Delete('aspects/:id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus aspek penilaian' })
   @ApiParam({ name: 'id', description: 'ID Aspek Penilaian', required: true })
-  @ApiOkResponse({ description: 'Aspek penilaian dinonaktifkan (soft-delete via isActive=false)' })
+  @ApiOkResponse({ description: 'Aspek penilaian dinonaktifkan (soft-disable, tidak tampil di list)' })
   deleteAspect(@Param('id') id: string) {
     return this.aspectService.remove(id);
   }

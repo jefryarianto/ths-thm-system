@@ -33,7 +33,8 @@ export class AssessmentsService {
   // ── Items ─────────────────────────────────────────────
 
   async getItems(query: AssessmentFilterDto) {
-    const where: Record<string, unknown> = {};
+    // Hanya tampilkan item AKTIF — soft-disable (isActive:false) tidak muncul di list.
+    const where: Record<string, unknown> = { isActive: true };
     if (query.aspekId) where.aspekId = query.aspekId;
     if (query.search) {
       where.namaItem = { contains: query.search, mode: 'insensitive' };

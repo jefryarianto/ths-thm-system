@@ -26,15 +26,18 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
     });
   }
 
-  /** Include item child relations by default. */
-  protected readonly DEFAULT_INCLUDE = { itemPenilaian: true };
+  /** Include item child relations by default (hanya item aktif). */
+  protected readonly DEFAULT_INCLUDE = { itemPenilaian: { where: { isActive: true } } };
 
   async findAll(query?: AssessmentFilterDto) {
     const limit = query?.limit || 10;
     const page = query?.page || 1;
-    const where = query?.search
-      ? { namaAspek: { contains: query.search, mode: 'insensitive' as const } }
-      : {};
+    // Hanya tampilkan aspek AKTIF — yang di-soft-disable (isActive:false)
+    // tidak muncul di list, sehingga tombol hapus terlihat bekerja.
+    const where: Record<string, unknown> = { isActive: true };
+    if (query?.search) {
+      where.namaAspek = { contains: query.search, mode: 'insensitive' as const };
+    }
     return this.baseFindAll(
       `aspects:all:${limit}:${page}`,
       () => where,
