@@ -231,6 +231,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const profileRef = useRef<HTMLDivElement>(null);
   // Per-group collapse (accordion) — Set of group labels that are collapsed
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  // Measured content heights per group — drives the smooth max-height expand/collapse transition
+  const [groupHeights, setGroupHeights] = useState<Record<string, number>>({});
+  const groupContentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
 
@@ -322,6 +325,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       return prev;
     });
   }, [pathname]);
+
+  // Measure each group's content height so the max-height transition animates smoothly.
+  // Items stay in the DOM — closed groups are clipped to 0 via overflow hidden.
+  useEffect(() => {
+    if (collapsed) return; // icon mode — wrapper is unconstrained, nothing to measure
+    const next: Record<string, number> = {};
+    for (const group of menuGroups) {
+      const el = groupContentRefs.current[group.label];
+      // scrollHeight reports full content height even when max-height is 0;
+      // +4 buffer accounts for the last item's margin/sub-pixel rounding
+      if (el && el.scrollHeight > 0) next[group.label] = el.scrollHeight + 4;
+    }
+    setGroupHeights((prev) => {
+      let changed = false;
+      const merged = { ...prev };
+      for (const [k, v] of Object.entries(next)) {
+        if (merged[k] !== v) {
+          merged[k] = v;
+          changed = true;
+        }
+      }
+      return changed ? merged : prev;
+    });
+    // `mounted` matters: admin-only items (Antrean, WebSocket) only render after mount,
+    // so heights must be re-measured once they appear.
+  }, [collapsedGroups, collapsed, mounted]);
 
   useEffect(() => {
     let socketSubscribed = false;
@@ -499,9 +528,26 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
               )}
 
-              {(!collapsedGroups.has(group.label) || collapsed) &&
-                visibleItems.map((item) => {
-                  const Icon = item.icon;
+              {/* Group items — smooth max-height expand/collapse. The wrapper is ALWAYS mounted;
+                  visibility is controlled purely by maxHeight (0 when closed, measured px when open,
+                  unconstrained in icon mode) so the transition can animate both ways. */}
+              <div
+                ref={(el) => {
+                  groupContentRefs.current[group.label] = el;
+                }}
+                className={
+                  collapsed
+                    ? undefined
+                    : 'overflow-hidden transition-[max-height] duration-300 ease-in-out motion-reduce:transition-none'
+                }
+                style={
+                  collapsed
+                    ? undefined
+                    : { maxHeight: collapsedGroups.has(group.label) ? 0 : groupHeights[group.label] }
+                }
+              >
+                {visibleItems.map((item) => {
+                    const Icon = item.icon;
                   const isActive = pathname?.startsWith(item.href) || false;
 
                   // Shared classes for both external and internal links
@@ -587,6 +633,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Link>
                   );
                 })}
+              </div>
             </div>
             );
           })}
