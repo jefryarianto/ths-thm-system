@@ -67,6 +67,22 @@ interface MenuGroup {
 const SIDEBAR_EXPANDED = 256;
 const SIDEBAR_COLLAPSED = 64;
 
+// Groups that stay OPEN by default on first login (no saved preference yet) —
+// the most-used sections per role. The rest are collapsed. The active page's
+// group always auto-expands anyway, and user toggles are saved to localStorage.
+const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
+  // System admins live in Keanggotaan + Sistem (Users, Settings, Antrean) daily.
+  superadmin: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi', 'Sistem'],
+  admin_distrik: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi', 'Sistem'],
+  admin_wilayah: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi'],
+  admin_ranting: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi'],
+  // Kegiatan organisasi → aktivitas & kalender.
+  admin_kegiatan: ['Utama', 'Aktivitas', 'Keuangan', 'Komunikasi'],
+  // Penguji bekerja di halaman Penilaian.
+  penguji: ['Utama', 'Pelatihan & Penilaian', 'Keuangan', 'Komunikasi'],
+  anggota: ['Utama', 'Aktivitas', 'Keuangan', 'Komunikasi'],
+};
+
 const menuGroups: MenuGroup[] = [
   {
     label: 'Utama',
@@ -250,11 +266,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     } else {
       setCollapsed(true);
     }
-    // Restore per-group collapse preference
+    // Restore per-group collapse preference. On FIRST login (no saved preference)
+    // collapse everything except the most-used groups for the user's role.
     try {
       const savedGroups = localStorage.getItem('sidebarCollapsedGroups');
       if (savedGroups) {
         setCollapsedGroups(new Set(JSON.parse(savedGroups) as string[]));
+      } else {
+        const openGroups = user?.role ? DEFAULT_OPEN_GROUPS[user.role] : DEFAULT_OPEN_GROUPS.anggota;
+        setCollapsedGroups(
+          new Set(menuGroups.map((g) => g.label).filter((label) => !openGroups.includes(label))),
+        );
       }
     } catch {
       /* ignore */
