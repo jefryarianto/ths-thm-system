@@ -179,6 +179,22 @@ export class OrgStructureService {
    */
   async importOrg(data: ImportOrgRow[]) {
     const nasional = await this.prisma.nasional.findFirst();
+
+    // Muat nama yang sudah ada sekaligus; pencocokan case-insensitive dilakukan
+    // di JS (hindari ketergantungan pada fitur Prisma mode:'insensitive').
+    const distrikMap = new Map<string, string>(); // nama.toLowerCase() -> id
+    for (const d of await this.prisma.distrik.findMany({ select: { id: true, nama: true } })) {
+      distrikMap.set(d.nama.toLowerCase(), d.id);
+    }
+    const wilayahMap = new Map<string, string>(); // `${distrikId}:${nama.toLowerCase()}` -> id
+    for (const w of await this.prisma.wilayah.findMany({ select: { id: true, nama: true, distrikId: true } })) {
+      wilayahMap.set(`${w.distrikId}:${w.nama.toLowerCase()}`, w.id);
+    }
+    const rantingMap = new Map<string, string>(); // `${wilayahId}:${nama.toLowerCase()}` -> id
+    for (const r of await this.prisma.ranting.findMany({ select: { id: true, nama: true, wilayahId: true } })) {
+      rantingMap.set(`${r.wilayahId}:${r.nama.toLowerCase()}`, r.id);
+    }
+
     let importedDistrik = 0;
     let importedWilayah = 0;
     let importedRanting = 0;
@@ -194,19 +210,17 @@ export class OrgStructureService {
       const rantingName = row.ranting?.trim();
 
       // ── Distrik (upsert by nama) ──
-      let distrik = await this.prisma.distrik.findFirst({
-        where: { nama: distrikName, mode: 'insensitive' as const },
-        select: { id: true },
-      });
-      if (!distrik) {
-        distrik = await this.prisma.distrik.create({
+      let distrikId = distrikMap.get(distrikName.toLowerCase());
+      if (!distrikId) {
+        const created = await this.prisma.distrik.create({
           data: {
             kodeDistrik: await this.nextKode('distrik', 'D'),
             nama: distrikName,
             nasionalId: nasional?.id || 'seed',
           },
-          select: { id: true },
         });
+        distrikId = created.id;
+        distrikMap.set(distrikName.toLowerCase(), distrikId);
         importedDistrik++;
       }
 
@@ -216,19 +230,17 @@ export class OrgStructureService {
       }
 
       // ── Wilayah (upsert by nama dalam distrik) ──
-      let wilayah = await this.prisma.wilayah.findFirst({
-        where: { distrikId: distrik.id, nama: wilayahName, mode: 'insensitive' as const },
-        select: { id: true },
-      });
-      if (!wilayah) {
-        wilayah = await this.prisma.wilayah.create({
+      let wilayahId = wilayahMap.get(`${distrikId}:${wilayahName.toLowerCase()}`);
+      if (!wilayahId) {
+        const created = await this.prisma.wilayah.create({
           data: {
             kodeWilayah: await this.nextKode('wilayah', 'W'),
             nama: wilayahName,
-            distrikId: distrik.id,
+            distrikId,
           },
-          select: { id: true },
         });
+        wilayahId = created.id;
+        wilayahMap.set(`${distrikId}:${wilayahName.toLowerCase()}`, wilayahId);
         importedWilayah++;
       }
 
@@ -238,19 +250,17 @@ export class OrgStructureService {
       }
 
       // ── Ranting (upsert by nama dalam wilayah) ──
-      const existingRanting = await this.prisma.ranting.findFirst({
-        where: { wilayahId: wilayah.id, nama: rantingName, mode: 'insensitive' as const },
-        select: { id: true },
-      });
-      if (!existingRanting) {
+      const rantingKey = `${wilayahId}:${rantingName.toLowerCase()}`;
+      if (!rantingMap.has(rantingKey)) {
         await this.prisma.ranting.create({
           data: {
             kodeRanting: await this.nextKode('ranting', 'R'),
             nama: rantingName,
-            wilayahId: wilayah.id,
+            wilayahId,
             lokasiLatihan: row.lokasiLatihan?.trim() || null,
           },
         });
+        rantingMap.set(rantingKey, wilayahId);
         importedRanting++;
       } else {
         skipped++;
