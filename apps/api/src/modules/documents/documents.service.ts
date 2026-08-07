@@ -146,6 +146,7 @@ export class DocumentsService {
         qrDataUrl,
         signerName: signer.signerName,
         signerTitle: signer.signerTitle,
+        template: await this.resolveTemplateTexts(dto.type),
       });
 
       if (PdfDoc) {
@@ -391,6 +392,32 @@ export class DocumentsService {
     return this.penandatanganService.resolveActive();
   }
 
+  /**
+   * Baca override teks template dokumen dari tabel `settings`
+   * (halaman Settings → Template Dokumen). Nilai kosong → pakai bawaan template.
+   */
+  private async resolveTemplateTexts(type: string) {
+    const keys = [
+      'docTemplate.orgNama',
+      'docTemplate.orgAlamat',
+      'docTemplate.footer',
+      `docTemplate.${type}.judul`,
+      `docTemplate.${type}.subJudul`,
+    ];
+    const rows = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
+    const map: Record<string, string> = {};
+    for (const r of rows) {
+      map[r.key] = String(r.value ?? '');
+    }
+    return {
+      orgNama: map['docTemplate.orgNama'] || undefined,
+      orgAlamat: map['docTemplate.orgAlamat'] || undefined,
+      footer: map['docTemplate.footer'] || undefined,
+      judul: map[`docTemplate.${type}.judul`] || undefined,
+      subJudul: map[`docTemplate.${type}.subJudul`] || undefined,
+    };
+  }
+
   // ── Generate Certificate (Sertifikat Pendadaran) ──
 
   async generateCertificate(dto: GenerateCertificateDto, scope?: UserScope) {
@@ -451,6 +478,7 @@ export class DocumentsService {
         pastorTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
         aspects: dto.aspects,
         qrDataUrl,
+        template: await this.resolveTemplateTexts('sertifikat_pendadaran'),
       });
 
       const pdfBuffer = await ReactPDF.renderToBuffer(pdfDoc);
@@ -511,6 +539,7 @@ export class DocumentsService {
       pastorTitle: dto.pastorTitle || process.env.PASTOR_TITLE || 'THS-THM',
       aspects: dto.aspects,
       qrDataUrl,
+      template: await this.resolveTemplateTexts('sertifikat_pendadaran'),
     });
 
     return ReactPDF.renderToBuffer(pdfDoc);
@@ -571,6 +600,7 @@ export class DocumentsService {
         qrDataUrl,
         signerName: dto.signerName || signer.signerName,
         signerTitle: dto.signerTitle || signer.signerTitle,
+        template: await this.resolveTemplateTexts('piagam_prestasi'),
       });
 
       if (PdfDoc) {

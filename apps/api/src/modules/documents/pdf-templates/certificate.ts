@@ -354,6 +354,12 @@ interface CertificatePdfProps {
   aspects: AspectScore[];
   qrDataUrl?: string;
   hideBack?: boolean;
+  /** Override teks template dari pengaturan (halaman Settings → Template Dokumen). */
+  template?: {
+    orgNama?: string;
+    judul?: string;
+    subJudul?: string;
+  };
 }
 
 const h = React.createElement;
@@ -363,8 +369,12 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
     recipientName, certificateNumber, eventTitle, location,
     ranting, wilayah, distrik, finalScore, predicate, status,
     issuedDate, signerName, signerTitle, pastorName, pastorTitle,
-    aspects, qrDataUrl,
+    aspects, qrDataUrl, template,
   } = props;
+
+  const orgName = template?.orgNama || 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA';
+  const judulText = template?.judul || 'SERTIFIKAT';
+  const subJudulText = template?.subJudul || 'PENDADARAN';
 
   const pages = [
     // Front side
@@ -379,14 +389,14 @@ export function buildCertificatePdf(props: CertificatePdfProps) {
         h(View, { style: styles.logoCircle },
           h(View, { style: styles.logoInner }, h(Text, null, 'THS'))),
         h(View, { style: { flex: 1, alignItems: 'center' } },
-          h(Text, { style: styles.orgName }, 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA'),
+          h(Text, { style: styles.orgName }, orgName),
           h(Text, { style: styles.districtName }, `KOORDINATORAT DISTRIK ${distrik.toUpperCase()}`)),
         h(View, { style: styles.logoCircle },
           h(View, { style: styles.logoInner }, h(Text, null, 'THS')))),
       // Title
       h(View, { style: styles.titleSection },
-        h(Text, { style: styles.sertifikatText }, 'SERTIFIKAT'),
-        h(Text, { style: styles.pendadaranText }, 'PENDADARAN'),
+        h(Text, { style: styles.sertifikatText }, judulText),
+        h(Text, { style: styles.pendadaranText }, subJudulText),
         h(Text, { style: styles.nomorText }, `Nomor Sertifikat: ${certificateNumber}`)),
       // Body
       h(View, { style: styles.bodySection },

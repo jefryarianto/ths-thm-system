@@ -44,6 +44,13 @@ interface PdfDocProps {
   /** Nama & jabatan penandatangan (dari tabel penandatangans) — opsional. */
   signerName?: string;
   signerTitle?: string;
+  /** Override teks template dari pengaturan (halaman Settings → Template Dokumen). */
+  template?: {
+    orgNama?: string;
+    orgAlamat?: string;
+    judul?: string;
+    footer?: string;
+  };
 }
 
 const h = React.createElement;
@@ -55,7 +62,15 @@ export function buildPdfDocument({
   qrDataUrl,
   signerName,
   signerTitle,
+  template,
 }: PdfDocProps) {
+  const orgNama = template?.orgNama || 'THS-THM System Manajemen';
+  const orgAlamat = template?.orgAlamat;
+  const judul = template?.judul || docTypeLabels[type] || 'DOKUMEN';
+  const footer =
+    template?.footer ||
+    'Dokumen ini valid dan terverifikasi. Diterbitkan oleh THS-THM System Manajemen.';
+
   return h(
     Document,
     null,
@@ -66,8 +81,11 @@ export function buildPdfDocument({
       h(
         View,
         { style: styles.header },
-        h(Text, { style: styles.title }, 'THS-THM System Manajemen'),
-        h(Text, { style: styles.subtitle }, docTypeLabels[type] || 'DOKUMEN'),
+        h(Text, { style: styles.title }, orgNama),
+        ...(orgAlamat
+          ? [h(Text, { key: 'alamat', style: { fontSize: 10, color: '#777', marginBottom: 4 } }, orgAlamat)]
+          : []),
+        h(Text, { style: styles.subtitle }, judul),
       ),
       // Nomor Dokumen
       h(
@@ -132,11 +150,7 @@ export function buildPdfDocument({
           ]
         : []),
       // Footer
-      h(
-        Text,
-        { style: styles.footer },
-        'Dokumen ini valid dan terverifikasi. Diterbitkan oleh THS-THM System Manajemen.',
-      ),
+      h(Text, { style: styles.footer }, footer),
     ),
   );
 }

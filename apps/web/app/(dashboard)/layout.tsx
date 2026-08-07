@@ -174,6 +174,7 @@ const menuGroups: MenuGroup[] = [
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
       { href: '/settings/penandatangan', label: 'Penandatangan', icon: PenLine, minRole: 'admin_distrik' },
+      { href: '/settings/dokumen', label: 'Template Dokumen', icon: FileText, minRole: 'admin_distrik' },
       {
         href: '/admin/queues',
         label: 'Antrean',
