@@ -76,7 +76,7 @@ export default function EditItemPenilaianPage() {
         urutan: form.urutan || undefined,
         isActive: form.isActive,
       });
-      router.push('/assessments/items');
+      router.push('/assessments');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Gagal menyimpan perubahan');
@@ -85,17 +85,17 @@ export default function EditItemPenilaianPage() {
   };
 
   if (loading) return <DetailSkeleton />;
-  if (fetchError) return <ErrorPage message={fetchError} backHref="/assessments/items" backLabel="Kembali ke Item Penilaian" />;
+  if (fetchError) return <ErrorPage message={fetchError} backHref="/assessments" backLabel="Kembali ke Penilaian" />;
 
   return (
       <PermissionGuard module="assessments" action="edit">
         <FormLayout
-              backHref="/assessments/items"
+              backHref="/assessments"
               title="Edit Item Penilaian"
               subtitle={itemTitle}
               error={error}
               saving={saving}
-              onCancel={() => router.push('/assessments/items')}
+              onCancel={() => router.push('/assessments')}
               onSubmit={handleSubmit}
               submitLabel="Simpan Perubahan"
             >

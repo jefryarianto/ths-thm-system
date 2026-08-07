@@ -105,12 +105,19 @@ export default function AssessmentsPage() {
         >
           <Upload size={14} /> Import CSV
         </button>
-        {tab === 'aspek' && (
+        {tab === 'aspek' ? (
           <button
             onClick={() => router.push('/assessments/aspects/new')}
             className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
           >
             <Plus size={14} /> Tambah Aspek
+          </button>
+        ) : (
+          <button
+            onClick={() => router.push('/assessments/items/new')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={14} /> Tambah Item
           </button>
         )}
       </PageHeader>
@@ -174,6 +181,13 @@ export default function AssessmentsPage() {
               </td>
               <td className="px-4 py-3 text-right hidden md:table-cell">
                 <div className="flex items-center justify-end gap-1">
+                  <Link
+                    href={`/assessments/aspects/${row.id}/edit`}
+                    className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-md transition-colors inline-flex"
+                    title="Edit"
+                  >
+                    <Edit3 size={14} />
+                  </Link>
                   <button
                     onClick={async () => {
                       try {

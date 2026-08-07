@@ -34,6 +34,8 @@ export default function EditAspectPage() {
     isActive: true,
   });
 
+  const [aspectTitle, setAspectTitle] = useState('');
+
   useEffect(() => {
     if (!id) return;
     (async () => {
@@ -47,6 +49,7 @@ export default function EditAspectPage() {
           bobot: a.bobot,
           isActive: a.isActive,
         });
+        setAspectTitle(`${a.kodeAspek} — ${a.namaAspek}`);
       } catch {
         setFetchError('Gagal memuat data aspek');
       }
@@ -82,7 +85,7 @@ export default function EditAspectPage() {
         <FormLayout
               backHref="/assessments"
               title="Edit Aspek Penilaian"
-              subtitle={form.namaAspek}
+              subtitle={aspectTitle}
               error={error}
               saving={saving}
               onCancel={() => router.push('/assessments')}

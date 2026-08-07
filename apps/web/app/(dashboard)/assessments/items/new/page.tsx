@@ -71,7 +71,7 @@ export default function NewItemPenilaianPage() {
       if (form.urutan > 0) payload.urutan = form.urutan;
 
       await apiClient.post('/assessments/items', payload);
-      router.push('/assessments/items');
+      router.push('/assessments');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Gagal menyimpan item penilaian');
@@ -82,12 +82,12 @@ export default function NewItemPenilaianPage() {
   return (
       <PermissionGuard module="assessments" action="create">
         <FormLayout
-              backHref="/assessments/items"
+              backHref="/assessments"
               title="Tambah Item Penilaian"
               subtitle="Buat item penilaian baru dalam aspek"
               error={error}
               saving={saving}
-              onCancel={() => router.push('/assessments/items')}
+              onCancel={() => router.push('/assessments')}
               onSubmit={handleSubmit}
               submitLabel="Tambah Item"
               savingLabel="Menyimpan..."
