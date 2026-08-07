@@ -5,7 +5,7 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, Save, AlertCircle, Building2, Map as MapIcon, Home, Upload, X } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, AlertCircle, Building2, Map as MapIcon, Home, Upload, X, CheckCircle2 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 
 // ─── Types ───
@@ -364,8 +364,8 @@ export default function OrgStructureSettingsPage() {
         'success',
         `Import selesai: ${res.importedDistrik} distrik, ${res.importedWilayah} wilayah, ${res.importedRanting} ranting baru`,
       );
-      setShowImportModal(false);
       setImportText('');
+      // Biarkan modal terbuka agar ringkasan hasil terlihat; tutup manual via tombol Batal/Selesai.
       await fetchData();
     } catch (e) {
       toast('error', e instanceof Error ? `Import gagal: ${e.message}` : 'Import gagal');
@@ -395,7 +395,10 @@ export default function OrgStructureSettingsPage() {
                     <RefreshCw size={14} /> Refresh
                   </button>
                   <button
-                    onClick={() => setShowImportModal(true)}
+                    onClick={() => {
+                      setShowImportModal(true);
+                      setImportResult(null);
+                    }}
                     className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
                   >
                     <Upload size={14} /> Import Data
@@ -571,10 +574,10 @@ export default function OrgStructureSettingsPage() {
                   />
                   {importResult && (
                     <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400">
-                      <AlertCircle size={16} className="shrink-0" />
+                      <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
                       <span>
-                        {importResult.importedDistrik} distrik, {importResult.importedWilayah} wilayah,{' '}
-                        {importResult.importedRanting} ranting dibuat · {importResult.skipped} dilewati
+                        Import selesai: <b>{importResult.importedDistrik}</b> distrik, <b>{importResult.importedWilayah}</b> wilayah,{' '}
+                        <b>{importResult.importedRanting}</b> ranting baru · <b>{importResult.skipped}</b> dilewati (sudah ada).
                       </span>
                     </div>
                   )}
@@ -583,11 +586,11 @@ export default function OrgStructureSettingsPage() {
                       onClick={() => setShowImportModal(false)}
                       className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
-                      <X size={14} /> Batal
+                      <X size={14} /> {importResult ? 'Selesai' : 'Batal'}
                     </button>
                     <button
                       onClick={handleImport}
-                      disabled={importing}
+                      disabled={importing || !!importResult}
                       className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                     >
                       <Upload size={14} /> {importing ? 'Mengimpor...' : 'Import Sekarang'}

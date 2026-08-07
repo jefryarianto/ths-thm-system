@@ -211,7 +211,7 @@ export class OrgStructureService {
       }
 
       if (!wilayahName) {
-        skipped++;
+        // Baris hanya berisi distrik — sudah diproses (distrik dibuat/ditemukan).
         continue;
       }
 
@@ -233,7 +233,7 @@ export class OrgStructureService {
       }
 
       if (!rantingName) {
-        skipped++;
+        // Baris hanya berisi distrik + wilayah — sudah diproses.
         continue;
       }
 
