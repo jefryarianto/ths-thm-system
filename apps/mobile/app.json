@@ -27,6 +27,14 @@
       "expo-router",
       "expo-font"
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f9fed5cb-78d4-42b3-a253-a5b3674e8a2c",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD"
+    },
     "experiments": {
       "typedRoutes": true
     },
@@ -35,8 +43,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "8b77feb3-c3cc-4458-99eb-bb0185126a94"
+        "projectId": "f9fed5cb-78d4-42b3-a253-a5b3674e8a2c"
       }
-    }
+    },
+    "owner": "jefryarianto"
   }
 }

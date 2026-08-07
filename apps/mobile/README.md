@@ -54,3 +54,47 @@ assets/
 pnpm install
 npx expo start
 ```
+
+## Build & Deploy (EAS)
+
+Project sudah terkonfigurasi EAS (`eas.json` + `updates.url` di `app.json` + `expo-updates`).
+
+### Prasyarat (sekali)
+
+```bash
+npm install -g eas-cli   # atau gunakan npx eas-cli
+npx eas-cli login        # login akun Expo (expo.dev)
+```
+
+### Build native pertama (wajib sekali)
+
+Build ini menanamkan `expo-updates` ke binary, sehingga update JS berikutnya bisa dikirim OTA:
+
+```bash
+# Android APK (distribusi internal / test)
+npx eas-cli build --platform android --profile preview
+
+# Android AAB (Play Store) / iOS
+npx eas-cli build --platform android --profile production
+npx eas-cli build --platform ios --profile production
+```
+
+Setelah selesai, download dari dashboard EAS (`https://expo.dev/accounts/<akun>/projects/ths-thm-mobile`) dan install ke HP.
+
+### Update OTA (perubahan JS saja)
+
+Semua perubahan JS (tanpa native module baru) cukup dikirim lewat EAS Update — tiba di HP dalam hitungan menit, tanpa rebuild:
+
+```bash
+npx eas-cli update --channel production --message "deskripsi perubahan"
+```
+
+> Catatan: perubahan yang melibatkan native module (plugin baru, dependency native) tetap butuh `eas build` ulang.
+
+### Catatan Windows (pnpm)
+
+Jika `pnpm` gagal dengan error `store-dir` atau `EACCES rename`:
+
+1. Pastikan `store-dir` di `%LOCALAPPDATA%\pnpm\config\rc` menunjuk path yang masih ada (mis. `C:\Users\<user>\AppData\Local\pnpm\store`).
+2. `.npmrc` proyek memakai `package-import-method=copy` untuk menghindari junction yang diblokir Windows Defender.
+3. Jika node_modules sudah terlanjur rusak (junction putus), hapus semua folder `node_modules` lalu `pnpm install --no-frozen-lockfile`.
