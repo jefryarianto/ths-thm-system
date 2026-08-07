@@ -35,8 +35,8 @@ test.describe('Documents — /documents', () => {
     // Batch tab content should appear
     await expect(page.getByText('Riwayat Generate Dokumen')).toBeVisible({ timeout: 5000 });
 
-    // Switch back to Dokumen tab
-    await page.locator('button:has-text("Dokumen")').first().click();
+    // Switch back to Dokumen tab (scoped to main — sidebar group header "Dokumen & Surat" also matches)
+    await page.locator('main button:has-text("Dokumen")').first().click();
     await page.waitForTimeout(300);
 
     // Dokumen content should be visible again

@@ -63,8 +63,8 @@ test.describe('Additional Dashboard Pages', () => {
     });
 
     test('switches between tabs', async ({ page }) => {
-      // Click Anggota tab
-      await page.getByRole('button', { name: 'Anggota' }).click();
+      // Click Anggota tab (scoped to main content — sidebar group header "Keanggotaan" also matches substring "Anggota")
+      await page.locator('main').getByRole('button', { name: 'Anggota' }).click();
       const searchVisible = await page.locator('input[placeholder="Cari anggota..."]').first().isVisible().catch(() => false);
       if (searchVisible) {
         await expect(page.locator('input[placeholder="Cari anggota..."]').first()).toBeVisible({ timeout: 5000 });
