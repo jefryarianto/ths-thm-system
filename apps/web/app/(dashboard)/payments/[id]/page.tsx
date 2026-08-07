@@ -1,6 +1,5 @@
 'use client';
 
-import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -295,6 +294,7 @@ export default function PaymentDetailPage() {
           </div>
         </div>
       )}
+      {confirmModal}
     </div>
   );
 }
@@ -319,23 +319,20 @@ function TimelineItem({ icon: Icon, title, date, subtitle, status }: {
   status: 'completed' | 'pending';
 }) {
   return (
-      <PermissionGuard module="payments" action="view">
-        <div className="flex gap-3">
-              <div className={`flex flex-col items-center`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  status === 'completed' ? 'bg-green-100 dark:bg-green-950' : 'bg-yellow-100 dark:bg-yellow-950'
-                }`}>
-                  <Icon size={14} className={status === 'completed' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'} />
-                </div>
-                <div className="w-0.5 flex-1 bg-gray-200 dark:bg-gray-700 mt-1" />
-              </div>
-              <div className="pb-4">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
-                {date && <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
-                {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
-              </div>
-            </div>
-        {confirmModal}
-      </PermissionGuard>
-    );
+    <div className="flex gap-3">
+      <div className={`flex flex-col items-center`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          status === 'completed' ? 'bg-green-100 dark:bg-green-950' : 'bg-yellow-100 dark:bg-yellow-950'
+        }`}>
+          <Icon size={14} className={status === 'completed' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'} />
+        </div>
+        <div className="w-0.5 flex-1 bg-gray-200 dark:bg-gray-700 mt-1" />
+      </div>
+      <div className="pb-4">
+        <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
+        {date && <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
+        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+      </div>
+    </div>
+  );
 }
