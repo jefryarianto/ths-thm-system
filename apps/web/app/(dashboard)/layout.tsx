@@ -365,10 +365,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, []);
 
-  // Queue Stats Polling
+  // Queue Stats Polling — only superadmin sees the Antrean menu, so poll only for them
   useEffect(() => {
     if (!mounted) return;
-    if (!isAdmin) return;
+    if (!hasMinRole('superadmin')) return;
 
     const fetchStats = async () => {
       try {
@@ -513,11 +513,26 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                   const content = (
                     <>
-                      <Icon size={18} className="shrink-0" />
+                      {/* Icon — wrapped for collapsed-mode dot indicators */}
+                      <span className="relative shrink-0">
+                        <Icon size={18} />
+                        {collapsed && item.href === '/notifications' && unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900" />
+                        )}
+                        {collapsed && item.href === '/admin/queues' && queueStats &&
+                          queueStats.waiting + queueStats.active > 0 && (
+                          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-gray-900" />
+                        )}
+                      </span>
                       {!collapsed && <span className="truncate">{item.label}</span>}
                       {/* Badge + external indicator — only when expanded */}
                       {!collapsed && (
                         <span className="ml-auto flex items-center gap-1.5">
+                          {item.href === '/notifications' && unreadCount > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                          )}
                           {item.href === '/admin/queues' && queueStats &&
                             (queueStats.waiting + queueStats.active > 0) && (
                             <span
