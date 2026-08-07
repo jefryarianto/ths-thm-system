@@ -11,6 +11,8 @@ import {
   GraduationCap,
   Dumbbell,
   Calendar,
+  ChevronDown,
+  ChevronRight,
   FileText,
   Mail,
   CreditCard,
@@ -227,6 +229,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [queueStats, setQueueStats] = useState<{ waiting: number; active: number } | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  // Per-group collapse (accordion) — Set of group labels that are collapsed
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
 
@@ -242,6 +246,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       }
     } else {
       setCollapsed(true);
+    }
+    // Restore per-group collapse preference
+    try {
+      const savedGroups = localStorage.getItem('sidebarCollapsedGroups');
+      if (savedGroups) {
+        setCollapsedGroups(new Set(JSON.parse(savedGroups) as string[]));
+      }
+    } catch {
+      /* ignore */
     }
   }, []);
 
@@ -271,6 +284,44 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       return next;
     });
   }, []);
+
+  const toggleGroup = useCallback((label: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  }, []);
+
+  // Persist per-group collapse state
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      localStorage.setItem('sidebarCollapsedGroups', JSON.stringify([...collapsedGroups]));
+    } catch {
+      /* ignore */
+    }
+  }, [collapsedGroups, mounted]);
+
+  // Auto-expand the group that contains the active page (so users never get lost)
+  useEffect(() => {
+    if (!pathname) return;
+    setCollapsedGroups((prev) => {
+      const activeGroup = menuGroups.find((g) =>
+        g.items.some((item) => pathname.startsWith(item.href)),
+      );
+      if (activeGroup && prev.has(activeGroup.label)) {
+        const next = new Set(prev);
+        next.delete(activeGroup.label);
+        return next;
+      }
+      return prev;
+    });
+  }, [pathname]);
 
   useEffect(() => {
     let socketSubscribed = false;
@@ -426,14 +477,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
             return (
             <div key={group.label}>
-              {/* Group label — hidden when collapsed */}
+              {/* Group header — clickable to collapse/expand (hidden in icon-only mode) */}
               {!collapsed && (
-                <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                  {group.label}
-                </p>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  title={
+                    collapsedGroups.has(group.label)
+                      ? `Buka grup ${group.label}`
+                      : `Ciutkan grup ${group.label}`
+                  }
+                  aria-expanded={!collapsedGroups.has(group.label)}
+                >
+                  <span className="truncate">{group.label}</span>
+                  {collapsedGroups.has(group.label) ? (
+                    <ChevronRight size={14} className="shrink-0" />
+                  ) : (
+                    <ChevronDown size={14} className="shrink-0" />
+                  )}
+                </button>
               )}
 
-              {visibleItems.map((item) => {
+              {(!collapsedGroups.has(group.label) || collapsed) &&
+                visibleItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname?.startsWith(item.href) || false;
 
@@ -638,6 +705,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">
               {user?.namaLengkap || ''}
             </span>
+            {/* Logout — top right of the header */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
+              title="Keluar"
+              aria-label="Keluar"
+            >
+              <LogOut size={18} />
+              <span className="hidden lg:inline text-sm font-medium">Keluar</span>
+            </button>
           </div>
         </header>
 
