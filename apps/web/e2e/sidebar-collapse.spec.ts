@@ -131,8 +131,8 @@ test.describe('Sidebar Collapse', () => {
   test('profile dropdown opens and closes correctly', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    // Find profile trigger button inside the sidebar
-    const profileTrigger = page.locator('aside').locator('button').filter({ has: page.locator('text=Super Admin') });
+    // Find profile trigger button in the header (top-right — moved from sidebar bottom)
+    const profileTrigger = page.locator('header').locator('button').filter({ has: page.locator('text=Super Admin') });
     if (await profileTrigger.isVisible().catch(() => false)) {
       await expect(profileTrigger).toBeVisible();
 
@@ -170,8 +170,8 @@ test.describe('Sidebar Collapse', () => {
   test('profile dropdown items navigate correctly', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    // Open profile dropdown
-    const profileTrigger = page.locator('button').filter({ has: page.locator('text=Super Admin') });
+    // Open profile dropdown (header, top-right)
+    const profileTrigger = page.locator('header').locator('button').filter({ has: page.locator('text=Super Admin') });
     await profileTrigger.click();
 
     // Click "Profil Saya" — should navigate to /settings
@@ -213,25 +213,16 @@ test.describe('Sidebar Collapse', () => {
     await expect(page.getByText('Keanggotaan')).not.toBeVisible();
   });
 
-  test('user avatar shows only initials when collapsed (expanded shows name)', async ({ page }) => {
+  test('profile chip stays in header when sidebar collapses', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    // Scope to sidebar's profile trigger button only (header also has the name)
-    const profileSection = page.locator('aside').locator('button').filter({ has: page.locator('text=Super Admin') });
+    // Profile chip is in the header (top-right), not the sidebar anymore
+    const chip = page.locator('header').locator('button[title="Super Admin"]');
+    await expect(chip).toBeVisible();
 
-    // Expanded: user name is visible inside the sidebar profile button
-    // The div with min-w-0 truncate contains the name text
-    const nameEl = profileSection.locator('p').first();
-    const emailEl = profileSection.locator('p').nth(1);
-    await expect(nameEl).toBeVisible();
-    await expect(emailEl).toBeVisible();
-
-    // Collapse
+    // Collapse sidebar — chip must remain visible in the header
     await page.locator('button[aria-label="Ciutkan sidebar"]').click();
-
-    // Name and email paragraphs are conditionally rendered — no longer in DOM
-    await expect(nameEl).not.toBeVisible();
-    await expect(emailEl).not.toBeVisible();
+    await expect(chip).toBeVisible();
   });
 
   test('nav tooltip shows when collapsed', async ({ page }) => {
@@ -251,9 +242,8 @@ test.describe('Sidebar Collapse', () => {
     // Collapse sidebar
     await page.locator('button[aria-label="Ciutkan sidebar"]').click();
 
-    // Find profile trigger (just the avatar centered)
-    const sidebar = page.locator('aside');
-    const profileTrigger = sidebar.locator('button[title="Super Admin"]');
+    // Find profile trigger in the header (top-right)
+    const profileTrigger = page.locator('header').locator('button[title="Super Admin"]');
     await expect(profileTrigger).toBeVisible();
 
     // Click to open dropdown

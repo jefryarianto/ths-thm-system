@@ -159,9 +159,11 @@ export default function OrgDocumentDetailPage() {
                       </button>
                       <button
                         onClick={() => setShowDeleteModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition"
+                        title="Hapus"
+                        aria-label="Hapus"
+                        className="p-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition"
                       >
-                        <Trash2 size={14} /> Hapus
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>

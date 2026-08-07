@@ -166,19 +166,23 @@ export default function ActivityDetailPage() {
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dateDisplay} • {timeDisplay}</p>
                     </div>
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                    {/* Actions — ikon saja */}
+                    <div className="flex items-center gap-1 mt-4 sm:mt-0">
                       <Link
                         href={`/activities/${activity.id}/edit`}
-                        className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                        title="Edit"
+                        aria-label="Edit"
+                        className="p-2 rounded-lg border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
                       >
-                        <Edit size={14} /> Edit
+                        <Edit size={15} />
                       </Link>
                       <button
                         onClick={() => setShowDeleteModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-2 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 rounded-lg text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950 transition"
+                        title="Hapus"
+                        aria-label="Hapus"
+                        className="p-2 rounded-lg border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition"
                       >
-                        <Trash2 size={14} /> Hapus
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>

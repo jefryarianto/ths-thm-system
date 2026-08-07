@@ -168,19 +168,22 @@ export default function TrainingDetailPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Link
                       href={`/trainings/${id}/edit`}
-                      className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                      title="Edit"
+                      aria-label="Edit"
+                      className="p-2 rounded-lg border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 transition"
                     >
-                      <Edit size={14} /> Edit
+                      <Edit size={15} />
                     </Link>
                     <button
                       onClick={fetchTraining}
                       className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400"
                       title="Refresh"
+                      aria-label="Refresh"
                     >
-                      <RefreshCw size={16} />
+                      <RefreshCw size={15} />
                     </button>
                   </div>
                 </div>

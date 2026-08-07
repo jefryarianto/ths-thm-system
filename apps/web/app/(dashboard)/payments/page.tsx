@@ -1,17 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2 } from 'lucide-react';
+import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2, Settings } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 import { useToast } from '@/components/ui/toast';
+import Link from 'next/link';
 
 
 interface DuesRecord {
@@ -39,6 +41,7 @@ interface BankInfo {
 }
 
 export default function PaymentsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [stats, setStats] = useState<StatsData>({
     totalCollected: 0,
@@ -82,7 +85,7 @@ export default function PaymentsPage() {
   };
 
   const handleReject = async (id: string) => {
-    if (!confirm('Tolak pembayaran ini? Status akan dikembalikan ke belum dibayar.')) return;
+    if (!(await confirm({ title: 'Tolak Pembayaran', message: 'Tolak pembayaran ini? Status akan dikembalikan ke belum dibayar.', confirmLabel: 'Ya, Tolak', variant: 'warning' }))) return;
     try {
       await apiClient.patch(`/payments/${id}/reject`);
       refetch();
@@ -157,11 +160,20 @@ export default function PaymentsPage() {
       {/* Bank Info + QRIS */}
       {bankInfo && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Informasi Rekening
-            </h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Informasi Rekening
+              </h3>
+            </div>
+            <Link
+              href="/payments/bank-info"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+            >
+              <Settings size={13} />
+              Kelola Rekening
+            </Link>
           </div>
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 space-y-2">
@@ -279,7 +291,7 @@ export default function PaymentsPage() {
                 {due.status === 'belum_dibayar' && (
                   <button
                     onClick={async () => {
-                      if (!confirm('Hapus catatan iuran ini?')) return;
+                      if (!(await confirm('Hapus catatan iuran ini?'))) return;
                       try {
                         await apiClient.delete(`/dues/${due.id}`);
                         refetch();
@@ -306,6 +318,7 @@ export default function PaymentsPage() {
           </tr>
         )}
       />
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Trash2, Edit3 } from 'lucide-react';
+import { X, Trash2, Edit3, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import type { LetterRow, LetterDetail } from './shared';
@@ -165,16 +165,20 @@ export default function LetterDetailPanel({
           <div className="flex gap-2 pt-2">
             <Link
               href={detailData.type === 'masuk' ? `/letters/incoming/${detailData.id}/edit` : `/letters/outgoing/${detailData.id}/edit`}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              title="Edit"
+              aria-label="Edit"
+              className="p-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
-              <Edit3 size={14} /> Edit
+              <Edit3 size={15} />
             </Link>
             <button
               onClick={() => onDelete(detailData)}
               disabled={deleting}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
+              title="Hapus"
+              aria-label="Hapus"
+              className="p-2 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
             >
-              <Trash2 size={14} /> {deleting ? 'Menghapus...' : 'Hapus'}
+              {deleting ? <RefreshCw size={15} className="animate-spin" /> : <Trash2 size={15} />}
             </button>
           </div>
         </div>

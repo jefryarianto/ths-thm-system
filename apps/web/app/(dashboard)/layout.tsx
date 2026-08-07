@@ -474,16 +474,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <Link href={user ? getHomePathForRole(user.role) : '/members'} className="mx-auto">
               <img
                 src="/logo.png"
-                alt=""
-                className="w-8 h-8 rounded-lg object-cover dark:brightness-0 dark:invert transition-all duration-300"
+                alt="THS-THM"
+                className="h-8 w-8 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
               />
             </Link>
           ) : (
             <Link href={user ? getHomePathForRole(user.role) : '/members'} className="flex items-center gap-2 min-w-0">
               <img
                 src="/logo.png"
-                alt=""
-                className="w-8 h-8 rounded-lg object-cover shrink-0 dark:brightness-0 dark:invert transition-all duration-300"
+                alt="THS-THM"
+                className="h-8 w-8 shrink-0 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
               />
               <span className="text-lg font-bold text-blue-700 dark:text-blue-400 truncate">THS-THM</span>
             </Link>
@@ -661,49 +661,54 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {/* User Profile — with dropdown menu */}
-        {user && (
-          <div className="relative" ref={profileRef}>
-            {/* Clickable trigger */}
-            <button
-              onClick={() => setProfileOpen((prev) => !prev)}
-              className={`w-full text-left transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                collapsed ? 'flex justify-center py-3' : 'px-3 py-3'
-              } ${profileOpen ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
-              title={collapsed ? user.namaLengkap : undefined}
+
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+        {/* Header */}
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+            {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
+          </h2>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              href="/notifications"
+              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              {collapsed ? (
-                <UserAvatar
-                  fotoPath={user.fotoPath}
-                  namaLengkap={user.namaLengkap}
-                  size="sm"
-                />
-              ) : (
-                <div className="flex items-center gap-3">
+              <Bell size={20} className="text-gray-600 dark:text-gray-300" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+            {/* Profile menu — top right of the header (moved from sidebar bottom) */}
+            {user && (
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setProfileOpen((prev) => !prev)}
+                  className={`flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                    profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
+                  }`}
+                  title={user.namaLengkap}
+                  aria-label="Menu profil"
+                  aria-expanded={profileOpen}
+                >
                   <UserAvatar
                     fotoPath={user.fotoPath}
                     namaLengkap={user.namaLengkap}
-                    size="md"
+                    size="sm"
                   />
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-                      {user.namaLengkap}
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </button>
+                  <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {user.namaLengkap}
+                  </span>
+                  <ChevronDown size={14} className="hidden md:block text-gray-400" />
+                </button>
 
-            {/* Dropdown menu */}
-            {profileOpen && (
-              <>
-                {/* Collapsed: dropdown appears to the right of the avatar */}
-                {collapsed ? (
-                  <div className="absolute left-full top-0 ml-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                    {/* User info header */}
+                {profileOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
                     <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {user.namaLengkap}
@@ -733,62 +738,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       Keluar
                     </button>
                   </div>
-                ) : (
-                  /* Expanded: dropdown appears below the profile card */
-                  <div className="absolute left-3 right-3 top-full mt-0.5 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                    <DropdownItem
-                      icon={User}
-                      label="Profil Saya"
-                      href="/settings"
-                      onClick={() => setProfileOpen(false)}
-                    />
-                    <DropdownItem
-                      icon={Lock}
-                      label="Ubah Password"
-                      href="/settings"
-                      onClick={() => setProfileOpen(false)}
-                    />
-                    <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
-                    >
-                      <LogOut size={16} className="shrink-0" />
-                      Keluar
-                    </button>
-                  </div>
                 )}
-              </>
+              </div>
             )}
-          </div>
-        )}
-
-
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
-        {/* Header */}
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
-          </h2>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <Link
-              href="/notifications"
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Bell size={20} className="text-gray-600 dark:text-gray-300" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </Link>
-            <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">
-              {user?.namaLengkap || ''}
-            </span>
             {/* Logout — top right of the header */}
             <button
               onClick={handleLogout}
