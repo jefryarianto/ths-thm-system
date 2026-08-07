@@ -742,16 +742,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 )}
               </div>
             )}
-            {/* Logout — top right of the header */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors"
-              title="Keluar"
-              aria-label="Keluar"
-            >
-              <LogOut size={18} />
-              <span className="hidden lg:inline text-sm font-medium">Keluar</span>
-            </button>
           </div>
         </header>
 
