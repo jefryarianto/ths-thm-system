@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { OrgStructureService } from './org-structure.service';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
+import { OrgStructureService, ImportOrgRow } from './org-structure.service';
 import {
   CreateDistrikDto,
   UpdateDistrikDto,
@@ -111,5 +111,16 @@ export class OrgStructureController {
   @CrudAuth('superadmin', { summary: 'Pohon organisasi (distrik → wilayah → ranting)' })
   getOrgTree() {
     return this.service.getOrgTree();
+  }
+
+  @Post('import')
+  @CrudAuth('superadmin', { summary: 'Import data organisasi (distrik, wilayah, ranting) dari list' })
+  @ApiBody({ description: 'Array baris import { distrik, wilayah?, ranting?, lokasiLatihan? }' })
+  @ApiCreatedResponse({ description: 'Struktur organisasi di-import (upsert by nama)' })
+  importOrg(@Body() body: { data: ImportOrgRow[] }) {
+    if (!body.data || !Array.isArray(body.data)) {
+      throw new BadRequestException('Data harus berupa array');
+    }
+    return this.service.importOrg(body.data);
   }
 }

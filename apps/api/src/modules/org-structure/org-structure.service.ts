@@ -9,6 +9,13 @@ import {
   UpdateRantingDto,
 } from './dto/org-structure.dto';
 
+export interface ImportOrgRow {
+  distrik: string;
+  wilayah?: string;
+  ranting?: string;
+  lokasiLatihan?: string;
+}
+
 @Injectable()
 export class OrgStructureService {
   constructor(private readonly prisma: PrismaService) {}
@@ -161,6 +168,123 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Ranting tidak ditemukan');
 
     await this.prisma.ranting.delete({ where: { id } });
+  }
+
+  // ─── IMPORT ORGANIZATION DATA ───
+
+  /**
+   * Import struktur organisasi dari daftar baris { distrik, wilayah?, ranting? }.
+   * Upsert berdasarkan nama (case-insensitive) — data yang sudah ada dilewati.
+   * Kode (kodeDistrik/kodeWilayah/kodeRanting) digenerate otomatis jika belum ada.
+   */
+  async importOrg(data: ImportOrgRow[]) {
+    const nasional = await this.prisma.nasional.findFirst();
+    let importedDistrik = 0;
+    let importedWilayah = 0;
+    let importedRanting = 0;
+    let skipped = 0;
+
+    for (const row of data) {
+      const distrikName = row.distrik?.trim();
+      if (!distrikName) {
+        skipped++;
+        continue;
+      }
+      const wilayahName = row.wilayah?.trim();
+      const rantingName = row.ranting?.trim();
+
+      // ── Distrik (upsert by nama) ──
+      let distrik = await this.prisma.distrik.findFirst({
+        where: { nama: distrikName, mode: 'insensitive' as const },
+        select: { id: true },
+      });
+      if (!distrik) {
+        distrik = await this.prisma.distrik.create({
+          data: {
+            kodeDistrik: await this.nextKode('distrik', 'D'),
+            nama: distrikName,
+            nasionalId: nasional?.id || 'seed',
+          },
+          select: { id: true },
+        });
+        importedDistrik++;
+      }
+
+      if (!wilayahName) {
+        skipped++;
+        continue;
+      }
+
+      // ── Wilayah (upsert by nama dalam distrik) ──
+      let wilayah = await this.prisma.wilayah.findFirst({
+        where: { distrikId: distrik.id, nama: wilayahName, mode: 'insensitive' as const },
+        select: { id: true },
+      });
+      if (!wilayah) {
+        wilayah = await this.prisma.wilayah.create({
+          data: {
+            kodeWilayah: await this.nextKode('wilayah', 'W'),
+            nama: wilayahName,
+            distrikId: distrik.id,
+          },
+          select: { id: true },
+        });
+        importedWilayah++;
+      }
+
+      if (!rantingName) {
+        skipped++;
+        continue;
+      }
+
+      // ── Ranting (upsert by nama dalam wilayah) ──
+      const existingRanting = await this.prisma.ranting.findFirst({
+        where: { wilayahId: wilayah.id, nama: rantingName, mode: 'insensitive' as const },
+        select: { id: true },
+      });
+      if (!existingRanting) {
+        await this.prisma.ranting.create({
+          data: {
+            kodeRanting: await this.nextKode('ranting', 'R'),
+            nama: rantingName,
+            wilayahId: wilayah.id,
+            lokasiLatihan: row.lokasiLatihan?.trim() || null,
+          },
+        });
+        importedRanting++;
+      } else {
+        skipped++;
+      }
+    }
+
+    return { importedDistrik, importedWilayah, importedRanting, skipped, total: data.length };
+  }
+
+  /** Generate kode unik berikutnya (mis. D001, D002, …) berdasarkan kode yang sudah terpakai. */
+  private async nextKode(
+    model: 'distrik' | 'wilayah' | 'ranting',
+    prefix: string,
+  ): Promise<string> {
+    const field =
+      model === 'distrik'
+        ? 'kodeDistrik'
+        : model === 'wilayah'
+          ? 'kodeWilayah'
+          : 'kodeRanting';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const all = await (this.prisma[model] as any).findMany({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      select: { [field]: true } as any,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const used = new Set(all.map((x: any) => x[field] as string));
+    let i = 1;
+    let kode = `${prefix}${String(i).padStart(3, '0')}`;
+    while (used.has(kode)) {
+      i++;
+      kode = `${prefix}${String(i).padStart(3, '0')}`;
+    }
+    return kode;
   }
 
   // ─── ORGANIZATION TREE ───

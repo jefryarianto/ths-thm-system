@@ -1,10 +1,11 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, Save, AlertCircle, Building2, Map as MapIcon, Home } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, AlertCircle, Building2, Map as MapIcon, Home, Upload, X } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 
 // ─── Types ───
@@ -202,6 +203,7 @@ function OrgFormModal({
 // ─── Main Page ───
 
 export default function OrgStructureSettingsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [distriks, setDistriks] = useState<Distrik[]>([]);
   const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
@@ -214,6 +216,18 @@ export default function OrgStructureSettingsPage() {
   const [editData, setEditData] = useState<Record<string, string> | null>(null);
   const [selectedDistrik, setSelectedDistrik] = useState<string>('');
   const [selectedWilayah, setSelectedWilayah] = useState<string>('');
+
+  // Import state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    importedDistrik: number;
+    importedWilayah: number;
+    importedRanting: number;
+    skipped: number;
+    total: number;
+  } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -286,13 +300,77 @@ export default function OrgStructureSettingsPage() {
   };
 
   const handleDelete = async (id: string, level: OrgLevel) => {
-    if (!confirm(`Yakin ingin menghapus ${level} ini? Data terkait akan ikut terhapus.`)) return;
+    if (!(await confirm(`Yakin ingin menghapus ${level} ini? Data terkait akan ikut terhapus.`))) return;
     try {
       await apiClient.delete(`/org-structure/${level}/${id}`);
       await fetchData();
     } catch {
       toast('error', 'Gagal menghapus');
     }
+  };
+
+  const handleImport = async () => {
+    const text = importText.trim();
+    if (!text) {
+      toast('error', 'Masukkan data terlebih dahulu');
+      return;
+    }
+    setImporting(true);
+    setImportResult(null);
+    try {
+      let rows: { distrik: string; wilayah?: string; ranting?: string; lokasiLatihan?: string }[];
+
+      if (text.startsWith('[')) {
+        // Format JSON: [{ "distrik": "...", "wilayah": "...", "ranting": "..." }]
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) throw new Error('JSON harus berupa array');
+        rows = parsed.map((r: Record<string, unknown>) => ({
+          distrik: String(r.distrik ?? r.Distrik ?? '').trim(),
+          wilayah: r.wilayah || r.Wilayah ? String(r.wilayah ?? r.Wilayah).trim() : undefined,
+          ranting: r.ranting || r.Ranting ? String(r.ranting ?? r.Ranting).trim() : undefined,
+          lokasiLatihan: r.lokasiLatihan ? String(r.lokasiLatihan).trim() : undefined,
+        }));
+      } else {
+        // Format CSV: distrik,wilayah,ranting per baris (header opsional)
+        rows = text
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const [distrik, wilayah, ranting] = line.split(',').map((c) => c.trim());
+            return {
+              distrik: distrik || '',
+              wilayah: wilayah || undefined,
+              ranting: ranting || undefined,
+            };
+          })
+          .filter((r) => r.distrik);
+        if (rows.length && rows[0].distrik.toLowerCase() === 'distrik') rows.shift();
+      }
+
+      const validRows = rows.filter((r) => r.distrik);
+      if (!validRows.length) throw new Error('Tidak ada baris valid');
+
+      const { data } = await apiClient.post('/org-structure/import', { data: validRows });
+      const res = (data?.data ?? data) as {
+        importedDistrik: number;
+        importedWilayah: number;
+        importedRanting: number;
+        skipped: number;
+        total: number;
+      };
+      setImportResult(res);
+      toast(
+        'success',
+        `Import selesai: ${res.importedDistrik} distrik, ${res.importedWilayah} wilayah, ${res.importedRanting} ranting baru`,
+      );
+      setShowImportModal(false);
+      setImportText('');
+      await fetchData();
+    } catch (e) {
+      toast('error', e instanceof Error ? `Import gagal: ${e.message}` : 'Import gagal');
+    }
+    setImporting(false);
   };
 
   const tabs: { key: OrgLevel; label: string; icon: typeof Building2 }[] = [
@@ -315,6 +393,12 @@ export default function OrgStructureSettingsPage() {
                 <div className="flex items-center gap-2">
                   <button onClick={fetchData} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                     <RefreshCw size={14} /> Refresh
+                  </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  >
+                    <Upload size={14} /> Import Data
                   </button>
                   <button onClick={openCreate} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
                     <Plus size={14} /> Tambah {tabs.find(t => t.key === activeTab)?.label}
@@ -462,7 +546,57 @@ export default function OrgStructureSettingsPage() {
                 wilayahList={wilayahs}
                 onSave={handleSave}
               />
+
+              {/* Import Modal */}
+              <Modal open={showImportModal} onClose={() => setShowImportModal(false)} title="Import Data Organisasi" size="lg">
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Tempel data struktur organisasi (satu baris = satu ranting). Kolom: <b>distrik, wilayah, ranting</b>.
+                    Data yang sudah ada (nama sama) otomatis dilewati.
+                  </p>
+                  <div className="rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                    <p className="font-medium text-gray-600 dark:text-gray-300">Contoh CSV:</p>
+                    <code className="block">Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Cideng</code>
+                    <code className="block">Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Gambir</code>
+                    <code className="block">Distrik Banten, Wilayah Tangerang, Ranting Cikokol</code>
+                    <p className="font-medium text-gray-600 dark:text-gray-300 pt-2">Contoh JSON:</p>
+                    <code className="block">[{'{'} "distrik": "Distrik Jakarta", "wilayah": "Jakarta Pusat", "ranting": "Cideng" {'}'}]</code>
+                  </div>
+                  <textarea
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    rows={8}
+                    placeholder={'Distrik Jakarta, Wilayah Jakarta Pusat, Ranting Cideng\nDistrik Jakarta, Wilayah Jakarta Pusat, Ranting Gambir'}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-blue-500"
+                  />
+                  {importResult && (
+                    <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400">
+                      <AlertCircle size={16} className="shrink-0" />
+                      <span>
+                        {importResult.importedDistrik} distrik, {importResult.importedWilayah} wilayah,{' '}
+                        {importResult.importedRanting} ranting dibuat · {importResult.skipped} dilewati
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setShowImportModal(false)}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <X size={14} /> Batal
+                    </button>
+                    <button
+                      onClick={handleImport}
+                      disabled={importing}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <Upload size={14} /> {importing ? 'Mengimpor...' : 'Import Sekarang'}
+                    </button>
+                  </div>
+                </div>
+              </Modal>
             </div>
+        {confirmModal}
       </PermissionGuard>
     );
 }
