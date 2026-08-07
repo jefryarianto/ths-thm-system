@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
 import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine } from 'lucide-react';
@@ -43,6 +44,7 @@ interface Stamp {
 }
 
 export default function SettingsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [org, setOrg] = useState<OrgSettings | null>(null);
   const [periods, setPeriods] = useState<Period[]>([]);
@@ -156,7 +158,7 @@ export default function SettingsPage() {
   };
 
   const deletePeriod = async (id: string) => {
-    if (!confirm('Yakin ingin menghapus periode ini?')) return;
+    if (!(await confirm('Yakin ingin menghapus periode ini?'))) return;
     try {
       await apiClient.delete(`/settings/periods/${id}`);
       setPeriods((prev) => prev.filter((p) => p.id !== id));
@@ -167,7 +169,7 @@ export default function SettingsPage() {
 
   // ─── Signature Delete ───
   const deleteSignature = async (id: string) => {
-    if (!confirm('Yakin ingin menghapus tanda tangan ini?')) return;
+    if (!(await confirm('Yakin ingin menghapus tanda tangan ini?'))) return;
     try {
       await apiClient.delete(`/settings/signatures/${id}`);
       setSignatures((prev) => prev.filter((s) => s.id !== id));
@@ -543,6 +545,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </Modal>
+      {confirmModal}
     </div>
     </PermissionGuard>
   );

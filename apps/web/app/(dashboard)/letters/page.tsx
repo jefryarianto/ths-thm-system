@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
 import { useFilters } from '@/lib/hooks/use-filters';
 import DataTable from '@/components/ui/data-table';
@@ -68,6 +69,7 @@ const columns = [
 ];
 
 export default function LettersPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [tab, setTab] = useState<TabValue>('all');
   const [data, setData] = useState<LetterRow[]>([]);
@@ -120,7 +122,7 @@ export default function LettersPage() {
   }, [tab, page, search, filters.status]);
 
   const handleDelete = async (letter: import('./shared').LetterDetail) => {
-    if (!confirm('Yakin ingin menghapus surat ini?')) return;
+    if (!(await confirm('Yakin ingin menghapus surat ini?'))) return;
     const type = letter.type || (letter.pengirim ? 'masuk' : 'keluar');
     const endpoint = type === 'masuk' ? '/letters/incoming' : '/letters/outgoing';
     setDeleting(true);
@@ -222,6 +224,7 @@ export default function LettersPage() {
       </div>
 
       {/* Create/Edit via dedicated pages: /letters/incoming/new, /letters/outgoing/new */}
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Download, FileSpreadsheet, FileText, ChevronDown, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface ExportMenuProps {
   /** Label to display on the button */
@@ -29,6 +30,7 @@ export default function ExportMenu({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<'xlsx' | 'csv' | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const toast = useToast();
 
   // Close on click outside
   useEffect(() => {
@@ -69,7 +71,7 @@ export default function ExportMenu({
       const { serverExport } = await import('@/lib/export-utils');
       await serverExport(serverType, format);
     } catch {
-      alert('Gagal mengexport data. Coba lagi nanti.');
+      toast('error', 'Gagal mengexport data. Coba lagi nanti.');
     }
 
     setLoading(null);

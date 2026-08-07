@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { FileText, Edit3, Trash2, Eye, X, Code, Send } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { EMAIL_TEMPLATES } from './shared';
@@ -17,6 +18,7 @@ interface CustomTemplate {
 }
 
 export default function EmailTemplatesTab() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [customTemplates, setCustomTemplates] = useState<Map<string, CustomTemplate>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -118,7 +120,7 @@ export default function EmailTemplatesTab() {
   };
 
   const deleteCustomTemplate = async (name: string) => {
-    if (!confirm(`Hapus custom template "${name}"? Template akan kembali ke default.`)) return;
+    if (!(await confirm(`Hapus custom template "${name}"? Template akan kembali ke default.`))) return;
     try {
       await apiClient.delete(`/mail/templates/${name}`);
       toast('success', 'Custom template dihapus, kembali ke default');
@@ -533,6 +535,7 @@ export default function EmailTemplatesTab() {
           </div>
         )}
       </Modal>
+      {confirmModal}
     </div>
   );
 }

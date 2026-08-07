@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { useParams } from 'next/navigation';
 import { Pin, Lock, Eye, Trash2, Send, CheckCircle, Edit3, X } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -32,6 +33,7 @@ interface Thread {
 }
 
 export default function ThreadDetailPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const params = useParams();
   const threadId = params.threadId as string;
@@ -72,7 +74,7 @@ export default function ThreadDetailPage() {
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm('Hapus balasan ini?')) return;
+    if (!(await confirm('Hapus balasan ini?'))) return;
     await apiClient.delete(`/forum/posts/${postId}`);
     await fetchThread();
   };
@@ -308,6 +310,7 @@ export default function ThreadDetailPage() {
             </div>
           </div>
         )}
+        {confirmModal}
       </PageContainer>
     </PermissionGuard>
   );

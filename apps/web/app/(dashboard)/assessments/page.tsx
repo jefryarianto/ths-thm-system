@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
@@ -39,6 +40,7 @@ interface ItemRow {
 type Tab = 'aspek' | 'item';
 
 export default function AssessmentsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('aspek');
@@ -203,7 +205,7 @@ export default function AssessmentsPage() {
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm(`Hapus aspek "${row.namaAspek}"?`)) return;
+                      if (!(await confirm(`Hapus aspek "${row.namaAspek}"?`))) return;
                       try {
                         await apiClient.delete(`/assessments/aspects/${row.id}`);
                         refetchAspek();
@@ -284,7 +286,7 @@ export default function AssessmentsPage() {
                   </Link>
                   <button
                     onClick={async () => {
-                      if (!confirm(`Hapus item "${row.namaItem}"?`)) return;
+                      if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;
                       try {
                         await apiClient.delete(`/assessments/items/${row.id}`);
                         refetchItems();
@@ -301,6 +303,7 @@ export default function AssessmentsPage() {
           )}
         />
       )}
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

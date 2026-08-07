@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -55,6 +56,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 export default function ManageRewardsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const router = useRouter();
   const toast = useToast();
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -120,7 +122,7 @@ export default function ManageRewardsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus reward ini?')) return;
+    if (!(await confirm('Hapus reward ini?'))) return;
     try {
       await apiClient.delete(`/gamification/rewards/${id}`);
       await fetchData();
@@ -438,6 +440,7 @@ export default function ManageRewardsPage() {
                   )}
                 />
               )}
+              {confirmModal}
             </PageContainer>
       </PermissionGuard>
     );

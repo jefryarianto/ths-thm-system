@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
@@ -35,6 +36,7 @@ const emptyForm: BankFormData = {
 };
 
 export default function BankInfoPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [banks, setBanks] = useState<BankInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +108,7 @@ export default function BankInfoPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus rekening bank ini?')) return;
+    if (!(await confirm('Hapus rekening bank ini?'))) return;
     try {
       await apiClient.delete(`/payments/bank-info/${id}`);
       await fetchBanks();
@@ -309,6 +311,7 @@ export default function BankInfoPage() {
             ))}
           </div>
         )}
+        {confirmModal}
       </PageContainer>
     </PermissionGuard>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
@@ -23,6 +24,7 @@ interface PenandatanganRow {
 }
 
 export default function PenandatanganPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [data, setData] = useState<PenandatanganRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export default function PenandatanganPage() {
   };
 
   const handleDelete = async (row: PenandatanganRow) => {
-    if (!confirm(`Hapus penandatangan "${row.nama}"?`)) return;
+    if (!(await confirm(`Hapus penandatangan "${row.nama}"?`))) return;
     try {
       await apiClient.delete(`/penandatangan/${row.id}`);
       toast('success', 'Penandatangan dihapus');
@@ -299,6 +301,7 @@ export default function PenandatanganPage() {
             </div>
           </div>
         </Modal>
+        {confirmModal}
       </PageContainer>
     </PermissionGuard>
   );

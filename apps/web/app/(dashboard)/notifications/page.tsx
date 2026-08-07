@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
 import { useFilters } from '@/lib/hooks/use-filters';
 import {
@@ -37,6 +38,7 @@ interface NotificationRow {
 }
 
 export default function NotificationsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const [data, setData] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState({ total: 0, totalPages: 0, unreadCount: 0 });
@@ -136,7 +138,7 @@ export default function NotificationsPage() {
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedIds.size === 0 || !confirm(`Hapus ${selectedIds.size} notifikasi?`)) return;
+    if (selectedIds.size === 0 || !(await confirm(`Hapus ${selectedIds.size} notifikasi?`))) return;
     setDeleting(true);
     try {
       await Promise.all(
@@ -487,6 +489,7 @@ export default function NotificationsPage() {
 
       {/* Send Notification Modal */}
       <SendNotificationModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} />
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

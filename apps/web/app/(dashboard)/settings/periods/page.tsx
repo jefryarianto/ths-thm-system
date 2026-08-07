@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
@@ -21,6 +22,7 @@ interface PeriodRow {
 }
 
 export default function PeriodsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [data, setData] = useState<PeriodRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function PeriodsPage() {
   };
 
   const handleDelete = async (row: PeriodRow) => {
-    if (!confirm(`Hapus periode "${row.nama}"?`)) return;
+    if (!(await confirm(`Hapus periode "${row.nama}"?`))) return;
     try {
       await apiClient.delete(`/settings/periods/${row.id}`);
       fetchData();
@@ -176,6 +178,7 @@ export default function PeriodsPage() {
                   </table>
                 )}
               </div>
+              {confirmModal}
             </PageContainer>
       </PermissionGuard>
     );

@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -27,6 +28,7 @@ interface OrgDocumentRow {
 }
 
 export default function OrgDocumentsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
   const [categories, setCategories] = useState<{ id: string; nama: string }[]>([]);
@@ -180,7 +182,7 @@ export default function OrgDocumentsPage() {
                         </button>
                         <button
                           onClick={async () => {
-                            if (!confirm(`Hapus dokumen "${row.judul}"?`)) return;
+                            if (!(await confirm(`Hapus dokumen "${row.judul}"?`))) return;
                             try {
                               await apiClient.delete(`/org-documents/${row.id}`);
                               refetch();
@@ -196,6 +198,7 @@ export default function OrgDocumentsPage() {
                   </tr>
                 )}
               />
+              {confirmModal}
             </PageContainer>
       </PermissionGuard>
     );

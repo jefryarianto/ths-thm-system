@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -50,6 +51,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 };
 
 export default function PaymentDetailPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const params = useParams();
   const router = useRouter();
@@ -78,7 +80,7 @@ export default function PaymentDetailPage() {
 
   const handleVerify = async () => {
     if (!payment) return;
-    if (!confirm('Verifikasi pembayaran ini? Status akan berubah menjadi LUNAS.')) return;
+    if (!(await confirm({ title: 'Verifikasi Pembayaran', message: 'Verifikasi pembayaran ini? Status akan berubah menjadi LUNAS.', confirmLabel: 'Ya, Verifikasi', variant: 'info' }))) return;
     setActionLoading('verify');
     try {
       await apiClient.patch(`/payments/${payment.id}/verify`);
@@ -89,7 +91,7 @@ export default function PaymentDetailPage() {
 
   const handleReject = async () => {
     if (!payment) return;
-    if (!confirm('Tolak pembayaran ini? Status akan dikembalikan ke Belum Dibayar.')) return;
+    if (!(await confirm({ title: 'Tolak Pembayaran', message: 'Tolak pembayaran ini? Status akan dikembalikan ke Belum Dibayar.', confirmLabel: 'Ya, Tolak', variant: 'warning' }))) return;
     setActionLoading('reject');
     try {
       await apiClient.patch(`/payments/${payment.id}/reject`);
@@ -333,6 +335,7 @@ function TimelineItem({ icon: Icon, title, date, subtitle, status }: {
                 {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
               </div>
             </div>
+        {confirmModal}
       </PermissionGuard>
     );
 }

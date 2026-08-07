@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
@@ -54,6 +55,7 @@ const STATUS_COLORS: Record<string, string> = {
 type Tab = 'documents' | 'batch';
 
 export default function DocumentsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('documents');
@@ -88,7 +90,7 @@ export default function DocumentsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus dokumen ini?')) return;
+    if (!(await confirm('Hapus dokumen ini?'))) return;
     try {
       await apiClient.delete(`/documents/${id}`);
       await refetch();
@@ -282,6 +284,7 @@ export default function DocumentsPage() {
         onClose={() => setShowBatchModal(false)}
         onBatchCreated={handleBatchCreated}
       />
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

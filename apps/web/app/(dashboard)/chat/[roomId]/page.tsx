@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { ArrowLeft, Send, RefreshCw, Trash2 } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
@@ -29,6 +30,7 @@ interface Room {
 }
 
 export default function ChatRoomPage() {
+  const { confirm, confirmModal } = useConfirm();
   const params = useParams();
   const roomId = params.roomId as string;
   const [room, setRoom] = useState<Room | null>(null);
@@ -162,7 +164,7 @@ export default function ChatRoomPage() {
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('Hapus pesan ini?')) return;
+    if (!(await confirm('Hapus pesan ini?'))) return;
     try {
       await apiClient.delete(`/chat/messages/${messageId}`);
       await fetchMessages();
@@ -296,6 +298,7 @@ export default function ChatRoomPage() {
             </div>
           </div>
         </div>
+        {confirmModal}
       </PageContainer>
     </PermissionGuard>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
@@ -78,6 +79,7 @@ function formatShortDate(dateStr: string) {
 // ─── Page ───
 
 export default function DuesPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
   const [stats, setStats] = useState<DuesStats | null>(null);
@@ -187,7 +189,7 @@ export default function DuesPage() {
                 <CanDelete module="dues">
                   <button
                     onClick={async () => {
-                      if (!confirm('Hapus iuran ini?')) return;
+                      if (!(await confirm('Hapus iuran ini?'))) return;
                       try {
                         await apiClient.delete(`/dues/${d.id}`);
                         refetch();
@@ -208,6 +210,7 @@ export default function DuesPage() {
           message: 'Belum ada data iuran',
         }}
       />
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

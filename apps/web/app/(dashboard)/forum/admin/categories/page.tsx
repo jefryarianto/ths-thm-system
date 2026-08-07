@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import { Plus, Pencil, Trash2, X, Save, GripVertical } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
@@ -26,6 +27,7 @@ interface CategoryForm {
 const emptyForm: CategoryForm = { nama: '', deskripsi: '', order: 0 };
 
 export default function ForumAdminCategoriesPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ export default function ForumAdminCategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus kategori ini? Semua thread di dalamnya akan ikut dihapus.')) return;
+    if (!(await confirm('Hapus kategori ini? Semua thread di dalamnya akan ikut dihapus.'))) return;
     try {
       await apiClient.delete(`/forum/categories/${id}`);
       await fetchCategories();
@@ -247,6 +249,7 @@ export default function ForumAdminCategoriesPage() {
             </table>
           </div>
         )}
+        {confirmModal}
       </PageContainer>
     </PermissionGuard>
   );

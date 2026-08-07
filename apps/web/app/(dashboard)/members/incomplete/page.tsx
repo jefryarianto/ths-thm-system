@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ import { formatDate } from '@/components/members/constants';
 import { useToast } from '@/components/ui/toast';
 
 export default function IncompleteMembersPage() {
+  const { confirm, confirmModal } = useConfirm();
   const router = useRouter();
   const toast = useToast();
   const [sendingAll, setSendingAll] = useState(false);
@@ -52,7 +54,7 @@ export default function IncompleteMembersPage() {
   };
 
   const handleSendAllNotifications = async () => {
-    if (!confirm('Kirim notifikasi ke semua anggota dengan data belum lengkap?')) return;
+    if (!(await confirm({ title: 'Kirim Notifikasi', message: 'Kirim notifikasi ke semua anggota dengan data belum lengkap?', confirmLabel: 'Ya, Kirim', variant: 'info' }))) return;
     setSendingAll(true);
     setSendResult(null);
     try {
@@ -211,6 +213,7 @@ export default function IncompleteMembersPage() {
                 total={meta.total}
                 onPageChange={(_p) => {}}
               />
+              {confirmModal}
             </PageContainer>
       </PermissionGuard>
     );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation'; import Link from 'next/link';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -30,6 +31,7 @@ interface TrainingRow {
 }
 
 export default function TrainingsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const router = useRouter();
   const {
@@ -163,7 +165,7 @@ export default function TrainingsPage() {
                 <CanDelete module="trainings">
                   <button
                     onClick={async () => {
-                      if (!confirm(`Hapus data latihan ini?`)) return;
+                      if (!(await confirm(`Hapus data latihan ini?`))) return;
                       try {
                         await apiClient.delete(`/trainings/${row.id}`);
                         refetch();
@@ -180,6 +182,7 @@ export default function TrainingsPage() {
           </tr>
         )}
       />
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

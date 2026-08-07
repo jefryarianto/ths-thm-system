@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useCallback } from 'react';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ interface ItemRow {
 }
 
 export default function ItemsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
@@ -142,7 +144,7 @@ export default function ItemsPage() {
                         </Link>
                         <button
                           onClick={async () => {
-                            if (!confirm(`Hapus item "${row.namaItem}"?`)) return;
+                            if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;
                             try {
                               await apiClient.delete(`/assessments/items/${row.id}`);
                               refetch();
@@ -160,6 +162,7 @@ export default function ItemsPage() {
                   </tr>
                 )}
               />
+              {confirmModal}
             </PageContainer>
       </PermissionGuard>
     );

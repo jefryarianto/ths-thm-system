@@ -29,30 +29,45 @@ const variantStyles = {
   },
 };
 
+export interface ConfirmOptions {
+  /** Shown as the modal heading (default: "Konfirmasi") */
+  title?: string;
+  /** Shown as the modal body */
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: ConfirmModalProps['variant'];
+}
+
 export function useConfirm() {
   const [state, setState] = useState<{
     open: boolean;
+    options: ConfirmOptions;
     resolve: ((value: boolean) => void) | null;
-  }>({ open: false, resolve: null });
+  }>({ open: false, options: { message: '' }, resolve: null });
 
-  const confirm = (
-    _title: string,
-    _message: string,
-    _variant: ConfirmModalProps['variant'] = 'danger'
-  ): Promise<boolean> => {
+  /**
+   * Promise-based confirmation — mirrors the native `confirm()` API but renders
+   * an in-app modal. Accepts a plain message string or an options object.
+   *
+   *   const ok = await confirm('Hapus item ini?');
+   *   const ok = await confirm({ title: 'Verifikasi', message: '...', confirmLabel: 'Ya, Verifikasi', variant: 'warning' });
+   */
+  const confirm = (options: string | ConfirmOptions): Promise<boolean> => {
+    const opts: ConfirmOptions = typeof options === 'string' ? { message: options } : options;
     return new Promise((resolve) => {
-      setState({ open: true, resolve });
+      setState({ open: true, options: opts, resolve });
     });
   };
 
   const handleConfirm = () => {
     state.resolve?.(true);
-    setState({ open: false, resolve: null });
+    setState({ open: false, options: { message: '' }, resolve: null });
   };
 
   const handleCancel = () => {
     state.resolve?.(false);
-    setState({ open: false, resolve: null });
+    setState({ open: false, options: { message: '' }, resolve: null });
   };
 
   return {
@@ -60,9 +75,13 @@ export function useConfirm() {
     confirmModal: (
       <ConfirmModal
         open={state.open}
-        title="Konfirmasi"
-        message=""
-        variant="danger"
+        title={state.options.title ?? 'Konfirmasi'}
+        message={state.options.message}
+        confirmLabel={
+          state.options.confirmLabel ?? (state.options.variant === 'danger' ? 'Ya, Hapus' : 'Ya')
+        }
+        cancelLabel={state.options.cancelLabel}
+        variant={state.options.variant}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />

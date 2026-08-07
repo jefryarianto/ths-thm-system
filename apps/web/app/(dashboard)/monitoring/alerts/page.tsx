@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import PageContainer from '@/components/ui/page-container';
@@ -356,6 +357,7 @@ function AlertFormModal({
 // ── Main Page ───────────────────────────────────────────────
 
 export default function MonitoringAlertsPage() {
+  const { confirm, confirmModal } = useConfirm();
   const [alerts, setAlerts] = useState<MonitoringAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -394,7 +396,7 @@ export default function MonitoringAlertsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Hapus alert ini?')) return;
+    if (!(await confirm('Hapus alert ini?'))) return;
     await apiClient.delete(`/monitoring/alerts/${id}`);
     await fetchAlerts();
   };
@@ -585,6 +587,7 @@ export default function MonitoringAlertsPage() {
         onSave={handleSave}
         onClose={() => { setModalOpen(false); setEditingAlert(null); }}
       />
+      {confirmModal}
     </PageContainer>
     </PermissionGuard>
   );

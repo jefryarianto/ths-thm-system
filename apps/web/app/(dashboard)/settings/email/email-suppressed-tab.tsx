@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
   Ban,
   Mail,
@@ -20,6 +21,7 @@ import { useMailSuppressions } from '@/lib/hooks/use-mail';
 import { type SuppressionEntry, formatDateShort } from './shared';
 
 export default function EmailSuppressedTab() {
+  const { confirm, confirmModal } = useConfirm();
   const [page, setPage] = useState(1);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -36,7 +38,7 @@ export default function EmailSuppressedTab() {
   const total = meta?.total ?? 0;
 
   const handleRemove = async (id: string) => {
-    if (!confirm('Hapus alamat email ini dari daftar supresi?')) return;
+    if (!(await confirm('Hapus alamat email ini dari daftar supresi?'))) return;
     setRemovingId(id);
     try {
       await apiClient.delete(`/mail/suppressions/${id}`);
@@ -75,9 +77,12 @@ export default function EmailSuppressedTab() {
 
   const handleClear = async () => {
     if (
-      !confirm(
-        'Bersihkan semua alamat email dari daftar supresi? Email akan tetap dikirim ke alamat-alamat ini.',
-      )
+      !(await confirm({
+        title: 'Bersihkan Supresi',
+        message: 'Bersihkan semua alamat email dari daftar supresi? Email akan tetap dikirim ke alamat-alamat ini.',
+        confirmLabel: 'Ya, Bersihkan',
+        variant: 'danger',
+      }))
     )
       return;
     try {
@@ -393,6 +398,7 @@ export default function EmailSuppressedTab() {
           </div>
         </div>
       )}
+      {confirmModal}
     </div>
   );
 }

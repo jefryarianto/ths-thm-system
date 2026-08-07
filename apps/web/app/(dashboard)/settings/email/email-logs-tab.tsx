@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import {
   Mail,
   RefreshCw,
@@ -15,6 +16,7 @@ import { useMailLogs, useMailStats, useMailModules } from '@/lib/hooks/use-mail'
 import { type EmailLogEntry, MODULES, statusBadge, formatDateShort, formatDate } from './shared';
 
 export default function EmailLogsTab() {
+  const { confirm, confirmModal } = useConfirm();
   const [logsFilter, setLogsFilter] = useState('');
   const [logsModuleFilter, setLogsModuleFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -70,7 +72,7 @@ export default function EmailLogsTab() {
   };
 
   const handleRetry = async () => {
-    if (!confirm('Kirim ulang semua email yang gagal?')) return;
+    if (!(await confirm({ title: 'Kirim Ulang Email', message: 'Kirim ulang semua email yang gagal?', confirmLabel: 'Ya, Kirim Ulang', variant: 'info' }))) return;
     setRetryLoading(true);
     setRetryResult(null);
     try {
@@ -86,7 +88,7 @@ export default function EmailLogsTab() {
 
   const handleBulkRetry = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Kirim ulang ${selectedIds.size} email yang gagal?`)) return;
+    if (!(await confirm({ title: 'Kirim Ulang Email', message: `Kirim ulang ${selectedIds.size} email yang gagal?`, confirmLabel: 'Ya, Kirim Ulang', variant: 'info' }))) return;
     setRetryLoading(true);
     setRetryResult(null);
     try {
@@ -568,6 +570,7 @@ export default function EmailLogsTab() {
           </div>
         </div>
       )}
+      {confirmModal}
     </div>
   );
 }
