@@ -93,12 +93,17 @@ export class GraduateResultDto {
   @IsString()
   candidateId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Jika diisi, dipakai; jika omit, dihitung otomatis dari NilaiPendadaran.',
+  })
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  totalSkor: number;
+  totalSkor?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Jika omit, dihitung otomatis berdasarkan skor (ranking tertinggi = 1).',
+  })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -107,6 +112,61 @@ export class GraduateResultDto {
   @ApiProperty()
   @IsBoolean()
   lulus: boolean;
+}
+
+/** Satu entri aksi validasi hasil pendadaran (untuk bulk). */
+export class SingleValidateResultDto {
+  @ApiProperty({ description: 'ID CalonAnggota yang hasilnya divalidasi' })
+  @IsString()
+  candidateId: string;
+
+  @ApiProperty({ description: 'Setujui (true) atau tolak (false) hasil ini' })
+  @IsBoolean()
+  approved: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  catatan?: string;
+}
+
+/** Dto untuk validasi hasil pendadaran oleh admin (Approve/Reject). */
+export class ValidateResultDto {
+  @ApiProperty({
+    description: 'Validasi satu peserta: isi candidateId + approved. Atau pakai `results` untuk bulk.',
+  })
+  @IsOptional()
+  @IsString()
+  candidateId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Bulk: daftar aksi validasi hasil pendadaran.',
+    type: [SingleValidateResultDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SingleValidateResultDto)
+  @IsOptional()
+  results?: SingleValidateResultDto[];
+
+  @ApiProperty({ description: 'Setujui (true) atau tolak (false) hasil ini' })
+  @IsBoolean()
+  approved: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  catatan?: string;
+}
+
+/** Body opsional untuk generate-docs — jika kosong, generate untuk semua lulus+approved. */
+export class GenerateDocsDto {
+  @ApiPropertyOptional({
+    description: 'Hanya generate dokumen untuk calon ID tertentu (opsional).',
+  })
+  @IsOptional()
+  @IsString()
+  candidateId?: string;
 }
 
 export class UpdateGraduationDto {

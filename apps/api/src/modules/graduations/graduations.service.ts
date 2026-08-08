@@ -1,18 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
+import { DocumentsService } from '../documents/documents.service';
+import { NraService } from '../../common/services/nra.service';
+import { MemberMailService } from '../../common/services/member-mail.service';
 import {
   CreateGraduationDto,
   UpdateGraduationDto,
   GraduationFilterDto,
   RegisterParticipantDto,
   GraduateDto,
+  ValidateResultDto,
+  GenerateDocsDto,
 } from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+
+/** Shape expected by DocumentsService.generateCertificate (#aspects). */
+interface AspectScore {
+  name: string;
+  score: string | number;
+  items: string[];
+}
 
 @Injectable()
 export class GraduationsService extends BaseCrudService<CreateGraduationDto, UpdateGraduationDto> {
@@ -21,6 +38,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     scopeHelper: ScopeHelper,
     cache: CacheService,
     private readonly mailService: MailService,
+    private readonly documentsService: DocumentsService,
+    private readonly nraService: NraService,
+    private readonly memberMailService: MemberMailService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'kegiatan',
@@ -45,7 +65,13 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   ): Promise<Record<string, unknown>> {
     const resolvedScopeType =
       dto.scopeType ||
-      (scope?.rantingId ? 'ranting' : scope?.wilayahId ? 'wilayah' : scope?.distrikId ? 'distrik' : 'nasional');
+      (scope?.rantingId
+        ? 'ranting'
+        : scope?.wilayahId
+          ? 'wilayah'
+          : scope?.distrikId
+            ? 'distrik'
+            : 'nasional');
     const resolvedScopeId =
       dto.scopeId || scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'national';
 
@@ -117,11 +143,65 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     return this.baseUpdate(id, dto, scope, 'Pendadaran berhasil diperbarui');
   }
 
+  /**
+   * Hapus (atau batalkan) pendadaran.
+   * Jika ada data terkait (hasil/nilai/ujian), tidak dihapus permanen —
+   * cukup `status='cancelled'` untuk menjaga integritas referensial.
+   */
+  async delete(graduationId: string, scope?: UserScope) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+
+    const [results, scores, exams] = await this.prisma.$transaction([
+      this.prisma.hasilPendadaran.count({ where: { kegiatanId: grad.id } }),
+      this.prisma.nilaiPendadaran.count({ where: { kegiatanId: grad.id } }),
+      this.prisma.ujianPraktek.count({ where: { kegiatanId: grad.id } }),
+    ]);
+    const dependent = results + scores + exams;
+
+    if (dependent > 0) {
+      await this.prisma.kegiatan.update({
+        where: { id: grad.id },
+        data: { status: 'cancelled' },
+      });
+      this.invalidateCache();
+      return { deleted: false, status: 'cancelled', reason: 'Memiliki data terkait (hasil/nilai/ujian)' };
+    }
+
+    await this.prisma.kegiatan.delete({ where: { id: grad.id } });
+    this.invalidateCache();
+    return { deleted: true };
+  }
+
+
+  async remove(id: string, scope?: UserScope) {
+    return this.baseRemove(id, scope, 'Pendadaran berhasil dihapus');
+  }
+
   // ═══════════════════════════════════════════════════════════
-  //  DOMAIN METHODS
+  //  PARTICIPANTS
   // ═══════════════════════════════════════════════════════════
 
-  async registerParticipant(graduationId: string, dto: RegisterParticipantDto) {
+  async registerParticipant(
+    graduationId: string,
+    dto: RegisterParticipantDto,
+    scope?: UserScope,
+  ) {
+    // 1. Verify access to this pendadaran + existence
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // 2. Verify the caller can access the candidate (scope-bound)
+    await this.scopeHelper.verifyResourceAccess(
+      this.prisma,
+      scope,
+      dto.candidateId,
+      (p, id) =>
+        p.calonAnggota.findUnique({
+          where: { id },
+          select: { rantingId: true },
+        }) as unknown as Promise<{ rantingId?: string | null } | null>,
+      'Calon anggota tidak ditemukan',
+    );
+
     const candidate = await this.prisma.calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'mengikuti_pendadaran' },
@@ -131,11 +211,19 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
     }
 
+    this.invalidateCache();
     return candidate;
   }
 
-  async unregisterParticipant(_graduationId: string, dto: RegisterParticipantDto) {
-    await this.prisma.calonAnggota.update({
+  async unregisterParticipant(
+    graduationId: string,
+    dto: RegisterParticipantDto,
+    scope?: UserScope,
+  ) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (this.prisma as any).calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'diusulkan' },
     });
@@ -143,9 +231,21 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     // void — interceptor returns { success: true }
   }
 
-  async getParticipants(_graduationId: string) {
+  /**
+   * FIX BUG: sebelumnya mengeembalikan SELURUH calon dengan status
+   * 'mengikuti_pendadaran' di seluruh sistem (tanpa filter scope / graduation).
+   * Sekarang: verifikasi akses ke pendadaran + filter peserta sesuai scope
+   * (konsisten dengan pola calon anggota lain).
+   */
+  async getParticipants(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = { status: 'mengikuti_pendadaran' };
+    Object.assign(where, this.scopeHelper.buildScopeFilter(scope as UserScope));
+
     const participants = await this.prisma.calonAnggota.findMany({
-      where: { status: 'mengikuti_pendadaran' },
+      where,
       include: { ranting: true },
     });
 
@@ -153,17 +253,21 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   async importParticipants(
-    _graduationId: string,
+    graduationId: string,
     data: Array<{ candidateId?: string; id?: string }>,
+    scope?: UserScope,
   ) {
-    const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: _graduationId } });
-    if (!kegiatan) throw new NotFoundException('Pendadaran tidak ditemukan');
+    // Verify access to the graduation (throws 404 if not found / 403 if out of scope)
+    await this.getGraduationOrThrow(graduationId, scope);
 
     let imported = 0;
     for (const row of data) {
-      const candidateId = row.candidateId || row.id;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const candidateId = (row as any).candidateId || (row as any).id;
       if (!candidateId) continue;
-      const candidate = await this.prisma.calonAnggota.findUnique({ where: { id: candidateId } });
+      const candidate = await this.prisma.calonAnggota.findUnique({
+        where: { id: candidateId },
+      });
       if (candidate && candidate.status === 'diusulkan') {
         await this.prisma.calonAnggota.update({
           where: { id: candidateId },
@@ -173,60 +277,389 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
+    this.invalidateCache();
     return { imported };
   }
 
+  // ═══════════════════════════════════════════════════════════
+  //  GRADUATE (Kelulusan)
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Buat HasilPendadaran untuk setiap peserta.
+   * - totalSkor & ranking: jika ditiadakan di DTO, dihitung otomatis
+   *   dari NilaiPendadaran (pola DFD: "Hitung Total & Ranking").
+   * - statusValidasi='pending' → menunggu validasi admin (Gap 1).
+   */
   async graduate(graduationId: string, dto: GraduateDto, scope?: UserScope) {
-    if (scope) {
-      const graduation = await this.prisma.kegiatan.findUnique({
-        where: { id: graduationId },
-        select: { scopeType: true, scopeId: true },
-      });
-      if (!graduation) throw new NotFoundException('Pendadaran tidak ditemukan');
-      this.scopeHelper.verifyKegiatanScope(scope, graduation.scopeType, graduation.scopeId);
+    // Verify access to this pendadaran
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const candidateIds = (dto.results || []).map((r) => r.candidateId);
+
+    // Auto-compute totalSkor per candidate from NilaiPendadaran (jika tidak disediakan).
+    const nilaiList = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId: graduationId, calonAnggotaId: { in: candidateIds } },
+      select: { calonAnggotaId: true, skor: true },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const scoreMap = new Map<string, number>();
+    for (const n of nilaiList) {
+      scoreMap.set(
+        n.calonAnggotaId,
+        (scoreMap.get(n.calonAnggotaId) ?? 0) + Number(n.skor),
+      );
     }
 
-    for (const result of dto.results || []) {
+    // Determine totals (user-supplied or computed) then derive ranking by score desc.
+    const computed = (dto.results || []).map((r) => ({
+      candidateId: r.candidateId,
+      totalSkor:
+        r.totalSkor !== undefined && r.totalSkor > 0
+          ? r.totalSkor
+          : scoreMap.get(r.candidateId) ?? 0,
+      ranking: r.ranking,
+      lulus: r.lulus,
+    }));
+
+    // If NO ranking was supplied at all, compute rankings from totals (rank #1 = highest).
+    const anyRankingSupplied = (dto.results || []).some((r) => r.ranking !== undefined && r.ranking > 0);
+    if (!anyRankingSupplied) {
+      const sorted = [...computed].sort((a, b) => b.totalSkor - a.totalSkor);
+      const rankOf = new Map<string, number>();
+      sorted.forEach((r, i) => rankOf.set(r.candidateId, i + 1));
+      computed.forEach((r) => (r.ranking = rankOf.get(r.candidateId) ?? 0));
+    }
+
+    for (const r of computed) {
       await this.prisma.hasilPendadaran.create({
         data: {
           kegiatanId: graduationId,
-          calonAnggotaId: result.candidateId,
-          totalSkor: result.totalSkor,
-          ranking: result.ranking,
-          statusKelulusan: result.lulus ? 'lulus' : 'gagal',
+          calonAnggotaId: r.candidateId,
+          totalSkor: r.totalSkor,
+          ranking: r.ranking,
+          statusKelulusan: r.lulus ? 'lulus' : 'gagal',
           statusValidasi: 'pending',
         },
       });
 
       const candidate = await this.prisma.calonAnggota.update({
-        where: { id: result.candidateId },
-        data: { status: result.lulus ? 'lulus' : 'gagal' },
+        where: { id: r.candidateId },
+        data: { status: r.lulus ? 'lulus' : 'gagal' },
       });
 
       if (candidate.email) {
         this.sendGraduationResultEmail(
           candidate.namaLengkap,
           candidate.email,
-          result.lulus,
-          result.totalSkor,
+          r.lulus,
+          r.totalSkor,
         );
       }
     }
 
+    this.invalidateCache();
     // void — interceptor returns { success: true }
   }
 
-  async generateDocuments(graduationId: string) {
-    const graduates = await this.prisma.hasilPendadaran.findMany({
-      where: { kegiatanId: graduationId, statusKelulusan: 'lulus' },
+  // ═══════════════════════════════════════════════════════════
+  //  VALIDATE RESULT (Gap 1 — Admin validasi nilai)
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Validasi hasil pendadaran oleh Admin (Approve / Reject).
+   * - Mengubah `statusValidasi` HasilPendadaran (pending → approved/rejected).
+   * - Mengisi `divalidasiOleh` / `divalidasiAt` (sesuai DFD: "Validasi Nilai oleh Admin").
+   * Mendukung bulk via `dto.results` atau single via `dto.candidateId`.
+   */
+  async validateResult(
+    graduationId: string,
+    dto: ValidateResultDto,
+    userId?: string,
+    scope?: UserScope,
+  ) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // Normalize to action list
+    let actions: Array<{ candidateId: string; approved: boolean; catatan?: string }>;
+    if (dto.results && dto.results.length > 0) {
+      actions = dto.results;
+    } else if (dto.candidateId) {
+      actions = [
+        {
+          candidateId: dto.candidateId,
+          approved: dto.approved,
+          catatan: dto.catatan,
+        },
+      ];
+    } else {
+      throw new BadRequestException('Harus menyertakan candidateId atau results');
+    }
+
+    let validated = 0;
+    let skipped = 0;
+
+    for (const action of actions) {
+      const existing = await this.prisma.hasilPendadaran.findFirst({
+        where: { kegiatanId: graduationId, calonAnggotaId: action.candidateId },
+      });
+      if (!existing) {
+        skipped++;
+        continue;
+      }
+
+      await this.prisma.hasilPendadaran.update({
+        where: { id: existing.id },
+        data: {
+          statusValidasi: action.approved ? 'approved' : 'rejected',
+          divalidasiOleh: userId || null,
+          divalidasiAt: new Date(),
+        },
+      });
+      validated++;
+
+      // Kick off member creation + document generation for approved + lulus results
+      if (action.approved && existing.statusKelulusan === 'lulus') {
+        try {
+          await this.ensureAnggotaAndDocument(graduationId, action.candidateId, existing.totalSkor);
+        } catch (error) {
+          this.logger.error(
+            `Post-approval member/doc generation failed for ${action.candidateId}: ${(error as Error).message}`,
+          );
+        }
+      }
+    }
+
+    this.invalidateCache();
+    this.cache.invalidatePrefix('members:');
+    this.cache.invalidatePrefix('documents:');
+    return { validated, skipped };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  GENERATE DOCUMENTS (Gap 2 — Generate Sertifikat & Piagam + Update Anggota Aktif)
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Generate dokumen (sertifikat) dan buat Anggota baru (dengan NRA) untuk
+   * setiap calon yang `lulus` **dan sudah divalidasi (approved)**.
+   * - Idempotency: jika calon sudah menjadi anggota (via email), gunakan kembali.
+   * - Diperbolehkan filter hanya satu calon via `dto.candidateId`.
+   */
+  async generateDocuments(graduationId: string, dto?: GenerateDocsDto, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      kegiatanId: graduationId,
+      statusKelulusan: 'lulus',
+      statusValidasi: 'approved',
+    };
+    if (dto?.candidateId) where.calonAnggotaId = dto.candidateId;
+
+    const results = await this.prisma.hasilPendadaran.findMany({
+      where,
+      include: { calonAnggota: true },
     });
 
-    return { totalGraduates: graduates.length };
+    let generated = 0;
+    const errors: string[] = [];
+
+    for (const r of results) {
+      try {
+        await this.ensureAnggotaAndDocument(graduationId, r.calonAnggotaId, r.totalSkor, r.calonAnggota);
+        generated++;
+      } catch (error) {
+        errors.push(`${r.calonAnggotaId}: ${(error as Error).message}`);
+      }
+    }
+
+    return { generated, total: results.length, errors };
+  }
+
+  /**
+   * Memastikan seorang calon punya Akun anggota (Anggota + NRA) dan dokumen
+   * sertifikat_pendadaran. Dipanggil oleh `validateResult` (post-approve) dan
+   * `generateDocuments`.
+   */
+  private async ensureAnggotaAndDocument(
+    kegiatanId: string,
+    calonAnggotaId: string,
+    totalSkor: unknown,
+    calon?: {
+      id: string;
+      namaLengkap: string;
+      jenisKelamin: 'L' | 'P';
+      tempatLahir: string | null;
+      tanggalLahir: Date | null;
+      alamat: string | null;
+      noHp: string | null;
+      email: string | null;
+      tingkat: string | null;
+      rantingId: string;
+    },
+  ): Promise<void> {
+    const candidate =
+      calon ??
+      (await this.prisma.calonAnggota.findUnique({
+        where: { id: calonAnggotaId },
+      }));
+    if (!candidate) throw new NotFoundException('Calon anggota tidak ditemukan');
+
+    const kegiatan = await this.prisma.kegiatan.findUnique({
+      where: { id: kegiatanId },
+      select: { nama: true, lokasi: true },
+    });
+
+    // 1. Resolve atau create Anggota (dengan NRA) — pola mirip CandidatesService.approve()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let anggota: { id: string } | null = null;
+    if (candidate.email) {
+      anggota = await this.prisma.anggota.findUnique({
+        where: { email: candidate.email },
+        select: { id: true },
+      });
+    }
+    if (!anggota) {
+      anggota = await this.prisma.anggota.create({
+        data: {
+          namaLengkap: candidate.namaLengkap,
+          jenisKelamin: candidate.jenisKelamin,
+          tempatLahir: candidate.tempatLahir,
+          tanggalLahir: candidate.tanggalLahir ?? null,
+          alamat: candidate.alamat,
+          noHp: candidate.noHp,
+          email: candidate.email,
+          rantingId: candidate.rantingId,
+          tingkat: candidate.tingkat || null,
+          nomorAnggota: await this.nraService.generateMemberNumber(candidate.rantingId),
+          statusKeanggotaan: 'aktif',
+          statusData: 'complete',
+          statusValidasi: 'approved',
+        },
+      });
+      // Notify the new member
+      if (candidate.email) {
+        this.memberMailService.sendToMemberWithArgs(
+          anggota.id,
+          graduationResultEmail,
+          [true, Number(totalSkor) || 0],
+          { template: 'graduationResultEmail', email: candidate.email },
+          'graduations',
+          { nomorAnggota: (anggota as { nomorAnggota?: string }).nomorAnggota ?? '' },
+        );
+      }
+    }
+
+    // 2. Aspect scores dari NilaiPendadaran (untuk sertifikat)
+    const aspects = await this.buildAspectScores(kegiatanId, calonAnggotaId);
+
+    // 3. Generate sertifikat pendadaran
+    const finalSkor = Number(totalSkor) || 0;
+    await this.documentsService.generateCertificate({
+      memberId: anggota.id,
+      eventTitle: `Pendadaran ${kegiatan?.nama || ''}`,
+      location: kegiatan?.lokasi || '',
+      finalScore: finalSkor,
+      predicate: this.predicateFromScore(finalSkor),
+      aspects,
+    });
+
+    this.logger.log(`Generated dokumen + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`);
+  }
+
+  private predicateFromScore(skor: number): string {
+    if (skor >= 90) return 'Dengan Pujian';
+    if (skor >= 60) return 'Lulus';
+    return 'Lulus';
+  }
+
+  private async buildAspectScores(kegiatanId: string, calonAnggotaId: string): Promise<AspectScore[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nilai: any[] = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId, calonAnggotaId },
+      include: { itemPenilaian: { include: { aspek: true } } },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = new Map<string, { name: string; total: number; max: number; items: string[] }>();
+    for (const n of nilai) {
+      const a = n.itemPenilaian.aspek;
+      const key = a.id;
+      const cur = map.get(key) || { name: a.namaAspek, total: 0, max: 0, items: [] as string[] };
+      cur.total += Number(n.skor);
+      cur.max += Number(n.itemPenilaian.skorMaksimal);
+      cur.items.push(`${n.itemPenilaian.namaItem}: ${Number(n.skor)}`);
+      map.set(key, cur);
+    }
+    return Array.from(map.values()).map((v) => ({
+      name: v.name,
+      score: `${v.total}/${v.max}`,
+      items: v.items,
+    }));
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  EVALUATIONS (Nilai evaluasi pendadaran — didokumentasikan di API.md)
+  // ═══════════════════════════════════════════════════════════
+
+  async getEvaluations(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // Semua penilaian aspek/item untuk peserta pendadaran ini
+    const results = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        calonAnggota: { select: { id: true, namaLengkap: true, ranting: { select: { nama: true } } } },
+        itemPenilaian: {
+          select: {
+            namaItem: true,
+            skorMaksimal: true,
+            bobot: true,
+            aspek: { select: { namaAspek: true, bobot: true } },
+          },
+        },
+        penguji: { select: { id: true, namaLengkap: true } },
+        ujianPraktek: { select: { id: true, nama: true } },
+      },
+      orderBy: [{ calonAnggotaId: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    // Aggregate total skor per candidate for convenience
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const totals: Record<string, { nama: string; skor: number; items: number }> = {};
+    for (const r of results) {
+      const key = r.calonAnggotaId;
+      if (!totals[key]) {
+        totals[key] = {
+          nama: r.calonAnggota?.namaLengkap ?? '',
+          skor: 0,
+          items: 0,
+        };
+      }
+      totals[key].skor += Number(r.skor);
+      totals[key].items += 1;
+    }
+
+    return {
+      scores: results,
+      summary: totals,
+    };
   }
 
   // ═══════════════════════════════════════════════════════════
   //  PRIVATE HELPERS
   // ═══════════════════════════════════════════════════════════
+
+  /** Verify the pendadaran exists & the caller has scope access */
+  private async getGraduationOrThrow(id: string, scope?: UserScope) {
+    const grad = await this.prisma.kegiatan.findUnique({
+      where: { id },
+    });
+    if (!grad) throw new NotFoundException('Pendadaran tidak ditemukan');
+    this.scopeHelper.verifyKegiatanScope(scope, grad.scopeType, grad.scopeId);
+    return grad;
+  }
 
   private async sendGraduationRegisteredEmail(
     nama: string,

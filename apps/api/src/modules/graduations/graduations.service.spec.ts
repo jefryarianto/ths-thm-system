@@ -7,6 +7,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
+import { DocumentsService } from '../documents/documents.service';
+import { NraService } from '../../common/services/nra.service';
 
 describe('GraduationsService', () => {
   let service: GraduationsService;
@@ -28,6 +30,16 @@ describe('GraduationsService', () => {
       create: jest.fn(),
       findMany: jest.fn(),
     },
+    nilaiPendadaran: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  };
+
+  const mockGraduation = {
+    id: 'g1',
+    tipe: 'pendadaran',
+    scopeType: 'nasional',
+    scopeId: 'national',
   };
 
   const mockScopeHelper = {
@@ -51,6 +63,14 @@ describe('GraduationsService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockDocumentsService = {
+    generateCertificate: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockNraService = {
+    generateMemberNumber: jest.fn().mockResolvedValue('NRA-0001'),
+  };
+
   const mockCache = {
     getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
     invalidatePrefix: jest.fn(),
@@ -65,6 +85,8 @@ describe('GraduationsService', () => {
         { provide: CacheService, useValue: mockCache },
         { provide: MailService, useValue: mockMailService },
         { provide: MemberMailService, useValue: mockMemberMailService },
+        { provide: DocumentsService, useValue: mockDocumentsService },
+        { provide: NraService, useValue: mockNraService },
       ],
     }).compile();
 
@@ -112,15 +134,18 @@ describe('GraduationsService', () => {
 
   describe('getParticipants', () => {
     it('should return participants', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
       mockPrisma.calonAnggota.findMany.mockResolvedValue([
         { id: 'c1', status: 'mengikuti_pendadaran' },
       ]);
       const result = await service.getParticipants('g1');
+      expect(result).toHaveLength(1);
     });
   });
 
   describe('graduate', () => {
     it('should process graduation results and send email', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
       mockPrisma.hasilPendadaran.create.mockResolvedValue({ id: 'h1' });
       mockPrisma.calonAnggota.update.mockResolvedValue({
         id: 'c1',
