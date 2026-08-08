@@ -4,7 +4,7 @@ import { PaymentsService, CreateBankInfoDto, UpdateBankInfoDto } from './payment
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, resolve } from 'path';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
