@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { GraduationsService } from './graduations.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -29,9 +29,18 @@ describe('GraduationsService', () => {
     hasilPendadaran: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     nilaiPendadaran: {
       findMany: jest.fn().mockResolvedValue([]),
+    },
+    dokumen: {
+      findFirst: jest.fn(),
+    },
+    anggota: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
     },
   };
 
@@ -40,6 +49,19 @@ describe('GraduationsService', () => {
     tipe: 'pendadaran',
     scopeType: 'nasional',
     scopeId: 'national',
+  };
+
+  const mockCandidate = {
+    id: 'c1',
+    namaLengkap: 'Budi',
+    jenisKelamin: 'L',
+    tempatLahir: 'Jakarta',
+    tanggalLahir: new Date('2000-01-01'),
+    alamat: 'Jl. Merdeka',
+    noHp: '08123456789',
+    email: 'candidate@test.com',
+    tingkat: 'Sabuk Putih',
+    rantingId: 'r1',
   };
 
   const mockScopeHelper = {
@@ -159,6 +181,239 @@ describe('GraduationsService', () => {
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'candidate@test.com' }),
       );
+    });
+  });
+
+  describe('validateResult', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+    });
+
+    it('should approve a single result and set validasi fields', async () => {
+      mockPrisma.hasilPendadaran.findFirst.mockResolvedValue({
+        id: 'h1',
+        statusKelulusan: 'lulus',
+        totalSkor: 85,
+      });
+      mockPrisma.hasilPendadaran.update.mockResolvedValue({ id: 'h1' });
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue(mockCandidate);
+      mockPrisma.anggota.findUnique.mockResolvedValue(null);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'a1', nomorAnggota: 'NRA-0001' });
+      mockPrisma.dokumen.findFirst.mockResolvedValue(null);
+      mockNraService.generateMemberNumber.mockResolvedValue('NRA-0001');
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([]);
+
+      const result = await service.validateResult(
+        'g1',
+        { candidateId: 'c1', approved: true } as any,
+        'user1',
+      );
+
+      expect(mockPrisma.hasilPendadaran.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'h1' },
+          data: expect.objectContaining({ statusValidasi: 'approved', divalidasiOleh: 'user1' }),
+        }),
+      );
+      expect(result).toEqual({ validated: 1, skipped: 0 });
+    });
+
+    it('should still count as validated when post-approval doc generation fails', async () => {
+      mockPrisma.hasilPendadaran.findFirst.mockResolvedValue({
+        id: 'h1',
+        statusKelulusan: 'lulus',
+        totalSkor: 85,
+      });
+      mockPrisma.hasilPendadaran.update.mockResolvedValue({ id: 'h1' });
+      // Calon tidak ditemukan → ensureAnggotaAndDocument gagal, tapi validasi tetap sukses
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue(null);
+
+      const result = await service.validateResult(
+        'g1',
+        { candidateId: 'c1', approved: true } as any,
+        'user1',
+      );
+
+      expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+      expect(result).toEqual({ validated: 1, skipped: 0 });
+    });
+
+    it('should reject a result without creating member documents', async () => {
+      mockPrisma.hasilPendadaran.findFirst.mockResolvedValue({
+        id: 'h1',
+        statusKelulusan: 'lulus',
+      });
+      mockPrisma.hasilPendadaran.update.mockResolvedValue({ id: 'h1' });
+
+      const result = await service.validateResult(
+        'g1',
+        { candidateId: 'c1', approved: false } as any,
+        'user1',
+      );
+
+      expect(mockPrisma.hasilPendadaran.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ statusValidasi: 'rejected' }),
+        }),
+      );
+      expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+      expect(result).toEqual({ validated: 1, skipped: 0 });
+    });
+
+    it('should approve bulk results and create anggota + certificate for lulus', async () => {
+      mockPrisma.hasilPendadaran.findFirst.mockResolvedValue({
+        id: 'h1',
+        statusKelulusan: 'lulus',
+        totalSkor: 85,
+      });
+      mockPrisma.hasilPendadaran.update.mockResolvedValue({ id: 'h1' });
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue(mockCandidate);
+      mockPrisma.anggota.findUnique.mockResolvedValue(null);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'a1', nomorAnggota: 'NRA-0001' });
+      mockPrisma.dokumen.findFirst.mockResolvedValue(null);
+      mockNraService.generateMemberNumber.mockResolvedValue('NRA-0001');
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([]);
+
+      const result = await service.validateResult(
+        'g1',
+        { results: [{ candidateId: 'c1', approved: true }] } as any,
+        'user1',
+      );
+
+      expect(mockPrisma.anggota.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.anggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ email: mockCandidate.email }) }),
+      );
+      expect(mockDocumentsService.generateCertificate).toHaveBeenCalledWith(
+        expect.objectContaining({ memberId: 'a1', finalScore: 85 }),
+      );
+      expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledWith(
+        'a1',
+        expect.any(Function),
+        [true, 85],
+        expect.any(Object),
+        'graduations',
+        expect.any(Object),
+      );
+      expect(result).toEqual({ validated: 1, skipped: 0 });
+    });
+
+    it('should skip results without an existing HasilPendadaran', async () => {
+      mockPrisma.hasilPendadaran.findFirst.mockResolvedValue(null);
+
+      const result = await service.validateResult(
+        'g1',
+        { results: [{ candidateId: 'c1', approved: true }] } as any,
+        'user1',
+      );
+
+      expect(mockPrisma.hasilPendadaran.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ validated: 0, skipped: 1 });
+    });
+
+    it('should throw BadRequestException without candidateId or results', async () => {
+      await expect(service.validateResult('g1', {} as any, 'user1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('generateDocuments', () => {
+    const approvedResult = {
+      id: 'h1',
+      calonAnggotaId: 'c1',
+      totalSkor: 85,
+      calonAnggota: { ...mockCandidate },
+    };
+
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.hasilPendadaran.findMany.mockResolvedValue([approvedResult]);
+      mockPrisma.anggota.findUnique.mockResolvedValue(null);
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'a1', nomorAnggota: 'NRA-0001' });
+      mockPrisma.dokumen.findFirst.mockResolvedValue(null);
+      mockNraService.generateMemberNumber.mockResolvedValue('NRA-0001');
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([]);
+    });
+
+    it('should generate documents for approved lulus candidates', async () => {
+      const result = await service.generateDocuments('g1');
+
+      expect(result).toEqual({ generated: 1, total: 1, errors: [] });
+      expect(mockPrisma.anggota.create).toHaveBeenCalledTimes(1);
+      expect(mockDocumentsService.generateCertificate).toHaveBeenCalledWith(
+        expect.objectContaining({ memberId: 'a1', finalScore: 85 }),
+      );
+    });
+
+    it('should not duplicate certificates when one already exists', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1' });
+      mockPrisma.dokumen.findFirst.mockResolvedValue({ id: 'd1' });
+
+      const result = await service.generateDocuments('g1', { candidateId: 'c1' });
+
+      expect(result.generated).toBe(1);
+      expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+      expect(mockDocumentsService.generateCertificate).not.toHaveBeenCalled();
+    });
+
+    it('should report errors without failing the whole batch', async () => {
+      mockPrisma.hasilPendadaran.findMany.mockResolvedValue([
+        approvedResult,
+        { id: 'h2', calonAnggotaId: 'missing', totalSkor: 50, calonAnggota: null },
+      ]);
+      mockPrisma.calonAnggota.findUnique.mockResolvedValue(null);
+
+      const result = await service.generateDocuments('g1');
+
+      expect(result.generated).toBe(1);
+      expect(result.total).toBe(2);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toContain('missing');
+    });
+  });
+
+  describe('getEvaluations', () => {
+    it('should return raw scores and aggregated summary', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
+        {
+          calonAnggotaId: 'c1',
+          skor: 80,
+          calonAnggota: { id: 'c1', namaLengkap: 'Budi', ranting: { nama: 'Ranting A' } },
+          itemPenilaian: {
+            namaItem: 'Jurus',
+            skorMaksimal: 100,
+            bobot: 1,
+            aspek: { namaAspek: 'Teknik', bobot: 1 },
+          },
+          penguji: { id: 'p1', namaLengkap: 'Penguji 1' },
+          ujianPraktek: { id: 'u1', nama: 'Ujian 1' },
+        },
+        {
+          calonAnggotaId: 'c1',
+          skor: 70,
+          calonAnggota: { id: 'c1', namaLengkap: 'Budi', ranting: { nama: 'Ranting A' } },
+          itemPenilaian: {
+            namaItem: 'Sikap',
+            skorMaksimal: 100,
+            bobot: 1,
+            aspek: { namaAspek: 'Sikap', bobot: 1 },
+          },
+          penguji: { id: 'p1', namaLengkap: 'Penguji 1' },
+          ujianPraktek: { id: 'u1', nama: 'Ujian 1' },
+        },
+      ]);
+
+      const result = await service.getEvaluations('g1');
+
+      expect(mockPrisma.nilaiPendadaran.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { kegiatanId: 'g1' } }),
+      );
+      expect(result.scores).toHaveLength(2);
+      expect(result.summary).toEqual({
+        c1: { nama: 'Budi', skor: 150, items: 2 },
+      });
     });
   });
 });
