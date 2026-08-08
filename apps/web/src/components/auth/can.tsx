@@ -39,7 +39,8 @@ const DEFAULT_MODULE: ModulePermission = {
 
 export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   members:          { ...DEFAULT_MODULE },
-  candidates:       { ...DEFAULT_MODULE },
+  // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
+  candidates:       { ...DEFAULT_MODULE, create: 'admin_kegiatan' },
   registrations:    { ...DEFAULT_MODULE },
   trainings:        { ...DEFAULT_MODULE, view: 'anggota' },
   graduations:      { ...DEFAULT_MODULE },

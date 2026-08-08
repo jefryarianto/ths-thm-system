@@ -96,7 +96,8 @@ const menuGroups: MenuGroup[] = [
     label: 'Keanggotaan',
     items: [
       { href: '/members', label: 'Anggota', icon: Users, minRole: 'admin_ranting' },
-      { href: '/candidates', label: 'Calon', icon: UserPlus, minRole: 'admin_ranting' },
+      // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
+      { href: '/candidates', label: 'Calon', icon: UserPlus, minRole: 'admin_kegiatan' },
       { href: '/registrations', label: 'Pendaftaran', icon: UserPlus, minRole: 'admin_ranting' },
       { href: '/claims', label: 'Klaim', icon: ClipboardCheck, minRole: 'admin_ranting' },
     ],
@@ -105,8 +106,10 @@ const menuGroups: MenuGroup[] = [
     label: 'Pelatihan & Penilaian',
     items: [
       { href: '/trainings', label: 'Latihan', icon: Dumbbell, minRole: 'admin_ranting' },
-      { href: '/graduations', label: 'Pendadaran', icon: GraduationCap, minRole: 'admin_ranting' },
-      { href: '/examiners', label: 'Penguji', icon: Shield, minRole: 'admin_ranting' },
+      // admin_kegiatan mengelola pendadaran (alur langkah 3)
+      { href: '/graduations', label: 'Pendadaran', icon: GraduationCap, minRole: 'admin_kegiatan' },
+      // admin_kegiatan mengajukan penguji ke admin distrik (alur langkah 6)
+      { href: '/examiners', label: 'Penguji', icon: Shield, minRole: 'admin_kegiatan' },
       { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck, minRole: 'penguji' },
     ],
   },

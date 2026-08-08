@@ -13,19 +13,19 @@ export class CandidatesController {
   constructor(private readonly candidatesService: CandidatesService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil semua kandidat' })
   findAll(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest) {
     return this.candidatesService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil detail kandidat' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.candidatesService.findOne(id, req.scope);
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah kandidat baru' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah kandidat baru' })
   create(@Body() dto: CreateCandidateDto, @Req() req: ScopedRequest) {
     return this.candidatesService.create(dto, req.scope, req.user.id);
   }
@@ -43,7 +43,7 @@ export class CandidatesController {
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Impor data kandidat' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor data kandidat' })
   importCsv(@Body() data: any[]) {
     return this.candidatesService.importCsv(data);
   }
