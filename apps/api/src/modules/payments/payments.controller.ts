@@ -42,25 +42,25 @@ export class PaymentsController {
   }
 
   @Get('bank-info/all')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
   getAllBankInfo() {
     return this.service.getAllBankInfo();
   }
 
   @Post('bank-info')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Tambah rekening bank baru — Admin' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tambah rekening bank baru — Admin' })
   createBankInfo(@Body() dto: CreateBankInfoDto) {
     return this.service.createBankInfo(dto);
   }
 
   @Patch('bank-info/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Ubah rekening bank — Admin' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Ubah rekening bank — Admin' })
   updateBankInfo(@Param('id') id: string, @Body() dto: UpdateBankInfoDto) {
     return this.service.updateBankInfo(id, dto);
   }
 
   @Delete('bank-info/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Hapus rekening bank — Admin' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus rekening bank — Admin' })
   deleteBankInfo(@Param('id') id: string) {
     return this.service.deleteBankInfo(id);
   }

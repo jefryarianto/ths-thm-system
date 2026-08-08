@@ -8,6 +8,7 @@ import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2, Settings } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { CanAdmin } from '@/components/auth/can';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -167,13 +168,15 @@ export default function PaymentsPage() {
                 Informasi Rekening
               </h3>
             </div>
-            <Link
-              href="/payments/bank-info"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-            >
-              <Settings size={13} />
-              Kelola Rekening
-            </Link>
+            <CanAdmin module="payments">
+              <Link
+                href="/payments/bank-info"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+              >
+                <Settings size={13} />
+                Kelola Rekening
+              </Link>
+            </CanAdmin>
           </div>
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1 space-y-2">
