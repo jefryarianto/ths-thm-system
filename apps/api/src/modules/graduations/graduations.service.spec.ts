@@ -432,6 +432,36 @@ describe('GraduationsService', () => {
     });
   });
 
+  describe('getResults', () => {
+    it('should return hasil list with validation status', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.hasilPendadaran.findMany.mockResolvedValue([
+        {
+          id: 'h1',
+          calonAnggotaId: 'c1',
+          totalSkor: 85,
+          ranking: 1,
+          statusKelulusan: 'lulus',
+          statusValidasi: 'pending',
+          calonAnggota: {
+            id: 'c1',
+            namaLengkap: 'Budi',
+            email: 'candidate@test.com',
+            ranting: { nama: 'Ranting A' },
+          },
+        },
+      ]);
+
+      const result = await service.getResults('g1');
+
+      expect(mockPrisma.hasilPendadaran.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { kegiatanId: 'g1' } }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].statusValidasi).toBe('pending');
+    });
+  });
+
   describe('getEvaluations', () => {
     it('should return raw scores and aggregated summary', async () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);

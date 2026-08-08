@@ -123,6 +123,14 @@ export class GraduationsController {
     return this.service.generateDocuments(id, dto, req.scope);
   }
 
+  // ── Results (HasilPendadaran + status validasi) ──
+
+  @Get(':id/results')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil hasil pendadaran beserta status validasi' })
+  getResults(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getResults(id, req.scope);
+  }
+
   // ── Evaluations (Nilai aspek & item penilaian) — didokumentasikan di API.md ──
 
   @Get(':id/evaluations')

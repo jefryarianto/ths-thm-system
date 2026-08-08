@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, ScreenShell, TabBar } from '../../components/ui/shared';
 import { useRole } from '../../hooks/use-role';
-import type { Graduation, GraduationParticipant, GraduationEvaluation } from '../../types';
+import type { Graduation, GraduationParticipant, GraduationEvaluation, GraduationResult } from '../../types';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: 'Draft', color: '#6b7280', bg: '#f3f4f6' },
@@ -20,20 +20,26 @@ export default function GraduationDetailScreen() {
   const [graduation, setGraduation] = useState<Graduation | null>(null);
   const [participants, setParticipants] = useState<GraduationParticipant[]>([]);
   const [evaluations, setEvaluations] = useState<GraduationEvaluation[]>([]);
-  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'evaluations'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'evaluations' | 'validasi'>('info');
   const [loading, setLoading] = useState(true);
+  const [results, setResults] = useState<GraduationResult[]>([]);
+  const [validating, setValidating] = useState(false);
+  const [genDocsLoading, setGenDocsLoading] = useState(false);
+  const [genDocsResult, setGenDocsResult] = useState<{ generated: number; total: number; errors: string[] } | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [gradRes, partRes, evalRes] = await Promise.all([
+        const [gradRes, partRes, evalRes, hasilRes] = await Promise.all([
           apiClient.get(`/graduations/${id}`),
           apiClient.get(`/graduations/${id}/participants`),
           apiClient.get(`/graduations/${id}/evaluations`),
+          apiClient.get(`/graduations/${id}/results`),
         ]);
         setGraduation(unwrap(gradRes));
         setParticipants(unwrap(partRes) || []);
         setEvaluations(unwrap(evalRes) || []);
+        setResults(unwrap(hasilRes) || []);
       } catch {
         /* ignore */
       }
@@ -75,11 +81,57 @@ export default function GraduationDetailScreen() {
     return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
+  const canValidate = isAdmin || role === 'admin_kegiatan';
+  const pendingValidasi = results.filter((r) => r.statusValidasi === 'pending').length;
   const tabs = [
     { key: 'info', label: 'Info', icon: 'information-circle' as const },
     { key: 'participants', label: `Peserta (${participants.length})`, icon: 'people' as const },
     { key: 'evaluations', label: `Nilai (${evaluations.length})`, icon: 'school' as const },
+    ...(canValidate
+      ? [{ key: 'validasi', label: `Validasi (${pendingValidasi})`, icon: 'checkmark-circle' as const }]
+      : []),
   ];
+
+  const validateResult = (candidateId: string, approved: boolean, nama: string) => {
+    Alert.alert(
+      approved ? 'Setujui Hasil' : 'Tolak Hasil',
+      approved
+        ? `Setujui hasil ${nama}? Anggota & sertifikat akan dibuat otomatis.`
+        : `Tolak hasil ${nama}? Anggota tidak akan dibuat.`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: approved ? 'Setujui' : 'Tolak',
+          style: approved ? 'default' : 'destructive',
+          onPress: async () => {
+            setValidating(true);
+            try {
+              await apiClient.post(`/graduations/${id}/validate-result`, { candidateId, approved });
+              const hasilRes = await apiClient.get(`/graduations/${id}/results`);
+              setResults(unwrap(hasilRes) || []);
+            } catch {
+              /* ignore */
+            }
+            setValidating(false);
+          },
+        },
+      ],
+    );
+  };
+
+  const generateDocs = async () => {
+    setGenDocsLoading(true);
+    setGenDocsResult(null);
+    try {
+      const res = await apiClient.post(`/graduations/${id}/generate-docs`, {});
+      setGenDocsResult(res.data?.data ?? { generated: 0, total: 0, errors: [] });
+      const hasilRes = await apiClient.get(`/graduations/${id}/results`);
+      setResults(unwrap(hasilRes) || []);
+    } catch {
+      /* ignore */
+    }
+    setGenDocsLoading(false);
+  };
 
   return (
     <ScreenShell title={graduation.nama} variant="detail" badgeLabel={ss.label} badgeColor={ss.color} badgeBg={ss.bg}>
@@ -225,6 +277,107 @@ export default function GraduationDetailScreen() {
         </View>
       )}
 
+      {activeTab === 'validasi' && canValidate && (
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.genDocsBtn}
+            activeOpacity={0.7}
+            onPress={generateDocs}
+            disabled={genDocsLoading}
+          >
+            <Ionicons name="document-text" size={18} color="#fff" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.genDocsTitle}>
+                {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
+              </Text>
+              <Text style={styles.genDocsSub}>
+                Buat sertifikat untuk semua hasil lulus + disetujui
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {genDocsResult && (
+            <View style={styles.genDocsResult}>
+              <Text style={styles.genDocsResultText}>
+                {genDocsResult.generated} dari {genDocsResult.total} sertifikat berhasil dibuat
+              </Text>
+              {genDocsResult.errors.length > 0 && (
+                <Text style={styles.genDocsResultError}>
+                  {genDocsResult.errors.length} error:{' '}
+                  {genDocsResult.errors.slice(0, 2).join('; ')}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {results.length > 0 ? (
+            results.map((r) => (
+              <View key={r.id} style={styles.resultCard}>
+                <View style={styles.resultLeft}>
+                  <Text style={styles.resultName}>
+                    {r.calonAnggota?.namaLengkap || 'Unknown'}
+                  </Text>
+                  <Text style={styles.resultMeta}>
+                    {r.calonAnggota?.ranting?.nama || '-'} · Skor {Number(r.totalSkor)} · Rank{' '}
+                    {r.ranking ?? '-'}
+                  </Text>
+                  <View style={styles.resultBadges}>
+                    <Text
+                      style={[
+                        styles.resultBadge,
+                        r.statusKelulusan === 'lulus' ? styles.badgeLulus : styles.badgeGagal,
+                      ]}
+                    >
+                      {r.statusKelulusan === 'lulus' ? 'Lulus' : 'Gagal'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.resultBadge,
+                        r.statusValidasi === 'approved'
+                          ? styles.badgeApproved
+                          : r.statusValidasi === 'rejected'
+                            ? styles.badgeRejected
+                            : styles.badgePending,
+                      ]}
+                    >
+                      {r.statusValidasi === 'approved'
+                        ? 'Disetujui'
+                        : r.statusValidasi === 'rejected'
+                          ? 'Ditolak'
+                          : 'Menunggu'}
+                    </Text>
+                  </View>
+                </View>
+                {r.statusValidasi === 'pending' && (
+                  <View style={styles.resultActions}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.approveBtn]}
+                      disabled={validating}
+                      onPress={() =>
+                        validateResult(r.calonAnggotaId, true, r.calonAnggota?.namaLengkap || '')
+                      }
+                    >
+                      <Text style={styles.approveText}>Setujui</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.rejectBtn]}
+                      disabled={validating}
+                      onPress={() =>
+                        validateResult(r.calonAnggotaId, false, r.calonAnggota?.namaLengkap || '')
+                      }
+                    >
+                      <Text style={styles.rejectText}>Tolak</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Belum ada hasil pendadaran</Text>
+          )}
+        </View>
+      )}
+
     </ScreenShell>
   );
 }
@@ -340,4 +493,59 @@ const styles = StyleSheet.create({
   },
   inputNilaiTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
   inputNilaiSub: { color: '#bfdbfe', fontSize: 12, marginTop: 2 },
+
+  // Validasi Hasil
+  genDocsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#059669',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+    shadowColor: '#059669',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  genDocsTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  genDocsSub: { color: '#a7f3d0', fontSize: 12, marginTop: 2 },
+  genDocsResult: {
+    backgroundColor: '#ecfdf5',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+  },
+  genDocsResultText: { fontSize: 13, fontWeight: '600', color: '#047857' },
+  genDocsResultError: { fontSize: 11, color: '#dc2626', marginTop: 4 },
+  resultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    gap: 8,
+  },
+  resultLeft: { flex: 1, minWidth: 0 },
+  resultName: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  resultMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  resultBadges: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  resultBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, fontSize: 10, fontWeight: '600' },
+  badgeLulus: { backgroundColor: '#ecfdf5', color: '#16a34a' },
+  badgeGagal: { backgroundColor: '#fef2f2', color: '#dc2626' },
+  badgeApproved: { backgroundColor: '#ecfdf5', color: '#16a34a' },
+  badgeRejected: { backgroundColor: '#fef2f2', color: '#dc2626' },
+  badgePending: { backgroundColor: '#fffbeb', color: '#d97706' },
+  resultActions: { flexDirection: 'row', gap: 6, flexShrink: 0 },
+  actionBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  approveBtn: { backgroundColor: '#059669' },
+  rejectBtn: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#fca5a5' },
+  approveText: { fontSize: 12, fontWeight: '600', color: '#fff' },
+  rejectText: { fontSize: 12, fontWeight: '600', color: '#dc2626' },
 });

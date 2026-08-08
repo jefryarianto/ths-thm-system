@@ -152,6 +152,22 @@ interface NilaiRecord {
   komentar: string | null;
 }
 
+interface HasilRecord {
+  id: string;
+  calonAnggotaId: string;
+  totalSkor: number;
+  ranking: number | null;
+  statusKelulusan: 'lulus' | 'gagal';
+  statusValidasi: 'pending' | 'approved' | 'rejected';
+  divalidasiAt: string | null;
+  calonAnggota?: {
+    id: string;
+    namaLengkap: string;
+    email: string | null;
+    ranting?: { nama: string } | null;
+  } | null;
+}
+
 // ─── Page ───
 
 export default function GraduationDetailPage() {
@@ -184,6 +200,15 @@ export default function GraduationDetailPage() {
   const [scores, setScores] = useState<NilaiRecord[]>([]);
   const [scoreInput, setScoreInput] = useState<Record<string, Record<string, number>>>({});
   const [savingScores, setSavingScores] = useState(false);
+
+  // Validation state
+  const [results, setResults] = useState<HasilRecord[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [validateModal, setValidateModal] = useState<{ candidateId: string; approved: boolean; nama: string } | null>(null);
+  const [validateCatatan, setValidateCatatan] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [genDocsLoading, setGenDocsLoading] = useState(false);
+  const [genDocsResult, setGenDocsResult] = useState<{ generated: number; total: number; errors: string[] } | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -229,6 +254,16 @@ export default function GraduationDetailPage() {
     } catch { /* ignore */ }
   }, [id]);
 
+  const fetchResults = useCallback(async () => {
+    if (!id) return;
+    setResultsLoading(true);
+    try {
+      const res = await apiClient.get(`/graduations/${id}/results`);
+      setResults(res.data.data || []);
+    } catch { /* ignore */ }
+    setResultsLoading(false);
+  }, [id]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -239,11 +274,14 @@ export default function GraduationDetailPage() {
       fetchAvailableItems();
       fetchAvailableExaminers();
     }
-  }, [activeSubTab, fetchUjianList, fetchAvailableItems, fetchAvailableExaminers]);
+    if (activeSubTab === 'validasi') {
+      fetchResults();
+    }
+  }, [activeSubTab, fetchUjianList, fetchAvailableItems, fetchAvailableExaminers, fetchResults]);
 
   const handleGraduate = async () => {
     if (!graduation) return;
-    const results = participants
+    const graduatePayload = participants
       .filter((p) => graduateResults[p.id]?.lulus !== undefined)
       .map((p) => ({
         candidateId: p.id,
@@ -251,13 +289,43 @@ export default function GraduationDetailPage() {
         totalSkor: graduateResults[p.id].totalSkor || 0,
         ranking: 0,
       }));
-    if (results.length === 0) return;
+    if (graduatePayload.length === 0) return;
     try {
-      await apiClient.post(`/graduations/${graduation.id}/graduate`, { results });
+      await apiClient.post(`/graduations/${graduation.id}/graduate`, { results: graduatePayload });
       await fetchData();
       setShowGraduateModal(false);
       setGraduateResults({});
     } catch { /* ignore */ }
+  };
+
+  const handleValidate = async () => {
+    if (!validateModal || !graduation) return;
+    setValidating(true);
+    try {
+      await apiClient.post(`/graduations/${graduation.id}/validate-result`, {
+        candidateId: validateModal.candidateId,
+        approved: validateModal.approved,
+        catatan: validateCatatan || undefined,
+      });
+      setValidateModal(null);
+      setValidateCatatan('');
+      await fetchResults();
+      await fetchData();
+    } catch { /* ignore */ }
+    setValidating(false);
+  };
+
+  const handleGenerateDocs = async () => {
+    if (!graduation) return;
+    setGenDocsLoading(true);
+    setGenDocsResult(null);
+    try {
+      const res = await apiClient.post(`/graduations/${graduation.id}/generate-docs`, {});
+      setGenDocsResult(res.data.data || { generated: 0, total: 0, errors: [] });
+      await fetchResults();
+      await fetchData();
+    } catch { /* ignore */ }
+    setGenDocsLoading(false);
   };
 
   const handleCreateUjian = async (e: React.FormEvent) => {
@@ -406,10 +474,13 @@ export default function GraduationDetailPage() {
     return availableExaminers.filter((e) => !assignedIds.has(e.id));
   };
 
+  const pendingValidasiCount = results.filter((r) => r.statusValidasi === 'pending').length;
+
   const SUB_TABS = [
     { key: 'info' as const, label: 'Detail', icon: GraduationCap },
     { key: 'participants' as const, label: `Peserta (${participants.length})`, icon: Users },
     { key: 'ujian-praktek' as const, label: `Ujian Praktek (${ujianList.length})`, icon: ClipboardList },
+    { key: 'validasi' as const, label: `Validasi (${pendingValidasiCount})`, icon: UserCheck },
   ];
 
   return (
@@ -891,6 +962,84 @@ export default function GraduationDetailPage() {
           </div>
         )}
 
+        {/* ─── TAB: Validasi Hasil ─────────────────────────────── */}
+        {activeSubTab === 'validasi' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <UserCheck size={18} className="text-emerald-500" />
+                  Validasi Hasil ({results.length})
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">Setujui hasil lulus untuk membuat anggota & sertifikat secara otomatis</p>
+              </div>
+              <button onClick={handleGenerateDocs} disabled={genDocsLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50 shrink-0">
+                <FileEdit size={14} /> {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
+              </button>
+            </div>
+
+            {genDocsResult && (
+              <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-sm">
+                <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                  {genDocsResult.generated} dari {genDocsResult.total} sertifikat berhasil dibuat
+                </p>
+                {genDocsResult.errors.length > 0 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {genDocsResult.errors.length} error: {genDocsResult.errors.slice(0, 3).join('; ')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {resultsLoading ? (
+              <div className="text-center py-8 text-sm text-gray-400">Memuat hasil...</div>
+            ) : results.length === 0 ? (
+              <div className="text-center py-12">
+                <Award size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-sm text-gray-400">Belum ada hasil. Gunakan "Input Hasil" di tab Peserta terlebih dahulu.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {results.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.calonAnggota?.namaLengkap || '—'}</p>
+                      <p className="text-xs text-gray-400">
+                        {r.calonAnggota?.ranting?.nama || '-'} · Skor {Number(r.totalSkor)} · Rank {r.ranking ?? '-'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${r.statusKelulusan === 'lulus' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {r.statusKelulusan === 'lulus' ? 'Lulus' : 'Gagal'}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        r.statusValidasi === 'approved' ? 'bg-emerald-100 text-emerald-700'
+                        : r.statusValidasi === 'rejected' ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {r.statusValidasi === 'approved' ? 'Disetujui' : r.statusValidasi === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                      </span>
+                      {r.statusValidasi === 'pending' && (
+                        <>
+                          <button onClick={() => { setValidateModal({ candidateId: r.calonAnggotaId, approved: true, nama: r.calonAnggota?.namaLengkap || '' }); setValidateCatatan(''); }}
+                            className="px-3 py-1 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">
+                            Setujui
+                          </button>
+                          <button onClick={() => { setValidateModal({ candidateId: r.calonAnggotaId, approved: false, nama: r.calonAnggota?.namaLengkap || '' }); setValidateCatatan(''); }}
+                            className="px-3 py-1 rounded-lg text-xs font-medium border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition">
+                            Tolak
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Graduate Modal */}
         <Modal open={showGraduateModal} onClose={() => setShowGraduateModal(false)} title="Input Hasil Pendadaran" size="lg">
           <div className="space-y-4">
@@ -926,6 +1075,31 @@ export default function GraduationDetailPage() {
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
               <button onClick={handleGraduate}
                 className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Simpan Hasil</button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Validate Confirm Modal */}
+        <Modal open={!!validateModal} onClose={() => setValidateModal(null)} title={validateModal?.approved ? 'Setujui Hasil' : 'Tolak Hasil'} size="sm">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {validateModal?.approved
+                ? <>Setujui hasil <b>{validateModal.nama}</b>? Anggota & sertifikat akan dibuat otomatis.</>
+                : <>Tolak hasil <b>{validateModal.nama}</b>? Anggota tidak akan dibuat.</>}
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (opsional)</label>
+              <textarea value={validateCatatan} onChange={(e) => setValidateCatatan(e.target.value)} rows={2}
+                placeholder="Catatan validasi"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setValidateModal(null)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
+              <button onClick={handleValidate} disabled={validating}
+                className={`px-4 py-2 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 ${validateModal?.approved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>
+                {validating ? 'Menyimpan...' : 'Konfirmasi'}
+              </button>
             </div>
           </div>
         </Modal>

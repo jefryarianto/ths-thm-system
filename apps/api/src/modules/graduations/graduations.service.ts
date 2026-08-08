@@ -608,6 +608,33 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   // ═══════════════════════════════════════════════════════════
+  //  RESULTS (HasilPendadaran + status validasi — untuk UI validasi)
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Daftar HasilPendadaran beserta status validasi (pending/approved/rejected).
+   * Dipakai UI web & mobile untuk tombol Setujui/Tolak dan Generate Sertifikat.
+   */
+  async getResults(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    return this.prisma.hasilPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        calonAnggota: {
+          select: {
+            id: true,
+            namaLengkap: true,
+            email: true,
+            ranting: { select: { nama: true } },
+          },
+        },
+      },
+      orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { totalSkor: 'desc' }],
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
   //  EVALUATIONS (Nilai evaluasi pendadaran — didokumentasikan di API.md)
   // ═══════════════════════════════════════════════════════════
 

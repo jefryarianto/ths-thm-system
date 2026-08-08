@@ -59,6 +59,22 @@ export interface GraduationEvaluation {
   aspek?: { nama: string };
 }
 
+export interface GraduationResult {
+  id: string;
+  calonAnggotaId: string;
+  totalSkor: number;
+  ranking: number | null;
+  statusKelulusan: 'lulus' | 'gagal';
+  statusValidasi: 'pending' | 'approved' | 'rejected';
+  divalidasiAt?: string | null;
+  calonAnggota?: {
+    id: string;
+    namaLengkap: string;
+    email?: string | null;
+    ranting?: { nama: string } | null;
+  } | null;
+}
+
 export interface Dues {
   id: string;
   periode: string;
