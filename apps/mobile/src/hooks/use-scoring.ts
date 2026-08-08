@@ -18,12 +18,9 @@ export interface ScoringItem {
 
 export interface ScoringParticipant {
   id: string;
-  anggotaId: string;
-  statusKelulusan: string;
-  anggota?: {
-    namaLengkap: string;
-    nomorAnggota?: string;
-  };
+  namaLengkap: string;
+  status: string;
+  ranting?: { id: string; nama: string };
 }
 
 export interface ScoreEntry {

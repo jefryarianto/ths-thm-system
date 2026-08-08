@@ -42,21 +42,24 @@ export interface Graduation {
 
 export interface GraduationParticipant {
   id: string;
-  graduasiId: string;
-  anggotaId: string;
-  statusKelulusan: string;
-  anggota?: { namaLengkap: string; nomorAnggota?: string };
+  namaLengkap: string;
+  status: string;
+  ranting?: { id: string; nama: string };
 }
 
 export interface GraduationEvaluation {
   id: string;
-  graduasiId: string;
-  anggotaId: string;
-  aspekId: string;
-  nilai: number;
-  catatan?: string;
-  anggota?: { namaLengkap: string };
-  aspek?: { nama: string };
+  calonAnggotaId: string;
+  skor: number;
+  komentar?: string | null;
+  calonAnggota?: { id: string; namaLengkap: string; ranting?: { nama: string } };
+  itemPenilaian?: {
+    namaItem: string;
+    skorMaksimal: number;
+    bobot: number;
+    aspek?: { namaAspek: string };
+  };
+  penguji?: { id: string; namaLengkap: string };
 }
 
 export interface GraduationResult {

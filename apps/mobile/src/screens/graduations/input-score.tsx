@@ -88,11 +88,7 @@ export default function InputScoreScreen() {
     if (!participants) return [];
     const q = search.trim().toLowerCase();
     if (!q) return participants;
-    return participants.filter(
-      (p) =>
-        p.anggota?.namaLengkap?.toLowerCase().includes(q) ||
-        p.anggota?.nomorAnggota?.toLowerCase().includes(q),
-    );
+    return participants.filter((p) => p.namaLengkap?.toLowerCase().includes(q));
   }, [participants, search]);
 
   // Select participant
@@ -151,7 +147,7 @@ export default function InputScoreScreen() {
     try {
       const scores: ScoreEntry[] = allItems.map((item) => ({
         itemPenilaianId: item.id,
-        calonAnggotaId: selectedParticipant.anggotaId,
+        calonAnggotaId: selectedParticipant.id,
         nilai: currentScores[item.id],
         catatan: currentNotes[item.id] || undefined,
       }));
@@ -197,7 +193,7 @@ export default function InputScoreScreen() {
           <View style={styles.confirmCard}>
             <View style={styles.confirmRow}>
               <Text style={styles.confirmLabel}>Peserta</Text>
-              <Text style={styles.confirmValue}>{selectedParticipant?.anggota?.namaLengkap}</Text>
+              <Text style={styles.confirmValue}>{selectedParticipant?.namaLengkap}</Text>
             </View>
             <View style={styles.confirmRow}>
               <Text style={styles.confirmLabel}>Total Nilai</Text>
@@ -277,15 +273,11 @@ export default function InputScoreScreen() {
                 onPress={() => handleSelectParticipant(p)}
               >
                 <View style={styles.partAvatar}>
-                  <Text style={styles.partAvatarText}>
-                    {p.anggota?.namaLengkap?.charAt(0) || '?'}
-                  </Text>
+                  <Text style={styles.partAvatarText}>{p.namaLengkap?.charAt(0) || '?'}</Text>
                 </View>
                 <View style={styles.partInfo}>
-                  <Text style={styles.partName}>{p.anggota?.namaLengkap || 'Unknown'}</Text>
-                  {p.anggota?.nomorAnggota && (
-                    <Text style={styles.partNo}>{p.anggota.nomorAnggota}</Text>
-                  )}
+                  <Text style={styles.partName}>{p.namaLengkap || 'Unknown'}</Text>
+                  {p.ranting?.nama && <Text style={styles.partNo}>{p.ranting.nama}</Text>}
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
               </TouchableOpacity>
@@ -306,10 +298,10 @@ export default function InputScoreScreen() {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle} numberOfLines={1}>
-              {selectedParticipant?.anggota?.namaLengkap || 'Input Nilai'}
+              {selectedParticipant?.namaLengkap || 'Input Nilai'}
             </Text>
-            {selectedParticipant?.anggota?.nomorAnggota && (
-              <Text style={styles.headerSub}>{selectedParticipant.anggota.nomorAnggota}</Text>
+            {selectedParticipant?.ranting?.nama && (
+              <Text style={styles.headerSub}>{selectedParticipant.ranting.nama}</Text>
             )}
           </View>
         </View>

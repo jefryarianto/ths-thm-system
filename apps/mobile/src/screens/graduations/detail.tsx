@@ -38,7 +38,8 @@ export default function GraduationDetailScreen() {
         ]);
         setGraduation(unwrap(gradRes));
         setParticipants(unwrap(partRes) || []);
-        setEvaluations(unwrap(evalRes) || []);
+        const evalData = unwrap(evalRes) as { scores?: GraduationEvaluation[] } | undefined;
+        setEvaluations(evalData?.scores || []);
         setResults(unwrap(hasilRes) || []);
       } catch {
         /* ignore */
@@ -195,30 +196,40 @@ export default function GraduationDetailScreen() {
               <View key={p.id} style={styles.partCard}>
                 <View style={styles.partLeft}>
                   <View style={styles.partAvatar}>
-                    <Text style={styles.partAvatarText}>
-                      {p.anggota?.namaLengkap?.charAt(0) || '?'}
-                    </Text>
+                    <Text style={styles.partAvatarText}>{p.namaLengkap?.charAt(0) || '?'}</Text>
                   </View>
                   <View>
-                    <Text style={styles.partName}>{p.anggota?.namaLengkap || 'Unknown'}</Text>
-                    {p.anggota?.nomorAnggota && (
-                      <Text style={styles.partNo}>{p.anggota.nomorAnggota}</Text>
-                    )}
+                    <Text style={styles.partName}>{p.namaLengkap || 'Unknown'}</Text>
+                    {p.ranting?.nama && <Text style={styles.partNo}>{p.ranting.nama}</Text>}
                   </View>
                 </View>
                 <View
                   style={[
                     styles.partStatus,
-                    { backgroundColor: p.statusKelulusan === 'lulus' ? '#ecfdf5' : '#fef2f2' },
+                    {
+                      backgroundColor:
+                        p.status === 'lulus'
+                          ? '#ecfdf5'
+                          : p.status === 'gagal'
+                            ? '#fef2f2'
+                            : '#eff6ff',
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.partStatusText,
-                      { color: p.statusKelulusan === 'lulus' ? '#16a34a' : '#dc2626' },
+                      {
+                        color:
+                          p.status === 'lulus'
+                            ? '#16a34a'
+                            : p.status === 'gagal'
+                              ? '#dc2626'
+                              : '#2563eb',
+                      },
                     ]}
                   >
-                    {p.statusKelulusan === 'lulus' ? 'Lulus' : 'Belum Lulus'}
+                    {p.status === 'lulus' ? 'Lulus' : p.status === 'gagal' ? 'Gagal' : 'Peserta'}
                   </Text>
                 </View>
               </View>
@@ -253,21 +264,25 @@ export default function GraduationDetailScreen() {
                 <View style={styles.evalLeft}>
                   <View style={styles.evalAvatar}>
                     <Text style={styles.evalAvatarText}>
-                      {ev.anggota?.namaLengkap?.charAt(0) || '?'}
+                      {ev.calonAnggota?.namaLengkap?.charAt(0) || '?'}
                     </Text>
                   </View>
                   <View style={styles.evalInfo}>
-                    <Text style={styles.evalName}>{ev.anggota?.namaLengkap || 'Unknown'}</Text>
-                    {ev.aspek && <Text style={styles.evalAspek}>{ev.aspek.nama}</Text>}
-                    {ev.catatan && (
+                    <Text style={styles.evalName}>{ev.calonAnggota?.namaLengkap || 'Unknown'}</Text>
+                    {ev.itemPenilaian && (
+                      <Text style={styles.evalAspek}>
+                        {ev.itemPenilaian.aspek?.namaAspek || ev.itemPenilaian.namaItem}
+                      </Text>
+                    )}
+                    {ev.komentar && (
                       <Text style={styles.evalNote} numberOfLines={2}>
-                        {ev.catatan}
+                        {ev.komentar}
                       </Text>
                     )}
                   </View>
                 </View>
                 <View style={styles.evalScore}>
-                  <Text style={styles.evalScoreText}>{ev.nilai}</Text>
+                  <Text style={styles.evalScoreText}>{Number(ev.skor)}</Text>
                 </View>
               </View>
             ))

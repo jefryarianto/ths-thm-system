@@ -181,7 +181,7 @@ export default function GraduationDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Sub-tab state
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek'>('info');
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek' | 'validasi'>('info');
 
   // Graduate modal
   const [showGraduateModal, setShowGraduateModal] = useState(false);
@@ -214,12 +214,14 @@ export default function GraduationDetailPage() {
     if (!id) return;
     setLoading(true);
     try {
-      const [gradRes, partRes] = await Promise.all([
+      const [gradRes, partRes, hasilRes] = await Promise.all([
         apiClient.get(`/graduations/${id}`),
         apiClient.get(`/graduations/${id}/participants`),
+        apiClient.get(`/graduations/${id}/results`),
       ]);
       setGraduation(gradRes.data.data);
       setParticipants(partRes.data.data || []);
+      setResults(hasilRes.data.data || []);
       setError(null);
     } catch {
       setError('Gagal memuat data pendadaran');
@@ -309,6 +311,7 @@ export default function GraduationDetailPage() {
       });
       setValidateModal(null);
       setValidateCatatan('');
+      setGenDocsResult(null);
       await fetchResults();
       await fetchData();
     } catch { /* ignore */ }
@@ -1084,8 +1087,8 @@ export default function GraduationDetailPage() {
           <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {validateModal?.approved
-                ? <>Setujui hasil <b>{validateModal.nama}</b>? Anggota & sertifikat akan dibuat otomatis.</>
-                : <>Tolak hasil <b>{validateModal.nama}</b>? Anggota tidak akan dibuat.</>}
+                ? <>Setujui hasil <b>{validateModal?.nama}</b>? Anggota & sertifikat akan dibuat otomatis.</>
+                : <>Tolak hasil <b>{validateModal?.nama}</b>? Anggota tidak akan dibuat.</>}
             </p>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan (opsional)</label>
