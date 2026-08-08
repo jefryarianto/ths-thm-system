@@ -551,19 +551,27 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    // 2. Aspect scores dari NilaiPendadaran (untuk sertifikat)
-    const aspects = await this.buildAspectScores(kegiatanId, calonAnggotaId);
-
-    // 3. Generate sertifikat pendadaran
-    const finalSkor = Number(totalSkor) || 0;
-    await this.documentsService.generateCertificate({
-      memberId: anggota.id,
-      eventTitle: `Pendadaran ${kegiatan?.nama || ''}`,
-      location: kegiatan?.lokasi || '',
-      finalScore: finalSkor,
-      predicate: this.predicateFromScore(finalSkor),
-      aspects,
+    // 2. Idempotency: jangan duplikasi sertifikat yang sudah ada
+    //    (validateResult auto-generate + generateDocuments batch bisa memproses calon sama)
+    const existingDoc = await this.prisma.dokumen.findFirst({
+      where: { anggotaId: anggota.id, tipe: 'sertifikat_pendadaran' },
+      select: { id: true },
     });
+    if (!existingDoc) {
+      // 3. Aspect scores dari NilaiPendadaran (untuk sertifikat)
+      const aspects = await this.buildAspectScores(kegiatanId, calonAnggotaId);
+
+      // 4. Generate sertifikat pendadaran
+      const finalSkor = Number(totalSkor) || 0;
+      await this.documentsService.generateCertificate({
+        memberId: anggota.id,
+        eventTitle: `Pendadaran ${kegiatan?.nama || ''}`,
+        location: kegiatan?.lokasi || '',
+        finalScore: finalSkor,
+        predicate: this.predicateFromScore(finalSkor),
+        aspects,
+      });
+    }
 
     this.logger.log(`Generated dokumen + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`);
   }
