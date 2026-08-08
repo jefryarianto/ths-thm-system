@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { Role } from '@/types';
 
@@ -126,6 +126,17 @@ interface CanProps {
  */
 export function Can({ module, action = 'view', minRole, roles, negate = false, fallback = null, children }: CanProps) {
   const { hasMinRole, hasRole } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  // Same hydration gate as PermissionGuard: the role is only known after
+  // client mount (localStorage is unavailable during SSR), so render nothing
+  // until then instead of flashing fallback/denied content on refresh.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   let allowed = false;
 
   if (roles) {

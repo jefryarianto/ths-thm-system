@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -28,6 +28,16 @@ export function PermissionGuard({
   fallback,
 }: PermissionGuardProps) {
   const { hasMinRole, role, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  // The user's role is only known after client hydration (useAuth reads
+  // localStorage, which doesn't exist during SSR). Before that, render
+  // nothing instead of a misleading "Akses Ditolak" flash on every refresh.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   const perms = MODULE_PERMISSIONS[module];
   const requiredRole = perms?.[action];
