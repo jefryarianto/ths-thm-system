@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { MODULE_PERMISSIONS } from './can';
 import type { ModulePermission } from './can';
@@ -31,13 +31,14 @@ export function PermissionGuard({
   const [mounted, setMounted] = useState(false);
 
   // The user's role is only known after client hydration (useAuth reads
-  // localStorage, which doesn't exist during SSR). Before that, render
-  // nothing instead of a misleading "Akses Ditolak" flash on every refresh.
+  // localStorage, which doesn't exist during SSR). Before that, show a
+  // neutral loading placeholder instead of a misleading "Akses Ditolak"
+  // flash (or an empty content area) on every refresh.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) return <PageLoadingPlaceholder />;
 
   const perms = MODULE_PERMISSIONS[module];
   const requiredRole = perms?.[action];
@@ -64,6 +65,23 @@ export function PermissionGuard({
       module={module}
       requiredRole={requiredRole}
     />
+  );
+}
+
+// ─── Loading Placeholder (pre-hydration) ───
+
+function PageLoadingPlaceholder() {
+  return (
+    <div
+      className="flex items-center justify-center min-h-[50vh]"
+      role="status"
+      aria-label="Memuat halaman"
+    >
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 size={28} className="text-blue-500 animate-spin" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Memuat...</p>
+      </div>
+    </div>
   );
 }
 
