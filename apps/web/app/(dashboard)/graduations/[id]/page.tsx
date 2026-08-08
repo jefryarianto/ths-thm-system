@@ -278,11 +278,11 @@ export default function GraduationDetailPage() {
   const fetchCompleteness = useCallback(async () => {
     if (!id) return;
     try {
-      const [pRes, eRes, aRes, dRes] = await Promise.allSettled([
+      const [pRes, eRes, aRes, rRes] = await Promise.allSettled([
         apiClient.get(`/graduations/${id}/participants`),
         apiClient.get(`/graduations/${id}/examiners`),
         apiClient.get(`/graduations/${id}/evaluations`),
-        apiClient.get('/documents', { params: { tipe: 'sertifikat_pendadaran', limit: 1 } }),
+        apiClient.get(`/graduations/${id}/results`),
       ]);
       const participants =
         pRes.status === 'fulfilled' ? (pRes.value.data.data || []) : [];
@@ -295,12 +295,13 @@ export default function GraduationDetailPage() {
       for (const s of scoreRows) {
         if (s.itemPenilaian?.aspek?.id) aspekSet.add(s.itemPenilaian.aspek.id);
       }
-      const sertifikatCount =
-        dRes.status === 'fulfilled' && dRes.value.data?.meta
-          ? dRes.value.data.meta.total || 0
-          : dRes.status === 'fulfilled'
-            ? (dRes.value.data.data || []).length
-            : 0;
+      // Sertifikat di-infer dari hasil lulus yang disetujui (dokumen dibuat
+      // otomatis saat validasi disetujui — idempoten, satu per calon lulus).
+      const hasilRows = rRes.status === 'fulfilled' ? (rRes.value.data.data || []) : [];
+      const sertifikatCount = hasilRows.filter(
+        (h: HasilRecord) =>
+          h.statusKelulusan === 'lulus' && h.statusValidasi === 'approved',
+      ).length;
       setCompleteness({
         calonAnggota: participants.filter((p: { status: string }) => p.status === 'mengikuti_pendadaran').length,
         adminKegiatan: !!graduation?.adminKegiatanId,

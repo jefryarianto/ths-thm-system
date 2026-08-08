@@ -399,17 +399,17 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     let validated = 0;
     let skipped = 0;
 
+    // Auto-compute sekali untuk semua aksi (alur langkah 11: nilai yang
+    // diapprove dihitung otomatis menentukan kelulusan & peringkat).
+    const computed = await this.autoComputeResults(graduationId);
+
     for (const action of actions) {
       const existing = await this.prisma.hasilPendadaran.findFirst({
         where: { kegiatanId: graduationId, calonAnggotaId: action.candidateId },
       });
 
-      // Auto-compute: jika belum ada HasilPendadaran, hitung dari nilai yang
-      // sudah disetujui (skor total + ranking) — mengikuti alur langkah 11
-      // (nilai yang diapprove dihitung otomatis menentukan kelulusan & peringkat).
       let hasil = existing;
       if (!hasil) {
-        const computed = await this.autoComputeResults(graduationId);
         const found = computed.find((c) => c.calonAnggotaId === action.candidateId);
         if (found) {
           hasil = await this.prisma.hasilPendadaran.create({
@@ -418,7 +418,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
               calonAnggotaId: found.calonAnggotaId,
               totalSkor: found.totalSkor,
               ranking: found.ranking ?? null,
-              statusKelulusan: 'lulus',
+              statusKelulusan: found.lulus ? 'lulus' : 'gagal',
               statusValidasi: 'pending',
             },
           });
@@ -817,7 +817,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       data: {
         pengajuanNilaiOleh: userId || null,
         pengajuanNilaiAt: new Date(),
-        status: 'closed',
+        // Tetap 'published' — admin distrik masih harus review & approve.
+        // status 'closed' hanya dipakai saat seluruh proses selesai.
+        status: grad.status === 'draft' ? 'published' : grad.status,
       },
     });
     this.invalidateCache();
@@ -831,23 +833,40 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   /**
    * Saat admin distrik menyetujui hasil (validate-result), hitung otomatis
    * kelulusan & peringkat dari total skor, lalu buat anggota + KTA + sertifikat.
+   * - Kelulusan: persentase totalSkor terhadap total skorMaksimal seluruh item
+   *   yang dinilai (normalisasi ke skala 100) dengan ambang ≥ 60.
    */
-  private async autoComputeResults(graduationId: string) {
+  private async autoComputeResults(
+    graduationId: string,
+  ): Promise<Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number; lulus: boolean }>> {
     const nilai = await this.prisma.nilaiPendadaran.findMany({
       where: { kegiatanId: graduationId, statusValidasi: 'approved' },
-      select: { calonAnggotaId: true, skor: true },
+      select: {
+        calonAnggotaId: true,
+        skor: true,
+        itemPenilaian: { select: { skorMaksimal: true } },
+      },
     });
     if (nilai.length === 0) return [];
 
-    // Total skor per calon
+    // Total skor & total maksimal per calon
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const map = new Map<string, number>();
+    const scoreMap = new Map<string, number>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maxMap = new Map<string, number>();
     for (const n of nilai) {
-      map.set(n.calonAnggotaId, (map.get(n.calonAnggotaId) ?? 0) + Number(n.skor));
+      scoreMap.set(n.calonAnggotaId, (scoreMap.get(n.calonAnggotaId) ?? 0) + Number(n.skor));
+      maxMap.set(
+        n.calonAnggotaId,
+        (maxMap.get(n.calonAnggotaId) ?? 0) + Number(n.itemPenilaian?.skorMaksimal ?? 100),
+      );
     }
-    const totals: Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number }> = Array.from(
-      map.entries(),
-    ).map(([calonAnggotaId, totalSkor]) => ({ calonAnggotaId, totalSkor }));
+    const totals: Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number; lulus: boolean }> =
+      Array.from(scoreMap.entries()).map(([calonAnggotaId, totalSkor]) => {
+        const max = maxMap.get(calonAnggotaId) ?? 0;
+        const pct = max > 0 ? (totalSkor / max) * 100 : 0;
+        return { calonAnggotaId, totalSkor, lulus: pct >= 60 };
+      });
 
     // Ranking: skor tertinggi = #1
     totals.sort((a, b) => b.totalSkor - a.totalSkor);

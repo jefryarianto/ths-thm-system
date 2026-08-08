@@ -608,13 +608,13 @@ describe('GraduationsService', () => {
       mockPrisma.nilaiPendadaran.count.mockResolvedValue(2);
       mockPrisma.kegiatan.update.mockResolvedValue({
         id: 'g1',
-        status: 'closed',
+        status: 'published',
         pengajuanNilaiAt: new Date('2026-08-08'),
       });
 
       const result = await service.submitResults('g1', 'user1');
       expect(result.success).toBe(true);
-      expect(result.status).toBe('closed');
+      expect(result.status).toBe('published');
     });
 
     it('should throw BadRequestException when no approved scores', async () => {
