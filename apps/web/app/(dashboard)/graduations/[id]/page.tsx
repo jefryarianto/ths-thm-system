@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useAuth } from '@/hooks/use-auth';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ import {
   EyeOff,
   ChevronDown,
   ChevronRight,
+  Send,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 
@@ -105,6 +107,7 @@ interface GraduationDetail {
   scopeType: string;
   scopeId: string | null;
   adminKegiatanId?: string | null;
+  pengajuanNilaiAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -168,6 +171,32 @@ interface HasilRecord {
   } | null;
 }
 
+interface ExaminerAssignment {
+  id: string;
+  kegiatanId: string;
+  pengujiUserId: string;
+  peran: string | null;
+  catatan: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  disetujuiOleh: string | null;
+  disetujuiAt: string | null;
+  pengujiUser: { id: string; namaLengkap: string; email: string };
+}
+
+interface ExaminerOption {
+  id: string;
+  namaLengkap: string;
+  email: string;
+}
+
+interface Completeness {
+  calonAnggota: number;
+  adminKegiatan: boolean;
+  penguji: { total: number; approved: number };
+  aspek: number;
+  sertifikat: number;
+}
+
 // ─── Page ───
 
 export default function GraduationDetailPage() {
@@ -181,7 +210,7 @@ export default function GraduationDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Sub-tab state
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek' | 'validasi'>('info');
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek' | 'examiners' | 'validasi'>('info');
 
   // Graduate modal
   const [showGraduateModal, setShowGraduateModal] = useState(false);
@@ -209,6 +238,78 @@ export default function GraduationDetailPage() {
   const [validating, setValidating] = useState(false);
   const [genDocsLoading, setGenDocsLoading] = useState(false);
   const [genDocsResult, setGenDocsResult] = useState<{ generated: number; total: number; errors: string[] } | null>(null);
+
+  // Workflow state (pengajuan penguji, persetujuan nilai, pengajuan ke distrik)
+  const { role } = useAuth();
+  const isDistrikLevel = role === 'superadmin' || role === 'admin_distrik';
+  const isAdminKegiatanLevel =
+    role === 'superadmin' || role === 'admin_distrik' || role === 'admin_wilayah' || role === 'admin_ranting' || role === 'admin_kegiatan';
+  const [examiners, setExaminers] = useState<ExaminerAssignment[]>([]);
+  const [examinersLoading, setExaminersLoading] = useState(false);
+  const [examinerOptions, setExaminerOptions] = useState<ExaminerOption[]>([]);
+  const [showProposeExaminer, setShowProposeExaminer] = useState(false);
+  const [proposeForm, setProposeForm] = useState({ pengujiUserId: '', catatan: '' });
+  const [proposing, setProposing] = useState(false);
+  const [approveScoresLoading, setApproveScoresLoading] = useState(false);
+  const [submitResultsLoading, setSubmitResultsLoading] = useState(false);
+  const [workflowMsg, setWorkflowMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Completeness (5 komponen pendadaran)
+  const [completeness, setCompleteness] = useState<Completeness | null>(null);
+
+  const fetchExaminers = useCallback(async () => {
+    if (!id) return;
+    setExaminersLoading(true);
+    try {
+      const res = await apiClient.get(`/graduations/${id}/examiners`);
+      setExaminers(res.data.data || []);
+    } catch { /* ignore */ }
+    setExaminersLoading(false);
+  }, [id]);
+
+  const fetchExaminerOptions = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await apiClient.get('/examiners', { params: { limit: 100 } });
+      setExaminerOptions(res.data?.data || []);
+    } catch { /* ignore */ }
+  }, [id]);
+
+  const fetchCompleteness = useCallback(async () => {
+    if (!id) return;
+    try {
+      const [pRes, eRes, aRes, dRes] = await Promise.allSettled([
+        apiClient.get(`/graduations/${id}/participants`),
+        apiClient.get(`/graduations/${id}/examiners`),
+        apiClient.get(`/graduations/${id}/evaluations`),
+        apiClient.get('/documents', { params: { tipe: 'sertifikat_pendadaran', limit: 1 } }),
+      ]);
+      const participants =
+        pRes.status === 'fulfilled' ? (pRes.value.data.data || []) : [];
+      const ex =
+        eRes.status === 'fulfilled' ? (eRes.value.data.data || []) : [];
+      const evalData =
+        aRes.status === 'fulfilled' ? aRes.value.data : { scores: [], summary: {} };
+      const scoreRows = evalData?.scores || [];
+      const aspekSet = new Set<string>();
+      for (const s of scoreRows) {
+        if (s.itemPenilaian?.aspek?.id) aspekSet.add(s.itemPenilaian.aspek.id);
+      }
+      const sertifikatCount =
+        dRes.status === 'fulfilled' && dRes.value.data?.meta
+          ? dRes.value.data.meta.total || 0
+          : dRes.status === 'fulfilled'
+            ? (dRes.value.data.data || []).length
+            : 0;
+      setCompleteness({
+        calonAnggota: participants.filter((p: { status: string }) => p.status === 'mengikuti_pendadaran').length,
+        adminKegiatan: !!graduation?.adminKegiatanId,
+        penguji: { total: ex.length, approved: ex.filter((x: ExaminerAssignment) => x.status === 'approved').length },
+        aspek: aspekSet.size,
+        sertifikat: sertifikatCount,
+      });
+    } catch { /* ignore */ }
+  }, [id, graduation?.adminKegiatanId]);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -271,6 +372,11 @@ export default function GraduationDetailPage() {
   }, [fetchData]);
 
   useEffect(() => {
+    fetchExaminers();
+    fetchCompleteness();
+  }, [fetchExaminers, fetchCompleteness, results]);
+
+  useEffect(() => {
     if (activeSubTab === 'ujian-praktek') {
       fetchUjianList();
       fetchAvailableItems();
@@ -280,6 +386,72 @@ export default function GraduationDetailPage() {
       fetchResults();
     }
   }, [activeSubTab, fetchUjianList, fetchAvailableItems, fetchAvailableExaminers, fetchResults]);
+
+  const handleProposeExaminer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !proposeForm.pengujiUserId) return;
+    setProposing(true);
+    setWorkflowMsg(null);
+    try {
+      await apiClient.post(`/graduations/${id}/examiners`, {
+        pengujiUserId: proposeForm.pengujiUserId,
+        catatan: proposeForm.catatan || undefined,
+      });
+      setShowProposeExaminer(false);
+      setProposeForm({ pengujiUserId: '', catatan: '' });
+      setWorkflowMsg({ ok: true, text: 'Penguji berhasil diajukan dan menunggu persetujuan admin distrik' });
+      await fetchExaminers();
+      await fetchCompleteness();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal mengajukan penguji' });
+    }
+    setProposing(false);
+  };
+
+  const handleReviewExaminer = async (penugasanId: string, approved: boolean) => {
+    if (!id) return;
+    setWorkflowMsg(null);
+    try {
+      await apiClient.post(`/graduations/${id}/examiners/${penugasanId}/review`, { approved });
+      setWorkflowMsg({ ok: true, text: approved ? 'Penguji disetujui' : 'Pengajuan penguji ditolak' });
+      await fetchExaminers();
+      await fetchCompleteness();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal memproses pengajuan penguji' });
+    }
+  };
+
+  const handleApproveScores = async () => {
+    if (!id) return;
+    setApproveScoresLoading(true);
+    setWorkflowMsg(null);
+    try {
+      const res = await apiClient.post(`/graduations/${id}/scores/approve`);
+      setWorkflowMsg({ ok: true, text: `${res.data.data?.approved || 0} nilai penguji disetujui` });
+      await fetchData();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal menyetujui nilai' });
+    }
+    setApproveScoresLoading(false);
+  };
+
+  const handleSubmitResults = async () => {
+    if (!id) return;
+    setSubmitResultsLoading(true);
+    setWorkflowMsg(null);
+    try {
+      await apiClient.post(`/graduations/${id}/submit-results`);
+      setWorkflowMsg({ ok: true, text: 'Nilai diajukan ke admin distrik untuk review & persetujuan' });
+      await fetchData();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal mengajukan nilai' });
+    }
+    setSubmitResultsLoading(false);
+  };
 
   const handleGraduate = async () => {
     if (!graduation) return;
@@ -478,13 +650,48 @@ export default function GraduationDetailPage() {
   };
 
   const pendingValidasiCount = results.filter((r) => r.statusValidasi === 'pending').length;
+  const pendingExaminers = examiners.filter((e) => e.status === 'pending').length;
 
   const SUB_TABS = [
     { key: 'info' as const, label: 'Detail', icon: GraduationCap },
     { key: 'participants' as const, label: `Peserta (${participants.length})`, icon: Users },
     { key: 'ujian-praktek' as const, label: `Ujian Praktek (${ujianList.length})`, icon: ClipboardList },
-    { key: 'validasi' as const, label: `Validasi (${pendingValidasiCount})`, icon: UserCheck },
+    { key: 'examiners' as const, label: `Penguji (${pendingExaminers})`, icon: UserCheck },
+    { key: 'validasi' as const, label: `Validasi (${pendingValidasiCount})`, icon: Award },
   ];
+
+  const completenessItems = completeness
+    ? [
+        {
+          label: 'Calon Anggota',
+          ok: completeness.calonAnggota > 0,
+          detail: `${completeness.calonAnggota} peserta`,
+        },
+        {
+          label: 'Admin Kegiatan',
+          ok: completeness.adminKegiatan,
+          detail: completeness.adminKegiatan ? 'Sudah ditunjuk' : 'Belum ditunjuk',
+        },
+        {
+          label: 'Penguji (disetujui)',
+          ok: completeness.penguji.approved > 0,
+          detail: `${completeness.penguji.approved} dari ${completeness.penguji.total} disetujui`,
+        },
+        {
+          label: 'Aspek Penilaian',
+          ok: completeness.aspek > 0,
+          detail: `${completeness.aspek} aspek dinilai`,
+        },
+        {
+          label: 'Sertifikat',
+          ok: completeness.sertifikat > 0,
+          detail:
+            completeness.sertifikat > 0
+              ? `${completeness.sertifikat} ter-generate`
+              : 'Belum (muncul setelah validasi disetujui)',
+        },
+      ]
+    : [];
 
   return (
     <PermissionGuard module="graduations" action="view">
@@ -604,6 +811,46 @@ export default function GraduationDetailPage() {
                   <span className="text-sm text-gray-600 dark:text-gray-400">Sudah Dinilai</span>
                   <span className="text-lg font-bold text-gray-900 dark:text-white">{lulusCount + gagalCount}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* ── Checklist Kelengkapan Pendadaran ── */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
+                <ListChecks size={18} className="text-emerald-500" />
+                Kelengkapan Pendadaran
+              </h3>
+              <p className="text-xs text-gray-400 mb-4">
+                Setiap pendadaran harus memiliki 5 komponen berikut agar datanya valid
+              </p>
+              <div className="space-y-2.5">
+                {completenessItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition ${
+                      item.ok
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/50'
+                        : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {item.ok ? (
+                        <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertCircle size={16} className="text-amber-500 shrink-0" />
+                      )}
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                        {item.label}
+                      </span>
+                    </div>
+                    <span className={`text-xs font-medium shrink-0 ${item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                      {item.detail}
+                    </span>
+                  </div>
+                ))}
+                {completenessItems.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">Memuat status kelengkapan...</p>
+                )}
               </div>
             </div>
           </div>
@@ -962,6 +1209,218 @@ export default function GraduationDetailPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── TAB: Penguji ──────────────────────────────────────── */}
+        {activeSubTab === 'examiners' && (
+          <div className="space-y-6">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <UserCheck size={18} className="text-emerald-500" />
+                  Penguji Pendadaran
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Admin kegiatan mengajukan penguji, lalu admin distrik menyetujuinya
+                </p>
+              </div>
+              {isAdminKegiatanLevel && (
+                <button
+                  onClick={() => { setShowProposeExaminer(true); fetchExaminerOptions(); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
+                >
+                  <Plus size={14} /> Ajukan Penguji
+                </button>
+              )}
+            </div>
+
+            {/* Workflow message */}
+            {workflowMsg && (
+              <div className={`px-4 py-3 rounded-xl border text-sm ${
+                workflowMsg.ok
+                  ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+              }`}>
+                {workflowMsg.text}
+              </div>
+            )}
+
+            {/* Workflow steps */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <p className="text-xs text-gray-400 uppercase font-medium mb-1">1. Pengajuan</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">Admin kegiatan mengajukan penguji</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <p className="text-xs text-gray-400 uppercase font-medium mb-1">2. Persetujuan</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">Admin distrik menyetujui / menolak</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                <p className="text-xs text-gray-400 uppercase font-medium mb-1">3. Penilaian</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">Penguji disetujui dapat menguji di sesi ujian praktek</p>
+              </div>
+            </div>
+
+            {/* Examiner list */}
+            {examinersLoading ? (
+              <div className="text-center py-8 text-sm text-gray-400">Memuat data penguji...</div>
+            ) : examiners.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <UserCheck size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada penguji</p>
+                {isAdminKegiatanLevel && (
+                  <button
+                    onClick={() => { setShowProposeExaminer(true); fetchExaminerOptions(); }}
+                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+                  >
+                    <Plus size={14} /> Ajukan Penguji Pertama
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {examiners.map((ex) => (
+                    <div key={ex.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm font-bold shrink-0">
+                          {ex.pengujiUser.namaLengkap.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {ex.pengujiUser.namaLengkap}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">{ex.pengujiUser.email}</p>
+                          {ex.catatan && (
+                            <p className="text-xs text-gray-400 italic mt-0.5">Catatan: {ex.catatan}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          ex.status === 'approved' ? 'bg-emerald-100 text-emerald-700'
+                          : ex.status === 'rejected' ? 'bg-red-100 text-red-700'
+                          : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {ex.status === 'approved' ? 'Disetujui' : ex.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                        </span>
+                        {ex.status === 'pending' && isDistrikLevel && (
+                          <>
+                            <button
+                              onClick={() => handleReviewExaminer(ex.id, true)}
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                            >
+                              Setujui
+                            </button>
+                            <button
+                              onClick={() => handleReviewExaminer(ex.id, false)}
+                              className="px-2.5 py-1 rounded-lg text-xs font-medium border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition"
+                            >
+                              Tolak
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions: Setujui Nilai + Ajukan ke Distrik */}
+            {isAdminKegiatanLevel && examiners.some((e) => e.status === 'approved') && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                  <Award size={16} className="text-emerald-500" />
+                  Alur Penilaian
+                </h4>
+                <p className="text-xs text-gray-400 mb-4">
+                  Setelah seluruh penguji selesai menilai di sesi ujian praktek: setujui nilai, lalu ajukan ke admin distrik.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={handleApproveScores}
+                    disabled={approveScoresLoading}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={14} />
+                    {approveScoresLoading ? 'Menyetujui...' : 'Setujui Nilai Penguji'}
+                  </button>
+                  <button
+                    onClick={handleSubmitResults}
+                    disabled={submitResultsLoading || !!graduation.pengajuanNilaiAt}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                      graduation.pengajuanNilaiAt
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    <Send size={14} />
+                    {submitResultsLoading
+                      ? 'Mengajukan...'
+                      : graduation.pengajuanNilaiAt
+                        ? 'Sudah Diajukan ke Distrik'
+                        : 'Ajukan Nilai ke Admin Distrik'}
+                  </button>
+                </div>
+                {graduation.pengajuanNilaiAt && (
+                  <p className="text-xs text-gray-400 mt-3">
+                    Diajukan pada {formatShort(graduation.pengajuanNilaiAt)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Propose Examiner Modal */}
+            <Modal open={showProposeExaminer} onClose={() => setShowProposeExaminer(false)} title="Ajukan Penguji" size="sm">
+              <form onSubmit={handleProposeExaminer} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Penguji *</label>
+                  <select
+                    value={proposeForm.pengujiUserId}
+                    onChange={(e) => setProposeForm({ ...proposeForm, pengujiUserId: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">Pilih penguji...</option>
+                    {examinerOptions.map((o) => (
+                      <option key={o.id} value={o.id}>{o.namaLengkap} ({o.email})</option>
+                    ))}
+                    {examinerOptions.length === 0 && (
+                      <option value="" disabled>Belum ada data penguji. Tambahkan di menu Penguji terlebih dahulu.</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
+                  <textarea
+                    value={proposeForm.catatan}
+                    onChange={(e) => setProposeForm({ ...proposeForm, catatan: e.target.value })}
+                    rows={2}
+                    placeholder="Contoh: penguji teknik jurus"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowProposeExaminer(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={proposing}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                  >
+                    {proposing ? 'Mengajukan...' : 'Ajukan'}
+                  </button>
+                </div>
+              </form>
+            </Modal>
           </div>
         )}
 

@@ -403,13 +403,34 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       const existing = await this.prisma.hasilPendadaran.findFirst({
         where: { kegiatanId: graduationId, calonAnggotaId: action.candidateId },
       });
-      if (!existing) {
+
+      // Auto-compute: jika belum ada HasilPendadaran, hitung dari nilai yang
+      // sudah disetujui (skor total + ranking) — mengikuti alur langkah 11
+      // (nilai yang diapprove dihitung otomatis menentukan kelulusan & peringkat).
+      let hasil = existing;
+      if (!hasil) {
+        const computed = await this.autoComputeResults(graduationId);
+        const found = computed.find((c) => c.calonAnggotaId === action.candidateId);
+        if (found) {
+          hasil = await this.prisma.hasilPendadaran.create({
+            data: {
+              kegiatanId: graduationId,
+              calonAnggotaId: found.calonAnggotaId,
+              totalSkor: found.totalSkor,
+              ranking: found.ranking ?? null,
+              statusKelulusan: 'lulus',
+              statusValidasi: 'pending',
+            },
+          });
+        }
+      }
+      if (!hasil) {
         skipped++;
         continue;
       }
 
       await this.prisma.hasilPendadaran.update({
-        where: { id: existing.id },
+        where: { id: hasil.id },
         data: {
           statusValidasi: action.approved ? 'approved' : 'rejected',
           divalidasiOleh: userId || null,
@@ -418,10 +439,10 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
       validated++;
 
-      // Kick off member creation + document generation for approved + lulus results
-      if (action.approved && existing.statusKelulusan === 'lulus') {
+      // Kick off member creation + KTA + certificate generation for approved results
+      if (action.approved && hasil.statusKelulusan === 'lulus') {
         try {
-          await this.ensureAnggotaAndDocument(graduationId, action.candidateId, existing.totalSkor);
+          await this.ensureAnggotaAndDocument(graduationId, action.candidateId, hasil.totalSkor);
         } catch (error) {
           this.logger.error(
             `Post-approval member/doc generation failed for ${action.candidateId}: ${(error as Error).message}`,
@@ -551,17 +572,31 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    // 2. Idempotency: jangan duplikasi sertifikat yang sudah ada
+    // 2. Idempotency: jangan duplikasi dokumen yang sudah ada
     //    (validateResult auto-generate + generateDocuments batch bisa memproses calon sama)
+    const existingKta = await this.prisma.dokumen.findFirst({
+      where: { anggotaId: anggota.id, tipe: 'kartu_anggota' },
+      select: { id: true },
+    });
+    if (!existingKta) {
+      // 3. Kartu anggota (KTA) otomatis — langkah 12 alur pendadaran
+      try {
+        await this.documentsService.generate({ memberId: anggota.id, type: 'kartu_anggota' });
+      } catch (error) {
+        this.logger.warn(`KTA generation skipped for ${anggota.id}: ${(error as Error).message}`);
+      }
+    }
+
+    // 4. Idempotency: jangan duplikasi sertifikat yang sudah ada
     const existingDoc = await this.prisma.dokumen.findFirst({
       where: { anggotaId: anggota.id, tipe: 'sertifikat_pendadaran' },
       select: { id: true },
     });
     if (!existingDoc) {
-      // 3. Aspect scores dari NilaiPendadaran (untuk sertifikat)
+      // 5. Aspect scores dari NilaiPendadaran (untuk sertifikat)
       const aspects = await this.buildAspectScores(kegiatanId, calonAnggotaId);
 
-      // 4. Generate sertifikat pendadaran
+      // 6. Generate sertifikat pendadaran
       const finalSkor = Number(totalSkor) || 0;
       await this.documentsService.generateCertificate({
         memberId: anggota.id,
@@ -573,7 +608,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
     }
 
-    this.logger.log(`Generated dokumen + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`);
+    this.logger.log(`Generated KTA + sertifikat + anggota for calon ${candidate.id} (pendadaran ${kegiatanId})`);
   }
 
   private predicateFromScore(skor: number): string {
@@ -632,6 +667,193 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       },
       orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { totalSkor: 'desc' }],
     });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  WORKFLOW: PENGAJUAN & PERSETUJUAN PENGUJI
+  // ═══════════════════════════════════════════════════════════
+
+  /** Daftar penguji yang ditugaskan ke pendadaran beserta status persetujuannya. */
+  async getExaminers(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const assignments = await this.prisma.penugasanPenguji.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        pengujiUser: { select: { id: true, namaLengkap: true, email: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return assignments;
+  }
+
+  /**
+   * Admin kegiatan mengajukan penguji untuk pendadaran (status pending).
+   * Penguji yang diajukan akan menunggu persetujuan admin distrik.
+   */
+  async proposeExaminer(
+    graduationId: string,
+    dto: { pengujiUserId: string; peran?: string; catatan?: string },
+    scope?: UserScope,
+  ) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'closed' || grad.status === 'cancelled') {
+      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat mengajukan penguji.');
+    }
+
+    const penguji = await this.prisma.user.findUnique({
+      where: { id: dto.pengujiUserId },
+      select: { id: true, role: true },
+    });
+    if (!penguji || penguji.role !== 'penguji') {
+      throw new BadRequestException('User yang dipilih bukan penguji');
+    }
+
+    const existing = await this.prisma.penugasanPenguji.findFirst({
+      where: { kegiatanId: graduationId, pengujiUserId: dto.pengujiUserId },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new BadRequestException('Penguji ini sudah diajukan untuk pendadaran ini');
+    }
+
+    const assignment = await this.prisma.penugasanPenguji.create({
+      data: {
+        kegiatanId: graduationId,
+        pengujiUserId: dto.pengujiUserId,
+        peran: dto.peran || 'penguji',
+        catatan: dto.catatan,
+        status: 'pending',
+      },
+      include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
+    });
+    this.invalidateCache();
+    return assignment;
+  }
+
+  /**
+   * Admin distrik menyetujui / menolak pengajuan penguji.
+   * Hanya penugasan ber-status pending yang dapat direview.
+   */
+  async reviewExaminer(
+    graduationId: string,
+    penugasanId: string,
+    dto: { approved: boolean; catatan?: string },
+    userId?: string,
+    scope?: UserScope,
+  ) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const assignment = await this.prisma.penugasanPenguji.findUnique({
+      where: { id: penugasanId },
+    });
+    if (!assignment || assignment.kegiatanId !== graduationId) {
+      throw new NotFoundException('Penugasan penguji tidak ditemukan');
+    }
+    if (assignment.status !== 'pending') {
+      throw new BadRequestException('Pengajuan ini sudah diproses');
+    }
+
+    const updated = await this.prisma.penugasanPenguji.update({
+      where: { id: penugasanId },
+      data: {
+        status: dto.approved ? 'approved' : 'rejected',
+        disetujuiOleh: userId || null,
+        disetujuiAt: new Date(),
+        catatan: dto.catatan ?? assignment.catatan,
+      },
+      include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
+    });
+    this.invalidateCache();
+    return updated;
+  }
+
+  /**
+   * Admin kegiatan menyetujui seluruh nilai yang dimasukkan penguji
+   * (statusValidasi nilai: pending → approved). Hanya nilai dengan status
+   * pending yang diubah; nilai yang sudah diputuskan tidak disentuh.
+   */
+  async approveScores(graduationId: string, userId?: string, scope?: UserScope) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'cancelled') {
+      throw new BadRequestException('Pendadaran dibatalkan. Tidak dapat menyetujui nilai.');
+    }
+
+    const result = await this.prisma.nilaiPendadaran.updateMany({
+      where: { kegiatanId: graduationId, statusValidasi: 'pending' },
+      data: {
+        statusValidasi: 'approved',
+        divalidasiOleh: userId || null,
+        divalidasiAt: new Date(),
+      },
+    });
+    this.invalidateCache();
+    return { approved: result.count };
+  }
+
+  /**
+   * Admin kegiatan mengajukan seluruh nilai ke admin distrik untuk review
+   * & persetujuan (langkah 10 alur pendadaran). Mencatat waktu & user pengaju.
+   */
+  async submitResults(graduationId: string, userId?: string, scope?: UserScope) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'cancelled') {
+      throw new BadRequestException('Pendadaran dibatalkan. Tidak dapat mengajukan nilai.');
+    }
+    if (grad.pengajuanNilaiAt) {
+      throw new BadRequestException('Nilai sudah diajukan ke admin distrik');
+    }
+
+    // Pastikan ada nilai yang sudah disetujui admin kegiatan
+    const approvedCount = await this.prisma.nilaiPendadaran.count({
+      where: { kegiatanId: graduationId, statusValidasi: 'approved' },
+    });
+    if (approvedCount === 0) {
+      throw new BadRequestException('Belum ada nilai yang disetujui. Setujui nilai penguji terlebih dahulu.');
+    }
+
+    const updated = await this.prisma.kegiatan.update({
+      where: { id: graduationId },
+      data: {
+        pengajuanNilaiOleh: userId || null,
+        pengajuanNilaiAt: new Date(),
+        status: 'closed',
+      },
+    });
+    this.invalidateCache();
+    return {
+      success: true,
+      status: updated.status,
+      pengajuanNilaiAt: updated.pengajuanNilaiAt,
+    };
+  }
+
+  /**
+   * Saat admin distrik menyetujui hasil (validate-result), hitung otomatis
+   * kelulusan & peringkat dari total skor, lalu buat anggota + KTA + sertifikat.
+   */
+  private async autoComputeResults(graduationId: string) {
+    const nilai = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId: graduationId, statusValidasi: 'approved' },
+      select: { calonAnggotaId: true, skor: true },
+    });
+    if (nilai.length === 0) return [];
+
+    // Total skor per calon
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = new Map<string, number>();
+    for (const n of nilai) {
+      map.set(n.calonAnggotaId, (map.get(n.calonAnggotaId) ?? 0) + Number(n.skor));
+    }
+    const totals: Array<{ calonAnggotaId: string; totalSkor: number; ranking?: number }> = Array.from(
+      map.entries(),
+    ).map(([calonAnggotaId, totalSkor]) => ({ calonAnggotaId, totalSkor }));
+
+    // Ranking: skor tertinggi = #1
+    totals.sort((a, b) => b.totalSkor - a.totalSkor);
+    totals.forEach((t, i) => (t.ranking = i + 1));
+
+    return totals;
   }
 
   // ═══════════════════════════════════════════════════════════

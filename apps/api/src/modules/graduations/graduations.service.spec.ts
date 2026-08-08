@@ -34,6 +34,8 @@ describe('GraduationsService', () => {
     },
     nilaiPendadaran: {
       findMany: jest.fn().mockResolvedValue([]),
+      updateMany: jest.fn(),
+      count: jest.fn(),
     },
     dokumen: {
       findFirst: jest.fn(),
@@ -41,6 +43,16 @@ describe('GraduationsService', () => {
     anggota: {
       findUnique: jest.fn(),
       create: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
+    },
+    penugasanPenguji: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -459,6 +471,163 @@ describe('GraduationsService', () => {
       );
       expect(result).toHaveLength(1);
       expect(result[0].statusValidasi).toBe('pending');
+    });
+  });
+
+  describe('getExaminers', () => {
+    it('should return examiner assignments with status', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.penugasanPenguji.findMany.mockResolvedValue([
+        {
+          id: 'p1',
+          kegiatanId: 'g1',
+          pengujiUserId: 'u1',
+          status: 'pending',
+          pengujiUser: { id: 'u1', namaLengkap: 'Penguji 1', email: 'p1@test.com' },
+        },
+      ]);
+
+      const result = await service.getExaminers('g1');
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe('pending');
+    });
+  });
+
+  describe('proposeExaminer', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.user.findUnique.mockReset();
+      mockPrisma.penugasanPenguji.findFirst.mockReset();
+      mockPrisma.penugasanPenguji.create.mockReset();
+    });
+
+    it('should create a pending assignment for a penguji', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
+      mockPrisma.penugasanPenguji.create.mockResolvedValue({
+        id: 'p1',
+        kegiatanId: 'g1',
+        pengujiUserId: 'u1',
+        status: 'pending',
+      });
+
+      const result = await service.proposeExaminer('g1', { pengujiUserId: 'u1' });
+      expect(result.status).toBe('pending');
+      expect(mockPrisma.penugasanPenguji.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'pending' }) }),
+      );
+    });
+
+    it('should throw BadRequestException when user is not a penguji', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota' });
+      await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException when already proposed', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1' });
+      await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('reviewExaminer', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.penugasanPenguji.findUnique.mockReset();
+      mockPrisma.penugasanPenguji.update.mockReset();
+    });
+
+    it('should approve a pending assignment', async () => {
+      mockPrisma.penugasanPenguji.findUnique.mockResolvedValue({
+        id: 'p1',
+        kegiatanId: 'g1',
+        status: 'pending',
+      });
+      mockPrisma.penugasanPenguji.update.mockResolvedValue({ id: 'p1', status: 'approved' });
+
+      const result = await service.reviewExaminer('g1', 'p1', { approved: true }, 'user1');
+      expect(result.status).toBe('approved');
+      expect(mockPrisma.penugasanPenguji.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'approved', disetujuiOleh: 'user1' }),
+        }),
+      );
+    });
+
+    it('should throw NotFoundException for foreign assignment', async () => {
+      mockPrisma.penugasanPenguji.findUnique.mockResolvedValue({
+        id: 'p1',
+        kegiatanId: 'other',
+        status: 'pending',
+      });
+      await expect(service.reviewExaminer('g1', 'p1', { approved: true }, 'user1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException when already processed', async () => {
+      mockPrisma.penugasanPenguji.findUnique.mockResolvedValue({
+        id: 'p1',
+        kegiatanId: 'g1',
+        status: 'approved',
+      });
+      await expect(service.reviewExaminer('g1', 'p1', { approved: true }, 'user1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('approveScores', () => {
+    it('should approve all pending scores', async () => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.nilaiPendadaran.updateMany.mockReset().mockResolvedValue({ count: 3 });
+
+      const result = await service.approveScores('g1', 'user1');
+      expect(result).toEqual({ approved: 3 });
+      expect(mockPrisma.nilaiPendadaran.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { kegiatanId: 'g1', statusValidasi: 'pending' },
+          data: expect.objectContaining({ statusValidasi: 'approved', divalidasiOleh: 'user1' }),
+        }),
+      );
+    });
+  });
+
+  describe('submitResults', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.kegiatan.update.mockReset();
+      mockPrisma.nilaiPendadaran.count.mockReset();
+    });
+
+    it('should submit results to distrik when approved scores exist', async () => {
+      mockPrisma.nilaiPendadaran.count.mockResolvedValue(2);
+      mockPrisma.kegiatan.update.mockResolvedValue({
+        id: 'g1',
+        status: 'closed',
+        pengajuanNilaiAt: new Date('2026-08-08'),
+      });
+
+      const result = await service.submitResults('g1', 'user1');
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('closed');
+    });
+
+    it('should throw BadRequestException when no approved scores', async () => {
+      mockPrisma.nilaiPendadaran.count.mockResolvedValue(0);
+      await expect(service.submitResults('g1', 'user1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when already submitted', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        ...mockGraduation,
+        pengajuanNilaiAt: new Date('2026-08-08'),
+      });
+      await expect(service.submitResults('g1', 'user1')).rejects.toThrow(BadRequestException);
     });
   });
 

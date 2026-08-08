@@ -138,4 +138,45 @@ export class GraduationsController {
   getEvaluations(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getEvaluations(id, req.scope);
   }
+
+  // ── Workflow pendadaran: pengajuan & persetujuan penguji, nilai, dan pengajuan ke distrik ──
+
+  @Get(':id/examiners')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar penguji pendadaran beserta status persetujuan' })
+  getExaminers(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getExaminers(id, req.scope);
+  }
+
+  @Post(':id/examiners')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Admin kegiatan mengajukan penguji (status pending, menunggu persetujuan admin distrik)' })
+  proposeExaminer(
+    @Param('id') id: string,
+    @Body() dto: { pengujiUserId: string; peran?: string; catatan?: string },
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.proposeExaminer(id, dto, req.scope);
+  }
+
+  @Post(':id/examiners/:penugasanId/review')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Admin distrik menyetujui / menolak pengajuan penguji' })
+  reviewExaminer(
+    @Param('id') id: string,
+    @Param('penugasanId') penugasanId: string,
+    @Body() dto: { approved: boolean; catatan?: string },
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.reviewExaminer(id, penugasanId, dto, req.user?.id, req.scope);
+  }
+
+  @Post(':id/scores/approve')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Admin kegiatan menyetujui seluruh nilai penguji' })
+  approveScores(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.approveScores(id, req.user?.id, req.scope);
+  }
+
+  @Post(':id/submit-results')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Admin kegiatan mengajukan seluruh nilai ke admin distrik untuk review & approve' })
+  submitResults(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.submitResults(id, req.user?.id, req.scope);
+  }
 }

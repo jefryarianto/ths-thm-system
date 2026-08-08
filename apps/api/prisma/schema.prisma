@@ -102,6 +102,18 @@ enum StatusKelulusan {
   gagal
 }
 
+enum StatusPenugasanPenguji {
+  pending
+  approved
+  rejected
+}
+
+enum StatusValidasiNilai {
+  pending
+  approved
+  rejected
+}
+
 enum TipeDokumen {
   kartu_anggota
   sertifikat_pendadaran
@@ -388,6 +400,8 @@ model Kegiatan {
   tanggalSelesai DateTime       @map("tanggal_selesai")
   createdBy      String         @map("created_by")
   status         StatusKegiatan @default(draft)
+  pengajuanNilaiOleh String?     @map("pengajuan_nilai_oleh")
+  pengajuanNilaiAt   DateTime?   @map("pengajuan_nilai_at")
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
@@ -521,6 +535,9 @@ model PenugasanPenguji {
   kegiatanId    String   @map("kegiatan_id")
   peran         String?  @default("penguji")
   catatan       String?
+  status        StatusPenugasanPenguji @default(pending)
+  disetujuiOleh String?  @map("disetujui_oleh")
+  disetujuiAt   DateTime? @map("disetujui_at")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   pengujiUser   User     @relation(fields: [pengujiUserId], references: [id])
@@ -559,6 +576,9 @@ model NilaiPendadaran {
   ujianPraktekId  String?  @map("ujian_praktek_id")
   skor            Decimal  @db.Decimal(65, 30)
   komentar        String?
+  statusValidasi  StatusValidasiNilai @default(pending) @map("status_validasi")
+  divalidasiOleh  String?  @map("divalidasi_oleh")
+  divalidasiAt    DateTime? @map("divalidasi_at")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
