@@ -307,6 +307,34 @@ export class DocumentsService {
     }
   }
 
+  /**
+   * Resolve file PDF/PNG tersimpan untuk satu dokumen (dari `filePath`).
+   * Validasi scope + pastikan path aman (hanya basename di dalam outputDir).
+   * Status dokumen di-update ke `downloaded` saat file diminta.
+   */
+  async getDocumentFile(id: string, scope?: UserScope): Promise<{ filePath: string; nomorDokumen: string; tipe: string }> {
+    const doc = await this.findOne(id, scope);
+    if (!doc.filePath) {
+      throw new NotFoundException('File dokumen belum tersedia. Generate ulang dokumen terlebih dahulu.');
+    }
+
+    // Keamanan: abaikan path absolut dari DB, hanya ambil nama file lalu gabung ke outputDir.
+    const fileName = path.basename(doc.filePath);
+    const filePath = path.join(this.outputDir, fileName);
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('File dokumen tidak ditemukan di penyimpanan.');
+    }
+
+    // Tandai sebagai diunduh
+    await this.prisma.dokumen.update({
+      where: { id },
+      data: { status: 'downloaded' },
+    });
+    this.cache.invalidatePrefix(this.CACHE_PREFIX);
+
+    return { filePath, nomorDokumen: doc.nomorDokumen, tipe: doc.tipe };
+  }
+
   async remove(id: string, scope?: UserScope) {
     if (scope) {
       const doc = await this.prisma.dokumen.findUnique({

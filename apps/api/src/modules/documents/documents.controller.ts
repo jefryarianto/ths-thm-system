@@ -31,6 +31,20 @@ export class DocumentsController {
     return this.service.verifyByToken(token);
   }
 
+  @Get(':id/file')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Download file PDF/PNG tersimpan dari dokumen' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
+  @RequireScope('branch')
+  async downloadDocumentFile(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
+    const { filePath, nomorDokumen, tipe } = await this.service.getDocumentFile(id, req.scope);
+    const ext = filePath.toLowerCase().endsWith('.png') ? 'image/png' : 'application/pdf';
+    const extName = ext === 'image/png' ? 'png' : 'pdf';
+    res.setHeader('Content-Type', ext);
+    res.setHeader('Content-Disposition', `attachment; filename="${nomorDokumen}-${tipe}.${extName}"`);
+    res.sendFile(filePath);
+  }
+
   @Get()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua dokumen' })

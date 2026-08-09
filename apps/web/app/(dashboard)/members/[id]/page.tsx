@@ -501,6 +501,32 @@ export default function MemberDetailPage() {
     }
   };
 
+  /** Download file dokumen tersimpan (sertifikat/piagam) dari /documents/:id/file. */
+  const downloadDocumentFile = async (docId: string, filename: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${window.location.origin}/api/documents/${docId}/file`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        toast('error', 'File dokumen belum tersedia. Generate ulang dokumen.');
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast('success', 'File dokumen berhasil diunduh');
+    } catch {
+      toast('error', 'Gagal mengunduh dokumen. Silakan coba lagi.');
+    }
+  };
+
   const handleDelete = async () => {
     if (!member) return;
     setActionLoading('delete');
@@ -884,6 +910,40 @@ export default function MemberDetailPage() {
                                   </td>
                                   <td className="px-5 py-3 text-right">
                                     <div className="flex items-center justify-end gap-1">
+                                      {doc.tipe === 'kartu_anggota' && (
+                                        <>
+                                          <button
+                                            onClick={() => downloadKTA(member!.id, 'pdf')}
+                                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition"
+                                            title="Download PDF KTA"
+                                          >
+                                            <Download size={14} className="text-red-500" />
+                                          </button>
+                                          <button
+                                            onClick={() => downloadKTA(member!.id, 'image')}
+                                            className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-950 transition"
+                                            title="Download PNG KTA"
+                                          >
+                                            <Image size={14} className="text-green-600" />
+                                          </button>
+                                        </>
+                                      )}
+                                      {doc.tipe !== 'kartu_anggota' && doc.filePath && (
+                                        <button
+                                          onClick={() =>
+                                            downloadDocumentFile(
+                                              doc.id,
+                                              `${doc.nomorDokumen || 'dokumen'}${
+                                                doc.filePath.toLowerCase().endsWith('.png') ? '.png' : '.pdf'
+                                              }`,
+                                            )
+                                          }
+                                          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition"
+                                          title="Download File"
+                                        >
+                                          <Download size={14} className="text-red-500" />
+                                        </button>
+                                      )}
                                       {verifyToken && (
                                         <Link
                                           href={`/verify/${verifyToken}`}
