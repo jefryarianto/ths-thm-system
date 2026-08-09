@@ -40,7 +40,6 @@ import { StatusBadge,
   DetailStats,
   DetailSkeleton,
   DUES_STATUS_STYLES,
-  DOCUMENT_TYPES,
   FLAT_STATUS_LABELS,
   formatDate,
   formatRupiah,
@@ -83,11 +82,48 @@ interface MemberDetail {
 
 interface DocumentItem {
   id: string;
-  jenis: string;
-  namaDokumen?: string;
+  tipe: string;
+  nomorDokumen: string;
   status: string;
-  tokenVerifikasi?: string;
+  verificationUrl?: string | null;
+  filePath?: string | null;
   createdAt: string;
+  updatedAt: string;
+}
+
+/** Label tipe dokumen — sesuai enum TipeDokumen di Prisma. */
+const DOKUMEN_TIPE_LABEL: Record<string, string> = {
+  kartu_anggota: 'Kartu Anggota (KTA)',
+  sertifikat_pendadaran: 'Sertifikat Pendadaran',
+  sertifikat_pelatihan: 'Sertifikat Pelatihan',
+  piagam_prestasi: 'Piagam Prestasi',
+};
+
+/** Label & warna badge untuk status dokumen (enum StatusDokumen). */
+const DOKUMEN_STATUS_META: Record<string, { label: string; className: string }> = {
+  generated: {
+    label: 'Ter-generate',
+    className: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400',
+  },
+  downloaded: {
+    label: 'Diunduh',
+    className: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
+  },
+  revoked: {
+    label: 'Dicabut',
+    className: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
+  },
+};
+
+function docStatusMeta(status: string) {
+  return DOKUMEN_STATUS_META[status] || { label: status, className: '' };
+}
+
+/** Ambil token verifikasi dari verificationUrl (/verify/<token> atau /api/documents/verify/<token>). */
+function docVerificationToken(verificationUrl?: string | null): string | null {
+  if (!verificationUrl) return null;
+  const m = verificationUrl.match(/\/verify\/([^/?#]+)/);
+  return m ? m[1] : null;
 }
 
 interface DuesItem {
@@ -769,91 +805,120 @@ export default function MemberDetailPage() {
         
               {/* ── Tab: Dokumen ── */}
               {activeTab === 'documents' && (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <FileText size={18} className="text-blue-500" />
-                      Dokumen Anggota
-                    </h3>
-                    <span className="text-xs text-gray-400">{member.dokumen.length} dokumen</span>
+                <div className="space-y-4">
+                  {/* Ringkasan per tipe dokumen */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {(['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'] as const).map((t) => {
+                      const count = member.dokumen.filter((d: DocumentItem) => d.tipe === t).length;
+                      return (
+                        <div key={t} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{DOKUMEN_TIPE_LABEL[t]}</p>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{count}</p>
+                        </div>
+                      );
+                    })}
                   </div>
-                  {member.dokumen.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-gray-100 dark:border-gray-700">
-                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                              Jenis
-                            </th>
-                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                              Nama Dokumen
-                            </th>
-                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                              Status
-                            </th>
-                            <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                              Dibuat
-                            </th>
-                            <th className="text-right px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
-                              Aksi
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                          {member.dokumen.map((doc) => (
-                            <tr
-                              key={doc.id}
-                              className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
-                            >
-                              <td className="px-4 py-3">
-                                <span className="font-medium text-gray-900 dark:text-white">
-                                  {DOCUMENT_TYPES[doc.jenis] || doc.jenis}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                                {doc.namaDokumen || '-'}
-                              </td>
-                              <td className="px-4 py-3">
-                                <StatusBadge status={doc.status} />
-                              </td>
-                              <td className="px-4 py-3 hidden sm:table-cell text-xs text-gray-500">
-                                {formatDate(doc.createdAt)}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  {doc.tokenVerifikasi && (
-                                    <Link
-                                      href={`/verify/${doc.tokenVerifikasi}`}
-                                      target="_blank"
-                                      className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-                                      title="Verifikasi Dokumen"
-                                    >
-                                      <BadgeCheck size={14} className="text-blue-600" />
-                                    </Link>
-                                  )}
-                                  <Link
-                                    href={`/documents?search=${doc.jenis}`}
-                                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                                    title="Lihat Detail"
-                                  >
-                                    <ExternalLink size={14} className="text-gray-400" />
-                                  </Link>
-                                </div>
-                              </td>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <FileText size={18} className="text-blue-500" />
+                        Daftar Dokumen
+                      </h3>
+                      <span className="text-xs text-gray-400">{member.dokumen.length} dokumen</span>
+                    </div>
+                    {member.dokumen.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                Tipe Dokumen
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                No. Dokumen
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                Status
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                                Dibuat
+                              </th>
+                              <th className="text-left px-5 py-3 font-medium text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                                Diperbarui
+                              </th>
+                              <th className="text-right px-5 py-3 font-medium text-gray-500 dark:text-gray-400">
+                                Aksi
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="text-center py-10">
-                      <FileText size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada dokumen</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        Dokumen akan muncul setelah di-generate
-                      </p>
-                    </div>
-                  )}
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {member.dokumen.map((doc) => {
+                              const statusMeta = docStatusMeta(doc.status);
+                              const verifyToken = docVerificationToken(doc.verificationUrl);
+                              return (
+                                <tr
+                                  key={doc.id}
+                                  className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
+                                >
+                                  <td className="px-5 py-3">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      {DOKUMEN_TIPE_LABEL[doc.tipe] || doc.tipe || '-'}
+                                    </span>
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <span className="font-mono text-xs text-blue-700 dark:text-blue-400">
+                                      {doc.nomorDokumen || '-'}
+                                    </span>
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusMeta.className || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`}>
+                                      {statusMeta.label}
+                                    </span>
+                                  </td>
+                                  <td className="px-5 py-3 hidden md:table-cell text-xs text-gray-500">
+                                    {formatDate(doc.createdAt)}
+                                  </td>
+                                  <td className="px-5 py-3 hidden lg:table-cell text-xs text-gray-500">
+                                    {doc.updatedAt ? formatDate(doc.updatedAt) : '-'}
+                                  </td>
+                                  <td className="px-5 py-3 text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      {verifyToken && (
+                                        <Link
+                                          href={`/verify/${verifyToken}`}
+                                          target="_blank"
+                                          className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                                          title="Verifikasi Dokumen"
+                                        >
+                                          <BadgeCheck size={14} className="text-blue-600" />
+                                        </Link>
+                                      )}
+                                      <Link
+                                        href={`/documents/${doc.id}`}
+                                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                        title="Lihat Detail"
+                                      >
+                                        <ExternalLink size={14} className="text-gray-400" />
+                                      </Link>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-10">
+                        <FileText size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada dokumen</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          Dokumen akan muncul setelah di-generate
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
         

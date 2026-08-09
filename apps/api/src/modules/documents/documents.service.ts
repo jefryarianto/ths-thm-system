@@ -92,7 +92,19 @@ export class DocumentsService {
   async findOne(id: string, scope?: UserScope) {
     const doc = await this.prisma.dokumen.findUnique({
       where: { id },
-      include: { qrValidation: true, anggota: { select: { rantingId: true } } },
+      include: {
+        qrValidation: true,
+        anggota: {
+          select: {
+            id: true,
+            namaLengkap: true,
+            nomorAnggota: true,
+            email: true,
+            noHp: true,
+            rantingId: true,
+          },
+        },
+      },
     });
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
     if (
