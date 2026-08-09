@@ -1,17 +1,33 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { execFile } from 'child_process';
+import { execFile, spawnSync } from 'child_process';
 import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
+
+/**
+ * Apakah binary `pdftoppm` (poppler-utils) tersedia di PATH?
+ * Dievaluasi sekali saat modul dimuat.
+ */
+const HAS_PDFTOPPM = (() => {
+  try {
+    const res = spawnSync('pdftoppm', ['-v'], { stdio: 'ignore' });
+    // pdftoppm -v menulis ke stderr dan keluar dengan kode non-zero pada versi lama,
+    // jadi cukup cek bahwa binary ada (error != ENOENT).
+    return !(res.error && (res.error as NodeJS.ErrnoException).code === 'ENOENT');
+  } catch {
+    return false;
+  }
+})();
 
 /**
  * Convert PDF buffer to PNG image buffer.
  *
  * Prioritas: binary `pdftoppm` (poppler-utils, tersedia di image production
  * via Dockerfile `apk add poppler-utils`) — pdf-poppler TIDAK mendukung Linux
- * ("linux is NOT supported"). Fallback ke pdf-poppler untuk dev Windows.
+ * ("linux is NOT supported"). Fallback ke pdf-poppler hanya jika pdftoppm
+ * tidak tersedia (mis. dev Windows tanpa poppler).
  */
 export async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
   // Write PDF buffer to temp file
@@ -22,7 +38,7 @@ export async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
     fs.writeFileSync(pdfPath, pdfBuffer);
 
     let pngPath: string;
-    try {
+    if (HAS_PDFTOPPM) {
       // Poppler pdftoppm: konversi halaman 1, 300 DPI, output page-1.png
       await execFileAsync('pdftoppm', [
         '-png',
@@ -33,7 +49,7 @@ export async function pdfToPng(pdfBuffer: Buffer): Promise<Buffer> {
         path.join(tmpDir, 'page'),
       ]);
       pngPath = path.join(tmpDir, 'page-1.png');
-    } catch {
+    } else {
       // pdftoppm tidak tersedia (mis. dev Windows tanpa poppler) — fallback pdf-poppler
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const pdfPoppler = require('pdf-poppler');
