@@ -71,7 +71,10 @@ export default function PaymentsPage() {
     ]);
     const { success, data: statsData } = statsRes.data;
     if (success) setStats(statsData);
-    if (bankRes.data) setBankInfo(bankRes.data);
+    // bankRes.data.data adalah ARRAY rekening aktif — ambil yang pertama (satu-satunya yg aktif)
+    const bankList = bankRes.data?.data;
+    if (Array.isArray(bankList) && bankList.length > 0) setBankInfo(bankList[0]);
+    else setBankInfo(null);
     return duesRes.data;
   }, [page, debouncedSearch]);
 

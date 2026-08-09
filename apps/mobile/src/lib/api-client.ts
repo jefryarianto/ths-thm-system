@@ -108,4 +108,15 @@ export interface ApiResponse<T> {
 /** Unwrap `r.data.data` from an Axios response. Use with `.then(unwrap)` */
 export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
 
+/**
+ * Ubah path relatif (mis. `/storage/qris.png`) menjadi URL absolut untuk `<Image>`
+ * React Native (tidak bisa resolve path relatif seperti browser). URL http(s)
+ * dibiarkan apa adanya.
+ */
+export const toAbsoluteUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 export default apiClient;

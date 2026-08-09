@@ -13,7 +13,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
-import apiClient, { unwrap } from '../../lib/api-client';
+import apiClient, { unwrap, toAbsoluteUrl } from '../../lib/api-client';
 import { LoadingView, StatusBadge } from '../../components/ui/shared';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
@@ -56,7 +56,9 @@ export default function DuesDetailScreen() {
         apiClient.get('/payments/bank-info'),
       ]);
       setDues(unwrap(duesRes));
-      setBankInfo(unwrap(bankRes) as BankInfo);
+      // unwrap(bankRes) adalah ARRAY rekening aktif — ambil yang pertama (satu-satunya yg aktif)
+      const bankList = unwrap<BankInfo[] | null>(bankRes) || [];
+      setBankInfo(Array.isArray(bankList) && bankList.length > 0 ? bankList[0] : null);
     } catch {
       /* ignore */
     }
@@ -201,10 +203,10 @@ export default function DuesDetailScreen() {
           <View style={styles.bankCard}>
             <Text style={styles.bankTitle}>Pembayaran via Transfer</Text>
 
-            {bankInfo.qrisImageUrl && (
+            {toAbsoluteUrl(bankInfo.qrisImageUrl) && (
               <View style={styles.qrisContainer}>
                 <Image
-                  source={{ uri: bankInfo.qrisImageUrl }}
+                  source={{ uri: toAbsoluteUrl(bankInfo.qrisImageUrl) as string }}
                   style={styles.qrisImage}
                   resizeMode="contain"
                 />
