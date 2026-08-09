@@ -882,6 +882,7 @@ export default function MemberDetailPage() {
                             {member.dokumen.map((doc) => {
                               const statusMeta = docStatusMeta(doc.status);
                               const verifyToken = docVerificationToken(doc.verificationUrl);
+                              const filePath = doc.filePath;
                               return (
                                 <tr
                                   key={doc.id}
@@ -928,13 +929,13 @@ export default function MemberDetailPage() {
                                           </button>
                                         </>
                                       )}
-                                      {doc.tipe !== 'kartu_anggota' && doc.filePath && (
+                                      {doc.tipe !== 'kartu_anggota' && filePath && (
                                         <button
                                           onClick={() =>
                                             downloadDocumentFile(
                                               doc.id,
                                               `${doc.nomorDokumen || 'dokumen'}${
-                                                doc.filePath.toLowerCase().endsWith('.png') ? '.png' : '.pdf'
+                                                filePath.toLowerCase().endsWith('.png') ? '.png' : '.pdf'
                                               }`,
                                             )
                                           }
