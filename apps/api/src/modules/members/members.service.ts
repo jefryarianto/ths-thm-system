@@ -199,6 +199,46 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
           rantingId = scope.rantingId;
         }
 
+        // ── PRAKONDISI: struktur organisasi (distrik → wilayah → ranting) wajib ada ──
+        // NRA dibangun dari kode distrik/wilayah/ranting. Tanpa ranting yang valid,
+        // baris DITOLAK — bukan dibuat dengan NRA palsu (0000-0000-...) atau tanpa ranting.
+        if (!rantingId) {
+          return {
+            success: false,
+            error:
+              'ranting_id wajib diisi. Import struktur organisasi (distrik → wilayah → ranting) terlebih dahulu.',
+          };
+        }
+
+        const rantingRow = await this.prisma.ranting.findUnique({
+          where: { id: rantingId },
+          select: {
+            nama: true,
+            kodeRanting: true,
+            wilayah: {
+              select: { kodeWilayah: true, distrik: { select: { kodeDistrik: true, nama: true } } },
+            },
+          },
+        });
+
+        if (!rantingRow) {
+          return {
+            success: false,
+            error: `Ranting "${rantingId}" tidak ditemukan. Import struktur organisasi (distrik → wilayah → ranting) terlebih dahulu.`,
+          };
+        }
+
+        const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '';
+        const kodeWilayah = (rantingRow?.wilayah?.kodeWilayah?.split('-').pop() || '').padStart(2, '0');
+        const kodeRanting = (rantingRow?.kodeRanting?.split('-').pop() || '').padStart(2, '0');
+
+        if (!kodeDistrik || !kodeWilayah || !kodeRanting) {
+          return {
+            success: false,
+            error: `Struktur organisasi ranting "${rantingRow.nama}" belum lengkap (kode distrik/wilayah/ranting kosong). Lengkapi data organisasi terlebih dahulu.`,
+          };
+        }
+
         // Support legacy import: accept existing member number from CSV.
         // Format lama bisa "001-1994" (urut-tahun) atau "0103-001-1994" (full lama).
         // Selalu dikonversi ke format resmi:
@@ -206,20 +246,6 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota;
         let nomorAnggota: string;
         if (existingNumber) {
-          const rantingRow = rantingId
-            ? await this.prisma.ranting.findUnique({
-                where: { id: rantingId },
-                select: {
-                  kodeRanting: true,
-                  wilayah: {
-                    select: { kodeWilayah: true, distrik: { select: { kodeDistrik: true } } },
-                  },
-                },
-              })
-            : null;
-          const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '';
-          const kodeWilayah = (rantingRow?.wilayah?.kodeWilayah?.split('-').pop() || '').padStart(2, '0');
-          const kodeRanting = (rantingRow?.kodeRanting?.split('-').pop() || '').padStart(2, '0');
           // Segmen terakhir = tahun, segmen ke-2 terakhir = urut (robust utk semua format).
           const legacyParts = String(existingNumber).trim().split('-');
           const urut = legacyParts[legacyParts.length - 2] || '';
@@ -230,7 +256,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
               : String(existingNumber).trim();
         } else {
           nomorAnggota = await this.nraService.generateMemberNumber(
-            rantingId || '',
+            rantingId,
             row.tahun_dadar || row.tahunDadar || undefined,
           );
         }
@@ -249,7 +275,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             noHp: row.no_hp || row.phone || null,
             email: row.email || null,
             alamat: row.alamat || row.address || null,
-            rantingId: rantingId || undefined,
+            rantingId,
             tingkat: row.tingkat || row.tingkatan || null,
             statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
             statusValidasi: 'pending',

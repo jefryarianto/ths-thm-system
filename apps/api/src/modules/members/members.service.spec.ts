@@ -209,6 +209,135 @@ describe('MembersService', () => {
     });
   });
 
+  describe('importCsv', () => {
+    // Mock importRows to actually execute the provided rowProcessor, so we can
+    // assert per-row behavior (ranting validation, NRA conversion, errors).
+    const runImport = async (rows: any[], scope?: any) => {
+      let capturedProcessor: any = null;
+      mockCsvImportService.importRows.mockImplementation(
+        async (_data: any[], options: any) => {
+          capturedProcessor = options.rowProcessor;
+          const result: any = { success: 0, incomplete: 0, errors: 0, details: [] };
+          for (const row of _data) {
+            const helpers: any = {
+              email: row.email?.toString().trim().toLowerCase(),
+              namaLengkap: (row.nama_lengkap || row.nama || '').toString().trim().toLowerCase(),
+              addIntraCsv: jest.fn(),
+            };
+            const processed = await options.rowProcessor(row, helpers);
+            if (processed.skip) {
+              result.incomplete++;
+            } else if (processed.success) {
+              result.success++;
+            } else {
+              result.errors++;
+              result.details.push({ row, error: processed.error });
+            }
+          }
+          return result;
+        },
+      );
+      const result = await service.importCsv(rows, scope);
+      return { result, processor: capturedProcessor };
+    };
+
+    beforeEach(() => {
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', email: 'x@y.com' });
+      mockMemberMailService.sendToMember.mockResolvedValue(undefined);
+    });
+
+    it('should reject rows without ranting_id (struktur organisasi belum ada)', async () => {
+      const { result } = await runImport([{ nama_lengkap: 'Tanpa Ranting', jenis_kelamin: 'L' }]);
+      expect(result.success).toBe(0);
+      expect(result.errors).toBe(1);
+      expect(result.details[0].error).toContain('ranting_id wajib diisi');
+    });
+
+    it('should reject rows when ranting is not found in DB', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue(null);
+      const { result } = await runImport([
+        { nama_lengkap: 'Ranting Hilang', jenis_kelamin: 'L', ranting_id: 'missing-1' },
+      ]);
+      expect(result.success).toBe(0);
+      expect(result.errors).toBe(1);
+      expect(result.details[0].error).toContain('tidak ditemukan');
+    });
+
+    it('should reject rows when ranting has incomplete org structure', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue({
+        id: 'r9',
+        nama: 'Ranting Tanpa Struktur',
+        kodeRanting: '',
+        wilayah: null,
+      });
+      const { result } = await runImport([
+        { nama_lengkap: 'Struktur Kurang', jenis_kelamin: 'L', ranting_id: 'r9' },
+      ]);
+      expect(result.success).toBe(0);
+      expect(result.errors).toBe(1);
+      expect(result.details[0].error).toContain('belum lengkap');
+    });
+
+    it('should import member with converted NRA from legacy number', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
+      let createdData: any = null;
+      mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
+        createdData = data;
+        return { id: 'm1', ...data };
+      });
+
+      const { result } = await runImport([
+        {
+          nama_lengkap: 'Jefry',
+          jenis_kelamin: 'L',
+          ranting_id: 'r1',
+          nomor_anggota: '001-1994',
+          tahun_dadar: '1994',
+        },
+      ]);
+
+      expect(result.success).toBe(1);
+      expect(result.errors).toBe(0);
+      expect(createdData.nomorAnggota).toBe('0114-0101-001-1994');
+      expect(createdData.rantingId).toBe('r1');
+    });
+
+    it('should import member with auto-generated NRA when no legacy number', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
+      let createdData: any = null;
+      mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
+        createdData = data;
+        return { id: 'm2', ...data };
+      });
+
+      const { result } = await runImport([
+        { nama_lengkap: 'Auto NRA', jenis_kelamin: 'P', ranting_id: 'r1', tahun_dadar: '2026' },
+      ]);
+
+      expect(result.success).toBe(1);
+      expect(createdData.nomorAnggota).toBe('0114-0101-001-2026');
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', '2026');
+    });
+
+    it('should use ranting_id from scope when CSV row has none', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
+      let createdData: any = null;
+      mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
+        createdData = data;
+        return { id: 'm3', ...data };
+      });
+
+      const { result } = await runImport([{ nama_lengkap: 'Scope Ranting', jenis_kelamin: 'L' }], {
+        rantingId: 'r1',
+        role: 'admin_ranting',
+      });
+
+      expect(result.success).toBe(1);
+      expect(createdData.rantingId).toBe('r1');
+    });
+  });
+
   describe('update', () => {
     it('should update a member', async () => {
       mockPrisma.anggota.update.mockResolvedValue({ id: 'm1', namaLengkap: 'Updated' });

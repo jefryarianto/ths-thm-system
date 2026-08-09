@@ -2,6 +2,8 @@
 
 Template untuk import data anggota (termasuk import historis). Baris pertama harus header kolom; delimiter koma (`,`); encoding UTF-8.
 
+> ⚠️ **PRAKONDISI**: Sebelum import anggota, struktur organisasi **distrik → wilayah → ranting** harus sudah dibuat/di-import terlebih dahulu (kolom `ranting_id` harus merujuk ranting yang valid di sistem). Baris tanpa `ranting_id` valid akan **ditolak** — NRA tidak bisa di-generate tanpa kode distrik/wilayah/ranting.
+
 ## Kolom
 
 | Kolom            | Tipe   | Required | Deskripsi                                     |
