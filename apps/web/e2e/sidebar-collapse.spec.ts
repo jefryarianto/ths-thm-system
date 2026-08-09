@@ -174,9 +174,9 @@ test.describe('Sidebar Collapse', () => {
     const profileTrigger = page.locator('header').locator('button').filter({ has: page.locator('text=Super Admin') });
     await profileTrigger.click();
 
-    // Click "Profil Saya" — should navigate to /settings
+    // Click "Profil Saya" — should navigate to /profile
     await page.getByText('Profil Saya').click();
-    await expect(page).toHaveURL(/\/settings/);
+    await expect(page).toHaveURL(/\/profile/);
   });
 
   test('nav item labels are hidden when collapsed (spans with truncate)', async ({ page }) => {
