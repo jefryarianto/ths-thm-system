@@ -41,19 +41,36 @@ RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app
 
-# Copy built artifacts
+# Copy workspace manifests + API package (needed by pnpm deploy for resolution)
 COPY --from=builder /app/pnpm-lock.yaml ./
 COPY --from=builder /app/pnpm-workspace.yaml ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/packages/templates ./packages/templates
+COPY --from=builder /app/apps/api/tsconfig.json ./apps/api/tsconfig.json
+COPY --from=builder /app/apps/api/nest-cli.json ./apps/api/nest-cli.json
 
-# Install all dependencies (including dev) — needed for prisma generate
-# Must use npx from within apps/api to find prisma CLI (it's in api's devDeps)
-RUN pnpm install --frozen-lockfile --ignore-scripts && \
-    cd apps/api && npx prisma generate --schema=prisma/schema.prisma
+# Deploy ONLY @ths-thm/api with its production dependencies (no devDeps,
+# no sibling workspace packages such as web/mobile). Result is a
+# self-contained /app/api-deploy with exactly what the API needs at runtime.
+RUN pnpm --filter @ths-thm/api deploy --prod --legacy --ignore-scripts /app/api-deploy
+
+# Copy the Prisma client generated during the build stage into the deployed
+# node_modules. The `prisma` CLI is a devDependency (not deployed with --prod),
+# but the generated client at node_modules/.prisma is required at runtime.
+COPY --from=builder /app/node_modules/.prisma /app/api-deploy/node_modules/.prisma
+
+# Move the deployed package to /app. Keep WORKDIR /app because storage paths
+# are resolved relative to process.cwd() (e.g. documents.service.ts uses
+# path.resolve('storage','documents')) and docker-compose mounts ./storage
+# at /app/storage.
+RUN cp -a /app/api-deploy/. /app/ && \
+    rm -rf /app/api-deploy /app/apps /app/packages /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/tsconfig.base.json /app/src /app/test /app/coverage /app/api.log /app/*.tsbuildinfo && \
+    rm -f /app/Dockerfile /app/Dockerfile.test /app/package-lock.json /app/ths-thm-system-*-firebase-adminsdk-*.json && \
+    # Firebase admin SDK is initialized from env vars (FCM_PROJECT_ID/FCM_PRIVATE_KEY/FCM_CLIENT_EMAIL)
+    # so the service-account JSON file is not needed in the image.
+    true
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
@@ -64,4 +81,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["node", "dist/main.js"]
