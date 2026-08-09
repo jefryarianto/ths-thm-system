@@ -8,16 +8,28 @@ import {
   Param,
   Query,
   Res,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { unlinkSync } from 'fs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SettingsService } from './settings.service';
 import {
   CreatePeriodDto,
   UpdatePeriodDto,
+  CreateSignatureDto,
+  CreateStampDto,
 } from './dto/setting.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import {
+  buildImageUploadOptions,
+  validateImageMagicBytes,
+} from '../../common/utils/image-upload.util';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -89,6 +101,63 @@ export class SettingsController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil stempel aktif' })
   async getStamp() {
     return this.settingsService.getStamp();
+  }
+
+  @Post('signatures')
+  @ApiConsumes('multipart/form-data')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Upload tanda tangan (gambar)' })
+  @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('signature')))
+  async uploadSignature(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() body: { nama?: string; jabatan?: string },
+    @CurrentUser() user: { id: string; namaLengkap?: string },
+  ) {
+    if (!file) {
+      throw new BadRequestException('File tanda tangan harus diupload');
+    }
+    if (!validateImageMagicBytes(file.path)) {
+      try {
+        unlinkSync(file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      throw new BadRequestException('File tidak valid: format gambar tidak dikenali');
+    }
+
+    const dto = new CreateSignatureDto();
+    dto.userId = user.id;
+    dto.nama = body.nama?.trim() || user.namaLengkap || 'Tanda Tangan';
+    dto.jabatan = body.jabatan?.trim() || 'Pejabat Distrik';
+    dto.imagePath = file.filename;
+    dto.isActive = true;
+    return this.settingsService.uploadSignature(dto);
+  }
+
+  @Post('stamp')
+  @ApiConsumes('multipart/form-data')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Upload stempel (gambar)' })
+  @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('stamp')))
+  async uploadStamp(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() body: { nama?: string },
+  ) {
+    if (!file) {
+      throw new BadRequestException('File stempel harus diupload');
+    }
+    if (!validateImageMagicBytes(file.path)) {
+      try {
+        unlinkSync(file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      throw new BadRequestException('File tidak valid: format gambar tidak dikenali');
+    }
+
+    const dto = new CreateStampDto();
+    dto.nama = body.nama?.trim() || 'Stempel Distrik';
+    dto.imagePath = file.filename;
+    dto.isActive = true;
+    return this.settingsService.uploadStamp(dto);
   }
 
   @Get(':key')

@@ -94,11 +94,21 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   // ── Signatures & Stamps ───────────────────────────
 
   async uploadSignature(dto: CreateSignatureDto) {
-    return this.prisma.tandaTangan.create({ data: dto });
+    // Hanya satu tanda tangan aktif; nonaktifkan yang lama (atomik).
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.isActive) {
+        await tx.tandaTangan.updateMany({
+          where: { isActive: true },
+          data: { isActive: false },
+        });
+      }
+      return tx.tandaTangan.create({ data: dto });
+    });
   }
 
   async getSignatures() {
     return this.prisma.tandaTangan.findMany({
+      orderBy: [{ isActive: 'desc' }, { createdAt: 'desc' }],
       include: { user: { select: { namaLengkap: true } } },
     });
   }
@@ -108,7 +118,16 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   }
 
   async uploadStamp(dto: CreateStampDto) {
-    return this.prisma.stempel.create({ data: dto });
+    // Hanya satu stempel aktif — nonaktifkan yang lama saat upload baru (atomik).
+    return this.prisma.$transaction(async (tx) => {
+      if (dto.isActive) {
+        await tx.stempel.updateMany({
+          where: { isActive: true },
+          data: { isActive: false },
+        });
+      }
+      return tx.stempel.create({ data: dto });
+    });
   }
 
   async getStamp() {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers, Upload, ImagePlus } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import Card from '@/components/cards/card';
@@ -35,12 +35,15 @@ interface Signature {
   namaLengkap?: string;
   jabatan: string;
   isActive: boolean;
+  imagePath?: string | null;
 }
 
 interface Stamp {
+  id?: string;
   nama?: string;
   label?: string;
   url?: string;
+  imagePath?: string | null;
 }
 
 export default function SettingsPage() {
@@ -64,6 +67,22 @@ export default function SettingsPage() {
   const [periodForm, setPeriodForm] = useState({ nama: '', periode: '', isActive: false });
   const [savingPeriod, setSavingPeriod] = useState(false);
   const [periodError, setPeriodError] = useState('');
+
+  // Upload Stempel modal
+  const [showStampModal, setShowStampModal] = useState(false);
+  const [stampForm, setStampForm] = useState({ nama: '', file: null as File | null });
+  const [savingStamp, setSavingStamp] = useState(false);
+  const [stampError, setStampError] = useState('');
+
+  // Upload Tanda Tangan modal
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureForm, setSignatureForm] = useState({
+    nama: '',
+    jabatan: '',
+    file: null as File | null,
+  });
+  const [savingSignature, setSavingSignature] = useState(false);
+  const [signatureError, setSignatureError] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -176,6 +195,89 @@ export default function SettingsPage() {
     } catch {
       toast('error', 'Gagal menghapus tanda tangan');
     }
+  };
+
+  // ─── Upload Stempel ───
+  const openStampModal = () => {
+    setStampForm({ nama: stamp?.nama || '', file: null });
+    setStampError('');
+    setShowStampModal(true);
+  };
+
+  const saveStamp = async () => {
+    if (!stampForm.file) {
+      setStampError('Pilih file gambar stempel terlebih dahulu');
+      return;
+    }
+    setSavingStamp(true);
+    setStampError('');
+    try {
+      // Pakai raw fetch — apiClient memaksa Content-Type: application/json
+      // yang akan membuat multer gagal parse multipart (pola sama dgn upload foto).
+      const fd = new FormData();
+      fd.append('file', stampForm.file);
+      fd.append('nama', stampForm.nama.trim());
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/settings/stamp', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStampError(data?.message || 'Gagal mengupload stempel');
+        return;
+      }
+      setShowStampModal(false);
+      toast('success', 'Stempel berhasil diupload');
+      const { data: res2 } = await apiClient.get('/settings/stamp');
+      setStamp(unwrap(res2));
+    } catch {
+      setStampError('Gagal mengupload stempel. Silakan coba lagi.');
+    }
+    setSavingStamp(false);
+  };
+
+  // ─── Upload Tanda Tangan ───
+  const openSignatureModal = () => {
+    setSignatureForm({ nama: '', jabatan: '', file: null });
+    setSignatureError('');
+    setShowSignatureModal(true);
+  };
+
+  const saveSignature = async () => {
+    if (!signatureForm.file) {
+      setSignatureError('Pilih file gambar tanda tangan terlebih dahulu');
+      return;
+    }
+    setSavingSignature(true);
+    setSignatureError('');
+    try {
+      // Pakai raw fetch — apiClient memaksa Content-Type: application/json
+      // yang akan membuat multer gagal parse multipart (pola sama dgn upload foto).
+      const fd = new FormData();
+      fd.append('file', signatureForm.file);
+      fd.append('nama', signatureForm.nama.trim());
+      fd.append('jabatan', signatureForm.jabatan.trim());
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/settings/signatures', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSignatureError(data?.message || 'Gagal mengupload tanda tangan');
+        return;
+      }
+      setShowSignatureModal(false);
+      toast('success', 'Tanda tangan berhasil diupload');
+      const { data: res2 } = await apiClient.get('/settings/signatures');
+      setSignatures(unwrap(res2) || []);
+    } catch {
+      setSignatureError('Gagal mengupload tanda tangan. Silakan coba lagi.');
+    }
+    setSavingSignature(false);
   };
 
   if (loading)
@@ -331,22 +433,48 @@ export default function SettingsPage() {
         </Card>
 
         {/* Stempel */}
-        <Card title="Stempel">
+        <Card
+          title="Stempel"
+          action={
+            <button
+              onClick={openStampModal}
+              className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded transition-colors"
+              title="Upload stempel"
+            >
+              <Upload size={14} />
+            </button>
+          }
+        >
           {stamp ? (
             <div className="space-y-2 text-sm">
               <InfoRow label="Nama" value={stamp.nama || stamp.label} />
-              {stamp.url && (
-                <div className="mt-2">
+              {stamp.imagePath && (
+                <div className="mt-2 flex items-center gap-4">
                   <img
-                    src={stamp.url}
+                    src={`/api/uploads/${encodeURIComponent(stamp.imagePath)}`}
                     alt="Stempel"
-                    className="h-24 border rounded dark:border-gray-600"
+                    className="h-24 border rounded dark:border-gray-600 object-contain"
                   />
                 </div>
               )}
+              <div className="pt-1">
+                <button
+                  onClick={openStampModal}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition"
+                >
+                  <Upload size={12} />
+                  Ganti Stempel
+                </button>
+              </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada stempel</p>
+            <button
+              onClick={openStampModal}
+              className="w-full flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:border-green-400 hover:text-green-600 dark:hover:border-green-700 transition"
+            >
+              <Upload size={16} />
+              Upload Stempel Distrik
+            </button>
           )}
         </Card>
 
@@ -409,7 +537,18 @@ export default function SettingsPage() {
         </Card>
 
         {/* Daftar Tanda Tangan */}
-        <Card title="Daftar Tanda Tangan">
+        <Card
+          title="Daftar Tanda Tangan"
+          action={
+            <button
+              onClick={openSignatureModal}
+              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded transition-colors"
+              title="Tambah tanda tangan"
+            >
+              <Plus size={14} />
+            </button>
+          }
+        >
           {signatures.length > 0 ? (
             <div className="space-y-2">
               {signatures.map((s) => (
@@ -417,11 +556,24 @@ export default function SettingsPage() {
                   key={s.id}
                   className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
                 >
-                  <div>
-                    <p className="text-sm text-gray-900 dark:text-white font-medium">
-                      {s.nama || s.namaLengkap}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{s.jabatan}</p>
+                  <div className="flex items-center gap-3">
+                    {s.imagePath ? (
+                      <img
+                        src={`/api/uploads/${encodeURIComponent(s.imagePath)}`}
+                        alt={s.nama || s.namaLengkap || 'Tanda tangan'}
+                        className="w-10 h-8 object-contain bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                      />
+                    ) : (
+                      <div className="w-10 h-8 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                        <PenLine size={12} className="text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-gray-900 dark:text-white font-medium">
+                        {s.nama || s.namaLengkap}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{s.jabatan}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
@@ -443,9 +595,22 @@ export default function SettingsPage() {
                   </div>
                 </div>
               ))}
+              <button
+                onClick={openSignatureModal}
+                className="w-full mt-2 flex items-center justify-center gap-1.5 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 transition"
+              >
+                <Plus size={12} />
+                Tambah Tanda Tangan
+              </button>
             </div>
           ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500">Belum ada tanda tangan</p>
+            <button
+              onClick={openSignatureModal}
+              className="w-full flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-700 transition"
+            >
+              <Upload size={16} />
+              Upload Tanda Tangan
+            </button>
           )}
         </Card>
       </div>
@@ -561,6 +726,151 @@ export default function SettingsPage() {
             >
               <Save size={14} />{' '}
               {savingPeriod ? 'Menyimpan...' : editingPeriod ? 'Simpan' : 'Tambah'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── Upload Stempel Modal ─── */}
+      <Modal
+        open={showStampModal}
+        onClose={() => setShowStampModal(false)}
+        title="Upload Stempel Distrik"
+      >
+        <div className="space-y-4">
+          <FormField label="Nama Stempel">
+            <input
+              type="text"
+              value={stampForm.nama}
+              onChange={(e) => setStampForm((p) => ({ ...p, nama: e.target.value }))}
+              placeholder="Contoh: Stempel Distrik Larantuka"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+            />
+          </FormField>
+          <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>
+            <label className="flex items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-950/30 transition">
+              {stampForm.file ? (
+                <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  {stampForm.file.name}
+                </span>
+              ) : (
+                <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <ImagePlus size={18} />
+                  Klik untuk memilih file stempel
+                </span>
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) =>
+                  setStampForm((p) => ({ ...p, file: e.target.files?.[0] || null }))
+                }
+              />
+            </label>
+          </FormField>
+          {stampForm.file && (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <img
+                src={URL.createObjectURL(stampForm.file)}
+                alt="Preview"
+                className="h-16 object-contain rounded border border-gray-200 dark:border-gray-600"
+              />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Preview stempel</span>
+            </div>
+          )}
+          {stampError && <p className="text-sm text-red-600 dark:text-red-400">{stampError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowStampModal(false)}
+              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Batal
+            </button>
+            <button
+              onClick={saveStamp}
+              disabled={savingStamp}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              <Upload size={14} /> {savingStamp ? 'Mengupload...' : 'Upload Stempel'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── Upload Tanda Tangan Modal ─── */}
+      <Modal
+        open={showSignatureModal}
+        onClose={() => setShowSignatureModal(false)}
+        title="Upload Tanda Tangan"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <FormField label="Nama Penandatangan">
+              <input
+                type="text"
+                value={signatureForm.nama}
+                onChange={(e) => setSignatureForm((p) => ({ ...p, nama: e.target.value }))}
+                placeholder="Contoh: Yoseph Pehan Betan"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </FormField>
+            <FormField label="Jabatan">
+              <input
+                type="text"
+                value={signatureForm.jabatan}
+                onChange={(e) => setSignatureForm((p) => ({ ...p, jabatan: e.target.value }))}
+                placeholder="Contoh: Koordinator Distrik"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </FormField>
+          </div>
+          <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>
+            <label className="flex items-center justify-center gap-2 px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition">
+              {signatureForm.file ? (
+                <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                  {signatureForm.file.name}
+                </span>
+              ) : (
+                <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <ImagePlus size={18} />
+                  Klik untuk memilih file tanda tangan
+                </span>
+              )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) =>
+                  setSignatureForm((p) => ({ ...p, file: e.target.files?.[0] || null }))
+                }
+              />
+            </label>
+          </FormField>
+          {signatureForm.file && (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <img
+                src={URL.createObjectURL(signatureForm.file)}
+                alt="Preview"
+                className="h-16 object-contain rounded border border-gray-200 dark:border-gray-600"
+              />
+              <span className="text-xs text-gray-500 dark:text-gray-400">Preview tanda tangan</span>
+            </div>
+          )}
+          {signatureError && <p className="text-sm text-red-600 dark:text-red-400">{signatureError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={() => setShowSignatureModal(false)}
+              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Batal
+            </button>
+            <button
+              onClick={saveSignature}
+              disabled={savingSignature}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              <Upload size={14} /> {savingSignature ? 'Mengupload...' : 'Upload Tanda Tangan'}
             </button>
           </div>
         </div>

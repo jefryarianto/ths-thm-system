@@ -8,6 +8,18 @@ describe('SettingsService', () => {
   let service: SettingsService;
 
   const mockPrisma = {
+    $transaction: jest.fn((cb: (tx: unknown) => unknown) =>
+      cb({
+        tandaTangan: {
+          updateMany: jest.fn(),
+          create: jest.fn(),
+        },
+        stempel: {
+          updateMany: jest.fn(),
+          create: jest.fn(),
+        },
+      } as never),
+    ),
     setting: {
       findMany: jest.fn(),
       upsert: jest.fn(),
@@ -23,10 +35,12 @@ describe('SettingsService', () => {
     tandaTangan: {
       create: jest.fn(),
       findMany: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
     },
     stempel: {
       create: jest.fn(),
+      updateMany: jest.fn(),
       findFirst: jest.fn(),
     },
   };
@@ -134,11 +148,11 @@ describe('SettingsService', () => {
   });
 
   describe('uploadSignature', () => {
-    it('should upload a signature', async () => {
+    it('should upload a signature via transaction', async () => {
       const dto = { filePath: '/storage/sig.png', userId: 'u1' };
-      mockPrisma.tandaTangan.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.uploadSignature(dto);
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
   });
 
@@ -161,11 +175,11 @@ describe('SettingsService', () => {
   });
 
   describe('uploadStamp', () => {
-    it('should upload a stamp', async () => {
+    it('should upload a stamp via transaction', async () => {
       const dto = { filePath: '/storage/stamp.png' };
-      mockPrisma.stempel.create.mockResolvedValue({ id: '1', ...dto });
 
       const result = await service.uploadStamp(dto);
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
   });
 
