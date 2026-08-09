@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { GraduationsService } from '../graduations/graduations.service';
 
 @Injectable()
 export class CronTasksService {
@@ -10,6 +11,7 @@ export class CronTasksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly graduationsService: GraduationsService,
   ) {}
 
   // ─────────────────────────────────────────────────────────
@@ -439,6 +441,49 @@ export class CronTasksService {
 
     if (overdue.count > 0) {
       this.logger.log(`Marked ${overdue.count} dues as menunggak (30+ days)`);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  GRADUATION INVITATIONS: H-7 (daily @ 5AM)
+  //  Auto-generate undangan pendadaran 7 hari sebelum kegiatan dimulai
+  //  (kriteria: masa anggota >2 tahun dari tahun dadar ATAU tingkat Pratama)
+  //  + kirim email & in-app notification.
+  // ─────────────────────────────────────────────────────────
+
+  @Cron(CronExpression.EVERY_DAY_AT_5AM)
+  async sendGraduationInvitationsH7(): Promise<void> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const hMinus7 = new Date(today);
+    hMinus7.setDate(hMinus7.getDate() + 7);
+    const hMinus7End = new Date(hMinus7);
+    hMinus7End.setHours(23, 59, 59, 999);
+
+    const graduations = await this.prisma.kegiatan.findMany({
+      where: {
+        tipe: 'pendadaran',
+        status: { notIn: ['cancelled', 'closed'] },
+        tanggalMulai: { gte: hMinus7, lte: hMinus7End },
+      },
+      select: { id: true, nama: true },
+      take: 50,
+    });
+
+    if (graduations.length === 0) return;
+
+    for (const g of graduations) {
+      try {
+        const result = await this.graduationsService.generateInvitations(g.id);
+        this.logger.log(
+          `H-7 invitations for "${g.nama}" (${g.id}): generated=${result.generated} skipped=${result.skipped} total=${result.total}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `H-7 invitation generation failed for ${g.id}: ${(error as Error).message}`,
+        );
+      }
     }
   }
 

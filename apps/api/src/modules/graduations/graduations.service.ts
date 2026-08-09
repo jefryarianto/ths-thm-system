@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
@@ -11,6 +12,7 @@ import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
 import { DocumentsService } from '../documents/documents.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NraService } from '../../common/services/nra.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import {
@@ -41,6 +43,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     private readonly documentsService: DocumentsService,
     private readonly nraService: NraService,
     private readonly memberMailService: MemberMailService,
+    private readonly notificationsService: NotificationsService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'kegiatan',
@@ -873,6 +876,263 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     totals.forEach((t, i) => (t.ranking = i + 1));
 
     return totals;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  UNDANGAN PENDADARAN (H-7) & KONFIRMASI KEHADIRAN
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Daftar undangan untuk satu pendadaran (semua status).
+   * Dipakai UI admin (web/mobile) untuk melihat & mencatat konfirmasi manual.
+   */
+  async getInvitations(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const invitations = await this.prisma.undanganPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        anggota: {
+          select: { id: true, namaLengkap: true, nomorAnggota: true, tingkat: true, tahunDadar: true, email: true, noHp: true },
+        },
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+    });
+    return invitations;
+  }
+
+  /**
+   * Generate undangan secara manual (juga dipakai cron H-7).
+   * Kriteria anggota: masa anggota >2 tahun (dari tahun dadar) ATAU tingkat Pratama.
+   * Idempotent: anggota yang sudah diundang dilewati (unique kegiatanId+anggotaId).
+   */
+  async generateInvitations(graduationId: string, scope?: UserScope) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'cancelled' || grad.status === 'closed') {
+      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat membuat undangan.');
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    // Anggota dalam scope pendadaran (ranting/wilayah/distrik/nasional)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const scopeFilter: any = this.buildAnggotaScopeFilter(grad.scopeType, grad.scopeId);
+
+    const eligible = await this.prisma.anggota.findMany({
+      where: {
+        statusKeanggotaan: 'aktif',
+        deletedAt: null,
+        ...scopeFilter,
+        OR: [
+          // Masa anggota > 2 tahun (terhitung dari tahun dadar)
+          { tahunDadar: { not: null } },
+          // Tingkat Pratama (biru 1)
+          { tingkat: 'Pratama' },
+        ],
+      },
+      select: { id: true, namaLengkap: true, email: true, tingkat: true, tahunDadar: true },
+    });
+
+    // Filter yang benar-benar memenuhi kriteria (tahunDadar valid & >2 tahun)
+    const targets = eligible.filter((m) => {
+      const dadarYear = m.tahunDadar ? parseInt(String(m.tahunDadar).slice(0, 4), 10) : NaN;
+      const senior = !isNaN(dadarYear) && currentYear - dadarYear > 2;
+      return senior || m.tingkat === 'Pratama';
+    });
+
+    let created = 0;
+    let skipped = 0;
+    for (const m of targets) {
+      try {
+        await this.prisma.undanganPendadaran.create({
+          data: { kegiatanId: graduationId, anggotaId: m.id, status: 'dikirim' },
+        });
+        created++;
+        // Kirim email + in-app notification
+        await this.sendInvitationNotifications(m, grad);
+      } catch (error) {
+        // Unique violation (sudah diundang) → skip; error lain → log
+        if ((error as { code?: string }).code === 'P2002') {
+          skipped++;
+        } else {
+          this.logger.warn(
+            `Invitation create failed for ${m.id} (${grad.nama}): ${(error as Error).message}`,
+          );
+          skipped++;
+        }
+      }
+    }
+
+    this.invalidateCache();
+    return { generated: created, skipped, total: targets.length };
+  }
+
+  /**
+   * Konfirmasi kehadiran oleh anggota sendiri (self — via email match) ATAU
+   * pencatatan manual oleh admin kegiatan.
+   * - Self: verifikasi undangan milik user yang login (via email → Anggota.id).
+   * - Manual: `manualOleh` diisi controller hanya untuk role admin.
+   */
+  async confirmInvitation(
+    graduationId: string,
+    invitationId: string,
+    dto: { hadir: boolean; catatan?: string; manualOleh?: string },
+    userId?: string,
+    scope?: UserScope,
+  ) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const inv = await this.prisma.undanganPendadaran.findUnique({
+      where: { id: invitationId },
+    });
+    if (!inv || inv.kegiatanId !== graduationId) {
+      throw new NotFoundException('Undangan tidak ditemukan');
+    }
+
+    // Self-confirm: pastikan undangan milik anggota yang login
+    if (!dto.manualOleh) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId || '' },
+        select: { email: true },
+      });
+      const anggota = user?.email
+        ? await this.prisma.anggota.findFirst({
+            where: { email: user.email, deletedAt: null },
+            select: { id: true },
+          })
+        : null;
+      if (!anggota || anggota.id !== inv.anggotaId) {
+        throw new ForbiddenException('Anda hanya dapat mengkonfirmasi undangan Anda sendiri');
+      }
+    }
+
+    const updated = await this.prisma.undanganPendadaran.update({
+      where: { id: invitationId },
+      data: {
+        status: dto.hadir ? 'hadir' : 'tidak_hadir',
+        konfirmasiAt: new Date(),
+        konfirmasiOleh: dto.manualOleh || userId || null,
+        catatan: dto.catatan ?? inv.catatan,
+      },
+    });
+    this.invalidateCache();
+    return updated;
+  }
+
+  /**
+   * Undangan untuk anggota yang sedang login (self-scope).
+   * Dipakai layar "Pendadaran" di mobile/web anggota untuk konfirmasi kehadiran.
+   */
+  async getMyInvitations(userId: string) {
+    // Resolve Anggota via email (pola sama seperti forum/anggota self)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!user?.email) return [];
+
+    const anggota = await this.prisma.anggota.findFirst({
+      where: { email: user.email, deletedAt: null },
+      select: { id: true },
+    });
+    if (!anggota) return [];
+
+    const invitations = await this.prisma.undanganPendadaran.findMany({
+      where: { anggotaId: anggota.id },
+      include: {
+        kegiatan: {
+          select: { id: true, nama: true, lokasi: true, tanggalMulai: true, tanggalSelesai: true, status: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return invitations;
+  }
+
+  /** Kirim email undangan + in-app notification ke anggota. */
+  private async sendInvitationNotifications(
+    member: { id: string; namaLengkap: string; email: string | null },
+    grad: { nama: string; lokasi: string | null; tanggalMulai: Date },
+  ): Promise<void> {
+    const tanggal = grad.tanggalMulai.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const lokasi = grad.lokasi || 'lokasi pendadaran';
+    const judul = '📩 Undangan Pendadaran';
+    const isi = `Anda diundang mengikuti pendadaran "${grad.nama}" pada ${tanggal} di ${lokasi}. Konfirmasi kehadiran Anda melalui menu Pendadaran di aplikasi.`;
+
+    // In-app notification (fallback ke direct create jika service error)
+    try {
+      await this.notificationsService.send(member.id, {
+        userId: member.id,
+        judul,
+        isi,
+        tipe: 'umum',
+      });
+    } catch (error) {
+      this.logger.warn(`Invitation in-app notif failed for ${member.id}: ${(error as Error).message}`);
+      try {
+        await this.prisma.notifikasi.create({
+          data: { userId: member.id, tipe: 'umum', judul, isi },
+        });
+      } catch { /* ignore */ }
+    }
+
+    // Email undangan
+    if (member.email) {
+      try {
+        await this.sendGraduationInvitationEmail(member, grad, tanggal, lokasi);
+      } catch (error) {
+        this.logger.warn(`Invitation email failed for ${member.email}: ${(error as Error).message}`);
+      }
+    }
+  }
+
+  private async sendGraduationInvitationEmail(
+    member: { namaLengkap: string; email: string | null },
+    grad: { nama: string },
+    tanggal: string,
+    lokasi: string,
+  ): Promise<void> {
+    if (!member.email) return;
+    const tpl = await this.mailService.renderWithOverride(
+      'graduationInvitationEmail',
+      () => ({
+        subject: `Undangan Pendadaran: ${grad.nama}`,
+        html: `<h2>Undangan Pendadaran</h2><p>Halo <strong>${member.namaLengkap}</strong>,</p><p>Anda diundang untuk mengikuti pendadaran <strong>${grad.nama}</strong> pada <strong>${tanggal}</strong> di <strong>${lokasi}</strong>.</p><p>Mohon konfirmasi kehadiran melalui aplikasi (menu Pendadaran) atau hubungi admin kegiatan.</p><p>Salam,<br/>Sekretariat THS-THM</p>`,
+        text: `Undangan Pendadaran: ${grad.nama}\n\nHalo ${member.namaLengkap},\n\nAnda diundang untuk mengikuti pendadaran ${grad.nama} pada ${tanggal} di ${lokasi}.\n\nMohon konfirmasi kehadiran melalui aplikasi (menu Pendadaran) atau hubungi admin kegiatan.`,
+      }),
+      { nama: member.namaLengkap, gradNama: grad.nama, tanggal, lokasi },
+    );
+    await this.mailService.sendMail({
+      to: member.email,
+      subject: tpl.subject,
+      html: tpl.html,
+      metadata: { module: 'graduations', template: 'graduationInvitationEmail' },
+    });
+  }
+
+  /**
+   * Scope filter untuk anggota berdasar scope kegiatan pendadaran.
+   * - nasional → tanpa filter
+   * - distrik → anggota yang ranting-nya di dalam distrik
+   * - wilayah → anggota yang ranting-nya di dalam wilayah
+   * - ranting → anggota ranting tsb
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private buildAnggotaScopeFilter(scopeType: string, scopeId: string): any {
+    if (!scopeId || scopeId === 'national') return {};
+    if (scopeType === 'ranting') return { rantingId: scopeId };
+    if (scopeType === 'wilayah') {
+      return { ranting: { wilayahId: scopeId } };
+    }
+    if (scopeType === 'distrik') {
+      return { ranting: { wilayah: { distrikId: scopeId } } };
+    }
+    return {};
   }
 
   // ═══════════════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { GraduationsService } from './graduations.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -9,6 +9,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { DocumentsService } from '../documents/documents.service';
 import { NraService } from '../../common/services/nra.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('GraduationsService', () => {
   let service: GraduationsService;
@@ -42,10 +43,18 @@ describe('GraduationsService', () => {
     },
     anggota: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
+    },
+    undanganPendadaran: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     penugasanPenguji: {
       findMany: jest.fn(),
@@ -97,6 +106,10 @@ describe('GraduationsService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockNotificationsService = {
+    send: jest.fn().mockResolvedValue(undefined),
+  };
+
   const mockDocumentsService = {
     generateCertificate: jest.fn().mockResolvedValue(undefined),
   };
@@ -121,6 +134,7 @@ describe('GraduationsService', () => {
         { provide: MemberMailService, useValue: mockMemberMailService },
         { provide: DocumentsService, useValue: mockDocumentsService },
         { provide: NraService, useValue: mockNraService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
@@ -628,6 +642,181 @@ describe('GraduationsService', () => {
         pengajuanNilaiAt: new Date('2026-08-08'),
       });
       await expect(service.submitResults('g1', 'user1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getInvitations', () => {
+    it('should return invitations with member info', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
+        {
+          id: 'inv1',
+          kegiatanId: 'g1',
+          anggotaId: 'a1',
+          status: 'dikirim',
+          anggota: { id: 'a1', namaLengkap: 'Jefry', nomorAnggota: 'LRT-0103-001', tingkat: 'Pratama', tahunDadar: '2020', email: 'a1@test.com', noHp: '0812' },
+        },
+      ]);
+
+      const result = await service.getInvitations('g1');
+      expect(mockPrisma.undanganPendadaran.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { kegiatanId: 'g1' } }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].anggota.nomorAnggota).toBe('LRT-0103-001');
+    });
+  });
+
+  describe('generateInvitations', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue({
+        ...mockGraduation,
+        nama: 'Pendadaran 1',
+        lokasi: 'Jakarta',
+        tanggalMulai: new Date('2026-08-16'),
+        status: 'published',
+      });
+      mockPrisma.anggota.findMany.mockReset();
+      mockPrisma.undanganPendadaran.create.mockReset();
+      mockNotificationsService.send.mockClear();
+    });
+
+    it('should invite senior members (>2 tahun dari tahun dadar) and Pratama members', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([
+        // Senior: dadar 2020 (6 tahun) → diundang
+        { id: 'a1', namaLengkap: 'Senior', email: 'senior@test.com', tingkat: 'Anggota', tahunDadar: '2020' },
+        // Pratama → diundang walau dadar baru
+        { id: 'a2', namaLengkap: 'Pratama', email: 'pratama@test.com', tingkat: 'Pratama', tahunDadar: '2025' },
+        // Baru & bukan pratama → tidak memenuhi kriteria
+        { id: 'a3', namaLengkap: 'Baru', email: 'baru@test.com', tingkat: 'Anggota', tahunDadar: '2025' },
+      ]);
+      mockPrisma.undanganPendadaran.create.mockResolvedValue({ id: 'inv1' });
+
+      const result = await service.generateInvitations('g1');
+
+      expect(result).toEqual({ generated: 2, skipped: 0, total: 2 });
+      expect(mockPrisma.undanganPendadaran.create).toHaveBeenCalledTimes(2);
+      expect(mockNotificationsService.send).toHaveBeenCalledTimes(2);
+    });
+
+    it('should skip duplicates and count them as skipped', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([
+        { id: 'a1', namaLengkap: 'Senior', email: 'senior@test.com', tingkat: 'Anggota', tahunDadar: '2020' },
+      ]);
+      mockPrisma.undanganPendadaran.create.mockRejectedValue(new Error('duplicate'));
+
+      const result = await service.generateInvitations('g1');
+
+      expect(result).toEqual({ generated: 0, skipped: 1, total: 1 });
+    });
+
+    it('should throw BadRequestException when graduation closed/cancelled', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        ...mockGraduation,
+        status: 'cancelled',
+      });
+      await expect(service.generateInvitations('g1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('confirmInvitation', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.undanganPendadaran.findUnique.mockReset();
+      mockPrisma.undanganPendadaran.update.mockReset();
+      mockPrisma.user.findUnique.mockReset();
+      mockPrisma.anggota.findFirst.mockReset();
+    });
+
+    it('should allow admin to confirm manually', async () => {
+      mockPrisma.undanganPendadaran.findUnique.mockResolvedValue({
+        id: 'inv1',
+        kegiatanId: 'g1',
+        anggotaId: 'a1',
+        status: 'dikirim',
+      });
+      mockPrisma.undanganPendadaran.update.mockResolvedValue({
+        id: 'inv1',
+        status: 'hadir',
+        konfirmasiOleh: 'admin@ths-thm.org',
+      });
+
+      const result = await service.confirmInvitation(
+        'g1',
+        'inv1',
+        { hadir: true, manualOleh: 'admin@ths-thm.org' },
+        'user1',
+      );
+      expect(result.status).toBe('hadir');
+      expect(mockPrisma.undanganPendadaran.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'hadir' }) }),
+      );
+    });
+
+    it('should allow member to confirm their own invitation', async () => {
+      mockPrisma.undanganPendadaran.findUnique.mockResolvedValue({
+        id: 'inv1',
+        kegiatanId: 'g1',
+        anggotaId: 'a1',
+        status: 'dikirim',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user1', email: 'member@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.undanganPendadaran.update.mockResolvedValue({ id: 'inv1', status: 'tidak_hadir' });
+
+      const result = await service.confirmInvitation('g1', 'inv1', { hadir: false }, 'user1');
+      expect(result.status).toBe('tidak_hadir');
+    });
+
+    it('should throw ForbiddenException when member confirms someone elses invitation', async () => {
+      mockPrisma.undanganPendadaran.findUnique.mockResolvedValue({
+        id: 'inv1',
+        kegiatanId: 'g1',
+        anggotaId: 'a1',
+        status: 'dikirim',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user2', email: 'other@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a999' });
+
+      await expect(service.confirmInvitation('g1', 'inv1', { hadir: true }, 'user2')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should throw NotFoundException for unknown invitation', async () => {
+      mockPrisma.undanganPendadaran.findUnique.mockResolvedValue(null);
+      await expect(service.confirmInvitation('g1', 'x', { hadir: true }, 'user1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('getMyInvitations', () => {
+    it('should return invitations for the logged-in member via email match', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user1', email: 'member@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
+        {
+          id: 'inv1',
+          status: 'dikirim',
+          kegiatan: { id: 'g1', nama: 'Pendadaran 1', lokasi: 'Jakarta', tanggalMulai: new Date('2026-08-16'), tanggalSelesai: new Date('2026-08-16'), status: 'published' },
+        },
+      ]);
+
+      const result = await service.getMyInvitations('user1');
+      expect(mockPrisma.undanganPendadaran.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { anggotaId: 'a1' } }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].kegiatan.nama).toBe('Pendadaran 1');
+    });
+
+    it('should return empty when user has no member record', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user1', email: 'member@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+
+      const result = await service.getMyInvitations('user1');
+      expect(result).toEqual([]);
     });
   });
 

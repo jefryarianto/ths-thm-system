@@ -323,6 +323,7 @@ model Anggota {
   ForumPost               ForumPost[]
   qrCodes                 QrCode[]
   checkIns                CheckIn[]
+  undanganPendadarans     UndanganPendadaran[]
   iuranRecurrings         IuranRecurring[]
   memberReferralsAsReferrer MemberReferral[] @relation("Referrer")
   memberReferralsAsReferred MemberReferral[] @relation("Referred")
@@ -419,8 +420,37 @@ model Kegiatan {
   nilaiPendadarans  NilaiPendadaran[]
   hasilPendadarans  HasilPendadaran[]
   checkIns          CheckIn[]
+  undangans         UndanganPendadaran[]
 
   @@map("kegiatan")
+}
+
+// Undangan pendadaran H-7, dibuat otomatis oleh cron untuk anggota yang
+// memenuhi kriteria (masa anggota >2 tahun dari tahun dadar ATAU tingkat Pratama).
+// Status: dikirim -> hadir / tidak_hadir (konfirmasi anggota atau catat manual admin).
+model UndanganPendadaran {
+  id           String            @id @default(uuid())
+  kegiatanId   String            @map("kegiatan_id")
+  anggotaId    String            @map("anggota_id")
+  status       StatusUndangan    @default(dikirim)
+  dikirimAt    DateTime          @default(now()) @map("dikirim_at")
+  konfirmasiAt DateTime?         @map("konfirmasi_at")
+  konfirmasiOleh String?         @map("konfirmasi_oleh")
+  catatan      String?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
+  anggota  Anggota  @relation(fields: [anggotaId], references: [id])
+
+  @@unique([kegiatanId, anggotaId])
+  @@map("undangan_pendadaran")
+}
+
+enum StatusUndangan {
+  dikirim
+  hadir
+  tidak_hadir
 }
 
 model Latihan {

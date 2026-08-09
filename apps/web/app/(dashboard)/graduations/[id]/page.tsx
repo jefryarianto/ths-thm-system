@@ -34,8 +34,10 @@ import {
   ChevronDown,
   ChevronRight,
   Send,
+  Mail,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
+import InvitationTab from './components/InvitationTab';
 
 // ─── Constants (inline — no external file dependency) ──
 
@@ -210,7 +212,7 @@ export default function GraduationDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Sub-tab state
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek' | 'examiners' | 'validasi'>('info');
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'ujian-praktek' | 'examiners' | 'undangan' | 'validasi'>('info');
 
   // Graduate modal
   const [showGraduateModal, setShowGraduateModal] = useState(false);
@@ -658,6 +660,7 @@ export default function GraduationDetailPage() {
     { key: 'participants' as const, label: `Peserta (${participants.length})`, icon: Users },
     { key: 'ujian-praktek' as const, label: `Ujian Praktek (${ujianList.length})`, icon: ClipboardList },
     { key: 'examiners' as const, label: `Penguji (${pendingExaminers})`, icon: UserCheck },
+    { key: 'undangan' as const, label: 'Undangan', icon: Mail },
     { key: 'validasi' as const, label: `Validasi (${pendingValidasiCount})`, icon: Award },
   ];
 
@@ -1423,6 +1426,11 @@ export default function GraduationDetailPage() {
               </form>
             </Modal>
           </div>
+        )}
+
+        {/* ─── TAB: Undangan ────────────────────────────────────── */}
+        {activeSubTab === 'undangan' && (
+          <InvitationTab id={id} isAdminKegiatanLevel={isAdminKegiatanLevel} />
         )}
 
         {/* ─── TAB: Validasi Hasil ─────────────────────────────── */}

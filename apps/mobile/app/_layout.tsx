@@ -52,6 +52,7 @@ export default function RootLayout() {
           <Stack.Screen name="graduations" />
           <Stack.Screen name="graduations/[id]" />
           <Stack.Screen name="graduations/input-score" />
+          <Stack.Screen name="graduations/invitations" />
           <Stack.Screen name="dues/[id]" />
           <Stack.Screen name="payments/create" />
           <Stack.Screen name="documents/[id]" />

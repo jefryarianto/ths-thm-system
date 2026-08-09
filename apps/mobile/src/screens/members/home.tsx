@@ -15,6 +15,7 @@ const memberItems = [
   { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
   { icon: 'document-text', label: 'Dokumen', route: '/documents' },
   { icon: 'cash', label: 'Iuran', route: '/dues' },
+  { icon: 'mail-open', label: 'Undangan Pendadaran', route: '/graduations/invitations' },
   { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },
   { icon: 'settings', label: 'Set. Notifikasi', route: '/notification-preferences' },
 ];

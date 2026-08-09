@@ -179,4 +179,52 @@ export class GraduationsController {
   submitResults(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.submitResults(id, req.user?.id, req.scope);
   }
+
+  // ── Undangan H-7 & konfirmasi kehadiran ──
+
+  /** Undangan untuk anggota yang sedang login (self-scope) — semua role termasuk anggota. */
+  @Get('invitations/me')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Daftar undangan pendadaran untuk user yang login' })
+  getMyInvitations(@Req() req: ScopedRequest) {
+    return this.service.getMyInvitations(req.user.id);
+  }
+
+  @Get(':id/invitations')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftar undangan untuk satu pendadaran (semua status)' })
+  getInvitations(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getInvitations(id, req.scope);
+  }
+
+  /** Generate undangan manual (kriteria: masa anggota >2 tahun dari tahun dadar ATAU tingkat Pratama). */
+  @Post(':id/invitations/generate')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Generate undangan pendadaran (otomatis saat H-7 / manual oleh admin)' })
+  generateInvitations(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.generateInvitations(id, req.scope);
+  }
+
+  /** Konfirmasi kehadiran — anggota sendiri (self) ATAU pencatatan manual oleh admin. */
+  @Post(':id/invitations/:invitationId/confirm')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Konfirmasi kehadiran undangan (anggota self / admin manual)' })
+  confirmInvitation(
+    @Param('id') id: string,
+    @Param('invitationId') invitationId: string,
+    @Body() dto: { hadir: boolean; catatan?: string },
+    @Req() req: ScopedRequest,
+  ) {
+    // Admin yang mencatat manual → manualOleh diisi nama/email admin.
+    const isAdmin = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan'].includes(
+      req.user?.role || '',
+    );
+    return this.service.confirmInvitation(
+      id,
+      invitationId,
+      {
+        hadir: dto.hadir,
+        catatan: dto.catatan,
+        manualOleh: isAdmin ? `${req.user?.email || req.user?.id}` : undefined,
+      },
+      req.user?.id,
+      req.scope,
+    );
+  }
 }
