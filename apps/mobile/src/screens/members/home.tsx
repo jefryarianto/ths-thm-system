@@ -19,26 +19,46 @@ const memberItems = [
   { icon: 'settings', label: 'Set. Notifikasi', route: '/notification-preferences' },
 ];
 
-const adminItems = [
-  { icon: 'people', label: 'Anggota', route: '/members' },
-  { icon: 'fitness', label: 'Latihan', route: '/trainings' },
-  { icon: 'calendar', label: 'Kegiatan', route: '/activities' },
-  { icon: 'people', label: 'Calon', route: '/candidates' },
-  { icon: 'school', label: 'Pendadaran', route: '/graduations' },
-  { icon: 'mail', label: 'Surat', route: '/letters' },
-  { icon: 'stats-chart', label: 'Laporan', route: '/reports' },
-  { icon: 'clipboard', label: 'Aspek', route: '/assessments' },
-  { icon: 'cloud-upload', label: 'Import', route: '/member-import' },
-  { icon: 'shield-checkmark', label: 'Persetujuan', route: '/approvals' },
+// minRole = minimum role level to see the menu (same hierarchy as web layout.tsx):
+//   superadmin > admin_distrik > admin_wilayah > admin_ranting > admin_kegiatan > penguji > anggota
+// admin_kegiatan memasukkan calon & mengelola pendadaran (alur langkah 3-6).
+interface AdminItem {
+  icon: string;
+  label: string;
+  route: string;
+  minRole: string;
+  /** Extra roles allowed even if below minRole (e.g. penguji needs Pendadaran to input scores) */
+  extraRoles?: string[];
+}
+
+const adminItems: AdminItem[] = [
+  { icon: 'people', label: 'Anggota', route: '/members', minRole: 'admin_ranting' },
+  { icon: 'fitness', label: 'Latihan', route: '/trainings', minRole: 'admin_ranting' },
+  { icon: 'calendar', label: 'Kegiatan', route: '/activities', minRole: 'anggota' },
+  { icon: 'people', label: 'Calon', route: '/candidates', minRole: 'admin_kegiatan' },
+  // Penguji butuh Pendadaran untuk input nilai (tombolnya ada di detail pendadaran)
+  { icon: 'school', label: 'Pendadaran', route: '/graduations', minRole: 'admin_kegiatan', extraRoles: ['penguji'] },
+  { icon: 'mail', label: 'Surat', route: '/letters', minRole: 'admin_ranting' },
+  { icon: 'stats-chart', label: 'Laporan', route: '/reports', minRole: 'admin_ranting' },
+  { icon: 'clipboard', label: 'Aspek', route: '/assessments', minRole: 'penguji' },
+  { icon: 'cloud-upload', label: 'Import', route: '/member-import', minRole: 'admin_ranting' },
+  { icon: 'shield-checkmark', label: 'Persetujuan', route: '/approvals', minRole: 'admin_ranting' },
 ];
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
-  const { isAdmin, isPenguji } = useRole();
+  const { role, isAnggota, hasMinRole } = useRole();
   const { data: member, loading, refetch } = useMemberProfile();
   const { refreshing, onRefresh } = useRefresh(refetch);
 
-  const menuItems = isAdmin || isPenguji ? [...memberItems, ...adminItems] : memberItems;
+  // Anggota murni hanya melihat menu anggota; role lain melihat menu sesuai minRole
+  // (admin_kegiatan kini melihat Calon & Pendadaran, sama seperti web).
+  const visibleAdminItems = isAnggota
+    ? []
+    : adminItems.filter(
+        (item) => hasMinRole(item.minRole) || !!item.extraRoles?.includes(role),
+      );
+  const menuItems = [...memberItems, ...visibleAdminItems];
 
   return (
     <ScrollView
