@@ -199,20 +199,35 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
           rantingId = scope.rantingId;
         }
 
-        // Support legacy import: accept existing member number from CSV
+        // Support legacy import: accept existing member number from CSV.
+        // Format lama bisa "001-1994" (urut-tahun) atau "0103-001-1994" (full lama).
+        // Selalu dikonversi ke format resmi:
+        //   [kodeDistrik]-[kodeWilayah][kodeRanting]-[urut]-[tahun]  (mis. LRT-0103-001-1994)
         const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota;
         let nomorAnggota: string;
         if (existingNumber) {
           const rantingRow = rantingId
             ? await this.prisma.ranting.findUnique({
                 where: { id: rantingId },
-                select: { wilayah: { select: { distrik: { select: { kodeDistrik: true } } } } },
+                select: {
+                  kodeRanting: true,
+                  wilayah: {
+                    select: { kodeWilayah: true, distrik: { select: { kodeDistrik: true } } },
+                  },
+                },
               })
             : null;
-          const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.replace(/^\D+/g, '') || '';
-          nomorAnggota = kodeDistrik
-            ? `${kodeDistrik}-${String(existingNumber).trim()}`
-            : String(existingNumber).trim();
+          const kodeDistrik = rantingRow?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '';
+          const kodeWilayah = (rantingRow?.wilayah?.kodeWilayah?.split('-').pop() || '').padStart(2, '0');
+          const kodeRanting = (rantingRow?.kodeRanting?.split('-').pop() || '').padStart(2, '0');
+          // Segmen terakhir = tahun, segmen ke-2 terakhir = urut (robust utk semua format).
+          const legacyParts = String(existingNumber).trim().split('-');
+          const urut = legacyParts[legacyParts.length - 2] || '';
+          const tahun = legacyParts[legacyParts.length - 1] || '';
+          nomorAnggota =
+            kodeDistrik && kodeWilayah && kodeRanting && urut && tahun
+              ? `${kodeDistrik}-${kodeWilayah}${kodeRanting}-${urut}-${tahun}`
+              : String(existingNumber).trim();
         } else {
           nomorAnggota = await this.nraService.generateMemberNumber(
             rantingId || '',

@@ -171,5 +171,35 @@ describe('NraService', () => {
 
       expect(nra.endsWith(`-${currentYear}`)).toBe(true);
     });
+
+    it('should support teks kode distrik (mis. LRT) + kode ranting per-wilayah', async () => {
+      mockTx.ranting.findUnique.mockResolvedValue({
+        id: 'r4',
+        kodeRanting: '03',
+        nama: 'San Juan Lebao',
+        wilayah: {
+          id: 'w4',
+          kodeWilayah: '01',
+          nama: 'Wilayah Larantuka & Solor',
+          distrik: { id: 'd4', kodeDistrik: 'LRT', nama: 'Keuskupan Larantuka' },
+        },
+      });
+      mockTx.anggota.findFirst.mockResolvedValue(null);
+
+      const nra = await service.generateMemberNumber('r4');
+
+      // LRT-0103-001-2026
+      expect(nra).toBe('LRT-0103-001-2026');
+    });
+
+    it('should support kode distrik ber-prefix lama (DST-0114) tanpa merusak format', async () => {
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
+
+      const nra = await service.generateMemberNumber('r1');
+
+      // DST-0114 → 0114, WLY-0114-01 → 01, RTG-0114-01 → 01
+      expect(nra).toBe('0114-0101-001-2026');
+    });
   });
 });

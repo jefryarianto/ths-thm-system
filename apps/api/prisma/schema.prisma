@@ -200,7 +200,7 @@ model Distrik {
 model Wilayah {
   id          String   @id @default(uuid())
   distrikId   String   @map("distrik_id")
-  kodeWilayah String   @unique @map("kode_wilayah")
+  kodeWilayah String   @map("kode_wilayah")
   nama        String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -208,13 +208,14 @@ model Wilayah {
   distrik  Distrik   @relation(fields: [distrikId], references: [id])
   rantings Ranting[]
 
+  @@unique([distrikId, kodeWilayah])
   @@map("wilayah")
 }
 
 model Ranting {
   id            String   @id @default(uuid())
   wilayahId     String   @map("wilayah_id")
-  kodeRanting   String   @unique @map("kode_ranting")
+  kodeRanting   String   @map("kode_ranting")
   nama          String
   lokasiLatihan String?  @map("lokasi_latihan")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -226,6 +227,7 @@ model Ranting {
   calonAnggotas CalonAnggota[]
   latihans      Latihan[]
 
+  @@unique([wilayahId, kodeRanting])
   @@map("ranting")
 }
 

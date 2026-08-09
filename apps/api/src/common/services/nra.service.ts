@@ -9,7 +9,8 @@ export class NraService {
 
   /**
    * Generate NRA in format: [kode_distrik]-[kode_wilayah][kode_ranting]-[3digit_urut]-[tahun_dadar]
-   * Example: 0114-0101-001-1993
+   * Example: LRT-0103-001-1993  (kode distrik teks seperti LRT, kode wilayah 2 digit,
+   *           kode ranting 2 digit per-wilayah — unik dalam satu wilayah)
    *
    * Uses a Prisma transaction to atomically read the latest sequence number
    * and compute the next one, preventing duplicates under concurrent creates.
@@ -26,10 +27,12 @@ export class NraService {
         include: { wilayah: { include: { distrik: true } } },
       });
 
-      // Extract numeric codes from kode fields
-      const kodeDistrik = ranting?.wilayah?.distrik?.kodeDistrik?.replace(/^\D+/g, '') || '0000';
-      const kodeWilayah = ranting?.wilayah?.kodeWilayah?.split('-').pop() || '00';
-      const kodeRanting = ranting?.kodeRanting?.split('-').pop() || '00';
+      // Kode distrik boleh teks (mis. "LRT") atau angka ("0103"); jika berformat
+      // lama ber-prefix ("DST-0114") ambil segmen terakhir supaya konsisten.
+      const kodeDistrik = ranting?.wilayah?.distrik?.kodeDistrik?.split('-').pop()?.trim() || '0000';
+      // Kode wilayah & ranting selalu 2 digit (mis. "01", "03").
+      const kodeWilayah = (ranting?.wilayah?.kodeWilayah?.split('-').pop() || '00').padStart(2, '0');
+      const kodeRanting = (ranting?.kodeRanting?.split('-').pop() || '00').padStart(2, '0');
 
       // Find the latest member in this ranting to get the current sequence number.
       // Using findFirst + orderBy nomorAnggota DESC returns the member with the

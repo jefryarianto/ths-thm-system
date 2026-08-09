@@ -41,7 +41,7 @@
 | Requirement | Implementation | File |
 |:------------|:---------------|:-----|
 | CRUD Anggota | `findAll`, `findOne`, `create`, `update`, `remove` | `members.controller.ts` |
-| NRA Auto-generate | `generateMemberNumber()` with format `[distrik]-[wilayah][ranting]-[urut]-[tahun]` | `nra.service.ts` |
+| NRA Auto-generate | `generateMemberNumber()` with format `[kode_distrik]-[kode_wilayah][kode_ranting]-[urut]-[tahun]` (contoh `LRT-0103-001-1994` — kode distrik teks seperti `LRT`, kode wilayah & ranting 2 digit per-wilayah) | `nra.service.ts` |
 | Import CSV | `POST /members/import` — duplicate detection, batch size limit | `members.controller.ts`, `csv-import.service.ts` |
 | Export CSV | `GET /members/export` — filter by scope | `members.controller.ts` |
 | Validasi Data | `POST /members/:id/validate`, `approve`, `suspend`, `reactivate` | `members-workflow.service.ts` |
