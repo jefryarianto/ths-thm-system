@@ -82,3 +82,6 @@ opencode.json
 # Data sumber mentah impor historis (bukan bagian repo)
 /Data Anggota.csv
 /Data larantuka.xlsx
+
+# Dokumen ter-generate (storage bind-mount di VPS)
+/storage/
