@@ -34,6 +34,11 @@ export default function EditProfileScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [photoUri, setPhotoUri] = useState<string | null>(null);
 
+  // Ubah password
+  const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -94,6 +99,30 @@ export default function EditProfileScreen() {
       Alert.alert('Gagal', err?.response?.data?.message || 'Terjadi kesalahan');
     }
     setSaving(false);
+  };
+
+  const handleChangePassword = async () => {
+    setPwMsg(null);
+    if (pw.newPassword.length < 6) {
+      setPwMsg({ ok: false, text: 'Password baru minimal 6 karakter' });
+      return;
+    }
+    if (pw.newPassword !== pw.confirmPassword) {
+      setPwMsg({ ok: false, text: 'Konfirmasi password tidak cocok' });
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await apiClient.patch('/auth/change-password', {
+        currentPassword: pw.currentPassword,
+        newPassword: pw.newPassword,
+      });
+      setPwMsg({ ok: true, text: 'Password berhasil diubah' });
+      setPw({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      setPwMsg({ ok: false, text: err?.response?.data?.message || 'Gagal mengubah password. Periksa password lama Anda.' });
+    }
+    setPwSaving(false);
   };
 
   const pickImage = async () => {
@@ -257,6 +286,65 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
+        {/* Ubah Password */}
+        <View style={styles.section}>
+          <View style={styles.pwCard}>
+            <View style={styles.pwHeader}>
+              <Ionicons name="key" size={18} color="#2563eb" />
+              <Text style={styles.pwTitle}>Ubah Password</Text>
+            </View>
+            <Text style={styles.pwHint}>Minimal 6 karakter. Gunakan password baru saat login berikutnya.</Text>
+
+            {pwMsg && (
+              <View style={[styles.pwMsg, { backgroundColor: pwMsg.ok ? '#ecfdf5' : '#fef2f2', borderColor: pwMsg.ok ? '#a7f3d0' : '#fecaca' }]}>
+                <Text style={[styles.pwMsgText, { color: pwMsg.ok ? '#047857' : '#b91c1c' }]}>{pwMsg.text}</Text>
+              </View>
+            )}
+
+            <Text style={styles.fieldLabel}>Password Lama</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              placeholder="Password saat ini"
+              placeholderTextColor="#9ca3af"
+              value={pw.currentPassword}
+              onChangeText={(t) => setPw((p) => ({ ...p, currentPassword: t }))}
+            />
+            <Text style={styles.fieldLabel}>Password Baru</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              placeholder="Minimal 6 karakter"
+              placeholderTextColor="#9ca3af"
+              value={pw.newPassword}
+              onChangeText={(t) => setPw((p) => ({ ...p, newPassword: t }))}
+            />
+            <Text style={styles.fieldLabel}>Konfirmasi Password Baru</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              placeholder="Ulangi password baru"
+              placeholderTextColor="#9ca3af"
+              value={pw.confirmPassword}
+              onChangeText={(t) => setPw((p) => ({ ...p, confirmPassword: t }))}
+            />
+            <TouchableOpacity
+              style={[styles.pwBtn, pwSaving && styles.btnDisabled]}
+              onPress={handleChangePassword}
+              disabled={pwSaving}
+            >
+              {pwSaving ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="key-outline" size={16} color="#fff" />
+                  <Text style={styles.pwBtnText}>Ubah Password</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -363,4 +451,29 @@ const styles = StyleSheet.create({
     borderColor: '#bfdbfe',
   },
   infoText: { flex: 1, fontSize: 12, color: '#1e40af', lineHeight: 18 },
+
+  // ── Ubah Password ──
+  pwCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  pwHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  pwTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  pwHint: { fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 18 },
+  pwMsg: { borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 14 },
+  pwMsgText: { fontSize: 12, fontWeight: '600' },
+  pwBtn: {
+    backgroundColor: '#2563eb',
+    borderRadius: 10,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  pwBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
 });

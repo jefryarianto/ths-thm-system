@@ -724,13 +724,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <DropdownItem
                       icon={User}
                       label="Profil Saya"
-                      href="/settings"
+                      href="/profile"
                       onClick={() => setProfileOpen(false)}
                     />
                     <DropdownItem
                       icon={Lock}
                       label="Ubah Password"
-                      href="/settings"
+                      href="/profile"
                       onClick={() => setProfileOpen(false)}
                     />
                     <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
