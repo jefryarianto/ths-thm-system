@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import Card from '@/components/cards/card';
@@ -259,6 +259,26 @@ export default function SettingsPage() {
           </div>
         </div>
         <ArrowRight size={18} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition" />
+      </Link>
+
+      <Link
+        href="/settings/tingkatan"
+        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950">
+            <Layers size={20} className="text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+              Tingkatan
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Kelola strip/balok tingkatan pada kartu anggota
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={18} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition" />
       </Link>
 
       <Link

@@ -1606,3 +1606,21 @@ model DokumenPenandatangan {
   @@index([dokumenType])
   @@map("dokumen_penandatangans")
 }
+
+// ── Tingkatan (pengaturan strip pada kartu anggota) ─────────────────────
+
+/// Pengaturan visual strip di kartu anggota per tingkatan.
+/// `stripCount` = jumlah balok (0 = tanpa strip, mis. tingkat Anggota).
+/// `stripWarna` = warna balok (hex) — Pratama/Tamtama biru, Muda/Madya/Utama kuning.
+model Tingkatan {
+  id         String   @id @default(uuid())
+  nama       String   @unique
+  stripCount Int      @default(0) @map("strip_count")
+  stripWarna String   @default("#94a3b8") @map("strip_warna")
+  urutan     Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([urutan])
+  @@map("tingkatan")
+}

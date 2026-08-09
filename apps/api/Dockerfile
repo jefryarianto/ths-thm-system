@@ -36,7 +36,8 @@ RUN cd apps/api && pnpm run build
 # Production Stage
 FROM node:22-alpine AS production
 
-RUN apk add --no-cache openssl libc6-compat dumb-init
+# poppler-utils: menyediakan pdftoppm yang dipakai pdf-poppler (endpoint PNG kartu)
+RUN apk add --no-cache openssl libc6-compat dumb-init poppler-utils
 RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app

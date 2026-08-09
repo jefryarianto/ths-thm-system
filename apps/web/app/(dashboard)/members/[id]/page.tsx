@@ -30,6 +30,7 @@ import {
   IdCard,
   Download,
   Image,
+  Printer,
   Pencil,
   Save,
 } from 'lucide-react';
@@ -108,23 +109,34 @@ interface LevelVisual {
   label: string;
 }
 
-/** Tingkat Tapak Suci → visual balok pada kartu (sesuai template desain). */
+/** Tingkat Tapak Suci → visual balok pada kartu (sesuai tabel pengaturan tingkatan). */
 const TINGKAT_LEVEL: Record<string, LevelVisual> = {
-  Pratama: { stripCount: 2, stripClass: 'bg-red-700', stripBorder: 'border-red-900', stripColor: '#b91c1c', label: 'Balok Merah II' },
-  Tamtama: { stripCount: 2, stripClass: 'bg-blue-700', stripBorder: 'border-blue-900', stripColor: '#1d4ed8', label: 'Balok Biru II' },
-  Muda:    { stripCount: 2, stripClass: 'bg-yellow-600', stripBorder: 'border-yellow-800', stripColor: '#ca8a04', label: 'Balok Kuning II' },
-  Madya:   { stripCount: 2, stripClass: 'bg-green-700', stripBorder: 'border-green-900', stripColor: '#15803d', label: 'Balok Hijau II' },
-  Utama:   { stripCount: 2, stripClass: 'bg-slate-900', stripBorder: 'border-slate-950', stripColor: '#1e293b', label: 'Balok Hitam II' },
+  Anggota: { stripCount: 0, stripClass: '', stripBorder: '', stripColor: '', label: 'Tanpa strip' },
+  Pratama: { stripCount: 1, stripClass: 'bg-blue-700', stripBorder: 'border-blue-900', stripColor: '#1d4ed8', label: 'Biru 1' },
+  Tamtama: { stripCount: 2, stripClass: 'bg-blue-700', stripBorder: 'border-blue-900', stripColor: '#1d4ed8', label: 'Biru 2' },
+  Muda:    { stripCount: 1, stripClass: 'bg-yellow-600', stripBorder: 'border-yellow-800', stripColor: '#ca8a04', label: 'Kuning 1' },
+  Madya:   { stripCount: 2, stripClass: 'bg-yellow-600', stripBorder: 'border-yellow-800', stripColor: '#ca8a04', label: 'Kuning 2' },
+  Utama:   { stripCount: 3, stripClass: 'bg-yellow-600', stripBorder: 'border-yellow-800', stripColor: '#ca8a04', label: 'Kuning 3' },
 };
 
-function getLevelVisual(tingkat?: string | null): LevelVisual {
+function getLevelVisual(tingkat?: string | null, fromApi?: { stripCount: number; color: string; label?: string } | null): LevelVisual {
+  if (fromApi) {
+    const api: LevelVisual = {
+      stripCount: fromApi.stripCount,
+      stripColor: fromApi.color,
+      label: fromApi.label || 'Strip',
+      stripClass: '',
+      stripBorder: '',
+    };
+    return api;
+  }
   return (
     (tingkat && TINGKAT_LEVEL[tingkat]) || {
-      stripCount: 1,
-      stripClass: 'bg-slate-400',
-      stripBorder: 'border-slate-500',
-      stripColor: '#94a3b8',
-      label: 'Balok',
+      stripCount: 0,
+      stripClass: '',
+      stripBorder: '',
+      stripColor: '',
+      label: 'Tanpa strip',
     }
   );
 }
@@ -190,7 +202,12 @@ export default function MemberDetailPage() {
   const [editRantings, setEditRantings] = useState<Array<{ id: string; nama: string }>>([]);
   const [editWilayahLoading, setEditWilayahLoading] = useState(false);
   const [editRantingLoading, setEditRantingLoading] = useState(false);
-  const [cardData, setCardData] = useState<{ qrCode: string; signerName?: string; signerTitle?: string } | null>(null);
+  const [cardData, setCardData] = useState<{
+    qrCode: string;
+    signerName?: string;
+    signerTitle?: string;
+    levelVisual?: { stripCount: number; color: string; label?: string } | null;
+  } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const fetchMember = useCallback(async () => {
@@ -230,6 +247,7 @@ export default function MemberDetailPage() {
               qrCode: data.data.qrCode,
               signerName: data.data.card?.signerName,
               signerTitle: data.data.card?.signerTitle,
+              levelVisual: data.data.levelVisual || null,
             });
           }
         })
@@ -257,7 +275,39 @@ export default function MemberDetailPage() {
     setActionLoading(null);
   };
 
-  const downloadKTA = async (memberId: string, _format: 'pdf' | 'image') => {
+  /** Download file KTA (PDF 2 sisi / PNG 2 sisi) langsung dari API. */
+  const downloadKTA = async (memberId: string, format: 'pdf' | 'image') => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const endpoint =
+        format === 'pdf'
+          ? `${window.location.origin}/api/members/${memberId}/digital-card/pdf`
+          : `${window.location.origin}/api/members/${memberId}/digital-card/image`;
+      const response = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        toast('error', 'Gagal membuat file KTA. Coba lagi.');
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = format === 'pdf' ? `KTA-${member?.nomorAnggota || memberId}.pdf` : `KTA-${member?.nomorAnggota || memberId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast('success', format === 'pdf' ? 'PDF KTA berhasil diunduh' : 'PNG KTA berhasil diunduh');
+    } catch (err) {
+      console.error('KTA download error:', err);
+      toast('error', 'Gagal mengunduh KTA. Silakan coba lagi.');
+    }
+  };
+
+  /** Preview HTML (2 sisi) untuk cetak — memakai logo resmi & visual strip terkini. */
+  const previewKTA = async (memberId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`${window.location.origin}/api/members/${memberId}/digital-card`, {
@@ -275,15 +325,16 @@ export default function MemberDetailPage() {
       const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       const ttl = [m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null].filter(Boolean).join(', ') || '-';
       const dadar = [member?.tempatDadar, member?.tahunDadar].filter(Boolean).join(', ') || '-';
-      const lv = getLevelVisual(member?.tingkat);
+      const lv = getLevelVisual(member?.tingkat, data.data.levelVisual || null);
       const stripHtml = Array.from({ length: lv.stripCount })
         .map(() => `<div class="level-strip" style="background:${lv.stripColor}"></div>`)
         .join('');
       const photoHtml = m.fotoPath
-        ? `<img src="${window.location.origin}/api/uploads/${m.fotoPath}" alt="Foto" style="width:100%;height:100%;object-fit:cover"/>`
-        : 'FOTO';
+        ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}" alt="Foto" style="width:100%;height:100%;object-fit:cover"/>`
+        : '<span style="font-size:18px;font-weight:600;color:#94a3b8">FOTO</span>';
       const signerName = data.data.card?.signerName || 'Koordinator Distrik';
       const signerTitle = data.data.card?.signerTitle || 'THS-THM';
+      const logoUrl = `${window.location.origin}/logo.png`;
 
       const win = window.open('', '_blank');
       if (!win) return;
@@ -302,17 +353,18 @@ export default function MemberDetailPage() {
   .front .top-bar { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: linear-gradient(90deg, #1e3a5f, #1d4ed8, #06b6d4); }
   .front .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(90deg, #0f2b4a, #1e40af, #0891b2); }
   .front .border-inner, .back .border-inner { position: absolute; inset: 18px; border-radius: 20px; border: 2px solid rgba(250,204,21,0.6); }
-  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 100px; font-weight: 900; color: rgba(30,58,95,0.04); pointer-events: none; }
+  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .watermark img { width: 260px; height: 260px; opacity: 0.06; }
   .content { position: relative; z-index: 10; height: 100%; padding: 0; }
   .header-row { display: flex; align-items: flex-start; gap: 20px; padding: 24px 40px 0; color: #fff; }
-  .logo { width: 48px; height: 48px; border-radius: 50%; background: #fde047; border: 4px solid #0f172a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .logo-inner { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #1e3a5f; }
+  .logo { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); }
+  .logo img { width: 100%; height: 100%; object-fit: cover; }
   .header-text { line-height: 1.2; }
   .header-text .org { font-size: 22px; font-weight: 900; letter-spacing: 0.02em; }
   .header-text .sub { font-size: 17px; font-weight: 600; opacity: 0.95; }
   .title-badge { position: absolute; left: 0; right: 0; text-align: center; top: 92px; }
   .title-badge span { display: inline-block; padding: 8px 32px; border-radius: 999px; background: rgba(255,255,255,0.9); border: 1px solid #eab308; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 24px; font-weight: 900; letter-spacing: 0.18em; color: #1e3a5f; }
-  .photo { position: absolute; left: 40px; top: 165px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 18px; font-weight: 600; }
+  .photo { position: absolute; left: 40px; top: 165px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .level-strips { position: absolute; left: 40px; top: 412px; width: 185px; display: flex; flex-direction: column; gap: 6px; }
   .level-strip { height: 14px; width: 100%; border-radius: 4px; border: 1px solid rgba(0,0,0,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
   .info { position: absolute; left: 255px; top: 162px; right: 40px; }
@@ -324,16 +376,18 @@ export default function MemberDetailPage() {
   .bottom-info .expiry { font-size: 22px; font-weight: 900; }
   .signature { position: absolute; right: 48px; bottom: 36px; text-align: center; color: #fff; }
   .signature .sig-wrap { position: relative; height: 80px; width: 192px; margin-bottom: 4px; }
-  .signature .sig { position: absolute; left: 32px; top: 0; font-size: 38px; font-family: cursive; transform: rotate(-8deg); color: rgba(15,23,42,0.8); }
-  .signature .stamp { position: absolute; right: 0; top: 0; width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(191,219,254,0.8); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #dbeafe; transform: rotate(-12deg); }
+  .signature .sig { position: absolute; left: 32px; top: 0; font-size: 38px; font-family: cursive; transform: rotate(-8deg); color: rgba(255,255,255,0.9); }
+  .signature .stamp { position: absolute; right: 0; top: 0; width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(191,219,254,0.9); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #dbeafe; transform: rotate(-12deg); }
   .signature .title { font-size: 16px; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.6); padding-top: 4px; }
   .signature .subtitle { font-size: 13px; font-weight: 600; opacity: 0.9; }
+  .back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .back .wm img { width: 260px; height: 260px; opacity: 0.1; }
   .back .title { position: absolute; left: 0; right: 0; text-align: center; top: 28px; color: #fff; }
   .back .title h2 { font-size: 28px; font-weight: 900; letter-spacing: 0.16em; }
   .back .title p { font-size: 15px; opacity: 0.9; margin-top: 4px; }
   .qr-box { position: absolute; left: 48px; top: 145px; width: 210px; height: 210px; background: #fff; border-radius: 16px; border: 4px solid #1e3a5f; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 16px; display: flex; align-items: center; justify-content: center; }
   .qr-box img { width: 100%; height: 100%; }
-  .back-info { position: absolute; left: 300px; top: 145px; right: 48px; background: rgba(255,255,255,0.85); border-radius: 16px; border: 1px solid rgba(191,219,254,0.5); padding: 24px; color: #334155; }
+  .back-info { position: absolute; left: 300px; top: 145px; right: 48px; background: rgba(255,255,255,0.9); border-radius: 16px; border: 1px solid rgba(191,219,254,0.5); padding: 24px; color: #334155; }
   .back-info .row { display: grid; grid-template-columns: 105px 1fr; gap: 8px; font-size: 18px; margin-bottom: 12px; }
   .back-info .row .lbl { font-weight: 900; color: #1e3a5f; }
   .back-info .row .val { font-weight: 600; }
@@ -347,10 +401,10 @@ export default function MemberDetailPage() {
   <div class="bg-circle1"></div><div class="bg-circle2"></div>
   <div class="top-bar"></div><div class="bottom-bar"></div>
   <div class="border-inner"></div>
-  <div class="watermark">THS</div>
+  <div class="watermark"><img src="${logoUrl}" alt="" /></div>
   <div class="content">
     <div class="header-row">
-      <div class="logo"><div class="logo-inner">THS</div></div>
+      <div class="logo"><img src="${logoUrl}" alt="THS-THM" /></div>
       <div class="header-text">
         <div class="org">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
         <div class="sub">DISTRIK ${distrik}</div>
@@ -382,6 +436,7 @@ export default function MemberDetailPage() {
 </div>
 <div class="card back page-break">
   <div class="border-inner"></div>
+  <div class="wm"><img src="${logoUrl}" alt="" /></div>
   <div class="content">
     <div class="title">
       <h2>VERIFIKASI KARTU ANGGOTA</h2>
@@ -474,7 +529,7 @@ export default function MemberDetailPage() {
       .join(' › ') || '-';
 
   // ── Data turunan kartu (sesuai template desain) ──
-  const levelVisual = getLevelVisual(member.tingkat);
+  const levelVisual = getLevelVisual(member.tingkat, cardData?.levelVisual || null);
   const validUntilText = new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', {
     day: 'numeric',
     month: 'long',
@@ -824,17 +879,17 @@ export default function MemberDetailPage() {
                       <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600" />
                       <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
                       
-                      {/* Watermark */}
+                      {/* Watermark — logo resmi */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
-                        <div className="w-60 h-60 rounded-full border-[18px] border-blue-900 flex items-center justify-center text-5xl font-black text-blue-900">THS</div>
+                        <img src="/logo.png" alt="" className="w-64 h-64 object-contain" />
                       </div>
         
                       {/* Content */}
                       <div className="relative z-10 h-full">
                         {/* Header */}
                         <div className="px-10 pt-6 flex items-start gap-5 text-white">
-                          <div className="w-12 h-12 rounded-full bg-yellow-300 border-4 border-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <div className="w-8 h-8 rounded-full bg-white border border-slate-700 flex items-center justify-center text-[9px] font-black text-blue-800">THS</div>
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                            <img src="/logo.png" alt="THS-THM" className="w-full h-full object-cover" />
                           </div>
                           <div className="leading-tight">
                             <div className="text-[22px] font-black tracking-wide">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
@@ -852,16 +907,20 @@ export default function MemberDetailPage() {
                         {/* Photo */}
                         <div className="absolute left-10 top-[165px] w-[185px] h-[235px] rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden">
                           {member.fotoPath ? (
-                            <img src={`/api/uploads/${member.fotoPath}`} alt="Foto" className="w-full h-full object-cover" />
+                            <img src={`/api/uploads/${encodeURIComponent(member.fotoPath)}`} alt="Foto" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-100 flex items-center justify-center text-slate-500 font-bold text-lg">FOTO</div>
                           )}
                         </div>
 
-                        {/* Level strips — balok sesuai tingkat (sesuai template desain) */}
+                        {/* Level strips — sesuai tabel pengaturan tingkatan */}
                         <div className="absolute left-10 top-[412px] w-[185px] flex flex-col gap-[6px]">
                           {Array.from({ length: levelVisual.stripCount }).map((_, i) => (
-                            <div key={i} className={`h-[14px] w-full rounded-sm border ${levelVisual.stripClass} ${levelVisual.stripBorder} shadow-sm`} />
+                            <div
+                              key={i}
+                              className="h-[14px] w-full rounded-sm border border-black/25 shadow-sm"
+                              style={levelVisual.stripColor ? { backgroundColor: levelVisual.stripColor } : undefined}
+                            />
                           ))}
                         </div>
         
@@ -881,8 +940,8 @@ export default function MemberDetailPage() {
                         </div>
                         <div className="absolute right-12 bottom-9 text-center text-white">
                           <div className="relative h-20 w-48">
-                            <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-900/80">ttd</div>
-                            <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/80 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
+                            <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-white/90">ttd</div>
+                            <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/90 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
                           </div>
                           <div className="text-[16px] font-black border-t border-white/60 pt-1">{cardData?.signerName || 'Koordinator Distrik'}</div>
                           <div className="text-[13px] font-semibold opacity-95">{cardData?.signerTitle || 'THS-THM'}</div>
@@ -896,6 +955,9 @@ export default function MemberDetailPage() {
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
                     <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border border-slate-300 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600">
                       <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                        <img src="/logo.png" alt="" className="w-64 h-64 object-contain" />
+                      </div>
                       <div className="relative z-10 h-full">
                         <div className="absolute top-7 left-0 right-0 text-center">
                           <div className="text-[28px] font-black tracking-[0.16em] text-white">VERIFIKASI KARTU ANGGOTA</div>
@@ -933,20 +995,27 @@ export default function MemberDetailPage() {
                   </div>
         
                   {/* Download Actions */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <button
                       onClick={() => downloadKTA(member.id, 'pdf')}
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg"
                     >
                       <Download size={20} />
-                      Download PDF (KTA) — 2 Sisi
+                      Download PDF — 2 Sisi
                     </button>
                     <button
                       onClick={() => downloadKTA(member.id, 'image')}
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg"
                     >
                       <Image size={20} />
-                      Preview PNG (KTA)
+                      Download PNG — 2 Sisi
+                    </button>
+                    <button
+                      onClick={() => previewKTA(member.id)}
+                      className="flex items-center justify-center gap-3 px-6 py-4 bg-slate-700 text-white rounded-xl hover:bg-slate-800 transition font-medium shadow-lg"
+                    >
+                      <Printer size={20} />
+                      Preview & Cetak (HTML)
                     </button>
                   </div>
         

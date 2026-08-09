@@ -5,6 +5,9 @@ import { LoadingView } from '../../components/ui/shared';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Logo resmi THS-THM (di-bundle bersama app)
+const LOGO = require('../../../assets/images/logo.png');
+
 // Ukuran desain kartu (CR80 landscape) — seluruh layout memakai koordinat 856×540
 const CARD_W = 856;
 const CARD_H = 540;
@@ -34,20 +37,26 @@ interface CardData {
   signerTitle: string;
   /** Penandatangan ganda (1-3) dari API — tampil berurutan. */
   signers?: { signerName?: string; signerTitle?: string }[];
+  levelVisual?: { stripCount: number; color: string; label?: string } | null;
 }
 
-// ─── Tingkat → visual balok (sesuai template desain) ───
+// ─── Tingkat → visual balok (sesuai tabel pengaturan tingkatan) ───
 
 const TINGKAT_LEVEL: Record<string, { stripCount: number; color: string; label: string }> = {
-  Pratama: { stripCount: 2, color: '#b91c1c', label: 'Balok Merah II' },
-  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Balok Biru II' },
-  Muda:    { stripCount: 2, color: '#ca8a04', label: 'Balok Kuning II' },
-  Madya:   { stripCount: 2, color: '#15803d', label: 'Balok Hijau II' },
-  Utama:   { stripCount: 2, color: '#1e293b', label: 'Balok Hitam II' },
+  Anggota: { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' },
+  Pratama: { stripCount: 1, color: '#1d4ed8', label: 'Biru 1' },
+  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Biru 2' },
+  Muda:    { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' },
+  Madya:   { stripCount: 2, color: '#ca8a04', label: 'Kuning 2' },
+  Utama:   { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' },
 };
 
-function getLevelVisual(tingkat?: string | null) {
-  return (tingkat && TINGKAT_LEVEL[tingkat]) || { stripCount: 1, color: '#94a3b8', label: 'Balok' };
+function getLevelVisual(
+  tingkat?: string | null,
+  fromApi?: { stripCount: number; color: string; label?: string } | null,
+) {
+  if (fromApi) return fromApi;
+  return (tingkat && TINGKAT_LEVEL[tingkat]) || { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' };
 }
 
 // ─── Card shell (scaling 856×540 → lebar layar) ───
@@ -96,7 +105,7 @@ function BackRow({ label, value }: { label: string; value: string }) {
 // ─── Sisi Depan ───
 
 function MemberCardFront({ member, cardData, validUntilText }: { member: MemberInfo | null; cardData: CardData | null; validUntilText: string }) {
-  const lv = getLevelVisual(member?.tingkat);
+  const lv = getLevelVisual(member?.tingkat, cardData?.levelVisual || null);
   const distrik = member?.ranting?.wilayah?.distrik?.nama || 'THS-THM';
 
   return (
@@ -107,20 +116,16 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
       <View style={styles.bottomBar} />
       <View style={styles.borderInner} />
 
-      {/* Watermark */}
+      {/* Watermark — logo resmi */}
       <View style={styles.watermarkWrap} pointerEvents="none">
-        <View style={styles.watermarkCircle}>
-          <Text style={styles.watermarkText}>THS</Text>
-        </View>
+        <Image source={LOGO} style={styles.watermarkLogo} resizeMode="contain" />
       </View>
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.logo}>
-            <View style={styles.logoInner}>
-              <Text style={styles.logoText}>THS</Text>
-            </View>
+            <Image source={LOGO} style={styles.logoImg} resizeMode="cover" />
           </View>
           <View style={styles.headerText}>
             <Text style={styles.orgName} numberOfLines={2}>TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</Text>
@@ -136,7 +141,7 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
         {/* Photo */}
         <View style={styles.photoBox}>
           {member?.fotoPath ? (
-            <Image source={{ uri: `${API_URL}/api/uploads/${member.fotoPath}` }} style={styles.photoImg} resizeMode="cover" />
+            <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(member.fotoPath)}` }} style={styles.photoImg} resizeMode="cover" />
           ) : (
             <Text style={styles.photoPlaceholder}>FOTO</Text>
           )}
@@ -193,6 +198,9 @@ function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { memb
   return (
     <CardShell dark>
       <View style={styles.borderInner} />
+      <View style={styles.backWatermarkWrap} pointerEvents="none">
+        <Image source={LOGO} style={styles.backWatermarkLogo} resizeMode="contain" />
+      </View>
 
       <View style={styles.content}>
         {/* Title */}
@@ -254,6 +262,7 @@ export default function DigitalCardScreen() {
             const res = await apiClient.get(`/members/${me.id}/digital-card`);
             const data = unwrap<{
               qrCode: string;
+              levelVisual?: { stripCount: number; color: string; label?: string } | null;
               card?: { signerName?: string; signerTitle?: string; signers?: { signerName?: string; signerTitle?: string }[] };
             }>(res);
             setCardData({
@@ -261,10 +270,11 @@ export default function DigitalCardScreen() {
               signerName: data.card?.signerName || 'Koordinator Distrik',
               signerTitle: data.card?.signerTitle || 'THS-THM',
               signers: data.card?.signers || [],
+              levelVisual: data.levelVisual || null,
             });
           } catch {
             // QR/signer gagal dimuat — kartu tetap tampil (fallback nama default)
-            setCardData({ qrCode: null, signerName: 'Koordinator Distrik', signerTitle: 'THS-THM', signers: [] });
+            setCardData({ qrCode: null, signerName: 'Koordinator Distrik', signerTitle: 'THS-THM', signers: [], levelVisual: null });
           }
         }
       } catch {
@@ -330,15 +340,18 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(250,204,21,0.6)',
   },
 
-  watermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 0.06 },
-  watermarkCircle: { width: 240, height: 240, borderRadius: 120, borderWidth: 18, borderColor: '#1e3a5f', alignItems: 'center', justifyContent: 'center' },
+  watermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 0.07 },
+  watermarkLogo: { width: 260, height: 260 },
+  backWatermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 0.12 },
+  backWatermarkLogo: { width: 260, height: 260 },
   watermarkText: { fontSize: 48, fontWeight: '900', color: '#1e3a5f' },
 
   content: { ...StyleSheet.absoluteFillObject, zIndex: 10 },
 
   // ── Header ──
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 20, paddingTop: 24, paddingHorizontal: 40 },
-  logo: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#fde047', borderWidth: 4, borderColor: '#0f172a', alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#fff', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 3 },
+  logoImg: { width: 48, height: 48 },
   logoInner: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: '#334155', alignItems: 'center', justifyContent: 'center' },
   logoText: { fontSize: 9, fontWeight: '900', color: '#1e3a5f' },
   headerText: { flex: 1, paddingTop: 2 },
@@ -393,7 +406,7 @@ const styles = StyleSheet.create({
   // ── Signer ──
   signerBox: { position: 'absolute', right: 48, bottom: 36, alignItems: 'center' },
   sigWrap: { position: 'relative', width: 192, height: 80, marginBottom: 4 },
-  sig: { position: 'absolute', left: 32, top: 0, fontSize: 38, fontStyle: 'italic', color: 'rgba(15,23,42,0.8)', transform: [{ rotate: '-8deg' }] },
+  sig: { position: 'absolute', left: 32, top: 0, fontSize: 38, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)', transform: [{ rotate: '-8deg' }] },
   stamp: {
     position: 'absolute', right: 0, top: 0, width: 80, height: 80, borderRadius: 40,
     borderWidth: 4, borderColor: 'rgba(191,219,254,0.8)',

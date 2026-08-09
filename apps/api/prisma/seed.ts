@@ -350,6 +350,28 @@ async function main() {
     console.log(`Penandatangan sudah ada (${existingSignerCount}). Lewati seed penandatangan.`);
   }
 
+  // ── Seeder Tingkatan (pengaturan strip kartu anggota) ──
+  const tingkatanSeed = [
+    { nama: 'Anggota', stripCount: 0, stripWarna: '#94a3b8', urutan: 1 },
+    { nama: 'Pratama', stripCount: 1, stripWarna: '#1d4ed8', urutan: 2 },
+    { nama: 'Tamtama', stripCount: 2, stripWarna: '#1d4ed8', urutan: 3 },
+    { nama: 'Muda', stripCount: 1, stripWarna: '#ca8a04', urutan: 4 },
+    { nama: 'Madya', stripCount: 2, stripWarna: '#ca8a04', urutan: 5 },
+    { nama: 'Utama', stripCount: 3, stripWarna: '#ca8a04', urutan: 6 },
+  ];
+
+  const existingTingkatanCount = await prisma.tingkatan.count();
+  if (existingTingkatanCount === 0) {
+    let seededT = 0;
+    for (const t of tingkatanSeed) {
+      await prisma.tingkatan.create({ data: t });
+      seededT++;
+    }
+    console.log(`Seeded ${seededT} tingkatan`);
+  } else {
+    console.log(`Tingkatan sudah ada (${existingTingkatanCount}). Lewati seed tingkatan.`);
+  }
+
   console.log('Seeding completed!');
 }
 

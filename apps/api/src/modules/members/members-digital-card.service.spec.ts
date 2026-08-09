@@ -4,6 +4,7 @@ import { MembersDigitalCardService } from './members-digital-card.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
+import { TingkatanService } from '../tingkatan/tingkatan.service';
 
 // Mock QRCode — hindari generate PNG asli saat test
 jest.mock('qrcode', () => ({
@@ -68,6 +69,16 @@ describe('MembersDigitalCardService', () => {
     resolveActive: jest.fn().mockResolvedValue(mockSigners[0]),
   };
 
+  // Tingkatan → visual strip (sesuai seeder: Muda = Kuning 1)
+  const mockTingkatanService = {
+    resolveLevelVisual: jest.fn().mockImplementation(async (tingkat?: string | null) => {
+      if (tingkat === 'Muda') return { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' };
+      if (tingkat === 'Utama') return { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' };
+      return { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' };
+    }),
+    getAllLevelVisuals: jest.fn().mockResolvedValue({}),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -75,6 +86,7 @@ describe('MembersDigitalCardService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: PenandatanganService, useValue: mockPenandatanganService },
+        { provide: TingkatanService, useValue: mockTingkatanService },
       ],
     }).compile();
 
@@ -118,6 +130,13 @@ describe('MembersDigitalCardService', () => {
       // Backward-compat: signer pertama di signerName/signerTitle
       expect(result.data.card.signerName).toBe('Yoseph Pehan Betan');
       expect(result.data.card.signerTitle).toBe('Koordinator Distrik');
+    });
+
+    it('should include levelVisual (strip tingkat) dari tabel tingkatan', async () => {
+      const result = await service.getDigitalCard('m-lrt-1');
+
+      expect(mockTingkatanService.resolveLevelVisual).toHaveBeenCalledWith('Muda');
+      expect(result.data.levelVisual).toEqual({ stripCount: 1, color: '#ca8a04', label: 'Kuning 1' });
     });
 
     it('should generate new card dokumen + QR validation when none exists', async () => {

@@ -46,12 +46,14 @@ import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module';
 import { PenandatanganModule } from './modules/penandatangan/penandatangan.module';
+import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
 
 @Module({
   imports: [
     ChatModule,
     ForumModule,
     PenandatanganModule,
+    TingkatanModule,
     CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,

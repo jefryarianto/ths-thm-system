@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const React = require('react');
 const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
+const { KTA_LOGO_DATA_URL } = require('./kta-logo');
 
 // ── Palette (sesuai template desain kartu) ──
 const BLUE_900 = '#1e3a5f';
@@ -9,17 +10,22 @@ const WHITE = '#ffffff';
 const YELLOW_500 = '#eab308';
 const SLATE_800 = '#1e293b';
 
-/** Tingkat Tapak Suci → visual balok pada kartu (identik dengan web & mobile). */
-const TINGKAT_LEVEL: Record<string, { stripCount: number; color: string; label: string }> = {
-  Pratama: { stripCount: 2, color: '#b91c1c', label: 'Balok Merah II' },
-  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Balok Biru II' },
-  Muda:    { stripCount: 2, color: '#ca8a04', label: 'Balok Kuning II' },
-  Madya:   { stripCount: 2, color: '#15803d', label: 'Balok Hijau II' },
-  Utama:   { stripCount: 2, color: '#1e293b', label: 'Balok Hitam II' },
+/**
+ * Fallback visual strip bila config tingkatan tidak dikirim (sama dengan seeder):
+ * Anggota=tanpa strip, Pratama=Biru 1, Tamtama=Biru 2, Muda=Kuning 1, Madya=Kuning 2, Utama=Kuning 3.
+ */
+const TINGKAT_LEVEL_FALLBACK: Record<string, { stripCount: number; color: string; label: string }> = {
+  Anggota: { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' },
+  Pratama: { stripCount: 1, color: '#1d4ed8', label: 'Biru 1' },
+  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Biru 2' },
+  Muda:    { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' },
+  Madya:   { stripCount: 2, color: '#ca8a04', label: 'Kuning 2' },
+  Utama:   { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' },
 };
 
-function getLevelVisual(tingkat?: string | null) {
-  return (tingkat && TINGKAT_LEVEL[tingkat]) || { stripCount: 1, color: '#94a3b8', label: 'Balok' };
+function getLevelVisual(tingkat?: string | null, fromConfig?: { stripCount: number; color: string; label?: string } | null) {
+  if (fromConfig) return fromConfig;
+  return (tingkat && TINGKAT_LEVEL_FALLBACK[tingkat]) || TINGKAT_LEVEL_FALLBACK.Anggota;
 }
 
 const styles = StyleSheet.create({
@@ -84,11 +90,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  watermarkText: {
-    fontSize: 100,
-    fontWeight: 'heavy',
-    color: BLUE_900,
-    opacity: 0.06,
+  watermarkLogo: {
+    width: 260,
+    height: 260,
+    opacity: 0.07,
   },
   headerRow: {
     position: 'relative',
@@ -102,24 +107,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#fde047',
-    borderWidth: 4,
-    borderColor: '#0f172a',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  logoInner: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: WHITE,
-    borderWidth: 1,
-    borderColor: '#334155',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 9,
-    fontWeight: 'heavy',
-    color: BLUE_900,
+  logoImg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   orgName: {
     color: WHITE,
@@ -255,7 +247,7 @@ const styles = StyleSheet.create({
     fontSize: 38,
     fontStyle: 'italic',
     transform: 'rotate(-8deg)',
-    color: 'rgba(15,23,42,0.8)',
+    color: 'rgba(255,255,255,0.9)',
   },
   stamp: {
     position: 'absolute',
@@ -265,7 +257,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 4,
-    borderColor: 'rgba(191,219,254,0.8)',
+    borderColor: 'rgba(191,219,254,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,6 +290,20 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: BLUE_900,
     position: 'relative',
+  },
+  backWatermarkLogo: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backWatermarkImg: {
+    width: 260,
+    height: 260,
+    opacity: 0.12,
   },
   backTitle: {
     position: 'absolute',
@@ -343,7 +349,7 @@ const styles = StyleSheet.create({
     left: 300,
     top: 145,
     right: 48,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(191,219,254,0.5)',
@@ -430,11 +436,15 @@ interface MemberCardPdfProps {
   };
   /** Data URL foto anggota (base64) — opsional, fallback ke placeholder "FOTO". */
   photoDataUrl?: string | null;
+  /** Visual strip dari tabel tingkatan — bila kosong fallback ke mapping bawaan. */
+  levelVisual?: { stripCount: number; color: string; label?: string } | null;
 }
 
 const h = React.createElement;
 
-export function buildMemberCardPdf({ member, cardConfig, photoDataUrl }: MemberCardPdfProps) {
+/** Konten sisi depan (tanpa Page — dipakai untuk halaman normal & gabungan). */
+function buildFrontSide(props: MemberCardPdfProps) {
+  const { member, cardConfig } = props;
   const tanggalLahirStr = member.tanggalLahir
     ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -442,13 +452,10 @@ export function buildMemberCardPdf({ member, cardConfig, photoDataUrl }: MemberC
         year: 'numeric',
       })
     : '-';
-
   const ttl = member.tempatLahir
     ? `${member.tempatLahir}, ${tanggalLahirStr}`
     : tanggalLahirStr;
-
-  const dadar = [member.tempatDadar, member.tahunDadar].filter(Boolean).join(', ') || '-';
-
+  const distrik = member.distrik || member.wilayah || 'THS-THM';
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
   const validUntilStr = validUntil.toLocaleDateString('id-ID', {
@@ -457,201 +464,252 @@ export function buildMemberCardPdf({ member, cardConfig, photoDataUrl }: MemberC
     year: 'numeric',
   });
 
-  const distrik = member.distrik || member.wilayah || 'THS-THM';
-
-  const lv = getLevelVisual(member.tingkat);
+  const lv = getLevelVisual(member.tingkat, props.levelVisual);
   const levelStrips = Array.from({ length: lv.stripCount }, (_, i) =>
     h(View, { key: i, style: [styles.levelStrip, { backgroundColor: lv.color }] }),
   );
 
+  return [
+    h(View, { key: 'bg1', style: styles.bgCircle1 }),
+    h(View, { key: 'bg2', style: styles.bgCircle2 }),
+    h(View, { key: 'top', style: styles.topBar }),
+    h(View, { key: 'bottom', style: styles.bottomBar }),
+    h(View, { key: 'border', style: styles.borderInner }),
+    h(
+      View,
+      { key: 'wm', style: styles.watermark },
+      h(Image, { src: KTA_LOGO_DATA_URL, style: styles.watermarkLogo }),
+    ),
+    // Header
+    h(
+      View,
+      { key: 'header', style: styles.headerRow },
+      h(View, { key: 'logo', style: styles.logo }, h(Image, { src: KTA_LOGO_DATA_URL, style: styles.logoImg })),
+      h(
+        View,
+        { key: 'headertxt' },
+        h(Text, { style: styles.orgName }, 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA'),
+        h(Text, { style: styles.distrikName }, `DISTRIK ${distrik.toUpperCase()}`),
+      ),
+    ),
+    // Title
+    h(
+      View,
+      { key: 'title', style: styles.titleBar },
+      h(
+        View,
+        { key: 'badge', style: styles.titleBadge },
+        h(Text, { style: styles.titleText }, 'KARTU TANDA ANGGOTA'),
+      ),
+    ),
+    // Photo
+    h(
+      View,
+      { key: 'photo', style: styles.photoBox },
+      props.photoDataUrl
+        ? h(Image, { src: props.photoDataUrl, style: styles.photoImage })
+        : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
+    ),
+    // Level strips (balok tingkat — dari tabel tingkatan)
+    h(View, { key: 'strips', style: styles.levelStrips }, levelStrips),
+    // Info
+    h(
+      View,
+      { key: 'info', style: styles.infoSection },
+      h(
+        View,
+        { key: 'r1', style: styles.infoRow },
+        h(Text, { style: styles.infoLabel }, 'Nama'),
+        h(Text, { style: styles.infoValueStrong }, `: ${member.namaLengkap}`),
+      ),
+      h(
+        View,
+        { key: 'r2', style: styles.infoRow },
+        h(Text, { style: styles.infoLabel }, 'No. Anggota'),
+        h(Text, { style: styles.infoValue }, `: ${member.nomorAnggota}`),
+      ),
+      h(
+        View,
+        { key: 'r3', style: styles.infoRow },
+        h(Text, { style: styles.infoLabel }, 'Ranting'),
+        h(Text, { style: styles.infoValue }, `: ${member.ranting || '-'}`),
+      ),
+      h(
+        View,
+        { key: 'r4', style: styles.infoRow },
+        h(Text, { style: styles.infoLabel }, 'Wilayah'),
+        h(Text, { style: styles.infoValue }, `: ${member.wilayah || '-'}`),
+      ),
+      h(
+        View,
+        { key: 'r5', style: styles.infoRow },
+        h(Text, { style: styles.infoLabel }, 'Distrik'),
+        h(Text, { style: styles.infoValue }, `: ${distrik}`),
+      ),
+    ),
+    // Bottom left — masa berlaku
+    h(
+      View,
+      { key: 'valid', style: styles.bottomInfo },
+      h(Text, { style: styles.validUntil }, 'Berlaku sampai'),
+      h(Text, { style: styles.validUntilValue }, validUntilStr),
+    ),
+    // Bottom right — penandatangan (1-3) + stempel
+    h(
+      View,
+      { key: 'sig', style: styles.signature },
+      h(
+        View,
+        { key: 'sigwrap', style: styles.sigWrap },
+        h(Text, { key: 'sigttd', style: styles.sigText }, 'ttd'),
+        h(View, { key: 'stamp', style: styles.stamp }, h(Text, { style: styles.stampText }, 'STEMPEL')),
+      ),
+      ...(cardConfig.signers && cardConfig.signers.length > 0
+        ? cardConfig.signers
+            .filter((s) => s && (s.signerName || s.signerTitle))
+            .map((s, i) =>
+              h(
+                View,
+                { key: `sig-${i}`, style: { alignItems: 'center', marginTop: i === 0 ? 0 : 8, width: '100%' } },
+                s.signerName
+                  ? h(Text, { style: styles.signerName }, s.signerName)
+                  : null,
+                s.signerTitle
+                  ? h(Text, { style: styles.signerTitle }, s.signerTitle)
+                  : null,
+              ),
+            )
+        : [
+            h(Text, { key: 'sig-n', style: styles.signerName }, cardConfig.signerName),
+            h(Text, { key: 'sig-t', style: styles.signerTitle }, cardConfig.signerTitle),
+          ]),
+    ),
+  ];
+}
+
+/** Konten sisi belakang (tanpa Page). */
+function buildBackSide(props: MemberCardPdfProps) {
+  const { member, cardConfig } = props;
+  const tanggalLahirStr = member.tanggalLahir
+    ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '-';
+  const ttl = member.tempatLahir ? `${member.tempatLahir}, ${tanggalLahirStr}` : tanggalLahirStr;
+  const dadar = [member.tempatDadar, member.tahunDadar].filter(Boolean).join(', ') || '-';
+  const validUntil = new Date();
+  validUntil.setFullYear(validUntil.getFullYear() + 5);
+  const validUntilStr = validUntil.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return [
+    h(View, { key: 'border', style: styles.borderInner }),
+    h(
+      View,
+      { key: 'wm', style: styles.backWatermarkLogo },
+      h(Image, { src: KTA_LOGO_DATA_URL, style: styles.backWatermarkImg }),
+    ),
+    h(Text, { key: 'title', style: styles.backTitle }, 'VERIFIKASI KARTU ANGGOTA'),
+    h(Text, { key: 'sub', style: styles.backSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),
+    // QR Code
+    h(
+      View,
+      { key: 'qr', style: styles.qrSection },
+      h(Image, { src: cardConfig.qrDataUrl, style: styles.qrImage }),
+    ),
+    // Back info
+    h(
+      View,
+      { key: 'info', style: styles.backInfo },
+      h(
+        Text,
+        { key: 'desc', style: styles.backDesc },
+        'Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.',
+      ),
+      h(
+        View,
+        { key: 'r1', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'TTL'),
+        h(Text, { style: styles.backValue }, `: ${ttl}`),
+      ),
+      h(
+        View,
+        { key: 'r2', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'DADAR'),
+        h(Text, { style: styles.backValue }, `: ${dadar}`),
+      ),
+      h(
+        View,
+        { key: 'r3', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'Status'),
+        h(Text, { style: styles.backValue }, `: ${member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'}`),
+      ),
+      h(
+        View,
+        { key: 'r4', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'Valid s/d'),
+        h(Text, { style: styles.backValue }, `: ${validUntilStr}`),
+      ),
+    ),
+    // Footer
+    h(
+      View,
+      { key: 'footer', style: styles.backFooter },
+      h(
+        Text,
+        { key: 'ft', style: styles.footerText },
+        'Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.',
+      ),
+      h(
+        View,
+        { key: 'urlbox', style: styles.footerUrlBox },
+        h(Text, { key: 'ul', style: styles.footerUrlLabel }, 'URL Verifikasi'),
+        h(Text, { key: 'uv', style: styles.footerUrl }, cardConfig.verificationUrl),
+      ),
+    ),
+  ];
+}
+
+/**
+ * Bangun dokumen KTA.
+ * @param opts.combined — true: satu halaman 856×1080 (depan di atas, belakang di bawah)
+ *   untuk menghasilkan PNG 2 sisi dalam satu gambar. false/default: 2 halaman (PDF).
+ */
+export function buildMemberCardPdf(props: MemberCardPdfProps, opts?: { combined?: boolean }) {
+  const combined = !!opts?.combined;
+  const frontSide = buildFrontSide(props);
+  const backSide = buildBackSide(props);
+
+  if (combined) {
+    return h(
+      Document,
+      null,
+      h(
+        Page,
+        { size: [856, 1080], style: { width: 856, height: 1080, padding: 0, position: 'relative', backgroundColor: WHITE } },
+        // Front (top half)
+        h(
+          View,
+          { key: 'front', style: { position: 'absolute', top: 0, left: 0, width: 856, height: 540, backgroundColor: WHITE } },
+          frontSide,
+        ),
+        // Back (bottom half)
+        h(
+          View,
+          { key: 'back', style: { position: 'absolute', top: 540, left: 0, width: 856, height: 540 } },
+          backSide,
+        ),
+      ),
+    );
+  }
+
   return h(Document, null, [
-    // ── Front side ──
-    h(
-      Page,
-      { size: [856, 540], style: styles.pageFront, key: 'front' },
-      // Backgrounds
-      h(View, { style: styles.bgCircle1 }),
-      h(View, { style: styles.bgCircle2 }),
-      h(View, { style: styles.topBar }),
-      h(View, { style: styles.bottomBar }),
-      h(View, { style: styles.borderInner }),
-      h(
-        View,
-        { style: styles.watermark },
-        h(Text, { style: styles.watermarkText }, 'THS'),
-      ),
-      // Header
-      h(
-        View,
-        { style: styles.headerRow },
-        h(
-          View,
-          { style: styles.logo },
-          h(View, { style: styles.logoInner }, h(Text, null, 'THS')),
-        ),
-        h(
-          View,
-          null,
-          h(Text, { style: styles.orgName }, 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA'),
-          h(Text, { style: styles.distrikName }, `DISTRIK ${distrik.toUpperCase()}`),
-        ),
-      ),
-      // Title
-      h(
-        View,
-        { style: styles.titleBar },
-        h(
-          View,
-          { style: styles.titleBadge },
-          h(Text, { style: styles.titleText }, 'KARTU TANDA ANGGOTA'),
-        ),
-      ),
-      // Photo
-      h(
-        View,
-        { style: styles.photoBox },
-        photoDataUrl
-          ? h(Image, { src: photoDataUrl, style: styles.photoImage })
-          : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
-      ),
-      // Level strips (balok tingkat — sesuai template desain)
-      h(View, { style: styles.levelStrips }, levelStrips),
-      // Info
-      h(
-        View,
-        { style: styles.infoSection },
-        h(
-          View,
-          { style: styles.infoRow },
-          h(Text, { style: styles.infoLabel }, 'Nama'),
-          h(Text, { style: styles.infoValueStrong }, `: ${member.namaLengkap}`),
-        ),
-        h(
-          View,
-          { style: styles.infoRow },
-          h(Text, { style: styles.infoLabel }, 'No. Anggota'),
-          h(Text, { style: styles.infoValue }, `: ${member.nomorAnggota}`),
-        ),
-        h(
-          View,
-          { style: styles.infoRow },
-          h(Text, { style: styles.infoLabel }, 'Ranting'),
-          h(Text, { style: styles.infoValue }, `: ${member.ranting || '-'}`),
-        ),
-        h(
-          View,
-          { style: styles.infoRow },
-          h(Text, { style: styles.infoLabel }, 'Wilayah'),
-          h(Text, { style: styles.infoValue }, `: ${member.wilayah || '-'}`),
-        ),
-        h(
-          View,
-          { style: styles.infoRow },
-          h(Text, { style: styles.infoLabel }, 'Distrik'),
-          h(Text, { style: styles.infoValue }, `: ${distrik}`),
-        ),
-      ),
-      // Bottom left — masa berlaku
-      h(
-        View,
-        { style: styles.bottomInfo },
-        h(Text, { style: styles.validUntil }, 'Berlaku sampai'),
-        h(Text, { style: styles.validUntilValue }, validUntilStr),
-      ),
-      // Bottom right — penandatangan (1-3) + stempel
-      h(
-        View,
-        { style: styles.signature },
-        h(
-          View,
-          { style: styles.sigWrap },
-          h(Text, { style: styles.sigText }, 'ttd'),
-          h(View, { style: styles.stamp }, h(Text, { style: styles.stampText }, 'STEMPEL')),
-        ),
-        ...(cardConfig.signers && cardConfig.signers.length > 0
-          ? cardConfig.signers
-              .filter((s) => s && (s.signerName || s.signerTitle))
-              .map((s, i) =>
-                h(
-                  View,
-                  { key: `sig-${i}`, style: { alignItems: 'center', marginTop: i === 0 ? 0 : 8, width: '100%' } },
-                  s.signerName
-                    ? h(Text, { style: styles.signerName }, s.signerName)
-                    : null,
-                  s.signerTitle
-                    ? h(Text, { style: styles.signerTitle }, s.signerTitle)
-                    : null,
-                ),
-              )
-          : [
-              h(Text, { key: 'sig-n', style: styles.signerName }, cardConfig.signerName),
-              h(Text, { key: 'sig-t', style: styles.signerTitle }, cardConfig.signerTitle),
-            ]),
-      ),
-    ),
-    // ── Back side ──
-    h(
-      Page,
-      { size: [856, 540], style: styles.pageBack, key: 'back' },
-      h(View, { style: styles.borderInner }),
-      h(Text, { style: styles.backTitle }, 'VERIFIKASI KARTU ANGGOTA'),
-      h(Text, { style: styles.backSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),
-      // QR Code
-      h(
-        View,
-        { style: styles.qrSection },
-        h(Image, { src: cardConfig.qrDataUrl, style: styles.qrImage }),
-      ),
-      // Back info
-      h(
-        View,
-        { style: styles.backInfo },
-        h(
-          Text,
-          { style: styles.backDesc },
-          'Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.',
-        ),
-        h(
-          View,
-          { style: styles.backRow },
-          h(Text, { style: styles.backLabel }, 'TTL'),
-          h(Text, { style: styles.backValue }, `: ${ttl}`),
-        ),
-        h(
-          View,
-          { style: styles.backRow },
-          h(Text, { style: styles.backLabel }, 'DADAR'),
-          h(Text, { style: styles.backValue }, `: ${dadar}`),
-        ),
-        h(
-          View,
-          { style: styles.backRow },
-          h(Text, { style: styles.backLabel }, 'Status'),
-          h(Text, { style: styles.backValue }, `: ${member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'}`),
-        ),
-        h(
-          View,
-          { style: styles.backRow },
-          h(Text, { style: styles.backLabel }, 'Valid s/d'),
-          h(Text, { style: styles.backValue }, `: ${validUntilStr}`),
-        ),
-      ),
-      // Footer
-      h(
-        View,
-        { style: styles.backFooter },
-        h(
-          Text,
-          { style: styles.footerText },
-          'Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.',
-        ),
-        h(
-          View,
-          { style: styles.footerUrlBox },
-          h(Text, { style: styles.footerUrlLabel }, 'URL Verifikasi'),
-          h(Text, { style: styles.footerUrl }, cardConfig.verificationUrl),
-        ),
-      ),
-    ),
+    h(Page, { size: [856, 540], style: styles.pageFront, key: 'front' }, frontSide),
+    h(Page, { size: [856, 540], style: styles.pageBack, key: 'back' }, backSide),
   ]);
 }
