@@ -107,6 +107,7 @@ export interface Document {
   status: string;
   filePath?: string;
   qrCode?: string;
+  verificationUrl?: string;
   createdAt: string;
   updatedAt?: string;
 }

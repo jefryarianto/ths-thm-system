@@ -8,6 +8,8 @@ import {
   Linking,
   Image,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -15,7 +17,7 @@ import { LoadingView, InfoRow, StatusBadge, ScreenShell, referenceStyles } from 
 import type { Document } from '../../types';
 
 const TIPE_LABELS: Record<string, string> = {
-  kartu_anggota: 'Kartu Anggota',
+  kartu_anggota: 'Kartu Anggota (KTA)',
   sertifikat_pendadaran: 'Sertifikat Pendadaran',
   sertifikat_pelatihan: 'Sertifikat Pelatihan',
   piagam_prestasi: 'Piagam Prestasi',
@@ -23,9 +25,9 @@ const TIPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: 'Draft', color: '#6b7280', bg: '#f3f4f6' },
-  published: { label: 'Published', color: '#16a34a', bg: '#ecfdf5' },
-  archived: { label: 'Diarsipkan', color: '#d97706', bg: '#fef3c7' },
+  generated: { label: 'Ter-generate', color: '#047857', bg: '#ecfdf5' },
+  downloaded: { label: 'Diunduh', color: '#1d4ed8', bg: '#eff6ff' },
+  revoked: { label: 'Dicabut', color: '#dc2626', bg: '#fef2f2' },
 };
 
 export default function DocumentDetailScreen() {
@@ -60,13 +62,20 @@ export default function DocumentDetailScreen() {
   };
 
   const handleDownload = async () => {
-    if (document.filePath) {
-      try {
-        const url = `${apiClient.defaults.baseURL}${document.filePath}`;
-        await Linking.openURL(url);
-      } catch {
-        Alert.alert('Error', 'Tidak bisa membuka dokumen');
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const url = `${apiClient.defaults.baseURL}/documents/${document.id}/file`;
+      const ext = document.filePath?.toLowerCase().endsWith('.png') ? '.png' : '.pdf';
+      const fileUri = `${FileSystem.cacheDirectory}${document.nomorDokumen || 'dokumen'}${ext}`;
+      const res = await FileSystem.downloadAsync(url, fileUri, { headers });
+      if (res.status !== 200) {
+        Alert.alert('Error', 'File dokumen belum tersedia. Generate ulang dokumen.');
+        return;
       }
+      await Linking.openURL(fileUri);
+    } catch {
+      Alert.alert('Error', 'Tidak bisa membuka dokumen');
     }
   };
 
