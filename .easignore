@@ -1,0 +1,99 @@
+# EAS Build upload filter (root git repo)
+# EAS CLI archivers seluruh root repo (git) lalu copy working directory.
+# .easignore MENGANTIKAN .gitignore — semua .gitignore rules harus
+# disalin ke sini agar upload tidak membocorkan rahasia, nge-bloat, atau
+# tersangkut file bermasalah.
+#
+# Referensi: https://docs.expo.dev/build-reference/easignore/
+
+# ── Monorepo: hanya apps/mobile yang dibutuhkan untuk build EAS ──
+apps/api/
+apps/web/
+packages/
+
+# ── Dokumen non-kode (tidak perlu di build server) ──
+docs/
+Roadmap/
+Roles/
+SPEC/
+Prompt_AI/
+
+# ── Script & tooling lokal ──
+scripts/
+_scripts/
+nginx/
+.claude/
+.kilo/
+opencode.json
+
+# ── Artifak build (EAS Build akan regenerate) ──
+.expo/
+dist/
+build/
+android/build/
+android/app/build/
+ios/build/
+*.tsbuildinfo
+.next/
+
+# ── Dependencies (EAS install sendiri) ──
+.pnpm-store/
+package-lock.json
+
+# ── Environment & secrets (JANGAN diupload!) ──
+.env*
+.env.local
+.env.*.local
+.env.production
+*client_secret*.json
+*firebase-adminsdk*.json
+check.sql
+temp_key.pem
+
+# ── IDE & OS garbage ──
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+NUL
+
+# ── Database & storage ──
+*.db
+*.db-journal
+/uploads/
+/storage/
+apps/api/storage/
+
+# ── Test artifacts ──
+test-results/
+apps/web/test-results/
+coverage/
+blob-report/
+playwright-report/
+
+# ── Logs & debug ──
+*.log
+npm-debug.log*
+api-error.txt
+api-output.txt
+api-server-error.log
+api-server.log
+ci-lint-log.html
+lint-output.txt
+logs.zip
+raw-logs.txt
+raw-logs2.txt
+
+# ── App data (Freebuff dll) ──
+.freebuff/
+.super/
+docs/item.txt
+
+# ── Data mentah impor (berisi informasi pribadi) ──
+/Data Anggota.csv
+/Data larantuka.xlsx
+
+# ── Package node_modules (cadangan di monorepo packages) ──
+packages/templates/node_modules/
