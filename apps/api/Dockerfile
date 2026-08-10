@@ -62,6 +62,9 @@ RUN pnpm --filter @ths-thm/api deploy --prod --legacy --ignore-scripts /app/api-
 # but the generated client at node_modules/.prisma is required at runtime.
 COPY --from=builder /app/node_modules/.prisma /app/api-deploy/node_modules/.prisma
 
+# Copy the Prisma CLI binary for running migrations in production
+COPY --from=builder /app/node_modules/prisma /app/api-deploy/node_modules/prisma
+
 # Move the deployed package to /app. Keep WORKDIR /app because storage paths
 # are resolved relative to process.cwd() (e.g. documents.service.ts uses
 # path.resolve('storage','documents')) and docker-compose mounts ./storage

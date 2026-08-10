@@ -196,10 +196,11 @@ jobs:
             echo "   Pulling images..."
             docker compose -f docker-compose.production.yml pull
 
-            # Run database migrations before restarting (from apps/api/ so prisma finds schema.prisma)
+            # Run database migrations before restarting
+            # Production image flattens API to /app/ — prisma/ is at /app/prisma/
             echo "   Running database migrations..."
             docker compose -f docker-compose.production.yml run --rm api \
-              sh -c "cd apps/api && npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
+              sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
 
             # Stop & remove old containers, then restart with latest config
             echo "   Restarting Docker services..."
