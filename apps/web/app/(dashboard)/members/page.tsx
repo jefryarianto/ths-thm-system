@@ -46,6 +46,9 @@ export default function MembersPage() {
       { key: 'statusKeanggotaan', defaultValue: '' },
       { key: 'statusData', defaultValue: '' },
       { key: 'statusValidasi', defaultValue: '' },
+      { key: 'distrikId', defaultValue: '' },
+      { key: 'wilayahId', defaultValue: '' },
+      { key: 'rantingId', defaultValue: '' },
     ],
   });
   const debouncedSearch = useDebounce(search, 300);
@@ -70,8 +73,45 @@ export default function MembersPage() {
     filters.statusKeanggotaan,
     filters.statusData,
     filters.statusValidasi,
+    filters.distrikId,
+    filters.wilayahId,
+    filters.rantingId,
   ]);
 
+  interface OrgNode { id: string; name: string; children?: OrgNode[]; }
+  interface OrgChartResp { data?: { tree?: OrgNode[] }; }
+
+  const [distrikOptions, setDistrikOptions] = useState<{ value: string; label: string }[]>([]);
+  const [wilayahOptions, setWilayahOptions] = useState<{ value: string; label: string }[]>([]);
+  const [rantingOptions, setRantingOptions] = useState<{ value: string; label: string }[]>([]);
+
+  const loadOrgChart = useCallback(async () => {
+    try {
+      const { data: res } = await apiClient.get<OrgChartResp>('/org-chart');
+      const tree = res?.data?.tree ?? [];
+      // Assumes a single Nasional root with children = distriks
+      const distriks = tree.flatMap(n => n.children ?? []);
+      setDistrikOptions(distriks.map(d => ({ value: d.id, label: d.name })));
+
+      // Populate wilayahs for selected distrik
+      const selDistrik = distriks.find(d => d.id === filters.distrikId);
+      const wil = selDistrik?.children ?? [];
+      setWilayahOptions(wil.map(w => ({ value: w.id, label: w.name })));
+
+      // Populate rantings for selected wilayah
+      const selWilayah = wil.find(w => w.id === filters.wilayahId);
+      const rant = selWilayah?.children ?? [];
+      setRantingOptions(rant.map(r => ({ value: r.id, label: r.name })));
+    } catch {
+      /* ignore */
+    }
+  }, [filters.distrikId, filters.wilayahId]);
+
+  useEffect(() => {
+    loadOrgChart();
+  }, [loadOrgChart]);
+
+  // ─── Fetch stats ───
   const fetchStats = useCallback(async () => {
     try {
       const { data: res } = await apiClient.get('/reports/dashboard');
@@ -222,6 +262,34 @@ export default function MembersPage() {
         onReset={resetFilters}
         placeholder="Cari nama, nomor anggota, email..."
       >
+        {/* Hierarchical filters: Distrik → Wilayah → Ranting */}
+        <FilterSelect
+          value={filters.distrikId}
+          onChange={(v) => {
+            setFilter('distrikId', v);
+            setFilter('wilayahId', '');
+            setFilter('rantingId', '');
+          }}
+          options={distrikOptions}
+          placeholder="Semua Distrik"
+        />
+        <FilterSelect
+          value={filters.wilayahId}
+          onChange={(v) => {
+            setFilter('wilayahId', v);
+            setFilter('rantingId', '');
+          }}
+          options={wilayahOptions}
+          placeholder={filters.distrikId ? 'Semua Wilayah' : 'Pilih Distrik'}
+          disabled={!filters.distrikId}
+        />
+        <FilterSelect
+          value={filters.rantingId}
+          onChange={(v) => setFilter('rantingId', v)}
+          options={rantingOptions}
+          placeholder={filters.wilayahId ? 'Semua Ranting' : 'Pilih Wilayah'}
+          disabled={!filters.wilayahId}
+        />
         <FilterSelect
           value={filters.statusKeanggotaan}
           onChange={(v) => setFilter('statusKeanggotaan', v)}

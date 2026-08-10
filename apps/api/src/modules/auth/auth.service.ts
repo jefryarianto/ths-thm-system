@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Logger,
   Inject,
+  Optional,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
@@ -23,6 +24,7 @@ import {
   UpdateProfileDto,
   ChangePasswordDto,
 } from './dto/auth.dto';
+import { ApprovalService } from '../approvals/approval.service';
 
 interface UserPayload {
   id: string;
@@ -47,6 +49,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     @Inject('ENV') private readonly envConfig: typeof env,
+    @Optional() private readonly approvalService?: ApprovalService,
   ) {}
 
   async login(dto: LoginDto, response?: Response) {
@@ -141,6 +144,9 @@ export class AuthService {
           where: { id: anggota.id },
           data: anggotaData,
         });
+
+        // Recalculate missing fields and trigger approval workflow
+        await this.triggerProfileApproval(anggota.id, userId);
       } else {
         console.warn(
           `updateProfile: No Anggota record found for user ${userId} (email: ${user.email}) — profile fields not synced`,
@@ -149,6 +155,79 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  /**
+   * After a member updates their own profile, recalculate completeness
+   * and trigger the multi-level approval workflow (ranting → wilayah → distrik).
+   */
+  private async triggerProfileApproval(anggotaId: string, userId: string): Promise<void> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const member = await (this.prisma as any).anggota.findUnique({
+        where: { id: anggotaId },
+        select: {
+          namaLengkap: true,
+          jenisKelamin: true,
+          tempatLahir: true,
+          tanggalLahir: true,
+          tempatDadar: true,
+          tahunDadar: true,
+          alamat: true,
+          noHp: true,
+          email: true,
+          tingkat: true,
+        },
+      });
+
+      if (!member) return;
+
+      // Calculate missing fields
+      const missingFields: string[] = [];
+      if (!member.namaLengkap) missingFields.push('nama_lengkap');
+      if (!member.jenisKelamin) missingFields.push('jenis_kelamin');
+      if (!member.tempatLahir) missingFields.push('tempat_lahir');
+      if (!member.tanggalLahir) missingFields.push('tanggal_lahir');
+      if (!member.tempatDadar) missingFields.push('tempat_dadar');
+      if (!member.tahunDadar) missingFields.push('tahun_dadar');
+      if (!member.alamat) missingFields.push('alamat');
+      if (!member.noHp) missingFields.push('no_hp');
+      if (!member.email) missingFields.push('email');
+      if (!member.tingkat) missingFields.push('tingkat');
+
+      const statusData = missingFields.length > 0 ? 'incomplete' : 'complete';
+
+      // Update statusData and missingFields
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (this.prisma as any).anggota.update({
+        where: { id: anggotaId },
+        data: {
+          statusData,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
+        },
+      });
+
+      // If data is now complete, trigger approval workflow
+      if (statusData === 'complete') {
+        // Set statusValidasi to pending
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.prisma as any).anggota.update({
+          where: { id: anggotaId },
+          data: { statusValidasi: 'pending' },
+        });
+
+        // Submit approval request
+        if (this.approvalService) {
+          await this.approvalService.submit(
+            { requestType: 'member_update', itemId: anggotaId },
+            userId,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to trigger profile approval for member ${anggotaId}: ${(error as Error).message}`);
+    }
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {

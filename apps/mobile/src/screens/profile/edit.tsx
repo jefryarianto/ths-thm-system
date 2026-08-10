@@ -18,9 +18,11 @@ import * as ImagePicker from 'expo-image-picker';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
+import { useMemberProfile } from '../../hooks/use-member-profile';
 
 export default function EditProfileScreen() {
   const user = useAuthStore((s) => s.user);
+  const { data: memberProfile, refetch: refetchProfile } = useMemberProfile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -33,6 +35,7 @@ export default function EditProfileScreen() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   // Ubah password
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -84,6 +87,7 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
+    setSaveMsg(null);
     try {
       const payload: Record<string, string> = {};
       if (form.namaLengkap !== user?.namaLengkap) payload.namaLengkap = form.namaLengkap;
@@ -93,8 +97,19 @@ export default function EditProfileScreen() {
       if (form.tanggalLahir) payload.tanggalLahir = form.tanggalLahir;
 
       await apiClient.patch('/auth/me', payload);
-      Alert.alert('Berhasil', 'Profil berhasil diperbarui');
-      router.back();
+
+      // If data was incomplete, show approval message instead of navigating back
+      if (memberProfile?.statusData === 'incomplete') {
+        setSaveMsg({
+          ok: true,
+          text: 'Data berhasil diupdate. Silakan lengkapi field lain, lalu kirim lagi. Data akan diverifikasi oleh admin.',
+        });
+        refetchProfile();
+        setTimeout(() => setSaveMsg(null), 8000);
+      } else {
+        Alert.alert('Berhasil', 'Profil berhasil diperbarui');
+        router.back();
+      }
     } catch (err: any) {
       Alert.alert('Gagal', err?.response?.data?.message || 'Terjadi kesalahan');
     }
@@ -212,6 +227,37 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profil</Text>
         </View>
+
+        {/* Data Incomplete Banner */}
+        {memberProfile?.statusData === 'incomplete' && (
+          <View style={[styles.banner, { backgroundColor: '#fff7ed', borderColor: '#fed7aa' }]}>
+            <Ionicons name="warning" size={20} color="#ea580c" />
+            <View style={styles.bannerInner}>
+              <Text style={styles.bannerTitle}>Data Belum Lengkap</Text>
+              <Text style={styles.bannerContent}>
+                Lengkapi: {memberProfile.missingFields?.map((f: string) => f.replace(/_/g, ' ')).join(', ') || 'lihat form di bawah'}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Approval Status Badge */}
+        {memberProfile?.statusValidasi === 'pending' && memberProfile?.statusData === 'complete' && (
+          <View style={[styles.banner, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}>
+            <Ionicons name="time" size={20} color="#2563eb" />
+            <View style={styles.bannerInner}>
+              <Text style={styles.bannerTitle}>Menunggu Persetujuan</Text>
+              <Text style={styles.bannerContent}>Data Anda diverifikasi oleh admin ranting → wilayah → distrik.</Text>
+            </View>
+          </View>
+        )}
+
+        {saveMsg && (
+          <View style={[styles.banner, { backgroundColor: saveMsg.ok ? '#ecfdf5' : '#fef2f2', borderColor: saveMsg.ok ? '#a7f3d0' : '#fecaca' }]}>
+            <Ionicons name={saveMsg.ok ? 'checkmark-circle' : 'alert-circle'} size={20} color={saveMsg.ok ? '#047857' : '#b91c1c'} />
+            <Text style={[styles.bannerContent, { color: saveMsg.ok ? '#047857' : '#b91c1c', fontWeight: '600' }]}>{saveMsg.text}</Text>
+          </View>
+        )}
 
         <View style={styles.section}>
           {/* Photo */}
@@ -476,4 +522,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   pwBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+
+  // ── Banners ──
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  bannerInner: { flex: 1 },
+  bannerTitle: { fontSize: 14, fontWeight: '700', color: '#9a3412', marginBottom: 2 },
+  bannerContent: { fontSize: 12, color: '#9a3412', lineHeight: 18 },
 });

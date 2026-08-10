@@ -5,8 +5,11 @@ export interface Member {
   id: string;
   namaLengkap: string;
   noAnggota: string;
+  nomorAnggota: string;
   tingkat: string;
   statusKeanggotaan: string;
+  statusData?: 'complete' | 'incomplete';
+  statusValidasi?: 'pending' | 'approved' | 'rejected';
   ranting?: { nama: string };
 }
 

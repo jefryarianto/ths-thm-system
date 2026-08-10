@@ -5,9 +5,11 @@ import { MembersDigitalCardService } from './members-digital-card.service';
 import { MembersWorkflowService } from './members-workflow.service';
 import { PenandatanganModule } from '../penandatangan/penandatangan.module';
 import { TingkatanModule } from '../tingkatan/tingkatan.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ApprovalModule } from '../approvals/approval.module';
 
 @Module({
-  imports: [PenandatanganModule, TingkatanModule],
+  imports: [PenandatanganModule, TingkatanModule, NotificationsModule, ApprovalModule],
   controllers: [MembersController],
   providers: [MembersService, MembersDigitalCardService, MembersWorkflowService],
   exports: [MembersService],

@@ -212,7 +212,13 @@ export class ApprovalService {
         });
         break;
       case 'member_update':
-        // Update already performed, just confirm
+        // Approve data update — set statusValidasi to approved
+        await this.prisma.anggota.update({
+          where: { id: request.itemId },
+          data: { statusValidasi: 'approved', statusData: 'complete' },
+        });
+        // Notify the member that their data has been approved
+        await this.notifyMemberApproved(request.itemId);
         break;
       case 'claim':
         await this.prisma.klaim.update({
@@ -229,6 +235,37 @@ export class ApprovalService {
       case 'certificate':
         // Certificate generation handled by documents service
         break;
+    }
+  }
+
+  private async notifyMemberApproved(anggotaId: string) {
+    try {
+      const member = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { email: true, namaLengkap: true },
+      });
+
+      if (!member?.email) return;
+
+      // Find user by email to send notification
+      const user = await this.prisma.user.findUnique({
+        where: { email: member.email },
+        select: { id: true },
+      });
+
+      if (user && this.notificationsService) {
+        this.notificationsService.send(user.id, {
+          judul: '✅ Data Anggota Disetujui',
+          isi: `Halo ${member.namaLengkap}, data keanggotaan Anda telah disetujui.`,
+          tipe: 'umum',
+          data: {
+            screen: 'members',
+            anggotaId,
+          },
+        }).catch((err) => this.logger.error(`Failed to notify member approval: ${err.message}`));
+      }
+    } catch (error) {
+      this.logger.error(`Failed to notify member ${anggotaId}: ${(error as Error).message}`);
     }
   }
 }

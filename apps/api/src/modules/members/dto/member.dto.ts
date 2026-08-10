@@ -152,10 +152,25 @@ export class MemberFilterDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  distrikId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  wilayahId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   statusKeanggotaan?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   statusValidasi?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  statusData?: string;
 }

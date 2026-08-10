@@ -2,11 +2,27 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useMembers, STATUS_OPTIONS, TINGKAT_OPTIONS } from '../../hooks/use-members';
+import { useMembers } from '../../hooks/use-members';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
+import { useRole } from '../../hooks/use-role';
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Semua' },
+  { value: 'aktif', label: 'Aktif' },
+  { value: 'nonaktif', label: 'Nonaktif' },
+];
+
+const TINGKAT_OPTIONS = [
+  { value: '', label: 'Semua' },
+  { value: 'dasar', label: 'Dasar' },
+  { value: 'menengah', label: 'Menengah' },
+  { value: 'lanjut', label: 'Lanjut' },
+  { value: 'instruktur', label: 'Instruktur' },
+];
 
 export default function MembersScreen() {
+  const { hasMinRole } = useRole();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterTingkat, setFilterTingkat] = useState('');
@@ -23,13 +39,15 @@ export default function MembersScreen() {
           <Text style={styles.headerTitle}>Anggota</Text>
           <Text style={styles.headerSub}>{(members ?? []).length} anggota</Text>
         </View>
-        <TouchableOpacity
-          style={styles.addBtn}
-          activeOpacity={0.7}
-          onPress={() => router.push('/members/create')}
-        >
-          <Ionicons name="add" size={22} color="#fff" />
-        </TouchableOpacity>
+        {hasMinRole('admin_ranting') && (
+          <TouchableOpacity
+            style={styles.addBtn}
+            activeOpacity={0.7}
+            onPress={() => router.push('/members/create')}
+          >
+            <Ionicons name="add" size={22} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <SearchBar value={search} onChangeText={setSearch} placeholder="Cari anggota..." />
@@ -51,6 +69,9 @@ export default function MembersScreen() {
         renderItem={({ item }) => {
           const statusColor = item.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626';
           const statusLabel = item.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif';
+          const isIncomplete = item.statusData === 'incomplete';
+          const validationStatus = item.statusValidasi;
+
           return (
             <TouchableOpacity
               style={styles.card}
@@ -61,12 +82,26 @@ export default function MembersScreen() {
               }}
             >
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.namaLengkap.charAt(0)}</Text>
+                <Text style={styles.avatarText}>{item.namaLengkap?.charAt(0) || '?'}</Text>
               </View>
               <View style={styles.cardBody}>
-                <Text style={styles.name}>{item.namaLengkap}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.name}>{item.namaLengkap}</Text>
+                  {isIncomplete && (
+                    <View style={styles.warningBadge}>
+                      <Ionicons name="warning" size={12} color="#ea580c" />
+                      <Text style={styles.warningText}>Data belum lengkap</Text>
+                    </View>
+                  )}
+                  {validationStatus === 'pending' && (
+                    <View style={styles.pendingBadge}>
+                      <Ionicons name="time" size={12} color="#2563eb" />
+                      <Text style={styles.pendingText}>Menunggu persetujuan</Text>
+                    </View>
+                  )}
+                </View>
                 <View style={styles.metaRow}>
-                  <Text style={styles.metaText}>{item.noAnggota}</Text>
+                  <Text style={styles.metaText}>{item.nomorAnggota || item.noAnggota}</Text>
                   {item.ranting && (
                     <>
                       <Text style={styles.metaDot}>·</Text>
@@ -76,7 +111,34 @@ export default function MembersScreen() {
                   )}
                 </View>
                 <View style={styles.metaRow}>
-                  <Text style={styles.tingkatText}>{item.tingkat}</Text>
+                  <Text style={styles.tingkatText}>{item.tingkat || '-'}</Text>
+                  {item.statusValidasi && (
+                    <Text
+                      style={[
+                        styles.validationBadge,
+                        {
+                          backgroundColor:
+                            item.statusValidasi === 'approved'
+                              ? '#dcfce7'
+                              : item.statusValidasi === 'rejected'
+                              ? '#fef2f2'
+                              : '#eff6ff',
+                          color:
+                            item.statusValidasi === 'approved'
+                              ? '#166534'
+                              : item.statusValidasi === 'rejected'
+                              ? '#991c1b'
+                              : '#2563eb',
+                        },
+                      ]}
+                    >
+                      {item.statusValidasi === 'approved'
+                        ? 'Disetujui'
+                        : item.statusValidasi === 'rejected'
+                        ? 'Ditolak'
+                        : 'Pending'}
+                    </Text>
+                  )}
                 </View>
               </View>
               <View
@@ -126,11 +188,17 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
   cardBody: { flex: 1 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   name: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  warningBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#fed7aa', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+  warningText: { fontSize: 10, color: '#9a3412', fontWeight: '600' },
+  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#dbeafe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+  pendingText: { fontSize: 10, color: '#2563eb', fontWeight: '600' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
   metaText: { fontSize: 12, color: '#6b7280' },
   metaDot: { fontSize: 12, color: '#9ca3af' },
-  tingkatText: { fontSize: 11, color: '#2563eb', fontWeight: '500', marginTop: 2 },
+  tingkatText: { fontSize: 11, color: '#2563eb', fontWeight: '500' },
+  validationBadge: { fontSize: 10, fontWeight: '600', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginLeft: 6 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
   statusText: { fontSize: 11, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60 },

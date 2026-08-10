@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
 import { env } from '../../config/env.validation';
+import { ApprovalModule } from '../approvals/approval.module';
 @Module({
   imports: [
     PassportModule,
@@ -13,6 +14,7 @@ import { env } from '../../config/env.validation';
       secret: env.jwtSecret,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
     }),
+    ApprovalModule,
   ],
   controllers: [AuthController],
   providers: [

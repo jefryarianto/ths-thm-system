@@ -7,6 +7,14 @@ export interface MemberProfile {
   statusKeanggotaan: string;
   nomorAnggota: string;
   tingkat: string;
+  statusData?: 'complete' | 'incomplete';
+  statusValidasi?: 'pending' | 'approved' | 'rejected';
+  missingFields?: string[];
+  email?: string;
+  noHp?: string;
+  tempatLahir?: string;
+  tanggalLahir?: string;
+  alamat?: string;
 }
 
 export function useMemberProfile() {
