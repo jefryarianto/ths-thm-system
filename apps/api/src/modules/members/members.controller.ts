@@ -39,14 +39,26 @@ export class MembersController {
     return this.membersService.searchMembers(q, rantingId, wilayahId);
   }
 
+  @Get('incomplete')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil anggota dengan data tidak lengkap' })
+  getIncompleteMembers(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
+    return this.membersService.getIncompleteMembers(filter, req.scope);
+  }
+
+  @Get('incomplete/stats')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Statistik data tidak lengkap' })
+  getIncompleteStats(@Req() req: ScopedRequest) {
+    return this.membersService.getIncompleteStats(req.scope);
+  }
+
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil semua anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua anggota' })
   findAll(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
     return this.membersService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil detail anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail anggota' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.findOne(id, req.scope);
   }
