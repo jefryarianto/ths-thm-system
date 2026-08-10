@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateDistrikDto,
@@ -67,8 +67,22 @@ export class OrgStructureService {
   }
 
   async deleteDistrik(id: string) {
-    const existing = await this.prisma.distrik.findUnique({ where: { id } });
+    const existing = await this.prisma.distrik.findUnique({
+      where: { id },
+      include: { _count: { select: { wilayahs: true, unitLatihans: true } } },
+    });
     if (!existing) throw new NotFoundException('Distrik tidak ditemukan');
+
+    if (existing._count.wilayahs > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus distrik "${existing.nama}" karena masih memiliki ${existing._count.wilayahs} wilayah. Hapus wilayah terlebih dahulu.`,
+      );
+    }
+    if (existing._count.unitLatihans > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus distrik "${existing.nama}" karena masih memiliki ${existing._count.unitLatihans} unit latihan.`,
+      );
+    }
 
     await this.prisma.distrik.delete({ where: { id } });
   }
@@ -117,8 +131,17 @@ export class OrgStructureService {
   }
 
   async deleteWilayah(id: string) {
-    const existing = await this.prisma.wilayah.findUnique({ where: { id } });
+    const existing = await this.prisma.wilayah.findUnique({
+      where: { id },
+      include: { _count: { select: { rantings: true } } },
+    });
     if (!existing) throw new NotFoundException('Wilayah tidak ditemukan');
+
+    if (existing._count.rantings > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus wilayah "${existing.nama}" karena masih memiliki ${existing._count.rantings} ranting. Hapus ranting terlebih dahulu.`,
+      );
+    }
 
     await this.prisma.wilayah.delete({ where: { id } });
   }
@@ -164,8 +187,27 @@ export class OrgStructureService {
   }
 
   async deleteRanting(id: string) {
-    const existing = await this.prisma.ranting.findUnique({ where: { id } });
+    const existing = await this.prisma.ranting.findUnique({
+      where: { id },
+      include: { _count: { select: { anggota: true, calonAnggotas: true, latihans: true } } },
+    });
     if (!existing) throw new NotFoundException('Ranting tidak ditemukan');
+
+    if (existing._count.anggota > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus ranting "${existing.nama}" karena masih memiliki ${existing._count.anggota} anggota.`,
+      );
+    }
+    if (existing._count.calonAnggotas > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus ranting "${existing.nama}" karena masih memiliki ${existing._count.calonAnggotas} calon anggota.`,
+      );
+    }
+    if (existing._count.latihans > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus ranting "${existing.nama}" karena masih memiliki ${existing._count.latihans} data latihan.`,
+      );
+    }
 
     await this.prisma.ranting.delete({ where: { id } });
   }
