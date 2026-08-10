@@ -360,6 +360,9 @@ importers:
       react-native-web:
         specifier: ~0.19.13
         version: 0.19.13(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      socket.io-client:
+        specifier: ^4.8.3
+        version: 4.8.3(supports-color@8.1.1)
       zustand:
         specifier: ^4.5.0
         version: 4.5.7(@types/react@18.2.0)(react@18.2.0)
