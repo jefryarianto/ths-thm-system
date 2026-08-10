@@ -48,6 +48,10 @@ describe('MembersService', () => {
     importLog: {
       create: jest.fn().mockResolvedValue(undefined),
     },
+    user: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ id: 'u1', email: 'test@test.com' }),
+    },
   };
 
   const mockNraService = {
@@ -283,7 +287,7 @@ describe('MembersService', () => {
       let createdData: any = null;
       mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
         createdData = data;
-        return { id: 'm1', ...data };
+        return { id: 'm1', email: data.email, namaLengkap: data.namaLengkap, rantingId: data.rantingId };
       });
 
       const { result } = await runImport([
@@ -293,6 +297,13 @@ describe('MembersService', () => {
           ranting_id: 'r1',
           nomor_anggota: '001-1994',
           tahun_dadar: '1994',
+          email: 'jefry@test.com',
+          tempat_lahir: 'Jakarta',
+          tanggal_lahir: '1990-01-15',
+          tempat_dadar: 'Bandung',
+          alamat: 'Jl. Test No. 1',
+          no_hp: '081234567890',
+          tingkat: 'Pratama',
         },
       ]);
 
@@ -308,11 +319,23 @@ describe('MembersService', () => {
       let createdData: any = null;
       mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
         createdData = data;
-        return { id: 'm2', ...data };
+        return { id: 'm2', email: data.email, namaLengkap: data.namaLengkap, rantingId: data.rantingId };
       });
 
       const { result } = await runImport([
-        { nama_lengkap: 'Auto NRA', jenis_kelamin: 'P', ranting_id: 'r1', tahun_dadar: '2026' },
+        {
+          nama_lengkap: 'Auto NRA',
+          jenis_kelamin: 'P',
+          ranting_id: 'r1',
+          tahun_dadar: '2026',
+          email: 'auto@test.com',
+          tempat_lahir: 'Jakarta',
+          tanggal_lahir: '1990-01-15',
+          tempat_dadar: 'Bandung',
+          alamat: 'Jl. Test No. 1',
+          no_hp: '081234567890',
+          tingkat: 'Pratama',
+        },
       ]);
 
       expect(result.success).toBe(1);
@@ -325,10 +348,23 @@ describe('MembersService', () => {
       let createdData: any = null;
       mockPrisma.anggota.create.mockImplementation(async ({ data }: any) => {
         createdData = data;
-        return { id: 'm3', ...data };
+        return { id: 'm3', email: data.email, namaLengkap: data.namaLengkap, rantingId: data.rantingId };
       });
 
-      const { result } = await runImport([{ nama_lengkap: 'Scope Ranting', jenis_kelamin: 'L' }], {
+      const { result } = await runImport([
+        {
+          nama_lengkap: 'Scope Ranting',
+          jenis_kelamin: 'L',
+          email: 'scope@test.com',
+          tempat_lahir: 'Jakarta',
+          tanggal_lahir: '1990-01-15',
+          tempat_dadar: 'Bandung',
+          tahun_dadar: '2020',
+          alamat: 'Jl. Test No. 1',
+          no_hp: '081234567890',
+          tingkat: 'Pratama',
+        },
+      ], {
         rantingId: 'r1',
         role: 'admin_ranting',
       });
