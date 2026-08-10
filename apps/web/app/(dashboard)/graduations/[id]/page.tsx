@@ -261,6 +261,25 @@ export default function GraduationDetailPage() {
   // Completeness (5 komponen pendadaran)
   const [completeness, setCompleteness] = useState<Completeness | null>(null);
 
+  // QR Absensi
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const fetchQr = useCallback(async () => {
+    if (!id) return;
+    setQrLoading(true);
+    try {
+      const res = await apiClient.get(`/graduations/${id}/qr`);
+      setQrDataUrl(res.data?.data?.qrDataUrl || null);
+    } catch { /* ignore */ }
+    setQrLoading(false);
+  }, [id]);
+
+  // Reset QR saat pindah ke pendadaran lain (hindari menampilkan QR milik pendadaran sebelumnya)
+  useEffect(() => {
+    setQrDataUrl(null);
+  }, [id]);
+
   const fetchExaminers = useCallback(async () => {
     if (!id) return;
     setExaminersLoading(true);
@@ -806,6 +825,31 @@ export default function GraduationDetailPage() {
                     </div>
                   </div>
                 ))}
+
+                {graduation.status === 'published' && (
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                    <p className="text-xs text-gray-500 uppercase mb-2 flex items-center gap-1.5">
+                      <Mail size={14} /> QR Absensi Pendadaran
+                    </p>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Tampilkan QR ini — anggota memindainya lewat menu Scan QR (mode Check-in) untuk absen hadir.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      {qrLoading ? (
+                        <RefreshCw size={28} className="animate-spin text-gray-400" />
+                      ) : qrDataUrl ? (
+                        <img src={qrDataUrl} alt="QR Absensi Pendadaran" className="w-36 h-36 rounded-lg border border-gray-200 dark:border-gray-700 bg-white p-2" />
+                      ) : (
+                        <button
+                          onClick={fetchQr}
+                          className="text-xs font-medium text-emerald-600 hover:underline"
+                        >
+                          Muat QR
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">

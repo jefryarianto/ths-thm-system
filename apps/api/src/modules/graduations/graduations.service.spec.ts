@@ -866,6 +866,59 @@ describe('GraduationsService', () => {
     });
   });
 
+  describe('checkInByQr', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.user.findUnique.mockReset();
+      mockPrisma.anggota.findFirst.mockReset();
+      mockPrisma.undanganPendadaran.findFirst.mockReset();
+      mockPrisma.undanganPendadaran.update.mockReset();
+      mockPrisma.undanganPendadaran.create.mockReset();
+    });
+
+    it('should mark existing invitation as hadir', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'anggota@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.undanganPendadaran.findFirst.mockResolvedValue({ id: 'inv1' });
+      mockPrisma.undanganPendadaran.update.mockResolvedValue({ id: 'inv1', status: 'hadir' });
+
+      const result = await service.checkInByQr('g1', 'u1');
+      expect(result.status).toBe('hadir');
+      expect(mockPrisma.undanganPendadaran.update).toHaveBeenCalled();
+      expect(mockPrisma.undanganPendadaran.create).not.toHaveBeenCalled();
+    });
+
+    it('should create invitation as hadir when member not invited yet', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'anggota@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.undanganPendadaran.findFirst.mockResolvedValue(null);
+      mockPrisma.undanganPendadaran.create.mockResolvedValue({ id: 'inv2', status: 'hadir' });
+
+      const result = await service.checkInByQr('g1', 'u1');
+      expect(result.status).toBe('hadir');
+      expect(mockPrisma.undanganPendadaran.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'hadir', anggotaId: 'a1' }),
+        }),
+      );
+    });
+
+    it('should throw ForbiddenException when member record not found', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'x@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      await expect(service.checkInByQr('g1', 'u1')).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('getQrDataUrl', () => {
+    it('should return a qr data URL for a graduation', async () => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      const result = await service.getQrDataUrl('g1');
+      expect(result.qrDataUrl).toContain('data:image/png;base64,');
+      expect(JSON.parse(result.payload).type).toBe('graduation');
+    });
+  });
+
   describe('getMyInvitations', () => {
     it('should return invitations for the logged-in member via email match', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'user1', email: 'member@test.com' });

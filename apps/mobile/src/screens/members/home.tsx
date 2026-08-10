@@ -39,6 +39,7 @@ const adminItems: AdminItem[] = [
   { icon: 'people', label: 'Calon', route: '/candidates', minRole: 'admin_kegiatan' },
   // Penguji butuh Pendadaran untuk input nilai (tombolnya ada di detail pendadaran)
   { icon: 'school', label: 'Pendadaran', route: '/graduations', minRole: 'admin_kegiatan', extraRoles: ['penguji'] },
+  { icon: 'ribbon', label: 'Penguji', route: '/examiners', minRole: 'admin_ranting' },
   { icon: 'mail', label: 'Surat', route: '/letters', minRole: 'admin_ranting' },
   { icon: 'stats-chart', label: 'Laporan', route: '/reports', minRole: 'admin_ranting' },
   { icon: 'clipboard', label: 'Aspek', route: '/assessments', minRole: 'penguji' },

@@ -68,6 +68,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
     if (dto.email !== undefined) data.email = dto.email;
     if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
     if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
     return data;
   }
 
@@ -76,9 +77,11 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
 
   async findAll(query: ExaminerFilterDto) {
     return this.baseFindAll(
-      `examiners:list:${query.page || 1}:${query.limit || 10}:${query.search || ''}`,
+      `examiners:list:${query.page || 1}:${query.limit || 10}:${query.search || ''}:${query.includeInactive ? 'all' : 'active'}`,
       async () => {
-        const where: Record<string, unknown> = { role: 'penguji', isActive: true };
+        const where: Record<string, unknown> = { role: 'penguji' };
+        // Default: hanya penguji aktif. includeInactive=true → tampilkan juga nonaktif.
+        if (!query.includeInactive) where.isActive = true;
         if (query.search) where.namaLengkap = { contains: query.search };
         return where;
       },
@@ -86,7 +89,13 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
         page: query.page,
         limit: query.limit,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, email: true, namaLengkap: true, createdAt: true },
+        select: {
+          id: true,
+          email: true,
+          namaLengkap: true,
+          isActive: true,
+          createdAt: true,
+        },
       },
       30,
     );

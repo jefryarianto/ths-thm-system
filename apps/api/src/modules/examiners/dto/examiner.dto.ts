@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, Min, IsEmail } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsEmail, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -32,6 +32,11 @@ export class UpdateExaminerDto {
   @IsOptional()
   @IsString()
   namaLengkap?: string;
+
+  @ApiPropertyOptional({ description: 'Status aktif penguji (false = nonaktif)' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class ExaminerFilterDto {
@@ -53,6 +58,12 @@ export class ExaminerFilterDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({ description: 'Sertakan penguji nonaktif (true = tampilkan semua)' })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  includeInactive?: boolean;
 }
 
 export class AssignExaminerDto {

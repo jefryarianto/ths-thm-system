@@ -18,7 +18,7 @@ interface KegiatanItem {
   nama: string;
   lokasi?: string;
   tanggalMulai: string;
-  type: 'activity' | 'training';
+  type: 'activity' | 'training' | 'graduation';
 }
 
 interface ScanHistoryItem {
@@ -81,13 +81,14 @@ export default function QRScanScreen() {
     setHistory([]);
   };
 
-  // ─── Fetch active activities and trainings ───
+  // ─── Fetch active activities, trainings and pendadaran ───
   const fetchActiveKegiatan = async () => {
     setLoadingKegiatan(true);
     try {
-      const [actRes, trainRes] = await Promise.all([
+      const [actRes, trainRes, gradRes] = await Promise.all([
         apiClient.get('/activities', { params: { status: 'published', limit: 20 } }),
         apiClient.get('/trainings', { params: { limit: 20 } }),
+        apiClient.get('/graduations', { params: { status: 'published', limit: 20 } }),
       ]);
 
       const activities: KegiatanItem[] = (actRes.data?.data || []).map((a: any) => ({
@@ -106,7 +107,15 @@ export default function QRScanScreen() {
         type: 'training' as const,
       }));
 
-      const merged = [...activities, ...trainings];
+      const graduations: KegiatanItem[] = (gradRes.data?.data || []).map((g: any) => ({
+        id: g.id,
+        nama: `🎓 ${g.nama || 'Pendadaran'}`,
+        lokasi: g.lokasi,
+        tanggalMulai: g.tanggalMulai,
+        type: 'graduation' as const,
+      }));
+
+      const merged = [...activities, ...trainings, ...graduations];
       setKegiatanList(merged);
 
       // Auto-select first if only one
@@ -198,14 +207,21 @@ export default function QRScanScreen() {
     }
 
     // Determine correct endpoint based on type
-    const endpoint = kegiatan.type === 'training'
-      ? `/trainings/${kegiatan.id}/attendances`
-      : `/activities/${kegiatan.id}/presence`;
+    let endpoint: string;
+    let payload: Record<string, unknown>;
+    if (kegiatan.type === 'training') {
+      endpoint = `/trainings/${kegiatan.id}/attendances`;
+      payload = { status: 'hadir', catatan: `Check-in via QR: ${qrData.slice(0, 30)}` };
+    } else if (kegiatan.type === 'graduation') {
+      // Pendadaran: QR absensi self check-in (undangan → hadir)
+      endpoint = `/graduations/${kegiatan.id}/checkin`;
+      payload = {};
+    } else {
+      endpoint = `/activities/${kegiatan.id}/presence`;
+      payload = { status: 'hadir', catatan: `Check-in via QR: ${qrData.slice(0, 30)}` };
+    }
 
-    const { data } = await apiClient.post(endpoint, {
-      status: 'hadir',
-      catatan: `Check-in via QR: ${qrData.slice(0, 30)}`,
-    });
+    const { data } = await apiClient.post(endpoint, payload);
 
     const success = data.success === true;
     const result = {

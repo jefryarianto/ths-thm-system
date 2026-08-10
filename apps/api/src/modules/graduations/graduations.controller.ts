@@ -189,6 +189,18 @@ export class GraduationsController {
   // ── Undangan H-7 & konfirmasi kehadiran ──
 
   /** Undangan untuk anggota yang sedang login (self-scope) — semua role termasuk anggota. */
+  @Get(':id/qr')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'QR absensi pendadaran (data URL) untuk ditampilkan admin' })
+  getQr(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getQrDataUrl(id, req.scope);
+  }
+
+  @Post(':id/checkin')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'QR absensi pendadaran — catat kehadiran anggota yang login (self check-in)' })
+  checkInByQr(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.checkInByQr(id, req.user?.id || '', req.scope);
+  }
+
   @Get('invitations/me')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Daftar undangan pendadaran untuk user yang login' })
   getMyInvitations(@Req() req: ScopedRequest) {

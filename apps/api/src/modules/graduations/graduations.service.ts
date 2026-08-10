@@ -11,6 +11,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
+import * as QRCode from 'qrcode';
 import { DocumentsService } from '../documents/documents.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NraService } from '../../common/services/nra.service';
@@ -1106,6 +1107,73 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     });
     this.invalidateCache();
     return updated;
+  }
+
+  /**
+   * QR code (data URL) untuk absensi pendadaran. Dipakai admin web/mobile
+   * untuk menampilkan QR yang dipindai anggota (self check-in).
+   */
+  async getQrDataUrl(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+    const payload = JSON.stringify({ id: graduationId, type: 'graduation' });
+    const qrDataUrl = await QRCode.toDataURL(payload, { width: 240, margin: 2 });
+    return { qrDataUrl, payload };
+  }
+
+  /**
+   * QR absensi (self check-in) untuk kegiatan pendadaran.
+   * Anggota yang login memindai QR pendadaran → catat kehadiran:
+   * - Undangan miliknya (jika ada) di-update menjadi 'hadir'.
+   * - Jika belum diundang (mis. admin catat manual), undangan dibuat dengan
+   *   status 'hadir' agar tercatat di daftar hadir kegiatan.
+   */
+  async checkInByQr(graduationId: string, userId: string, scope?: UserScope) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'cancelled' || grad.status === 'closed') {
+      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan');
+    }
+
+    // Resolve Anggota via email (pola sama seperti forum/self-service)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!user?.email) {
+      throw new ForbiddenException('Akun Anda tidak memiliki email terdaftar');
+    }
+    const anggota = await this.prisma.anggota.findFirst({
+      where: { email: user.email, deletedAt: null },
+      select: { id: true },
+    });
+    if (!anggota) {
+      throw new ForbiddenException('Data keanggotaan Anda tidak ditemukan');
+    }
+
+    // Upsert undangan → 'hadir'
+    const existing = await this.prisma.undanganPendadaran.findFirst({
+      where: { kegiatanId: graduationId, anggotaId: anggota.id },
+      select: { id: true },
+    });
+
+    let invitation;
+    if (existing) {
+      invitation = await this.prisma.undanganPendadaran.update({
+        where: { id: existing.id },
+        data: { status: 'hadir', konfirmasiAt: new Date(), konfirmasiOleh: userId },
+      });
+    } else {
+      invitation = await this.prisma.undanganPendadaran.create({
+        data: { kegiatanId: graduationId, anggotaId: anggota.id, status: 'hadir', konfirmasiAt: new Date(), konfirmasiOleh: userId },
+      });
+    }
+
+    this.invalidateCache();
+    return {
+      success: true,
+      status: 'hadir',
+      anggotaId: anggota.id,
+      undanganId: invitation.id,
+    };
   }
 
   /**

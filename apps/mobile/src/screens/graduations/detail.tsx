@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
+import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, ScreenShell, TabBar } from '../../components/ui/shared';
 import { useRole } from '../../hooks/use-role';
@@ -186,6 +187,25 @@ export default function GraduationDetailScreen() {
               </View>
             </View>
           </View>
+
+          {/* QR Absensi Pendadaran */}
+          {graduation.status === 'published' && (
+            <View style={styles.qrCard}>
+              <View style={styles.qrHeader}>
+                <Ionicons name="qr-code" size={18} color="#059669" />
+                <Text style={styles.qrTitle}>QR Absensi Pendadaran</Text>
+              </View>
+              <Text style={styles.qrHint}>
+                Scan QR ini untuk mencatat kehadiran (anggota yang diundang / daftar hadir)
+              </Text>
+              <View style={styles.qrContainer}>
+                <QRCode
+                  value={JSON.stringify({ id: graduation.id, type: 'graduation' })}
+                  size={160}
+                />
+              </View>
+            </View>
+          )}
         </View>
       )}
 
@@ -430,6 +450,27 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   statusText: { fontSize: 11, fontWeight: '600' },
+
+  // QR Absensi
+  qrCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  qrHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginBottom: 6 },
+  qrTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  qrHint: { fontSize: 12, color: '#6b7280', textAlign: 'center', marginBottom: 16 },
+  qrContainer: {
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
 
   partCard: {
     flexDirection: 'row',
