@@ -253,11 +253,13 @@ export class UjianPraktekService {
   }
 
   async getAvailableExaminers(kegiatanId: string) {
-    // Get examiners already assigned to this kegiatan, plus all users with penguji role
+    // Get examiners already assigned (approved) to this kegiatan, plus all users with penguji role
     const [assigned, allPenguji] = await Promise.all([
       this.prisma.penugasanPenguji.findMany({
-        where: { kegiatanId },
-        select: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
+        where: { kegiatanId, status: 'approved' },
+        select: {
+          pengujiUser: { select: { id: true, namaLengkap: true, email: true, role: true } },
+        },
       }),
       this.prisma.user.findMany({
         where: { role: 'penguji', isActive: true },
@@ -265,9 +267,18 @@ export class UjianPraktekService {
       }),
     ]);
 
+    // Gabungkan penguji dari daftar hadir (bukan role=penguji) yang sudah disetujui
+    // untuk kegiatan ini agar bisa ditugaskan ke sesi ujian praktek.
+    const merged = new Map(allPenguji.map((u) => [u.id, u]));
+    for (const a of assigned) {
+      if (a.pengujiUser.role !== 'penguji' && !merged.has(a.pengujiUser.id)) {
+        merged.set(a.pengujiUser.id, a.pengujiUser);
+      }
+    }
+
     return {
       assignedToKegiatan: assigned.map((a) => a.pengujiUser),
-      allPenguji,
+      allPenguji: Array.from(merged.values()),
     };
   }
 }

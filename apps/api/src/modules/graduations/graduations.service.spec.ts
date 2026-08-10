@@ -49,10 +49,12 @@ describe('GraduationsService', () => {
     },
     user: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     undanganPendadaran: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -507,16 +509,62 @@ describe('GraduationsService', () => {
     });
   });
 
+  describe('getExaminerCandidates', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.user.findMany.mockReset();
+      mockPrisma.undanganPendadaran.findMany.mockReset();
+      mockPrisma.user.findUnique.mockReset();
+    });
+
+    it('should return registered penguji aktif + anggota hadir with sumber', async () => {
+      mockPrisma.user.findMany
+        .mockResolvedValueOnce([
+          { id: 'u1', namaLengkap: 'Penguji Aktif', email: 'p@test.com' },
+        ])
+        // Batch lookup user via email utk anggota hadir
+        .mockResolvedValueOnce([{ id: 'u2', email: 'hadir@test.com' }]);
+      mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
+        {
+          id: 'inv1',
+          status: 'hadir',
+          anggota: { id: 'a1', namaLengkap: 'Anggota Hadir', email: 'hadir@test.com', nomorAnggota: 'LRT-0103-001' },
+        },
+      ]);
+
+      const result = await service.getExaminerCandidates('g1');
+      expect(result.manajemenPenguji).toHaveLength(1);
+      expect(result.manajemenPenguji[0].sumber).toBe('manajemen_penguji');
+      expect(result.daftarHadir).toHaveLength(1);
+      expect(result.daftarHadir[0].sumber).toBe('daftar_hadir');
+      expect(result.daftarHadir[0].id).toBe('u2');
+    });
+
+    it('should skip anggota hadir tanpa akun User atau yang sudah terdaftar penguji', async () => {
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'u1', namaLengkap: 'Penguji Aktif', email: 'p@test.com' }]);
+      mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
+        { id: 'inv1', status: 'hadir', anggota: { id: 'a1', namaLengkap: 'No Akun', email: 'none@test.com', nomorAnggota: null } },
+        { id: 'inv2', status: 'hadir', anggota: { id: 'a2', namaLengkap: 'Sama Penguji', email: 'p@test.com', nomorAnggota: null } },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.getExaminerCandidates('g1');
+      expect(result.daftarHadir).toHaveLength(0);
+    });
+  });
+
   describe('proposeExaminer', () => {
     beforeEach(() => {
       mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
       mockPrisma.user.findUnique.mockReset();
+      mockPrisma.anggota.findFirst.mockReset();
+      mockPrisma.undanganPendadaran.findFirst.mockReset();
       mockPrisma.penugasanPenguji.findFirst.mockReset();
       mockPrisma.penugasanPenguji.create.mockReset();
     });
 
-    it('should create a pending assignment for a penguji', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
+    it('should create a pending assignment for a registered penguji', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
       mockPrisma.penugasanPenguji.create.mockResolvedValue({
         id: 'p1',
@@ -532,15 +580,42 @@ describe('GraduationsService', () => {
       );
     });
 
-    it('should throw BadRequestException when user is not a penguji', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota' });
+    it('should throw BadRequestException for inactive registered penguji', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: false, email: 'p@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
       await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
         BadRequestException,
       );
     });
 
+    it('should throw BadRequestException when user is neither penguji aktif nor hadir', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota', isActive: true, email: 'anggota@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.undanganPendadaran.findFirst.mockResolvedValue(null);
+      await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should allow an anggota that attended (undangan hadir) to be proposed', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota', isActive: true, email: 'hadir@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1' });
+      mockPrisma.undanganPendadaran.findFirst.mockResolvedValue({ id: 'inv1', status: 'hadir' });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
+      mockPrisma.penugasanPenguji.create.mockResolvedValue({
+        id: 'p1',
+        kegiatanId: 'g1',
+        pengujiUserId: 'u1',
+        status: 'pending',
+      });
+
+      const result = await service.proposeExaminer('g1', { pengujiUserId: 'u1' });
+      expect(result.status).toBe('pending');
+      expect(mockPrisma.penugasanPenguji.create).toHaveBeenCalled();
+    });
+
     it('should throw BadRequestException when already proposed', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji' });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1' });
       await expect(service.proposeExaminer('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
         BadRequestException,

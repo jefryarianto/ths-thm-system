@@ -188,7 +188,9 @@ interface ExaminerAssignment {
 interface ExaminerOption {
   id: string;
   namaLengkap: string;
-  email: string;
+  email: string | null;
+  nomorAnggota?: string | null;
+  sumber?: 'manajemen_penguji' | 'daftar_hadir';
 }
 
 interface Completeness {
@@ -272,8 +274,17 @@ export default function GraduationDetailPage() {
   const fetchExaminerOptions = useCallback(async () => {
     if (!id) return;
     try {
-      const res = await apiClient.get('/examiners', { params: { limit: 100 } });
-      setExaminerOptions(res.data?.data || []);
+      const res = await apiClient.get(`/graduations/${id}/examiner-candidates`);
+      const data = res.data?.data || {};
+      const manajemen: ExaminerOption[] = (data.manajemenPenguji || []).map((m: ExaminerOption) => ({
+        ...m,
+        sumber: 'manajemen_penguji',
+      }));
+      const hadir: ExaminerOption[] = (data.daftarHadir || []).map((m: ExaminerOption) => ({
+        ...m,
+        sumber: 'daftar_hadir',
+      }));
+      setExaminerOptions([...manajemen, ...hadir]);
     } catch { /* ignore */ }
   }, [id]);
 
@@ -1389,11 +1400,28 @@ export default function GraduationDetailPage() {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="">Pilih penguji...</option>
-                    {examinerOptions.map((o) => (
-                      <option key={o.id} value={o.id}>{o.namaLengkap} ({o.email})</option>
-                    ))}
+                    {examinerOptions.some((o) => o.sumber === 'manajemen_penguji') && (
+                      <optgroup label="Manajemen Penguji (aktif)">
+                        {examinerOptions
+                          .filter((o) => o.sumber === 'manajemen_penguji')
+                          .map((o) => (
+                            <option key={o.id} value={o.id}>{o.namaLengkap} ({o.email})</option>
+                          ))}
+                      </optgroup>
+                    )}
+                    {examinerOptions.some((o) => o.sumber === 'daftar_hadir') && (
+                      <optgroup label="Daftar Hadir Pendadaran">
+                        {examinerOptions
+                          .filter((o) => o.sumber === 'daftar_hadir')
+                          .map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.namaLengkap} ({o.nomorAnggota || o.email})
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
                     {examinerOptions.length === 0 && (
-                      <option value="" disabled>Belum ada data penguji. Tambahkan di menu Penguji terlebih dahulu.</option>
+                      <option value="" disabled>Belum ada kandidat penguji. Tambahkan di manajemen penguji atau catat kehadiran anggota terlebih dahulu.</option>
                     )}
                   </select>
                 </div>

@@ -691,8 +691,74 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   /**
+   * Kandidat penguji untuk satu pendadaran: (1) penguji terdaftar di
+   * manajemen penguji dengan status aktif, atau (2) anggota yang tercatat
+   * HADIR pada kegiatan ini (konfirmasi kehadiran via aplikasi / scan QR /
+   * absen manual oleh admin kegiatan).
+   */
+  async getExaminerCandidates(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // 1. Manajemen penguji aktif (role='penguji' + isActive)
+    const registered = await this.prisma.user.findMany({
+      where: { role: 'penguji', isActive: true },
+      select: { id: true, namaLengkap: true, email: true },
+      orderBy: { namaLengkap: 'asc' },
+    });
+
+    // 2. Anggota hadir (undangan status='hadir') yang punya akun login (User via email)
+    const hadir = await this.prisma.undanganPendadaran.findMany({
+      where: { kegiatanId: graduationId, status: 'hadir' },
+      include: {
+        anggota: { select: { id: true, namaLengkap: true, email: true, nomorAnggota: true } },
+      },
+    });
+
+    const registeredIds = new Set(registered.map((r) => r.id));
+
+    // Resolve User untuk anggota hadir via email (batch — hindari N+1)
+    const attendeeEmails = hadir
+      .map((inv) => inv.anggota.email)
+      .filter((e): e is string => !!e);
+    const usersByEmail = new Map<string, string>();
+    if (attendeeEmails.length > 0) {
+      const users = await this.prisma.user.findMany({
+        where: { email: { in: attendeeEmails } },
+        select: { id: true, email: true },
+      });
+      for (const u of users) usersByEmail.set(u.email, u.id);
+    }
+
+    const fromAttendance: Array<{
+      id: string;
+      namaLengkap: string;
+      email: string | null;
+      nomorAnggota: string | null;
+      sumber: 'daftar_hadir';
+    }> = [];
+    for (const inv of hadir) {
+      const userId = inv.anggota.email ? usersByEmail.get(inv.anggota.email) : undefined;
+      if (!userId || registeredIds.has(userId)) continue;
+      fromAttendance.push({
+        id: userId,
+        namaLengkap: inv.anggota.namaLengkap,
+        email: inv.anggota.email,
+        nomorAnggota: inv.anggota.nomorAnggota,
+        sumber: 'daftar_hadir',
+      });
+    }
+
+    return {
+      manajemenPenguji: registered.map((r) => ({ ...r, sumber: 'manajemen_penguji' })),
+      daftarHadir: fromAttendance,
+    };
+  }
+
+  /**
    * Admin kegiatan mengajukan penguji untuk pendadaran (status pending).
    * Penguji yang diajukan akan menunggu persetujuan admin distrik.
+   * Calon penguji sah bila: terdaftar di manajemen penguji (aktif) ATAU
+   * tercatat HADIR pada kegiatan ini (undangan status='hadir').
    */
   async proposeExaminer(
     graduationId: string,
@@ -706,10 +772,33 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
 
     const penguji = await this.prisma.user.findUnique({
       where: { id: dto.pengujiUserId },
-      select: { id: true, role: true },
+      select: { id: true, role: true, isActive: true, email: true },
     });
-    if (!penguji || penguji.role !== 'penguji') {
-      throw new BadRequestException('User yang dipilih bukan penguji');
+    if (!penguji) throw new BadRequestException('User yang dipilih tidak ditemukan');
+
+    // Syarat 1: manajemen penguji dengan status aktif
+    const isRegisteredPenguji = penguji.role === 'penguji' && penguji.isActive !== false;
+
+    // Syarat 2: anggota yang tercatat HADIR pada pendadaran ini
+    let isAttendee = false;
+    if (!isRegisteredPenguji && penguji.email) {
+      const anggota = await this.prisma.anggota.findFirst({
+        where: { email: penguji.email, deletedAt: null },
+        select: { id: true },
+      });
+      if (anggota) {
+        const inv = await this.prisma.undanganPendadaran.findFirst({
+          where: { kegiatanId: graduationId, anggotaId: anggota.id, status: 'hadir' },
+          select: { id: true },
+        });
+        isAttendee = !!inv;
+      }
+    }
+
+    if (!isRegisteredPenguji && !isAttendee) {
+      throw new BadRequestException(
+        'Calon penguji harus terdaftar di manajemen penguji (status aktif) atau tercatat HADIR pada pendadaran ini',
+      );
     }
 
     const existing = await this.prisma.penugasanPenguji.findFirst({
