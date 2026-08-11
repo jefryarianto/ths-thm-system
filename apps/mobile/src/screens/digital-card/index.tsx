@@ -401,16 +401,16 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 12 },
   infoLabel: { width: 120, fontSize: 18, fontWeight: '700', color: '#0f2b4a' },
   infoValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#111827' },
-  // Nomor Anggota: pakai font OCR A Extended (di-bold via simulasi shadow,
+  // Nomor Anggota: pakai font OCR A Extended (di-bold via simulasi shadow kuat,
   // karena varian asli font OCR A Extended hanya tersedia weight regular;
   // fontWeight di React Native dengan fontFamily custom berisiko fallback ke font sistem)
   infoValueStrong: {
-    fontSize: 22,
+    fontSize: 23,
     fontFamily: OCR_A_FONT,
     color: '#0f2b4a',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
     textShadowColor: '#0f2b4a',
-    textShadowRadius: 1,
+    textShadowRadius: 2,
     textShadowOffset: { width: 0, height: 0 },
   },
 
