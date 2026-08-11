@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const React = require('react');
-const { Document, Page, View, Text, Image, StyleSheet } = require('@react-pdf/renderer');
+const { Document, Page, View, Text, Image, StyleSheet, Svg, Defs, LinearGradient, Stop, Rect } = require('@react-pdf/renderer');
 const { KTA_LOGO_DATA_URL } = require('./kta-logo');
+const { MAP_INDONESIA_DATA_URL, MAP_INDONESIA_LIGHT_DATA_URL } = require('./map-indonesia');
 
 // ── Palette (sesuai template desain kartu) ──
 const BLUE_900 = '#1e3a5f';
 const BLUE_800 = '#1e4a7a';
 const WHITE = '#ffffff';
-const YELLOW_500 = '#eab308';
 const SLATE_800 = '#1e293b';
 
 /**
@@ -71,16 +71,6 @@ const styles = StyleSheet.create({
     height: 80,
     backgroundColor: BLUE_800,
   },
-  borderInner: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    top: 18,
-    bottom: 18,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'rgba(250,204,21,0.6)',
-  },
   watermark: {
     position: 'absolute',
     left: 0,
@@ -91,8 +81,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   watermarkLogo: {
-    width: 260,
-    height: 260,
+    width: 420,
+    height: 190,
     opacity: 0.07,
   },
   headerRow: {
@@ -101,52 +91,47 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 20,
     paddingHorizontal: 40,
-    paddingTop: 24,
+    paddingTop: 20,
   },
   logo: {
     width: 48,
     height: 48,
     borderRadius: 24,
+    position: 'relative',
+    overflow: 'hidden',
   },
   logoImg: {
     width: 48,
     height: 48,
     borderRadius: 24,
   },
+  row1: {
+    color: WHITE,
+    fontSize: 15,
+    fontWeight: 'heavy',
+    letterSpacing: 2.1,
+  },
+  row2: {
+    color: WHITE,
+    fontSize: 11,
+    fontWeight: 'semibold',
+    opacity: 0.95,
+    letterSpacing: 1.2,
+    marginTop: 1,
+  },
   orgName: {
     color: WHITE,
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: 'heavy',
     letterSpacing: 0.5,
-    lineHeight: 1.1,
+    marginTop: 2,
   },
   distrikName: {
     color: WHITE,
-    fontSize: 17,
+    fontSize: 12.5,
     fontWeight: 'semibold',
     opacity: 0.95,
     marginTop: 2,
-  },
-  titleBar: {
-    position: 'absolute',
-    top: 92,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  titleBadge: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingHorizontal: 32,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: YELLOW_500,
-  },
-  titleText: {
-    fontSize: 24,
-    fontWeight: 'heavy',
-    color: BLUE_900,
-    letterSpacing: 4,
   },
   photoBox: {
     position: 'absolute',
@@ -301,9 +286,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backWatermarkImg: {
-    width: 260,
-    height: 260,
-    opacity: 0.12,
+    width: 420,
+    height: 190,
+    opacity: 0.14,
   },
   backTitle: {
     position: 'absolute',
@@ -442,6 +427,40 @@ interface MemberCardPdfProps {
 
 const h = React.createElement;
 
+/**
+ * Microprint / guilloche border — beberapa lapis garis tipis anti-fotokopi
+ * (didukung penuh @react-pdf/renderer: Svg + Rect + strokeDasharray).
+ */
+function guillocheBorder(strokeColor: string) {
+  return h(
+    Svg,
+    { width: 856, height: 540, viewBox: '0 0 856 540', style: { position: 'absolute', top: 0, left: 0 } },
+    h(Rect, { x: 16, y: 16, width: 824, height: 508, rx: 22, fill: 'none', stroke: strokeColor, strokeWidth: 1.2, opacity: 0.45 }),
+    h(Rect, { x: 22, y: 22, width: 812, height: 496, rx: 18, fill: 'none', stroke: strokeColor, strokeWidth: 0.8, strokeDasharray: '3 5', opacity: 0.35 }),
+    h(Rect, { x: 27, y: 27, width: 802, height: 486, rx: 14, fill: 'none', stroke: strokeColor, strokeWidth: 0.5, opacity: 0.2 }),
+  );
+}
+
+/** Hologram / foil shimmer — gradient diagonal semi-transparan. */
+function ShimmerOverlay({ width, height, id, colors }: { width: number; height: number; id: string; colors: [string, string, string] }) {
+  return h(
+    Svg,
+    { width, height, viewBox: `0 0 ${width} ${height}`, style: { position: 'absolute', top: 0, left: 0 } },
+    h(
+      Defs,
+      null,
+      h(
+        LinearGradient,
+        { id, x1: '0%', y1: '0%', x2: '100%', y2: '100%' },
+        h(Stop, { offset: '0%', stopColor: colors[0] }),
+        h(Stop, { offset: '50%', stopColor: colors[1] }),
+        h(Stop, { offset: '100%', stopColor: colors[2] }),
+      ),
+    ),
+    h(Rect, { x: 0, y: 0, width, height, fill: `url(#${id})` }),
+  );
+}
+
 /** Konten sisi depan (tanpa Page — dipakai untuk halaman normal & gabungan). */
 function buildFrontSide(props: MemberCardPdfProps) {
   const { member, cardConfig } = props;
@@ -474,32 +493,31 @@ function buildFrontSide(props: MemberCardPdfProps) {
     h(View, { key: 'bg2', style: styles.bgCircle2 }),
     h(View, { key: 'top', style: styles.topBar }),
     h(View, { key: 'bottom', style: styles.bottomBar }),
-    h(View, { key: 'border', style: styles.borderInner }),
+    // Guilloche / microprint border (lapis garis tipis anti-fotokopi)
+    guillocheBorder('rgba(29,78,216,0.4)'),
+    // Watermark — peta Indonesia
     h(
       View,
       { key: 'wm', style: styles.watermark },
-      h(Image, { src: KTA_LOGO_DATA_URL, style: styles.watermarkLogo }),
+      h(Image, { src: MAP_INDONESIA_DATA_URL, style: styles.watermarkLogo }),
     ),
-    // Header
+    // Header — 4 baris + logo
     h(
       View,
       { key: 'header', style: styles.headerRow },
-      h(View, { key: 'logo', style: styles.logo }, h(Image, { src: KTA_LOGO_DATA_URL, style: styles.logoImg })),
+      h(
+        View,
+        { key: 'logo', style: styles.logo },
+        h(Image, { src: KTA_LOGO_DATA_URL, style: styles.logoImg }),
+        h(ShimmerOverlay, { width: 48, height: 48, id: 'logoShimmerFront', colors: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)'] }),
+      ),
       h(
         View,
         { key: 'headertxt' },
+        h(Text, { style: styles.row1 }, 'KARTU TANDA ANGGOTA'),
+        h(Text, { style: styles.row2 }, 'ORGANISASI PENCAK SILAT PENDIDIKAN'),
         h(Text, { style: styles.orgName }, 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA'),
-        h(Text, { style: styles.distrikName }, `DISTRIK ${distrik.toUpperCase()}`),
-      ),
-    ),
-    // Title
-    h(
-      View,
-      { key: 'title', style: styles.titleBar },
-      h(
-        View,
-        { key: 'badge', style: styles.titleBadge },
-        h(Text, { style: styles.titleText }, 'KARTU TANDA ANGGOTA'),
+        h(Text, { style: styles.distrikName }, `DISTRIK KEUSKUPAN ${distrik.toUpperCase()}`),
       ),
     ),
     // Photo
@@ -561,6 +579,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
       h(
         View,
         { key: 'sigwrap', style: styles.sigWrap },
+        h(ShimmerOverlay, { width: 192, height: 80, id: 'sigShimmerFront', colors: ['rgba(34,211,238,0.2)', 'rgba(255,255,255,0.3)', 'rgba(252,211,77,0.2)'] }),
         h(Text, { key: 'sigttd', style: styles.sigText }, 'ttd'),
         h(View, { key: 'stamp', style: styles.stamp }, h(Text, { style: styles.stampText }, 'STEMPEL')),
       ),
@@ -608,11 +627,11 @@ function buildBackSide(props: MemberCardPdfProps) {
   });
 
   return [
-    h(View, { key: 'border', style: styles.borderInner }),
+    guillocheBorder('rgba(191,219,254,0.4)'),
     h(
       View,
       { key: 'wm', style: styles.backWatermarkLogo },
-      h(Image, { src: KTA_LOGO_DATA_URL, style: styles.backWatermarkImg }),
+      h(Image, { src: MAP_INDONESIA_LIGHT_DATA_URL, style: styles.backWatermarkImg }),
     ),
     h(Text, { key: 'title', style: styles.backTitle }, 'VERIFIKASI KARTU ANGGOTA'),
     h(Text, { key: 'sub', style: styles.backSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),

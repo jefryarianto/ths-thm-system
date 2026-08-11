@@ -389,18 +389,22 @@ export default function MemberDetailPage() {
   .front .bg-circle2 { position: absolute; bottom: -110px; left: -80px; width: 380px; height: 380px; border-radius: 50%; background: rgba(29,78,216,0.08); }
   .front .top-bar { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: linear-gradient(90deg, #1e3a5f, #1d4ed8, #06b6d4); }
   .front .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(90deg, #0f2b4a, #1e40af, #0891b2); }
-  .front .border-inner, .back .border-inner { position: absolute; inset: 18px; border-radius: 20px; border: 2px solid rgba(250,204,21,0.6); }
+  .guilloche { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .watermark img { width: 260px; height: 260px; opacity: 0.06; }
+  .watermark svg, .back .wm svg { width: 420px; height: 190px; opacity: 0.05; }
   .content { position: relative; z-index: 10; height: 100%; padding: 0; }
-  .header-row { display: flex; align-items: flex-start; gap: 20px; padding: 24px 40px 0; color: #fff; }
-  .logo { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); }
+  .header-row { display: flex; align-items: flex-start; gap: 20px; padding: 20px 40px 0; color: #fff; }
+  .logo { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); position: relative; }
   .logo img { width: 100%; height: 100%; object-fit: cover; }
-  .header-text { line-height: 1.2; }
-  .header-text .org { font-size: 22px; font-weight: 900; letter-spacing: 0.02em; }
-  .header-text .sub { font-size: 17px; font-weight: 600; opacity: 0.95; }
-  .title-badge { position: absolute; left: 0; right: 0; text-align: center; top: 92px; }
-  .title-badge span { display: inline-block; padding: 8px 32px; border-radius: 999px; background: rgba(255,255,255,0.9); border: 1px solid #eab308; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 24px; font-weight: 900; letter-spacing: 0.18em; color: #1e3a5f; }
+  .logo .shimmer { position: absolute; inset: 0; background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%); }
+  .header-text { line-height: 1.25; }
+  .header-text .row1 { font-size: 15px; font-weight: 900; letter-spacing: 0.14em; }
+  .header-text .row2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; opacity: 0.95; }
+  .header-text .org { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; margin-top: 2px; }
+  .header-text .sub { font-size: 12.5px; font-weight: 600; opacity: 0.95; margin-top: 2px; }
+  .sig-wrap .shimmer { position: absolute; inset: -4px; border-radius: 12px; background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(255,255,255,0.3), rgba(252,211,77,0.2)); }
+  .back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .back .wm svg { opacity: 0.12; fill: #cbd5e1; }
   .photo { position: absolute; left: 40px; top: 165px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .level-strips { position: absolute; left: 40px; top: 412px; width: 185px; display: flex; flex-direction: column; gap: 6px; }
   .level-strip { height: 14px; width: 100%; border-radius: 4px; border: 1px solid rgba(0,0,0,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -437,17 +441,18 @@ export default function MemberDetailPage() {
 <div class="card front">
   <div class="bg-circle1"></div><div class="bg-circle2"></div>
   <div class="top-bar"></div><div class="bottom-bar"></div>
-  <div class="border-inner"></div>
-  <div class="watermark"><img src="${logoUrl}" alt="" /></div>
+  <svg class="guilloche" viewBox="0 0 856 540" aria-hidden="true"><defs><pattern id="g-front" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke="rgba(29,78,216,0.3)" stroke-width="0.5"/></pattern></defs><rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#g-front)" stroke-width="14"/></svg>
+  <div class="watermark"><svg viewBox="0 0 400 180" fill="#1e3a5f" aria-hidden="true"><path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/><path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/><path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/><path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/><path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/><path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/><path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/><path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/><path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/></svg></div>
   <div class="content">
     <div class="header-row">
-      <div class="logo"><img src="${logoUrl}" alt="THS-THM" /></div>
+      <div class="logo"><img src="${logoUrl}" alt="THS-THM" /><div class="shimmer"></div></div>
       <div class="header-text">
+        <div class="row1">KARTU TANDA ANGGOTA</div>
+        <div class="row2">ORGANISASI PENCAK SILAT PENDIDIKAN</div>
         <div class="org">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
-        <div class="sub">DISTRIK ${distrik}</div>
+        <div class="sub">DISTRIK KEUSKUPAN ${distrik}</div>
       </div>
     </div>
-    <div class="title-badge"><span>KARTU TANDA ANGGOTA</span></div>
     <div class="photo">${photoHtml}</div>
     <div class="level-strips">${stripHtml}</div>
     <div class="info">
@@ -463,6 +468,7 @@ export default function MemberDetailPage() {
     </div>
     <div class="signature">
       <div class="sig-wrap">
+        <div class="shimmer"></div>
         <div class="sig">ttd</div>
         <div class="stamp">STEMPEL</div>
       </div>
@@ -472,8 +478,8 @@ export default function MemberDetailPage() {
   </div>
 </div>
 <div class="card back page-break">
-  <div class="border-inner"></div>
-  <div class="wm"><img src="${logoUrl}" alt="" /></div>
+  <svg class="guilloche" viewBox="0 0 856 540" aria-hidden="true"><defs><pattern id="g-back" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke="rgba(191,219,254,0.4)" stroke-width="0.5"/></pattern></defs><rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#g-back)" stroke-width="14"/></svg>
+  <div class="wm"><svg viewBox="0 0 400 180" fill="#cbd5e1" aria-hidden="true"><path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/><path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/><path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/><path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/><path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/><path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/><path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/><path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/><path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/></svg></div>
   <div class="content">
     <div class="title">
       <h2>VERIFIKASI KARTU ANGGOTA</h2>
@@ -1003,32 +1009,48 @@ export default function MemberDetailPage() {
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-white to-blue-100" />
                       <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-cyan-300/30" />
                       <div className="absolute -bottom-28 -left-20 w-96 h-96 rounded-full bg-blue-700/15" />
-                      <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-blue-900 via-blue-700 to-cyan-500" />
+                      <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-900 via-blue-700 to-cyan-500" />
                       <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600" />
-                      <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
-                      
-                      {/* Watermark — logo resmi */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
-                        <img src="/logo.png" alt="" className="w-64 h-64 object-contain" />
+
+                      {/* Guilloche / microprint border pattern */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 856 540" aria-hidden="true">
+                        <defs>
+                          <pattern id="guilloche-front" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+                            <path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke="rgba(29,78,216,0.3)" strokeWidth="0.5" />
+                          </pattern>
+                        </defs>
+                        <rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#guilloche-front)" strokeWidth="14" />
+                      </svg>
+
+                      {/* Watermark — peta Indonesia */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
+                        <svg viewBox="0 0 400 180" className="w-[420px] h-[190px]" fill="#1e3a5f" aria-hidden="true">
+                          <path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/>
+                          <path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/>
+                          <path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/>
+                          <path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/>
+                          <path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/>
+                          <path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/>
+                          <path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/>
+                          <path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/>
+                          <path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/>
+                        </svg>
                       </div>
-        
+
                       {/* Content */}
                       <div className="relative z-10 h-full">
-                        {/* Header */}
-                        <div className="px-10 pt-6 flex items-start gap-5 text-white">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                        {/* Header — 4 baris + logo */}
+                        <div className="px-10 pt-5 flex items-start gap-5 text-white">
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0 relative">
                             <img src="/logo.png" alt="THS-THM" className="w-full h-full object-cover" />
+                            {/* Hologram / foil shimmer overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent" />
                           </div>
                           <div className="leading-tight">
-                            <div className="text-[22px] font-black tracking-wide">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
-                            <div className="text-[17px] font-semibold opacity-95">DISTRIK {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
-                          </div>
-                        </div>
-        
-                        {/* Title */}
-                        <div className="absolute top-[92px] left-0 right-0 text-center">
-                          <div className="inline-block px-8 py-2 rounded-full bg-white/90 border border-yellow-500 shadow-sm">
-                            <span className="text-[24px] font-black tracking-[0.18em] text-blue-900">KARTU TANDA ANGGOTA</span>
+                            <div className="text-[15px] font-black tracking-[0.14em]">KARTU TANDA ANGGOTA</div>
+                            <div className="text-[11px] font-semibold tracking-[0.08em] opacity-95">ORGANISASI PENCAK SILAT PENDIDIKAN</div>
+                            <div className="text-[16px] font-black tracking-wide mt-0.5">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
+                            <div className="text-[12.5px] font-semibold opacity-95 mt-0.5">DISTRIK KEUSKUPAN {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
                           </div>
                         </div>
         
@@ -1068,7 +1090,9 @@ export default function MemberDetailPage() {
                         </div>
                         <div className="absolute right-12 bottom-9 text-center text-white">
                           <div className="relative h-20 w-48">
-                            <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-white/90">ttd</div>
+                            {/* Hologram / foil shimmer overlay on signature */}
+                            <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-cyan-300/20 via-white/30 to-amber-200/20" />
+                            <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-white/95">ttd</div>
                             <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/90 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
                           </div>
                           <div className="text-[16px] font-black border-t border-white/60 pt-1">{cardData?.signerName || 'Koordinator Distrik'}</div>
@@ -1082,9 +1106,27 @@ export default function MemberDetailPage() {
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
                     <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border border-slate-300 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600">
-                      <div className="absolute inset-[18px] rounded-[20px] border-2 border-yellow-400/80" />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
-                        <img src="/logo.png" alt="" className="w-64 h-64 object-contain" />
+                      {/* Guilloche / microprint border pattern */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 856 540" aria-hidden="true">
+                        <defs>
+                          <pattern id="guilloche-back" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+                            <path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke="rgba(191,219,254,0.4)" strokeWidth="0.5" />
+                          </pattern>
+                        </defs>
+                        <rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#guilloche-back)" strokeWidth="14" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.12]">
+                        <svg viewBox="0 0 400 180" className="w-[420px] h-[190px]" fill="#cbd5e1" aria-hidden="true">
+                          <path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/>
+                          <path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/>
+                          <path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/>
+                          <path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/>
+                          <path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/>
+                          <path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/>
+                          <path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/>
+                          <path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/>
+                          <path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/>
+                        </svg>
                       </div>
                       <div className="relative z-10 h-full">
                         <div className="absolute top-7 left-0 right-0 text-center">

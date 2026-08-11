@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import Svg, { Path, Rect, Defs, Pattern, LinearGradient, Stop } from 'react-native-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 
@@ -16,6 +17,77 @@ const CARD_H = 540;
 // Nama font harus SAMA PERSIS dgn nama family internal file TTF: "OCR A Extended"
 // (cek metadata TTF via System.Drawing/FontBook; nama family = "OCR A Extended", ada spasi)
 const OCR_A_FONT = 'OCR A Extended';
+
+// ─── Siluet peta Indonesia (watermark) — viewBox 0 0 400 180 ───
+const INDONESIA_MAP_PATHS = [
+  'M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z',
+  'M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z',
+  'M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z',
+  'M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z',
+  'M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z',
+  'M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z',
+  'M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z',
+  'M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z',
+  'M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z',
+];
+
+/** Watermark peta Indonesia (SVG inline). */
+function IndonesiaMapWatermark({ color, opacity, size = { width: 420, height: 190 } }: { color: string; opacity: number; size?: { width: number; height: number } }) {
+  return (
+    <Svg width={size.width} height={size.height} viewBox="0 0 400 180" style={{ opacity }}>
+      {INDONESIA_MAP_PATHS.map((d, i) => (
+        <Path key={i} d={d} fill={color} />
+      ))}
+    </Svg>
+  );
+}
+
+/** Guilloche / microprint border — garis sinusoidal tipis mengelilingi kartu.
+ *  Memakai beberapa rect berlapis (strokeDasharray) yang andal di react-native-svg,
+ *  plus pattern sinusoidal halus sebagai dekorasi tambahan. */
+function GuillocheBorder({ patternId, strokeColor }: { patternId: string; strokeColor: string }) {
+  return (
+    <Svg width={CARD_W} height={CARD_H} viewBox="0 0 856 540" style={styles.guilloche}>
+      <Defs>
+        <Pattern id={patternId} x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+          <Path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke={strokeColor} strokeWidth={0.5} />
+        </Pattern>
+      </Defs>
+      <Rect x={16} y={16} width={824} height={508} rx={22} fill="none" stroke={strokeColor} strokeWidth={1.2} opacity={0.45} />
+      <Rect x={22} y={22} width={812} height={496} rx={18} fill="none" stroke={strokeColor} strokeWidth={0.8} strokeDasharray="3 5" opacity={0.35} />
+      <Rect x={27} y={27} width={802} height={486} rx={14} fill="none" stroke={strokeColor} strokeWidth={0.5} opacity={0.2} />
+      <Rect x={16} y={16} width={824} height={508} rx={22} fill="none" stroke={`url(#${patternId})`} strokeWidth={14} opacity={0.5} />
+    </Svg>
+  );
+}
+
+/** Hologram / foil shimmer overlay (gradient diagonal) — Svg + LinearGradient + Rect. */
+function ShimmerOverlay({
+  id,
+  width,
+  height,
+  colors,
+  borderRadius = 0,
+}: {
+  id: string;
+  width: number;
+  height: number;
+  colors: [string, string, string];
+  borderRadius?: number;
+}) {
+  return (
+    <Svg width={width} height={height} style={styles.shimmerOverlay}>
+      <Defs>
+        <LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor={colors[0]} />
+          <Stop offset="50%" stopColor={colors[1]} />
+          <Stop offset="100%" stopColor={colors[2]} />
+        </LinearGradient>
+      </Defs>
+      <Rect x={0} y={0} width={width} height={height} rx={borderRadius} fill={`url(#${id})`} />
+    </Svg>
+  );
+}
 
 // ─── Types ───
 
@@ -119,28 +191,29 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
       <View style={styles.bgCircle2} />
       <View style={styles.topBar} />
       <View style={styles.bottomBar} />
-      <View style={styles.borderInner} />
 
-      {/* Watermark — logo resmi */}
+      {/* Guilloche / microprint border */}
+      <GuillocheBorder patternId="g-front" strokeColor="rgba(29,78,216,0.3)" />
+
+      {/* Watermark — peta Indonesia */}
       <View style={styles.watermarkWrap} pointerEvents="none">
-        <Image source={LOGO} style={styles.watermarkLogo} resizeMode="contain" />
+        <IndonesiaMapWatermark color="#1e3a5f" opacity={0.05} />
       </View>
 
       <View style={styles.content}>
-        {/* Header */}
+        {/* Header — 4 baris + logo */}
         <View style={styles.headerRow}>
           <View style={styles.logo}>
             <Image source={LOGO} style={styles.logoImg} resizeMode="cover" />
+            {/* Hologram / foil shimmer overlay */}
+            <ShimmerOverlay id="logoShimmer" width={48} height={48} colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']} borderRadius={24} />
           </View>
           <View style={styles.headerText}>
-            <Text style={styles.orgName} numberOfLines={2}>TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</Text>
-            <Text style={styles.distrikName} numberOfLines={1}>DISTRIK {distrik.toUpperCase()}</Text>
+            <Text style={styles.row1} numberOfLines={1}>KARTU TANDA ANGGOTA</Text>
+            <Text style={styles.row2} numberOfLines={1}>ORGANISASI PENCAK SILAT PENDIDIKAN</Text>
+            <Text style={styles.orgName} numberOfLines={1}>TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</Text>
+            <Text style={styles.distrikName} numberOfLines={1}>DISTRIK KEUSKUPAN {distrik.toUpperCase()}</Text>
           </View>
-        </View>
-
-        {/* Title badge */}
-        <View style={styles.titleBadge}>
-          <Text style={styles.titleText}>KARTU TANDA ANGGOTA</Text>
         </View>
 
         {/* Photo */}
@@ -177,6 +250,8 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
         {/* Signer */}
         <View style={styles.signerBox}>
           <View style={styles.sigWrap}>
+            {/* Hologram / foil shimmer overlay */}
+            <ShimmerOverlay id="sigShimmer" width={192} height={80} colors={['rgba(34,211,238,0.25)', 'rgba(255,255,255,0.35)', 'rgba(252,211,77,0.25)']} borderRadius={12} />
             <Text style={styles.sig}>ttd</Text>
             <View style={styles.stamp}>
               <Text style={styles.stampText}>STEMPEL</Text>
@@ -202,9 +277,12 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
 function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { member: MemberInfo | null; cardData: CardData | null; ttl: string; dadar: string; validUntilText: string }) {
   return (
     <CardShell dark>
-      <View style={styles.borderInner} />
+      {/* Guilloche / microprint border */}
+      <GuillocheBorder patternId="g-back" strokeColor="rgba(191,219,254,0.4)" />
+
+      {/* Watermark — peta Indonesia */}
       <View style={styles.backWatermarkWrap} pointerEvents="none">
-        <Image source={LOGO} style={styles.backWatermarkLogo} resizeMode="contain" />
+        <IndonesiaMapWatermark color="#cbd5e1" opacity={0.12} />
       </View>
 
       <View style={styles.content}>
@@ -337,47 +415,28 @@ const styles = StyleSheet.create({
   bgCircle2: { position: 'absolute', bottom: -110, left: -80, width: 380, height: 380, borderRadius: 190, backgroundColor: 'rgba(29,78,216,0.08)' },
   topBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 64, backgroundColor: '#1d4ed8' },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, backgroundColor: '#0f2b4a' },
-  borderInner: {
-    position: 'absolute',
-    top: 18, left: 18, right: 18, bottom: 18,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'rgba(250,204,21,0.6)',
-  },
+  guilloche: { position: 'absolute', top: 0, left: 0 },
+  shimmerOverlay: { position: 'absolute', top: 0, left: 0 },
 
-  watermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 0.07 },
+  watermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 1 },
   watermarkLogo: { width: 260, height: 260 },
-  backWatermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 0.12 },
+  backWatermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 1 },
   backWatermarkLogo: { width: 260, height: 260 },
   watermarkText: { fontSize: 48, fontWeight: '900', color: '#1e3a5f' },
 
   content: { ...StyleSheet.absoluteFillObject, zIndex: 10 },
 
-  // ── Header ──
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 20, paddingTop: 24, paddingHorizontal: 40 },
+  // ── Header — 4 baris ──
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 20, paddingTop: 20, paddingHorizontal: 40 },
   logo: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#fff', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 3 },
   logoImg: { width: 48, height: 48 },
   logoInner: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', borderWidth: 1, borderColor: '#334155', alignItems: 'center', justifyContent: 'center' },
   logoText: { fontSize: 9, fontWeight: '900', color: '#1e3a5f' },
   headerText: { flex: 1, paddingTop: 2 },
-  orgName: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 0.5 },
-  distrikName: { fontSize: 17, fontWeight: '600', color: '#fff', opacity: 0.95, marginTop: 2 },
-
-  // ── Title badge ──
-  titleBadge: { position: 'absolute', top: 92, left: 0, right: 0, alignItems: 'center' },
-  titleText: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#1e3a5f',
-    letterSpacing: 4,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderWidth: 1,
-    borderColor: '#eab308',
-    borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 32,
-    overflow: 'hidden',
-  },
+  row1: { fontSize: 15, fontWeight: '900', color: '#fff', letterSpacing: 2.1 },
+  row2: { fontSize: 11, fontWeight: '600', color: '#fff', opacity: 0.95, letterSpacing: 1.2, marginTop: 1 },
+  orgName: { fontSize: 16, fontWeight: '900', color: '#fff', letterSpacing: 0.5, marginTop: 2 },
+  distrikName: { fontSize: 12.5, fontWeight: '600', color: '#fff', opacity: 0.95, marginTop: 2 },
 
   // ── Photo ──
   photoBox: {
