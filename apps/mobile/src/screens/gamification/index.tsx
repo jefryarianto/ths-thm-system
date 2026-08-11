@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import apiClient from '../../lib/api-client';
+import apiClient, { unwrap } from '../../lib/api-client';
 import {
   View,
   Text,
@@ -14,11 +14,11 @@ import {
   Alert,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { router } from 'expo-router';
 import { useRefresh } from '../../hooks/use-refresh';
+import { useAuthStore } from '../../store/auth-store';
 import {
   useGamificationProfile,
   usePointsHistory,
@@ -228,6 +228,10 @@ function getTimeAgo(dateStr: string) {
 }
 
 export default function GamificationScreen() {
+  // Admin Reward hanya untuk role admin — anggota/penguji tidak perlu melihatnya
+  const userRole = useAuthStore((s) => s.user?.role);
+  const isAdminRole = !!userRole && userRole !== 'anggota' && userRole !== 'penguji';
+
   const [anggotaId, setAnggotaId] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -244,13 +248,14 @@ export default function GamificationScreen() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const pageSize = 10;
 
-  // Load anggotaId from AsyncStorage once
+  // Load anggotaId dari /members/me (id anggota sebenarnya — bukan id User akun)
   useEffect(() => {
-    AsyncStorage.getItem('user').then((userStr) => {
-      const user = userStr ? JSON.parse(userStr) : null;
-      setAnggotaId(user?.anggotaId || user?.id || null);
-      setLoadingUser(false);
-    });
+    apiClient
+      .get('/members/me')
+      .then((res) => unwrap<{ id: string } | null>(res))
+      .then((me) => setAnggotaId(me?.id || null))
+      .catch(() => setAnggotaId(null))
+      .finally(() => setLoadingUser(false));
   }, []);
 
   // Hooks for independent data sources
@@ -378,6 +383,36 @@ export default function GamificationScreen() {
                   </View>
                 )}
               </View>
+              {/* Cara Mendapatkan Poin — biar tidak bingung asal poin */}
+              <View style={styles.howPointsCard}>
+                <View style={styles.howPointsHeader}>
+                  <Ionicons name="help-circle" size={18} color="#3b82f6" />
+                  <Text style={styles.howPointsTitle}>Cara Mendapatkan Poin</Text>
+                </View>
+                <View style={styles.howPointsRow}>
+                  <Text style={styles.howPointsIcon}>🥋</Text>
+                  <Text style={styles.howPointsDesc}>Hadir latihan rutin</Text>
+                  <Text style={styles.howPointsValue}>+10</Text>
+                </View>
+                <View style={styles.howPointsRow}>
+                  <Text style={styles.howPointsIcon}>💰</Text>
+                  <Text style={styles.howPointsDesc}>Bayar iuran tepat waktu</Text>
+                  <Text style={styles.howPointsValue}>+20</Text>
+                </View>
+                <View style={styles.howPointsRow}>
+                  <Text style={styles.howPointsIcon}>💸</Text>
+                  <Text style={styles.howPointsDesc}>Bayar iuran terlambat</Text>
+                  <Text style={styles.howPointsValue}>+5</Text>
+                </View>
+                <View style={styles.howPointsRow}>
+                  <Text style={styles.howPointsIcon}>🏅</Text>
+                  <Text style={styles.howPointsDesc}>Raih badge (streak & keaktifan)</Text>
+                  <Text style={styles.howPointsValue}>Bonus</Text>
+                </View>
+                <Text style={styles.howPointsNote}>
+                  Poin dihitung otomatis dari aktivitas. Nilai dapat diubah pengurus.
+                </Text>
+              </View>
               {pointsHistory && pointsHistory.length > 1 && (
                 <View style={styles.chartSection}>
                   <Text style={styles.chartTitle}>Perkembangan Poin</Text>
@@ -445,6 +480,14 @@ export default function GamificationScreen() {
           <View style={styles.leaderboardHeader}>
             <Ionicons name="trophy" size={24} color="#f59e0b" />
             <Text style={styles.leaderboardTitle}>Peringkat Anggota</Text>
+            <TouchableOpacity
+              style={styles.publicRankButton}
+              onPress={() => router.push('/public-leaderboard')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="earth" size={14} color="#fff" />
+              <Text style={styles.publicRankButtonText}>Peringkat Publik</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={16} color="#9ca3af" style={styles.searchIcon} />
@@ -709,13 +752,15 @@ export default function GamificationScreen() {
       </AnimatedTabContent>
 
       <Confetti visible={showConfetti} onFinish={() => setShowConfetti(false)} />
-      <TouchableOpacity
-        style={styles.adminButton}
-        onPress={() => router.push('/admin-rewards' as never)}
-      >
-        <Ionicons name="settings" size={16} color="#6b7280" />
-        <Text style={styles.adminButtonText}>Admin Reward</Text>
-      </TouchableOpacity>
+      {isAdminRole && (
+        <TouchableOpacity
+          style={styles.adminButton}
+          onPress={() => router.push('/admin-rewards' as never)}
+        >
+          <Ionicons name="settings" size={16} color="#6b7280" />
+          <Text style={styles.adminButtonText}>Admin Reward</Text>
+        </TouchableOpacity>
+      )}
       <GamificationTour show={tourVisible} onClose={() => setTourVisible(false)} />
       <TouchableOpacity style={styles.tourButton} onPress={() => setTourVisible(true)}>
         <Ionicons name="help-circle" size={18} color="#3b82f6" />
@@ -860,7 +905,18 @@ const styles = StyleSheet.create({
   eventPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
 
   leaderboardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  leaderboardTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937' },
+  leaderboardTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', flexShrink: 1 },
+  publicRankButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 'auto',
+    backgroundColor: '#2563eb',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  publicRankButtonText: { fontSize: 12, fontWeight: '600', color: '#fff' },
   leaderboardItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -991,6 +1047,29 @@ const styles = StyleSheet.create({
   },
   levelIcon: { fontSize: 16 },
   levelName: { fontSize: 13, fontWeight: '700' },
+
+  // ── Cara Mendapatkan Poin ──
+  howPointsCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 16,
+  },
+  howPointsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  howPointsTitle: { fontSize: 14, fontWeight: '700', color: '#1f2937' },
+  howPointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  howPointsIcon: { fontSize: 16, width: 28 },
+  howPointsDesc: { flex: 1, fontSize: 13, color: '#374151' },
+  howPointsValue: { fontSize: 13, fontWeight: '700', color: '#f59e0b' },
+  howPointsNote: { fontSize: 11, color: '#9ca3af', marginTop: 10, lineHeight: 16 },
 
   loadMoreButton: {
     flexDirection: 'row',

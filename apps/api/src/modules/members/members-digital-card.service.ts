@@ -50,9 +50,26 @@ export class MembersDigitalCardService {
     return this.penandatanganService.resolveActive();
   }
 
+  /** Resolve gambar tanda tangan & stempel aktif (dari tabel settings). */
+  private async resolveSignatureStamp() {
+    try {
+      const [signature, stamp] = await Promise.all([
+        this.prisma.tandaTangan.findFirst({ where: { isActive: true }, orderBy: { updatedAt: 'desc' } }),
+        this.prisma.stempel.findFirst({ where: { isActive: true }, orderBy: { updatedAt: 'desc' } }),
+      ]);
+      return {
+        signatureImage: signature?.imagePath || null,
+        stampImage: stamp?.imagePath || null,
+      };
+    } catch {
+      return { signatureImage: null, stampImage: null };
+    }
+  }
+
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
     const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
+    const { signatureImage, stampImage } = await this.resolveSignatureStamp();
 
     return {
       success: true,
@@ -61,6 +78,8 @@ export class MembersDigitalCardService {
         member: memberData,
         qrCode: qrDataUrl,
         levelVisual,
+        signatureImage,
+        stampImage,
       },
     };
   }

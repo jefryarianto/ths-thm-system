@@ -180,10 +180,11 @@ function getLevelVisual(tingkat?: string | null, fromApi?: { stripCount: number;
 
 function InfoPreview({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="grid grid-cols-[120px_1fr] gap-2 mt-3 items-start">
-      <div className="text-[18px] font-bold text-blue-950">{label}</div>
-      <div className={`${strong ? 'text-[25px] font-black text-blue-950' : 'text-[18px] font-semibold text-slate-800'}`}>
-        : {value}
+    <div className="flex items-start gap-2 mt-3">
+      <div className="w-[150px] text-[18px] font-bold text-blue-950 uppercase">{label}</div>
+      <div className="w-[18px] text-[18px] font-bold text-slate-900">:</div>
+      <div className={`${strong ? 'text-[23px] font-black text-blue-950 tracking-[1.5px]' : 'text-[18px] font-semibold text-slate-900'}`}>
+        {value}
       </div>
     </div>
   );
@@ -191,9 +192,10 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
 
 function BackPreview({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[105px_1fr] gap-2 text-[18px] mb-3">
-      <div className="font-black text-blue-950">{label}</div>
-      <div className="font-semibold">: {value}</div>
+    <div className="flex gap-2 text-[18px] mb-3">
+      <div className="w-[105px] font-black text-blue-950 uppercase">{label}</div>
+      <div className="w-[18px] font-black text-slate-900">:</div>
+      <div className="font-semibold">{value}</div>
     </div>
   );
 }
@@ -243,6 +245,8 @@ export default function MemberDetailPage() {
     qrCode: string;
     signerName?: string;
     signerTitle?: string;
+    signatureImage?: string | null;
+    stampImage?: string | null;
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -284,6 +288,8 @@ export default function MemberDetailPage() {
               qrCode: data.data.qrCode,
               signerName: data.data.card?.signerName,
               signerTitle: data.data.card?.signerTitle,
+              signatureImage: data.data.signatureImage || null,
+              stampImage: data.data.stampImage || null,
               levelVisual: data.data.levelVisual || null,
             });
           }
@@ -368,7 +374,9 @@ export default function MemberDetailPage() {
         .join('');
       const photoHtml = m.fotoPath
         ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}" alt="Foto" style="width:100%;height:100%;object-fit:cover"/>`
-        : '<span style="font-size:18px;font-weight:600;color:#94a3b8">FOTO</span>';
+        : m.jenisKelamin === 'P'
+          ? `<svg viewBox="0 0 512 512" style="width:130px;height:170px;opacity:0.9;margin:30px auto 0;display:block"><g fill="#94a3b8"><circle cx="256" cy="170" r="85"/><path d="M60 311c45-4 61-50 67-98 8-74-3-168 85-204 70-28 161 10 171 111 0 69 19 186 81 191-4 12-23 20-46 24 75 24 97 65 94 154h-161l78-91 72 25-47-89c-14-3-26-7-35-14l-2-1c-3 35-38 103-65 159-26-55-61-122-65-157-10 9-24 14-39 17l-45 85 72-25-72 91H0c-3-91 20-130 95-154-18-5-32-13-35-24z"/></g></svg>`
+          : `<svg viewBox="0 0 512 512" style="width:130px;height:170px;opacity:0.9;margin:30px auto 0;display:block"><g fill="#94a3b8"><circle cx="256" cy="170" r="85"/><path d="M135 212c5-13 15-9 31-3l0-1c8-84 50-72 94-82v265c-20 1-39-8-58-24-21-18-39-30-40-67-5 2-10 2-15-1-13-7-14-34-12-47z"/><path d="M108 93c68-84 147-130 205-55 72 4 97 122 37 167 5-64-14-93-43-107-56 61-130-6-141 110l-27-14c-3-33 5-91-31-101z"/></g></svg>`;
       const signerName = data.data.card?.signerName || 'Koordinator Distrik';
       const signerTitle = data.data.card?.signerTitle || 'THS-THM';
       const logoUrl = `${window.location.origin}/logo.png`;
@@ -387,40 +395,45 @@ export default function MemberDetailPage() {
   .card.back { background: linear-gradient(135deg, #1e3a5f, #1e40af, #0891b2); border: 2px solid #1e3a5f; }
   .front .bg-circle1 { position: absolute; top: -80px; right: -80px; width: 320px; height: 320px; border-radius: 50%; background: rgba(6,182,212,0.15); }
   .front .bg-circle2 { position: absolute; bottom: -110px; left: -80px; width: 380px; height: 380px; border-radius: 50%; background: rgba(29,78,216,0.08); }
-  .front .top-bar { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: linear-gradient(90deg, #1e3a5f, #1d4ed8, #06b6d4); }
-  .front .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(90deg, #0f2b4a, #1e40af, #0891b2); }
+  .front .top-bar { position: absolute; top: 0; left: 0; right: 0; height: 104px; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+  .front .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 96px; background: linear-gradient(315deg, #93c5fd, #dbeafe); }
   .guilloche { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .watermark svg, .back .wm svg { width: 420px; height: 190px; opacity: 0.05; }
+  .watermark svg { width: 480px; height: 166px; opacity: 0.55; }
+  .back .wm svg { width: 480px; height: 166px; opacity: 0.65; }
   .content { position: relative; z-index: 10; height: 100%; padding: 0; }
-  .header-row { display: flex; align-items: flex-start; gap: 20px; padding: 20px 40px 0; color: #fff; }
-  .logo { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); position: relative; }
-  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .header-row { display: flex; align-items: center; gap: 14px; padding: 14px 24px; color: #fff; }
+  .logo { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); position: relative; }
+  .logo img { width: 60px; height: 60px; object-fit: contain; }
   .logo .shimmer { position: absolute; inset: 0; background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%); }
-  .header-text { line-height: 1.25; }
-  .header-text .row1 { font-size: 15px; font-weight: 900; letter-spacing: 0.14em; }
-  .header-text .row2 { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; opacity: 0.95; }
-  .header-text .org { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; margin-top: 2px; }
-  .header-text .sub { font-size: 12.5px; font-weight: 600; opacity: 0.95; margin-top: 2px; }
+  .header-text { line-height: 19px; }
+  .header-text .row1 { font-size: 16px; font-weight: 900; letter-spacing: 2px; }
+  .header-text .row2 { font-size: 16px; font-weight: 900; letter-spacing: 1.1px; margin-top: 1px; }
+  .header-text .org { font-size: 16px; font-weight: 900; letter-spacing: 0.5px; margin-top: 1px; }
+  .header-text .sub { font-size: 16px; font-weight: 900; margin-top: 1px; }
   .sig-wrap .shimmer { position: absolute; inset: -4px; border-radius: 12px; background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(255,255,255,0.3), rgba(252,211,77,0.2)); }
   .back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .back .wm svg { opacity: 0.12; fill: #cbd5e1; }
+  .back .wm svg { opacity: 0.65; fill: #ffffff; }
   .photo { position: absolute; left: 40px; top: 165px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .level-strips { position: absolute; left: 40px; top: 412px; width: 185px; display: flex; flex-direction: column; gap: 6px; }
   .level-strip { height: 14px; width: 100%; border-radius: 4px; border: 1px solid rgba(0,0,0,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
   .info { position: absolute; left: 255px; top: 162px; right: 40px; }
-  .info-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; margin-top: 12px; align-items: start; }
-  .info-row .label { font-size: 18px; font-weight: 700; color: #1e3a5f; }
-  .info-row .name { font-size: 25px; font-weight: 900; color: #1e3a5f; }
-  .info-row .value { font-size: 18px; font-weight: 600; color: #1e293b; }
-  .bottom-info { position: absolute; left: 40px; bottom: 40px; color: #fff; font-size: 15px; }
-  .bottom-info .expiry { font-size: 22px; font-weight: 900; }
-  .signature { position: absolute; right: 48px; bottom: 36px; text-align: center; color: #fff; }
+  .info-row { display: flex; gap: 8px; margin-top: 12px; align-items: flex-start; }
+  .info-row .label { width: 150px; font-size: 18px; font-weight: 700; color: #1e3a5f; text-transform: uppercase; }
+  .info-row .colon { width: 18px; font-size: 18px; font-weight: 700; color: #111827; }
+  .info-row .name { font-size: 23px; font-weight: 900; color: #0f2b4a; letter-spacing: 1.5px; }
+  .info-row .value { font-size: 18px; font-weight: 600; color: #111827; }
+  .bottom-info { position: absolute; left: 40px; bottom: 40px; color: #111827; }
+  .bottom-info .label { font-size: 13px; font-weight: 700; color: #1e3a5f; }
+  .bottom-info .expiry { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .signature { position: absolute; right: 48px; bottom: 36px; text-align: center; color: #111827; }
   .signature .sig-wrap { position: relative; height: 80px; width: 192px; margin-bottom: 4px; }
-  .signature .sig { position: absolute; left: 32px; top: 0; font-size: 38px; font-family: cursive; transform: rotate(-8deg); color: rgba(255,255,255,0.9); }
-  .signature .stamp { position: absolute; right: 0; top: 0; width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(191,219,254,0.9); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #dbeafe; transform: rotate(-12deg); }
-  .signature .title { font-size: 16px; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.6); padding-top: 4px; }
-  .signature .subtitle { font-size: 13px; font-weight: 600; opacity: 0.9; }
+  .signature .sig { position: absolute; left: 32px; top: 0; font-size: 38px; font-family: cursive; transform: rotate(-8deg); color: #334155; }
+  .signature .sig img { position: absolute; left: 8px; top: 0; width: 176px; height: 76px; object-fit: contain; opacity: 0.9; }
+  .signature .stamp { position: absolute; left: 52px; top: 0; width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(30,64,175,0.55); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #1e40af; transform: rotate(-12deg); overflow: hidden; }
+  .signature .stamp img { width: 100%; height: 100%; object-fit: contain; opacity: 0.9; }
+  .signature .title { font-size: 16px; font-weight: 900; color: #111827; border-top: 1px solid rgba(15,43,74,0.3); padding-top: 4px; }
+  .signature .subtitle { font-size: 13px; font-weight: 600; color: #111827; margin-top: 2px; }
   .back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
   .back .wm img { width: 260px; height: 260px; opacity: 0.1; }
   .back .title { position: absolute; left: 0; right: 0; text-align: center; top: 28px; color: #fff; }
@@ -429,8 +442,9 @@ export default function MemberDetailPage() {
   .qr-box { position: absolute; left: 48px; top: 145px; width: 210px; height: 210px; background: #fff; border-radius: 16px; border: 4px solid #1e3a5f; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 16px; display: flex; align-items: center; justify-content: center; }
   .qr-box img { width: 100%; height: 100%; }
   .back-info { position: absolute; left: 300px; top: 145px; right: 48px; background: rgba(255,255,255,0.9); border-radius: 16px; border: 1px solid rgba(191,219,254,0.5); padding: 24px; color: #334155; }
-  .back-info .row { display: grid; grid-template-columns: 105px 1fr; gap: 8px; font-size: 18px; margin-bottom: 12px; }
-  .back-info .row .lbl { font-weight: 900; color: #1e3a5f; }
+  .back-info .row { display: flex; gap: 8px; font-size: 18px; margin-bottom: 12px; }
+  .back-info .row .lbl { width: 105px; font-weight: 900; color: #1e3a5f; text-transform: uppercase; }
+  .back-info .row .colon { width: 18px; font-weight: 900; color: #111827; }
   .back-info .row .val { font-weight: 600; }
   .back-info .desc { font-size: 18px; line-height: 1.5; margin-bottom: 16px; }
   .back-footer { position: absolute; left: 48px; right: 48px; bottom: 32px; display: flex; align-items: flex-end; justify-content: space-between; color: #fff; font-size: 15px; }
@@ -456,21 +470,22 @@ export default function MemberDetailPage() {
     <div class="photo">${photoHtml}</div>
     <div class="level-strips">${stripHtml}</div>
     <div class="info">
-      <div class="info-row"><span class="label">Nama</span><span class="name">: ${toProperCase(m.namaLengkap)}</span></div>
-      <div class="info-row"><span class="label">No. Anggota</span><span class="value">: ${m.nomorAnggota}</span></div>
-      <div class="info-row"><span class="label">Ranting</span><span class="value">: ${m.ranting || '-'}</span></div>
-      <div class="info-row"><span class="label">Wilayah</span><span class="value">: ${m.wilayah || '-'}</span></div>
-      <div class="info-row"><span class="label">Distrik</span><span class="value">: ${distrik}</span></div>
+      <div class="info-row"><span class="label">No. Anggota</span><span class="colon">:</span><span class="name">${(m.nomorAnggota || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Nama</span><span class="colon">:</span><span class="value">${(m.namaLengkap || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Tempat Lahir</span><span class="colon">:</span><span class="value">${(m.tempatLahir || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Tanggal Lahir</span><span class="colon">:</span><span class="value">${(m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Ranting</span><span class="colon">:</span><span class="value">${(m.ranting || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Wilayah</span><span class="colon">:</span><span class="value">${(m.wilayah || '-').toUpperCase()}</span></div>
     </div>
     <div class="bottom-info">
-      <div>Berlaku sampai</div>
+      <div class="label">Berlaku sampai</div>
       <div class="expiry">${expiry}</div>
     </div>
     <div class="signature">
       <div class="sig-wrap">
         <div class="shimmer"></div>
-        <div class="sig">ttd</div>
-        <div class="stamp">STEMPEL</div>
+        ${data.data.signatureImage ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.signatureImage)}" alt="ttd" style="position:absolute;left:8px;top:0;width:176px;height:76px;object-fit:contain;opacity:0.9"/>` : '<div class="sig">ttd</div>'}
+        <div class="stamp">${data.data.stampImage ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.stampImage)}" alt="stempel"/>` : 'STEMPEL'}</div>
       </div>
       <div class="title">${signerName}</div>
       <div class="subtitle">${signerTitle}</div>
@@ -488,10 +503,10 @@ export default function MemberDetailPage() {
     <div class="qr-box">${qr ? `<img src="${qr}" alt="QR"/>` : '<div style="width:100%;height:100%;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:4px">' + Array.from({length:25},(_,i)=>`<div style="background:${i%3===0||i%7===0?'#0f172a':'#e2e8f0'};border-radius:2px"></div>`).join('') + '</div>'}</div>
     <div class="back-info">
       <p class="desc">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
-      <div class="row"><span class="lbl">TTL</span><span class="val">: ${ttl}</span></div>
-      <div class="row"><span class="lbl">DADAR</span><span class="val">: ${dadar}</span></div>
-      <div class="row"><span class="lbl">Status</span><span class="val">: ${m.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'}</span></div>
-      <div class="row"><span class="lbl">Valid s/d</span><span class="val">: ${expiry}</span></div>
+      <div class="row"><span class="lbl">TTL</span><span class="colon">:</span><span class="val">${ttl.toUpperCase()}</span></div>
+      <div class="row"><span class="lbl">DADAR</span><span class="colon">:</span><span class="val">${dadar.toUpperCase()}</span></div>
+      <div class="row"><span class="lbl">Status</span><span class="colon">:</span><span class="val">${(m.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif').toUpperCase()}</span></div>
+      <div class="row"><span class="lbl">VALID S/D</span><span class="colon">:</span><span class="val">${expiry}</span></div>
     </div>
     <div class="back-footer">
       <div>Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
@@ -1009,8 +1024,8 @@ export default function MemberDetailPage() {
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-white to-blue-100" />
                       <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-cyan-300/30" />
                       <div className="absolute -bottom-28 -left-20 w-96 h-96 rounded-full bg-blue-700/15" />
-                      <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-900 via-blue-700 to-cyan-500" />
-                      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-r from-blue-950 via-blue-800 to-cyan-600" />
+                      <div className="absolute top-0 left-0 right-0 h-[104px] bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800" />
+                      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-tr from-blue-300/70 via-blue-200/50 to-cyan-100/30" />
 
                       {/* Guilloche / microprint border pattern */}
                       <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 856 540" aria-hidden="true">
@@ -1022,9 +1037,9 @@ export default function MemberDetailPage() {
                         <rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#guilloche-front)" strokeWidth="14" />
                       </svg>
 
-                      {/* Watermark — peta Indonesia */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
-                        <svg viewBox="0 0 400 180" className="w-[420px] h-[190px]" fill="#1e3a5f" aria-hidden="true">
+                      {/* Watermark — peta Indonesia (jelas terlihat seperti mobile) */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.55]">
+                        <svg viewBox="0 0 400 180" className="w-[480px] h-[166px]" fill="#1d4ed8" aria-hidden="true">
                           <path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/>
                           <path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/>
                           <path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/>
@@ -1039,27 +1054,40 @@ export default function MemberDetailPage() {
 
                       {/* Content */}
                       <div className="relative z-10 h-full">
-                        {/* Header — 4 baris + logo */}
-                        <div className="px-10 pt-5 flex items-start gap-5 text-white">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0 relative">
-                            <img src="/logo.png" alt="THS-THM" className="w-full h-full object-cover" />
+                        {/* Header — 4 baris semua bold + logo utuh (contain) */}
+                        <div className="px-6 pt-3.5 flex items-center gap-3.5 text-white">
+                          <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow flex items-center justify-center flex-shrink-0 relative">
+                            <img src="/logo.png" alt="THS-THM" className="w-[60px] h-[60px] object-contain" />
                             {/* Hologram / foil shimmer overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
                           </div>
-                          <div className="leading-tight">
-                            <div className="text-[15px] font-black tracking-[0.14em]">KARTU TANDA ANGGOTA</div>
-                            <div className="text-[11px] font-semibold tracking-[0.08em] opacity-95">ORGANISASI PENCAK SILAT PENDIDIKAN</div>
-                            <div className="text-[16px] font-black tracking-wide mt-0.5">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
-                            <div className="text-[12.5px] font-semibold opacity-95 mt-0.5">DISTRIK KEUSKUPAN {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
+                          <div className="leading-[19px]">
+                            <div className="text-[16px] font-black tracking-[2px]">KARTU TANDA ANGGOTA</div>
+                            <div className="text-[16px] font-black tracking-[1.1px] mt-px">ORGANISASI PENCAK SILAT PENDIDIKAN</div>
+                            <div className="text-[16px] font-black tracking-[0.5px] mt-px">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
+                            <div className="text-[16px] font-black mt-px">DISTRIK KEUSKUPAN {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
                           </div>
                         </div>
         
-                        {/* Photo */}
+                        {/* Photo — fallback siluet sesuai jenis kelamin (sama seperti mobile) */}
                         <div className="absolute left-10 top-[165px] w-[185px] h-[235px] rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden">
                           {member.fotoPath ? (
                             <img src={`/api/uploads/${encodeURIComponent(member.fotoPath)}`} alt="Foto" className="w-full h-full object-cover" />
+                          ) : member.jenisKelamin === 'P' ? (
+                            <svg viewBox="0 0 512 512" className="w-[130px] h-[170px] opacity-90 mx-auto mt-[30px]" aria-hidden="true">
+                              <g fill="#94a3b8">
+                                <circle cx="256" cy="170" r="85"/>
+                                <path d="M60 311c45-4 61-50 67-98 8-74-3-168 85-204 70-28 161 10 171 111 0 69 19 186 81 191-4 12-23 20-46 24 75 24 97 65 94 154h-161l78-91 72 25-47-89c-14-3-26-7-35-14l-2-1c-3 35-38 103-65 159-26-55-61-122-65-157-10 9-24 14-39 17l-45 85 72-25-72 91H0c-3-91 20-130 95-154-18-5-32-13-35-24z"/>
+                              </g>
+                            </svg>
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-slate-300 to-slate-100 flex items-center justify-center text-slate-500 font-bold text-lg">FOTO</div>
+                            <svg viewBox="0 0 512 512" className="w-[130px] h-[170px] opacity-90 mx-auto mt-[30px]" aria-hidden="true">
+                              <g fill="#94a3b8">
+                                <circle cx="256" cy="170" r="85"/>
+                                <path d="M135 212c5-13 15-9 31-3l0-1c8-84 50-72 94-82v265c-20 1-39-8-58-24-21-18-39-30-40-67-5 2-10 2-15-1-13-7-14-34-12-47z"/>
+                                <path d="M108 93c68-84 147-130 205-55 72 4 97 122 37 167 5-64-14-93-43-107-56 61-130-6-141 110l-27-14c-3-33 5-91-31-101z"/>
+                              </g>
+                            </svg>
                           )}
                         </div>
 
@@ -1074,29 +1102,40 @@ export default function MemberDetailPage() {
                           ))}
                         </div>
         
-                        {/* Info */}
+                        {/* Info — semua UPPERCASE, tanpa Distrik (sudah di header) */}
                         <div className="absolute left-[255px] top-[162px] right-10 text-slate-800">
-                          <InfoPreview label="Nama" value={toProperCase(member.namaLengkap)} strong />
-                          <InfoPreview label="No. Anggota" value={member.nomorAnggota} />
-                          <InfoPreview label="Ranting" value={member.ranting?.nama || '-'} />
-                          <InfoPreview label="Wilayah" value={member.ranting?.wilayah?.nama || '-'} />
-                          <InfoPreview label="Distrik" value={member.ranting?.wilayah?.distrik?.nama || '-'} />
+                          <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
+                          <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
+                          <InfoPreview label="Tempat Lahir" value={(member.tempatLahir || '-').toUpperCase()} />
+                          <InfoPreview label="Tanggal Lahir" value={(member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-').toUpperCase()} />
+                          <InfoPreview label="Ranting" value={(member.ranting?.nama || '-').toUpperCase()} />
+                          <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
                         </div>
         
-                        {/* Bottom */}
-                        <div className="absolute left-10 bottom-10 text-white">
-                          <div className="text-[15px] opacity-90">Berlaku sampai</div>
-                          <div className="text-[22px] font-black">{validUntilText}</div>
+                        {/* Bottom — hitam, ukuran mengikuti nama penandatangan */}
+                        <div className="absolute left-10 bottom-10">
+                          <div className="text-[13px] font-bold text-blue-950">Berlaku sampai</div>
+                          <div className="text-[16px] font-bold text-slate-900 mt-0.5">{validUntilText}</div>
                         </div>
-                        <div className="absolute right-12 bottom-9 text-center text-white">
+                        <div className="absolute right-12 bottom-9 text-center text-slate-900">
                           <div className="relative h-20 w-48">
                             {/* Hologram / foil shimmer overlay on signature */}
                             <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-cyan-300/20 via-white/30 to-amber-200/20" />
-                            <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-white/95">ttd</div>
-                            <div className="absolute right-0 top-0 w-20 h-20 rounded-full border-4 border-blue-200/90 flex items-center justify-center text-[10px] font-bold text-blue-100 rotate-[-12deg]">STEMPEL</div>
+                            {cardData?.signatureImage ? (
+                              <img src={`/api/uploads/${encodeURIComponent(cardData.signatureImage)}`} alt="ttd" className="absolute left-2 top-0 w-[176px] h-[76px] object-contain opacity-90" />
+                            ) : (
+                              <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-700">ttd</div>
+                            )}
+                            <div className="absolute left-[52px] top-0 w-20 h-20 rounded-full border-4 border-blue-800/55 flex items-center justify-center rotate-[-12deg] overflow-hidden">
+                              {cardData?.stampImage ? (
+                                <img src={`/api/uploads/${encodeURIComponent(cardData.stampImage)}`} alt="stempel" className="w-full h-full object-contain opacity-90" />
+                              ) : (
+                                <span className="text-[10px] font-black text-blue-800">STEMPEL</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-[16px] font-black border-t border-white/60 pt-1">{cardData?.signerName || 'Koordinator Distrik'}</div>
-                          <div className="text-[13px] font-semibold opacity-95">{cardData?.signerTitle || 'THS-THM'}</div>
+                          <div className="text-[16px] font-black border-t border-slate-900/30 pt-1">{(cardData?.signerName || 'Koordinator Distrik').toUpperCase()}</div>
+                          <div className="text-[13px] font-semibold mt-0.5">{(cardData?.signerTitle || 'THS-THM').toUpperCase()}</div>
                         </div>
                       </div>
                     </div>
@@ -1115,8 +1154,9 @@ export default function MemberDetailPage() {
                         </defs>
                         <rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#guilloche-back)" strokeWidth="14" />
                       </svg>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.12]">
-                        <svg viewBox="0 0 400 180" className="w-[420px] h-[190px]" fill="#cbd5e1" aria-hidden="true">
+                      {/* Watermark peta PUTIH — jelas terlihat seperti mobile */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.65]">
+                        <svg viewBox="0 0 400 180" className="w-[480px] h-[166px]" fill="#ffffff" aria-hidden="true">
                           <path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/>
                           <path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/>
                           <path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/>
@@ -1147,10 +1187,10 @@ export default function MemberDetailPage() {
                         <div className="absolute left-[300px] top-[145px] right-12 text-slate-800">
                           <div className="bg-white/85 rounded-2xl border border-blue-200 p-6 shadow-sm">
                             <p className="text-[18px] leading-relaxed text-slate-700 mb-4">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</p>
-                            <BackPreview label="TTL" value={ttl} />
-                            <BackPreview label="DADAR" value={dadar} />
-                            <BackPreview label="Status" value={member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'} />
-                            <BackPreview label="Valid s/d" value={validUntilText} />
+                            <BackPreview label="TTL" value={ttl.toUpperCase()} />
+                            <BackPreview label="DADAR" value={dadar.toUpperCase()} />
+                            <BackPreview label="Status" value={(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif').toUpperCase()} />
+                            <BackPreview label="VALID S/D" value={validUntilText} />
                           </div>
                         </div>
                         <div className="absolute left-12 right-12 bottom-8 text-white flex items-end justify-between gap-6">

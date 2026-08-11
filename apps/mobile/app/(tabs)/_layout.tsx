@@ -3,7 +3,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import apiClient from '../../src/lib/api-client';
-import { getSocket, disconnectSocket } from '../../src/lib/socket';
 
 function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -31,19 +30,9 @@ const badgeStyles = StyleSheet.create({
 });
 
 export default function TabLayout() {
-  const [unreadCount, setUnreadCount] = useState(0);
   const [activeKegiatanCount, setActiveKegiatanCount] = useState(0);
 
   useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const { data } = await apiClient.get('/notifications/count');
-        setUnreadCount(data.data?.count || 0);
-      } catch {
-        /* ignore */
-      }
-    };
-
     const fetchActiveKegiatan = async () => {
       try {
         // Fetch active (published) activities — trainings don't have status field
@@ -55,38 +44,13 @@ export default function TabLayout() {
       }
     };
 
-    fetchCount();
     fetchActiveKegiatan();
 
-    // Try WebSocket for real-time updates
-    let cleanupFn: (() => void) | undefined;
-    (async () => {
-      try {
-        const socket = await getSocket();
-        socket.on('notification:new', () => {
-          setUnreadCount((prev) => prev + 1);
-        });
-        socket.on('notification:count', (data: { count: number }) => {
-          setUnreadCount(data.count);
-        });
-        cleanupFn = () => {
-          socket.off('notification:new');
-          socket.off('notification:count');
-        };
-      } catch {
-        /* fallback to polling */
-      }
-    })();
-
-    // Fallback: poll every 30s
+    // Poll setiap 30 detik
     const interval = setInterval(() => {
-      fetchCount();
       fetchActiveKegiatan();
     }, 30000);
-    return () => {
-      clearInterval(interval);
-      cleanupFn?.();
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -98,45 +62,26 @@ export default function TabLayout() {
         tabBarStyle: { backgroundColor: '#fff', borderTopColor: '#e5e7eb' },
       }}
     >
+      {/* Halaman ini tetap ada tapi tidak tampil di tab bar (diakses dari shortcut Beranda) */}
+      <Tabs.Screen name="documents" options={{ href: null }} />
+      <Tabs.Screen name="dues" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+
       <Tabs.Screen
         name="home"
         options={{
           tabBarLabel: 'Beranda',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="digital-card"
         options={{
           tabBarLabel: 'Kartu',
-          tabBarIcon: ({ color, size }) => <Ionicons name="card" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="documents"
-        options={{
-          tabBarLabel: 'Dokumen',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="dues"
-        options={{
-          tabBarLabel: 'Iuran',
-          tabBarIcon: ({ color, size }) => <Ionicons name="cash" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          tabBarLabel: 'Notifikasi',
-          tabBarIcon: ({ color, size }) => (
-            <View>
-              <Ionicons name="notifications" size={size} color={color} />
-              <Badge count={unreadCount} />
-            </View>
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'card' : 'card-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -144,9 +89,9 @@ export default function TabLayout() {
         name="qr-scan"
         options={{
           tabBarLabel: 'Scan QR',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size, focused }) => (
             <View>
-              <Ionicons name="qr-code" size={size} color={color} />
+              <Ionicons name={focused ? 'qr-code' : 'qr-code-outline'} size={size} color={color} />
               <Badge count={activeKegiatanCount} />
             </View>
           ),
@@ -156,15 +101,21 @@ export default function TabLayout() {
         name="gamification"
         options={{
           tabBarLabel: 'Poin',
-          tabBarIcon: ({ color, size }) => <Ionicons name="trophy" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'trophy' : 'trophy-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           tabBarLabel: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'person-circle' : 'person-circle-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

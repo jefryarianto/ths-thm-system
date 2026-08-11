@@ -176,7 +176,15 @@ export default function QRScanScreen() {
 
   // ─── Document Verification ───
   const handleDocumentVerify = async (qrData: string) => {
-    const { data } = await apiClient.get('/documents/verify/token');
+    // QR berisi URL verifikasi penuh (https://…/api/documents/verify/<token>)
+    // atau token mentah — ekstrak tokennya, jangan pakai path literal.
+    const match = qrData.match(/(?:verify\/)([^/?#]+)/);
+    const token = match ? match[1] : qrData.trim();
+    if (!token) {
+      setScanResult({ success: false, message: 'QR tidak valid: token kosong' });
+      return;
+    }
+    const { data } = await apiClient.get(`/documents/verify/${encodeURIComponent(token)}`);
     const doc = data.data;
     const result = {
       success: !!doc,

@@ -77,10 +77,8 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {/* Logo aplikasi — diperbesar */}
-        <View style={styles.logoWrap}>
-          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-        </View>
+        {/* Logo organisasi — langsung tampil tanpa lingkaran putih, biar muat penuh */}
+        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>THS-THM</Text>
         <Text style={styles.subtitle}>Sistem Manajemen</Text>
       </View>
@@ -169,50 +167,27 @@ export default function LoginScreen() {
         >
           <Text style={styles.forgotPasswordText}>Lupa password?</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.publicButton}
-          onPress={() => router.push('/public-leaderboard' as any)}
-        >
-          <Text style={styles.publicButtonText}>🏆 Lihat Peringkat Publik</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6', justifyContent: 'center', padding: 24 },
-  header: { alignItems: 'center', marginBottom: 40 },
-  logoWrap: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  logo: { width: 108, height: 108, borderRadius: 54 },
-  title: { fontSize: 36, fontWeight: 'bold', color: '#1d4ed8', textAlign: 'center' },
-  subtitle: { fontSize: 18, color: '#6b7280', marginTop: 4, textAlign: 'center' },
+  container: { flex: 1, backgroundColor: '#f3f4f6', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  header: { alignItems: 'center', marginBottom: 20 },
+  logo: { width: 128, height: 128, marginBottom: 12 },
+  title: { fontSize: 34, fontWeight: 'bold', color: '#1d4ed8', textAlign: 'center' },
+  subtitle: { fontSize: 16, color: '#6b7280', marginTop: 2, textAlign: 'center' },
   form: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 24,
+    padding: 20,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
   },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 16 },
+  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
   input: {
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -234,27 +209,27 @@ const styles = StyleSheet.create({
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 12,
     gap: 8,
   },
   rememberText: { fontSize: 14, color: '#374151', fontWeight: '500' },
   button: {
     backgroundColor: '#2563eb',
     borderRadius: 8,
-    padding: 14,
+    padding: 13,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 18,
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 14 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#d1d5db' },
   dividerText: { marginHorizontal: 12, fontSize: 13, color: '#9ca3af' },
   oauthButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 14,
+    padding: 13,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -275,20 +250,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   oauthButtonText: { fontSize: 14, fontWeight: '600', color: '#374151' },
-  publicButton: {
-    marginTop: 8,
-    padding: 12,
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    backgroundColor: '#f9fafb',
-  },
-  publicButtonText: { fontSize: 14, fontWeight: '500', color: '#374151' },
   forgotPassword: {
-    marginTop: 12,
+    marginTop: 10,
     alignItems: 'center',
-    padding: 8,
+    padding: 6,
   },
   forgotPasswordText: { fontSize: 13, color: '#2563eb', fontWeight: '500' },
 });

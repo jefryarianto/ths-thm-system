@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Image } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient, { unwrap, toAbsoluteUrl } from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
-import { LoadingView, StatusBadge, FilterChips } from '../../components/ui/shared';
+import { LoadingView, StatusBadge, FilterChips, ErrorView } from '../../components/ui/shared';
 import { router } from 'expo-router';
 
 interface DuesItem {
@@ -43,15 +43,27 @@ export default function DuesScreen() {
   const [filterStatus, setFilterStatus] = useState('');
   const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
 
+  // Endpoint khusus anggota (self-scope): /dues (admin-only) tidak bisa dipakai anggota.
   const {
-    data: dues,
+    data: allDues,
     loading,
+    error,
     refetch,
-  } = usePaginatedList<DuesItem>(() => {
-    const params: Record<string, unknown> = { limit: 50 };
-    if (filterStatus) params.status = filterStatus;
-    return apiClient.get('/dues', { params }).then((r) => r.data);
-  }, [filterStatus]);
+  } = usePaginatedList<DuesItem>(() =>
+    apiClient
+      .get('/dues/members/me')
+      .then((r) => ({
+        data: unwrap<DuesItem[]>(r) || [],
+        meta: { total: 0, totalPages: 0 },
+      })),
+    [],
+  );
+
+  // Filter chip diterapkan client-side (endpoint mengembalikan seluruh iuran sendiri)
+  const dues = useMemo(() => {
+    if (!filterStatus) return allDues;
+    return allDues.filter((d) => d.status === filterStatus);
+  }, [allDues, filterStatus]);
 
   // Muat rekening aktif untuk info transfer (API mengembalikan array — ambil elemen pertama)
   useEffect(() => {
@@ -64,19 +76,36 @@ export default function DuesScreen() {
       .catch(() => {});
   }, []);
 
-  // Calculate total from fetched data
+  // Total pembayaran = jumlah SEMUA iuran lunas (bukan hanya yang sedang difilter),
+  // agar angka tidak berubah saat user memilih filter lain / data kosong.
   useEffect(() => {
-    if (dues.length > 0) {
-      const paid = dues
-        .filter((d) => d.status === 'lunas')
-        .reduce((s, d) => s + Number(d.jumlah), 0);
-      setTotal(paid);
-    }
-  }, [dues]);
+    const paid = allDues
+      .filter((d) => d.status === 'lunas')
+      .reduce((s, d) => s + Number(d.jumlah), 0);
+    setTotal(paid);
+  }, [allDues]);
 
   const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (loading) return <LoadingView message="Memuat iuran..." />;
+
+  // Gagal memuat data → tampilkan pesan jelas + tombol coba lagi
+  // (daripada daftar kosong yang membingungkan).
+  if (error && allDues.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={styles.totalLabel}>Total Pembayaran</Text>
+            <Text style={styles.totalAmount}>Rp 0</Text>
+          </View>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <ErrorView message="Gagal memuat data iuran" onRetry={refetch} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

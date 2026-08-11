@@ -8,6 +8,13 @@ export interface NotificationItem {
   tipe: string;
   isRead: boolean;
   createdAt: string;
+  /** Metadata dari backend (screen tujuan, anggotaId, missingFields, dst). */
+  data?: {
+    screen?: string;
+    anggotaId?: string;
+    missingFields?: string[];
+    [key: string]: unknown;
+  };
 }
 
 export function formatTime(dateStr: string) {

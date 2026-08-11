@@ -81,7 +81,9 @@ export default function HomeScreen() {
             style={styles.card}
             onPress={() => router.push(item.route as any)}
           >
-            <Ionicons name={item.icon as any} size={32} color="#2563eb" />
+            <View style={styles.iconChip}>
+              <Ionicons name={item.icon as any} size={24} color="#2563eb" />
+            </View>
             <Text style={styles.cardLabel}>{item.label}</Text>
           </TouchableOpacity>
         ))}
@@ -124,12 +126,21 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 32 },
   greeting: { color: '#bfdbfe', fontSize: 14 },
   name: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -20 },
+  cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -6 },
+  iconChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   card: {
     width: '30%',
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     margin: '1.5%',
     alignItems: 'center',
     shadowColor: '#000',

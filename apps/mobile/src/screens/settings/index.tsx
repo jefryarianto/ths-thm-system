@@ -53,20 +53,7 @@ export default function SettingsScreen() {
           <PasswordSection />
         </View>
 
-        {/* Edit Profile Link */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => router.push('/profile/edit' as never)}
-          >
-            <Ionicons name="person-circle" size={20} color="#2563eb" />
-            <View style={styles.linkContent}>
-              <Text style={styles.linkLabel}>Edit Profil</Text>
-              <Text style={styles.linkDesc}>Ubah nama, alamat, no HP, dan foto</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
-          </TouchableOpacity>
-        </View>
+        {/* Edit Profil tunggal ada di dalam ProfileSection — jangan duplikat di sini */}
 
         {/* Notification Preferences */}
         <View style={styles.section}>
