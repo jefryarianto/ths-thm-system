@@ -24,6 +24,16 @@
         "EXPO_PUBLIC_API_URL": "https://ths-thm.cloud"
       }
     },
+    "production-apk": {
+      "distribution": "internal",
+      "channel": "production",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ths-thm.cloud"
+      }
+    },
     "production": {
       "channel": "production",
       "android": {
