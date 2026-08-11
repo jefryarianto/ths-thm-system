@@ -5,6 +5,7 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import type { Member } from '@/types';
@@ -19,7 +20,7 @@ import {
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
-import { formatDate } from '@/components/members/constants';
+import { formatDate, toProperCase } from '@/components/members/constants';
 import { useToast } from '@/components/ui/toast';
 
 export default function IncompleteMembersPage() {
@@ -90,7 +91,13 @@ export default function IncompleteMembersPage() {
             <img src="/logo.png" alt="" className="w-full h-full object-cover" />
           </div>
           <div>
-            <span className="font-medium text-gray-900 dark:text-white">{m.namaLengkap}</span>
+            <Link
+              href={`/members/${m.id}`}
+              className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition"
+              title="Lihat detail anggota"
+            >
+              {toProperCase(m.namaLengkap)}
+            </Link>
             <span className="ml-2 font-mono text-xs text-gray-400">{m.nomorAnggota}</span>
           </div>
         </div>

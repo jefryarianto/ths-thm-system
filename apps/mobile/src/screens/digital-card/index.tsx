@@ -12,6 +12,10 @@ const LOGO = require('../../../assets/images/logo.png');
 const CARD_W = 856;
 const CARD_H = 540;
 
+// Font nomor anggota — OCR A Extended (didaftarkan via plugin expo-font di app.json)
+// Nama font = nama file tanpa ekstensi: "OCRAExtended"
+const OCR_A_FONT = 'OCRAExtended';
+
 // ─── Types ───
 
 interface MemberInfo {
@@ -154,10 +158,10 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           ))}
         </View>
 
-        {/* Info */}
+        {/* Info — SUSUNAN: Nomor dulu, baru Nama */}
         <View style={styles.infoBox}>
-          <InfoRow label="Nama" value={member?.namaLengkap || '-'} strong />
-          <InfoRow label="No. Anggota" value={member?.nomorAnggota || '-'} />
+          <InfoRow label="No. Anggota" value={member?.nomorAnggota || '-'} strong />
+          <InfoRow label="Nama" value={member?.namaLengkap || '-'} />
           <InfoRow label="Ranting" value={member?.ranting?.nama || '-'} />
           <InfoRow label="Wilayah" value={member?.ranting?.wilayah?.nama || '-'} />
           <InfoRow label="Distrik" value={distrik} />
@@ -394,14 +398,25 @@ const styles = StyleSheet.create({
   // ── Info ──
   infoBox: { position: 'absolute', left: 255, top: 162, right: 40 },
   infoRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 12 },
-  infoLabel: { width: 120, fontSize: 18, fontWeight: '700', color: '#1e3a5f' },
-  infoValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#1e293b' },
-  infoValueStrong: { fontSize: 25, fontWeight: '900', color: '#1e3a5f' },
+  infoLabel: { width: 120, fontSize: 18, fontWeight: '700', color: '#0f2b4a' },
+  infoValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#111827' },
+  // Nomor Anggota: pakai font OCR A Extended (di-bold via simulasi shadow,
+  // karena varian asli font OCR A Extended hanya tersedia weight regular;
+  // fontWeight di React Native dengan fontFamily custom berisiko fallback ke font sistem)
+  infoValueStrong: {
+    fontSize: 22,
+    fontFamily: OCR_A_FONT,
+    color: '#0f2b4a',
+    letterSpacing: 1,
+    textShadowColor: '#0f2b4a',
+    textShadowRadius: 1,
+    textShadowOffset: { width: 0, height: 0 },
+  },
 
   // ── Bottom ──
   bottomInfo: { position: 'absolute', left: 40, bottom: 40 },
-  bottomLabel: { fontSize: 15, color: '#fff', opacity: 0.9 },
-  bottomValue: { fontSize: 22, fontWeight: '900', color: '#fff', marginTop: 2 },
+  bottomLabel: { fontSize: 15, color: '#f0f9ff', marginBottom: 2 },
+  bottomValue: { fontSize: 22, fontWeight: '900', color: '#ffffff', marginTop: 2 },
 
   // ── Signer ──
   signerBox: { position: 'absolute', right: 48, bottom: 36, alignItems: 'center' },
@@ -413,10 +428,10 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     transform: [{ rotate: '-12deg' }],
   },
-  stampText: { fontSize: 10, fontWeight: '900', color: '#dbeafe' },
+  stampText: { fontSize: 10, fontWeight: '900', color: '#1e40af' },
   signerRow: { alignItems: 'center', width: '100%', marginBottom: 6 },
-  signerName: { fontSize: 16, fontWeight: '900', color: '#fff', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.6)', paddingTop: 4, maxWidth: 220 },
-  signerTitle: { fontSize: 13, fontWeight: '600', color: '#fff', opacity: 0.95, marginTop: 2, maxWidth: 220 },
+  signerName: { fontSize: 16, fontWeight: '900', color: '#ffffff', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.6)', paddingTop: 4, maxWidth: 220 },
+  signerTitle: { fontSize: 13, fontWeight: '600', color: '#ffffff', opacity: 0.95, marginTop: 2, maxWidth: 220 },
 
   // ── Back ──
   backTitleBox: { position: 'absolute', top: 28, left: 0, right: 0, alignItems: 'center' },
@@ -431,19 +446,19 @@ const styles = StyleSheet.create({
   qrPlaceholder: { fontSize: 24, fontWeight: '700', color: '#94a3b8' },
   backInfoBox: {
     position: 'absolute', left: 300, top: 145, right: 48,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 16, borderWidth: 1, borderColor: 'rgba(191,219,254,0.5)',
     padding: 24,
   },
-  backDesc: { fontSize: 18, lineHeight: 27, color: '#334155', marginBottom: 16 },
+  backDesc: { fontSize: 18, lineHeight: 27, color: '#0f172a', marginBottom: 16 },
   backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  backRowLabel: { width: 105, fontSize: 18, fontWeight: '900', color: '#1e3a5f' },
-  backRowValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#334155' },
+  backRowLabel: { width: 105, fontSize: 18, fontWeight: '900', color: '#0f2b4a' },
+  backRowValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#111827' },
   backFooter: { position: 'absolute', left: 48, right: 48, bottom: 32, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 },
-  footerText: { flex: 1, fontSize: 15, lineHeight: 22, color: '#fff', opacity: 0.95 },
+  footerText: { flex: 1, fontSize: 15, lineHeight: 22, color: '#f0f9ff', opacity: 0.95 },
   footerUrl: { alignItems: 'flex-end' },
-  footerUrlLabel: { fontSize: 13, color: '#fff', opacity: 0.8 },
-  footerUrlValue: { fontSize: 16, fontWeight: '700', color: '#fff', marginTop: 2 },
+  footerUrlLabel: { fontSize: 13, color: '#f0f9ff', opacity: 0.8 },
+  footerUrlValue: { fontSize: 16, fontWeight: '700', color: '#ffffff', marginTop: 2 },
 
   noteBox: { marginTop: 24, backgroundColor: '#fef9c3', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#fde68a', width: '100%' },
   noteText: { fontSize: 13, lineHeight: 19, color: '#a16207' },

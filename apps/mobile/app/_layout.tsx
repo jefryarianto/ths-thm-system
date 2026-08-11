@@ -1,12 +1,18 @@
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import { useAuthStore, AuthState } from '../src/store/auth-store';
 import { GlobalErrorBoundary } from '../src/components/GlobalErrorBoundary';
 import { setupNotificationListeners } from '../src/lib/fcm';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
+
+  // Muat font OCR A Extended untuk No. Anggota di KTA
+  const [fontsLoaded] = useFonts({
+    OCRAExtended: require('../assets/fonts/OCRAExtended.ttf'),
+  });
 
   useEffect(() => {
     loadUser();
@@ -26,6 +32,12 @@ export default function RootLayout() {
     );
     return cleanup;
   }, []);
+
+  // Tunggu font siap sebelum merender navigasi agar font OCR A Extended
+  // langsung tersedia (Expo Go tidak otomatis memuat dari plugin app.json)
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <GlobalErrorBoundary>

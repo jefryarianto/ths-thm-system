@@ -9,7 +9,7 @@ import { ArrowLeft, Save, AlertCircle, RefreshCw } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
-import { TINGKAT_OPTIONS } from '@/components/members/constants';
+import { TINGKAT_OPTIONS, toProperCase } from '@/components/members/constants';
 
 interface MemberDetail {
   id: string;
@@ -245,7 +245,7 @@ export default function EditMemberPage() {
                     Edit Anggota
                   </h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                    {form.namaLengkap || 'Memuat...'}
+                    {toProperCase(form.namaLengkap) || 'Memuat...'}
                   </p>
                 </div>
                 <button

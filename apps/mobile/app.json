@@ -25,7 +25,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/OCRAExtended.ttf"
+          ]
+        }
+      ]
     ],
     "runtimeVersion": "1.0.0",
     "updates": {

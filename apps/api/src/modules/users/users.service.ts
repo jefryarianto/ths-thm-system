@@ -99,7 +99,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
 
         // Search & role filters
         if (query.role) where.role = query.role;
-        if (query.search) where.namaLengkap = { contains: query.search };
+        if (query.search) where.namaLengkap = { contains: query.search, mode: 'insensitive' };
 
         // Scope filtering — User has a direct `rantingId` field AND
         // a `ranting` relation for wilayah/distrik level filtering.

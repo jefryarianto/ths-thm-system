@@ -120,9 +120,9 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
         if (filter.search) {
           where.OR = [
-            { namaLengkap: { contains: filter.search } },
-            { nomorAnggota: { contains: filter.search } },
-            { email: { contains: filter.search } },
+            { namaLengkap: { contains: filter.search, mode: 'insensitive' } },
+            { nomorAnggota: { contains: filter.search, mode: 'insensitive' } },
+            { email: { contains: filter.search, mode: 'insensitive' } },
           ];
         }
         if (filter.rantingId) where.rantingId = filter.rantingId;
@@ -426,9 +426,9 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
     if (q && q.length >= 2) {
       where.OR = [
-        { namaLengkap: { contains: q } },
-        { nomorAnggota: { contains: q } },
-        { email: { contains: q } },
+        { namaLengkap: { contains: q, mode: 'insensitive' } },
+        { nomorAnggota: { contains: q, mode: 'insensitive' } },
+        { email: { contains: q, mode: 'insensitive' } },
       ];
     }
 

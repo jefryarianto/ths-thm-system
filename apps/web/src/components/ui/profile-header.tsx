@@ -30,6 +30,8 @@ export interface ProfileHeaderProps {
   actions?: ReactNode;
   /** Tailwind gradient classes for the top bar */
   gradient?: string;
+  /** If true, hides the colored gradient bar entirely (content starts at the top normally) */
+  hideGradient?: boolean;
   /** Refresh callback — shows a refresh button when provided */
   onRefresh?: () => void;
 }
@@ -44,6 +46,7 @@ export default function ProfileHeader({
   badges,
   actions,
   gradient = 'from-blue-600 via-blue-700 to-indigo-700',
+  hideGradient = false,
   onRefresh,
 }: ProfileHeaderProps) {
   const avatarShape = avatar?.shape || 'circle';
@@ -53,20 +56,22 @@ export default function ProfileHeader({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
       {/* Gradient Bar */}
-      <div className={`h-16 bg-gradient-to-r ${gradient} relative`}>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
-            title="Refresh"
-          >
-            <RefreshCw size={14} />
-          </button>
-        )}
-      </div>
+      {!hideGradient && (
+        <div className={`h-16 bg-gradient-to-r ${gradient} relative`}>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
+              title="Refresh"
+            >
+              <RefreshCw size={14} />
+            </button>
+          )}
+        </div>
+      )}
 
-      {/* Content — pulled up to overlap the gradient bar */}
-      <div className="px-6 pb-6 -mt-12">
+      {/* Content — pulled up to overlap the gradient bar when present */}
+      <div className={`relative px-6 pb-6 ${hideGradient ? 'pt-6' : '-mt-12'}`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
           {/* Avatar */}
           {avatar && (
@@ -131,12 +136,21 @@ export default function ProfileHeader({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          {actions && (
+          {/* Right side — Refresh + Action Buttons */}
+          {(hideGradient && onRefresh) || actions ? (
             <div className="flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
+              {hideGradient && onRefresh && (
+                <button
+                  onClick={onRefresh}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  title="Refresh"
+                >
+                  <RefreshCw size={14} />
+                </button>
+              )}
               {actions}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

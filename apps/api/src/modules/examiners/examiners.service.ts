@@ -82,7 +82,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
         const where: Record<string, unknown> = { role: 'penguji' };
         // Default: hanya penguji aktif. includeInactive=true → tampilkan juga nonaktif.
         if (!query.includeInactive) where.isActive = true;
-        if (query.search) where.namaLengkap = { contains: query.search };
+        if (query.search) where.namaLengkap = { contains: query.search, mode: 'insensitive' };
         return where;
       },
       {

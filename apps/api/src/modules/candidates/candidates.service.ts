@@ -154,8 +154,8 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
 
         if (filter.search) {
           where.OR = [
-            { namaLengkap: { contains: filter.search } },
-            { email: { contains: filter.search } },
+            { namaLengkap: { contains: filter.search, mode: 'insensitive' } },
+            { email: { contains: filter.search, mode: 'insensitive' } },
           ];
         }
         if (filter.rantingId) where.rantingId = filter.rantingId;
@@ -350,8 +350,8 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
 
     if (_filter.search) {
       where.OR = [
-        { namaLengkap: { contains: _filter.search } },
-        { email: { contains: _filter.search } },
+        { namaLengkap: { contains: _filter.search, mode: 'insensitive' } },
+        { email: { contains: _filter.search, mode: 'insensitive' } },
       ];
     }
     if (_filter.rantingId) where.rantingId = _filter.rantingId;

@@ -46,7 +46,7 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
       async () => {
         const where: Record<string, unknown> = {};
         if (query.kategoriId) where.kategoriId = query.kategoriId;
-        if (query.search) where.judul = { contains: query.search };
+        if (query.search) where.judul = { contains: query.search, mode: 'insensitive' };
         return where;
       },
       {

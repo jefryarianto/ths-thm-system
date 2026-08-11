@@ -28,6 +28,28 @@ export function formatDate(dateStr: string) {
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+/**
+ * Ubah teks menjadi Proper Case — huruf pertama setiap kata kapital,
+ * sisanya huruf kecil. Kata sambung kecil seperti "bin", "binti", "van",
+ * "von", "of", "the", "dan", "di", "dari" disetel huruf kecil semua.
+ */
+export function toProperCase(input?: string | null): string {
+  if (!input) return input || '';
+  const CONJUNCTIONS = new Set(['bin', 'binti', 'van', 'von', 'of', 'the', 'dan', 'di', 'dari']);
+  return input
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((word) => {
+      // Pertahankan gelar/singkatan bertitik seperti "S.E.", "M.Kom", "Dr." apa adanya
+      if (word.includes('.')) return word;
+      const lower = word.toLowerCase();
+      if (CONJUNCTIONS.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ');
+}
+
 interface StatusBadgeProps {
   status: string;
   labels?: Record<string, string>;

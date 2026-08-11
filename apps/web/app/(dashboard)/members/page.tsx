@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -19,7 +20,7 @@ import FilterSelect from '@/components/ui/filter-select';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import MemberActions from '@/components/members/MemberActions';
 import MemberStatCards from '@/components/members/MemberStatCards';
-import { StatusBadge, STATUS_LABELS, formatDate } from '@/components/members/constants';
+import { StatusBadge, STATUS_LABELS, formatDate, toProperCase } from '@/components/members/constants';
 
 // ─── Page ───
 
@@ -176,7 +177,13 @@ export default function MembersPage() {
           <div className={`w-8 h-8 rounded-full ${m.fotoPath ? 'hidden' : ''}`}>
             <img src="/logo.png" alt="" className="w-8 h-8 rounded-full object-cover" />
           </div>
-          <span className="font-medium text-gray-900 dark:text-white">{m.namaLengkap}</span>
+          <Link
+            href={`/members/${m.id}`}
+            className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition"
+            title="Lihat detail anggota"
+          >
+            {toProperCase(m.namaLengkap)}
+          </Link>
         </div>
       ),
     },

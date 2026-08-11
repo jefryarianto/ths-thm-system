@@ -43,6 +43,7 @@ import { StatusBadge,
   FLAT_STATUS_LABELS,
   formatDate,
   formatRupiah,
+  toProperCase,
 } from '@/components/members/constants';
 import { useToast } from '@/components/ui/toast';
 
@@ -376,7 +377,7 @@ export default function MemberDetailPage() {
       if (!win) return;
 
       win.document.write(`<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>KTA - ${m.namaLengkap}</title>
+<html><head><meta charset="utf-8"><title>KTA - ${toProperCase(m.namaLengkap)}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
@@ -450,7 +451,7 @@ export default function MemberDetailPage() {
     <div class="photo">${photoHtml}</div>
     <div class="level-strips">${stripHtml}</div>
     <div class="info">
-      <div class="info-row"><span class="label">Nama</span><span class="name">: ${m.namaLengkap}</span></div>
+      <div class="info-row"><span class="label">Nama</span><span class="name">: ${toProperCase(m.namaLengkap)}</span></div>
       <div class="info-row"><span class="label">No. Anggota</span><span class="value">: ${m.nomorAnggota}</span></div>
       <div class="info-row"><span class="label">Ranting</span><span class="value">: ${m.ranting || '-'}</span></div>
       <div class="info-row"><span class="label">Wilayah</span><span class="value">: ${m.wilayah || '-'}</span></div>
@@ -604,7 +605,7 @@ export default function MemberDetailPage() {
 
   return (
       <PermissionGuard module="members" action="view">
-        <Breadcrumbs suffix={{ href: '#', label: member?.namaLengkap || 'Detail' }} />
+        <Breadcrumbs suffix={{ href: '#', label: toProperCase(member?.namaLengkap || 'Detail') }} />
         <div className="space-y-6">
               {/* ── Back Button ── */}
               <Link
@@ -617,9 +618,10 @@ export default function MemberDetailPage() {
         
               {/* ── Profile Header ── */}
               <ProfileHeader
-                name={member.namaLengkap}
+                name={toProperCase(member.namaLengkap)}
                 subtitle={orgPath}
                 meta={member.nomorAnggota}
+                hideGradient
                 avatar={{
                   src: member.fotoPath ? `/api/uploads/${member.fotoPath}` : null,
                   onUpload: async (file) => {
@@ -759,7 +761,7 @@ export default function MemberDetailPage() {
                       Data Pribadi
                     </h3>
                     <div className="space-y-2">
-                      <InfoRow icon={User} label="Nama Lengkap" value={member.namaLengkap} />
+                      <InfoRow icon={User} label="Nama Lengkap" value={toProperCase(member.namaLengkap)} />
                       <InfoRow
                         icon={User}
                         label="Jenis Kelamin"
@@ -1052,7 +1054,7 @@ export default function MemberDetailPage() {
         
                         {/* Info */}
                         <div className="absolute left-[255px] top-[162px] right-10 text-slate-800">
-                          <InfoPreview label="Nama" value={member.namaLengkap} strong />
+                          <InfoPreview label="Nama" value={toProperCase(member.namaLengkap)} strong />
                           <InfoPreview label="No. Anggota" value={member.nomorAnggota} />
                           <InfoPreview label="Ranting" value={member.ranting?.nama || '-'} />
                           <InfoPreview label="Wilayah" value={member.ranting?.wilayah?.nama || '-'} />
@@ -1529,7 +1531,7 @@ export default function MemberDetailPage() {
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
                     <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
                     <p className="text-sm text-red-700 dark:text-red-400">
-                      Tindakan ini akan menghapus <strong>{member.namaLengkap}</strong> secara permanen.
+                      Tindakan ini akan menghapus <strong>{toProperCase(member.namaLengkap)}</strong> secara permanen.
                     </p>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">

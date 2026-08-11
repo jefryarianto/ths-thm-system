@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { toProperCase } from '@/components/members/constants';
 
 interface MemberProfile {
   id: string;
@@ -222,9 +223,8 @@ export default function ProfilePage() {
         
               {/* Profile Card */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="h-24 bg-gradient-to-r from-blue-500 to-indigo-600" />
-                <div className="px-6 pb-6">
-                  <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-12">
+                <div className="px-6 pt-6 pb-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
                     {/* Avatar */}
                     <div className="relative group">
                       <div className="w-24 h-24 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden">
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                       </label>
                     </div>
                     <div className="flex-1 text-center sm:text-left">
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{member.namaLengkap}</h2>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{toProperCase(member.namaLengkap)}</h2>
                       <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{member.nomorAnggota}</p>
                     </div>
                   </div>
