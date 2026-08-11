@@ -18,6 +18,7 @@ import {
   PaymentConfirmationDto,
 } from './dto/dues.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.helper';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
 
@@ -140,7 +141,20 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     );
   }
 
-  async findOne(id: string, scope?: UserScope) {
+  async findOne(id: string, scope?: UserScope, user?: SelfScopeUser) {
+    // Anggota/penguji: hanya boleh lihat iuran miliknya sendiri (scope guard
+    // level "self" hanya memastikan login, kepemilikan dicek di sini).
+    if (user && (user.role === 'anggota' || user.role === 'penguji')) {
+      const iuran = await this.prisma.iuran.findUnique({
+        where: { id },
+        include: {
+          anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
+        },
+      });
+      if (!iuran) throw new NotFoundException('Iuran tidak ditemukan');
+      await assertSelfMember(this.prisma as any, user, iuran.anggotaId);
+      return iuran;
+    }
     return this.baseFindOne(id, scope, {
       anggota: {
         select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true },

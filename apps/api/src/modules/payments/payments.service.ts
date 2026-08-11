@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.helper';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 
@@ -184,15 +185,19 @@ export class PaymentsService {
     iuranId: string,
     payload: { catatan?: string; file?: Express.Multer.File },
     scope?: UserScope,
+    user?: SelfScopeUser,
   ) {
     const iuran = await this.prisma.iuran.findUnique({
       where: { id: iuranId },
-      include: { anggota: { select: { rantingId: true } } },
+      include: { anggota: { select: { id: true, rantingId: true } } },
     });
 
     if (!iuran) throw new NotFoundException('Iuran tidak ditemukan');
 
-    if (scope && iuran.anggota?.rantingId) {
+    // Anggota/penguji: hanya boleh upload bukti untuk iuran miliknya sendiri
+    if (user && (user.role === 'anggota' || user.role === 'penguji')) {
+      await assertSelfMember(this.prisma as any, user, iuran.anggotaId);
+    } else if (scope && iuran.anggota?.rantingId) {
       if (
         !(await this.scopeHelper.hasAccessToResourceAsync(
           this.prisma,

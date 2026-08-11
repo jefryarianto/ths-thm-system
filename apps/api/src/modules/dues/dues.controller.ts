@@ -90,9 +90,9 @@ export class DuesController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Detail iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Detail iuran' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
-    return this.service.findOne(id, req.scope);
+    return this.service.findOne(id, req.scope, req.user);
   }
 
   @Post(':id/payments')

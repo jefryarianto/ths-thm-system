@@ -75,7 +75,7 @@ export class PaymentsController {
 
   @Post(':id/upload-proof')
   @ApiConsumes('multipart/form-data')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Upload bukti pembayaran manual' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Upload bukti pembayaran manual' })
   @UseInterceptors(
     FileInterceptor('bukti', {
       storage: buildProofStorage(),
@@ -96,7 +96,7 @@ export class PaymentsController {
     @UploadedFile() file?: Express.Multer.File,
     @Body('catatan') catatan?: string,
   ) {
-    return this.service.uploadProof(id, { catatan, file }, req.scope);
+    return this.service.uploadProof(id, { catatan, file }, req.scope, req.user);
   }
 
   @Patch(':id/verify')
