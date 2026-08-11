@@ -364,7 +364,7 @@ export default function MemberDetailPage() {
 
       const m = data.data.member;
       const qr = data.data.qrCode;
-      const distrik = m.distrik || 'THS-THM';
+      const distrik = (m.distrik || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase();
       const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       const ttl = [m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null].filter(Boolean).join(', ') || '-';
       const dadar = [member?.tempatDadar, member?.tahunDadar].filter(Boolean).join(', ') || '-';
@@ -1065,7 +1065,7 @@ export default function MemberDetailPage() {
                             <div className="text-[16px] font-black tracking-[2px]">KARTU TANDA ANGGOTA</div>
                             <div className="text-[16px] font-black tracking-[1.1px] mt-px">ORGANISASI PENCAK SILAT PENDIDIKAN</div>
                             <div className="text-[16px] font-black tracking-[0.5px] mt-px">TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA</div>
-                            <div className="text-[16px] font-black mt-px">DISTRIK KEUSKUPAN {member.ranting?.wilayah?.distrik?.nama?.toUpperCase() || 'THS-THM'}</div>
+                            <div className="text-[16px] font-black mt-px">DISTRIK KEUSKUPAN {(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}</div>
                           </div>
                         </div>
         
