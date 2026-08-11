@@ -95,7 +95,7 @@ describe('ExaminersService', () => {
       await service.findAll({ search: 'Budi' });
       expect(mockPrisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { role: 'penguji', isActive: true, namaLengkap: { contains: 'Budi' } },
+          where: { role: 'penguji', isActive: true, namaLengkap: { contains: 'Budi', mode: 'insensitive' } },
         }),
       );
     });

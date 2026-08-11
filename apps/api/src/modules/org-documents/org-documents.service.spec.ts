@@ -79,7 +79,7 @@ describe('OrgDocumentsService', () => {
       await service.findAll({ kategoriId: 'cat1', search: 'AD/ART' });
       expect(mockPrisma.dokumenOrganisasi.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { kategoriId: 'cat1', judul: { contains: 'AD/ART' } },
+          where: { kategoriId: 'cat1', judul: { contains: 'AD/ART', mode: 'insensitive' } },
         }),
       );
     });
