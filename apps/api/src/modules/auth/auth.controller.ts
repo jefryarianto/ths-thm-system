@@ -61,8 +61,9 @@ export class AuthController {
     }
     const result = await this.authService.refreshToken(refreshToken);
     this.authService.setRefreshTokenCookie(res, result.refreshToken);
-    const { refreshToken: _, ...rest } = result;
-    return rest;
+    // Kembalikan refreshToken (rotasi) agar mobile bisa menyimpan token baru;
+    // cookie tetap dipakai web.
+    return result;
   }
 
   @Post('forgot')
