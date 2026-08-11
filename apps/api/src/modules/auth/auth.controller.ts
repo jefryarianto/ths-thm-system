@@ -53,8 +53,9 @@ export class AuthController {
   @Post('refresh')
   @Public()
   @ApiOperation({ summary: 'Refresh token akses' })
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
+  async refresh(@Req() req: Request, @Body() dto: RefreshDto, @Res({ passthrough: true }) res: Response) {
+    // Mobile mengirim refreshToken via body; web via httpOnly cookie — terima keduanya
+    const refreshToken = dto.refreshToken || parseCookie(req.headers.cookie || '', 'refreshToken');
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token tidak ditemukan');
     }
