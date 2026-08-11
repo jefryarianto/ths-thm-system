@@ -29,7 +29,7 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/OCRAExtended.ttf"
+            "./assets/fonts/OCR A Extended.ttf"
           ]
         }
       ]

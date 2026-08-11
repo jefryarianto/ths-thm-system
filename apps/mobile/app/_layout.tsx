@@ -10,8 +10,9 @@ export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
 
   // Muat font OCR A Extended untuk No. Anggota di KTA
+  // Kunci useFonts harus sama persis dgn nama family internal TTF ("OCR A Extended")
   const [fontsLoaded] = useFonts({
-    OCRAExtended: require('../assets/fonts/OCRAExtended.ttf'),
+    'OCR A Extended': require('../assets/fonts/OCR A Extended.ttf'),
   });
 
   useEffect(() => {

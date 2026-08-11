@@ -13,8 +13,9 @@ const CARD_W = 856;
 const CARD_H = 540;
 
 // Font nomor anggota — OCR A Extended (didaftarkan via plugin expo-font di app.json)
-// Nama font = nama file tanpa ekstensi: "OCRAExtended"
-const OCR_A_FONT = 'OCRAExtended';
+// Nama font harus SAMA PERSIS dgn nama family internal file TTF: "OCR A Extended"
+// (cek metadata TTF via System.Drawing/FontBook; nama family = "OCR A Extended", ada spasi)
+const OCR_A_FONT = 'OCR A Extended';
 
 // ─── Types ───
 
