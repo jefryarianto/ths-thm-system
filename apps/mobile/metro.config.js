@@ -8,8 +8,10 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(projectRoot);
 
-// pnpm monorepo: watch the entire workspace root
-config.watchFolders = [monorepoRoot];
+// pnpm monorepo: watch ONLY the mobile app.
+// Watching the whole monorepo root makes Metro scan apps/web & apps/api, which
+// on Windows can hit EPERM on locked files and breaks `eas update` export.
+config.watchFolders = [projectRoot];
 
 // pnpm monorepo: resolve modules from both local and root node_modules
 config.resolver.nodeModulesPaths = [
