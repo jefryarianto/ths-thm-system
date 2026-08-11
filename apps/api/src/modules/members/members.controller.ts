@@ -25,7 +25,7 @@ export class MembersController {
     if (!user?.email) {
       return { success: false, message: 'User tidak memiliki email' };
     }
-    const member = await this.membersService.findByEmail(user.email);
+    const member = await this.membersService.findByEmail(user.email, user.namaLengkap);
     return member;
   }
 
@@ -118,36 +118,36 @@ export class MembersController {
   }
 
   @Get(':id/documents')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Ambil dokumen anggota' })
-  getDocuments(@Param('id') id: string) {
-    return this.membersService.getDocuments(id);
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Ambil dokumen anggota' })
+  getDocuments(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.membersService.getDocuments(id, req.user);
   }
 
   @Get(':id/dues')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Ambil iuran anggota' })
-  getDues(@Param('id') id: string) {
-    return this.membersService.getDues(id);
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Ambil iuran anggota' })
+  getDues(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.membersService.getDues(id, req.user);
   }
 
   @Get(':id/digital-card')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Kartu Anggota Digital dengan QR Code' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Kartu Anggota Digital dengan QR Code' })
   getDigitalCard(@Param('id') id: string, @Req() req: ScopedRequest) {
-    return this.digitalCardService.getDigitalCard(id, req.scope);
+    return this.digitalCardService.getDigitalCard(id, req.scope, req.user);
   }
 
   @Get(':id/digital-card/pdf')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Download Kartu Anggota Digital (PDF)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Download Kartu Anggota Digital (PDF)' })
   async getDigitalCardPdf(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
-    const pdfBuffer = await this.digitalCardService.getDigitalCardPdf(id, req.scope);
+    const pdfBuffer = await this.digitalCardService.getDigitalCardPdf(id, req.scope, req.user);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="kartu-anggota-${id}.pdf"`);
     res.send(pdfBuffer);
   }
 
   @Get(':id/digital-card/image')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Preview Kartu Anggota Digital (PNG)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Preview Kartu Anggota Digital (PNG)' })
   async getDigitalCardImage(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
-    const pngBuffer = await this.digitalCardService.getDigitalCardImage(id, req.scope);
+    const pngBuffer = await this.digitalCardService.getDigitalCardImage(id, req.scope, req.user);
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Content-Disposition', `inline; filename="kartu-anggota-${id}.png"`);
     res.send(pngBuffer);

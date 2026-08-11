@@ -51,6 +51,8 @@ describe('MembersDigitalCardService', () => {
   const mockPrisma = {
     anggota: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
     },
     dokumen: {
       create: jest.fn(),
@@ -189,6 +191,31 @@ describe('MembersDigitalCardService', () => {
     it('should throw NotFoundException when member does not exist', async () => {
       mockPrisma.anggota.findUnique.mockResolvedValue(null);
       await expect(service.getDigitalCard('missing')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException when anggota tries another member\'s card', async () => {
+      // Akun login terhubung ke anggota m-lrt-1, tapi mencoba akses kartu m-lain
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm-lrt-1' });
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      await expect(
+        service.getDigitalCard('m-lain', undefined, {
+          email: 'jefry@gmail.com',
+          namaLengkap: 'Jefry Arianto Baba',
+          role: 'anggota',
+        } as any),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should allow anggota to access their own card (self-scope)', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm-lrt-1' });
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      const result = await service.getDigitalCard('m-lrt-1', undefined, {
+        email: 'jefry@gmail.com',
+        namaLengkap: 'Jefry Arianto Baba',
+        role: 'anggota',
+      } as any);
+      expect(result.success).toBe(true);
+      expect(result.data.member.nomorAnggota).toBe('LRT-0103-001-1994');
     });
 
     it('should throw ForbiddenException when scope has no access to ranting', async () => {

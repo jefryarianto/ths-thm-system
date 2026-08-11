@@ -170,11 +170,24 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return dues;
   }
 
-  async getMyDues(user: { id: string; email: string; role: string }) {
-    const anggota = await (this.prisma as any).anggota.findFirst({
+  async getMyDues(user: { id: string; email: string; role: string; namaLengkap?: string }) {
+    let anggota = await (this.prisma as any).anggota.findFirst({
       where: { email: user.email, deletedAt: null },
       select: { id: true },
     });
+
+    // Fallback: anggota di-import tanpa email — cocokkan via nama (unik & email kosong)
+    if (!anggota && user.namaLengkap?.trim()) {
+      const byName = await (this.prisma as any).anggota.findMany({
+        where: {
+          namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
+          OR: [{ email: null }, { email: '' }],
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      if (byName.length === 1) anggota = byName[0];
+    }
 
     if (!anggota) {
       return [];

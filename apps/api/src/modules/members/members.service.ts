@@ -5,6 +5,7 @@ import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
 import { CacheService } from '../../common/services/cache.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { CsvImportService } from '../../common/services/csv-import.service';
@@ -376,25 +377,48 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   // ── Domain: findByEmail ──────────────────────────────────
 
-  async findByEmail(email: string) {
+  /**
+   * Cari anggota milik user yang login. Prioritas cocokkan via email persis;
+   * bila tidak ketemu, fallback via nama lengkap — khusus untuk anggota yang
+   * email-nya kosong (mis. hasil import CSV tanpa kolom email) dan hanya bila
+   * hasilnya UNIK (hindari salah taut bila ada nama kembar).
+   */
+  async findByEmail(email: string, namaLengkap?: string) {
+    const include = {
+      ranting: { include: { wilayah: { include: { distrik: true } } } },
+    };
+
+    // Prioritas 1: akun terhubung ke anggota via email.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const member = await (this.prisma as any).anggota.findFirst({
       where: { email, deletedAt: null },
-      include: {
-        ranting: { include: { wilayah: { include: { distrik: true } } } },
-      },
+      include,
     });
+    if (member) return member;
 
-    if (!member) {
-      throw new NotFoundException('Anggota tidak ditemukan untuk email ini');
+    // Prioritas 2 (fallback nama): hanya untuk anggota ber-email kosong & hasil unik.
+    if (namaLengkap && namaLengkap.trim()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const byName = await (this.prisma as any).anggota.findMany({
+        where: {
+          namaLengkap: { equals: namaLengkap.trim(), mode: 'insensitive' },
+          OR: [{ email: null }, { email: '' }],
+          deletedAt: null,
+        },
+        include,
+      });
+      if (byName.length === 1) return byName[0];
     }
 
-    return member;
+    throw new NotFoundException('Anggota tidak ditemukan untuk email ini');
   }
 
   // ── Domain: getDocuments ─────────────────────────────────
 
-  async getDocuments(id: string) {
+  async getDocuments(id: string, user?: SelfScopeUser) {
+    // Anggota hanya boleh ambil dokumen miliknya sendiri
+    await assertSelfMember(this.prisma as any, user, id);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const documents = await (this.prisma as any).dokumen.findMany({
       where: { anggotaId: id },
@@ -406,7 +430,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   // ── Domain: getDues ──────────────────────────────────────
 
-  async getDues(id: string) {
+  async getDues(id: string, user?: SelfScopeUser) {
+    // Anggota hanya boleh ambil iuran miliknya sendiri
+    await assertSelfMember(this.prisma as any, user, id);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dues = await (this.prisma as any).iuran.findMany({
       where: { anggotaId: id },

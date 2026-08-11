@@ -4,6 +4,10 @@ import { MailService } from '../../mail/mail.service';
 import { badgeEarnedEmail, levelUpEmail } from '../../mail/email-templates';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CacheService } from '../../common/services/cache.service';
+import {
+  assertSelfMember,
+  SelfScopeUser,
+} from '../../common/utils/self-scope.helper';
 
 export interface Badge {
   id: string;
@@ -305,6 +309,13 @@ export class GamificationService {
   // ═══════════════════════════════════════════════
   //  GETTERS
   // ═══════════════════════════════════════════════
+
+  /**
+   * Enforce self-scope pada data profil poin (anggota/penguji hanya data sendiri).
+   */
+  async assertSelfMember(user?: SelfScopeUser, anggotaId?: string): Promise<void> {
+    await assertSelfMember(this.prisma as any, user, anggotaId);
+  }
 
   async getProfile(anggotaId: string): Promise<GamificationProfile> {
     const profile = await this.getOrCreate(anggotaId);

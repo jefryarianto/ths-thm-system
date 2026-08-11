@@ -10,6 +10,10 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+  assertSelfMember,
+  SelfScopeUser,
+} from '../../common/utils/self-scope.helper';
 
 export interface Reward {
   id: string;
@@ -122,7 +126,10 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
 
   // ── Domain: Redeem reward with points ──────────────
 
-  async redeemReward(anggotaId: string, rewardId: string): Promise<Redemption> {
+  async redeemReward(anggotaId: string, rewardId: string, user?: SelfScopeUser): Promise<Redemption> {
+    // Anggota hanya boleh redeem untuk dirinya sendiri
+    await assertSelfMember(this.prisma as any, user, anggotaId);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const reward = await (this.prisma as any).gamificationReward.findUnique({ where: { id: rewardId } });
     if (!reward) throw new NotFoundException('Reward tidak ditemukan');
@@ -189,7 +196,10 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
 
   // ── Domain: Get member's redemptions ───────────────
 
-  async getMemberRedemptions(anggotaId: string): Promise<Redemption[]> {
+  async getMemberRedemptions(anggotaId: string, user?: SelfScopeUser): Promise<Redemption[]> {
+    // Anggota hanya boleh lihat redemption miliknya sendiri
+    await assertSelfMember(this.prisma as any, user, anggotaId);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const redemptions = await (this.prisma as any).gamificationRedemption.findMany({
       where: { anggotaId },

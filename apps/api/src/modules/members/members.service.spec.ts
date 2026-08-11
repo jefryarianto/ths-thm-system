@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -31,6 +31,7 @@ describe('MembersService', () => {
   const mockPrisma = {
     anggota: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       count: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -393,12 +394,81 @@ describe('MembersService', () => {
       mockPrisma.dokumen.findMany.mockResolvedValue([{ id: 'd1' }]);
       const result = await service.getDocuments('m1');
     });
+
+    it('should throw ForbiddenException when anggota requests another member\'s documents', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm1' });
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      await expect(
+        service.getDocuments('m2', { email: 'jefry@gmail.com', namaLengkap: 'Jefry Arianto Baba', role: 'anggota' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('getDues', () => {
     it('should return dues for a member', async () => {
       mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'i1', jumlah: 100000 }]);
       const result = await service.getDues('m1');
+    });
+
+    it('should allow anggota to access their own dues (self-scope)', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm1' });
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockPrisma.iuran.findMany.mockResolvedValue([{ id: 'i1', jumlah: 100000 }]);
+      const result = await service.getDues('m1', { email: 'jefry@gmail.com', namaLengkap: 'Jefry Arianto Baba', role: 'anggota' });
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('findByEmail', () => {
+    const member = {
+      id: 'm1',
+      nomorAnggota: '001-1994',
+      namaLengkap: 'Jefry Arianto Baba',
+      email: null,
+      ranting: { nama: 'Ranting Test', wilayah: { nama: 'Wilayah Test', distrik: { nama: 'Distrik Test' } } },
+    };
+
+    it('should return member by exact email match', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue(member);
+      const result = await service.findByEmail('jefry@example.com', 'Jefry Arianto Baba');
+      expect(result).toBe(member);
+      // Fallback nama tidak perlu dicoba bila email cocok
+      expect(mockPrisma.anggota.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should fallback to unique nama match when email kosong', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.findMany.mockResolvedValue([member]);
+
+      const result = await service.findByEmail('akun@example.com', 'Jefry Arianto Baba');
+      expect(result).toBe(member);
+      // Filter fallback: nama insensitive + hanya anggota ber-email kosong
+      expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith({
+        where: {
+          namaLengkap: { equals: 'Jefry Arianto Baba', mode: 'insensitive' },
+          OR: [{ email: null }, { email: '' }],
+          deletedAt: null,
+        },
+        include: expect.any(Object),
+      });
+    });
+
+    it('should throw NotFoundException when nama match ambiguous (nama kembar)', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.findMany.mockResolvedValue([member, { ...member, id: 'm2' }]);
+
+      await expect(service.findByEmail('akun@example.com', 'Jefry Arianto Baba')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw NotFoundException when no match at all', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+
+      await expect(service.findByEmail('tidak.ada@example.com', 'Orang Asing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

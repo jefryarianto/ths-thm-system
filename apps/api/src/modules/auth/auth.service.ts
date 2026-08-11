@@ -135,9 +135,20 @@ export class AuthService {
       if (dto.tanggalLahir) anggotaData.tanggalLahir = new Date(dto.tanggalLahir);
       if (dto.email !== undefined) anggotaData.email = dto.email;
 
-      const anggota = await this.prisma.anggota.findFirst({
+      // Cocokkan via email; fallback via nama lengkap untuk anggota yang email-nya
+      // kosong (hasil import CSV) dan unik — supaya profil tetap tersinkron.
+      let anggota = await this.prisma.anggota.findFirst({
         where: { email: user.email },
       });
+      if (!anggota && user.namaLengkap?.trim()) {
+        const byName = await this.prisma.anggota.findMany({
+          where: {
+            namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
+            OR: [{ email: null }, { email: '' }],
+          },
+        });
+        if (byName.length === 1) anggota = byName[0];
+      }
 
       if (anggota) {
         await this.prisma.anggota.update({

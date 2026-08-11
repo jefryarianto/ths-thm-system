@@ -20,6 +20,7 @@ export interface ScopedRequest {
     email: string;
     role: string;
     rantingId?: string;
+    namaLengkap?: string;
   };
   scope?: UserScope;
   method?: string;

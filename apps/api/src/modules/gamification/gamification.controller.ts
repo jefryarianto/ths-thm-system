@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Put, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { GamificationService } from './gamification.service';
 
 /**
@@ -30,7 +31,7 @@ export class GamificationController {
     'penguji',
     'anggota',
   )
-  @RequireScope('branch')
+  @RequireScope('self')
   @ApiOperation({ summary: 'Get all available badges' })
   getAllBadges() {
     return this.gamificationService.getAllBadges();
@@ -49,9 +50,10 @@ export class GamificationController {
     'penguji',
     'anggota',
   )
-  @RequireScope('branch')
+  @RequireScope('self')
   @ApiOperation({ summary: 'Get member gamification profile' })
-  async getProfile(@Param('anggotaId') anggotaId: string) {
+  async getProfile(@Param('anggotaId') anggotaId: string, @Req() req: ScopedRequest) {
+    await this.gamificationService.assertSelfMember(req.user, anggotaId);
     const profile = await this.gamificationService.getProfile(anggotaId);
     const badges = await this.gamificationService.getBadges(anggotaId);
     return { ...profile, badges };
@@ -70,9 +72,14 @@ export class GamificationController {
     'penguji',
     'anggota',
   )
-  @RequireScope('branch')
+  @RequireScope('self')
   @ApiOperation({ summary: 'Get member recent point events' })
-  async getRecentEvents(@Param('anggotaId') anggotaId: string, @Query('limit') limit?: string) {
+  async getRecentEvents(
+    @Param('anggotaId') anggotaId: string,
+    @Query('limit') limit?: string,
+    @Req() req?: ScopedRequest,
+  ) {
+    await this.gamificationService.assertSelfMember(req?.user, anggotaId);
     return this.gamificationService.getRecentEvents(
       anggotaId,
       limit ? parseInt(limit) : 20,
@@ -92,7 +99,7 @@ export class GamificationController {
     'penguji',
     'anggota',
   )
-  @RequireScope('branch')
+  @RequireScope('self')
   @ApiOperation({ summary: 'Get global recent point events (activity feed)' })
   async getGlobalRecentEvents(@Query('limit') limit?: string) {
     return this.gamificationService.getGlobalRecentEvents(
@@ -113,9 +120,10 @@ export class GamificationController {
     'penguji',
     'anggota',
   )
-  @RequireScope('branch')
+  @RequireScope('self')
   @ApiOperation({ summary: 'Get member points history by month' })
-  async getPointsHistory(@Param('anggotaId') anggotaId: string) {
+  async getPointsHistory(@Param('anggotaId') anggotaId: string, @Req() req: ScopedRequest) {
+    await this.gamificationService.assertSelfMember(req.user, anggotaId);
     return this.gamificationService.getPointsHistory(anggotaId);
   }
 
@@ -179,7 +187,7 @@ export class GamificationController {
     'penguji',
     'anggota',
   )
-  @RequireScope('branch')
+  @RequireScope('self')
   @ApiOperation({
     summary: 'Get top members leaderboard (optional scope filter, search & pagination)',
   })

@@ -4,6 +4,7 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { TingkatanService } from '../tingkatan/tingkatan.service';
+import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -49,8 +50,8 @@ export class MembersDigitalCardService {
     return this.penandatanganService.resolveActive();
   }
 
-  async getDigitalCard(memberId: string, scope?: UserScope) {
-    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope);
+  async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
 
     return {
@@ -64,9 +65,9 @@ export class MembersDigitalCardService {
     };
   }
 
-  async getDigitalCardImage(memberId: string, scope?: UserScope): Promise<Buffer> {
+  async getDigitalCardImage(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
     // PNG 2 sisi: render halaman gabungan (depan+belakang) lalu konversi ke PNG
-    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope);
+    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl }, { combined: true });
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
@@ -134,13 +135,16 @@ export class MembersDigitalCardService {
     }
   }
 
-  async getDigitalCardPdf(memberId: string, scope?: UserScope): Promise<Buffer> {
-    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope);
+  async getDigitalCardPdf(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
+    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     return this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl });
   }
 
-  private async prepareDigitalCardData(memberId: string, scope?: UserScope) {
+  private async prepareDigitalCardData(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    // Anggota hanya boleh ambil kartu miliknya sendiri (admin dicakup oleh scope)
+    await assertSelfMember(this.prisma as any, user, memberId);
+
     const member = await this.prisma.anggota.findUnique({
       where: { id: memberId, deletedAt: null },
       include: {

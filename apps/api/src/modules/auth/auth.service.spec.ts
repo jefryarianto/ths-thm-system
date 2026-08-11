@@ -38,6 +38,7 @@ describe('AuthService', () => {
     },
     anggota: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
   };
@@ -71,6 +72,8 @@ describe('AuthService', () => {
     // Re-mock bcrypt methods after clearAllMocks
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
+    // Default: fallback nama tidak menemukan anggota (agar test lama tetap pass)
+    mockPrisma.anggota.findMany.mockResolvedValue([]);
   });
 
   it('should be defined', () => {
@@ -245,8 +248,9 @@ describe('AuthService', () => {
     it('should not update Anggota when no matching record found', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue(mockUser);
-      // No matching Anggota record
+      // No matching Anggota record (email maupun fallback nama)
       mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
 
       const result = await service.updateProfile('u1', {
         noHp: '081234567890',
@@ -255,6 +259,34 @@ describe('AuthService', () => {
 
       // Should NOT call anggota.update since no match found
       expect(mockPrisma.anggota.update).not.toHaveBeenCalled();
+      // Fallback nama dicoba (cari anggota ber-email kosong dengan nama user)
+      expect(mockPrisma.anggota.findMany).toHaveBeenCalled();
+    });
+
+    it('should sync Anggota via nama fallback when email tidak cocok tapi nama unik & email kosong', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, namaLengkap: 'Anggota User' });
+      // Email tidak cocok, tapi ada anggota bernama sama dengan email kosong (hasil import CSV)
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.findMany.mockResolvedValue([{ id: 'a9', email: null, namaLengkap: 'Anggota User' }]);
+      mockPrisma.anggota.update.mockResolvedValue({});
+
+      await service.updateProfile('u1', {
+        namaLengkap: 'Anggota User',
+        noHp: '081234567890',
+      });
+
+      // Fallback nama harus memfilter hanya anggota ber-email kosong
+      expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith({
+        where: {
+          namaLengkap: { equals: 'Anggota User', mode: 'insensitive' },
+          OR: [{ email: null }, { email: '' }],
+        },
+      });
+      expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
+        where: { id: 'a9' },
+        data: expect.objectContaining({ noHp: '081234567890' }),
+      });
     });
 
     it('should not try to update Anggota when only core User fields change', async () => {
