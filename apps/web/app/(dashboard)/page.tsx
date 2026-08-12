@@ -357,7 +357,7 @@ export default function DashboardPage() {
               data.recentNotifications.map((n) => (
                 <div
                   key={n.id}
-                  className="px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+                  className="px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   <div className="flex items-start gap-3">
                     <div
@@ -408,7 +408,7 @@ export default function DashboardPage() {
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition group"
                 >
                   <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950 group-hover:scale-105 transition-transform">
                     <Icon size={16} className="text-blue-600 dark:text-blue-400" />

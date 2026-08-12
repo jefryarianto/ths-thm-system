@@ -142,6 +142,8 @@ export class MembersDigitalCardService {
             signerTitle: data.card.signerTitle,
           },
           photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath),
+          signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage),
+          stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage),
           levelVisual: data.levelVisual,
         },
         opts,

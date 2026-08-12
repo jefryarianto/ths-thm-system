@@ -230,7 +230,7 @@ export default function PenandatanganPage() {
                 {data.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>

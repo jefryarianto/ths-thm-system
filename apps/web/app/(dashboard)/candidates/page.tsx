@@ -115,7 +115,7 @@ export default function CandidatesPage() {
         renderRow={(c: Candidate) => (
           <tr
             key={c.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{c.namaLengkap}</span>

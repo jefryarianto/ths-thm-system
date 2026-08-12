@@ -434,7 +434,7 @@ export default function AuditLogsPage() {
                   {data.map((entry, idx) => (
                     <tr
                       key={`${entry.timestamp}-${idx}`}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <td className="px-4 py-3">
                         <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap font-mono">

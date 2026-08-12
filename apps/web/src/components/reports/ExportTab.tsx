@@ -53,7 +53,7 @@ export default function ExportTab({
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Link
           href="/settings/email"
-          className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+          className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
         >
           <FileText size={18} className="text-blue-500" />
           <div>
@@ -63,7 +63,7 @@ export default function ExportTab({
         </Link>
         <Link
           href="/dues"
-          className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+          className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
         >
           <CreditCard size={18} className="text-yellow-500" />
           <div>

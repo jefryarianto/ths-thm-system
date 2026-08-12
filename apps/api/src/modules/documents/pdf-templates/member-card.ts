@@ -71,19 +71,18 @@ const styles = StyleSheet.create({
     height: 80,
     backgroundColor: BLUE_800,
   },
+  // Watermark peta — digeser ke kanan agar tidak mengenai bingkai foto (foto s/d x=225)
   watermark: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    left: 230,
+    top: 166,
+    width: 600,
+    height: 207,
   },
   watermarkLogo: {
-    width: 420,
-    height: 190,
-    opacity: 0.07,
+    width: '100%',
+    height: '100%',
+    opacity: 0.12,
   },
   headerRow: {
     position: 'relative',
@@ -93,17 +92,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingTop: 20,
   },
+  // Logo setinggi blok teks header (±60px)
   logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     position: 'relative',
     overflow: 'hidden',
   },
   logoImg: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   row1: {
     color: WHITE,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   photoBox: {
     position: 'absolute',
     left: 40,
-    top: 165,
+    top: 148,
     width: 185,
     height: 235,
     borderRadius: 16,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   levelStrips: {
     position: 'absolute',
     left: 40,
-    top: 412,
+    top: 395,
     width: 185,
   },
   levelStrip: {
@@ -169,44 +169,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.25)',
   },
+  // Info — label di atas, nilai di bawah; kolom lebar ke kanan, zIndex di atas stempel agar teks tidak wrap
   infoSection: {
     position: 'absolute',
-    left: 255,
-    top: 162,
+    left: 240,
+    top: 148,
     right: 40,
+    zIndex: 20,
   },
   infoRow: {
-    flexDirection: 'row',
-    marginTop: 12,
-    alignItems: 'flex-start',
+    marginBottom: 13,
   },
   infoLabel: {
-    width: 120,
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#1e3a5f',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    // Jenis huruf label berbeda dari data (serif Times vs data Helvetica)
+    fontFamily: 'Times-Bold',
   },
   infoValue: {
-    flex: 1,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: 'semibold',
     color: SLATE_800,
+    marginTop: 3,
+    lineHeight: 20,
   },
   infoValueStrong: {
-    flex: 1,
-    fontSize: 25,
+    fontSize: 19,
     fontWeight: 'heavy',
     color: '#1e3a5f',
+    marginTop: 3,
   },
   bottomInfo: {
     position: 'absolute',
     left: 40,
-    bottom: 40,
+    bottom: 14,
   },
   validUntil: {
     color: WHITE,
     fontSize: 15,
     opacity: 0.9,
+    fontFamily: 'Times-Bold',
   },
   validUntilValue: {
     color: WHITE,
@@ -214,58 +219,77 @@ const styles = StyleSheet.create({
     fontWeight: 'heavy',
     marginTop: 2,
   },
+  // Stempel 110 px (50% dari 220 px ≈ 1,1 cm pada skala CR80 856 px = 8.56 cm), cap di-upload di dalamnya
+  // Container 220px agar nama/jabatan tidak wrap; stempel 110px di tengah
   signature: {
     position: 'absolute',
-    right: 48,
-    bottom: 36,
+    right: 0,
+    bottom: 14,
+    width: 220,
     alignItems: 'center',
   },
   sigWrap: {
     position: 'relative',
-    width: 192,
-    height: 80,
+    width: 110,
+    height: 110,
+    marginBottom: 2,
+    alignSelf: 'center',
   },
   sigText: {
     position: 'absolute',
-    left: 32,
-    top: 0,
-    fontSize: 38,
+    left: 22,
+    top: 81,
+    fontSize: 16,
     fontStyle: 'italic',
     transform: 'rotate(-8deg)',
     color: 'rgba(255,255,255,0.9)',
   },
+  sigImage: {
+    position: 'absolute',
+    left: 20,
+    top: 79,
+    width: 70,
+    height: 29,
+    opacity: 0.95,
+    transform: 'rotate(-8deg)',
+  },
   stamp: {
     position: 'absolute',
-    right: 0,
+    left: 0,
     top: 0,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     borderWidth: 4,
     borderColor: 'rgba(191,219,254,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
+    transform: 'rotate(-8deg)',
+    overflow: 'hidden',
+  },
+  stampImg: {
+    width: '100%',
+    height: '100%',
   },
   stampText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#dbeafe',
     transform: 'rotate(-12deg)',
   },
   signerName: {
     color: WHITE,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'heavy',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.6)',
-    paddingTop: 4,
+    textTransform: 'uppercase',
   },
   signerTitle: {
     color: WHITE,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'semibold',
     opacity: 0.95,
     marginTop: 2,
+    textTransform: 'uppercase',
   },
 
   // ── Back Side ──
@@ -421,6 +445,9 @@ interface MemberCardPdfProps {
   };
   /** Data URL foto anggota (base64) — opsional, fallback ke placeholder "FOTO". */
   photoDataUrl?: string | null;
+  /** Data URL tanda tangan & stempel (cap) yang di-upload — opsional, fallback teks "ttd"/"STEMPEL". */
+  signatureDataUrl?: string | null;
+  stampDataUrl?: string | null;
   /** Visual strip dari tabel tingkatan — bila kosong fallback ke mapping bawaan. */
   levelVisual?: { stripCount: number; color: string; label?: string } | null;
 }
@@ -530,39 +557,39 @@ function buildFrontSide(props: MemberCardPdfProps) {
     ),
     // Level strips (balok tingkat — dari tabel tingkatan)
     h(View, { key: 'strips', style: styles.levelStrips }, levelStrips),
-    // Info
+    // Info — No. Anggota, Nama, Tempat-Tanggal Lahir (gabung), Ranting, Wilayah — UPPERCASE (Distrik sudah di header)
     h(
       View,
       { key: 'info', style: styles.infoSection },
       h(
         View,
         { key: 'r1', style: styles.infoRow },
-        h(Text, { style: styles.infoLabel }, 'Nama'),
-        h(Text, { style: styles.infoValueStrong }, `: ${member.namaLengkap}`),
+        h(Text, { style: styles.infoLabel }, 'No. Anggota'),
+        h(Text, { style: styles.infoValueStrong }, (member.nomorAnggota || '-').toUpperCase()),
       ),
       h(
         View,
         { key: 'r2', style: styles.infoRow },
-        h(Text, { style: styles.infoLabel }, 'No. Anggota'),
-        h(Text, { style: styles.infoValue }, `: ${member.nomorAnggota}`),
+        h(Text, { style: styles.infoLabel }, 'Nama'),
+        h(Text, { style: styles.infoValue }, (member.namaLengkap || '-').toUpperCase()),
       ),
       h(
         View,
         { key: 'r3', style: styles.infoRow },
-        h(Text, { style: styles.infoLabel }, 'Ranting'),
-        h(Text, { style: styles.infoValue }, `: ${member.ranting || '-'}`),
+        h(Text, { style: styles.infoLabel }, 'Tempat, Tanggal Lahir'),
+        h(Text, { style: styles.infoValue }, (ttl || '-').toUpperCase()),
       ),
       h(
         View,
         { key: 'r4', style: styles.infoRow },
-        h(Text, { style: styles.infoLabel }, 'Wilayah'),
-        h(Text, { style: styles.infoValue }, `: ${member.wilayah || '-'}`),
+        h(Text, { style: styles.infoLabel }, 'Ranting'),
+        h(Text, { style: styles.infoValue }, (member.ranting || '-').toUpperCase()),
       ),
       h(
         View,
         { key: 'r5', style: styles.infoRow },
-        h(Text, { style: styles.infoLabel }, 'Distrik'),
-        h(Text, { style: styles.infoValue }, `: ${distrik}`),
+        h(Text, { style: styles.infoLabel }, 'Wilayah'),
+        h(Text, { style: styles.infoValue }, (member.wilayah || '-').toUpperCase()),
       ),
     ),
     // Bottom left — masa berlaku
@@ -573,15 +600,23 @@ function buildFrontSide(props: MemberCardPdfProps) {
       h(Text, { style: styles.validUntilValue }, validUntilStr),
     ),
     // Bottom right — penandatangan (1-3) + stempel
+    // Bottom right — stempel 4 cm (cap di-upload) + ttd di atasnya + nama/jabatan di bawah
     h(
       View,
       { key: 'sig', style: styles.signature },
       h(
         View,
         { key: 'sigwrap', style: styles.sigWrap },
-        h(ShimmerOverlay, { width: 192, height: 80, id: 'sigShimmerFront', colors: ['rgba(34,211,238,0.2)', 'rgba(255,255,255,0.3)', 'rgba(252,211,77,0.2)'] }),
-        h(Text, { key: 'sigttd', style: styles.sigText }, 'ttd'),
-        h(View, { key: 'stamp', style: styles.stamp }, h(Text, { style: styles.stampText }, 'STEMPEL')),
+        h(
+          View,
+          { key: 'stamp', style: styles.stamp },
+          props.stampDataUrl
+            ? h(Image, { src: props.stampDataUrl, style: styles.stampImg })
+            : h(Text, { style: styles.stampText }, 'STEMPEL'),
+        ),
+        props.signatureDataUrl
+          ? h(Image, { src: props.signatureDataUrl, style: styles.sigImage })
+          : h(Text, { key: 'sigttd', style: styles.sigText }, 'ttd'),
       ),
       ...(cardConfig.signers && cardConfig.signers.length > 0
         ? cardConfig.signers
@@ -591,16 +626,16 @@ function buildFrontSide(props: MemberCardPdfProps) {
                 View,
                 { key: `sig-${i}`, style: { alignItems: 'center', marginTop: i === 0 ? 0 : 8, width: '100%' } },
                 s.signerName
-                  ? h(Text, { style: styles.signerName }, s.signerName)
+                  ? h(Text, { style: styles.signerName }, (s.signerName || '').toUpperCase())
                   : null,
                 s.signerTitle
-                  ? h(Text, { style: styles.signerTitle }, s.signerTitle)
+                  ? h(Text, { style: styles.signerTitle }, (s.signerTitle || '').toUpperCase())
                   : null,
               ),
             )
         : [
-            h(Text, { key: 'sig-n', style: styles.signerName }, cardConfig.signerName),
-            h(Text, { key: 'sig-t', style: styles.signerTitle }, cardConfig.signerTitle),
+            h(Text, { key: 'sig-n', style: styles.signerName }, (cardConfig.signerName || '').toUpperCase()),
+            h(Text, { key: 'sig-t', style: styles.signerTitle }, (cardConfig.signerTitle || '').toUpperCase()),
           ]),
     ),
   ];

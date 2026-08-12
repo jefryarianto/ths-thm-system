@@ -193,7 +193,7 @@ export default function TingkatanPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                 {data.map((row, i) => (
-                  <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                  <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{i + 1}</td>
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
@@ -208,11 +208,11 @@ export default function TingkatanPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-[6px] items-center" style={{ width: 120 }}>
+                      <div className="flex flex-col gap-[4px]" style={{ width: 120 }}>
                         {Array.from({ length: row.stripCount }).map((_, s) => (
                           <div
                             key={s}
-                            className="h-[14px] flex-1 rounded-sm border border-black/25"
+                            className="h-[10px] w-full rounded-sm border border-black/25"
                             style={{ backgroundColor: row.stripWarna }}
                           />
                         ))}
@@ -309,12 +309,12 @@ export default function TingkatanPage() {
             {form.stripCount > 0 && (
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pratinjau:</p>
-                <div className="flex gap-[6px] items-center border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900">
+                <div className="flex flex-col gap-[4px] border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900" style={{ width: 120 }}>
                   {Array.from({ length: form.stripCount }).map((_, s) => (
                     <div
                       key={s}
-                      className="h-[14px] rounded-sm border border-black/25"
-                      style={{ backgroundColor: form.stripWarna, width: 40 }}
+                      className="h-[10px] w-full rounded-sm border border-black/25"
+                      style={{ backgroundColor: form.stripWarna }}
                     />
                   ))}
                 </div>

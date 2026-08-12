@@ -125,7 +125,7 @@ export const DOCUMENT_TYPES: Record<string, string> = {
   lainnya: 'Dokumen Lainnya',
 };
 
-export const TINGKAT_OPTIONS = ['anggota', 'Pratama', 'Tamtama', 'Muda', 'Madya', 'Utama'] as const;
+export const TINGKAT_OPTIONS = ['Anggota', 'Pratama', 'Tamtama', 'Muda', 'Madya', 'Utama'] as const;
 
 export function formatRupiah(value: number) {
   return `Rp ${value.toLocaleString('id-ID')}`;

@@ -23,6 +23,9 @@ export class MembersWorkflowService {
         tempatDadar: true,
         tahunDadar: true,
         tingkat: true,
+        alamat: true,
+        noHp: true,
+        email: true,
         statusData: true,
       },
     });
@@ -44,6 +47,9 @@ export class MembersWorkflowService {
     if (!member.tempatDadar) missingFields.push('tempat_dadar');
     if (!member.tahunDadar) missingFields.push('tahun_dadar');
     if (!member.tingkat) missingFields.push('tingkat');
+    if (!member.alamat) missingFields.push('alamat');
+    if (!member.noHp) missingFields.push('no_hp');
+    if (!member.email) missingFields.push('email');
 
     if (missingFields.length > 0) {
       await this.prisma.anggota.update({

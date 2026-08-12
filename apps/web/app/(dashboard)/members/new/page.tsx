@@ -8,7 +8,11 @@ import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
-import { TINGKAT_OPTIONS } from '@/components/members/constants';
+interface TingkatanOption {
+  id: string;
+  nama: string;
+}
+
 
 export default function NewMemberPage() {
   const router = useRouter();
@@ -27,6 +31,8 @@ export default function NewMemberPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [tingkatanList, setTingkatanList] = useState<TingkatanOption[]>([]);
+
   // Org structure cascading dropdowns
   const [distriks, setDistriks] = useState<{ id: string; nama: string }[]>([]);
   const [wilayahs, setWilayahs] = useState<{ id: string; nama: string }[]>([]);
@@ -37,6 +43,10 @@ export default function NewMemberPage() {
   const [selectedRanting, setSelectedRanting] = useState('');
   // Guards against stale async responses when the user re-picks a parent quickly
   const orgReqSeq = useRef(0);
+
+  useEffect(() => {
+    apiClient.get('/tingkatan').then((r) => setTingkatanList(r.data.data || [])).catch(() => {/* ignore */});
+  }, []);
 
   useEffect(() => {
     setOrgLoading(prev => ({ ...prev, distrik: true }));
@@ -168,8 +178,8 @@ export default function NewMemberPage() {
                     <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
                       <option value="">Pilih Tingkat</option>
-                      {TINGKAT_OPTIONS.map((t) => (
-                        <option key={t} value={t}>{t}</option>
+                      {tingkatanList.map((t) => (
+                        <option key={t.id} value={t.nama}>{t.nama}</option>
                       ))}
                     </select>
                   </div>

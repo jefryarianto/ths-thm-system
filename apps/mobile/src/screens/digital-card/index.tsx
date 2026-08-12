@@ -9,6 +9,7 @@ import {
   Pressable,
   Animated,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import Svg, { Path, Rect, Defs, Pattern, LinearGradient, Stop } from 'react-native-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -20,31 +21,9 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 // Logo resmi THS-THM (di-bundle bersama app)
 const LOGO = require('../../../assets/images/logo.png');
 
-// Siluet fallback foto anggota — path dari man-icon.svg / woman-icon.svg (root repo)
-// dirender via react-native-svg dengan satu warna agar bisa di-tint sesuai kartu.
-const MAN_PATHS = [
-  'M318.647 319.401c17.395 38.715 58.464 45.55 93.095 52.245C462.398 381.432 512 429.266 512 483.478v22.094c0 3.725-3.04 6.765-6.775 6.765H6.775c-3.735 0-6.775-3.04-6.775-6.765v-19.988c0-65.14 52.682-103.616 105.911-110.739 38.724-5.175 70.951-10.431 84.581-57.241 3.527 3.089 7.233 6.208 11.008 9.566 35.277 31.363 75.025 32.724 109.01-.049 2.792-2.703 5.524-5.246 8.137-7.72z',
-  'M318.647 319.411c9.1 20.247 24.677 31.781 42.409 39.122-59.984 44.01-142.797 41.466-204.49 3.855 18.687-10.064 28.045-24.638 33.907-44.795 3.526 3.09 7.242 6.21 11.027 9.577 35.277 31.363 75.025 32.724 109.01-.049 2.792-2.703 5.524-5.246 8.137-7.71z',
-  'M259.328 391.058c-35.873.159-71.955-9.895-102.762-28.67 18.617-10.024 28.214-24.826 33.916-44.795 3.537 3.09 7.233 6.21 11.018 9.577 18.528 16.472 38.307 24.667 57.828 23.992v39.896z',
-  'M134.739 212.161c4.655-13.324 15.482-9.04 30.904-3.412l-.142-.666.142.075c11.004-115.475 85.398-49.193 141.122-109.957 29.279 14.418 48.212 43.104 43.366 107.067l.156-.124a280.937 280.937 0 01-1.534 10.001c14.023-10.621 34.241-9.633 27.882 13.905l-8.687 24.605c-2.077 5.889-3.466 8.027-10.91 7.627-3.288-.175-6.595-1.443-9.894-3.622 3.046 36.31-14.579 48.157-36.64 69.449-33.977 32.787-73.728 31.433-108.995.059-20.658-18.375-39.004-29.534-39.92-67.307-5.356 1.641-10.42 1.939-14.842-.575-8.814-5.016-12.024-19.614-12.505-28.962-.193-3.759-.032-14.335.497-18.163z',
-  'M134.741 212.161c4.66-13.326 15.477-9.036 30.903-3.411l-.138-.665.138.075c8.039-84.405 49.947-71.713 93.68-82.493V351.16c-19.515.683-39.287-7.506-57.817-23.992-20.657-18.374-39.005-29.529-39.914-67.305-5.356 1.637-10.422 1.937-14.843-.577-12.837-7.306-13.871-33.724-12.009-47.125z',
-  'M108.075 92.791C176.124 8.703 254.558-37.032 313.452 37.772c72.174 3.79 97.211 121.553 36.678 167.497 4.849-63.963-14.086-92.651-43.364-107.067-55.725 60.764-130.12-5.52-141.122 109.955l-26.707-13.909c-2.652-33.119 5.106-90.577-30.862-101.457z',
-];
-const WOMAN_PATHS = [
-  'M60.185 311.499c44.657-3.627 61.073-50.023 66.576-98.131 8.382-73.65-3.246-168.407 85.39-204.232 70.384-28.465 161.399 9.853 171.327 111.254-.415 68.908 18.965 186.102 80.637 191.109-4.236 11.921-23.139 20.259-46.403 23.906 74.922 23.887 97.119 64.908 94.007 154.147H256l77.601-90.944 72.102 25.025-47.386-89.159c-13.764-2.718-26.195-7.333-35.245-14.077l-1.776-.632c-3.007 34.963-38.459 103.38-65.296 159.386-26.323-54.934-60.931-121.807-65.084-157.338-10.327 8.768-24.322 14.117-39.343 16.63l-45.277 85.19 72.102-25.025L256 489.552H.28c-3.173-91.056 20.084-129.853 95.428-153.824-17.795-4.835-31.662-13.352-35.523-24.229zm257.466 4.179c-5.371-5.518-8.773-12.152-9.446-19.994-14.465 9.406-31.173 15.249-49.684 15.861-18.054.594-36.251-3.87-52.024-14.003-1.858 6.954-5.109 12.943-9.401 18.067 23.326 43.258 98.141 41.441 120.555.069zm-.739-42.603c39.176-43.33 45.124-86.94 33.96-142.596-26.935-12.485-44.551-39.925-53.575-81.156-10.783 78.494-107.18 75.126-131.422 89.407 0 48.262-2.907 97.87 32.652 136.216 32.391 34.925 87.77 30.551 118.385-1.871z',
-];
-
-/** Siluet fallback foto — dirender dari path ikon man/woman dengan warna seragam. */
-function PhotoSilhouette({ female }: { female: boolean }) {
-  const paths = female ? WOMAN_PATHS : MAN_PATHS;
-  return (
-    <Svg width="100%" height="100%" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet">
-      {paths.map((d, i) => (
-        <Path key={i} d={d} fill="#94a3b8" />
-      ))}
-    </Svg>
-  );
-}
+// Ikon siluet fallback foto — man-icon.png / woman-icon.png (root repo, siluet hitam transparan)
+const MAN_ICON = require('../../../assets/images/man-icon.png');
+const WOMAN_ICON = require('../../../assets/images/woman-icon.png');
 
 // Ukuran desain kartu (CR80 landscape) — seluruh layout memakai koordinat 856×540
 const CARD_W = 856;
@@ -55,17 +34,18 @@ const CARD_H = 540;
 // (cek metadata TTF via System.Drawing/FontBook; nama family = "OCR A Extended", ada spasi)
 const OCR_A_FONT = 'OCR A Extended';
 
-// ─── Watermark peta Indonesia — ilustrasi titik halftone (vecteezy) ───
-// File SVG asli (4.092 titik merah, 1.6MB) dirasterisasi ke PNG putih-transparan
-// 1200×414 (~34KB) agar ringan di-bundle — titik-putih bisa di-tint via tintColor.
-const MAP_DOTS = require('../../../assets/images/map-indonesia-dots.png');
+// ─── Watermark peta Indonesia — peta indonesia.png (root repo, siluet hitam transparan) ───
+const MAP_PNG = require('../../../assets/images/peta-indonesia.png');
 
-/** Watermark peta Indonesia (PNG titik halftone, tintColor = warna titik). */
-function IndonesiaMapWatermark({ color, opacity, size = { width: 420, height: 145 } }: { color: string; opacity: number; size?: { width: number; height: number } }) {
+/** Watermark peta Indonesia (PNG siluet, tintColor = warna). */
+function IndonesiaMapWatermark({ color, opacity, size = { width: 560, height: 207 } }: { color: string; opacity: number; size?: { width: number; height: number } }) {
   return (
-    <Image source={MAP_DOTS} style={{ width: size.width, height: size.height, opacity, tintColor: color }} resizeMode="contain" />
+    <Image source={MAP_PNG} style={{ width: size.width, height: size.height, opacity, tintColor: color }} resizeMode="contain" />
   );
 }
+
+// Font label kartu — berbeda dari font data (serif); Android pakai generic 'serif', iOS 'Georgia'
+const LABEL_FONT = Platform.select({ ios: 'Georgia', android: 'serif' }) || 'serif';
 
 /** Latar abstrak — pita melengkung dengan gradien biru yang saling tumpang tindih
  *  (bukan blok warna solid), nuansa referensi "abstract wavy background". */
@@ -273,9 +253,7 @@ function InfoRow({ label, value, strong = false }: { label: string; value: strin
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
-      {/* Kolom titik dua dengan lebar tetap → semua baris sejajar */}
-      <Text style={styles.infoColon}>:</Text>
-      <Text style={[styles.infoValue, strong && styles.infoValueStrong]} numberOfLines={strong ? 2 : 1}>
+      <Text style={[styles.infoValue, strong && styles.infoValueStrong]} numberOfLines={2}>
         {value}
       </Text>
     </View>
@@ -316,9 +294,9 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
       {/* Guilloche / microprint border */}
       <GuillocheBorder patternId="g-front" strokeColor="rgba(29,78,216,0.3)" />
 
-      {/* Watermark — siluet peta titik halftone di tengah, jelas terlihat */}
+      {/* Watermark — peta indonesia.png washout di tengah-kanan (tidak mengenai bingkai foto) */}
       <View style={styles.watermarkWrap} pointerEvents="none">
-        <IndonesiaMapWatermark color="#1d4ed8" opacity={0.55} size={{ width: 480, height: 166 }} />
+        <IndonesiaMapWatermark color="#1d4ed8" opacity={0.75} size={{ width: 600, height: 207 }} />
       </View>
 
       <View style={styles.content}>
@@ -327,7 +305,7 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           <View style={styles.logo}>
             <Image source={LOGO} style={styles.logoImg} resizeMode="contain" />
             {/* Hologram / foil shimmer overlay */}
-            <ShimmerOverlay id="logoShimmer" width={64} height={64} colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']} borderRadius={32} />
+            <ShimmerOverlay id="logoShimmer" width={80} height={80} colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']} borderRadius={40} />
           </View>
           <View style={styles.headerText}>
             <Text style={styles.row1} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>KARTU TANDA ANGGOTA</Text>
@@ -340,12 +318,12 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           </View>
         </View>
 
-        {/* Photo — fallback siluet sesuai jenis kelamin bila tanpa foto */}
+        {/* Photo — fallback ikon man-icon.png / woman-icon.png sesuai jenis kelamin bila tanpa foto */}
         <View style={styles.photoBox}>
           {member?.fotoPath ? (
             <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(member.fotoPath)}` }} style={styles.photoImg} resizeMode="cover" />
           ) : (
-            <PhotoSilhouette female={member?.jenisKelamin === 'P'} />
+            <Image source={member?.jenisKelamin === 'P' ? WOMAN_ICON : MAN_ICON} style={styles.photoIcon} resizeMode="contain" />
           )}
         </View>
 
@@ -360,13 +338,18 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
         <View style={styles.infoBox}>
           <InfoRow label="No. Anggota" value={(member?.nomorAnggota || '-').toUpperCase()} strong />
           <InfoRow label="Nama" value={(member?.namaLengkap || '-').toUpperCase()} />
-          <InfoRow label="Tempat Lahir" value={(member?.tempatLahir || '-').toUpperCase()} />
           <InfoRow
-            label="Tanggal Lahir"
-            value={(member?.tanggalLahir
-              ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-              : '-')
+            label="Tempat, Tanggal Lahir"
+            value={[
+              member?.tempatLahir || '-',
+              member?.tanggalLahir
+                ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                : '-',
+            ]
+              .filter(Boolean)
+              .join(', ')
               .toUpperCase()}
+            strong={false}
           />
           <InfoRow label="Ranting" value={(member?.ranting?.nama || '-').toUpperCase()} />
           <InfoRow label="Wilayah" value={(member?.ranting?.wilayah?.nama || '-').toUpperCase()} />
@@ -378,24 +361,22 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           <Text style={styles.bottomValue}>{validUntilText}</Text>
         </View>
 
-        {/* Signer */}
+        {/* Signer — stempel diameter 2,2 cm (220 px ≈ 2,2 cm pada skala CR80 856 px = 8.56 cm), cap yang di-upload di dalamnya, ttd di atas stempel */}
         <View style={styles.signerBox}>
           <View style={styles.sigWrap}>
-            {/* Hologram / foil shimmer overlay */}
-            <ShimmerOverlay id="sigShimmer" width={192} height={80} colors={['rgba(34,211,238,0.25)', 'rgba(255,255,255,0.35)', 'rgba(252,211,77,0.25)']} borderRadius={12} />
-            {cardData?.signatureImage ? (
-              <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.signatureImage)}` }} style={styles.sigImg} resizeMode="contain" />
-            ) : (
-              <Text style={styles.sig}>ttd</Text>
-            )}
             {cardData?.stampImage ? (
               <View style={styles.stamp}>
-                <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.stampImage)}` }} style={styles.stampImg} resizeMode="contain" />
+                <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.stampImage)}` }} style={styles.stampImg} resizeMode="cover" />
               </View>
             ) : (
               <View style={styles.stamp}>
                 <Text style={styles.stampText}>STEMPEL</Text>
               </View>
+            )}
+            {cardData?.signatureImage ? (
+              <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.signatureImage)}` }} style={styles.sigImg} resizeMode="contain" />
+            ) : (
+              <Text style={styles.sig}>ttd</Text>
             )}
           </View>
           {(cardData?.signers && cardData.signers.length > 0
@@ -426,7 +407,7 @@ function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { memb
 
       {/* Watermark — siluet peta titik halftone PUTIH di tengah, jelas terlihat */}
       <View style={styles.backWatermarkWrap} pointerEvents="none">
-        <IndonesiaMapWatermark color="#ffffff" opacity={0.65} size={{ width: 480, height: 166 }} />
+        <IndonesiaMapWatermark color="#ffffff" opacity={0.85} size={{ width: 480, height: 166 }} />
       </View>
 
       <View style={styles.content}>
@@ -663,7 +644,8 @@ const styles = StyleSheet.create({
   guilloche: { position: 'absolute', top: 0, left: 0 },
   shimmerOverlay: { position: 'absolute', top: 0, left: 0 },
 
-  watermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 1 },
+  // Watermark peta — digeser ke kanan agar tidak mengenai bingkai foto (foto s/d x=225)
+  watermarkWrap: { position: 'absolute', left: 230, top: 166, width: 600, height: 207, opacity: 1 },
   watermarkLogo: { width: 260, height: 260 },
   backWatermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 1 },
   backWatermarkLogo: { width: 260, height: 260 },
@@ -674,8 +656,9 @@ const styles = StyleSheet.create({
   // ── Header — 4 baris, seluruhnya muat di dalam bar biru (height 104) ──
   // Blok teks: 19+15+22+16+3(margin) = 75px + padding vertikal 28 = 103 ≤ 104 → tidak ada overflow
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 14, paddingBottom: 14, paddingHorizontal: 24 },
-  logo: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.95)', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 3, borderWidth: 2, borderColor: '#ffffff' },
-  logoImg: { width: 60, height: 60, alignSelf: 'center' },
+  // Logo setinggi blok teks header (±80px: 4 baris × 19px + 3 margin)
+  logo: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.95)', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 3, borderWidth: 2, borderColor: '#ffffff' },
+  logoImg: { width: 76, height: 76, alignSelf: 'center' },
   logoInner: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: '#334155', alignItems: 'center', justifyContent: 'center' },
   logoText: { fontSize: 10, fontWeight: '900', color: '#171717' },
   headerText: { flex: 1 },
@@ -685,9 +668,9 @@ const styles = StyleSheet.create({
   orgName: { fontSize: 16, fontWeight: '900', color: '#fff', letterSpacing: 0.5, marginTop: 1, lineHeight: 19 },
   distrikName: { fontSize: 16, fontWeight: '900', color: '#fff', marginTop: 1, lineHeight: 19 },
 
-  // ── Photo ──
+  // ── Photo ── top sejajar dengan label No. Anggota (148)
   photoBox: {
-    position: 'absolute', left: 40, top: 165, width: 185, height: 235,
+    position: 'absolute', left: 40, top: 148, width: 185, height: 235,
     borderRadius: 16,
     backgroundColor: '#e2e8f0',
     borderWidth: 4,
@@ -696,55 +679,57 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   photoImg: { width: '100%', height: '100%' },
-  photoPlaceholder: { fontSize: 18, fontWeight: '700', color: '#94a3b8' },
-  photoSilhouette: { width: 130, height: 170, opacity: 0.9 },
+  photoIcon: { width: 130, height: 130, opacity: 0.9 },
 
-  // ── Level strips ── berjarak 12px dari bingkai foto (photo bottom = 165+235 = 400)
-  stripsBox: { position: 'absolute', left: 40, top: 412, width: 185, flexDirection: 'column', gap: 6 },
+  // ── Level strips ── berjarak 12px dari bingkai foto (photo bottom = 148+235 = 383)
+  stripsBox: { position: 'absolute', left: 40, top: 395, width: 185, flexDirection: 'column', gap: 6 },
   strip: { height: 14, width: '100%', borderRadius: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.25)' },
 
-  // ── Info ──
-  infoBox: { position: 'absolute', left: 255, top: 162, right: 40 },
-  infoRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 12 },
-  infoLabel: { width: 150, fontSize: 18, fontWeight: '700', color: '#1e3a5f', textTransform: 'uppercase' },
-  infoColon: { width: 18, fontSize: 18, fontWeight: '700', color: '#111827' },
-  infoValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#111827' },
+  // ── Info ── label di atas, nilai di bawah; kolom lebar ke kanan (stempel 2,2 cm di pojok),
+  // zIndex di atas stempel agar teks tetap di depan & tidak wrap
+  infoBox: { position: 'absolute', left: 240, top: 148, right: 40, zIndex: 20 },
+  infoRow: { marginBottom: 13 },
+  infoLabel: { fontSize: 12, fontWeight: '800', color: '#1e3a5f', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: LABEL_FONT },
+  infoValue: { fontSize: 15, fontWeight: '700', color: '#111827', marginTop: 3, lineHeight: 20 },
   // Nomor Anggota: pakai font OCR A Extended (di-bold via simulasi shadow kuat,
   // karena varian asli font OCR A Extended hanya tersedia weight regular;
   // fontWeight di React Native dengan fontFamily custom berisiko fallback ke font sistem)
   infoValueStrong: {
-    fontSize: 23,
+    fontSize: 19,
     fontFamily: OCR_A_FONT,
     color: '#0f2b4a',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
+    marginTop: 3,
     textShadowColor: '#0f2b4a',
     textShadowRadius: 2,
     textShadowOffset: { width: 0, height: 0 },
   },
 
   // ── Bottom ── masa berlaku: proper case, diperkecil mengikuti ukuran nama penandatangan (16px)
-  bottomInfo: { position: 'absolute', left: 40, bottom: 40 },
-  bottomLabel: { fontSize: 13, fontWeight: '700', color: '#1e3a5f', marginBottom: 2 },
+  // Jarak bawah teks masa berlaku = jarak atas teks header (14px)
+  bottomInfo: { position: 'absolute', left: 40, bottom: 14 },
+  bottomLabel: { fontSize: 13, fontWeight: '700', color: '#1e3a5f', marginBottom: 2, fontFamily: LABEL_FONT },
   bottomValue: { fontSize: 16, fontWeight: '700', color: '#111827', marginTop: 2 },
 
-  // ── Signer ── nama penandatangan + jabatan, warna hitam di atas bar putih
-  signerBox: { position: 'absolute', right: 48, bottom: 36, alignItems: 'center' },
-  sigWrap: { position: 'relative', width: 192, height: 80, marginBottom: 4 },
-  sig: { position: 'absolute', left: 32, top: 0, fontSize: 38, fontStyle: 'italic', color: '#334155', transform: [{ rotate: '-8deg' }] },
-  sigImg: { position: 'absolute', left: 8, top: 0, width: 176, height: 76, opacity: 0.9 },
-  // Stempel menutupi ± setengah gambar tanda tangan (stamp 52-132, sig ±32-92 → overlap ~40px)
+  // ── Signer ── stempel diameter 1,1 cm (110 px = 50% dari 220 px), cap di-upload di dalamnya,
+  // ttd di atas stempel, nama/jabatan hitam di bawah tanpa garis; jarak bawah = 14px (sama dgn header)
+  // Container 220px agar nama/jabatan tidak wrap; stempel 110px di tengah
+  signerBox: { position: 'absolute', right: 0, bottom: 14, width: 220, alignItems: 'center' },
+  sigWrap: { position: 'relative', width: 110, height: 110, marginBottom: 2, alignSelf: 'center' },
+  sig: { position: 'absolute', left: 22, top: 81, fontSize: 16, fontStyle: 'italic', color: '#334155', transform: [{ rotate: '-8deg' }] },
+  sigImg: { position: 'absolute', left: 20, top: 79, width: 70, height: 29, opacity: 0.95, transform: [{ rotate: '-8deg' }] },
   stamp: {
-    position: 'absolute', left: 52, top: 0, width: 80, height: 80, borderRadius: 40,
-    borderWidth: 4, borderColor: 'rgba(30,64,175,0.55)',
+    position: 'absolute', left: 0, top: 0, width: 110, height: 110, borderRadius: 55,
+    borderWidth: 4, borderColor: 'rgba(30,64,175,0.45)',
     alignItems: 'center', justifyContent: 'center',
-    transform: [{ rotate: '-12deg' }],
+    transform: [{ rotate: '-8deg' }],
     overflow: 'hidden',
   },
-  stampImg: { width: '100%', height: '100%', opacity: 0.9 },
-  stampText: { fontSize: 10, fontWeight: '900', color: '#1e40af' },
-  signerRow: { alignItems: 'center', width: '100%', marginBottom: 6 },
-  signerName: { fontSize: 16, fontWeight: '900', color: '#111827', borderTopWidth: 1, borderTopColor: 'rgba(15,43,74,0.3)', paddingTop: 4, maxWidth: 220 },
-  signerTitle: { fontSize: 13, fontWeight: '600', color: '#111827', marginTop: 2, maxWidth: 220 },
+  stampImg: { width: '100%', height: '100%' },
+  stampText: { fontSize: 11, fontWeight: '900', color: '#1e40af' },
+  signerRow: { alignItems: 'center', width: '100%', marginBottom: 4 },
+  signerName: { fontSize: 14, fontWeight: '900', color: '#111827', maxWidth: 220, textAlign: 'center' },
+  signerTitle: { fontSize: 12, fontWeight: '600', color: '#111827', marginTop: 2, maxWidth: 220, textAlign: 'center' },
 
   // ── Back ──
   backTitleBox: { position: 'absolute', top: 28, left: 0, right: 0, alignItems: 'center' },
@@ -765,7 +750,7 @@ const styles = StyleSheet.create({
   },
   backDesc: { fontSize: 18, lineHeight: 27, color: '#0f172a', marginBottom: 16 },
   backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  backRowLabel: { width: 115, fontSize: 18, fontWeight: '900', color: '#0f2b4a', textTransform: 'uppercase' },
+  backRowLabel: { width: 115, fontSize: 18, fontWeight: '900', color: '#0f2b4a', textTransform: 'uppercase', fontFamily: LABEL_FONT },
   backColon: { width: 18, fontSize: 18, fontWeight: '900', color: '#111827' },
   backRowValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#111827' },
   backFooter: { position: 'absolute', left: 48, right: 48, bottom: 32, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 },

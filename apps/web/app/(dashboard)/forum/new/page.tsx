@@ -78,7 +78,7 @@ export default function NewThreadPage() {
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -97,7 +97,7 @@ export default function NewThreadPage() {
                     value={judul}
                     onChange={(e) => setJudul(e.target.value)}
                     placeholder="Judul thread..."
-                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
         
@@ -110,7 +110,7 @@ export default function NewThreadPage() {
                     onChange={(e) => setKonten(e.target.value)}
                     placeholder="Tulis konten thread..."
                     rows={8}
-                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   />
                 </div>
         

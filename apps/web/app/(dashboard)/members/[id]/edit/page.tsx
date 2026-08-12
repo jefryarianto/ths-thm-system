@@ -9,7 +9,12 @@ import { ArrowLeft, Save, AlertCircle, RefreshCw } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
-import { TINGKAT_OPTIONS, toProperCase } from '@/components/members/constants';
+import { toProperCase } from '@/components/members/constants';
+
+interface TingkatanOption {
+  id: string;
+  nama: string;
+}
 
 interface MemberDetail {
   id: string;
@@ -53,6 +58,8 @@ export default function EditMemberPage() {
     rantingId: '',
   });
 
+  const [tingkatanList, setTingkatanList] = useState<TingkatanOption[]>([]);
+
   // Org cascade state
   const [distriks, setDistriks] = useState<Array<{ id: string; nama: string }>>([]);
   const [selectedDistrikId, setSelectedDistrikId] = useState('');
@@ -62,6 +69,10 @@ export default function EditMemberPage() {
   const [orgLoading, setOrgLoading] = useState(false);
   // Guards against stale async responses when the user re-picks a parent quickly
   const orgReqSeq = useRef(0);
+
+  useEffect(() => {
+    apiClient.get('/tingkatan').then((r) => setTingkatanList(r.data.data || [])).catch(() => {/* ignore */});
+  }, []);
 
   // ── Load member data ──────────────────────────────
   useEffect(() => {
@@ -290,10 +301,10 @@ export default function EditMemberPage() {
                        <FormField label="Tingkat">
                          <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition">
-                           <option value="">Pilih Tingkat</option>
-                           {TINGKAT_OPTIONS.map((t) => (
-                             <option key={t} value={t}>{t}</option>
-                           ))}
+                            <option value="">Pilih Tingkat</option>
+                            {tingkatanList.map((t) => (
+                              <option key={t.id} value={t.nama}>{t.nama}</option>
+                            ))}
                          </select>
                        </FormField>
                       <FormField label="Tempat Lahir">

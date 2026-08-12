@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        ocr: ['OCR A Extended', 'monospace'],
+      },
       colors: {
         primary: {
           50: '#eff6ff',

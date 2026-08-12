@@ -93,7 +93,7 @@ export default function ExportMenu({
       <button
         onClick={() => setOpen(!open)}
         disabled={disabled || !hasExport}
-        className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <Download size={14} />
         {label}
@@ -109,7 +109,7 @@ export default function ExportMenu({
             <button
               onClick={() => handleExport('xlsx')}
               disabled={loading !== null}
-              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition disabled:opacity-50"
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
             >
               {loading === 'xlsx' ? (
                 <Loader2 size={16} className="animate-spin text-blue-500" />
@@ -121,7 +121,7 @@ export default function ExportMenu({
             <button
               onClick={() => handleExport('csv')}
               disabled={loading !== null}
-              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition disabled:opacity-50"
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
             >
               {loading === 'csv' ? (
                 <Loader2 size={16} className="animate-spin text-blue-500" />

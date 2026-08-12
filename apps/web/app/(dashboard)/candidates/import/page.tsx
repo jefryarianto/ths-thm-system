@@ -657,7 +657,7 @@ export default function ImportCandidatesPage() {
                                     hasRowIssues
                                       ? 'bg-red-50/50 dark:bg-red-950/20'
                                       : 'odd:bg-white dark:odd:bg-gray-900/50 even:bg-gray-50/50 dark:even:bg-gray-800/30'
-                                  } hover:bg-gray-100/50 dark:hover:bg-gray-750 transition-colors`}
+                                  } hover:bg-gray-100/50 dark:hover:bg-gray-800 transition-colors`}
                                 >
                                   <td className="px-2 py-1.5 text-gray-400 dark:text-gray-500 font-mono">{i + 1}</td>
                                   {Object.values(row).map((v, j) => (

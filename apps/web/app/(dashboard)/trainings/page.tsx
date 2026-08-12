@@ -118,7 +118,7 @@ export default function TrainingsPage() {
         renderRow={(row: TrainingRow) => (
           <tr
             key={row.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <td className="px-4 py-3 whitespace-nowrap">
               <div className="flex items-center gap-2">

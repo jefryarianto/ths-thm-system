@@ -540,7 +540,7 @@ export default function EmailReportTab() {
             {logsStats.topRecipients.map((r: { email: string; count: number }, i: number) => (
               <div
                 key={r.email}
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xs text-gray-400 w-5 flex-shrink-0">{i + 1}.</span>

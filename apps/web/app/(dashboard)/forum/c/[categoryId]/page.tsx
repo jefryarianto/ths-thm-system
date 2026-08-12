@@ -107,7 +107,7 @@ export default function CategoryThreadsPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Cari thread..."
-                    className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>

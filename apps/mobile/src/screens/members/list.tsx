@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
@@ -6,6 +6,7 @@ import { useMembers } from '../../hooks/use-members';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { useRole } from '../../hooks/use-role';
+import apiClient from '../../lib/api-client';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
@@ -13,19 +14,21 @@ const STATUS_OPTIONS = [
   { value: 'nonaktif', label: 'Nonaktif' },
 ];
 
-const TINGKAT_OPTIONS = [
-  { value: '', label: 'Semua' },
-  { value: 'dasar', label: 'Dasar' },
-  { value: 'menengah', label: 'Menengah' },
-  { value: 'lanjut', label: 'Lanjut' },
-  { value: 'instruktur', label: 'Instruktur' },
-];
+interface TingkatanOption {
+  id: string;
+  nama: string;
+}
 
 export default function MembersScreen() {
   const { hasMinRole } = useRole();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterTingkat, setFilterTingkat] = useState('');
+  const [tingkatanOptions, setTingkatanOptions] = useState<TingkatanOption[]>([]);
+
+  useEffect(() => {
+    apiClient.get('/tingkatan').then((r) => setTingkatanOptions(r.data.data || [])).catch(() => {/* ignore */});
+  }, []);
 
   const { data: members, loading, refetch } = useMembers(search, filterStatus, filterTingkat);
   const { refreshing, onRefresh } = useRefresh(refetch);
@@ -53,7 +56,11 @@ export default function MembersScreen() {
       <SearchBar value={search} onChangeText={setSearch} placeholder="Cari anggota..." />
 
       <FilterChips options={STATUS_OPTIONS} selected={filterStatus} onChange={setFilterStatus} />
-      <FilterChips options={TINGKAT_OPTIONS} selected={filterTingkat} onChange={setFilterTingkat} />
+      <FilterChips
+        options={[{ value: '', label: 'Semua' }, ...tingkatanOptions.map((t) => ({ value: t.nama, label: t.nama }))]}
+        selected={filterTingkat}
+        onChange={setFilterTingkat}
+      />
 
       <FlatList
         data={members}

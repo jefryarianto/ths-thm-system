@@ -481,7 +481,7 @@ function StorybookPageContent() {
                       </thead>
                       <tbody>
                         {MOCK_MEMBERS.slice(0, 50).map((m, i) => (
-                          <tr key={m.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750">
+                          <tr key={m.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td className="px-4 py-2 text-xs text-gray-500">{i + 1}</td>
                             <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">{m.nama}</td>
                             <td className="px-4 py-2 text-xs font-mono text-gray-500 dark:text-gray-400 hidden sm:table-cell">{m.nra}</td>

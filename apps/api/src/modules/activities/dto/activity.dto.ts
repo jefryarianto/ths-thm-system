@@ -105,6 +105,11 @@ export class ActivityFilterDto {
   @IsOptional()
   @IsString()
   scopeType?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
 
 export class AddParticipantDto {

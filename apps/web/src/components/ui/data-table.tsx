@@ -106,7 +106,7 @@ export default function DataTable<T>({
               data.map((item, idx) => (
                 <tr
                   key={((item as Record<string, unknown>).id as string) || idx}
-                  className={`border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors${onRowClick ? ' cursor-pointer' : ''}`}
+                  className={`border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors${onRowClick ? ' cursor-pointer' : ''}`}
                   onClick={() => onRowClick?.(item)}
                 >
                   {columns.map((col) => (

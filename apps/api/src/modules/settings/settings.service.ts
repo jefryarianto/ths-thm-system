@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -40,6 +40,28 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
 
   // ── Period CRUD (via BaseCrudService) ──────────────
 
+  protected async beforeCreate(
+    dto: CreatePeriodDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = { nama: dto.nama };
+    if (dto.tglMulai) data.tglMulai = new Date(dto.tglMulai);
+    if (dto.tglSelesai) data.tglSelesai = new Date(dto.tglSelesai);
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    return data;
+  }
+
+  protected async beforeUpdate(
+    _id: string,
+    dto: UpdatePeriodDto,
+  ): Promise<Record<string, unknown>> {
+    const data: Record<string, unknown> = {};
+    if (dto.nama !== undefined) data.nama = dto.nama;
+    if (dto.tglMulai !== undefined) data.tglMulai = new Date(dto.tglMulai);
+    if (dto.tglSelesai !== undefined) data.tglSelesai = new Date(dto.tglSelesai);
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    return data;
+  }
+
   async getPeriods() {
     return this.prisma.periode.findMany({ orderBy: { tglMulai: 'desc' } });
   }
@@ -53,12 +75,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   }
 
   async updatePeriod(id: string, dto: UpdatePeriodDto) {
-    const data: Record<string, unknown> = {};
-    if (dto.nama) data.nama = dto.nama;
-    if (dto.tglMulai) data.tglMulai = new Date(dto.tglMulai);
-    if (dto.tglSelesai) data.tglSelesai = new Date(dto.tglSelesai);
-    if (dto.isActive !== undefined) data.isActive = dto.isActive;
-    return this.baseUpdate(id, { ...dto, ...data } as UpdatePeriodDto);
+    return this.baseUpdate(id, dto);
   }
 
   async deletePeriod(id: string) {

@@ -161,7 +161,7 @@ export default function AssessmentsPage() {
           renderRow={(row: AssessmentRow) => (
             <tr
               key={row.id}
-              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <td className="px-4 py-3">
                 <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
@@ -245,7 +245,7 @@ export default function AssessmentsPage() {
           renderRow={(row: ItemRow) => (
             <tr
               key={row.id}
-              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+              className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <td className="px-4 py-3">
                 <span className="font-mono text-xs text-gray-500 dark:text-gray-400">

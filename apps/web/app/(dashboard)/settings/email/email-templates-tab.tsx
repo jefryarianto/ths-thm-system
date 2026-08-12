@@ -204,7 +204,7 @@ export default function EmailTemplatesTab() {
                     className={`flex items-start gap-3 p-3 rounded-lg border text-left w-full transition ${
                       custom
                         ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50'
-                        : 'border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                        : 'border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     <div

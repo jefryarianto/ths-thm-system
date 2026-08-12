@@ -260,7 +260,7 @@ export default function EmailVariablesTab() {
           }, {} as Record<string, TemplateDoc[]>)
         ).map(([category, templates]) => (
           <div key={category} className="border-b border-gray-200 dark:border-gray-700 last:border-0">
-            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-750">
+            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {category}
               </h3>
@@ -268,7 +268,7 @@ export default function EmailVariablesTab() {
             {templates.map((tpl) => (
               <div
                 key={tpl.name}
-                className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-750/50 transition"
+                className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <FileText size={14} className="text-blue-500" />

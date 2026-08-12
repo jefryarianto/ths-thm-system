@@ -189,7 +189,7 @@ export default function MemberDuesPage() {
                           value={proofNotes[due.id] || ''}
                           onChange={(e) => setProofNotes((prev) => ({ ...prev, [due.id]: e.target.value }))}
                           placeholder="Nama pengirim, tanggal transfer..."
-                          className="mt-1 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="mt-1 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>

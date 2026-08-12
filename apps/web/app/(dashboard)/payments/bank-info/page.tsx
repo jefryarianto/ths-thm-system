@@ -168,7 +168,7 @@ export default function BankInfoPage() {
                   value={form.bankName}
                   onChange={(e) => setForm({ ...form, bankName: e.target.value })}
                   placeholder="Contoh: BCA"
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -177,7 +177,7 @@ export default function BankInfoPage() {
                   value={form.accountNumber}
                   onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
                   placeholder="Contoh: 1234567890"
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -186,7 +186,7 @@ export default function BankInfoPage() {
                   value={form.accountName}
                   onChange={(e) => setForm({ ...form, accountName: e.target.value })}
                   placeholder="Contoh: Yayasan THS-THM"
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -195,7 +195,7 @@ export default function BankInfoPage() {
                   value={form.qrisImageUrl}
                   onChange={(e) => setForm({ ...form, qrisImageUrl: e.target.value })}
                   placeholder="https://..."
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="flex items-center gap-2 md:col-span-2">

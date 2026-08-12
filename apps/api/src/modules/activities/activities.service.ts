@@ -87,6 +87,12 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
         if (query.tipe) where.tipe = query.tipe;
         if (query.status) where.status = query.status;
         if (query.scopeType) where.scopeType = query.scopeType;
+        if (query.search) {
+          where.OR = [
+            { nama: { contains: query.search, mode: 'insensitive' } },
+            { lokasi: { contains: query.search, mode: 'insensitive' } },
+          ];
+        }
 
         return where;
       },

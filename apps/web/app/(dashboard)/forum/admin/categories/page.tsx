@@ -144,7 +144,7 @@ export default function ForumAdminCategoriesPage() {
                   value={form.nama}
                   onChange={(e) => setForm({ ...form, nama: e.target.value })}
                   placeholder="Contoh: Diskusi Umum"
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="md:col-span-2">
@@ -154,7 +154,7 @@ export default function ForumAdminCategoriesPage() {
                   onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
                   placeholder="Jelaskan isi kategori..."
                   rows={2}
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
               <div>
@@ -163,7 +163,7 @@ export default function ForumAdminCategoriesPage() {
                   type="number"
                   value={form.order}
                   onChange={(e) => setForm({ ...form, order: parseInt(e.target.value || '0', 10) })}
-                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-750 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function ForumAdminCategoriesPage() {
                 {categories.map((cat) => (
                   <tr
                     key={cat.id}
-                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <GripVertical size={14} className="text-gray-300" />
