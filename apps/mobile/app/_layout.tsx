@@ -79,6 +79,7 @@ export default function RootLayout() {
           <Stack.Screen name="members/[id]" />
           <Stack.Screen name="members/create" />
           <Stack.Screen name="forgot-password" />
+          <Stack.Screen name="force-change-password" />
           <Stack.Screen name="approvals" />
           <Stack.Screen name="approvals/[id]" />
           <Stack.Screen name="approvals/reference-claim" />

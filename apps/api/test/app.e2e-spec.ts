@@ -28,7 +28,7 @@ describe('THS-THM API (e2e)', () => {
     // Try login first, register only if needed (idempotent)
     const loginRes = await request(app.getHttpServer())
       .post('/api/auth/login')
-      .send({ email: 'e2e@test.com', password: 'test1234' });
+      .send({ identifier: 'e2e@test.com', password: 'test1234' });
 
     if (loginRes.status < 300 && loginRes.body?.data?.accessToken) {
       accessToken = loginRes.body.data.accessToken;
@@ -105,7 +105,7 @@ describe('THS-THM API (e2e)', () => {
     it('POST /api/auth/login — should return tokens', () => {
       return request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'e2e@test.com', password: 'test1234' })
+        .send({ identifier: 'e2e@test.com', password: 'test1234' })
         .expect(201)
         .expect((res: any) => {
           expect(res.body.success).toBe(true);
@@ -117,7 +117,7 @@ describe('THS-THM API (e2e)', () => {
     it('POST /api/auth/login — should reject invalid credentials', () => {
       return request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'nonexistent@test.com', password: 'wrong' })
+        .send({ identifier: 'nonexistent@test.com', password: 'wrong' })
         .expect(401);
     });
 

@@ -105,6 +105,12 @@ export class MembersController {
     return this.workflowService.approve(id, req.scope);
   }
 
+  @Post(':id/resend-credentials')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Kirim ulang credential login anggota' })
+  resendCredentials(@Param('id') id: string) {
+    return this.membersService.resendCredentials(id);
+  }
+
   @Patch(':id/suspend')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tangguhkan anggota' })
   suspend(@Param('id') id: string, @Req() req: ScopedRequest) {

@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   User,
   Mail,
+  Send,
   Phone,
   MapPin,
   Calendar,
@@ -180,10 +181,9 @@ function getLevelVisual(tingkat?: string | null, fromApi?: { stripCount: number;
 
 function InfoPreview({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="flex items-start gap-2 mt-3">
-      <div className="w-[150px] text-[18px] font-bold text-blue-950 uppercase">{label}</div>
-      <div className="w-[18px] text-[18px] font-bold text-slate-900">:</div>
-      <div className={`${strong ? 'text-[23px] font-black text-blue-950 tracking-[1.5px]' : 'text-[18px] font-semibold text-slate-900'}`}>
+    <div className="mb-[13px]">
+      <div className="text-[12px] font-extrabold text-blue-950 uppercase tracking-[0.5px] font-['Georgia,_serif']">{label}</div>
+      <div className={`${strong ? 'text-[19px] font-black text-blue-950 tracking-[1.2px] font-ocr' : 'text-[15px] font-bold text-slate-900'} mt-[3px] leading-[20px]`}>
         {value}
       </div>
     </div>
@@ -193,7 +193,7 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
 function BackPreview({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-2 text-[18px] mb-3">
-      <div className="w-[105px] font-black text-blue-950 uppercase">{label}</div>
+      <div className="w-[105px] font-black text-blue-950 uppercase font-['Georgia,_serif']">{label}</div>
       <div className="w-[18px] font-black text-slate-900">:</div>
       <div className="font-semibold">{value}</div>
     </div>
@@ -250,6 +250,7 @@ export default function MemberDetailPage() {
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [tingkatanList, setTingkatanList] = useState<Array<{ id: string; nama: string }>>([]);
 
   const fetchMember = useCallback(async () => {
     if (!id) return;
@@ -272,6 +273,10 @@ export default function MemberDetailPage() {
   useEffect(() => {
     fetchMember();
   }, [fetchMember]);
+
+  useEffect(() => {
+    apiClient.get('/tingkatan').then((r) => setTingkatanList(r.data.data || [])).catch(() => {/* ignore */});
+  }, []);
 
   // Fetch digital card data when card tab is active
   useEffect(() => {
@@ -314,6 +319,20 @@ export default function MemberDetailPage() {
       await fetchMember();
     } catch {
       /* ignore */
+    }
+    setActionLoading(null);
+  };
+
+  const handleResendCredentials = async () => {
+    if (!member) return;
+    setActionLoading('resend');
+    try {
+      await apiClient.post(`/members/${member.id}/resend-credentials`, {});
+      toast('success', 'Credential berhasil dikirim ulang');
+      await fetchMember();
+    } catch (err) {
+      const apiError = (err as { message?: string })?.message || 'Gagal mengirim ulang credential';
+      toast('error', apiError);
     }
     setActionLoading(null);
   };
@@ -375,8 +394,8 @@ export default function MemberDetailPage() {
       const photoHtml = m.fotoPath
         ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(m.fotoPath)}" alt="Foto" style="width:100%;height:100%;object-fit:cover"/>`
         : m.jenisKelamin === 'P'
-          ? `<svg viewBox="0 0 512 512" style="width:130px;height:170px;opacity:0.9;margin:30px auto 0;display:block"><g fill="#94a3b8"><circle cx="256" cy="170" r="85"/><path d="M60 311c45-4 61-50 67-98 8-74-3-168 85-204 70-28 161 10 171 111 0 69 19 186 81 191-4 12-23 20-46 24 75 24 97 65 94 154h-161l78-91 72 25-47-89c-14-3-26-7-35-14l-2-1c-3 35-38 103-65 159-26-55-61-122-65-157-10 9-24 14-39 17l-45 85 72-25-72 91H0c-3-91 20-130 95-154-18-5-32-13-35-24z"/></g></svg>`
-          : `<svg viewBox="0 0 512 512" style="width:130px;height:170px;opacity:0.9;margin:30px auto 0;display:block"><g fill="#94a3b8"><circle cx="256" cy="170" r="85"/><path d="M135 212c5-13 15-9 31-3l0-1c8-84 50-72 94-82v265c-20 1-39-8-58-24-21-18-39-30-40-67-5 2-10 2-15-1-13-7-14-34-12-47z"/><path d="M108 93c68-84 147-130 205-55 72 4 97 122 37 167 5-64-14-93-43-107-56 61-130-6-141 110l-27-14c-3-33 5-91-31-101z"/></g></svg>`;
+          ? `<img src="${window.location.origin}/woman-icon.png" alt="foto" style="width:130px;height:130px;object-fit:contain;opacity:0.9;margin:52px auto 0;display:block"/>`
+          : `<img src="${window.location.origin}/man-icon.png" alt="foto" style="width:130px;height:130px;object-fit:contain;opacity:0.9;margin:52px auto 0;display:block"/>`;
       const signerName = data.data.card?.signerName || 'Koordinator Distrik';
       const signerTitle = data.data.card?.signerTitle || 'THS-THM';
       const logoUrl = `${window.location.origin}/logo.png`;
@@ -398,13 +417,12 @@ export default function MemberDetailPage() {
   .front .top-bar { position: absolute; top: 0; left: 0; right: 0; height: 104px; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
   .front .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 96px; background: linear-gradient(315deg, #93c5fd, #dbeafe); }
   .guilloche { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .watermark svg { width: 480px; height: 166px; opacity: 0.55; }
-  .back .wm svg { width: 480px; height: 166px; opacity: 0.65; }
+  .watermark { position: absolute; left: 230px; top: 166px; width: 600px; height: 207px; pointer-events: none; }
+  .watermark img { width: 100%; height: 100%; object-fit: contain; opacity: 0.1; }
   .content { position: relative; z-index: 10; height: 100%; padding: 0; }
   .header-row { display: flex; align-items: center; gap: 14px; padding: 14px 24px; color: #fff; }
-  .logo { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); position: relative; }
-  .logo img { width: 60px; height: 60px; object-fit: contain; }
+  .logo { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: #fff; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(255,255,255,0.35); position: relative; }
+  .logo img { width: 76px; height: 76px; object-fit: contain; }
   .logo .shimmer { position: absolute; inset: 0; background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%); }
   .header-text { line-height: 19px; }
   .header-text .row1 { font-size: 16px; font-weight: 900; letter-spacing: 2px; }
@@ -413,29 +431,27 @@ export default function MemberDetailPage() {
   .header-text .sub { font-size: 16px; font-weight: 900; margin-top: 1px; }
   .sig-wrap .shimmer { position: absolute; inset: -4px; border-radius: 12px; background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(255,255,255,0.3), rgba(252,211,77,0.2)); }
   .back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .back .wm svg { opacity: 0.65; fill: #ffffff; }
-  .photo { position: absolute; left: 40px; top: 165px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .level-strips { position: absolute; left: 40px; top: 412px; width: 185px; display: flex; flex-direction: column; gap: 6px; }
+  .back .wm img { width: 480px; height: 166px; object-fit: contain; opacity: 0.5; filter: invert(1); }
+  .photo { position: absolute; left: 40px; top: 148px; width: 185px; height: 235px; border-radius: 16px; background: linear-gradient(135deg, #cbd5e1, #f1f5f9); border: 4px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .level-strips { position: absolute; left: 40px; top: 395px; width: 185px; display: flex; flex-direction: column; gap: 6px; }
   .level-strip { height: 14px; width: 100%; border-radius: 4px; border: 1px solid rgba(0,0,0,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-  .info { position: absolute; left: 255px; top: 162px; right: 40px; }
-  .info-row { display: flex; gap: 8px; margin-top: 12px; align-items: flex-start; }
-  .info-row .label { width: 150px; font-size: 18px; font-weight: 700; color: #1e3a5f; text-transform: uppercase; }
-  .info-row .colon { width: 18px; font-size: 18px; font-weight: 700; color: #111827; }
-  .info-row .name { font-size: 23px; font-weight: 900; color: #0f2b4a; letter-spacing: 1.5px; }
-  .info-row .value { font-size: 18px; font-weight: 600; color: #111827; }
-  .bottom-info { position: absolute; left: 40px; bottom: 40px; color: #111827; }
-  .bottom-info .label { font-size: 13px; font-weight: 700; color: #1e3a5f; }
+  .info { position: absolute; left: 240px; top: 148px; right: 40px; z-index: 20; }
+  .info-row { margin-bottom: 13px; }
+  .info-row .label { display: block; font-size: 12px; font-weight: 800; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.5px; font-family: Georgia, 'Times New Roman', serif; }
+  .info-row .name { display: block; font-size: 19px; font-weight: 900; color: #0f2b4a; letter-spacing: 1.2px; margin-top: 3px; }
+  .info-row .value { display: block; font-size: 15px; font-weight: 700; color: #111827; margin-top: 3px; line-height: 20px; }
+  .bottom-info { position: absolute; left: 40px; bottom: 14px; color: #111827; }
+  .bottom-info .label { font-size: 13px; font-weight: 700; color: #1e3a5f; font-family: Georgia, 'Times New Roman', serif; }
   .bottom-info .expiry { font-size: 16px; font-weight: 700; margin-top: 2px; }
-  .signature { position: absolute; right: 48px; bottom: 36px; text-align: center; color: #111827; }
-  .signature .sig-wrap { position: relative; height: 80px; width: 192px; margin-bottom: 4px; }
-  .signature .sig { position: absolute; left: 32px; top: 0; font-size: 38px; font-family: cursive; transform: rotate(-8deg); color: #334155; }
-  .signature .sig img { position: absolute; left: 8px; top: 0; width: 176px; height: 76px; object-fit: contain; opacity: 0.9; }
-  .signature .stamp { position: absolute; left: 52px; top: 0; width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(30,64,175,0.55); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #1e40af; transform: rotate(-12deg); overflow: hidden; }
-  .signature .stamp img { width: 100%; height: 100%; object-fit: contain; opacity: 0.9; }
-  .signature .title { font-size: 16px; font-weight: 900; color: #111827; border-top: 1px solid rgba(15,43,74,0.3); padding-top: 4px; }
-  .signature .subtitle { font-size: 13px; font-weight: 600; color: #111827; margin-top: 2px; }
-  .back .wm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-  .back .wm img { width: 260px; height: 260px; opacity: 0.1; }
+  .signature { position: absolute; right: 0; bottom: 14px; width: 220px; text-align: center; color: #111827; }
+  .signature .sig-wrap { position: relative; height: 110px; width: 110px; margin: 0 auto 2px; }
+  .signature .sig { position: absolute; left: 22px; top: 81px; font-size: 16px; font-family: cursive; transform: rotate(-8deg); color: #334155; }
+  .signature .sig img { position: absolute; left: 20px; top: 79px; width: 70px; height: 29px; object-fit: contain; opacity: 0.95; transform: rotate(-8deg); }
+  .signature .stamp { position: absolute; left: 0; top: 0; width: 110px; height: 110px; border-radius: 50%; border: 4px solid rgba(30,64,175,0.45); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #1e40af; transform: rotate(-8deg); overflow: hidden; }
+  .signature .stamp img { width: 100%; height: 100%; object-fit: cover; }
+  .signature .title { font-size: 14px; font-weight: 900; color: #111827; }
+  .signature .subtitle { font-size: 12px; font-weight: 600; color: #111827; margin-top: 2px; }
+
   .back .title { position: absolute; left: 0; right: 0; text-align: center; top: 28px; color: #fff; }
   .back .title h2 { font-size: 28px; font-weight: 900; letter-spacing: 0.16em; }
   .back .title p { font-size: 15px; opacity: 0.9; margin-top: 4px; }
@@ -443,7 +459,7 @@ export default function MemberDetailPage() {
   .qr-box img { width: 100%; height: 100%; }
   .back-info { position: absolute; left: 300px; top: 145px; right: 48px; background: rgba(255,255,255,0.9); border-radius: 16px; border: 1px solid rgba(191,219,254,0.5); padding: 24px; color: #334155; }
   .back-info .row { display: flex; gap: 8px; font-size: 18px; margin-bottom: 12px; }
-  .back-info .row .lbl { width: 105px; font-weight: 900; color: #1e3a5f; text-transform: uppercase; }
+  .back-info .row .lbl { width: 105px; font-weight: 900; color: #1e3a5f; text-transform: uppercase; font-family: Georgia, 'Times New Roman', serif; }
   .back-info .row .colon { width: 18px; font-weight: 900; color: #111827; }
   .back-info .row .val { font-weight: 600; }
   .back-info .desc { font-size: 18px; line-height: 1.5; margin-bottom: 16px; }
@@ -456,7 +472,7 @@ export default function MemberDetailPage() {
   <div class="bg-circle1"></div><div class="bg-circle2"></div>
   <div class="top-bar"></div><div class="bottom-bar"></div>
   <svg class="guilloche" viewBox="0 0 856 540" aria-hidden="true"><defs><pattern id="g-front" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke="rgba(29,78,216,0.3)" stroke-width="0.5"/></pattern></defs><rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#g-front)" stroke-width="14"/></svg>
-  <div class="watermark"><svg viewBox="0 0 400 180" fill="#1e3a5f" aria-hidden="true"><path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/><path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/><path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/><path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/><path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/><path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/><path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/><path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/><path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/></svg></div>
+  <div class="watermark"><img src="${window.location.origin}/peta-indonesia.png" alt="peta"/></div>
   <div class="content">
     <div class="header-row">
       <div class="logo"><img src="${logoUrl}" alt="THS-THM" /><div class="shimmer"></div></div>
@@ -470,12 +486,11 @@ export default function MemberDetailPage() {
     <div class="photo">${photoHtml}</div>
     <div class="level-strips">${stripHtml}</div>
     <div class="info">
-      <div class="info-row"><span class="label">No. Anggota</span><span class="colon">:</span><span class="name">${(m.nomorAnggota || '-').toUpperCase()}</span></div>
-      <div class="info-row"><span class="label">Nama</span><span class="colon">:</span><span class="value">${(m.namaLengkap || '-').toUpperCase()}</span></div>
-      <div class="info-row"><span class="label">Tempat Lahir</span><span class="colon">:</span><span class="value">${(m.tempatLahir || '-').toUpperCase()}</span></div>
-      <div class="info-row"><span class="label">Tanggal Lahir</span><span class="colon">:</span><span class="value">${(m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-').toUpperCase()}</span></div>
-      <div class="info-row"><span class="label">Ranting</span><span class="colon">:</span><span class="value">${(m.ranting || '-').toUpperCase()}</span></div>
-      <div class="info-row"><span class="label">Wilayah</span><span class="colon">:</span><span class="value">${(m.wilayah || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">No. Anggota</span><span class="name">${(m.nomorAnggota || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Nama</span><span class="value">${(m.namaLengkap || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Tempat, Tanggal Lahir</span><span class="value">${ttl.toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Ranting</span><span class="value">${(m.ranting || '-').toUpperCase()}</span></div>
+      <div class="info-row"><span class="label">Wilayah</span><span class="value">${(m.wilayah || '-').toUpperCase()}</span></div>
     </div>
     <div class="bottom-info">
       <div class="label">Berlaku sampai</div>
@@ -483,9 +498,8 @@ export default function MemberDetailPage() {
     </div>
     <div class="signature">
       <div class="sig-wrap">
-        <div class="shimmer"></div>
-        ${data.data.signatureImage ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.signatureImage)}" alt="ttd" style="position:absolute;left:8px;top:0;width:176px;height:76px;object-fit:contain;opacity:0.9"/>` : '<div class="sig">ttd</div>'}
         <div class="stamp">${data.data.stampImage ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.stampImage)}" alt="stempel"/>` : 'STEMPEL'}</div>
+        ${data.data.signatureImage ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.signatureImage)}" alt="ttd" style="position:absolute;left:20px;top:79px;width:70px;height:29px;object-fit:contain;opacity:0.95;transform:rotate(-8deg)"/>` : '<div class="sig">ttd</div>'}
       </div>
       <div class="title">${signerName}</div>
       <div class="subtitle">${signerTitle}</div>
@@ -494,7 +508,7 @@ export default function MemberDetailPage() {
 </div>
 <div class="card back page-break">
   <svg class="guilloche" viewBox="0 0 856 540" aria-hidden="true"><defs><pattern id="g-back" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke="rgba(191,219,254,0.4)" stroke-width="0.5"/></pattern></defs><rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#g-back)" stroke-width="14"/></svg>
-  <div class="wm"><svg viewBox="0 0 400 180" fill="#cbd5e1" aria-hidden="true"><path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/><path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/><path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/><path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/><path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/><path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/><path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/><path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/><path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/></svg></div>
+  <div class="wm"><img src="${window.location.origin}/peta-indonesia.png" alt="peta"/></div>
   <div class="content">
     <div class="title">
       <h2>VERIFIKASI KARTU ANGGOTA</h2>
@@ -716,13 +730,14 @@ export default function MemberDetailPage() {
                         Setujui
                       </button>
                     )}
-                    <Link
-                      href={`/members/${member.id}/edit`}
-                      className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                    <button
+                      onClick={handleResendCredentials}
+                      disabled={actionLoading === 'resend'}
+                      className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"
                     >
-                      <Pencil size={14} />
-                      Edit
-                    </Link>
+                      <Mail size={14} />
+                      {actionLoading === 'resend' ? 'Mengirim...' : 'Kirim Ulang Credential'}
+                    </button>
                     <button
                       onClick={() => setShowDeleteModal(true)}
                       className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
@@ -1037,27 +1052,17 @@ export default function MemberDetailPage() {
                         <rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#guilloche-front)" strokeWidth="14" />
                       </svg>
 
-                      {/* Watermark — peta Indonesia (jelas terlihat seperti mobile) */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.55]">
-                        <svg viewBox="0 0 400 180" className="w-[480px] h-[166px]" fill="#1d4ed8" aria-hidden="true">
-                          <path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/>
-                          <path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/>
-                          <path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/>
-                          <path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/>
-                          <path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/>
-                          <path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/>
-                          <path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/>
-                          <path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/>
-                          <path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/>
-                        </svg>
+                      {/* Watermark — peta indonesia.png washout (digeser kanan, tidak mengenai bingkai foto) */}
+                      <div className="absolute left-[230px] top-[166px] w-[600px] h-[207px] pointer-events-none opacity-[0.1]">
+                        <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain" />
                       </div>
 
                       {/* Content */}
                       <div className="relative z-10 h-full">
                         {/* Header — 4 baris semua bold + logo utuh (contain) */}
                         <div className="px-6 pt-3.5 flex items-center gap-3.5 text-white">
-                          <div className="w-16 h-16 rounded-full overflow-hidden bg-white shadow flex items-center justify-center flex-shrink-0 relative">
-                            <img src="/logo.png" alt="THS-THM" className="w-[60px] h-[60px] object-contain" />
+                          <div className="w-20 h-20 rounded-full overflow-hidden bg-white shadow flex items-center justify-center flex-shrink-0 relative">
+                            <img src="/logo.png" alt="THS-THM" className="w-[76px] h-[76px] object-contain" />
                             {/* Hologram / foil shimmer overlay */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
                           </div>
@@ -1069,30 +1074,17 @@ export default function MemberDetailPage() {
                           </div>
                         </div>
         
-                        {/* Photo — fallback siluet sesuai jenis kelamin (sama seperti mobile) */}
-                        <div className="absolute left-10 top-[165px] w-[185px] h-[235px] rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden">
+                        {/* Photo — fallback man-icon.png / woman-icon.png sesuai jenis kelamin (top sejajar label No. Anggota) */}
+                        <div className="absolute left-10 top-[148px] w-[185px] h-[235px] rounded-2xl bg-slate-200 border-4 border-white shadow-lg overflow-hidden">
                           {member.fotoPath ? (
                             <img src={`/api/uploads/${encodeURIComponent(member.fotoPath)}`} alt="Foto" className="w-full h-full object-cover" />
-                          ) : member.jenisKelamin === 'P' ? (
-                            <svg viewBox="0 0 512 512" className="w-[130px] h-[170px] opacity-90 mx-auto mt-[30px]" aria-hidden="true">
-                              <g fill="#94a3b8">
-                                <circle cx="256" cy="170" r="85"/>
-                                <path d="M60 311c45-4 61-50 67-98 8-74-3-168 85-204 70-28 161 10 171 111 0 69 19 186 81 191-4 12-23 20-46 24 75 24 97 65 94 154h-161l78-91 72 25-47-89c-14-3-26-7-35-14l-2-1c-3 35-38 103-65 159-26-55-61-122-65-157-10 9-24 14-39 17l-45 85 72-25-72 91H0c-3-91 20-130 95-154-18-5-32-13-35-24z"/>
-                              </g>
-                            </svg>
                           ) : (
-                            <svg viewBox="0 0 512 512" className="w-[130px] h-[170px] opacity-90 mx-auto mt-[30px]" aria-hidden="true">
-                              <g fill="#94a3b8">
-                                <circle cx="256" cy="170" r="85"/>
-                                <path d="M135 212c5-13 15-9 31-3l0-1c8-84 50-72 94-82v265c-20 1-39-8-58-24-21-18-39-30-40-67-5 2-10 2-15-1-13-7-14-34-12-47z"/>
-                                <path d="M108 93c68-84 147-130 205-55 72 4 97 122 37 167 5-64-14-93-43-107-56 61-130-6-141 110l-27-14c-3-33 5-91-31-101z"/>
-                              </g>
-                            </svg>
+                            <img src={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'} alt="foto" className="w-[130px] h-[130px] object-contain opacity-90 mx-auto mt-[52px]" />
                           )}
                         </div>
 
                         {/* Level strips — sesuai tabel pengaturan tingkatan */}
-                        <div className="absolute left-10 top-[412px] w-[185px] flex flex-col gap-[6px]">
+                        <div className="absolute left-10 top-[395px] w-[185px] flex flex-col gap-[6px]">
                           {Array.from({ length: levelVisual.stripCount }).map((_, i) => (
                             <div
                               key={i}
@@ -1102,40 +1094,44 @@ export default function MemberDetailPage() {
                           ))}
                         </div>
         
-                        {/* Info — semua UPPERCASE, tanpa Distrik (sudah di header) */}
-                        <div className="absolute left-[255px] top-[162px] right-10 text-slate-800">
+                        {/* Info — label di atas, nilai di bawah; kolom lebar ke kanan, z-20 agar teks di depan stempel & tidak wrap */}
+                        <div className="absolute left-[240px] top-[148px] right-10 z-20 text-slate-800">
                           <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
                           <InfoPreview label="Nama" value={(member.namaLengkap || '-').toUpperCase()} />
-                          <InfoPreview label="Tempat Lahir" value={(member.tempatLahir || '-').toUpperCase()} />
-                          <InfoPreview label="Tanggal Lahir" value={(member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-').toUpperCase()} />
+                          <InfoPreview
+                            label="Tempat, Tanggal Lahir"
+                            value={[member.tempatLahir || '-', member.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-']
+                              .filter(Boolean)
+                              .join(', ')
+                              .toUpperCase()}
+                          />
                           <InfoPreview label="Ranting" value={(member.ranting?.nama || '-').toUpperCase()} />
                           <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
                         </div>
         
-                        {/* Bottom — hitam, ukuran mengikuti nama penandatangan */}
-                        <div className="absolute left-10 bottom-10">
+                        {/* Bottom — jarak bawah sama dengan jarak atas header (14px) */}
+                        <div className="absolute left-10 bottom-[14px]">
                           <div className="text-[13px] font-bold text-blue-950">Berlaku sampai</div>
                           <div className="text-[16px] font-bold text-slate-900 mt-0.5">{validUntilText}</div>
                         </div>
-                        <div className="absolute right-12 bottom-9 text-center text-slate-900">
-                          <div className="relative h-20 w-48">
-                            {/* Hologram / foil shimmer overlay on signature */}
-                            <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-cyan-300/20 via-white/30 to-amber-200/20" />
-                            {cardData?.signatureImage ? (
-                              <img src={`/api/uploads/${encodeURIComponent(cardData.signatureImage)}`} alt="ttd" className="absolute left-2 top-0 w-[176px] h-[76px] object-contain opacity-90" />
-                            ) : (
-                              <div className="absolute left-8 top-0 text-4xl font-[cursive] rotate-[-8deg] text-slate-700">ttd</div>
-                            )}
-                            <div className="absolute left-[52px] top-0 w-20 h-20 rounded-full border-4 border-blue-800/55 flex items-center justify-center rotate-[-12deg] overflow-hidden">
+                        {/* Signer — stempel 110px (50% dari 220px) di tengah container 220px, nama/jabatan tidak wrap; jarak bawah 14px */}
+                        <div className="absolute right-0 bottom-[14px] w-[220px] text-center text-slate-900">
+                          <div className="relative w-[110px] h-[110px] mb-[2px] mx-auto">
+                            <div className="absolute left-0 top-0 w-[110px] h-[110px] rounded-full border-[4px] border-blue-800/45 flex items-center justify-center rotate-[-8deg] overflow-hidden">
                               {cardData?.stampImage ? (
-                                <img src={`/api/uploads/${encodeURIComponent(cardData.stampImage)}`} alt="stempel" className="w-full h-full object-contain opacity-90" />
+                                <img src={`/api/uploads/${encodeURIComponent(cardData.stampImage)}`} alt="stempel" className="w-full h-full object-cover" />
                               ) : (
-                                <span className="text-[10px] font-black text-blue-800">STEMPEL</span>
+                                <span className="text-[11px] font-black text-blue-800">STEMPEL</span>
                               )}
                             </div>
+                            {cardData?.signatureImage ? (
+                              <img src={`/api/uploads/${encodeURIComponent(cardData.signatureImage)}`} alt="ttd" className="absolute left-[20px] top-[79px] w-[70px] h-[29px] object-contain opacity-95 rotate-[-8deg]" />
+                            ) : (
+                              <div className="absolute left-[22px] top-[81px] text-[16px] font-[cursive] rotate-[-8deg] text-slate-700">ttd</div>
+                            )}
                           </div>
-                          <div className="text-[16px] font-black border-t border-slate-900/30 pt-1">{(cardData?.signerName || 'Koordinator Distrik').toUpperCase()}</div>
-                          <div className="text-[13px] font-semibold mt-0.5">{(cardData?.signerTitle || 'THS-THM').toUpperCase()}</div>
+                          <div className="text-[14px] font-black max-w-[220px] mx-auto">{(cardData?.signerName || 'Koordinator Distrik').toUpperCase()}</div>
+                          <div className="text-[12px] font-semibold mt-0.5 max-w-[220px] mx-auto">{(cardData?.signerTitle || 'THS-THM').toUpperCase()}</div>
                         </div>
                       </div>
                     </div>
@@ -1154,19 +1150,9 @@ export default function MemberDetailPage() {
                         </defs>
                         <rect x="16" y="16" width="824" height="508" rx="22" fill="none" stroke="url(#guilloche-back)" strokeWidth="14" />
                       </svg>
-                      {/* Watermark peta PUTIH — jelas terlihat seperti mobile */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.65]">
-                        <svg viewBox="0 0 400 180" className="w-[480px] h-[166px]" fill="#ffffff" aria-hidden="true">
-                          <path d="M28 20 L36 16 L44 20 L52 24 L60 34 L68 46 L74 60 L78 76 L80 94 L78 110 L72 124 L62 134 L52 138 L44 134 L40 124 L38 112 L34 98 L28 84 L24 68 L22 50 L24 34 Z"/>
-                          <path d="M42 146 L60 140 L80 138 L100 136 L122 138 L142 142 L152 146 L148 152 L138 154 L120 156 L100 156 L80 156 L62 156 L48 154 Z"/>
-                          <path d="M120 52 L140 44 L160 40 L180 44 L196 52 L206 64 L210 80 L206 98 L196 110 L180 116 L162 116 L148 110 L136 100 L128 88 L122 74 L118 62 Z"/>
-                          <path d="M216 60 L230 50 L244 54 L252 66 L260 78 L268 92 L272 108 L268 122 L258 130 L248 126 L242 114 L238 100 L232 86 L224 72 Z"/>
-                          <path d="M276 52 L288 46 L298 50 L302 62 L294 72 L282 70 L276 62 Z"/>
-                          <path d="M286 84 L300 80 L314 84 L320 96 L314 108 L300 112 L288 106 L282 96 Z"/>
-                          <path d="M330 66 L348 56 L366 52 L382 56 L392 64 L398 76 L396 90 L390 102 L376 112 L360 116 L344 114 L334 106 L328 94 L326 80 Z"/>
-                          <path d="M156 146 L168 142 L180 144 L186 150 L178 156 L164 156 Z"/>
-                          <path d="M186 146 L198 148 L208 150 L214 156 L206 160 L192 158 Z"/>
-                        </svg>
+                      {/* Watermark peta PUTIH (invert peta indonesia.png) */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.5]">
+                        <img src="/peta-indonesia.png" alt="" className="w-[480px] h-[166px] object-contain invert" />
                       </div>
                       <div className="relative z-10 h-full">
                         <div className="absolute top-7 left-0 right-0 text-center">
@@ -1490,12 +1476,16 @@ export default function MemberDetailPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkat</label>
-                      <input
-                        type="text"
+                      <select
                         value={editForm.tingkat}
                         onChange={(e) => setEditForm({ ...editForm, tingkat: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                      >
+                        <option value="">Pilih Tingkat</option>
+                        {tingkatanList.map((t) => (
+                          <option key={t.id} value={t.nama}>{t.nama}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
         

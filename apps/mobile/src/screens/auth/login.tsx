@@ -19,7 +19,7 @@ import { registerForPushNotifications } from '../../lib/fcm';
 
 // Logo resmi THS-THM (di-bundle bersama app)
 const LOGO = require('../../../assets/images/logo.png');
-const REMEMBERED_EMAIL_KEY = 'remembered_email';
+const REMEMBERED_IDENTIFIER_KEY = 'remembered_identifier';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -34,7 +34,7 @@ export default function LoginScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const saved = await AsyncStorage.getItem(REMEMBERED_EMAIL_KEY);
+        const saved = await AsyncStorage.getItem(REMEMBERED_IDENTIFIER_KEY);
         if (saved) {
           setEmail(saved);
           setRememberMe(true);
@@ -47,18 +47,24 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Email dan password harus diisi');
+      Alert.alert('Error', 'Email/No. HP dan password harus diisi');
       return;
     }
     setLoading(true);
     try {
-      await login(email, password);
-      // Simpan / hapus email sesuai preferensi "Ingat Saya"
+      const result = await login(email.trim(), password);
+
+      if (result.mustChangePassword && result.resetToken) {
+        router.push({ pathname: '/force-change-password', params: { token: result.resetToken } } as any);
+        return;
+      }
+
+      // Simpan / hapus identifier sesuai preferensi "Ingat Saya"
       try {
         if (rememberMe) {
-          await AsyncStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+          await AsyncStorage.setItem(REMEMBERED_IDENTIFIER_KEY, email.trim());
         } else {
-          await AsyncStorage.removeItem(REMEMBERED_EMAIL_KEY);
+          await AsyncStorage.removeItem(REMEMBERED_IDENTIFIER_KEY);
         }
       } catch {
         // ignore storage write errors
@@ -67,7 +73,7 @@ export default function LoginScreen() {
       registerForPushNotifications();
       router.replace('/(tabs)/home' as any);
     } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Login gagal. Periksa email dan password Anda.';
+      const msg = error?.response?.data?.message || 'Login gagal. Periksa Email/No. HP dan password Anda.';
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
@@ -83,13 +89,13 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Sistem Manajemen</Text>
       </View>
       <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>Email / No. HP</Text>
         <TextInput
           style={styles.input}
           value={email}
           onChangeText={setEmail}
-          placeholder="email@ths-thm.org"
-          keyboardType="email-address"
+          placeholder="email@ths-thm.org atau 08xxx"
+          keyboardType="default"
           autoCapitalize="none"
         />
         <Text style={styles.label}>Password</Text>

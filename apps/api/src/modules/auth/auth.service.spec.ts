@@ -24,6 +24,8 @@ describe('AuthService', () => {
     role: 'anggota',
     isActive: true,
     rantingId: 'r1',
+    phone: null,
+    mustChangePassword: false,
     refreshToken: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -72,6 +74,8 @@ describe('AuthService', () => {
     // Re-mock bcrypt methods after clearAllMocks
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
     (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$12$hashedpassword');
+    mockJwt.sign.mockReturnValue('mock-jwt-token');
+    mockJwt.verify.mockReset();
     // Default: fallback nama tidak menemukan anggota (agar test lama tetap pass)
     mockPrisma.anggota.findMany.mockResolvedValue([]);
   });
@@ -85,17 +89,26 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
 
-      const result = await service.login({ email: 'test@ths-thm.org', password: 'password123' });
+      const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
       expect(result.user.email).toBe('test@ths-thm.org');
       expect(result.accessToken).toBe('mock-jwt-token');
       // login() without response param returns refreshToken in data
       expect((result as { refreshToken: string }).refreshToken).toBe('mock-jwt-token');
     });
 
+    it('should look up by phone when identifier matches phone pattern', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
+
+      const result = await service.login({ identifier: '081234567890', password: 'password123' });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '081234567890' } });
+      expect(result.user.email).toBe('test@ths-thm.org');
+    });
+
     it('should throw UnauthorizedException for non-existent user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       await expect(
-        service.login({ email: 'notfound@ths-thm.org', password: 'password123' }),
+        service.login({ identifier: 'notfound@ths-thm.org', password: 'password123' }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -103,9 +116,54 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
 
-      await expect(service.login({ email: 'test@ths-thm.org', password: 'wrong' })).rejects.toThrow(
+      await expect(service.login({ identifier: 'test@ths-thm.org', password: 'wrong' })).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+
+    it('should return mustChangePassword without tokens when flag is set', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, mustChangePassword: true });
+      mockJwt.sign.mockReturnValue('force-change-token');
+
+      const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
+
+      expect((result as { mustChangePassword: boolean }).mustChangePassword).toBe(true);
+      expect((result as { resetToken: string }).resetToken).toBe('force-change-token');
+      expect((result as { accessToken?: string }).accessToken).toBeUndefined();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('forceChangePassword', () => {
+    it('should update password and clear mustChangePassword flag', async () => {
+      mockJwt.verify.mockReturnValue({
+        sub: 'u1',
+        email: 'test@ths-thm.org',
+        purpose: 'force-change-password',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, mustChangePassword: true });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, mustChangePassword: false });
+
+      const result = await service.forceChangePassword({
+        token: 'valid-token',
+        newPassword: 'newpass123',
+      });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: expect.objectContaining({ mustChangePassword: false }),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should throw UnauthorizedException for invalid token', async () => {
+      mockJwt.verify.mockImplementation(() => {
+        throw new Error('invalid');
+      });
+
+      await expect(
+        service.forceChangePassword({ token: 'bad-token', newPassword: 'newpass123' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 

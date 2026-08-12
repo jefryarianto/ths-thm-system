@@ -23,6 +23,7 @@ import {
   ResetPasswordDto,
   UpdateProfileDto,
   ChangePasswordDto,
+  ForceChangePasswordDto,
 } from './dto/auth.dto';
 import { ApprovalService } from '../approvals/approval.service';
 
@@ -53,10 +54,29 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto, response?: Response) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    // Identifier bisa berupa email ATAU nomor HP
+    const isPhone = /^\+?[0-9]{10,15}$/.test(dto.identifier.trim());
+    const user = isPhone
+      ? await this.prisma.user.findUnique({ where: { phone: dto.identifier.trim() } })
+      : await this.prisma.user.findUnique({ where: { email: dto.identifier } });
+
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException('Email atau password salah');
+      throw new UnauthorizedException('Email/HP atau password salah');
     }
+
+    // Wajib ganti password (login pertama kali / credential direset admin)
+    if (user.mustChangePassword) {
+      const resetToken = this.jwtService.sign(
+        { sub: user.id, email: user.email, purpose: 'force-change-password' },
+        { secret: this.envConfig.jwtRefreshSecret, expiresIn: '1h' },
+      );
+      return {
+        mustChangePassword: true,
+        resetToken,
+        user: await this.sanitizeUser(user),
+      };
+    }
+
     const tokens = await this.generateTokens(user);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
@@ -303,6 +323,39 @@ export class AuthService {
     }
   }
 
+  /**
+   * Ubah password saat login pertama kali (mustChangePassword = true).
+   * Token sementara diambil dari response login dan diverifikasi di sini.
+   */
+  async forceChangePassword(dto: ForceChangePasswordDto) {
+    try {
+      const payload = this.jwtService.verify(dto.token, {
+        secret: this.envConfig.jwtRefreshSecret,
+      });
+      if (payload.purpose !== 'force-change-password') {
+        throw new UnauthorizedException('Token ubah password tidak valid');
+      }
+
+      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      if (!user) {
+        throw new NotFoundException('User tidak ditemukan');
+      }
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: await bcrypt.hash(dto.newPassword, 12),
+          mustChangePassword: false,
+        },
+      });
+
+      return { success: true, message: 'Password berhasil diubah' };
+    } catch (error) {
+      this.logger.error(`Force change password failed: ${(error as Error).message}`);
+      throw new UnauthorizedException('Token ubah password tidak valid atau kadaluarsa');
+    }
+  }
+
   async sendMagicLink(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -459,6 +512,8 @@ export class AuthService {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    phone?: string | null;
+    mustChangePassword?: boolean;
     passwordHash?: string;
     refreshToken?: string | null;
   }) {
@@ -492,6 +547,8 @@ export class AuthService {
       isActive: boolean;
       createdAt: Date;
       updatedAt: Date;
+      phone?: string | null;
+      mustChangePassword?: boolean;
       fotoPath?: string;
     };
   }

@@ -14,7 +14,7 @@ export interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<{ mustChangePassword?: boolean; resetToken?: string }>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
 }
@@ -24,12 +24,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   isAuthenticated: false,
 
-  login: async (email: string, password: string) => {
-    const res = await apiClient.post('/auth/login', { email, password });
-    const { user, accessToken, refreshToken } = res.data.data;
+  login: async (identifier: string, password: string) => {
+    const res = await apiClient.post('/auth/login', { identifier, password });
+    const data = res.data.data;
+
+    if (data.mustChangePassword) {
+      return { mustChangePassword: true, resetToken: data.resetToken };
+    }
+
+    const { user, accessToken, refreshToken } = data;
     await setTokens(accessToken, refreshToken);
     await AsyncStorage.setItem('user', JSON.stringify(user));
     set({ user, isAuthenticated: true });
+    return {};
   },
 
   logout: async () => {
@@ -49,7 +56,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user, isAuthenticated: !!user, isLoading: false });
       if (user) {
         registerForPushNotifications().catch(() => {
-          /* ignore FCM registration errors on cold start */
         });
       }
     } catch {

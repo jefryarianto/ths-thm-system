@@ -156,7 +156,7 @@ function FloatingInput({
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -177,9 +177,9 @@ export default function LoginPage() {
       window.history.replaceState({}, '', url.toString());
     }
     // Restore remembered email
-    const remembered = localStorage.getItem('rememberedEmail');
+    const remembered = localStorage.getItem('rememberedIdentifier');
     if (remembered) {
-      setEmail(remembered);
+      setIdentifier(remembered);
       setRememberMe(true);
     }
   }, []);
@@ -191,7 +191,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { data } = await apiClient.post('/auth/login', { email, password });
+      const { data } = await apiClient.post('/auth/login', { identifier: identifier.trim(), password });
 
       if (data.success) {
         setTokens(data.data.accessToken, data.data.refreshToken);
@@ -200,9 +200,14 @@ export default function LoginPage() {
         document.cookie = `accessToken=${data.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
 
         if (rememberMe) {
-          localStorage.setItem('rememberedEmail', email);
+          localStorage.setItem('rememberedIdentifier', identifier.trim());
         } else {
-          localStorage.removeItem('rememberedEmail');
+          localStorage.removeItem('rememberedIdentifier');
+        }
+
+        if (data.data.user.mustChangePassword && data.data.resetToken) {
+          router.push(`/force-change-password?token=${data.data.resetToken}`);
+          return;
         }
 
         setSuccessMessage('Login berhasil! Mengalihkan...');
@@ -361,14 +366,14 @@ export default function LoginPage() {
                 >
                   {/* Email */}
                   <FloatingInput
-                    id="email"
-                    label="Alamat Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="identifier"
+                    label="Email / No. HP"
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                     icon={Mail}
-                    autoComplete="email"
-                    placeholder="admin@ths-thm.org"
+                    autoComplete="username"
+                    placeholder="email@ths-thm.org atau 08xxx"
                   />
 
                   {/* Password */}

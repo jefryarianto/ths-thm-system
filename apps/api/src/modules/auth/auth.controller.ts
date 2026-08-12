@@ -10,6 +10,7 @@ import {
   ResetPasswordDto,
   UpdateProfileDto,
   ChangePasswordDto,
+  ForceChangePasswordDto,
   MagicLinkDto,
   MagicLinkVerifyDto,
 } from './dto/auth.dto';
@@ -78,6 +79,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Reset kata sandi' })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('force-change-password')
+  @Public()
+  @ApiOperation({ summary: 'Ubah kata sandi saat login pertama kali (mustChangePassword)' })
+  forceChangePassword(@Body() dto: ForceChangePasswordDto) {
+    return this.authService.forceChangePassword(dto);
   }
 
   @Get('me')

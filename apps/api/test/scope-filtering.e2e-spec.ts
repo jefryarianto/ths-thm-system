@@ -197,16 +197,16 @@ describe('Scope Filtering E2E', () => {
     const [suRes, daRes, waRes, raRes] = await Promise.all([
       request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'scope-superadmin@test.com', password: 'test1234' }),
+        .send({ identifier: 'scope-superadmin@test.com', password: 'test1234' }),
       request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'scope-distrik@test.com', password: 'test1234' }),
+        .send({ identifier: 'scope-distrik@test.com', password: 'test1234' }),
       request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'scope-wilayah@test.com', password: 'test1234' }),
+        .send({ identifier: 'scope-wilayah@test.com', password: 'test1234' }),
       request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'scope-ranting@test.com', password: 'test1234' }),
+        .send({ identifier: 'scope-ranting@test.com', password: 'test1234' }),
     ]);
 
     superadminToken = suRes.body.data.accessToken;
@@ -295,7 +295,7 @@ describe('Scope Filtering E2E', () => {
       // Login as anggota user
       const loginRes = await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'scope-anggota@test.com', password: 'test1234' });
+        .send({ identifier: 'scope-anggota@test.com', password: 'test1234' });
       const anggotaToken = loginRes.body.data.accessToken;
 
       await request(app.getHttpServer())

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { welcomeMemberEmail, escapeHtml } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
@@ -15,7 +15,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { ApprovalService } from '../approvals/approval.service';
 import bcrypt from 'bcryptjs';
 
-const DEFAULT_PASSWORD = 'ths12345';
+const DEFAULT_PASSWORD = 'thsthm123456';
 
 @Injectable()
 export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMemberDto> {
@@ -322,7 +322,12 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
         // Auto-create User account for the imported member
         if (member.email) {
-          await this.autoCreateUser(member.email, member.namaLengkap, member.rantingId);
+          await this.autoCreateUser(member.email, member.namaLengkap, member.rantingId, member.noHp, member.id);
+        } else if (member.noHp) {
+          // Anggota tanpa email tapi punya noHP: buat akun dengan email sintetis
+          // supaya User model tetap valid (email NOT NULL). Login via No. HP.
+          const syntheticEmail = `${member.noHp}@noemail.ths-thm.org`;
+          await this.autoCreateUser(syntheticEmail, member.namaLengkap, member.rantingId, member.noHp, member.id);
         }
 
         // Send notifications for incomplete data
@@ -411,6 +416,63 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     }
 
     throw new NotFoundException('Anggota tidak ditemukan untuk email ini');
+  }
+
+  // ── Domain: resend credentials ────────────────────────────
+  // Buat (jika belum ada) / reset akun User anggota ke password default,
+  // wajibkan ganti password, lalu kirim ulang credential via email.
+
+  async resendCredentials(memberId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const member = await (this.prisma as any).anggota.findUnique({
+      where: { id: memberId },
+      select: { id: true, email: true, noHp: true, namaLengkap: true, rantingId: true },
+    });
+    if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+
+    if (!member.email && !member.noHp) {
+      throw new BadRequestException('Anggota tidak memiliki email atau nomor HP');
+    }
+
+    const phone = member.noHp || undefined;
+    const email = member.email || (phone ? `${phone}@noemail.ths-thm.org` : null);
+
+    // Cari akun yang sudah ada: via email (asli/sintetis) atau phone
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let user: any = email ? await this.prisma.user.findUnique({ where: { email } }) : null;
+    if (!user && phone) {
+      user = await this.prisma.user.findUnique({ where: { phone } });
+    }
+
+    if (!user) {
+      // Belum punya akun — auto-create (sudah set mustChangePassword: true)
+      if (email) {
+        await this.autoCreateUser(email, member.namaLengkap, member.rantingId, phone, member.id);
+      }
+    } else {
+      // Akun sudah ada — reset password ke default + wajibkan ganti password
+      const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, mustChangePassword: true },
+      });
+    }
+
+    // Kirim email credential — hanya untuk anggota ber-email asli
+    if (member.email) {
+      this.memberMailService.sendToMember(
+        member.id,
+        () => ({
+          subject: 'Kredensial Login THS-THM',
+          html: `<h2>Halo ${escapeHtml(member.namaLengkap)},</h2><p>Akun Anda telah diatur ulang di sistem THS-THM.</p><p>Silakan login dengan:</p><ul><li><strong>Email:</strong> ${escapeHtml(member.email)}</li><li><strong>Password:</strong> ${DEFAULT_PASSWORD}</li></ul><p>Setelah login, Anda akan diminta mengubah password.</p>`,
+          text: `Halo ${member.namaLengkap},\n\nAkun Anda telah diatur ulang di sistem THS-THM.\n\nSilakan login dengan:\nEmail: ${member.email}\nPassword: ${DEFAULT_PASSWORD}\n\nSetelah login, Anda akan diminta mengubah password.`,
+        }),
+        { template: 'welcomeAccountEmail', email: member.email },
+        'members',
+      );
+    }
+
+    return { success: true, message: 'Credential berhasil dikirim ulang' };
   }
 
   // ── Domain: getDocuments ─────────────────────────────────
@@ -669,11 +731,22 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   // ── Private: auto-create User account ──────────────────────
 
-  private async autoCreateUser(email: string, namaLengkap: string, rantingId: string): Promise<void> {
+  private async autoCreateUser(
+    email: string,
+    namaLengkap: string,
+    rantingId: string,
+    phone?: string,
+    anggotaId?: string,
+  ): Promise<void> {
     try {
-      // Check if user already exists
+      // Check if user already exists (via email atau phone)
       const existingUser = await this.prisma.user.findUnique({ where: { email } });
       if (existingUser) return;
+
+      if (phone) {
+        const existingByPhone = await this.prisma.user.findUnique({ where: { phone } });
+        if (existingByPhone) return;
+      }
 
       const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
 
@@ -685,20 +758,28 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
           role: 'anggota',
           rantingId,
           isActive: true,
+          phone: phone || null,
+          mustChangePassword: true,
         },
       });
 
-      // Send welcome email with default password instructions
-      this.memberMailService.sendToMember(
-        null as never,
-        () => ({
-          subject: 'Akun THS-THM Telah Dibuat',
-          html: `<h2>Halo ${escapeHtml(namaLengkap)},</h2><p>Akun Anda telah dibuat di sistem THS-THM.</p><p>Silakan login dengan:</p><ul><li><strong>Email:</strong> ${escapeHtml(email)}</li><li><strong>Password:</strong> ${DEFAULT_PASSWORD}</li></ul><p>Setelah login, silakan lengkapi data diri Anda.</p>`,
-          text: `Halo ${namaLengkap},\n\nAkun Anda telah dibuat di sistem THS-THM.\n\nSilakan login dengan:\nEmail: ${email}\nPassword: ${DEFAULT_PASSWORD}\n\nSetelah login, silakan lengkapi data diri Anda.`,
-        }),
-        { template: 'welcomeAccountEmail', email },
-        'members',
-      );
+      // Email sintetis (08xxx@noemail.ths-thm.org) tidak valid untuk pengiriman —
+      // credential anggota tanpa email hanya ditampilkan via admin (Kirim Ulang Credential).
+      const isSynthetic = email.endsWith('@noemail.ths-thm.org');
+
+      // Kirim email credential — hanya jika anggota punya email asli
+      if (anggotaId && !isSynthetic) {
+        this.memberMailService.sendToMember(
+          anggotaId,
+          () => ({
+            subject: 'Akun THS-THM Telah Dibuat',
+            html: `<h2>Halo ${escapeHtml(namaLengkap)},</h2><p>Akun Anda telah dibuat di sistem THS-THM.</p><p>Silakan login dengan:</p><ul><li><strong>Email:</strong> ${escapeHtml(email)}</li><li><strong>Password:</strong> ${DEFAULT_PASSWORD}</li></ul><p>Setelah login, Anda akan diminta mengubah password.</p>`,
+            text: `Halo ${namaLengkap},\n\nAkun Anda telah dibuat di sistem THS-THM.\n\nSilakan login dengan:\nEmail: ${email}\nPassword: ${DEFAULT_PASSWORD}\n\nSetelah login, Anda akan diminta mengubah password.`,
+          }),
+          { template: 'welcomeAccountEmail', email },
+          'members',
+        );
+      }
 
       this.logger.log(`Auto-created user account for ${email}`);
     } catch (error) {
