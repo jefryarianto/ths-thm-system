@@ -109,3 +109,6 @@ _scripts/eas-build-log*.txt
 *.jks
 keystore.properties
 apps/mobile/android/ths-thm-release.keystore
+
+# Base64 keystore utk setup GitHub Actions secret (lokal saja)
+*.keystore.b64

@@ -1,0 +1,99 @@
+name: Android APK Build
+
+# Build APK release otomatis setiap push ke master (+ bisa dijalankan manual).
+# Hasil: 4 APK per-ABI + 1 universal, diunggah sebagai artifact.
+#
+# SIGNING PRODUKSI (opsional tapi disarankan):
+#   Setup 4 repository secrets dulu supaya APK di-sign kunci produksi:
+#     - THS_THM_KEYSTORE_BASE64  → isi file apps/mobile/android/ths-thm-release.keystore
+#                                   dalam base64 (lokal: `base64 -w0 <keystore>`)
+#     - THS_THM_STORE_PASSWORD   → storePassword (lihat keystore.properties lokal)
+#     - THS_THM_KEY_ALIAS        → keyAlias (default: ths-thm)
+#     - THS_THM_KEY_PASSWORD     → keyPassword
+#   Jika secret tidak diset, build tetap jalan dengan debug key (artefak tidak
+#   layak dipublikasikan — peringatan muncul di log build).
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-build
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup Java (Temurin 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup release signing (jika secret tersedia)
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.THS_THM_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.THS_THM_KEYSTORE_BASE64 }}" | base64 -d > apps/mobile/android/ths-thm-release.keystore
+            cat > apps/mobile/android/keystore.properties <<'EOF'
+            storeFile=ths-thm-release.keystore
+            storePassword=${{ secrets.THS_THM_STORE_PASSWORD }}
+            keyAlias=${{ secrets.THS_THM_KEY_ALIAS }}
+            keyPassword=${{ secrets.THS_THM_KEY_PASSWORD }}
+            EOF
+            echo "✅ Keystore produksi disiapkan untuk signing release."
+          else
+            echo "⚠️  THS_THM_KEYSTORE_BASE64 tidak diset — APK memakai DEBUG key (tidak untuk publikasi)."
+            echo "    Tambahkan secret repo: Settings → Secrets and variables → Actions."
+          fi
+
+      - name: Build release APKs
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          BT_DIR="$ANDROID_HOME/build-tools"
+          BT=$(ls "$BT_DIR" | sort -V | tail -1)
+          APK="apps/mobile/android/app/build/outputs/apk/release/app-arm64-v8a-release.apk"
+          echo "build-tools: $BT"
+          "$BT_DIR/$BT/apksigner" verify --print-certs "$APK" | head -4
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ths-thm-apk-${{ github.sha }}
+          path: |
+            apps/mobile/android/app/build/outputs/apk/release/*.apk
+            apps/mobile/android/app/build/outputs/apk/release/output-metadata.json
+          if-no-files-found: error
