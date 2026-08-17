@@ -6,6 +6,7 @@ import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { BackButton } from '../../components/ui/shared';
 
 interface AssessmentItem {
   id: string;
@@ -38,6 +39,7 @@ export default function AssessmentsScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Aspek Penilaian</Text>

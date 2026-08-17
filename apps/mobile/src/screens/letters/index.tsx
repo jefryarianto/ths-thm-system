@@ -14,6 +14,7 @@ import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 type LetterTab = 'incoming' | 'outgoing';
 
@@ -108,6 +109,7 @@ export default function LettersScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Surat</Text>

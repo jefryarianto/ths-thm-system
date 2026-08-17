@@ -4,7 +4,8 @@
     "babel.config.js",
     "jest.config.js",
     "jest.setup.js",
-    "metro.config.js"
+    "metro.config.js",
+    "react-native.config.js"
   ],
   "parserOptions": {
     "project": ["../../tsconfig.base.json", "./tsconfig.json"]

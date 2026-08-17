@@ -1,0 +1,8 @@
+{
+  "name": "@ths-thm/card-design",
+  "version": "1.0.0",
+  "description": "Sumber tunggal desain kartu KTA (856×540) — dipakai mobile, web, PDF, dan preview HTML",
+  "private": true,
+  "main": "index.js",
+  "files": ["index.js"]
+}

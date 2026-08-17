@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,12 @@ import {
   ActivityIndicator,
   Image,
   Switch,
+  Platform,
+  Animated,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Video, ResizeMode } from 'expo-av';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore, AuthState } from '../../store/auth-store';
@@ -19,7 +23,16 @@ import { registerForPushNotifications } from '../../lib/fcm';
 
 // Logo resmi THS-THM (di-bundle bersama app)
 const LOGO = require('../../../assets/images/logo.png');
+// Video splash saat membuka aplikasi — videothsnew.mp4 (root repo, muted, PUTAR SEKALI lalu stop).
+// Di APK release, video di-copy ke android/app/src/main/assets/videos/ (dan oleh config plugin
+// saat prebuild/EAS) lalu diputar via asset:/// — lebih andal daripada require() Metro
+// yang resolusi URI-nya rusak di build lokal (expo-asset hoisted tidak cocok).
+const INTRO_VIDEO = { uri: 'asset:///videos/videothsnew.mp4' };
 const REMEMBERED_IDENTIFIER_KEY = 'remembered_identifier';
+
+// Video splash hanya diputar SEKALI per proses aplikasi (saat buka app), tidak berulang
+// saat user kembali ke halaman login (mis. logout).
+let splashPlayed = false;
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -27,8 +40,40 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showVideo, setShowVideo] = useState(!splashPlayed);
+  const videoOpacity = useRef(new Animated.Value(1)).current;
+  // Ref pemutar video agar bisa di-pause eksplisit (video TIDAK boleh loop di belakang login)
+  const videoRef = useRef<Video>(null);
+  // Timer cadangan untuk memastikan video di-unmount — tidak bergantung pada callback animasi
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const login = useAuthStore((s: AuthState) => s.login);
   const { handleGoogleLogin, loading: oauthLoading } = useMobileOAuth();
+
+  /** Matikan video SEKARANG (pause) lalu fade-out & unmount → halaman login tampil penuh. */
+  const stopAndHide = useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    // 1) Hentikan pemutar — video langsung mati, tidak berputar/loop di belakang login
+    videoRef.current?.pauseAsync().catch(() => {});
+    // 2) Fade singkat (JS driver agar opacity benar-benar berlaku ke surface video)
+    Animated.timing(videoOpacity, {
+      toValue: 0,
+      duration: 350,
+      useNativeDriver: false,
+    }).start(() => setShowVideo(false));
+    // 3) Fallback: unmount dijamin terjadi meski callback animasi gagal/tertunda
+    hideTimerRef.current = setTimeout(() => setShowVideo(false), 800);
+  }, [videoOpacity]);
+
+  useEffect(() => {
+    // Tandai splash sudah diputar — jangan ulangi saat kembali ke login (logout)
+    splashPlayed = true;
+    // Jaga-jaga: jika video gagal dimuat/diputar, login tetap muncul setelah 12 detik
+    const safety = setTimeout(stopAndHide, 12000);
+    return () => {
+      clearTimeout(safety);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [stopAndHide]);
 
   // Pre-fill email yang disimpan dari sesi sebelumnya ("Ingat Saya")
   useEffect(() => {
@@ -174,12 +219,47 @@ export default function LoginScreen() {
           <Text style={styles.forgotPasswordText}>Lupa password?</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Video splash — full screen, diputar SEKALI saat app dibuka, lalu fade-out ke halaman login */}
+      {showVideo && (
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
+          <Video
+            ref={videoRef}
+            source={INTRO_VIDEO}
+            style={StyleSheet.absoluteFill}
+            resizeMode={ResizeMode.COVER}
+            shouldPlay
+            isMuted
+            isLooping={false}
+            onLoad={(status) => {
+              // Setelah durasi video berlalu (buffer kecil), matikan splash — tidak menunggu status finish
+              const dur = status.isLoaded ? status.durationMillis ?? 0 : 0;
+              if (dur > 0) {
+                hideTimerRef.current = setTimeout(stopAndHide, dur + 400);
+              }
+            }}
+            onPlaybackStatusUpdate={(status) => {
+              // Setelah video selesai diputar sekali, hentikan & masuk halaman login
+              if (status && status.isLoaded && status.didJustFinish) stopAndHide();
+            }}
+          />
+          {/* Overlay gelap tipis agar teks "Lewati" terbaca */}
+          <View style={styles.videoOverlay} />
+          {/* Tombol lewati splash */}
+          <Pressable style={styles.skipButton} onPress={stopAndHide} hitSlop={12}>
+            <Text style={styles.skipText}>Lewati ▸</Text>
+          </Pressable>
+        </Animated.View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  container: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  videoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.55)' },
+  skipButton: { position: 'absolute', bottom: 44, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.25)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' },
+  skipText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   header: { alignItems: 'center', marginBottom: 20 },
   logo: { width: 128, height: 128, marginBottom: 12 },
   title: { fontSize: 34, fontWeight: 'bold', color: '#1d4ed8', textAlign: 'center' },

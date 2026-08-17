@@ -5,6 +5,7 @@ import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 interface DashboardStats {
   totalMembers: number;
@@ -89,6 +90,7 @@ export default function ReportsScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
+      <BackButton />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Laporan & Statistik</Text>
         <Text style={styles.headerSub}>Overview data organisasi</Text>

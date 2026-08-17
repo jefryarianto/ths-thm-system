@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -18,6 +19,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Request, Response } from 'express';
 import { env } from '../../config/env.validation';
+import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
 
 function parseCookie(cookieHeader: string, name: string): string | undefined {
   const cookies = cookieHeader.split(';').map((c) => c.trim().split('='));
@@ -107,6 +109,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Ubah kata sandi' })
   changePassword(@CurrentUser() user: { id: string }, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(user.id, dto);
+  }
+
+  @Post('me/photo')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload foto profil sendiri (mobile — kamera/galeri)' })
+  @UseInterceptors(FileInterceptor('photo', buildImageUploadOptions('profile')))
+  uploadMyPhoto(@CurrentUser() user: { id: string }, @UploadedFile() file: Express.Multer.File) {
+    return this.authService.uploadMyPhoto(user.id, file);
   }
 
   @Post('magic-link')

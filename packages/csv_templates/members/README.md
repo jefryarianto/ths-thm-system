@@ -8,12 +8,14 @@ Template untuk import data anggota (termasuk import historis). Baris pertama har
 
 | Kolom            | Tipe   | Required | Deskripsi                                     |
 | ---------------- | ------ | -------- | --------------------------------------------- |
-| nomor_anggota    | string | opsional | Nomor lama dari sistem/arsip (mis. `001-1994`) |
+| nia / nomor_anggota | string | opsional | Nomor lama (mis. `0103-001-1994` atau `001-1994`) |
 | nama_lengkap     | string | ✅       | Nama lengkap                                   |
 | jenis_kelamin    | enum   | ✅       | `L` / `P`                                      |
-| tempat_lahir     | string |          | Tempat lahir                                   |
+| ttl              | string |          | Format: `"Tempat, Tanggal"` (mis. `"Oebafok, 06 Juli 1983"`) |
+| tempat_lahir     | string |          | Tempat lahir (jika kolom `ttl` kosong)         |
 | tanggal_lahir    | date   |          | Tanggal lahir (YYYY-MM-DD)                     |
-| tempat_dadar     | string |          | Tempat pendadaran                              |
+| tempat_dan_tahun_dadar | string |    | Format: `"Tempat - Tahun"` (mis. `"Lekunik - 1994"`) |
+| tempat_dadar     | string |          | Tempat pendadaran (jika kolom di atas kosong)  |
 | tahun_dadar      | number |          | Tahun pendadaran (4 digit)                     |
 | alamat           | string |          | Alamat                                         |
 | no_hp            | string |          | Nomor HP                                       |
@@ -22,16 +24,18 @@ Template untuk import data anggota (termasuk import historis). Baris pertama har
 | tingkat          | string |          | Tingkatan                                      |
 | ranting_id       | string | ✅       | ID ranting di sistem                           |
 
-## Format Nomor Anggota (NRA)
+## Fitur Import Cerdas (Logika Parser)
 
-NRA di-generate otomatis oleh sistem dengan format:
+Sistem memiliki parser cerdas untuk menangani data historis secara otomatis:
 
-```
-[kode_distrik]-[kode_wilayah][kode_ranting]-[urut]-[tahun]
-```
+1.  **Parser TTL (Tempat & Tanggal Lahir)**:
+    Jika Anda memiliki kolom `ttl` dengan format `"Kota, Tanggal Bulan Tahun"` (mis. `"Oebafok, 06 Juli 1983"`), sistem akan otomatis memisahkan tempat lahir dan mengubah tanggal ke format database.
+2.  **Parser Pendadaran**:
+    Jika Anda memiliki kolom `tempat_dan_tahun_dadar` (mis. `"Lekunik - 1994"`), sistem akan otomatis memecahnya menjadi tempat dan tahun pendadaran secara terpisah.
+3.  **Parser Nomor Anggota (NIA/NRA)**:
+    NRA di-generate otomatis oleh sistem dengan format: `[kode_distrik]-[kode_wilayah][kode_ranting]-[urut]-[tahun]`.
+    - Jika kolom `nia` atau `nomor_anggota` diisi (mis. `0103-001-1994`), sistem otomatis menyesuaikan kode distrik/wilayah/ranting berdasarkan `ranting_id` tempat Anda meng-import, namun mempertahankan nomor urut dan tahunnya.
 
-Contoh: `LRT-0103-001-1994` → distrik `LRT` (Keuskupan Larantuka), wilayah `01` (Larantuka & Solor), ranting `03` (San Juan Lebao), urut `001`, tahun dadar `1994`.
+## Contoh Template Historis
 
-- Kode distrik teks (mis. `LRT`), kode wilayah & kode ranting selalu 2 digit dan unik **dalam satu wilayah** (kode ranting `01` boleh muncul di tiap wilayah).
-- Jika kolom `nomor_anggota` diisi dengan nomor lama (mis. `001-1994` atau `0103-001-1994`), sistem otomatis mengonversi ke format resmi di atas menggunakan kode distrik/wilayah/ranting dari `ranting_id` — urut & tahun dipertahankan.
-- Jika kolom kosong, urut di-generate berurutan dari anggota terakhir di ranting tersebut.
+Lihat file: `template_csv_anggota_historis.csv` untuk contoh penggunaan kolom gabungan.

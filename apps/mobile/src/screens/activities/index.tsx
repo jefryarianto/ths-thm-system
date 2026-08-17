@@ -10,6 +10,7 @@ import {
 } from '../../hooks/use-activities';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 export default function ActivitiesScreen() {
   const [filter, setFilter] = useState<string>('');
@@ -21,6 +22,7 @@ export default function ActivitiesScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Kegiatan</Text>

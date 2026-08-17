@@ -9,10 +9,13 @@ import { setupNotificationListeners } from '../src/lib/fcm';
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
 
-  // Muat font OCR A Extended untuk No. Anggota di KTA
-  // Kunci useFonts harus sama persis dgn nama family internal TTF ("OCR A Extended")
+  // Muat font kartu: OCR A Extended (data No. Anggota), Open Sans (header), Roboto (label & teks lain)
+  // Kunci useFonts harus sama persis dgn nama family internal TTF ("OCR A Extended", "Open Sans", "Roboto")
   const [fontsLoaded] = useFonts({
     'OCR A Extended': require('../assets/fonts/OCR A Extended.ttf'),
+    'OpenSans-Bold': require('../assets/fonts/OpenSans-Bold.ttf'),
+    'Roboto-Regular': require('../assets/fonts/Roboto-Regular.ttf'),
+    'Roboto-Bold': require('../assets/fonts/Roboto-Bold.ttf'),
   });
 
   useEffect(() => {
@@ -93,6 +96,7 @@ export default function RootLayout() {
           <Stack.Screen name="forum/c/[categoryId]" />
           <Stack.Screen name="forum/t/[threadId]" />
           <Stack.Screen name="org-documents" />
+          <Stack.Screen name="camera/photo" />
         </Stack>
       </>
     </GlobalErrorBoundary>

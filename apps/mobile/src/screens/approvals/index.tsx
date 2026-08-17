@@ -23,6 +23,7 @@ import {
 } from '../../hooks/use-approvals';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, ErrorView, FilterChips, SearchBar } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 export default function ApprovalsListScreen() {
   const { data, loading, error, refetch } = usePendingApprovals();
@@ -95,6 +96,7 @@ export default function ApprovalsListScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>

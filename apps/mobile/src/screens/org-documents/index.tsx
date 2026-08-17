@@ -13,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useOrgDocuments, TIPE_OPTIONS } from '../../hooks/use-org-documents';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 export default function OrgDocumentsScreen() {
   const [filter, setFilter] = useState('');
@@ -37,6 +38,7 @@ export default function OrgDocumentsScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dokumen Organisasi</Text>
         <Text style={styles.headerSub}>{(documents ?? []).length} dokumen</Text>

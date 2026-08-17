@@ -54,10 +54,40 @@ async function bootstrap() {
 
   // Serve uploaded files statically
   const { existsSync, mkdirSync } = require('fs');
+  const pathMod = require('path');
   const uploadDir = process.env.UPLOAD_DIR || './uploads';
   if (!existsSync(uploadDir)) {
     mkdirSync(uploadDir, { recursive: true });
   }
+
+  // Lazy `.bg.png`: versi foto pasfoto tanpa background (ala SIM) yang dihasilkan
+  // on-demand dari file asli dan di-cache. URL: /api/uploads/<file>.bg.png
+  app.use('/api/uploads', async (req: any, res: any, next: any) => {
+    try {
+      const urlPath = decodeURIComponent(req.path || '').replace(/^\/+/, '');
+      if (!urlPath.endsWith('.bg.png')) return next();
+      const base = urlPath.slice(0, -'.bg.png'.length);
+      const resolvedUpload = pathMod.resolve(uploadDir);
+      const origPath = pathMod.resolve(resolvedUpload, base);
+      const bgPath = pathMod.resolve(resolvedUpload, urlPath);
+      // Proteksi path traversal: keduanya harus di dalam uploadDir
+      if (!origPath.startsWith(resolvedUpload + pathMod.sep) || !bgPath.startsWith(resolvedUpload + pathMod.sep)) {
+        return next();
+      }
+      if (!existsSync(origPath)) return next(); // biarkan static menangani 404
+      if (!existsSync(bgPath)) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { removePhotoBackground, isSharpAvailable } = require('./common/utils/photo-bg.util');
+        if (!isSharpAvailable()) return next(); // tanpa sharp → onError siluet di client
+        const buffer = require('fs').readFileSync(origPath);
+        const out = await removePhotoBackground(buffer);
+        require('fs').writeFileSync(bgPath, out);
+      }
+      return next();
+    } catch {
+      return next();
+    }
+  });
   app.use('/api/uploads', require('express').static(uploadDir));
 
   // Mount Bull Board dashboard (Express-level, bypasses NestJS guards)

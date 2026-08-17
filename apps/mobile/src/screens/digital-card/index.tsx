@@ -10,11 +10,24 @@ import {
   Animated,
   useWindowDimensions,
   Platform,
+  Alert,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+  ImageStyle,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Svg, { Path, Rect, Defs, Pattern, LinearGradient, Stop } from 'react-native-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, ErrorView } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
+
+// ─── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ───
+import { CARD, COLORS, FRONT, BACK, DECOR, FONTS, getLevelVisual, photoCrop } from '../../lib/card-design';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -25,14 +38,15 @@ const LOGO = require('../../../assets/images/logo.png');
 const MAN_ICON = require('../../../assets/images/man-icon.png');
 const WOMAN_ICON = require('../../../assets/images/woman-icon.png');
 
-// Ukuran desain kartu (CR80 landscape) — seluruh layout memakai koordinat 856×540
-const CARD_W = 856;
-const CARD_H = 540;
+// Ukuran desain kartu (CR80 landscape) — dari spec
+const CARD_W = CARD.W;
+const CARD_H = CARD.H;
 
-// Font nomor anggota — OCR A Extended (didaftarkan via plugin expo-font di app.json)
-// Nama font harus SAMA PERSIS dgn nama family internal file TTF: "OCR A Extended"
-// (cek metadata TTF via System.Drawing/FontBook; nama family = "OCR A Extended", ada spasi)
-const OCR_A_FONT = 'OCR A Extended';
+// Font kartu — nama family harus SAMA PERSIS dgn nama internal file TTF (spec)
+const OCR_A_FONT = FONTS.ocrA;
+const OPEN_SANS_BOLD = FONTS.openSansBold;
+const ROBOTO_REGULAR = FONTS.robotoRegular;
+const ROBOTO_BOLD = FONTS.robotoBold;
 
 // ─── Watermark peta Indonesia — peta indonesia.png (root repo, siluet hitam transparan) ───
 const MAP_PNG = require('../../../assets/images/peta-indonesia.png');
@@ -44,50 +58,75 @@ function IndonesiaMapWatermark({ color, opacity, size = { width: 560, height: 20
   );
 }
 
-// Font label kartu — berbeda dari font data (serif); Android pakai generic 'serif', iOS 'Georgia'
-const LABEL_FONT = Platform.select({ ios: 'Georgia', android: 'serif' }) || 'serif';
+// Font label kartu — Roboto Bold (sesuai spec font kartu: label = Roboto, data = OCR A Extended, header = Open Sans)
+const LABEL_FONT = ROBOTO_BOLD;
 
 /** Latar abstrak — pita melengkung dengan gradien biru yang saling tumpang tindih
  *  (bukan blok warna solid), nuansa referensi "abstract wavy background". */
+// Arah gradien ombak (x1/y1/x2/y2) — urutan sama dgn DECOR.wavyPaths & COLORS.wavy
+const WAVY_GRAD: Array<[string, string, string, string]> = [
+  ['0', '0', '0.6', '1'],
+  ['1', '0', '0.4', '1'],
+  ['0', '1', '1', '0'],
+];
+
 function WavyBackground() {
   return (
-    <Svg width={CARD_W} height={CARD_H} viewBox="0 0 856 540" style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width={CARD_W} height={CARD_H} viewBox={`0 0 ${CARD_W} ${CARD_H}`} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
-        <LinearGradient id="w1" x1="0" y1="0" x2="0.6" y2="1">
-          <Stop offset="0" stopColor="#bfdbfe" stopOpacity={0.9} />
-          <Stop offset="1" stopColor="#e0f2fe" stopOpacity={0} />
-        </LinearGradient>
-        <LinearGradient id="w2" x1="1" y1="0" x2="0.4" y2="1">
-          <Stop offset="0" stopColor="#93c5fd" stopOpacity={0.6} />
-          <Stop offset="1" stopColor="#eff6ff" stopOpacity={0} />
-        </LinearGradient>
-        <LinearGradient id="w3" x1="0" y1="1" x2="1" y2="0">
-          <Stop offset="0" stopColor="#7dd3fc" stopOpacity={0.45} />
-          <Stop offset="1" stopColor="#f0f9ff" stopOpacity={0} />
-        </LinearGradient>
+        {COLORS.wavy.map((w, i) => (
+          <LinearGradient key={i} id={`w${i + 1}`} x1={WAVY_GRAD[i][0]} y1={WAVY_GRAD[i][1]} x2={WAVY_GRAD[i][2]} y2={WAVY_GRAD[i][3]}>
+            <Stop offset="0" stopColor={w.from} stopOpacity={w.fromOpacity} />
+            <Stop offset="1" stopColor={w.to} stopOpacity={w.toOpacity} />
+          </LinearGradient>
+        ))}
       </Defs>
-      <Path d="M-60 110 C 140 30, 320 200, 500 110 S 780 20, 916 100 L 916 560 L -60 560 Z" fill="url(#w1)" />
-      <Path d="M-40 300 C 180 200, 380 380, 560 300 S 780 220, 900 290 L 900 560 L -40 560 Z" fill="url(#w2)" />
-      <Path d="M-60 440 C 150 350, 340 530, 540 440 S 790 370, 916 440 L 916 560 L -60 560 Z" fill="url(#w3)" />
+      {DECOR.wavyPaths.map((d, i) => (
+        <Path key={i} d={d} fill={`url(#w${i + 1})`} />
+      ))}
     </Svg>
   );
 }
 
-/** Header abstrak — bentuk melengkung mengalir dengan gradien biru 45° (bukan blok solid),
- *  memberi kontras untuk teks header putih. Tepi bawah bergelombang, bukan garis lurus. */
+/** Header — bar biru LURUS (tinggi 104px, sama dgn web/mock/previewKTA), gradien biru 45°.
+ *  Tepi bawah lurus agar konsisten antar platform. */
 function AbstractHeader() {
   return (
-    <Svg width={CARD_W} height={CARD_H} viewBox="0 0 856 540" style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width={CARD_W} height={CARD_H} viewBox={`0 0 ${CARD_W} ${CARD_H}`} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <LinearGradient id="headGrad" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#2563eb" />
-          <Stop offset="1" stopColor="#1d4ed8" />
+          <Stop offset="0" stopColor={COLORS.header.from} />
+          <Stop offset="1" stopColor={COLORS.header.to} />
         </LinearGradient>
       </Defs>
-      <Path
-        d="M0 0 H856 V96 C 730 118 660 88 570 110 C 470 136 380 92 290 116 C 200 140 96 104 0 124 Z"
-        fill="url(#headGrad)"
-      />
+      <Path d={DECOR.headerPath} fill="url(#headGrad)" />
+    </Svg>
+  );
+}
+
+/** Hologram / foil shimmer — gradien diagonal tipis (cyan→putih→amber) di area data anggota,
+ *  sebagai pengaman anti-pemalsuan. Memakai OPACITY level elemen (bukan stopOpacity) karena
+ *  alpha pada stop react-native-svg Android diabaikan (dulu membuat overlay opak menutupi data).
+ *  `kind="logo"` memakai sweep putih lembut seperti mock (logo .shimmer). */
+type FoilStop = { offset: string; color: string; opacity: number };
+
+function FoilShimmer({ kind = 'info' }: { kind?: 'info' | 'logo' | 'sig' }) {
+  const cfg: { id: string; opacity: number; stops: FoilStop[] } =
+    kind === 'logo'
+      ? { id: 'foilLogo', opacity: 1, stops: [{ offset: '0', color: '#ffffff', opacity: 0 }, { offset: '0.5', color: '#ffffff', opacity: 0.55 }, { offset: '1', color: '#ffffff', opacity: 0 }] }
+      : kind === 'sig'
+        ? { id: 'foilSig', opacity: 0.25, stops: [{ offset: '0', color: '#22d3ee', opacity: 1 }, { offset: '0.5', color: '#ffffff', opacity: 1 }, { offset: '1', color: '#fcd34d', opacity: 1 }] }
+        : { id: 'foilInfo', opacity: 0.15, stops: [{ offset: '0', color: '#22d3ee', opacity: 1 }, { offset: '0.5', color: '#ffffff', opacity: 1 }, { offset: '1', color: '#fcd34d', opacity: 1 }] };
+  return (
+    <Svg width="100%" height="100%" viewBox="0 0 400 220" style={StyleSheet.absoluteFill} opacity={cfg.opacity} pointerEvents="none">
+      <Defs>
+        <LinearGradient id={cfg.id} x1="0" y1="0" x2="1" y2="1">
+          {cfg.stops.map((s, i) => (
+            <Stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={s.opacity} />
+          ))}
+        </LinearGradient>
+      </Defs>
+      <Rect x={0} y={0} width={400} height={220} rx={12} fill={`url(#${cfg.id})`} />
     </Svg>
   );
 }
@@ -96,17 +135,14 @@ function AbstractHeader() {
  *  teks hitam penandatangan & masa berlaku tetap terbaca. */
 function BottomGradient() {
   return (
-    <Svg width={CARD_W} height={CARD_H} viewBox="0 0 856 540" style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width={CARD_W} height={CARD_H} viewBox={`0 0 ${CARD_W} ${CARD_H}`} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <LinearGradient id="botGrad" x1="1" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#93c5fd" stopOpacity={0.8} />
-          <Stop offset="1" stopColor="#dbeafe" stopOpacity={0.2} />
+          <Stop offset="0" stopColor={COLORS.bottom.from} stopOpacity={COLORS.bottom.fromOpacity} />
+          <Stop offset="1" stopColor={COLORS.bottom.to} stopOpacity={COLORS.bottom.toOpacity} />
         </LinearGradient>
       </Defs>
-      <Path
-        d="M0 462 C 140 436, 300 476, 470 450 S 720 424, 856 452 L 856 540 L 0 540 Z"
-        fill="url(#botGrad)"
-      />
+      <Path d={DECOR.bottomPath} fill="url(#botGrad)" />
     </Svg>
   );
 }
@@ -114,16 +150,16 @@ function BottomGradient() {
 /** Latar belakang kartu belakang — gradien abstrak (bukan blok warna solid). */
 function BackGradient() {
   return (
-    <Svg width={CARD_W} height={CARD_H} viewBox="0 0 856 540" style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width={CARD_W} height={CARD_H} viewBox={`0 0 ${CARD_W} ${CARD_H}`} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <LinearGradient id="backGrad" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#2563eb" />
-          <Stop offset="0.5" stopColor="#1e40af" />
-          <Stop offset="1" stopColor="#0f2b4a" />
+          {COLORS.backGradient.map((c, i) => (
+            <Stop key={i} offset={i === 0 ? '0' : i === 1 ? '0.5' : '1'} stopColor={c} />
+          ))}
         </LinearGradient>
       </Defs>
       <Rect x={0} y={0} width={CARD_W} height={CARD_H} fill="url(#backGrad)" />
-      <Path d="M-40 170 C 160 90, 340 240, 520 170 S 780 90, 920 170 L 920 540 L -40 540 Z" fill="#ffffff" opacity={0.06} />
+      <Path d={DECOR.backWave} fill="#ffffff" opacity={0.06} />
     </Svg>
   );
 }
@@ -133,44 +169,28 @@ function BackGradient() {
  *  plus pattern sinusoidal halus sebagai dekorasi tambahan. */
 function GuillocheBorder({ patternId, strokeColor }: { patternId: string; strokeColor: string }) {
   return (
-    <Svg width={CARD_W} height={CARD_H} viewBox="0 0 856 540" style={styles.guilloche}>
+    <Svg width={CARD_W} height={CARD_H} viewBox={`0 0 ${CARD_W} ${CARD_H}`} style={styles.guilloche}>
       <Defs>
-        <Pattern id={patternId} x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
-          <Path d="M0 9 Q4.5 0 9 9 T18 9" fill="none" stroke={strokeColor} strokeWidth={0.5} />
+        <Pattern id={patternId} x="0" y="0" width={DECOR.guilloche.pattern.w} height={DECOR.guilloche.pattern.h} patternUnits="userSpaceOnUse">
+          <Path d={DECOR.guilloche.pattern.path} fill="none" stroke={strokeColor} strokeWidth={DECOR.guilloche.pattern.strokeWidth} />
         </Pattern>
       </Defs>
-      <Rect x={16} y={16} width={824} height={508} rx={22} fill="none" stroke={strokeColor} strokeWidth={1.2} opacity={0.45} />
-      <Rect x={22} y={22} width={812} height={496} rx={18} fill="none" stroke={strokeColor} strokeWidth={0.8} strokeDasharray="3 5" opacity={0.35} />
-      <Rect x={27} y={27} width={802} height={486} rx={14} fill="none" stroke={strokeColor} strokeWidth={0.5} opacity={0.2} />
+      {DECOR.guilloche.rects.map((r, i) => (
+        <Rect
+          key={i}
+          x={r.inset}
+          y={r.inset}
+          width={CARD_W - r.inset * 2}
+          height={CARD_H - r.inset * 2}
+          rx={r.rx}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={r.strokeWidth}
+          {...(r.dash ? { strokeDasharray: r.dash } : {})}
+          opacity={r.opacity}
+        />
+      ))}
       <Rect x={16} y={16} width={824} height={508} rx={22} fill="none" stroke={`url(#${patternId})`} strokeWidth={14} opacity={0.5} />
-    </Svg>
-  );
-}
-
-/** Hologram / foil shimmer overlay (gradient diagonal) — Svg + LinearGradient + Rect. */
-function ShimmerOverlay({
-  id,
-  width,
-  height,
-  colors,
-  borderRadius = 0,
-}: {
-  id: string;
-  width: number;
-  height: number;
-  colors: [string, string, string];
-  borderRadius?: number;
-}) {
-  return (
-    <Svg width={width} height={height} style={styles.shimmerOverlay}>
-      <Defs>
-        <LinearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor={colors[0]} />
-          <Stop offset="50%" stopColor={colors[1]} />
-          <Stop offset="100%" stopColor={colors[2]} />
-        </LinearGradient>
-      </Defs>
-      <Rect x={0} y={0} width={width} height={height} rx={borderRadius} fill={`url(#${id})`} />
     </Svg>
   );
 }
@@ -191,7 +211,7 @@ interface MemberInfo {
   fotoPath: string | null;
   ranting?: {
     nama: string;
-    wilayah?: { nama: string; distrik?: { nama: string } };
+    wilayah?: { nama: string; distrik?: { nama: string; alamat?: string | null } };
   } | null;
 }
 
@@ -207,24 +227,7 @@ interface CardData {
   stampImage?: string | null;
 }
 
-// ─── Tingkat → visual balok (sesuai tabel pengaturan tingkatan) ───
-
-const TINGKAT_LEVEL: Record<string, { stripCount: number; color: string; label: string }> = {
-  Anggota: { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' },
-  Pratama: { stripCount: 1, color: '#1d4ed8', label: 'Biru 1' },
-  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Biru 2' },
-  Muda:    { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' },
-  Madya:   { stripCount: 2, color: '#ca8a04', label: 'Kuning 2' },
-  Utama:   { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' },
-};
-
-function getLevelVisual(
-  tingkat?: string | null,
-  fromApi?: { stripCount: number; color: string; label?: string } | null,
-) {
-  if (fromApi) return fromApi;
-  return (tingkat && TINGKAT_LEVEL[tingkat]) || { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' };
-}
+// Tingkat → visual balok — diambil dari spec (packages/card-design) via getLevelVisual
 
 // ─── Card shell (scaling 856×540 → lebar layar) ───
 
@@ -271,6 +274,49 @@ function BackRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Foto anggota — TANPA bingkai; fallback siluet man/woman-icon sesuai jenis kelamin
+ *  saat foto tidak ada (fotoPath kosong) ATAU gagal dimuat (onError → 404/korup). */
+// Crop foto ala SIM — tampilkan hanya WAJAH (60% bagian atas pasfoto: kepala + bahu).
+// Kalkulasi di spec: elementH = boxH / faceCrop, elementW = elementH × aspek pasfoto (photoCrop).
+const FACE_CROP = FRONT.photo.crop.faceCrop;
+const PASFOTO_ASPECT = FRONT.photo.crop.pasfotoAspect; // aspek umum pasfoto 3×4 (544×692)
+
+function MemberPhoto({
+  fotoPath,
+  jenisKelamin,
+  boxStyle,
+  iconStyle,
+  crop,
+}: {
+  fotoPath: string | null;
+  jenisKelamin: string | null;
+  boxStyle: StyleProp<ViewStyle>;
+  iconStyle: StyleProp<ImageStyle>;
+  crop: { w: number; h: number; left: number };
+}) {
+  const [failed, setFailed] = useState(false);
+  // `.bg.png` = versi foto tanpa background (ala SIM) yang dihasilkan API on-demand.
+  const uri = fotoPath ? `${API_URL}/api/uploads/${encodeURIComponent(fotoPath)}.bg.png` : null;
+  if (!uri || failed) {
+    return (
+      <View style={boxStyle}>
+        <Image source={jenisKelamin === 'P' ? WOMAN_ICON : MAN_ICON} style={iconStyle} resizeMode="contain" />
+      </View>
+    );
+  }
+  // Foto wajah (ala SIM): kotak menampilkan 60% atas pasfoto, di-zoom penuhi kotak (crop dari spec).
+  return (
+    <View style={boxStyle}>
+      <Image
+        source={{ uri }}
+        style={[styles.photoImg, { position: 'absolute', left: crop.left, top: 0, width: crop.w, height: crop.h }]}
+        resizeMode="cover"
+        onError={() => setFailed(true)}
+      />
+    </View>
+  );
+}
+
 // ─── Sisi Depan ───
 
 function MemberCardFront({ member, cardData, validUntilText }: { member: MemberInfo | null; cardData: CardData | null; validUntilText: string }) {
@@ -294,9 +340,9 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
       {/* Guilloche / microprint border */}
       <GuillocheBorder patternId="g-front" strokeColor="rgba(29,78,216,0.3)" />
 
-      {/* Watermark — peta indonesia.png washout di tengah-kanan (tidak mengenai bingkai foto) */}
+      {/* Watermark — peta indonesia.png washout di tengah (tidak mengganggu foto kanan atas) */}
       <View style={styles.watermarkWrap} pointerEvents="none">
-        <IndonesiaMapWatermark color="#1d4ed8" opacity={0.75} size={{ width: 600, height: 207 }} />
+        <IndonesiaMapWatermark color="#1d4ed8" opacity={0.35} size={{ width: 600, height: 207 }} />
       </View>
 
       <View style={styles.content}>
@@ -304,8 +350,8 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
         <View style={styles.headerRow}>
           <View style={styles.logo}>
             <Image source={LOGO} style={styles.logoImg} resizeMode="contain" />
-            {/* Hologram / foil shimmer overlay */}
-            <ShimmerOverlay id="logoShimmer" width={80} height={80} colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']} borderRadius={40} />
+            {/* Foil shimmer sweep putih lembut (anti-pemalsuan) */}
+            <FoilShimmer kind="logo" />
           </View>
           <View style={styles.headerText}>
             <Text style={styles.row1} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>KARTU TANDA ANGGOTA</Text>
@@ -318,26 +364,51 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           </View>
         </View>
 
-        {/* Photo — fallback ikon man-icon.png / woman-icon.png sesuai jenis kelamin bila tanpa foto */}
-        <View style={styles.photoBox}>
-          {member?.fotoPath ? (
-            <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(member.fotoPath)}` }} style={styles.photoImg} resizeMode="cover" />
-          ) : (
-            <Image source={member?.jenisKelamin === 'P' ? WOMAN_ICON : MAN_ICON} style={styles.photoIcon} resizeMode="contain" />
-          )}
-        </View>
+        {/* Photo besar kiri — TANPA bingkai; fallback siluet man/woman-icon (onError) */}
+        <MemberPhoto
+          fotoPath={member?.fotoPath || null}
+          jenisKelamin={member?.jenisKelamin || null}
+          boxStyle={styles.photoBox}
+          iconStyle={styles.photoIcon}
+          crop={photoCrop(FRONT.photo.big.w, FRONT.photo.big.h)}
+        />
 
-        {/* Level strips — berjarak dari bingkai foto (photo bottom = 165+235 = 400) */}
-        <View style={styles.stripsBox}>
-          {Array.from({ length: lv.stripCount }).map((_, i) => (
-            <View key={i} style={[styles.strip, { backgroundColor: lv.color }]} />
-          ))}
-        </View>
+        {/* Photo kecil kanan atas — sejajar label No. Anggota; rank (strips + nama tingkat) di bawahnya */}
+        <MemberPhoto
+          fotoPath={member?.fotoPath || null}
+          jenisKelamin={member?.jenisKelamin || null}
+          boxStyle={styles.photoBoxSmall}
+          iconStyle={styles.photoIconSmall}
+          crop={photoCrop(FRONT.photo.small.w, FRONT.photo.small.h)}
+        />
+
+        {/* Level rank — DI BAWAH foto kecil (kanan atas); teks nama tingkat selebar strip; sembunyi utk 'Anggota' */}
+        {lv.stripCount > 0 && (
+          <View style={styles.rankBox}>
+            <Text style={styles.rankName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+              {(member?.tingkat || lv.label || '').toUpperCase()}
+            </Text>
+            <View style={styles.rankStrips}>
+              {Array.from({ length: lv.stripCount }).map((_, i) => (
+                <View key={i} style={[styles.strip, { backgroundColor: lv.color }]} />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Info — No. Anggota, Nama, Tempat/Tanggal Lahir, Ranting, Wilayah — semua UPPERCASE (Distrik sudah ada di header) */}
         <View style={styles.infoBox}>
           <InfoRow label="No. Anggota" value={(member?.nomorAnggota || '-').toUpperCase()} strong />
-          <InfoRow label="Nama" value={(member?.namaLengkap || '-').toUpperCase()} />
+          {/* Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama */}
+          <View style={styles.infoPair}>
+            <View style={styles.infoPairLeft}>
+              <InfoRow label="Nama" value={(member?.namaLengkap || '-').toUpperCase()} />
+            </View>
+            <View style={styles.jkBox}>
+              <Text style={styles.infoLabel}>JK</Text>
+              <Text style={styles.jkValue} numberOfLines={1}>{member?.jenisKelamin === 'P' ? 'P' : 'L'}</Text>
+            </View>
+          </View>
           <InfoRow
             label="Tempat, Tanggal Lahir"
             value={[
@@ -353,6 +424,11 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           />
           <InfoRow label="Ranting" value={(member?.ranting?.nama || '-').toUpperCase()} />
           <InfoRow label="Wilayah" value={(member?.ranting?.wilayah?.nama || '-').toUpperCase()} />
+
+          {/* Hologram / foil shimmer — gradien diagonal tipis di atas area data anggota */}
+          <View style={styles.foilOverlay} pointerEvents="none">
+            <FoilShimmer kind="info" />
+          </View>
         </View>
 
         {/* Bottom */}
@@ -361,8 +437,10 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
           <Text style={styles.bottomValue}>{validUntilText}</Text>
         </View>
 
-        {/* Signer — stempel diameter 2,2 cm (220 px ≈ 2,2 cm pada skala CR80 856 px = 8.56 cm), cap yang di-upload di dalamnya, ttd di atas stempel */}
+        {/* Signer — teks jabatan & keuskupan di ATAS stempel + tanda tangan, nama penandatangan di bawah */}
         <View style={styles.signerBox}>
+          <Text style={styles.sigTitle1} numberOfLines={1}>KOORDINATORAT DISTRIK THS-THM</Text>
+          <Text style={styles.sigTitle2} numberOfLines={1}>KEUSKUPAN {distrik.replace(/^keuskupan\s*/i, '').toUpperCase()}</Text>
           <View style={styles.sigWrap}>
             {cardData?.stampImage ? (
               <View style={styles.stamp}>
@@ -374,18 +452,28 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
               </View>
             )}
             {cardData?.signatureImage ? (
-              <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.signatureImage)}` }} style={styles.sigImg} resizeMode="contain" />
+              <View style={styles.sigImgWrap}>
+                {/* Ttd ditebalkan: 3 lapis identik di posisi SAMA (tanpa offset → tidak berbayang) */}
+                <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.signatureImage)}` }} style={styles.sigImg} resizeMode="contain" />
+                <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.signatureImage)}` }} style={styles.sigImg} resizeMode="contain" />
+                <Image source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(cardData.signatureImage)}` }} style={styles.sigImg} resizeMode="contain" />
+              </View>
             ) : (
               <Text style={styles.sig}>ttd</Text>
             )}
+            {/* Foil shimmer halus di area stempel/ttd (anti-pemalsuan) */}
+            <View style={styles.foilOverlay} pointerEvents="none">
+              <FoilShimmer kind="sig" />
+            </View>
           </View>
           {(cardData?.signers && cardData.signers.length > 0
             ? cardData.signers
             : [{ signerName: cardData?.signerName || 'Koordinator Distrik', signerTitle: cardData?.signerTitle || 'THS-THM' }]
           ).map((s, i) => (
-            <View key={i} style={styles.signerRow}>
+            <View key={i} style={[styles.signerRow, { bottom: i * 34 }]}>
+              {/* Nama penandatangan (underline) + jabatan — font Roboto sama dgn teks "Berlaku sampai" */}
               <Text style={styles.signerName} numberOfLines={1}>{(s.signerName || 'Koordinator Distrik').toUpperCase()}</Text>
-              <Text style={styles.signerTitle} numberOfLines={1}>{(s.signerTitle || '').toUpperCase()}</Text>
+              {s.signerTitle ? <Text style={styles.signerTitle} numberOfLines={1}>{s.signerTitle.toUpperCase()}</Text> : null}
             </View>
           ))}
         </View>
@@ -405,9 +493,9 @@ function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { memb
       {/* Guilloche / microprint border */}
       <GuillocheBorder patternId="g-back" strokeColor="rgba(191,219,254,0.4)" />
 
-      {/* Watermark — siluet peta titik halftone PUTIH di tengah, jelas terlihat */}
+      {/* Watermark — siluet peta titik halftone PUTIH di tengah */}
       <View style={styles.backWatermarkWrap} pointerEvents="none">
-        <IndonesiaMapWatermark color="#ffffff" opacity={0.85} size={{ width: 480, height: 166 }} />
+        <IndonesiaMapWatermark color="#ffffff" opacity={0.5} size={{ width: 480, height: 166 }} />
       </View>
 
       <View style={styles.content}>
@@ -435,6 +523,7 @@ function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { memb
           <BackRow label="DADAR" value={dadar.toUpperCase()} />
           <BackRow label="Status" value={member?.statusKeanggotaan === 'aktif' ? 'AKTIF' : 'NONAKTIF'} />
           <BackRow label="Valid s/d" value={validUntilText} />
+          <BackRow label="Alamat" value={`THS-THM, ${(member?.ranting?.wilayah?.distrik?.alamat || 'Distrik').toUpperCase()}`} />
         </View>
 
         {/* Footer */}
@@ -579,6 +668,52 @@ export default function DigitalCardScreen() {
 
   const { refreshing, onRefresh } = useRefresh(load);
 
+  // ── Simpan kartu: PDF (share/save via intent) & PNG (langsung ke galeri) ──
+  const [saving, setSaving] = useState<'pdf' | 'png' | null>(null);
+
+  const memberId = member?.id;
+  const savePdf = async () => {
+    if (!memberId) return;
+    setSaving('pdf');
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      const url = `${API_URL}/api/members/${memberId}/digital-card/pdf`;
+      const dest = `${FileSystem.cacheDirectory}kartu-anggota-${memberId}.pdf`;
+      await FileSystem.downloadAsync(url, dest, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(dest, { mimeType: 'application/pdf', dialogTitle: 'Simpan Kartu Anggota' });
+      } else {
+        Alert.alert('Kartu tersimpan', `PDF tersimpan di: ${dest}`);
+      }
+    } catch {
+      Alert.alert('Gagal', 'Gagal mengunduh PDF kartu. Periksa koneksi internet.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!memberId) return;
+    setSaving('png');
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      const url = `${API_URL}/api/members/${memberId}/digital-card/image`;
+      const dest = `${FileSystem.cacheDirectory}kartu-anggota-${memberId}.png`;
+      await FileSystem.downloadAsync(url, dest, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const perm = await MediaLibrary.requestPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Izin Diperlukan', 'Aktifkan izin akses media untuk menyimpan ke galeri.');
+        return;
+      }
+      await MediaLibrary.saveToLibraryAsync(dest);
+      Alert.alert('Tersimpan', 'Kartu PNG berhasil disimpan ke galeri.');
+    } catch {
+      Alert.alert('Gagal', 'Gagal menyimpan kartu ke galeri.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
   if (loading) return <LoadingView />;
 
   // Error saat data anggota gagal dimuat → tampilkan pesan jelas + tombol coba lagi
@@ -607,6 +742,18 @@ export default function DigitalCardScreen() {
       <FlipCard member={member} cardData={cardData} ttl={ttl} dadar={dadar} validUntilText={validUntilText} />
       <Text style={styles.flipHint}>👆 Ketuk kartu untuk melihat sisi belakang (QR verifikasi)</Text>
 
+      {/* Simpan / unduh kartu */}
+      <View style={styles.saveRow}>
+        <TouchableOpacity style={[styles.saveBtn, styles.saveBtnPdf]} onPress={savePdf} disabled={!!saving} activeOpacity={0.8}>
+          <Ionicons name="download-outline" size={18} color="#fff" />
+          <Text style={styles.saveBtnText}>{saving === 'pdf' ? 'Menyimpan…' : 'Simpan PDF'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.saveBtn, styles.saveBtnPng]} onPress={saveToGallery} disabled={!!saving} activeOpacity={0.8}>
+          <Ionicons name="image-outline" size={18} color="#fff" />
+          <Text style={styles.saveBtnText}>{saving === 'png' ? 'Menyimpan…' : 'Simpan ke Galeri'}</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.noteBox}>
         <Text style={styles.noteText}>
           Kartu digital ini menggunakan format CR80 landscape (856×540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
@@ -632,20 +779,26 @@ const styles = StyleSheet.create({
   },
   flipHint: { fontSize: 12, color: '#6b7280', marginTop: 10, alignSelf: 'flex-start' },
 
-  // ── Canvas kartu 856×540 (di-scale oleh CardShell) ──
-  cardCanvas: { width: CARD_W, height: CARD_H, borderRadius: 28, overflow: 'hidden' },
-  // Background biru-cyan muda sesuai referensi "abstract wavy background"
-  cardFront: { backgroundColor: '#f7fcff', borderWidth: 1, borderColor: '#dbeafe' },
-  cardBack: { backgroundColor: '#1e40af', borderWidth: 1, borderColor: '#1e3a5f' },
+  // Tombol simpan kartu
+  saveRow: { flexDirection: 'row', gap: 10, marginTop: 12, alignSelf: 'stretch' },
+  saveBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 10 },
+  saveBtnPdf: { backgroundColor: '#2563eb' },
+  saveBtnPng: { backgroundColor: '#0f766e' },
+  saveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
-  bgCircle1: { position: 'absolute', top: -80, right: -80, width: 320, height: 320, borderRadius: 160, backgroundColor: 'rgba(6,182,212,0.15)' },
-  bgCircle2: { position: 'absolute', bottom: -110, left: -80, width: 380, height: 380, borderRadius: 190, backgroundColor: 'rgba(29,78,216,0.08)' },
+  // ── Canvas kartu 856×540 (di-scale oleh CardShell) ──
+  cardCanvas: { width: CARD_W, height: CARD_H, borderRadius: CARD.RADIUS, overflow: 'hidden' },
+  // Background & border dari spec
+  cardFront: { backgroundColor: COLORS.front.bg, borderWidth: 1, borderColor: COLORS.front.border },
+  cardBack: { backgroundColor: COLORS.back.bg, borderWidth: 1, borderColor: COLORS.back.border },
+
+  bgCircle1: { position: 'absolute', top: FRONT.bgCircle1.top, right: FRONT.bgCircle1.right, width: FRONT.bgCircle1.size, height: FRONT.bgCircle1.size, borderRadius: FRONT.bgCircle1.size / 2, backgroundColor: COLORS.bgCircle1 },
+  bgCircle2: { position: 'absolute', bottom: FRONT.bgCircle2.bottom, left: FRONT.bgCircle2.left, width: FRONT.bgCircle2.size, height: FRONT.bgCircle2.size, borderRadius: FRONT.bgCircle2.size / 2, backgroundColor: COLORS.bgCircle2 },
 
   guilloche: { position: 'absolute', top: 0, left: 0 },
-  shimmerOverlay: { position: 'absolute', top: 0, left: 0 },
 
-  // Watermark peta — digeser ke kanan agar tidak mengenai bingkai foto (foto s/d x=225)
-  watermarkWrap: { position: 'absolute', left: 230, top: 166, width: 600, height: 207, opacity: 1 },
+  // Watermark peta — posisi dari spec
+  watermarkWrap: { position: 'absolute', left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h, opacity: 1 },
   watermarkLogo: { width: 260, height: 260 },
   backWatermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 1 },
   backWatermarkLogo: { width: 260, height: 260 },
@@ -653,111 +806,140 @@ const styles = StyleSheet.create({
 
   content: { ...StyleSheet.absoluteFillObject, zIndex: 10 },
 
-  // ── Header — 4 baris, seluruhnya muat di dalam bar biru (height 104) ──
-  // Blok teks: 19+15+22+16+3(margin) = 75px + padding vertikal 28 = 103 ≤ 104 → tidak ada overflow
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 14, paddingBottom: 14, paddingHorizontal: 24 },
-  // Logo setinggi blok teks header (±80px: 4 baris × 19px + 3 margin)
-  logo: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.95)', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 3, borderWidth: 2, borderColor: '#ffffff' },
-  logoImg: { width: 76, height: 76, alignSelf: 'center' },
+  // ── Header — teks rata atas agar logo besar (120px) tidak mendorong teks keluar dari pita biru ──
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: FRONT.header.gap, paddingTop: FRONT.header.padTop, paddingBottom: FRONT.header.padBottom, paddingHorizontal: FRONT.header.padH },
+  // Logo — ukuran dari spec
+  logo: { width: FRONT.logo.size, height: FRONT.logo.size, borderRadius: FRONT.logo.radius, backgroundColor: FRONT.logo.bg, overflow: 'hidden', borderWidth: FRONT.logo.border, borderColor: FRONT.logo.borderColor },
+  logoImg: { width: FRONT.logo.img, height: FRONT.logo.img, alignSelf: 'center' },
   logoInner: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: '#334155', alignItems: 'center', justifyContent: 'center' },
   logoText: { fontSize: 10, fontWeight: '900', color: '#171717' },
   headerText: { flex: 1 },
-  // Semua baris header ukuran sama (16px) & di-bold — tinggi blok 4×20 = 80 + padding 28 = 108 ≤ 110
-  row1: { fontSize: 16, fontWeight: '900', color: '#fff', letterSpacing: 2, lineHeight: 19 },
-  row2: { fontSize: 16, fontWeight: '900', color: '#fff', letterSpacing: 1.1, marginTop: 1, lineHeight: 19 },
-  orgName: { fontSize: 16, fontWeight: '900', color: '#fff', letterSpacing: 0.5, marginTop: 1, lineHeight: 19 },
-  distrikName: { fontSize: 16, fontWeight: '900', color: '#fff', marginTop: 1, lineHeight: 19 },
+  // Semua baris header ukuran sama (16px), font Open Sans Bold — tinggi blok 4×20 = 80 + padding 28 = 108 ≤ 110
+  row1: { fontSize: FRONT.header.row.fontSize, fontWeight: '900', color: COLORS.headerText, letterSpacing: FRONT.header.row.spacing[0], lineHeight: FRONT.header.row.lineHeight, fontFamily: OPEN_SANS_BOLD },
+  row2: { fontSize: FRONT.header.row.fontSize, fontWeight: '900', color: COLORS.headerText, letterSpacing: FRONT.header.row.spacing[1], marginTop: FRONT.header.row.rowGap, lineHeight: FRONT.header.row.lineHeight, fontFamily: OPEN_SANS_BOLD },
+  orgName: { fontSize: FRONT.header.row.fontSize, fontWeight: '900', color: COLORS.headerText, letterSpacing: FRONT.header.row.spacing[2], marginTop: FRONT.header.row.rowGap, lineHeight: FRONT.header.row.lineHeight, fontFamily: OPEN_SANS_BOLD },
+  distrikName: { fontSize: FRONT.header.row.fontSize, fontWeight: '900', color: COLORS.headerText, marginTop: FRONT.header.row.rowGap, lineHeight: FRONT.header.row.lineHeight, fontFamily: OPEN_SANS_BOLD },
 
-  // ── Photo ── top sejajar dengan label No. Anggota (148)
+  // ── Photo besar kiri ── TANPA bingkai, top sejajar label No. Anggota (148)
   photoBox: {
-    position: 'absolute', left: 40, top: 148, width: 185, height: 235,
-    borderRadius: 16,
-    backgroundColor: '#e2e8f0',
-    borderWidth: 4,
-    borderColor: '#fff',
+    position: 'absolute', left: FRONT.photo.big.left, top: FRONT.photo.big.top, width: FRONT.photo.big.w, height: FRONT.photo.big.h,
     overflow: 'hidden',
     alignItems: 'center', justifyContent: 'center',
   },
   photoImg: { width: '100%', height: '100%' },
   photoIcon: { width: 130, height: 130, opacity: 0.9 },
 
-  // ── Level strips ── berjarak 12px dari bingkai foto (photo bottom = 148+235 = 383)
-  stripsBox: { position: 'absolute', left: 40, top: 395, width: 185, flexDirection: 'column', gap: 6 },
-  strip: { height: 14, width: '100%', borderRadius: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.25)' },
+  // ── Photo kecil kanan atas ── TANPA bingkai, sejajar label No. Anggota; rank di bawahnya
+  photoBoxSmall: {
+    position: 'absolute', right: FRONT.photo.small.right, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h,
+    overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  photoIconSmall: { width: 100, height: 100, opacity: 0.9 },
 
-  // ── Info ── label di atas, nilai di bawah; kolom lebar ke kanan (stempel 2,2 cm di pojok),
-  // zIndex di atas stempel agar teks tetap di depan & tidak wrap
-  infoBox: { position: 'absolute', left: 240, top: 148, right: 40, zIndex: 20 },
-  infoRow: { marginBottom: 13 },
-  infoLabel: { fontSize: 12, fontWeight: '800', color: '#1e3a5f', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: LABEL_FONT },
-  infoValue: { fontSize: 15, fontWeight: '700', color: '#111827', marginTop: 3, lineHeight: 20 },
+  // ── Level rank ── DI BAWAH photo kecil kanan atas (jarak kecil); teks nama tingkat selebar strip; sembunyi utk 'Anggota'
+  rankBox: { position: 'absolute', right: FRONT.rank.right, top: FRONT.rank.top, width: FRONT.rank.w, zIndex: 5 },
+  rankName: { fontSize: FRONT.rank.name.fontSize, fontWeight: '900', color: COLORS.rankText, textAlign: 'center', letterSpacing: FRONT.rank.name.letterSpacing, marginBottom: FRONT.rank.name.marginBottom, fontFamily: ROBOTO_BOLD },
+  rankStrips: { width: '100%', flexDirection: 'column', gap: FRONT.rank.strip.gap },
+  strip: { height: FRONT.rank.strip.h, width: '100%', borderRadius: FRONT.rank.strip.radius, borderWidth: 1, borderColor: COLORS.rankStripBorder },
+
+  // ── Info ── label di atas, nilai di bawah; kolom tengah (foto besar kiri + foto kecil kanan)
+  infoBox: { position: 'absolute', left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right, zIndex: 20 },
+  // Foil shimmer menimpa area info (di atas teks, tipis 15% — teks tetap terbaca)
+  foilOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: 12, zIndex: 30 },
+  // Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama
+  infoPair: { flexDirection: 'row' },
+  infoPairLeft: { flexShrink: 1 },
+  jkBox: { width: FRONT.info.jk.w, marginLeft: FRONT.info.jk.marginLeft },
+  jkValue: {
+    fontSize: FRONT.info.value.fontSize,
+    fontWeight: '700',
+    color: FRONT.info.value.color,
+    marginTop: FRONT.info.value.marginTop,
+    fontFamily: OCR_A_FONT,
+    textShadowColor: FRONT.info.value.color,
+    textShadowRadius: 1.5,
+    textShadowOffset: { width: 0, height: 0 },
+  },
+  infoRow: { marginBottom: FRONT.info.rowMarginBottom },
+  infoLabel: { fontSize: FRONT.info.label.fontSize, fontWeight: '800', color: FRONT.info.label.color, textTransform: 'uppercase', letterSpacing: FRONT.info.label.letterSpacing, fontFamily: LABEL_FONT },
+  // Data anggota BOLD — OCR A Extended hanya punya weight regular, jadi di-bold via
+  // simulasi shadow (teknik yang sama dengan No. Anggota) agar tidak fallback ke font sistem
+  infoValue: { fontSize: FRONT.info.value.fontSize, fontWeight: '700', color: FRONT.info.value.color, marginTop: FRONT.info.value.marginTop, lineHeight: FRONT.info.value.lineHeight, fontFamily: OCR_A_FONT, textShadowColor: FRONT.info.value.color, textShadowRadius: 1.5, textShadowOffset: { width: 0, height: 0 } },
   // Nomor Anggota: pakai font OCR A Extended (di-bold via simulasi shadow kuat,
   // karena varian asli font OCR A Extended hanya tersedia weight regular;
   // fontWeight di React Native dengan fontFamily custom berisiko fallback ke font sistem)
   infoValueStrong: {
-    fontSize: 19,
+    fontSize: FRONT.info.valueStrong.fontSize,
     fontFamily: OCR_A_FONT,
-    color: '#0f2b4a',
-    letterSpacing: 1.2,
-    marginTop: 3,
-    textShadowColor: '#0f2b4a',
+    color: FRONT.info.valueStrong.color,
+    letterSpacing: FRONT.info.valueStrong.letterSpacing,
+    marginTop: FRONT.info.valueStrong.marginTop,
+    textShadowColor: FRONT.info.valueStrong.color,
     textShadowRadius: 2,
     textShadowOffset: { width: 0, height: 0 },
   },
 
   // ── Bottom ── masa berlaku: proper case, diperkecil mengikuti ukuran nama penandatangan (16px)
   // Jarak bawah teks masa berlaku = jarak atas teks header (14px)
-  bottomInfo: { position: 'absolute', left: 40, bottom: 14 },
-  bottomLabel: { fontSize: 13, fontWeight: '700', color: '#1e3a5f', marginBottom: 2, fontFamily: LABEL_FONT },
-  bottomValue: { fontSize: 16, fontWeight: '700', color: '#111827', marginTop: 2 },
+  bottomInfo: { position: 'absolute', left: FRONT.bottom.left, bottom: FRONT.bottom.bottom },
+  bottomLabel: { fontSize: FRONT.bottom.label.fontSize, fontWeight: '700', color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom, fontFamily: LABEL_FONT },
+  bottomValue: { fontSize: FRONT.bottom.value.fontSize, fontWeight: '700', color: FRONT.bottom.value.color, marginTop: FRONT.bottom.value.marginTop, fontFamily: ROBOTO_BOLD },
 
-  // ── Signer ── stempel diameter 1,1 cm (110 px = 50% dari 220 px), cap di-upload di dalamnya,
-  // ttd di atas stempel, nama/jabatan hitam di bawah tanpa garis; jarak bawah = 14px (sama dgn header)
-  // Container 220px agar nama/jabatan tidak wrap; stempel 110px di tengah
-  signerBox: { position: 'absolute', right: 0, bottom: 14, width: 220, alignItems: 'center' },
-  sigWrap: { position: 'relative', width: 110, height: 110, marginBottom: 2, alignSelf: 'center' },
-  sig: { position: 'absolute', left: 22, top: 81, fontSize: 16, fontStyle: 'italic', color: '#334155', transform: [{ rotate: '-8deg' }] },
-  sigImg: { position: 'absolute', left: 20, top: 79, width: 70, height: 29, opacity: 0.95, transform: [{ rotate: '-8deg' }] },
+  // ── Signer ── diletakkan di bawah data Wilayah (top box ≈ 392), blok digeser ke kanan (right 24);
+  // teks KOORDINATOR/KEUSKUPAN di atas; stempel (border tipis, tdk ditebalkan) + ttd di tengah;
+  // nama (underline) + jabatan di bawah, font Roboto sama dgn "Berlaku sampai"
+  // Grup pengesahan dinaikkan (bottom 14) agar bagian bawah teks sejajar dengan tanggal masa laku,
+  // dan digeser ke kanan (right -8 → left 464) sesuai mock
+  signerBox: { position: 'absolute', right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h },
+  // Teks KOORDINATORAT: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel (sigWrap top 35)
+  sigTitle1: { position: 'absolute', left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
+  sigTitle2: { position: 'absolute', left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, fontWeight: '700', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
+  // ttd ditebalkan via 3 lapis di posisi sama (bukan berbayang) — ukuran dari spec
+  sigWrap: { position: 'absolute', left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h },
+  sig: { position: 'absolute', left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, fontSize: FRONT.signer.sig.fontSize, fontStyle: 'italic', color: FRONT.signer.sig.color, transform: [{ rotate: `${FRONT.signer.sig.rotate}deg` }], fontFamily: ROBOTO_REGULAR },
+  sigImgWrap: { position: 'absolute', left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h },
+  sigImg: { position: 'absolute', left: 0, top: 0, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h, opacity: 0.7, transform: [{ rotate: `${FRONT.signer.sig.rotate}deg` }] },
   stamp: {
-    position: 'absolute', left: 0, top: 0, width: 110, height: 110, borderRadius: 55,
-    borderWidth: 4, borderColor: 'rgba(30,64,175,0.45)',
+    position: 'absolute', left: FRONT.signer.stamp.left, top: FRONT.signer.stamp.top, width: FRONT.signer.stamp.size, height: FRONT.signer.stamp.size, borderRadius: FRONT.signer.stamp.radius,
+    borderWidth: FRONT.signer.stamp.border, borderColor: COLORS.stampBorder,
     alignItems: 'center', justifyContent: 'center',
-    transform: [{ rotate: '-8deg' }],
+    transform: [{ rotate: `${FRONT.signer.stamp.rotate}deg` }],
     overflow: 'hidden',
   },
   stampImg: { width: '100%', height: '100%' },
-  stampText: { fontSize: 11, fontWeight: '900', color: '#1e40af' },
-  signerRow: { alignItems: 'center', width: '100%', marginBottom: 4 },
-  signerName: { fontSize: 14, fontWeight: '900', color: '#111827', maxWidth: 220, textAlign: 'center' },
-  signerTitle: { fontSize: 12, fontWeight: '600', color: '#111827', marginTop: 2, maxWidth: 220, textAlign: 'center' },
+  stampText: { fontSize: FRONT.signer.stamp.text.fontSize, fontWeight: '900', color: COLORS.stampText, fontFamily: ROBOTO_BOLD },
+  // Nama + jabatan menimpa bagian bawah stempel (zIndex di atas), rata kiri
+  signerRow: { position: 'absolute', left: 0, bottom: 0, zIndex: 5, alignItems: 'flex-start', width: '100%' },
+  signerName: { fontSize: FRONT.signer.name.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textDecorationLine: 'underline' },
+  signerTitle: { fontSize: FRONT.signer.title.fontSize, fontWeight: '700', color: COLORS.value, marginTop: FRONT.signer.title.marginTop, fontFamily: ROBOTO_BOLD },
 
   // ── Back ──
-  backTitleBox: { position: 'absolute', top: 28, left: 0, right: 0, alignItems: 'center' },
-  backTitle: { fontSize: 28, fontWeight: '900', color: '#fff', letterSpacing: 3 },
-  backSubtitle: { fontSize: 15, color: '#fff', opacity: 0.9, marginTop: 4 },
+  backTitleBox: { position: 'absolute', top: BACK.title.top, left: 0, right: 0, alignItems: 'center' },
+  backTitle: { fontSize: BACK.title.fontSize, fontWeight: '900', color: COLORS.white, letterSpacing: BACK.title.letterSpacing, fontFamily: ROBOTO_BOLD },
+  backSubtitle: { fontSize: BACK.title.subtitle.fontSize, color: COLORS.white, opacity: 0.9, marginTop: BACK.title.subtitle.marginTop, fontFamily: ROBOTO_REGULAR },
   qrBox: {
-    position: 'absolute', left: 48, top: 145, width: 210, height: 210,
-    backgroundColor: '#fff', borderRadius: 16, borderWidth: 4, borderColor: '#1e3a5f',
-    padding: 16, alignItems: 'center', justifyContent: 'center',
+    position: 'absolute', left: BACK.qr.left, top: BACK.qr.top, width: BACK.qr.size, height: BACK.qr.size,
+    backgroundColor: BACK.qr.bg, borderRadius: BACK.qr.radius, borderWidth: BACK.qr.border, borderColor: BACK.qr.borderColor,
+    padding: BACK.qr.padding, alignItems: 'center', justifyContent: 'center',
   },
   qrImg: { width: '100%', height: '100%' },
   qrPlaceholder: { fontSize: 24, fontWeight: '700', color: '#94a3b8' },
+  // Area teks belakang transparan (tanpa kotak putih) — teks putih langsung di atas gradien
   backInfoBox: {
-    position: 'absolute', left: 300, top: 145, right: 48,
-    backgroundColor: 'rgba(255,255,255,0.93)',
-    borderRadius: 16, borderWidth: 1, borderColor: 'rgba(191,219,254,0.5)',
-    padding: 24,
+    position: 'absolute', left: BACK.info.left, top: BACK.info.top, right: BACK.info.right,
+    padding: BACK.info.padding,
   },
-  backDesc: { fontSize: 18, lineHeight: 27, color: '#0f172a', marginBottom: 16 },
-  backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  backRowLabel: { width: 115, fontSize: 18, fontWeight: '900', color: '#0f2b4a', textTransform: 'uppercase', fontFamily: LABEL_FONT },
-  backColon: { width: 18, fontSize: 18, fontWeight: '900', color: '#111827' },
-  backRowValue: { flex: 1, fontSize: 18, fontWeight: '600', color: '#111827' },
-  backFooter: { position: 'absolute', left: 48, right: 48, bottom: 32, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 },
-  footerText: { flex: 1, fontSize: 15, lineHeight: 22, color: '#f0f9ff', opacity: 0.95 },
+  backDesc: { fontSize: BACK.info.desc.fontSize, lineHeight: BACK.info.desc.lineHeight, color: COLORS.white, opacity: BACK.info.desc.opacity, marginBottom: BACK.info.desc.marginBottom, fontFamily: ROBOTO_REGULAR },
+  backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: BACK.info.row.marginBottom },
+  backRowLabel: { width: BACK.info.row.label.w, fontSize: BACK.info.row.label.fontSize, fontWeight: '700', color: COLORS.white, textTransform: 'uppercase', fontFamily: LABEL_FONT },
+  backColon: { width: BACK.info.row.colon.w, fontSize: BACK.info.row.label.fontSize, fontWeight: '700', color: COLORS.white, opacity: 0.9 },
+  backRowValue: { flex: 1, fontSize: BACK.info.row.value.fontSize, fontWeight: '600', color: COLORS.white, fontFamily: ROBOTO_REGULAR },
+  backFooter: { position: 'absolute', left: BACK.footer.left, right: BACK.footer.right, bottom: BACK.footer.bottom, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 },
+  footerText: { flex: 1, fontSize: BACK.footer.text.fontSize, lineHeight: BACK.footer.text.lineHeight, color: '#f0f9ff', opacity: BACK.footer.text.opacity, fontFamily: ROBOTO_REGULAR },
   footerUrl: { alignItems: 'flex-end' },
-  footerUrlLabel: { fontSize: 13, color: '#f0f9ff', opacity: 0.8, textTransform: 'uppercase' },
-  footerUrlValue: { fontSize: 16, fontWeight: '700', color: '#ffffff', marginTop: 2 },
+  footerUrlLabel: { fontSize: BACK.footer.urlLabel.fontSize, color: '#f0f9ff', opacity: BACK.footer.urlLabel.opacity, textTransform: 'uppercase', fontFamily: ROBOTO_REGULAR },
+  footerUrlValue: { fontSize: BACK.footer.urlValue.fontSize, fontWeight: '700', color: COLORS.white, marginTop: BACK.footer.urlValue.marginTop, fontFamily: ROBOTO_BOLD },
 
   noteBox: { marginTop: 24, backgroundColor: '#fef9c3', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#fde68a', width: '100%' },
   noteText: { fontSize: 13, lineHeight: 19, color: '#a16207' },

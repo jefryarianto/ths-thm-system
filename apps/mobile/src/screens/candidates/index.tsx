@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCandidates, STATUS_STYLES, STATUS_FILTERS } from '../../hooks/use-candidates';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 export default function CandidatesScreen() {
   const [search, setSearch] = useState('');
@@ -16,6 +17,7 @@ export default function CandidatesScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Calon Anggota</Text>
         <Text style={styles.headerSub}>{(candidates ?? []).length} calon</Text>

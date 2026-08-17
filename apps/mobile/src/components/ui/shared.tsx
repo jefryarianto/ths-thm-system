@@ -11,6 +11,31 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+interface BackButtonProps {
+  /** warna ikon panah (default putih) */
+  color?: string;
+  /** background tombol (default gelap semi-transparan) */
+  bg?: string;
+  /** override handler (default: router.back()) */
+  onPress?: () => void;
+}
+
+/** Tombol/ikon kembali — melayang di kiri-atas setiap halaman (safe-area aware). */
+export function BackButton({ color = '#fff', bg = 'rgba(15,23,42,0.55)', onPress }: BackButtonProps) {
+  const insets = useSafeAreaInsets();
+  return (
+    <TouchableOpacity
+      style={[styles.backBtn, { top: insets.top + 8, backgroundColor: bg }]}
+      onPress={onPress || (() => (router.canGoBack() ? router.back() : router.replace('/')))}       hitSlop={10}
+      activeOpacity={0.7}
+      accessibilityLabel="Kembali"
+    >
+      <Ionicons name="arrow-back" size={22} color={color} />
+    </TouchableOpacity>
+  );
+}
 
 interface LoadingViewProps {
   message?: string;
@@ -43,7 +68,6 @@ export function ErrorView({ message, onRetry }: ErrorViewProps) {
     </View>
   );
 }
-
 interface StatusBadgeProps {
   label: string;
   color: string;
@@ -592,6 +616,21 @@ export const referenceStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  backBtn: {
+    position: 'absolute' as const,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    zIndex: 999,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
   center: {
     flex: 1,
     justifyContent: 'center',

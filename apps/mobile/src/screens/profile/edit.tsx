@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
@@ -42,9 +42,13 @@ export default function EditProfileScreen() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  // Refetch saat layar difokuskan (mis. kembali dari layar kamera setelah upload foto)
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfile();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   const fetchProfile = async () => {
     try {
@@ -262,7 +266,7 @@ export default function EditProfileScreen() {
         <View style={styles.section}>
           {/* Photo */}
           <View style={styles.photoSection}>
-            <TouchableOpacity onPress={pickImage} style={styles.photoContainer}>
+            <View style={styles.photoContainer}>
               {photoUri ? (
                 <Image source={{ uri: photoUri }} style={styles.photo} />
               ) : (
@@ -273,8 +277,20 @@ export default function EditProfileScreen() {
               <View style={styles.photoBadge}>
                 <Ionicons name="pencil" size={12} color="#fff" />
               </View>
-            </TouchableOpacity>
-            <Text style={styles.photoHint}>Ketuk untuk mengganti foto</Text>
+            </View>
+            <Text style={styles.photoHint}>Foto pasfoto (background otomatis dihapus ala SIM)</Text>
+
+            {/* Ambil foto via kamera (overlay wajah) atau dari galeri */}
+            <View style={styles.photoActions}>
+              <TouchableOpacity style={styles.photoActionBtn} onPress={() => router.push('/camera/photo' as any)}>
+                <Ionicons name="camera" size={16} color="#fff" />
+                <Text style={styles.photoActionText}>Ambil Foto</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.photoActionBtn, styles.photoActionBtnSecondary]} onPress={pickImage}>
+                <Ionicons name="images" size={16} color="#2563eb" />
+                <Text style={[styles.photoActionText, { color: '#2563eb' }]}>Pilih dari Galeri</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Form Fields */}
@@ -445,7 +461,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
   },
-  photoHint: { fontSize: 12, color: '#9ca3af' },
+  photoHint: { fontSize: 12, color: '#9ca3af', marginBottom: 12 },
+  photoActions: { flexDirection: 'row', gap: 10, marginTop: 2 },
+  photoActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  photoActionBtnSecondary: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  photoActionText: { color: '#fff', fontSize: 13, fontWeight: '600' },
 
   fieldGroup: { marginBottom: 16 },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6 },

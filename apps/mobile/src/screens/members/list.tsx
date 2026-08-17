@@ -7,6 +7,7 @@ import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { useRole } from '../../hooks/use-role';
 import apiClient from '../../lib/api-client';
+import { BackButton } from '../../components/ui/shared';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
@@ -37,6 +38,7 @@ export default function MembersScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Anggota</Text>

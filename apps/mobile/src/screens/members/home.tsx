@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { LoadingView } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 import { useMemberProfile } from '../../hooks/use-member-profile';
 import { useRole } from '../../hooks/use-role';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../store/auth-store';
+import apiClient, { unwrap } from '../../lib/api-client';
 
 const memberItems = [
   { icon: 'chatbubbles', label: 'Forum', route: '/forum' },
@@ -53,6 +54,23 @@ export default function HomeScreen() {
   const { data: member, loading, refetch } = useMemberProfile();
   const { refreshing, onRefresh } = useRefresh(refetch);
 
+  // Jumlah notifikasi belum dibaca — refresh setiap home difokuskan (kembali dari tab lain)
+  const [unreadCount, setUnreadCount] = useState(0);
+  const loadUnread = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/notifications/count');
+      const d = unwrap<{ count: number }>(res);
+      setUnreadCount(d?.count ?? 0);
+    } catch {
+      // abaikan — badge hanya tidak tampil
+    }
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadUnread();
+    }, [loadUnread]),
+  );
+
   // Anggota murni hanya melihat menu anggota; role lain melihat menu sesuai minRole
   // (admin_kegiatan kini melihat Calon & Pendadaran, sama seperti web).
   const visibleAdminItems = isAnggota
@@ -72,6 +90,20 @@ export default function HomeScreen() {
         <Text style={styles.name}>
           {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
         </Text>
+        {/* Lonceng notifikasi + badge jumlah belum dibaca (kanan atas) */}
+        <TouchableOpacity
+          style={styles.bellBtn}
+          onPress={() => router.push('/notifications')}
+          activeOpacity={0.7}
+          accessibilityLabel="Notifikasi"
+        >
+          <Ionicons name="notifications" size={24} color="#fff" />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.cardContainer}>
@@ -124,6 +156,22 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 32 },
+  bellBtn: { position: 'absolute', right: 20, top: 52, padding: 6, zIndex: 10 },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#dc2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#2563eb',
+  },
+  bellBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   greeting: { color: '#bfdbfe', fontSize: 14 },
   name: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
   cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -6 },

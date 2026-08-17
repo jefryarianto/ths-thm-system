@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   NotFoundException,
+  BadRequestException,
   Logger,
   Inject,
   Optional,
@@ -26,6 +27,7 @@ import {
   ForceChangePasswordDto,
 } from './dto/auth.dto';
 import { ApprovalService } from '../approvals/approval.service';
+import { validateImageMagicBytes } from '../../common/utils/image-upload.util';
 
 interface UserPayload {
   id: string;
@@ -55,10 +57,50 @@ export class AuthService {
 
   async login(dto: LoginDto, response?: Response) {
     // Identifier bisa berupa email ATAU nomor HP
-    const isPhone = /^\+?[0-9]{10,15}$/.test(dto.identifier.trim());
-    const user = isPhone
-      ? await this.prisma.user.findUnique({ where: { phone: dto.identifier.trim() } })
-      : await this.prisma.user.findUnique({ where: { email: dto.identifier } });
+    const rawIdentifier = dto.identifier.trim();
+    const cleaned = rawIdentifier.replace(/[\s\-().]/g, '');
+    const isPhone = /^\+?[0-9]{10,15}$/.test(cleaned);
+    let user = isPhone
+      ? await this.prisma.user.findUnique({ where: { phone: cleaned } })
+      : await this.prisma.user.findUnique({ where: { email: rawIdentifier } });
+
+    // Fallback #1: email case-insensitive (Postgres findUnique bersifat case-sensitive)
+    if (!user && !isPhone) {
+      user = await this.prisma.user.findFirst({
+        where: { email: { equals: rawIdentifier, mode: 'insensitive' } },
+      });
+    }
+
+    // Fallback #2: nomor HP tersimpan di tabel `anggota.no_hp` (bukan `users.phone`,
+    // yang sering kosong). Cari anggota dengan format nomor dinormalisasi
+    // (+62xxx == 0xxx), lalu hubungkan ke user via email / nama lengkap.
+    if (!user && isPhone) {
+      const anggota = await this.findUserByMemberPhone(cleaned);
+      if (anggota) {
+        let byEmail = anggota.email
+          ? await this.prisma.user.findFirst({
+              where: { email: { equals: anggota.email, mode: 'insensitive' } },
+            })
+          : null;
+        if (!byEmail && anggota.namaLengkap) {
+          byEmail = await this.prisma.user.findFirst({
+            where: { namaLengkap: { equals: anggota.namaLengkap.trim(), mode: 'insensitive' } },
+          });
+        }
+        if (byEmail) {
+          user = byEmail;
+          // Self-healing: salin nomor HP ke tabel users agar lookup berikutnya cepat
+          try {
+            await this.prisma.user.update({
+              where: { id: byEmail.id },
+              data: { phone: anggota.noHp },
+            });
+          } catch {
+            // Nomor mungkin bentrok dengan user lain — abaikan, fallback tetap jalan
+          }
+        }
+      }
+    }
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Email/HP atau password salah');
@@ -83,6 +125,36 @@ export class AuthService {
       return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
     }
     return { user: await this.sanitizeUser(user), ...tokens };
+  }
+
+  /**
+   * Normalisasi nomor HP: buang spasi/tanda baca, dan samakan format
+   * `+62xxx` / `62xxx` → `0xxx` supaya pencocokan konsisten.
+   */
+  private normalizePhone(raw: string): string {
+    let s = raw.replace(/[\s\-().]/g, '');
+    if (s.startsWith('+62')) s = '0' + s.slice(3);
+    else if (s.startsWith('62')) s = '0' + s.slice(2);
+    return s;
+  }
+
+  /**
+   * Cari anggota berdasarkan nomor HP (format dinormalisasi) di tabel `anggota`.
+   * Mengembalikan anggota pertama yang cocok, atau null.
+   */
+  private async findUserByMemberPhone(phoneInput: string) {
+    const target = this.normalizePhone(phoneInput);
+    const candidates = await this.prisma.anggota.findMany({
+      where: {
+        noHp: { not: null },
+        NOT: { noHp: '' },
+      },
+      select: { noHp: true, email: true, namaLengkap: true },
+      take: 2000,
+    });
+    return (
+      candidates.find((c) => c.noHp && this.normalizePhone(c.noHp) === target) || null
+    );
   }
 
   async register(dto: RegisterDto, response?: Response) {
@@ -186,6 +258,70 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  /**
+   * Upload foto profil sendiri (mobile): simpan ke uploads, update `anggota.fotoPath`,
+   * dan generate versi tanpa background (`.bg.png`) ala SIM untuk kartu.
+   */
+  async uploadMyPhoto(userId: string, file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File foto harus diupload');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { unlinkSync } = require('fs');
+    if (!validateImageMagicBytes(file.path)) {
+      try { unlinkSync(file.path); } catch { /* best-effort */ }
+      throw new BadRequestException('File tidak valid: format gambar tidak dikenali.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      try { unlinkSync(file.path); } catch { /* best-effort */ }
+      throw new NotFoundException('User tidak ditemukan');
+    }
+
+    // Cocokkan anggota via email; fallback via nama lengkap (email kosong hasil import)
+    let anggota = await this.prisma.anggota.findFirst({ where: { email: user.email } });
+    if (!anggota && user.namaLengkap?.trim()) {
+      const byName = await this.prisma.anggota.findMany({
+        where: {
+          namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
+          OR: [{ email: null }, { email: '' }],
+        },
+      });
+      if (byName.length === 1) anggota = byName[0];
+    }
+    if (!anggota) {
+      try { unlinkSync(file.path); } catch { /* best-effort */ }
+      throw new NotFoundException('Data anggota tidak ditemukan. Hubungi admin.');
+    }
+
+    await this.prisma.anggota.update({
+      where: { id: anggota.id },
+      data: { fotoPath: file.filename },
+    });
+
+    // Generate `.bg.png` (tanpa background) — non-critical, lazy middleware sebagai fallback
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { removePhotoBackground } = require('../../common/utils/photo-bg.util');
+      const uploadDir = process.env.UPLOAD_DIR || './uploads';
+      const out = await removePhotoBackground(fs.readFileSync(file.path));
+      fs.writeFileSync(path.join(uploadDir, `${file.filename}.bg.png`), out);
+    } catch {
+      // Non-critical
+    }
+
+    return {
+      success: true,
+      data: { fotoPath: file.filename, url: `/api/uploads/${file.filename}` },
+      message: 'Foto berhasil diupload',
+    };
   }
 
   /**

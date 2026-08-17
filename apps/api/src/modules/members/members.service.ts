@@ -276,8 +276,43 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         }
 
         // Support legacy import: accept existing member number from CSV.
-        const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota;
+        const existingNumber = row.nomor_anggota || row.nomorAnggota || row.no_anggota || row.nia;
         let nomorAnggota: string;
+
+        // Smart Parsing for historical/legacy formats (TTL and Dadar)
+        // 1. Parse TTL (Tempat, Tanggal Lahir) - e.g., "Larantuka, 23 Desember 2026"
+        const rawTtl = row.ttl || row.tempat_tanggal_lahir;
+        let parsedTempatLahir = row.tempat_lahir || row.tempatLahir;
+        let parsedTanggalLahir = row.tanggal_lahir || row.tanggalLahir;
+
+        if (rawTtl && !parsedTempatLahir && !parsedTanggalLahir) {
+          const ttlParts = String(rawTtl).split(',');
+          if (ttlParts.length >= 2) {
+            parsedTempatLahir = ttlParts[0].trim();
+            parsedTanggalLahir = ttlParts[1].trim();
+          }
+        }
+
+        // 2. Parse Tempat & Tahun Dadar - e.g., "Larantuka - 2021"
+        const rawDadar = row.tempat_dan_tahun_dadar || row.dadar;
+        let parsedTempatDadar = row.tempat_dadar || row.tempatDadar;
+        let parsedTahunDadar = row.tahun_dadar || row.tahunDadar;
+
+        if (rawDadar && !parsedTempatDadar && !parsedTahunDadar) {
+          const dadarParts = String(rawDadar).split('-');
+          if (dadarParts.length >= 2) {
+            parsedTempatDadar = dadarParts[0].trim();
+            parsedTahunDadar = dadarParts[1].trim();
+          } else {
+            // Fallback: search for 4-digit year
+            const yearMatch = String(rawDadar).match(/\d{4}/);
+            if (yearMatch) {
+              parsedTahunDadar = yearMatch[0];
+              parsedTempatDadar = String(rawDadar).replace(yearMatch[0], '').trim().replace(/^-|-$/g, '');
+            }
+          }
+        }
+
         if (existingNumber) {
           const legacyParts = String(existingNumber).trim().split('-');
           const urut = legacyParts[legacyParts.length - 2] || '';
@@ -299,10 +334,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             nomorAnggota,
             namaLengkap: row.nama_lengkap || row.nama || row.name,
             jenisKelamin: row.jenis_kelamin || row.jenisKelamin || 'L',
-            tempatLahir: row.tempat_lahir || row.tempatLahir || null,
-            tanggalLahir: this.csvImportService.parseDateField(row.tanggal_lahir || row.tanggalLahir),
-            tempatDadar: row.tempat_dadar || row.tempatDadar || null,
-            tahunDadar: row.tahun_dadar || row.tahunDadar || null,
+            tempatLahir: parsedTempatLahir || null,
+            tanggalLahir: this.csvImportService.parseDateField(parsedTanggalLahir),
+            tempatDadar: parsedTempatDadar || null,
+            tahunDadar: parsedTahunDadar ? parseInt(String(parsedTahunDadar), 10) : null,
             fotoPath: row.foto || row.fotoPath || row.foto_path || null,
             noHp: row.no_hp || row.phone || null,
             email: row.email || null,

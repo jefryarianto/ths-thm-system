@@ -85,3 +85,21 @@ opencode.json
 
 # Dokumen ter-generate (storage bind-mount di VPS)
 /storage/
+
+# Debug artifacts (jangan di-commit)
+_scripts/device-bundle*.bin
+_scripts/dump-*.txt
+_scripts/api-*.tgz
+_scripts/*-preview-v*.apk
+_scripts/autolink-out.txt
+_scripts/*.tgz
+videoths*.mp4
+
+# APK build output (terlalu besar utk GitHub >100MB)
+_scripts/*.apk
+
+# Secret/token test files
+_scripts/admin-token.txt
+_scripts/test-token.txt
+_scripts/rk/
+_scripts/eas-build-log*.txt

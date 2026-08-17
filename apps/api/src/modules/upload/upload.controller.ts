@@ -60,6 +60,22 @@ export class UploadController {
     dto.fotoPath = file.filename;
     await this.membersService.update(memberId, dto, req.scope);
 
+    // Generate versi tanpa background (`<file>.bg.png`) ala SIM agar kartu
+    // langsung memakainya tanpa menunggu lazy generation pertama kali.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { removePhotoBackground } = require('../../common/utils/photo-bg.util');
+      const uploadDir = process.env.UPLOAD_DIR || './uploads';
+      const out = await removePhotoBackground(fs.readFileSync(file.path));
+      fs.writeFileSync(path.join(uploadDir, `${file.filename}.bg.png`), out);
+    } catch {
+      // Non-critical — lazy middleware akan meng-generate saat pertama diminta
+    }
+
     return {
       success: true,
       data: {

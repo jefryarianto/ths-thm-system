@@ -4,56 +4,45 @@ const { Document, Page, View, Text, Image, StyleSheet, Svg, Defs, LinearGradient
 const { KTA_LOGO_DATA_URL } = require('./kta-logo');
 const { MAP_INDONESIA_DATA_URL, MAP_INDONESIA_LIGHT_DATA_URL } = require('./map-indonesia');
 
-// ── Palette (sesuai template desain kartu) ──
-const BLUE_900 = '#1e3a5f';
+// ── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ──
+const { CARD, COLORS, FRONT, BACK, getLevelVisual, photoCrop } = require('../../../common/utils/card-design');
+
+// Palette PDF: warna kanon dari spec; nilai yang tak ada di spec tetap lokal (gaya print khas PDF)
+const BLUE_900 = COLORS.label; // #1e3a5f — garis & judul kartu
 const BLUE_800 = '#1e4a7a';
-const WHITE = '#ffffff';
-const SLATE_800 = '#1e293b';
+const WHITE = COLORS.white;
+const SLATE_800 = COLORS.value; // #111827 — teks data
 
-/**
- * Fallback visual strip bila config tingkatan tidak dikirim (sama dengan seeder):
- * Anggota=tanpa strip, Pratama=Biru 1, Tamtama=Biru 2, Muda=Kuning 1, Madya=Kuning 2, Utama=Kuning 3.
- */
-const TINGKAT_LEVEL_FALLBACK: Record<string, { stripCount: number; color: string; label: string }> = {
-  Anggota: { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' },
-  Pratama: { stripCount: 1, color: '#1d4ed8', label: 'Biru 1' },
-  Tamtama: { stripCount: 2, color: '#1d4ed8', label: 'Biru 2' },
-  Muda:    { stripCount: 1, color: '#ca8a04', label: 'Kuning 1' },
-  Madya:   { stripCount: 2, color: '#ca8a04', label: 'Kuning 2' },
-  Utama:   { stripCount: 3, color: '#ca8a04', label: 'Kuning 3' },
-};
-
-function getLevelVisual(tingkat?: string | null, fromConfig?: { stripCount: number; color: string; label?: string } | null) {
-  if (fromConfig) return fromConfig;
-  return (tingkat && TINGKAT_LEVEL_FALLBACK[tingkat]) || TINGKAT_LEVEL_FALLBACK.Anggota;
-}
+// Crop foto wajah ala SIM (kepala + bahu) — kalkulasi sama di semua renderer
+const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
+const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
 
 const styles = StyleSheet.create({
   // ── Front Side ──
   pageFront: {
-    width: 856,
-    height: 540,
+    width: CARD.W,
+    height: CARD.H,
     padding: 0,
     backgroundColor: WHITE,
     position: 'relative',
   },
   bgCircle1: {
     position: 'absolute',
-    top: -80,
-    right: -80,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    backgroundColor: 'rgba(6,182,212,0.15)',
+    top: FRONT.bgCircle1.top,
+    right: FRONT.bgCircle1.right,
+    width: FRONT.bgCircle1.size,
+    height: FRONT.bgCircle1.size,
+    borderRadius: FRONT.bgCircle1.size / 2,
+    backgroundColor: COLORS.bgCircle1,
   },
   bgCircle2: {
     position: 'absolute',
-    bottom: -110,
-    left: -80,
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: 'rgba(29,78,216,0.08)',
+    bottom: FRONT.bgCircle2.bottom,
+    left: FRONT.bgCircle2.left,
+    width: FRONT.bgCircle2.size,
+    height: FRONT.bgCircle2.size,
+    borderRadius: FRONT.bgCircle2.size / 2,
+    backgroundColor: COLORS.bgCircle2,
   },
   topBar: {
     position: 'absolute',
@@ -71,18 +60,18 @@ const styles = StyleSheet.create({
     height: 80,
     backgroundColor: BLUE_800,
   },
-  // Watermark peta — digeser ke kanan agar tidak mengenai bingkai foto (foto s/d x=225)
+  // Watermark peta — posisi dari spec
   watermark: {
     position: 'absolute',
-    left: 230,
-    top: 166,
-    width: 600,
-    height: 207,
+    left: FRONT.watermark.left,
+    top: FRONT.watermark.top,
+    width: FRONT.watermark.w,
+    height: FRONT.watermark.h,
   },
   watermarkLogo: {
     width: '100%',
     height: '100%',
-    opacity: 0.12,
+    opacity: 0.07,
   },
   headerRow: {
     position: 'relative',
@@ -92,18 +81,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingTop: 20,
   },
-  // Logo setinggi blok teks header (±60px)
+  // Logo 1.25× (115px dari 92px) agar sebagian melewati warna biru header (topBar 64px)
   logo: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 115,
+    height: 115,
+    borderRadius: 57,
     position: 'relative',
     overflow: 'hidden',
   },
   logoImg: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 115,
+    height: 115,
+    borderRadius: 57,
   },
   row1: {
     color: WHITE,
@@ -133,79 +122,137 @@ const styles = StyleSheet.create({
     opacity: 0.95,
     marginTop: 2,
   },
+  // Photo besar kiri — TANPA bingkai
   photoBox: {
     position: 'absolute',
-    left: 40,
-    top: 148,
-    width: 185,
-    height: 235,
-    borderRadius: 16,
-    borderWidth: 4,
-    borderColor: WHITE,
-    backgroundColor: '#e2e8f0',
+    left: FRONT.photo.big.left,
+    top: FRONT.photo.big.top,
+    width: FRONT.photo.big.w,
+    height: FRONT.photo.big.h,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  // Foto ala SIM: crop kepala+bahu dari spec (photoCrop)
   photoImage: {
-    width: 177,
-    height: 227,
+    position: 'absolute',
+    left: cropBig.left,
+    top: 0,
+    width: cropBig.w,
+    height: cropBig.h,
+    objectFit: 'cover',
+  },
+  // Photo kecil kanan atas — TANPA bingkai, dinaikkan; rank 12px di bawahnya
+  photoBoxSmall: {
+    position: 'absolute',
+    right: FRONT.photo.small.right,
+    top: FRONT.photo.small.top,
+    width: FRONT.photo.small.w,
+    height: FRONT.photo.small.h,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  photoImageSmall: {
+    position: 'absolute',
+    left: cropSmall.left,
+    top: 0,
+    width: cropSmall.w,
+    height: cropSmall.h,
+    objectFit: 'cover',
   },
   photoPlaceholder: {
     color: '#94a3b8',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  levelStrips: {
+  // Level rank — DI BAWAH photo kecil kanan atas (jarak kecil); teks nama tingkat selebar strip; sembunyi utk 'Anggota'
+  rankBox: {
     position: 'absolute',
-    left: 40,
-    top: 395,
-    width: 185,
+    right: FRONT.rank.right,
+    top: FRONT.rank.top,
+    width: FRONT.rank.w,
+  },
+  rankName: {
+    color: COLORS.rankText,
+    fontSize: FRONT.rank.name.fontSize,
+    fontWeight: 'heavy',
+    textAlign: 'center',
+    letterSpacing: FRONT.rank.name.letterSpacing,
+    marginBottom: FRONT.rank.name.marginBottom,
+  },
+  levelStrips: {
+    width: '100%',
   },
   levelStrip: {
-    height: 14,
-    marginBottom: 6,
-    borderRadius: 4,
+    height: FRONT.rank.strip.h,
+    marginBottom: FRONT.rank.strip.gap,
+    borderRadius: FRONT.rank.strip.radius,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.25)',
+    borderColor: COLORS.rankStripBorder,
   },
-  // Info — label di atas, nilai di bawah; kolom lebar ke kanan, zIndex di atas stempel agar teks tidak wrap
+  // Info — label di atas, nilai di bawah; kolom tengah (foto kiri + kanan)
   infoSection: {
     position: 'absolute',
-    left: 240,
-    top: 148,
-    right: 40,
+    left: FRONT.info.left,
+    top: FRONT.info.top,
+    right: FRONT.info.right,
     zIndex: 20,
   },
   infoRow: {
-    marginBottom: 13,
+    marginBottom: FRONT.info.rowMarginBottom,
   },
   infoLabel: {
-    fontSize: 12,
+    fontSize: FRONT.info.label.fontSize,
     fontWeight: 'bold',
-    color: '#1e3a5f',
+    color: FRONT.info.label.color,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: FRONT.info.label.letterSpacing,
     // Jenis huruf label berbeda dari data (serif Times vs data Helvetica)
     fontFamily: 'Times-Bold',
   },
   infoValue: {
-    fontSize: 15,
-    fontWeight: 'semibold',
+    fontSize: FRONT.info.value.fontSize,
+    fontWeight: 'bold',
     color: SLATE_800,
-    marginTop: 3,
-    lineHeight: 20,
+    marginTop: FRONT.info.value.marginTop,
+    lineHeight: FRONT.info.value.lineHeight,
+  },
+  // Nama + JK — label JK sejajar label Nama (jarak 1-2 tab), data L/P sejajar data Nama
+  infoPair: {
+    flexDirection: 'row',
+    marginBottom: 13,
+  },
+  infoPairLeft: {
+    flexShrink: 1,
+  },
+  jkBox: {
+    width: FRONT.info.jk.w,
+    marginLeft: FRONT.info.jk.marginLeft,
+  },
+  jkLabel: {
+    fontSize: FRONT.info.label.fontSize,
+    fontWeight: 'bold',
+    color: FRONT.info.label.color,
+    textTransform: 'uppercase',
+    letterSpacing: FRONT.info.label.letterSpacing,
+  },
+  jkValue: {
+    fontSize: FRONT.info.value.fontSize,
+    fontWeight: 'heavy',
+    color: SLATE_800,
+    marginTop: FRONT.info.value.marginTop,
   },
   infoValueStrong: {
-    fontSize: 19,
+    fontSize: FRONT.info.valueStrong.fontSize,
     fontWeight: 'heavy',
-    color: '#1e3a5f',
-    marginTop: 3,
+    color: FRONT.info.valueStrong.color,
+    marginTop: FRONT.info.valueStrong.marginTop,
   },
   bottomInfo: {
     position: 'absolute',
-    left: 40,
-    bottom: 14,
+    left: FRONT.bottom.left,
+    bottom: FRONT.bottom.bottom,
   },
   validUntil: {
     color: WHITE,
@@ -220,51 +267,86 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   // Stempel 110 px (50% dari 220 px ≈ 1,1 cm pada skala CR80 856 px = 8.56 cm), cap di-upload di dalamnya
-  // Container 220px agar nama/jabatan tidak wrap; stempel 110px di tengah
+  // Blok penandatangan digeser ke kanan (right 24) & teks koordinator turun sejajar di bawah data Wilayah;
+  // teks KOORDINATOR/KEUSKUPAN (gelap, di atas area putih) → stempel (tdk ditebalkan) + ttd → nama (underline) + jabatan (putih, di atas pita biru bawah)
+  // Grup pengesahan dinaikkan (bottom 14 → bawah teks sejajar tanggal masa laku) & digeser kanan (right -8)
   signature: {
     position: 'absolute',
-    right: 0,
-    bottom: 14,
-    width: 220,
-    alignItems: 'center',
+    right: FRONT.signer.right,
+    bottom: FRONT.signer.bottom,
+    width: FRONT.signer.w,
+    height: FRONT.signer.h,
+    alignItems: 'flex-start',
+  },
+  // Teks KOORDINATORAT diturunkan: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel
+  sigTitle1: {
+    position: 'absolute',
+    left: FRONT.signer.title1.left,
+    top: FRONT.signer.title1.top,
+    color: COLORS.value,
+    fontSize: FRONT.signer.title1.fontSize,
+    fontWeight: 'heavy',
+    textAlign: 'left',
+    textTransform: 'uppercase',
+  },
+  sigTitle2: {
+    position: 'absolute',
+    left: FRONT.signer.title2.left,
+    top: FRONT.signer.title2.top,
+    color: COLORS.value,
+    fontSize: FRONT.signer.title2.fontSize,
+    fontWeight: 'heavy',
+    textAlign: 'left',
+    textTransform: 'uppercase',
   },
   sigWrap: {
-    position: 'relative',
-    width: 110,
-    height: 110,
-    marginBottom: 2,
-    alignSelf: 'center',
+    position: 'absolute',
+    left: FRONT.signer.wrap.left,
+    top: FRONT.signer.wrap.top,
+    width: FRONT.signer.wrap.w,
+    height: FRONT.signer.wrap.h,
   },
+  // ttd digeser kanan-bawah — posisi/ukuran dari spec
   sigText: {
     position: 'absolute',
-    left: 22,
-    top: 81,
-    fontSize: 16,
+    left: FRONT.signer.sig.left,
+    top: FRONT.signer.sig.top,
+    fontSize: FRONT.signer.sig.fontSize,
     fontStyle: 'italic',
-    transform: 'rotate(-8deg)',
-    color: 'rgba(255,255,255,0.9)',
+    transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
+    color: FRONT.signer.sig.color,
   },
   sigImage: {
     position: 'absolute',
-    left: 20,
-    top: 79,
-    width: 70,
-    height: 29,
-    opacity: 0.95,
-    transform: 'rotate(-8deg)',
+    left: FRONT.signer.sig.left,
+    top: FRONT.signer.sig.top,
+    width: FRONT.signer.sig.w,
+    height: FRONT.signer.sig.h,
+    opacity: 0.75,
+    transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
+  },
+  // Salinan kedua di posisi sama — ttd ditebalkan (bukan berbayang)
+  sigImage2: {
+    position: 'absolute',
+    left: FRONT.signer.sig.left,
+    top: FRONT.signer.sig.top,
+    width: FRONT.signer.sig.w,
+    height: FRONT.signer.sig.h,
+    opacity: 0.75,
+    transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
   },
   stamp: {
     position: 'absolute',
-    left: 0,
-    top: 0,
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 4,
-    borderColor: 'rgba(191,219,254,0.9)',
+    left: FRONT.signer.stamp.left,
+    top: FRONT.signer.stamp.top,
+    width: FRONT.signer.stamp.size,
+    height: FRONT.signer.stamp.size,
+    borderRadius: FRONT.signer.stamp.radius,
+    borderWidth: FRONT.signer.stamp.border,
+    borderColor: COLORS.stampBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: 'rotate(-8deg)',
+    transform: `rotate(${FRONT.signer.stamp.rotate}deg)`,
     overflow: 'hidden',
   },
   stampImg: {
@@ -272,30 +354,32 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   stampText: {
-    fontSize: 11,
+    fontSize: FRONT.signer.stamp.text.fontSize,
     fontWeight: 'bold',
-    color: '#dbeafe',
+    color: COLORS.stampText,
     transform: 'rotate(-12deg)',
   },
   signerName: {
     color: WHITE,
     fontSize: 14,
     fontWeight: 'heavy',
+    textAlign: 'left',
     textTransform: 'uppercase',
+    textDecoration: 'underline',
   },
   signerTitle: {
     color: WHITE,
     fontSize: 12,
     fontWeight: 'semibold',
     opacity: 0.95,
-    marginTop: 2,
+    marginTop: 1,
     textTransform: 'uppercase',
   },
 
   // ── Back Side ──
   pageBack: {
-    width: 856,
-    height: 540,
+    width: CARD.W,
+    height: CARD.H,
     padding: 0,
     backgroundColor: BLUE_900,
     position: 'relative',
@@ -310,20 +394,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backWatermarkImg: {
-    width: 420,
-    height: 190,
+    width: BACK.watermark.w,
+    height: BACK.watermark.h,
     opacity: 0.14,
   },
   backTitle: {
     position: 'absolute',
-    top: 28,
+    top: BACK.title.top,
     left: 0,
     right: 0,
     textAlign: 'center',
     color: WHITE,
-    fontSize: 28,
+    fontSize: BACK.title.fontSize,
     fontWeight: 'heavy',
-    letterSpacing: 4,
+    letterSpacing: BACK.title.letterSpacing,
   },
   backSubtitle: {
     position: 'absolute',
@@ -332,20 +416,20 @@ const styles = StyleSheet.create({
     right: 0,
     textAlign: 'center',
     color: WHITE,
-    fontSize: 15,
+    fontSize: BACK.title.subtitle.fontSize,
     opacity: 0.9,
   },
   qrSection: {
     position: 'absolute',
-    left: 48,
-    top: 145,
-    width: 210,
-    height: 210,
-    backgroundColor: WHITE,
-    borderRadius: 16,
-    borderWidth: 4,
-    borderColor: BLUE_900,
-    padding: 16,
+    left: BACK.qr.left,
+    top: BACK.qr.top,
+    width: BACK.qr.size,
+    height: BACK.qr.size,
+    backgroundColor: BACK.qr.bg,
+    borderRadius: BACK.qr.radius,
+    borderWidth: BACK.qr.border,
+    borderColor: BACK.qr.borderColor,
+    padding: BACK.qr.padding,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -355,51 +439,51 @@ const styles = StyleSheet.create({
   },
   backInfo: {
     position: 'absolute',
-    left: 300,
-    top: 145,
-    right: 48,
+    left: BACK.info.left,
+    top: BACK.info.top,
+    right: BACK.info.right,
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(191,219,254,0.5)',
-    padding: 24,
+    padding: BACK.info.padding,
   },
   backDesc: {
-    fontSize: 18,
+    fontSize: BACK.info.desc.fontSize,
     lineHeight: 1.5,
     color: '#334155',
-    marginBottom: 16,
+    marginBottom: BACK.info.desc.marginBottom,
   },
   backRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: BACK.info.row.marginBottom,
     alignItems: 'flex-start',
   },
   backLabel: {
-    width: 105,
-    fontSize: 18,
+    width: BACK.info.row.label.w,
+    fontSize: BACK.info.row.label.fontSize,
     fontWeight: 'heavy',
     color: '#1e3a5f',
   },
   backValue: {
     flex: 1,
-    fontSize: 18,
+    fontSize: BACK.info.row.value.fontSize,
     fontWeight: 'semibold',
     color: SLATE_800,
   },
   backFooter: {
     position: 'absolute',
-    left: 48,
-    right: 48,
-    bottom: 32,
+    left: BACK.footer.left,
+    right: BACK.footer.right,
+    bottom: BACK.footer.bottom,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
   footerText: {
     color: WHITE,
-    fontSize: 15,
-    opacity: 0.95,
+    fontSize: BACK.footer.text.fontSize,
+    opacity: BACK.footer.text.opacity,
     maxWidth: 610,
     lineHeight: 1.4,
   },
@@ -408,14 +492,14 @@ const styles = StyleSheet.create({
   },
   footerUrlLabel: {
     color: WHITE,
-    fontSize: 13,
-    opacity: 0.8,
+    fontSize: BACK.footer.urlLabel.fontSize,
+    opacity: BACK.footer.urlLabel.opacity,
   },
   footerUrl: {
     color: WHITE,
-    fontSize: 16,
+    fontSize: BACK.footer.urlValue.fontSize,
     fontWeight: 'bold',
-    marginTop: 2,
+    marginTop: BACK.footer.urlValue.marginTop,
   },
 });
 
@@ -432,6 +516,7 @@ interface MemberCardPdfProps {
     ranting?: string;
     wilayah?: string;
     distrik?: string;
+    alamatDistrik?: string | null;
     statusKeanggotaan: string;
   };
   cardConfig: {
@@ -463,7 +548,7 @@ function guillocheBorder(strokeColor: string) {
     Svg,
     { width: 856, height: 540, viewBox: '0 0 856 540', style: { position: 'absolute', top: 0, left: 0 } },
     h(Rect, { x: 16, y: 16, width: 824, height: 508, rx: 22, fill: 'none', stroke: strokeColor, strokeWidth: 1.2, opacity: 0.45 }),
-    h(Rect, { x: 22, y: 22, width: 812, height: 496, rx: 18, fill: 'none', stroke: strokeColor, strokeWidth: 0.8, strokeDasharray: '3 5', opacity: 0.35 }),
+    h(Rect, { x: 22, y: 22, width: 812, height: 496, rx: 18, fill: 'none', stroke: strokeColor, strokeWidth: 0.8, strokeDasharray: '3,5', opacity: 0.35 }),
     h(Rect, { x: 27, y: 27, width: 802, height: 486, rx: 14, fill: 'none', stroke: strokeColor, strokeWidth: 0.5, opacity: 0.2 }),
   );
 }
@@ -547,7 +632,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
         h(Text, { style: styles.distrikName }, `DISTRIK KEUSKUPAN ${distrik.toUpperCase()}`),
       ),
     ),
-    // Photo
+    // Photo besar kiri (tanpa bingkai) + photo kecil kanan atas (sejajar No. Anggota)
     h(
       View,
       { key: 'photo', style: styles.photoBox },
@@ -555,8 +640,24 @@ function buildFrontSide(props: MemberCardPdfProps) {
         ? h(Image, { src: props.photoDataUrl, style: styles.photoImage })
         : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
     ),
-    // Level strips (balok tingkat — dari tabel tingkatan)
-    h(View, { key: 'strips', style: styles.levelStrips }, levelStrips),
+    h(
+      View,
+      { key: 'photo-small', style: styles.photoBoxSmall },
+      props.photoDataUrl
+        ? h(Image, { src: props.photoDataUrl, style: styles.photoImageSmall })
+        : h(Text, { style: styles.photoPlaceholder }, 'FOTO'),
+    ),
+    // Level rank — kanan atas sejajar data No. Anggota; teks nama tingkat selebar strip; sembunyi utk 'Anggota'
+    ...(levelStrips.length > 0
+      ? [
+          h(
+            View,
+            { key: 'rank', style: styles.rankBox },
+            h(Text, { style: styles.rankName }, (member.tingkat || '').toUpperCase()),
+            h(View, { key: 'rank-strips', style: styles.levelStrips }, levelStrips),
+          ),
+        ]
+      : []),
     // Info — No. Anggota, Nama, Tempat-Tanggal Lahir (gabung), Ranting, Wilayah — UPPERCASE (Distrik sudah di header)
     h(
       View,
@@ -567,11 +668,22 @@ function buildFrontSide(props: MemberCardPdfProps) {
         h(Text, { style: styles.infoLabel }, 'No. Anggota'),
         h(Text, { style: styles.infoValueStrong }, (member.nomorAnggota || '-').toUpperCase()),
       ),
+      // Nama + Jenis Kelamin sejajar (dua kolom baris sama)
       h(
         View,
-        { key: 'r2', style: styles.infoRow },
-        h(Text, { style: styles.infoLabel }, 'Nama'),
-        h(Text, { style: styles.infoValue }, (member.namaLengkap || '-').toUpperCase()),
+        { key: 'r2', style: styles.infoPair },
+        h(
+          View,
+          { key: 'n', style: styles.infoPairLeft },
+          h(Text, { style: styles.infoLabel }, 'Nama'),
+          h(Text, { style: styles.infoValue }, (member.namaLengkap || '-').toUpperCase()),
+        ),
+        h(
+          View,
+          { key: 'jk', style: styles.jkBox },
+          h(Text, { style: styles.jkLabel }, 'JK'),
+          h(Text, { style: styles.jkValue }, member.jenisKelamin === 'P' ? 'P' : 'L'),
+        ),
       ),
       h(
         View,
@@ -605,6 +717,16 @@ function buildFrontSide(props: MemberCardPdfProps) {
       View,
       { key: 'sig', style: styles.signature },
       h(
+        Text,
+        { key: 'st1', style: styles.sigTitle1 },
+        `KOORDINATORAT DISTRIK THS-THM`,
+      ),
+      h(
+        Text,
+        { key: 'st2', style: styles.sigTitle2 },
+        `KEUSKUPAN ${(member.distrik || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}`,
+      ),
+      h(
         View,
         { key: 'sigwrap', style: styles.sigWrap },
         h(
@@ -615,7 +737,10 @@ function buildFrontSide(props: MemberCardPdfProps) {
             : h(Text, { style: styles.stampText }, 'STEMPEL'),
         ),
         props.signatureDataUrl
-          ? h(Image, { src: props.signatureDataUrl, style: styles.sigImage })
+          ? [
+              h(Image, { src: props.signatureDataUrl, style: styles.sigImage }),
+              h(Image, { src: props.signatureDataUrl, style: styles.sigImage2 }),
+            ]
           : h(Text, { key: 'sigttd', style: styles.sigText }, 'ttd'),
       ),
       ...(cardConfig.signers && cardConfig.signers.length > 0
@@ -624,18 +749,23 @@ function buildFrontSide(props: MemberCardPdfProps) {
             .map((s, i) =>
               h(
                 View,
-                { key: `sig-${i}`, style: { alignItems: 'center', marginTop: i === 0 ? 0 : 8, width: '100%' } },
+                { key: `sig-${i}`, style: { position: 'absolute', left: 0, bottom: i * 34, width: '100%', alignItems: 'flex-start' } },
+                // Nama penandatangan (underline) + jabatan — keduanya tampil di bawah stempel, font sama dgn "Berlaku sampai"
                 s.signerName
                   ? h(Text, { style: styles.signerName }, (s.signerName || '').toUpperCase())
                   : null,
-                s.signerTitle
-                  ? h(Text, { style: styles.signerTitle }, (s.signerTitle || '').toUpperCase())
-                  : null,
+                s.signerTitle ? h(Text, { style: styles.signerTitle }, s.signerTitle.toUpperCase()) : null,
               ),
             )
         : [
-            h(Text, { key: 'sig-n', style: styles.signerName }, (cardConfig.signerName || '').toUpperCase()),
-            h(Text, { key: 'sig-t', style: styles.signerTitle }, (cardConfig.signerTitle || '').toUpperCase()),
+            h(
+              View,
+              { key: 'sig-fallback', style: { position: 'absolute', left: 0, bottom: 0, width: '100%', alignItems: 'flex-start' } },
+              h(Text, { key: 'sig-n', style: styles.signerName }, (cardConfig.signerName || '').toUpperCase()),
+              cardConfig.signerTitle
+                ? h(Text, { key: 'sig-nt', style: styles.signerTitle }, cardConfig.signerTitle.toUpperCase())
+                : null,
+            ),
           ]),
     ),
   ];
@@ -708,6 +838,12 @@ function buildBackSide(props: MemberCardPdfProps) {
         { key: 'r4', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Valid s/d'),
         h(Text, { style: styles.backValue }, `: ${validUntilStr}`),
+      ),
+      h(
+        View,
+        { key: 'r5', style: styles.backRow },
+        h(Text, { style: styles.backLabel }, 'Alamat'),
+        h(Text, { style: styles.backValue }, `: THS-THM, ${(member.alamatDistrik || 'Distrik').toUpperCase()}`),
       ),
     ),
     // Footer

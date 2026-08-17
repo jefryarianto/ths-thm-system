@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useGraduations, STATUS_STYLES, FILTERS } from '../../hooks/use-graduations';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -19,6 +20,7 @@ export default function GraduationsScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>

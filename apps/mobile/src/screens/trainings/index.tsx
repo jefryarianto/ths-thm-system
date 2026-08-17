@@ -7,6 +7,7 @@ import apiClient from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
+import { BackButton } from '../../components/ui/shared';
 
 interface Training {
   id: string;
@@ -68,6 +69,7 @@ export default function TrainingsScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Latihan</Text>

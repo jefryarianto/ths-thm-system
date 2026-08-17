@@ -23,7 +23,7 @@ export class MembersDigitalCardService {
    * Baca foto anggota dari disk sebagai data URL base64 untuk ditanam di PDF.
    * Fallback ke null bila file tidak ada / gagal dibaca (placeholder 'FOTO' dipakai).
    */
-  private async resolvePhotoDataUrl(fotoPath?: string | null): Promise<string | null> {
+  private async resolvePhotoDataUrl(fotoPath?: string | null, preferBg = false): Promise<string | null> {
     if (!fotoPath) return null;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -33,9 +33,30 @@ export class MembersDigitalCardService {
       const uploadDir = process.env.UPLOAD_DIR || './uploads';
       const filePath = path.join(uploadDir, fotoPath);
       if (!fs.existsSync(filePath)) return null;
-      const ext = path.extname(filePath).toLowerCase();
+
+      // Foto kartu: prefer versi tanpa background (`<file>.bg.png`) ala SIM.
+      // Bila belum ada, generate on-demand via sharp (lazy, sekali saja).
+      let targetPath = filePath;
+      if (preferBg) {
+        const bgPath = path.join(uploadDir, `${fotoPath}.bg.png`);
+        if (fs.existsSync(bgPath)) {
+          targetPath = bgPath;
+        } else {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { removePhotoBackground } = require('../../common/utils/photo-bg.util');
+            const out = await removePhotoBackground(fs.readFileSync(filePath));
+            fs.writeFileSync(bgPath, out);
+            targetPath = bgPath;
+          } catch {
+            targetPath = filePath;
+          }
+        }
+      }
+
+      const ext = path.extname(targetPath).toLowerCase();
       const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
-      const base64 = fs.readFileSync(filePath).toString('base64');
+      const base64 = fs.readFileSync(targetPath).toString('base64');
       return `data:${mime};base64,${base64}`;
     } catch {
       return null;
@@ -141,7 +162,7 @@ export class MembersDigitalCardService {
             signerName: data.card.signerName,
             signerTitle: data.card.signerTitle,
           },
-          photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath),
+          photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true),
           signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage),
           stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage),
           levelVisual: data.levelVisual,
@@ -223,6 +244,7 @@ export class MembersDigitalCardService {
       ranting: member.ranting?.nama,
       wilayah: member.ranting?.wilayah?.nama,
       distrik: member.ranting?.wilayah?.distrik?.nama,
+      alamatDistrik: member.ranting?.wilayah?.distrik?.alamat,
     };
 
     const signers = await this.penandatanganService.resolveSigners('kartu_anggota');

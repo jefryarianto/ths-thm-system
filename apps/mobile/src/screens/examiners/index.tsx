@@ -15,6 +15,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
 import { LoadingView, SearchBar } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
+import { BackButton } from '../../components/ui/shared';
 
 interface Examiner {
   id: string;
@@ -95,6 +96,7 @@ export default function ExaminersScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Manajemen Penguji</Text>
