@@ -1,3 +1,4 @@
+/* eslint-env node */
 /**
  * Config plugin — salin videothsnew.mp4 ke android/app/src/main/assets/videos/
  * saat prebuild (EAS Build memanggil `expo prebuild`). Login screen memutar video
