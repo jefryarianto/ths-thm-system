@@ -8,10 +8,11 @@ const monorepoRoot = path.resolve(projectRoot, '../..');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(projectRoot);
 
-// pnpm monorepo: watch ONLY the mobile app.
+// pnpm monorepo: watch ONLY the mobile app + packages/ (sumber tunggal desain).
 // Watching the whole monorepo root makes Metro scan apps/web & apps/api, which
 // on Windows can hit EPERM on locked files and breaks `eas update` export.
-config.watchFolders = [projectRoot];
+// packages/ murni sumber (tanpa node_modules) — aman & kecil untuk di-watch.
+config.watchFolders = [projectRoot, path.resolve(monorepoRoot, 'packages')];
 
 // pnpm monorepo: resolve modules from both local and root node_modules
 config.resolver.nodeModulesPaths = [
