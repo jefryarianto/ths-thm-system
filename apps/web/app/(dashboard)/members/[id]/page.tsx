@@ -1149,7 +1149,7 @@ export default function MemberDetailPage() {
                                 {[0, 1, 2].map((k) => (
                                   <img
                                     key={k}
-                                    src={`/api/uploads/${encodeURIComponent(cardData.signatureImage)}`}
+                                    src={`/api/uploads/${encodeURIComponent(cardData?.signatureImage ?? '')}`}
                                     alt="ttd"
                                     className="absolute left-0 top-0"
                                     style={{

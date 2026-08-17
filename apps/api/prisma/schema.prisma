@@ -255,7 +255,7 @@ model User {
   role               Role     @default(anggota)
   rantingId          String?  @map("ranting_id")
   phone              String?  @unique @map("phone")
-  forcePasswordChange Boolean  @default(false) @map("force_password_change")
+  mustChangePassword Boolean  @default(false) @map("must_change_password")
   fcmToken           String?  @map("fcm_token")
   refreshToken String?  @map("refresh_token")
   isActive            Boolean  @default(true) @map("is_active")
