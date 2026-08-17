@@ -103,3 +103,9 @@ _scripts/admin-token.txt
 _scripts/test-token.txt
 _scripts/rk/
 _scripts/eas-build-log*.txt
+
+# Release keystore & kredensial signing (JANGAN pernah di-commit)
+*.keystore
+*.jks
+keystore.properties
+apps/mobile/android/ths-thm-release.keystore

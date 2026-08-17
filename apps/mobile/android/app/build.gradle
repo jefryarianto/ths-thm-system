@@ -4,6 +4,21 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+// ── Release signing produksi ──
+// Kredensial dibaca dari keystore.properties (TIDAK di-commit; lihat .gitignore)
+// atau env var THS_THM_STORE_PASSWORD / THS_THM_KEY_ALIAS / THS_THM_KEY_PASSWORD.
+// Jika tidak tersedia, build release memakai debug key (fallback utk dev).
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+def releaseStoreFile = keystoreProperties['storeFile'] ? rootProject.file(keystoreProperties['storeFile']) : null
+def releaseStorePassword = keystoreProperties['storePassword'] ?: System.getenv('THS_THM_STORE_PASSWORD')
+def releaseKeyAlias = keystoreProperties['keyAlias'] ?: System.getenv('THS_THM_KEY_ALIAS')
+def releaseKeyPassword = keystoreProperties['keyPassword'] ?: System.getenv('THS_THM_KEY_PASSWORD')
+def hasReleaseSigning = releaseStoreFile?.exists() && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 static def versionToNumber(major, minor, patch) {
   return patch * 100 + minor * 10000 + major * 1000000
 }
@@ -124,15 +139,28 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (hasReleaseSigning) {
+                storeFile releaseStoreFile
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                // Fallback dev: tanpa keystore.properties, pakai debug key.
+                // APK hasil fallback TIDAK layak dipublikasikan.
+                signingConfig signingConfigs.debug
+                println "WARNING: release signing tidak dikonfigurasi (keystore.properties tidak ditemukan) — memakai debug key."
+            }
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
