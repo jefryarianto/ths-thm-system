@@ -129,8 +129,10 @@ android {
         applicationId 'org.thsthm.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        // Versi bisa di-override dari env (dipakai CI saat tag rilis v*):
+        // THS_THM_VERSION_NAME (mis. 1.2.3) & THS_THM_VERSION_CODE (mis. 10203)
+        versionCode (System.getenv('THS_THM_VERSION_CODE')?.toInteger() ?: 1)
+        versionName (System.getenv('THS_THM_VERSION_NAME') ?: "1.0.0")
     }
     signingConfigs {
         debug {

@@ -1,29 +1,36 @@
 name: Android APK Build
 
-# Build APK release otomatis setiap push ke master (+ bisa dijalankan manual).
-# Hasil: 4 APK per-ABI + 1 universal, diunggah sebagai artifact.
+# Build APK release otomatis:
+#   - setiap push ke master (+ bisa dijalankan manual) → upload artifact
+#   - push tag v* (mis. v1.2.3) → build + verifikasi signature produksi +
+#     buat GitHub Release berisi 5 APK dengan catatan rilis otomatis.
 #
-# SIGNING PRODUKSI (opsional tapi disarankan):
+# SIGNING PRODUKSI (wajib utk tag rilis, disarankan utk push biasa):
 #   Setup 4 repository secrets dulu supaya APK di-sign kunci produksi:
 #     - THS_THM_KEYSTORE_BASE64  → isi file apps/mobile/android/ths-thm-release.keystore
 #                                   dalam base64 (lokal: `base64 -w0 <keystore>`)
 #     - THS_THM_STORE_PASSWORD   → storePassword (lihat keystore.properties lokal)
 #     - THS_THM_KEY_ALIAS        → keyAlias (default: ths-thm)
 #     - THS_THM_KEY_PASSWORD     → keyPassword
-#   Jika secret tidak diset, build tetap jalan dengan debug key (artefak tidak
-#   layak dipublikasikan — peringatan muncul di log build).
+#   Tag rilis TANPA signature produksi akan GAGAL (guard fingerprint di bawah).
 
 on:
   push:
     branches: [master]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # utk membuat GitHub Release (gh release create)
 
 concurrency:
-  group: android-apk-build
+  # build tag rilis tidak boleh dibatalkan oleh push master yang bersamaan
+  group: android-apk-build-${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'push' }}
   cancel-in-progress: true
+
+env:
+  # Fingerprint SHA-256 sertifikat kunci produksi (keystore ths-thm-release.keystore)
+  PROD_CERT_SHA256: 4E92893C0DF8FD4DDF66D4267622150DD293947A592E45FDDCA17405FD4941A5
 
 jobs:
   build-apk:
@@ -76,6 +83,17 @@ jobs:
             echo "    Tambahkan secret repo: Settings → Secrets and variables → Actions."
           fi
 
+      - name: Set versi dari tag (hanya tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          TAG="$GITHUB_REF_NAME"                  # mis. v1.2.3
+          VER="${TAG#v}"
+          echo "THS_THM_VERSION_NAME=$VER" >> "$GITHUB_ENV"
+          CODE=$(echo "$VER" | awk -F. '{printf "%d", ($1*10000)+($2*100)+$3}')
+          echo "THS_THM_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+          echo "Versi APK: $VER (versionCode $CODE)"
+
       - name: Build release APKs
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease --no-daemon
@@ -97,3 +115,31 @@ jobs:
             apps/mobile/android/app/build/outputs/apk/release/*.apk
             apps/mobile/android/app/build/outputs/apk/release/output-metadata.json
           if-no-files-found: error
+
+      - name: Create GitHub Release (hanya tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK_DIR="apps/mobile/android/app/build/outputs/apk/release"
+          BT_DIR="$ANDROID_HOME/build-tools"
+          BT=$(ls "$BT_DIR" | sort -V | tail -1)
+
+          # Guard: tag rilis WAJIB ter-sign kunci produksi
+          DIGEST=$("$BT_DIR/$BT/apksigner" verify --print-certs "$APK_DIR/app-arm64-v8a-release.apk" \
+            | grep -i "SHA-256 digest" | sed 's/.*: //' | tr '[:lower:]' '[:upper:]')
+          if [ "$DIGEST" != "$PROD_CERT_SHA256" ]; then
+            echo "::error::APK tidak ter-sign kunci produksi (SHA-256 $DIGEST)."
+            echo "::error::Set THS_THM_KEYSTORE_BASE64 + password secrets sebelum membuat tag rilis."
+            exit 1
+          fi
+          echo "✅ Signature produksi terverifikasi: $DIGEST"
+
+          # Versi dari tag (v1.2.3 → "1.2.3")
+          VER="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            "$APK_DIR"/*.apk \
+            "$APK_DIR"/output-metadata.json \
+            --generate-notes \
+            --title "THS-THM $VER"
