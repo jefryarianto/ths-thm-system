@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getHomePathForRole } from '@/lib/role-redirect';
+import { LandingPageContent } from '@/components';
 
 export default function HomePage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -19,8 +21,7 @@ export default function HomePage() {
         /* ignore */
       }
       router.replace(getHomePathForRole(role));
-    } else {
-      router.replace('/login');
+      setIsAuthed(true);
     }
     setChecked(true);
   }, [router]);
@@ -33,5 +34,9 @@ export default function HomePage() {
     );
   }
 
-  return null;
+  if (isAuthed) {
+    return null;
+  }
+
+  return <LandingPageContent />;
 }

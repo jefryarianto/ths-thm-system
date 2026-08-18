@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PublicLayout } from '@/components';
 
 export default function DonasiPage() {
   const rekening = [
@@ -14,7 +15,7 @@ export default function DonasiPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <PublicLayout>
       <section className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-black text-blue-900 mb-4 text-center">Donasi</h1>
         <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -74,6 +75,6 @@ export default function DonasiPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicLayout>
   );
 }

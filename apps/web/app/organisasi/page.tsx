@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { PublicLayout } from '@/components';
 
 export default function OrganisasiPage() {
   const struktur = [
@@ -9,7 +9,7 @@ export default function OrganisasiPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <PublicLayout>
       <section className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Struktur Organisasi</h1>
         <div className="grid gap-4 md:grid-cols-2">
@@ -22,6 +22,6 @@ export default function OrganisasiPage() {
           ))}
         </div>
       </section>
-    </div>
+    </PublicLayout>
   );
 }

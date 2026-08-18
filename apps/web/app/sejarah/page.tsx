@@ -1,8 +1,8 @@
-import Link from 'next/link';
+import { PublicLayout } from '@/components';
 
 export default function SejarahPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <PublicLayout>
       <section className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Sejarah THS-THM</h1>
         <div className="prose prose-blue max-w-none text-gray-700">
@@ -17,6 +17,6 @@ export default function SejarahPage() {
           </p>
         </div>
       </section>
-    </div>
+    </PublicLayout>
   );
 }

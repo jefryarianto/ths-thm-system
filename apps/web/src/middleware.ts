@@ -9,6 +9,13 @@ const publicPaths = [
   '/daftar',
   '/reset-password',
   '/forgot-password',
+  '/landing',
+  '/sejarah',
+  '/organisasi',
+  '/kepengurusan',
+  '/berita',
+  '/galeri',
+  '/donasi',
 ];
 
 export function middleware(request: NextRequest) {
