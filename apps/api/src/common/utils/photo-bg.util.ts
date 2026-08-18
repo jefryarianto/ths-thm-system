@@ -62,24 +62,38 @@ export async function removePhotoBackground(
 ): Promise<Buffer> {
   try {
     // ── 0. Orientasi: EXIF rotate; landscape → potret (pasfoto selalu potret) ──
-    const rotatedMeta = await sharp(input).rotate().metadata();
-    let w = rotatedMeta.width || 0;
-    let h = rotatedMeta.height || 0;
+    // Penting: `sharp(input).rotate().metadata()` melaporkan dimensi HEADER input
+    // (raw sensor + tag orientation), BUKAN dimensi setelah rotasi. Foto HP sering
+    // menyimpan sensor landscape (mis. 4032×3024) + orientation=6 (= putar 90° CW).
+    // Jika kita memakai width/height header, foto potret salah terdeteksi landscape
+    // dan di-rotate DUA KALI (EXIF auto-rotate + rotate(90)) → hasil akhir landscape.
+    // Solusi: baca metadata tanpa pipeline, hitung dimensi TAMPILAN dari tag
+    // orientation (5-8 = perlu rotasi 90°), baru putar tambahan bila masih landscape.
+    const meta = await sharp(input).metadata();
+    let w = meta.width || 0;
+    let h = meta.height || 0;
     if (!w || !h) return input;
+    const orientation = meta.orientation || 1;
+    // Dimensi tampilan setelah EXIF auto-rotate (orientation 5-8 menukar w/h)
+    let dw = w;
+    let dh = h;
+    if (orientation >= 5 && orientation <= 8) {
+      [dw, dh] = [h, w];
+    }
     let extraRotation = 0;
-    if (w > h) {
+    if (dw > dh) {
       extraRotation = 90;
-      [w, h] = [h, w];
+      [dw, dh] = [dh, dw];
     }
 
     // ── 1. Downscale: max edge 1200px ──
     const maxEdge = 1200;
-    let rw = w;
-    let rh = h;
-    if (Math.max(w, h) > maxEdge) {
-      const k = maxEdge / Math.max(w, h);
-      rw = Math.round(w * k);
-      rh = Math.round(h * k);
+    let rw = dw;
+    let rh = dh;
+    if (Math.max(dw, dh) > maxEdge) {
+      const k = maxEdge / Math.max(dw, dh);
+      rw = Math.round(dw * k);
+      rh = Math.round(dh * k);
     }
 
     let pipe = sharp(input).rotate();

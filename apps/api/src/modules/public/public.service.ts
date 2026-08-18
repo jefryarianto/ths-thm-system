@@ -36,4 +36,11 @@ export class PublicService {
       where: { isVisible: true },
     });
   }
+
+  async getBankInfo() {
+    return this.prisma.bankInfo.findMany({
+      where: { isActive: true },
+      orderBy: { bankName: 'asc' },
+    });
+  }
 }

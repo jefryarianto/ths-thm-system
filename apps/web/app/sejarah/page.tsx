@@ -10,10 +10,10 @@ export default function SejarahPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/sejarah`);
+        const res = await fetch('/api/public/sejarah');
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
-        setData(json);
+        setData(json.data || null);
       } catch (error) {
         console.error('Error fetching sejarah:', error);
       } finally {

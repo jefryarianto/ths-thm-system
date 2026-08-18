@@ -34,6 +34,8 @@ import {
   User,
   Lock,
   PenLine,
+  Globe,
+  BookOpen,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -165,6 +167,13 @@ const menuGroups: MenuGroup[] = [
     items: [
       { href: '/reports', label: 'Laporan', icon: BarChart3, minRole: 'admin_ranting' },
       { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3, minRole: 'admin_ranting' },
+    ],
+  },
+  {
+    label: 'Konten Public',
+    items: [
+      { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
+      { href: '/content/organisasi', label: 'Struktur Org.', icon: Globe, minRole: 'superadmin' },
     ],
   },
   {

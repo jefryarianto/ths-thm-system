@@ -203,6 +203,34 @@ export class SettingsController {
     });
   }
 
+  // ── Sejarah (public content) ──────────────────────
+
+  @Get('sejarah')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil konten sejarah' })
+  async getSejarah() {
+    return this.settingsService.getSejarah();
+  }
+
+  @Patch('sejarah')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui konten sejarah' })
+  async updateSejarah(@Body() body: { konten: string; isVisible?: boolean }) {
+    return this.settingsService.updateSejarah(body);
+  }
+
+  // ── Organisasi (public content) ────────────────────
+
+  @Get('organisasi')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil struktur organisasi' })
+  async getOrganisasi() {
+    return this.settingsService.getOrganisasi();
+  }
+
+  @Patch('organisasi')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui struktur organisasi' })
+  async updateOrganisasi(@Body() body: { struktur: unknown; isVisible?: boolean }) {
+    return this.settingsService.updateOrganisasi(body);
+  }
+
   @Get('export/audit')
   @CrudAuth('superadmin', { scope: 'national', summary: 'Ekspor log audit' })
   async exportAudit(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {

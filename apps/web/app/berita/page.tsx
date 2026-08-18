@@ -20,10 +20,10 @@ export default function BeritaPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/berita`);
+        const res = await fetch('/api/public/berita');
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
-        setData(json);
+        setData(json.data || []);
       } catch (error) {
         console.error('Error fetching berita:', error);
       } finally {

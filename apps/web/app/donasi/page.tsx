@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components';
 
+interface BankInfo {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  qrisImageUrl?: string;
+}
+
 interface DonasiProgram {
   id: string;
   nama: string;
@@ -13,24 +21,29 @@ interface DonasiProgram {
 }
 
 export default function DonasiPage() {
-  const rekening = [
-    { bank: 'Bank BCA', nomor: '1234567890', atasNama: 'Yayasan THS-THM' },
-    { bank: 'Bank Mandiri', nomor: '0987654321', atasNama: 'Yayasan THS-THM' },
-    { bank: 'Bank BRI', nomor: '1122334455', atasNama: 'Yayasan THS-THM' },
-  ];
-
+  const [bankInfo, setBankInfo] = useState<BankInfo[]>([]);
   const [programDonasi, setProgramDonasi] = useState<DonasiProgram[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/donasi-program`);
-        if (!res.ok) throw new Error('Failed to fetch');
-        const json = await res.json();
-        setProgramDonasi(json);
+        const [bankRes, donasiRes] = await Promise.all([
+          fetch('/api/public/bank-info'),
+          fetch('/api/public/donasi-program'),
+        ]);
+
+        if (bankRes.ok) {
+          const bankJson = await bankRes.json();
+          setBankInfo(bankJson.data || []);
+        }
+
+        if (donasiRes.ok) {
+          const donasiJson = await donasiRes.json();
+          setProgramDonasi(donasiJson.data || []);
+        }
       } catch (error) {
-        console.error('Error fetching donasi programs:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -42,6 +55,9 @@ export default function DonasiPage() {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
   };
 
+  // Find QRIS image from bank info (if any bank has qrisImageUrl)
+  const qrisImage = bankInfo.find((b) => b.qrisImageUrl)?.qrisImageUrl;
+
   return (
     <PublicLayout>
       <section className="max-w-4xl mx-auto px-4 py-16">
@@ -51,60 +67,75 @@ export default function DonasiPage() {
           sangat berarti untuk kelangsungan program-program kami.
         </p>
 
+        {/* Bank Info dari Backend */}
         <div className="mb-16">
           <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Rekening Donasi</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {rekening.map((rek, idx) => (
-              <div key={idx} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 text-center hover:shadow-lg transition">
-                <div className="text-4xl mb-3">🏦</div>
-                <h3 className="text-xl font-bold text-blue-900 mb-2">{rek.bank}</h3>
-                <p className="font-mono text-lg text-blue-700 mb-1">{rek.nomor}</p>
-                <p className="text-gray-600">a.n. {rek.atasNama}</p>
-              </div>
-            ))}
-          </div>
+          {bankInfo.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              {bankInfo.map((rek) => (
+                <div key={rek.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 text-center hover:shadow-lg transition">
+                  <div className="text-4xl mb-3">🏦</div>
+                  <h3 className="text-xl font-bold text-blue-900 mb-2">{rek.bankName}</h3>
+                  <p className="font-mono text-lg text-blue-700 mb-1">{rek.accountNumber}</p>
+                  <p className="text-gray-600">a.n. {rek.accountName}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">Informasi rekening belum tersedia</p>
+          )}
         </div>
 
+        {/* Program Donasi dari Backend */}
         <div>
           <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Program Donasi Saat Ini</h2>
-          <div className="grid gap-6">
-            {programDonasi.map((prog) => {
-              const persen = Math.round((Number(prog.terkumpul) / Number(prog.targetDana)) * 100);
-              return (
-                <div key={prog.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
-                  <div className="flex justify-between mb-2">
-                    <h3 className="text-lg font-bold text-blue-900">{prog.nama}</h3>
-                    <span className="text-sm text-blue-700 font-medium">{persen}%</span>
+          {programDonasi.length > 0 ? (
+            <div className="grid gap-6">
+              {programDonasi.map((prog) => {
+                const persen = Math.round((Number(prog.terkumpul) / Number(prog.targetDana)) * 100);
+                return (
+                  <div key={prog.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
+                    <div className="flex justify-between mb-2">
+                      <h3 className="text-lg font-bold text-blue-900">{prog.nama}</h3>
+                      <span className="text-sm text-blue-700 font-medium">{persen}%</span>
+                    </div>
+                    <div className="w-full bg-blue-100 rounded-full h-2.5 mb-3">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                        style={{ width: `${persen}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Terkumpul: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.terkumpul))}</span></span>
+                      <span>Target: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.targetDana))}</span></span>
+                    </div>
+                    <Link
+                      href="/daftar"
+                      className="mt-4 block w-full text-center bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 font-medium transition"
+                    >
+                      Donasi Sekarang
+                    </Link>
                   </div>
-                  <div className="w-full bg-blue-100 rounded-full h-2.5 mb-3">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${persen}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Terkumpul: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.terkumpul))}</span></span>
-                    <span>Target: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.targetDana))}</span></span>
-                  </div>
-                  <Link
-                    href="/daftar"
-                    className="mt-4 block w-full text-center bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 font-medium transition"
-                  >
-                    Donasi Sekarang
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">Belum ada program donasi aktif</p>
+          )}
         </div>
 
-        <div className="mt-16 p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
-          <h3 className="text-xl font-bold text-blue-900 mb-3">Donasi Qris</h3>
-          <p className="text-gray-600 mb-4">Scan kode QRIS di bawah untuk donasi cepat via e-wallet</p>
-          <div className="w-48 h-48 mx-auto bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-            <span className="text-xl">📱 QRIS</span>
+        {/* QRIS dari Backend (jika ada) */}
+        {qrisImage && (
+          <div className="mt-16 p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+            <h3 className="text-xl font-bold text-blue-900 mb-3">Donasi QRIS</h3>
+            <p className="text-gray-600 mb-4">Scan kode QRIS di bawah untuk donasi cepat via e-wallet</p>
+            <img
+              src={qrisImage}
+              alt="QRIS THS-THM"
+              className="w-48 h-48 mx-auto object-contain"
+            />
           </div>
-        </div>
+        )}
       </section>
     </PublicLayout>
   );

@@ -18,10 +18,10 @@ export default function GaleriPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/galeri`);
+        const res = await fetch('/api/public/galeri');
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
-        setData(json);
+        setData(json.data || []);
       } catch (error) {
         console.error('Error fetching galeri:', error);
       } finally {

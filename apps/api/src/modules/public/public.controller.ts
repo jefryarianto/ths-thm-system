@@ -35,4 +35,10 @@ export class PublicController {
   async getOrganisasi() {
     return this.publicService.getOrganisasi();
   }
+
+  @Public()
+  @Get('bank-info')
+  async getBankInfo() {
+    return this.publicService.getBankInfo();
+  }
 }

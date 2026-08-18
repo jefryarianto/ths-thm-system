@@ -150,4 +150,66 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   async getStamp() {
     return this.prisma.stempel.findFirst({ where: { isActive: true } });
   }
+
+  // ── Sejarah (public content) ──────────────────────
+
+  async getSejarah() {
+    let record = await (this.prisma as any).sejarah.findFirst();
+    if (!record) {
+      record = await (this.prisma as any).sejarah.create({
+        data: { konten: '', isVisible: true },
+      });
+    }
+    return record;
+  }
+
+  async updateSejarah(body: { konten: string; isVisible?: boolean }) {
+    const existing = await (this.prisma as any).sejarah.findFirst();
+    if (existing) {
+      return (this.prisma as any).sejarah.update({
+        where: { id: existing.id },
+        data: {
+          konten: body.konten,
+          ...(body.isVisible !== undefined && { isVisible: body.isVisible }),
+        },
+      });
+    }
+    return (this.prisma as any).sejarah.create({
+      data: {
+        konten: body.konten,
+        isVisible: body.isVisible ?? true,
+      },
+    });
+  }
+
+  // ── Organisasi (public content) ────────────────────
+
+  async getOrganisasi() {
+    let record = await (this.prisma as any).organisasi.findFirst();
+    if (!record) {
+      record = await (this.prisma as any).organisasi.create({
+        data: { struktur: [], isVisible: true },
+      });
+    }
+    return record;
+  }
+
+  async updateOrganisasi(body: { struktur: unknown; isVisible?: boolean }) {
+    const existing = await (this.prisma as any).organisasi.findFirst();
+    if (existing) {
+      return (this.prisma as any).organisasi.update({
+        where: { id: existing.id },
+        data: {
+          struktur: body.struktur,
+          ...(body.isVisible !== undefined && { isVisible: body.isVisible }),
+        },
+      });
+    }
+    return (this.prisma as any).organisasi.create({
+      data: {
+        struktur: body.struktur,
+        isVisible: body.isVisible ?? true,
+      },
+    });
+  }
 }

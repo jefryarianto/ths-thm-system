@@ -18,10 +18,10 @@ export default function OrganisasiPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/organisasi`);
+        const res = await fetch('/api/public/organisasi');
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
-        setData(json);
+        setData(json.data || null);
       } catch (error) {
         console.error('Error fetching organisasi:', error);
       } finally {
