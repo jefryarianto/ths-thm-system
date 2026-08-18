@@ -1,9 +1,35 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components';
 
+interface Berita {
+  id: string;
+  judul: string;
+  ringkasan: string;
+  tanggal: string;
+  slug: string;
+}
+
 export function LandingPageContent() {
+  const [news, setNews] = useState<Berita[]>([]);
+
+  useEffect(() => {
+    async function fetchNews() {
+      try {
+        const res = await fetch('/api/public/berita');
+        if (res.ok) {
+          const json = await res.json();
+          setNews(json.data?.slice(0, 3) || []);
+        }
+      } catch (e) {
+        console.error('Failed to fetch news', e);
+      }
+    }
+    fetchNews();
+  }, []);
+
   return (
     <PublicLayout>
       <section className="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -38,6 +64,25 @@ export function LandingPageContent() {
           </div>
         </div>
       </section>
+
+      {news.length > 0 && (
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center text-blue-900 mb-12">Berita Terbaru</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {news.map((n) => (
+                <Link key={n.id} href={`/berita/${n.slug}`} className="bg-white rounded-2xl p-6 border hover:shadow-lg transition">
+                  <h3 className="text-xl font-bold text-blue-900 mb-2">{n.judul}</h3>
+                  <p className="text-gray-600 line-clamp-3">{n.ringkasan}</p>
+                </Link>
+              ))}
+            </div>
+            <div className="text-center mt-12">
+              <Link href="/berita" className="text-blue-900 font-bold hover:underline">Lihat Semua Berita →</Link>
+            </div>
+          </div>
+        </section>
+      )}
     </PublicLayout>
   );
 }

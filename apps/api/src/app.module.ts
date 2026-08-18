@@ -48,6 +48,7 @@ import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module
 import { PenandatanganModule } from './modules/penandatangan/penandatangan.module';
 import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
 import { PublicModule } from './modules/public/public.module';
+import { ContentModule } from './modules/content/content.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { PublicModule } from './modules/public/public.module';
     PenandatanganModule,
     TingkatanModule,
     PublicModule,
+    ContentModule,
     CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,

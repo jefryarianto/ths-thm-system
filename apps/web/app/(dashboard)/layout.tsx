@@ -172,6 +172,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Konten Public',
     items: [
+      { href: '/content/berita', label: 'Berita', icon: BookOpen, minRole: 'superadmin' },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
       { href: '/content/organisasi', label: 'Struktur Org.', icon: Globe, minRole: 'superadmin' },
     ],
