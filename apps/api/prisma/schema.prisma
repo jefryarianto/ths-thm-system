@@ -167,12 +167,74 @@ enum TipeNotifikasi {
   umum
 }
 
+
+// ── Public Content ────────────────────────────────────────
+
+model Berita {
+  id        String   @id @default(uuid())
+  judul     String
+  ringkasan String   @db.Text
+  konten    String   @db.Text
+  gambar    String?
+  tanggal   DateTime @default(now())
+  slug      String   @unique
+  isVisible Boolean  @default(true) @map("is_visible")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("berita")
+}
+
+model Galeri {
+  id        String   @id @default(uuid())
+  judul     String
+  gambar    String
+  tanggal   DateTime @default(now())
+  isVisible Boolean  @default(true) @map("is_visible")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("galeri")
+}
+
+model DonasiProgram {
+  id          String   @id @default(uuid())
+  nama        String
+  deskripsi   String   @db.Text
+  targetDana  Decimal  @map("target_dana") @db.Decimal(65, 30)
+  terkumpul   Decimal  @default(0) @map("terkumpul") @db.Decimal(65, 30)
+  isVisible   Boolean  @default(true) @map("is_visible")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("donasi_program")
+}
+
+model Sejarah {
+  id        String   @id @default(uuid())
+  konten    String   @db.Text
+  isVisible Boolean  @default(true) @map("is_visible")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sejarah")
+}
+
+model Organisasi {
+  id        String   @id @default(uuid())
+  struktur  Json     @map("struktur")
+  isVisible Boolean  @default(true) @map("is_visible")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("organisasi")
+}
+
 // ── Organizational Structure ──────────────────────────────
 
 model Nasional {
   id        String   @id @default(uuid())
   nama      String
   kode      String   @unique
+  isVisible Boolean  @default(true) @map("is_visible")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -187,6 +249,7 @@ model Distrik {
   kodeDistrik String   @unique @map("kode_distrik")
   nama        String
   alamat      String?
+  isVisible   Boolean  @default(true) @map("is_visible")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -202,6 +265,7 @@ model Wilayah {
   distrikId   String   @map("distrik_id")
   kodeWilayah String   @map("kode_wilayah")
   nama        String
+  isVisible   Boolean  @default(true) @map("is_visible")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -218,6 +282,7 @@ model Ranting {
   kodeRanting   String   @map("kode_ranting")
   nama          String
   lokasiLatihan String?  @map("lokasi_latihan")
+  isVisible     Boolean  @default(true) @map("is_visible")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 

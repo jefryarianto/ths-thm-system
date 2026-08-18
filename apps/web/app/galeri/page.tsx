@@ -16,19 +16,19 @@ export default function GaleriPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/galeri`);
-    // const json = await res.json();
-    // setData(json);
-    setData([
-      { id: '1', url: '/placeholder-1.jpg', judul: 'Latihan Rutin', deskripsi: 'Anggota latihan di lapangan', kategori: 'Latihan' },
-      { id: '2', url: '/placeholder-2.jpg', judul: 'Pelantikan', deskripsi: 'Acara pelantikan kepengurusan', kategori: 'Acara' },
-      { id: '3', url: '/placeholder-3.jpg', judul: 'Bakti Sosial', deskripsi: 'Kegiatan bakti sosial komunitas', kategori: 'Sosial' },
-      { id: '4', url: '/placeholder-4.jpg', judul: 'Pendadaran', deskripsi: 'Proses pendadaran anggota', kategori: 'Pendidikan' },
-      { id: '5', url: '/placeholder-5.jpg', judul: 'Rapat Tahunan', deskripsi: 'Rapat kerja tahunan', kategori: 'Rapat' },
-      { id: '6', url: '/placeholder-6.jpg', judul: 'Outing Anggota', deskripsi: 'Kegiatan outing bersama', kategori: 'Kegiatan' },
-    ]);
-    setLoading(false);
+    async function fetchData() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/galeri`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        setData(json);
+      } catch (error) {
+        console.error('Error fetching galeri:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   return (

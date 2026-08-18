@@ -18,34 +18,19 @@ export default function BeritaPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/berita`);
-    // const json = await res.json();
-    // setData(json);
-    setData([
-      {
-        id: '1',
-        judul: 'Pelantikan Kepengurusan Baru Periode 2024-2027',
-        ringkasan: 'Acara pelantikan kepengurusan THS-THM cabang Pusat dilaksanakan di Gedung Serbaguna...',
-        tanggal: '2024-01-15',
-        slug: 'pelantikan-kepengurusan-baru',
-      },
-      {
-        id: '2',
-        judul: 'Latihan Rutin Mingguan Dibuka untuk Umum',
-        ringkasan: 'Setiap hari Minggu pukul 07:00 WIB di Lapangan THS-THM, semua warga diundang ikut latihan...',
-        tanggal: '2024-01-10',
-        slug: 'latihan-rutin-mingguan',
-      },
-      {
-        id: '3',
-        judul: 'Donasi untuk Korban Bencana Alam',
-        ringkasan: 'THS-THM menggalang dana untuk membantu saudara-saudara yang terdampak bencana banjir...',
-        tanggal: '2024-01-05',
-        slug: 'donasi-bencana-alam',
-      },
-    ]);
-    setLoading(false);
+    async function fetchData() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/berita`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        setData(json);
+      } catch (error) {
+        console.error('Error fetching berita:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   const formatTanggal = (tanggal: string) => {

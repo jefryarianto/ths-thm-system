@@ -7,15 +7,21 @@ export class OrgChartService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOrgChart() {
+  async getOrgChart(isPublic = false) {
     // Get all organizational levels
+    const whereVisible = isPublic ? { isVisible: true } : {};
+
     const nasional = await this.prisma.nasional.findMany({
+      where: whereVisible,
       include: {
         distriks: {
+          where: whereVisible,
           include: {
             wilayahs: {
+              where: whereVisible,
               include: {
                 rantings: {
+                  where: whereVisible,
                   include: {
                     _count: { select: { anggota: true } },
                   },

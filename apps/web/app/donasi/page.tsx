@@ -1,5 +1,16 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components';
+
+interface DonasiProgram {
+  id: string;
+  nama: string;
+  deskripsi: string;
+  targetDana: number;
+  terkumpul: number;
+}
 
 export default function DonasiPage() {
   const rekening = [
@@ -8,11 +19,28 @@ export default function DonasiPage() {
     { bank: 'Bank BRI', nomor: '1122334455', atasNama: 'Yayasan THS-THM' },
   ];
 
-  const programDonasi = [
-    { judul: 'Operasional Latihan', target: 'Rp 50.000.000', terkumpul: 'Rp 12.500.000', persen: 25 },
-    { judul: 'Bantuan Sosial', target: 'Rp 100.000.000', terkumpul: 'Rp 45.000.000', persen: 45 },
-    { judul: 'Pembangunan Gedung', target: 'Rp 500.000.000', terkumpul: 'Rp 125.000.000', persen: 25 },
-  ];
+  const [programDonasi, setProgramDonasi] = useState<DonasiProgram[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/donasi-program`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        setProgramDonasi(json);
+      } catch (error) {
+        console.error('Error fetching donasi programs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const formatRupiah = (angka: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+  };
 
   return (
     <PublicLayout>
@@ -40,30 +68,33 @@ export default function DonasiPage() {
         <div>
           <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Program Donasi Saat Ini</h2>
           <div className="grid gap-6">
-            {programDonasi.map((prog, idx) => (
-              <div key={idx} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
-                <div className="flex justify-between mb-2">
-                  <h3 className="text-lg font-bold text-blue-900">{prog.judul}</h3>
-                  <span className="text-sm text-blue-700 font-medium">{prog.persen}%</span>
+            {programDonasi.map((prog) => {
+              const persen = Math.round((Number(prog.terkumpul) / Number(prog.targetDana)) * 100);
+              return (
+                <div key={prog.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
+                  <div className="flex justify-between mb-2">
+                    <h3 className="text-lg font-bold text-blue-900">{prog.nama}</h3>
+                    <span className="text-sm text-blue-700 font-medium">{persen}%</span>
+                  </div>
+                  <div className="w-full bg-blue-100 rounded-full h-2.5 mb-3">
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                      style={{ width: `${persen}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Terkumpul: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.terkumpul))}</span></span>
+                    <span>Target: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.targetDana))}</span></span>
+                  </div>
+                  <Link
+                    href="/daftar"
+                    className="mt-4 block w-full text-center bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 font-medium transition"
+                  >
+                    Donasi Sekarang
+                  </Link>
                 </div>
-                <div className="w-full bg-blue-100 rounded-full h-2.5 mb-3">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
-                    style={{ width: `${prog.persen}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Terkumpul: <span className="font-medium text-blue-900">{prog.terkumpul}</span></span>
-                  <span>Target: <span className="font-medium text-blue-900">{prog.target}</span></span>
-                </div>
-                <Link
-                  href="/daftar"
-                  className="mt-4 block w-full text-center bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 font-medium transition"
-                >
-                  Donasi Sekarang
-                </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

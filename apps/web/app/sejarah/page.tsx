@@ -1,22 +1,41 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components';
 
 export default function SejarahPage() {
+  const [data, setData] = useState<{ konten: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/sejarah`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        setData(json);
+      } catch (error) {
+        console.error('Error fetching sejarah:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
   return (
     <PublicLayout>
-      <section className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Sejarah THS-THM</h1>
-        <div className="prose prose-blue max-w-none text-gray-700">
-          <p>
-            Tunggal Hati Seminari - Tunggal Hati Maria (THS-THM) adalah organisasi bela diri pencak silat
-            berbasis Katolik. THS-THM didirikan sebagai sarana pengembangan diri, iman, dan persaudaraan.
-          </p>
-          <h2 className="text-2xl font-bold text-blue-900 mt-8 mb-4">Filosofi</h2>
-          <p>
-            THS-THM berlandaskan pada semangat kasih, kerendahan hati, dan pengabdian kepada sesama,
-            mengikuti teladan Yesus Kristus dan Bunda Maria.
-          </p>
+      {loading ? (
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
-      </section>
+      ) : (
+        <section className="max-w-4xl mx-auto px-4 py-16">
+          <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Sejarah THS-THM</h1>
+          <div className="prose prose-blue max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: data?.konten || '<p>Konten belum tersedia</p>' }}>
+          </div>
+        </section>
+      )}
     </PublicLayout>
   );
 }

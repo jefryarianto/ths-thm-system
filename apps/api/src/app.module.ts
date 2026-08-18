@@ -47,6 +47,7 @@ import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module';
 import { PenandatanganModule } from './modules/penandatangan/penandatangan.module';
 import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
+import { PublicModule } from './modules/public/public.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
     ForumModule,
     PenandatanganModule,
     TingkatanModule,
+    PublicModule,
     CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,
