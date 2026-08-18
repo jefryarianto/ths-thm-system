@@ -1,14 +1,16 @@
-import { IsString, IsOptional, IsInt, Min, IsEmail } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsEmail, IsNotEmpty, IsIn, IsMobilePhone } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateRegistrationDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   namaLengkap: string;
 
   @ApiProperty({ enum: ['L', 'P'] })
   @IsString()
+  @IsIn(['L', 'P'])
   jenisKelamin: string;
 
   @ApiPropertyOptional()
@@ -28,7 +30,7 @@ export class CreateRegistrationDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsMobilePhone('id-ID')
   noHp?: string;
 
   @ApiPropertyOptional()

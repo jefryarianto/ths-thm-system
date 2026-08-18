@@ -3,8 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { UserPlus, ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { z } from 'zod';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+const registrationSchema = z.object({
+  namaLengkap: z.string().min(3, 'Nama lengkap minimal 3 karakter'),
+  jenisKelamin: z.enum(['L', 'P']),
+  noHp: z.string().min(10, 'Nomor HP minimal 10 digit').regex(/^[0-9]+$/, 'Nomor HP hanya boleh berisi angka').optional().or(z.literal('')),
+  email: z.string().email('Format email tidak valid').optional().or(z.literal('')),
+  tempatLahir: z.string().optional(),
+  tanggalLahir: z.string().optional(),
+  alamat: z.string().optional(),
+  sumberInfo: z.string().optional(),
+});
 
 export default function DaftarPage() {
   const [step, setStep] = useState<'form' | 'success' | 'error'>('form');
@@ -31,6 +43,12 @@ export default function DaftarPage() {
     setErrorMsg('');
 
     try {
+      // Client-side validation
+      const validation = registrationSchema.safeParse(form);
+      if (!validation.success) {
+        throw new Error(validation.error.errors[0].message);
+      }
+
       const res = await fetch(`${API_URL}/api/registrations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

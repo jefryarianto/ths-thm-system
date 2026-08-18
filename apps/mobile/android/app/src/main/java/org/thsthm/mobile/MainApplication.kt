@@ -3,10 +3,10 @@ package org.thsthm.mobile
 import android.app.Application
 import android.content.res.Configuration
 
+import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
-import com.facebook.react.PackageList
 import com.facebook.react.ReactHost
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactNativeHost
@@ -21,7 +21,8 @@ class MainApplication : Application(), ReactApplication {
         this,
         object : DefaultReactNativeHost(this) {
           override fun getPackages(): List<ReactPackage> {
-            // Packages (RN community + expo-modules-core) autolinked via native_modules.gradle
+            // Packages that cannot be autolinked yet can be added manually here, for example:
+            // packages.add(new MyReactNativePackage());
             return PackageList(this).packages
           }
 

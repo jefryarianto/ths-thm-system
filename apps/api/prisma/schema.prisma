@@ -238,7 +238,8 @@ model Nasional {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  distriks Distrik[]
+  distriks      Distrik[]
+  kepengurusans Kepengurusan[]
 
   @@map("nasional")
 }
@@ -253,9 +254,10 @@ model Distrik {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  nasional     Nasional      @relation(fields: [nasionalId], references: [id])
-  wilayahs     Wilayah[]
-  unitLatihans UnitLatihan[]
+  nasional      Nasional      @relation(fields: [nasionalId], references: [id])
+  wilayahs      Wilayah[]
+  unitLatihans  UnitLatihan[]
+  kepengurusans Kepengurusan[]
 
   @@map("distrik")
 }
@@ -269,8 +271,9 @@ model Wilayah {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  distrik  Distrik   @relation(fields: [distrikId], references: [id])
-  rantings Ranting[]
+  distrik       Distrik   @relation(fields: [distrikId], references: [id])
+  rantings      Ranting[]
+  kepengurusans Kepengurusan[]
 
   @@unique([distrikId, kodeWilayah])
   @@map("wilayah")
@@ -291,6 +294,7 @@ model Ranting {
   anggota       Anggota[]
   calonAnggotas CalonAnggota[]
   latihans      Latihan[]
+  kepengurusans Kepengurusan[]
 
   @@unique([wilayahId, kodeRanting])
   @@map("ranting")
@@ -345,6 +349,7 @@ model User {
   dokumenOrgUploaded          DokumenOrganisasi[] @relation("DokumenOrgUploader")
   oauthAccounts               OAuthAccount[]
   auditLogs                   AuditLog[]
+  kepengurusans               Kepengurusan[]
 
   @@map("users")
 }
@@ -1163,7 +1168,46 @@ model Periode {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  pengurus   Kepengurusan[]
+
   @@map("periode")
+}
+
+model Jabatan {
+  id        String   @id @default(uuid())
+  nama      String   @unique
+  kode      String?  @unique
+  urutan    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  pengurus  Kepengurusan[]
+
+  @@map("jabatan")
+}
+
+model Kepengurusan {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  jabatanId     String   @map("jabatan_id")
+  periodeId     String   @map("periode_id")
+  nasionalId    String?  @map("nasional_id")
+  distrikId     String?  @map("distrik_id")
+  wilayahId     String?  @map("wilayah_id")
+  rantingId     String?  @map("ranting_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user          User     @relation(fields: [userId], references: [id])
+  jabatan       Jabatan  @relation(fields: [jabatanId], references: [id])
+  periode       Periode  @relation(fields: [periodeId], references: [id])
+  
+  nasional      Nasional? @relation(fields: [nasionalId], references: [id])
+  distrik       Distrik?  @relation(fields: [distrikId], references: [id])
+  wilayah       Wilayah?  @relation(fields: [wilayahId], references: [id])
+  ranting       Ranting?  @relation(fields: [rantingId], references: [id])
+
+  @@map("kepengurusan")
 }
 
 // ── Gamification ──────────────────────────────────────────
