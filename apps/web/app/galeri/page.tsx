@@ -38,8 +38,8 @@ export default function GaleriPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
       ) : (
-        <section className="max-w-7xl mx-auto px-4 py-16">
-          <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Galeri</h1>
+        <section className="max-w-7xl mx-auto px-4 py-8 sm:py-16">
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Galeri</h1>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.map((item) => (
               <div key={item.id} className="group relative bg-blue-50 rounded-2xl overflow-hidden border border-blue-100 hover:shadow-lg transition aspect-[4/3]">

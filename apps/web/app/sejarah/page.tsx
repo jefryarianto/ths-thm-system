@@ -30,9 +30,9 @@ export default function SejarahPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
       ) : (
-        <section className="max-w-4xl mx-auto px-4 py-16">
-          <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Sejarah THS-THM</h1>
-          <div className="prose prose-blue max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: data?.konten || '<p>Konten belum tersedia</p>' }}>
+        <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Sejarah THS-THM</h1>
+          <div className="prose prose-blue max-w-none text-gray-700 text-sm sm:text-base" dangerouslySetInnerHTML={{ __html: data?.konten || '<p>Konten belum tersedia</p>' }}>
           </div>
         </section>
       )}

@@ -91,8 +91,8 @@ export default function KepengurusanPage() {
 
   return (
     <PublicLayout>
-      <section className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-black text-blue-900 mb-12 text-center">Kepengurusan</h1>
+      <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
+        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-8 sm:mb-12 text-center">Kepengurusan</h1>
         
         {loading ? (
           <div className="flex items-center justify-center py-20">

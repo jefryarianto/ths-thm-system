@@ -48,14 +48,14 @@ export default function BeritaPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
       ) : (
-        <section className="max-w-4xl mx-auto px-4 py-16">
-          <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Berita & Artikel</h1>
-          <div className="grid gap-6">
+        <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Berita & Artikel</h1>
+          <div className="grid gap-4 sm:gap-6">
             {data.map((berita) => (
-              <article key={berita.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0 w-24 h-24 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <span className="text-4xl">📰</span>
+              <article key={berita.id} className="bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-100 hover:shadow-lg transition">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                  <div className="flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl sm:text-4xl">📰</span>
                   </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-bold text-blue-900 mb-2">{berita.judul}</h2>

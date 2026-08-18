@@ -60,23 +60,23 @@ export default function DonasiPage() {
 
   return (
     <PublicLayout>
-      <section className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-black text-blue-900 mb-4 text-center">Donasi</h1>
-        <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+      <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
+        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-4 text-center">Donasi</h1>
+        <p className="text-center text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base">
           Dukung kegiatan THS-THM dengan donasi Anda. Setiap kontribusi, besar maupun kecil,
           sangat berarti untuk kelangsungan program-program kami.
         </p>
 
         {/* Bank Info dari Backend */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Rekening Donasi</h2>
+        <div className="mb-10 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 text-center">Rekening Donasi</h2>
           {bankInfo.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {bankInfo.map((rek) => (
-                <div key={rek.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 text-center hover:shadow-lg transition">
+                <div key={rek.id} className="bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-100 text-center hover:shadow-lg transition">
                   <div className="text-4xl mb-3">🏦</div>
-                  <h3 className="text-xl font-bold text-blue-900 mb-2">{rek.bankName}</h3>
-                  <p className="font-mono text-lg text-blue-700 mb-1">{rek.accountNumber}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-2">{rek.bankName}</h3>
+                <p className="font-mono text-base sm:text-lg text-blue-700 mb-1">{rek.accountNumber}</p>
                   <p className="text-gray-600">a.n. {rek.accountName}</p>
                 </div>
               ))}
@@ -88,13 +88,13 @@ export default function DonasiPage() {
 
         {/* Program Donasi dari Backend */}
         <div>
-          <h2 className="text-2xl font-bold text-blue-900 mb-6 text-center">Program Donasi Saat Ini</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 text-center">Program Donasi Saat Ini</h2>
           {programDonasi.length > 0 ? (
-            <div className="grid gap-6">
+            <div className="grid gap-4 sm:gap-6">
               {programDonasi.map((prog) => {
                 const persen = Math.round((Number(prog.terkumpul) / Number(prog.targetDana)) * 100);
                 return (
-                  <div key={prog.id} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
+                  <div key={prog.id} className="bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-100 hover:shadow-lg transition">
                     <div className="flex justify-between mb-2">
                       <h3 className="text-lg font-bold text-blue-900">{prog.nama}</h3>
                       <span className="text-sm text-blue-700 font-medium">{persen}%</span>

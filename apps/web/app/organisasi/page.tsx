@@ -38,11 +38,11 @@ export default function OrganisasiPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
         </div>
       ) : (
-        <section className="max-w-4xl mx-auto px-4 py-16">
-          <h1 className="text-4xl font-black text-blue-900 mb-8 text-center">Struktur Organisasi</h1>
-          <div className="grid gap-4 md:grid-cols-2">
+        <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Struktur Organisasi</h1>
+          <div className="grid gap-4 sm:grid-cols-2">
             {data?.struktur?.map((item, idx) => (
-              <div key={idx} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
+              <div key={idx} className="bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-100 hover:shadow-lg transition">
                 <h3 className="text-xl font-bold text-blue-900 mb-2">{item.jabatan}</h3>
                 <p className="text-blue-700 font-medium mb-2">{item.nama}</p>
                 <p className="text-gray-600">{item.deskripsi}</p>
