@@ -61,25 +61,28 @@ async function main() {
     },
   });
 
-  const wilayah = await prisma.wilayah.upsert({
-    where: { kodeWilayah: 'THS-WLY-01' },
-    update: {},
-    create: {
-      distrikId: distrik.id,
-      kodeWilayah: 'THS-WLY-01',
-      nama: 'Wilayah Example',
-    },
-  });
+  // kodeWilayah/kodeRanting are not unique columns — use findFirst + create/update
+  let wilayah = await prisma.wilayah.findFirst({ where: { kodeWilayah: 'THS-WLY-01' } });
+  if (!wilayah) {
+    wilayah = await prisma.wilayah.create({
+      data: {
+        distrikId: distrik.id,
+        kodeWilayah: 'THS-WLY-01',
+        nama: 'Wilayah Example',
+      },
+    });
+  }
 
-  const ranting = await prisma.ranting.upsert({
-    where: { kodeRanting: 'THS-RTG-01' },
-    update: {},
-    create: {
-      wilayahId: wilayah.id,
-      kodeRanting: 'THS-RTG-01',
-      nama: 'Ranting Example',
-    },
-  });
+  let ranting = await prisma.ranting.findFirst({ where: { kodeRanting: 'THS-RTG-01' } });
+  if (!ranting) {
+    ranting = await prisma.ranting.create({
+      data: {
+        wilayahId: wilayah.id,
+        kodeRanting: 'THS-RTG-01',
+        nama: 'Ranting Example',
+      },
+    });
+  }
   console.log('Organization structure created');
 
   // ── Seeder Users ──

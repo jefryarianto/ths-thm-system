@@ -198,7 +198,50 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
-    return this.sanitizeUser(user);
+    const profile = await this.sanitizeUser(user);
+
+    // Lampirkan field profil anggota (noHp, alamat, tempatLahir, tanggalLahir) supaya
+    // aplikasi mobile bisa menampilkan data lama di form Edit Profil. Cocokkan via
+    // email; fallback via nama lengkap (email kosong hasil import CSV) — sama seperti
+    // updateProfile. Non-critical: gagal diam-diam bila anggota tidak ditemukan.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prisma = this.prisma as any;
+      const select = {
+        noHp: true,
+        alamat: true,
+        tempatLahir: true,
+        tanggalLahir: true,
+        fotoPath: true,
+      };
+      let anggota = await prisma.anggota.findFirst({
+        where: { email: user.email, deletedAt: null },
+        select,
+      });
+      if (!anggota && user.namaLengkap?.trim()) {
+        const byName = await prisma.anggota.findMany({
+          where: {
+            namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
+            OR: [{ email: null }, { email: '' }],
+            deletedAt: null,
+          },
+          select,
+        });
+        if (byName.length === 1) anggota = byName[0];
+      }
+      if (anggota) {
+        const target = profile as Record<string, unknown>;
+        if (anggota.noHp) target.noHp = anggota.noHp;
+        if (anggota.alamat) target.alamat = anggota.alamat;
+        if (anggota.tempatLahir) target.tempatLahir = anggota.tempatLahir;
+        if (anggota.tanggalLahir) target.tanggalLahir = anggota.tanggalLahir;
+        if (anggota.fotoPath) target.fotoPath = anggota.fotoPath;
+      }
+    } catch {
+      // Non-critical — field profil anggota opsional
+    }
+
+    return profile;
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {

@@ -82,6 +82,25 @@ async function bootstrap() {
         const buffer = require('fs').readFileSync(origPath);
         const out = await removePhotoBackground(buffer);
         require('fs').writeFileSync(bgPath, out);
+      } else {
+        // Self-healing: `.bg.png` lama (bukan kanvas pasfoto 900×1200) di-regenerate
+        // dengan pipeline terbaru — foto lama ikut diperbaiki tanpa re-upload.
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const sharp = require('sharp');
+          const meta = await sharp(bgPath).metadata();
+          if (meta.width !== 900 || meta.height !== 1200) {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { removePhotoBackground, isSharpAvailable } = require('./common/utils/photo-bg.util');
+            if (isSharpAvailable()) {
+              const buffer = require('fs').readFileSync(origPath);
+              const out = await removePhotoBackground(buffer);
+              require('fs').writeFileSync(bgPath, out);
+            }
+          }
+        } catch {
+          // Keep existing — non-critical
+        }
       }
       return next();
     } catch {

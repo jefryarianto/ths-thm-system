@@ -698,17 +698,32 @@ export default function DigitalCardScreen() {
     try {
       const token = await AsyncStorage.getItem('accessToken');
       const url = `${API_URL}/api/members/${memberId}/digital-card/image`;
-      const dest = `${FileSystem.cacheDirectory}kartu-anggota-${memberId}.png`;
+      // documentDirectory (bukan cache) agar file tidak terhapus saat sistem membersihkan cache
+      const dest = `${FileSystem.documentDirectory}kartu-anggota-${memberId}.png`;
       await FileSystem.downloadAsync(url, dest, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+
       const perm = await MediaLibrary.requestPermissionsAsync();
       if (!perm.granted) {
         Alert.alert('Izin Diperlukan', 'Aktifkan izin akses media untuk menyimpan ke galeri.');
         return;
       }
-      await MediaLibrary.saveToLibraryAsync(dest);
-      Alert.alert('Tersimpan', 'Kartu PNG berhasil disimpan ke galeri.');
+
+      // Simpan ke MediaStore lalu pindahkan ke album "THS-THM" di folder Pictures/
+      // (saveToLibraryAsync menaruh file di root DCIM yang tidak selalu muncul di galeri).
+      const asset = await MediaLibrary.createAssetAsync(dest);
+      try {
+        const album = await MediaLibrary.getAlbumAsync('THS-THM');
+        if (album) {
+          await MediaLibrary.addAssetsToAlbumAsync(asset.id, album.id, false);
+        } else {
+          await MediaLibrary.createAlbumAsync('THS-THM', asset.id, false);
+        }
+      } catch {
+        // Album opsional — file tetap tersimpan di MediaStore
+      }
+      Alert.alert('Tersimpan', 'Kartu PNG berhasil disimpan ke galeri (folder THS-THM).');
     } catch {
-      Alert.alert('Gagal', 'Gagal menyimpan kartu ke galeri.');
+      Alert.alert('Gagal', 'Gagal menyimpan kartu ke galeri. Coba lagi.');
     } finally {
       setSaving(null);
     }

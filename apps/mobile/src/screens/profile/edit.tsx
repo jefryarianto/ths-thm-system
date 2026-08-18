@@ -15,10 +15,35 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
-import { useMemberProfile } from '../../hooks/use-member-profile';
+import { useMemberProfile, MemberProfile } from '../../hooks/use-member-profile';
+
+// ── Helper tanggal (local time, hindari pergeseran zona UTC) ──
+const parseTanggal = (iso: string): Date | null => {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+};
+
+const formatLocalDate = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+const formatTanggalDisplay = (iso: string): string => {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
 
 export default function EditProfileScreen() {
   const user = useAuthStore((s) => s.user);
@@ -37,6 +62,10 @@ export default function EditProfileScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
+  // Date picker tanggal lahir
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
+
   // Ubah password
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwSaving, setPwSaving] = useState(false);
@@ -52,7 +81,13 @@ export default function EditProfileScreen() {
 
   const fetchProfile = async () => {
     try {
-      const res = await apiClient.get('/auth/me');
+      // `/auth/me` hanya berisi data user; `/members/me` berisi field anggota
+      // (alamat, tempatLahir, tanggalLahir, noHp). Gabungkan keduanya agar data
+      // lama selalu muncul di form — terlepas dari versi API yang ter-deploy.
+      const [meRes, memberRes] = await Promise.all([
+        apiClient.get('/auth/me'),
+        apiClient.get('/members/me').catch(() => null),
+      ]);
       const p = unwrap<{
         namaLengkap: string;
         email?: string;
@@ -60,15 +95,18 @@ export default function EditProfileScreen() {
         alamat?: string;
         tempatLahir?: string;
         tanggalLahir?: string;
-      }>(res);
+      }>(meRes);
+      const mp = memberRes ? (unwrap<MemberProfile | null>(memberRes) ?? null) : null;
+      const tgl = (mp?.tanggalLahir || p.tanggalLahir || '').slice(0, 10);
       setForm({
-        namaLengkap: p.namaLengkap || '',
-        email: p.email || '',
-        noHp: p.noHp || '',
-        alamat: p.alamat || '',
-        tempatLahir: p.tempatLahir || '',
-        tanggalLahir: p.tanggalLahir ? p.tanggalLahir.slice(0, 10) : '',
+        namaLengkap: p.namaLengkap || mp?.namaLengkap || '',
+        email: p.email || mp?.email || '',
+        noHp: p.noHp || mp?.noHp || '',
+        alamat: mp?.alamat || p.alamat || '',
+        tempatLahir: mp?.tempatLahir || p.tempatLahir || '',
+        tanggalLahir: tgl,
       });
+      setBirthDate(tgl ? parseTanggal(tgl) : null);
     } catch {
       Alert.alert('Error', 'Gagal memuat profil');
     }
@@ -310,9 +348,36 @@ export default function EditProfileScreen() {
           {renderField('Tempat Lahir', 'tempatLahir', {
             placeholder: 'Kota kelahiran',
           })}
-          {renderField('Tanggal Lahir', 'tanggalLahir', {
-            placeholder: 'YYYY-MM-DD',
-          })}
+          {/* Tanggal Lahir — pakai date selector native (Android dialog / iOS spinner) */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Tanggal Lahir</Text>
+            <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+              <Text style={form.tanggalLahir ? styles.inputText : styles.inputPlaceholder}>
+                {form.tanggalLahir ? formatTanggalDisplay(form.tanggalLahir) : 'Pilih tanggal lahir'}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={birthDate ?? new Date(2000, 0, 1)}
+                mode="date"
+                maximumDate={new Date()}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event: DateTimePickerEvent, date?: Date) => {
+                  if (Platform.OS === 'android') setShowDatePicker(false);
+                  if (event.type === 'set' && date) {
+                    setBirthDate(date);
+                    setForm((f) => ({ ...f, tanggalLahir: formatLocalDate(date) }));
+                  }
+                }}
+              />
+            )}
+            {Platform.OS === 'ios' && showDatePicker && (
+              <TouchableOpacity style={styles.dateDoneBtn} onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.dateDoneText}>Selesai</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           {renderField('Alamat', 'alamat', {
             placeholder: 'Alamat lengkap',
             multiline: true,
@@ -494,6 +559,17 @@ const styles = StyleSheet.create({
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
   inputDisabled: { backgroundColor: '#f3f4f6', color: '#9ca3af' },
   errorText: { fontSize: 11, color: '#ef4444', marginTop: 4 },
+  inputText: { fontSize: 15, color: '#111827' },
+  inputPlaceholder: { fontSize: 15, color: '#9ca3af' },
+  dateDoneBtn: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  dateDoneText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cancelBtn: {
