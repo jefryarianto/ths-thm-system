@@ -2,23 +2,25 @@
 
 import Link from 'next/link';
 import { ReactNode, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
+import { useI18n } from '@/i18n/context';
 
 interface PublicLayoutProps {
   children: ReactNode;
 }
 
-const NAV_LINKS = [
-  { href: '/sejarah', label: 'Sejarah' },
-  { href: '/organisasi', label: 'Organisasi' },
-  { href: '/kepengurusan', label: 'Kepengurusan' },
-  { href: '/berita', label: 'Berita' },
-  { href: '/galeri', label: 'Galeri' },
-  { href: '/donasi', label: 'Donasi' },
-];
-
 export default function PublicLayout({ children }: PublicLayoutProps) {
+  const { locale, t, setLocale } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const NAV_LINKS = [
+    { href: '/sejarah', label: t.nav.sejarah },
+    { href: '/organisasi', label: t.nav.organisasi },
+    { href: '/kepengurusan', label: t.nav.kepengurusan },
+    { href: '/berita', label: t.nav.berita },
+    { href: '/galeri', label: t.nav.galeri },
+    { href: '/donasi', label: t.nav.donasi },
+  ];
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white'>
@@ -46,17 +48,30 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 ))}
               </div>
               <div className='flex items-center gap-4 ml-8 border-l border-gray-200 pl-8'>
+                <button
+                  onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
+                  className='flex items-center gap-1 px-2 py-1 text-sm text-blue-900 hover:bg-blue-50 rounded-lg transition-colors'
+                >
+                  <Globe size={16} />
+                  <span className='font-medium'>{locale === 'id' ? 'EN' : 'ID'}</span>
+                </button>
                 <Link href='/login' className='text-blue-900 hover:text-blue-700 font-medium'>
-                  Login
+                  {t.nav.login}
                 </Link>
                 <Link href='/daftar' className='bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium'>
-                  Daftar
+                  {t.nav.daftar}
                 </Link>
               </div>
             </div>
 
             {/* Mobile Menu Button */}
-            <div className='md:hidden'>
+            <div className='flex items-center gap-2 md:hidden'>
+              <button
+                onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
+                className='p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors'
+              >
+                <Globe size={20} />
+              </button>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className='p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors'
@@ -88,14 +103,14 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     className='px-4 py-3 text-blue-900 hover:bg-blue-50 rounded-lg font-medium transition-colors'
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Login
+                    {t.nav.login}
                   </Link>
                   <Link
                     href='/daftar'
                     className='px-4 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 font-medium transition-colors text-center'
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Daftar
+                    {t.nav.daftar}
                   </Link>
                 </div>
               </div>

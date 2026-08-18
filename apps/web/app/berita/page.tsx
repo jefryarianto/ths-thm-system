@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components';
+import { useI18n } from '@/i18n/context';
 
 interface Berita {
   id: string;
@@ -14,6 +15,7 @@ interface Berita {
 }
 
 export default function BeritaPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<Berita[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export default function BeritaPage() {
         </div>
       ) : (
         <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
-          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Berita & Artikel</h1>
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">{t.berita.title}</h1>
           <div className="grid gap-4 sm:gap-6">
             {data.map((berita) => (
               <article key={berita.id} className="bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-100 hover:shadow-lg transition">
@@ -63,7 +65,7 @@ export default function BeritaPage() {
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <time dateTime={berita.tanggal}>{formatTanggal(berita.tanggal)}</time>
                       <Link href={`/berita/${berita.slug}`} className="text-blue-700 hover:underline font-medium">
-                        Baca selengkapnya
+                        {t.berita.readMore}
                       </Link>
                     </div>
                   </div>
@@ -71,6 +73,11 @@ export default function BeritaPage() {
               </article>
             ))}
           </div>
+          {data.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-xl">{t.berita.empty}</p>
+            </div>
+          )}
         </section>
       )}
     </PublicLayout>

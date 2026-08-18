@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PublicLayout } from '@/components';
 import apiClient from '@/lib/api-client';
 import { ChevronDown, ChevronRight, Building2, MapPin, Users, Loader2 } from 'lucide-react';
+import { useI18n } from '@/i18n/context';
 
 interface OrgNode {
   id: string;
@@ -25,6 +26,7 @@ interface OrgChartData {
 }
 
 function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(depth < 2);
   const hasChildren = node.children && node.children.length > 0;
 
@@ -50,7 +52,7 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
           {node.type === 'ranting' && <Users size={14} />}
           <span>{node.name}</span>
           {node.memberCount !== undefined && (
-            <span className="text-xs opacity-70 ml-2">({node.memberCount} anggota)</span>
+            <span className="text-xs opacity-70 ml-2">({node.memberCount} {t.kepengurusan.anggota})</span>
           )}
         </div>
         {hasChildren && (
@@ -71,6 +73,7 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
 }
 
 export default function KepengurusanPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<OrgChartData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -92,7 +95,7 @@ export default function KepengurusanPage() {
   return (
     <PublicLayout>
       <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
-        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-8 sm:mb-12 text-center">Kepengurusan</h1>
+        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-8 sm:mb-12 text-center">{t.kepengurusan.title}</h1>
         
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -102,10 +105,10 @@ export default function KepengurusanPage() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { label: 'Distrik', value: data.summary.totalDistrik },
-                { label: 'Wilayah', value: data.summary.totalWilayah },
-                { label: 'Ranting', value: data.summary.totalRanting },
-                { label: 'Anggota', value: data.summary.totalMembers },
+                { label: t.kepengurusan.distrik, value: data.summary.totalDistrik },
+                { label: t.kepengurusan.wilayah, value: data.summary.totalWilayah },
+                { label: t.kepengurusan.ranting, value: data.summary.totalRanting },
+                { label: t.kepengurusan.anggota, value: data.summary.totalMembers },
               ].map((card) => (
                 <div key={card.label} className="bg-blue-50 p-4 rounded-xl text-center">
                   <div className="text-2xl font-bold text-blue-900">{card.value}</div>
@@ -121,7 +124,7 @@ export default function KepengurusanPage() {
             </div>
           </>
         ) : (
-          <p className="text-center text-gray-500">Gagal memuat data kepengurusan.</p>
+          <p className="text-center text-gray-500">{t.kepengurusan.failed}</p>
         )}
       </section>
     </PublicLayout>

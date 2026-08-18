@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components';
+import { useI18n } from '@/i18n/context';
 
 interface BankInfo {
   id: string;
@@ -21,6 +22,7 @@ interface DonasiProgram {
 }
 
 export default function DonasiPage() {
+  const { t } = useI18n();
   const [bankInfo, setBankInfo] = useState<BankInfo[]>([]);
   const [programDonasi, setProgramDonasi] = useState<DonasiProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,15 +63,14 @@ export default function DonasiPage() {
   return (
     <PublicLayout>
       <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
-        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-4 text-center">Donasi</h1>
+        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-4 text-center">{t.donasi.title}</h1>
         <p className="text-center text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto text-sm sm:text-base">
-          Dukung kegiatan THS-THM dengan donasi Anda. Setiap kontribusi, besar maupun kecil,
-          sangat berarti untuk kelangsungan program-program kami.
+          {t.donasi.subtitle}
         </p>
 
         {/* Bank Info dari Backend */}
         <div className="mb-10 sm:mb-16">
-          <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 text-center">Rekening Donasi</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 text-center">{t.donasi.rekeningTitle}</h2>
           {bankInfo.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {bankInfo.map((rek) => (
@@ -82,13 +83,13 @@ export default function DonasiPage() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500">Informasi rekening belum tersedia</p>
+            <p className="text-center text-gray-500">{t.donasi.emptyRekening}</p>
           )}
         </div>
 
         {/* Program Donasi dari Backend */}
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 text-center">Program Donasi Saat Ini</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-900 mb-4 sm:mb-6 text-center">{t.donasi.programTitle}</h2>
           {programDonasi.length > 0 ? (
             <div className="grid gap-4 sm:gap-6">
               {programDonasi.map((prog) => {
@@ -106,29 +107,29 @@ export default function DonasiPage() {
                       ></div>
                     </div>
                     <div className="flex justify-between text-sm text-gray-600">
-                      <span>Terkumpul: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.terkumpul))}</span></span>
-                      <span>Target: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.targetDana))}</span></span>
+                      <span>{t.donasi.terkumpul}: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.terkumpul))}</span></span>
+                      <span>{t.donasi.target}: <span className="font-medium text-blue-900">{formatRupiah(Number(prog.targetDana))}</span></span>
                     </div>
                     <Link
                       href="/daftar"
                       className="mt-4 block w-full text-center bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 font-medium transition"
                     >
-                      Donasi Sekarang
+                      {t.donasi.donasiSekarang}
                     </Link>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="text-center text-gray-500">Belum ada program donasi aktif</p>
+            <p className="text-center text-gray-500">{t.donasi.emptyProgram}</p>
           )}
         </div>
 
         {/* QRIS dari Backend (jika ada) */}
         {qrisImage && (
           <div className="mt-16 p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center">
-            <h3 className="text-xl font-bold text-blue-900 mb-3">Donasi QRIS</h3>
-            <p className="text-gray-600 mb-4">Scan kode QRIS di bawah untuk donasi cepat via e-wallet</p>
+            <h3 className="text-xl font-bold text-blue-900 mb-3">{t.donasi.qrisTitle}</h3>
+            <p className="text-gray-600 mb-4">{t.donasi.qrisDesc}</p>
             <img
               src={qrisImage}
               alt="QRIS THS-THM"

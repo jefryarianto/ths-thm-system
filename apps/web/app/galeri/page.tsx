@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components';
+import { useI18n } from '@/i18n/context';
 
 interface GambarGaleri {
   id: string;
@@ -12,6 +13,7 @@ interface GambarGaleri {
 }
 
 export default function GaleriPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<GambarGaleri[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,7 @@ export default function GaleriPage() {
         </div>
       ) : (
         <section className="max-w-7xl mx-auto px-4 py-8 sm:py-16">
-          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Galeri</h1>
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">{t.galeri.title}</h1>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.map((item) => (
               <div key={item.id} className="group relative bg-blue-50 rounded-2xl overflow-hidden border border-blue-100 hover:shadow-lg transition aspect-[4/3]">
@@ -58,8 +60,8 @@ export default function GaleriPage() {
           </div>
           {data.length === 0 && (
             <div className="text-center py-12 text-gray-500">
-              <p className="text-xl mb-2">Belum ada foto</p>
-              <p>Galeri akan segera diisi dengan momen-momen indah THS-THM</p>
+              <p className="text-xl mb-2">{t.galeri.empty}</p>
+              <p>{t.galeri.emptyDesc}</p>
             </div>
           )}
         </section>

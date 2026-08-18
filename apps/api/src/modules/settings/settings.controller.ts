@@ -160,49 +160,6 @@ export class SettingsController {
     return this.settingsService.uploadStamp(dto);
   }
 
-  @Get(':key')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil pengaturan by key' })
-  async getSetting(@Param('key') key: string) {
-    const setting = await this.prisma.setting.findUnique({ where: { key } });
-    if (!setting) {
-      return { success: false, message: 'Setting not found' };
-    }
-    return setting.value;
-  }
-
-  @Post(':key')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui pengaturan by key' })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async updateSetting(@Param('key') key: string, @Body() body: { value: any }) {
-    await this.prisma.setting.upsert({
-      where: { key },
-      create: { key, value: body.value },
-      update: { value: body.value },
-    });
-  }
-
-  @Get('branding/colors')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil warna branding' })
-  async getBrandingColors() {
-    const setting = await this.prisma.setting.findUnique({ where: { key: 'branding' } });
-    const colors = setting?.value || {
-      primary: '#0066cc',
-      secondary: '#004c99',
-      accent: '#ff6600',
-    };
-    return colors;
-  }
-
-  @Post('branding/colors')
-  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui warna branding' })
-  async updateBrandingColors(@Body() body: { primary: string; secondary: string; accent: string }) {
-    await this.prisma.setting.upsert({
-      where: { key: 'branding' },
-      create: { key: 'branding', value: body },
-      update: { value: body },
-    });
-  }
-
   // ── Sejarah (public content) ──────────────────────
 
   @Get('sejarah')
@@ -229,6 +186,49 @@ export class SettingsController {
   @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui struktur organisasi' })
   async updateOrganisasi(@Body() body: { struktur: unknown; isVisible?: boolean }) {
     return this.settingsService.updateOrganisasi(body);
+  }
+
+  @Get('branding/colors')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil warna branding' })
+  async getBrandingColors() {
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'branding' } });
+    const colors = setting?.value || {
+      primary: '#0066cc',
+      secondary: '#004c99',
+      accent: '#ff6600',
+    };
+    return colors;
+  }
+
+  @Post('branding/colors')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui warna branding' })
+  async updateBrandingColors(@Body() body: { primary: string; secondary: string; accent: string }) {
+    await this.prisma.setting.upsert({
+      where: { key: 'branding' },
+      create: { key: 'branding', value: body },
+      update: { value: body },
+    });
+  }
+
+  @Get(':key')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil pengaturan by key' })
+  async getSetting(@Param('key') key: string) {
+    const setting = await this.prisma.setting.findUnique({ where: { key } });
+    if (!setting) {
+      return { success: false, message: 'Setting not found' };
+    }
+    return setting.value;
+  }
+
+  @Post(':key')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Perbarui pengaturan by key' })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async updateSetting(@Param('key') key: string, @Body() body: { value: any }) {
+    await this.prisma.setting.upsert({
+      where: { key },
+      create: { key, value: body.value },
+      update: { value: body.value },
+    });
   }
 
   @Get('export/audit')

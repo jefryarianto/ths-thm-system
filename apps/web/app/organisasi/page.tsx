@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components';
+import { useI18n } from '@/i18n/context';
 
 interface Organisasi {
   struktur: Array<{
@@ -12,6 +13,7 @@ interface Organisasi {
 }
 
 export default function OrganisasiPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<Organisasi | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,7 @@ export default function OrganisasiPage() {
         </div>
       ) : (
         <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
-          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">Struktur Organisasi</h1>
+          <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-6 sm:mb-8 text-center">{t.organisasi.title}</h1>
           <div className="grid gap-4 sm:grid-cols-2">
             {data?.struktur?.map((item, idx) => (
               <div key={idx} className="bg-blue-50 rounded-2xl p-4 sm:p-6 border border-blue-100 hover:shadow-lg transition">
@@ -49,7 +51,7 @@ export default function OrganisasiPage() {
               </div>
             )) || (
               <div className="col-span-full text-center text-gray-500 py-12">
-                <p>Data struktur organisasi belum tersedia</p>
+                <p>{t.organisasi.empty}</p>
               </div>
             )}
           </div>
