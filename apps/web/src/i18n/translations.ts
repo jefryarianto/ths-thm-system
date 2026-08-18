@@ -144,4 +144,4 @@ export const translations = {
 } as const;
 
 export type Locale = 'id' | 'en';
-export type TranslationKeys = typeof translations.id;
+export type TranslationKeys = (typeof translations)[Locale];
