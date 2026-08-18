@@ -392,18 +392,16 @@ export class AuthService {
 
       if (!member) return;
 
-      // Calculate missing fields
+      // Calculate missing fields — only check fields the user can edit from the mobile app.
+      // Admin-set fields (jenisKelamin, tempatDadar, tahunDadar, tingkat) are excluded
+      // because the user has no way to fill them, so they shouldn't trigger "incomplete".
       const missingFields: string[] = [];
       if (!member.namaLengkap) missingFields.push('nama_lengkap');
-      if (!member.jenisKelamin) missingFields.push('jenis_kelamin');
       if (!member.tempatLahir) missingFields.push('tempat_lahir');
       if (!member.tanggalLahir) missingFields.push('tanggal_lahir');
-      if (!member.tempatDadar) missingFields.push('tempat_dadar');
-      if (!member.tahunDadar) missingFields.push('tahun_dadar');
       if (!member.alamat) missingFields.push('alamat');
       if (!member.noHp) missingFields.push('no_hp');
       if (!member.email) missingFields.push('email');
-      if (!member.tingkat) missingFields.push('tingkat');
 
       const statusData = missingFields.length > 0 ? 'incomplete' : 'complete';
 

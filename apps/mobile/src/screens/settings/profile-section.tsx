@@ -1,14 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+
+/** Avatar dengan fallback ke initials */
+function ProfileAvatar({ fotoPath, namaLengkap }: { fotoPath?: string | null; namaLengkap?: string }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImage = fotoPath && !imgFailed;
+
+  return (
+    <View style={styles.avatar}>
+      {showImage ? (
+        <Image
+          source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(fotoPath!)}` }}
+          style={[StyleSheet.absoluteFill, styles.avatarImg]}
+          resizeMode="cover"
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <Text style={styles.avatarText}>
+          {(namaLengkap || 'U').charAt(0).toUpperCase()}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 interface ProfileData {
   namaLengkap?: string;
   email?: string;
   role?: string;
+  fotoPath?: string | null;
 }
 
 export default function ProfileSection() {
@@ -42,11 +68,7 @@ export default function ProfileSection() {
       <View style={styles.card}>
         {/* Avatar */}
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(profile?.namaLengkap || 'U').charAt(0).toUpperCase()}
-            </Text>
-          </View>
+          <ProfileAvatar fotoPath={profile?.fotoPath} namaLengkap={profile?.namaLengkap} />
           <Text style={styles.roleBadge}>{profile?.role || 'anggota'}</Text>
         </View>
 
@@ -93,6 +115,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#dbeafe',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
   },
   avatarText: { fontSize: 24, fontWeight: 'bold', color: '#2563eb' },
   roleBadge: { fontSize: 12, color: '#6b7280', marginTop: 6, textTransform: 'capitalize' },

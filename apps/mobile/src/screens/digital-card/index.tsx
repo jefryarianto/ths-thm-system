@@ -16,6 +16,7 @@ import {
   ViewStyle,
   ImageStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Svg, { Path, Rect, Defs, Pattern, LinearGradient, Stop } from 'react-native-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -746,10 +747,12 @@ export default function DigitalCardScreen() {
     .join(', ') || '-';
   const dadar = [member?.tempatDadar, member?.tahunDadar].filter(Boolean).join(', ') || '-';
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.containerContent}
+      contentContainerStyle={[styles.containerContent, { paddingTop: insets.top + 16 }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <Text style={styles.pageTitle}>Kartu Anggota Digital (KTA)</Text>

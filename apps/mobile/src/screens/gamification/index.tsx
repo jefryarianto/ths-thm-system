@@ -13,6 +13,7 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native';
 import { Svg, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
@@ -329,6 +330,8 @@ export default function GamificationScreen() {
     { key: 'rewards' as TabType, label: 'Reward', icon: 'gift' as const },
   ];
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={styles.container}
@@ -337,7 +340,7 @@ export default function GamificationScreen() {
       }
     >
       {/* Tab Selector */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { paddingTop: insets.top + 12 }]}>
         <View style={styles.tabRow}>
           {tabs.map((tab) => (
             <TouchableOpacity
@@ -785,7 +788,7 @@ const styles = StyleSheet.create({
   },
   retryText: { color: '#fff', fontWeight: '600' },
 
-  tabContainer: { paddingHorizontal: 16, paddingTop: 12 },
+  tabContainer: { paddingHorizontal: 16 },
   tabRow: { flexDirection: 'row', backgroundColor: '#e5e7eb', borderRadius: 12, padding: 3 },
   tab: {
     flex: 1,

@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/auth-store';
@@ -32,6 +33,8 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -39,7 +42,7 @@ export default function SettingsScreen() {
     >
       <ScrollView style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.headerTitle}>Pengaturan</Text>
         </View>
 
@@ -99,7 +102,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   section: { padding: 16, paddingBottom: 0 },
   linkButton: {

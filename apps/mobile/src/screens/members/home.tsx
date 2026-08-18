@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LoadingView } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 import { useMemberProfile } from '../../hooks/use-member-profile';
@@ -80,19 +81,21 @@ export default function HomeScreen() {
       );
   const menuItems = [...memberItems, ...visibleAdminItems];
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.greeting}>Selamat Datang,</Text>
         <Text style={styles.name}>
           {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
         </Text>
         {/* Lonceng notifikasi + badge jumlah belum dibaca (kanan atas) */}
         <TouchableOpacity
-          style={styles.bellBtn}
+          style={[styles.bellBtn, { top: insets.top + 8 }]}
           onPress={() => router.push('/notifications')}
           activeOpacity={0.7}
           accessibilityLabel="Notifikasi"
@@ -155,8 +158,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 32 },
-  bellBtn: { position: 'absolute', right: 20, top: 52, padding: 6, zIndex: 10 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 32 },
+  bellBtn: { position: 'absolute', right: 20, padding: 6, zIndex: 10 },
   bellBadge: {
     position: 'absolute',
     top: -2,
