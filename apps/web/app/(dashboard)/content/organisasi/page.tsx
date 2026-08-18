@@ -42,7 +42,7 @@ export default function OrganisasiPage() {
       setStruktur(org.struktur || []);
       setIsVisible(org.isVisible);
     } catch {
-      toast.error('Gagal memuat data organisasi');
+      toast('error', 'Gagal memuat data organisasi');
     } finally {
       setLoading(false);
     }
@@ -52,9 +52,9 @@ export default function OrganisasiPage() {
     setSaving(true);
     try {
       await apiClient.patch('/settings/organisasi', { struktur, isVisible });
-      toast.success('Struktur organisasi berhasil disimpan');
+      toast('success', 'Struktur organisasi berhasil disimpan');
     } catch {
-      toast.error('Gagal menyimpan struktur organisasi');
+      toast('error', 'Gagal menyimpan struktur organisasi');
     } finally {
       setSaving(false);
     }

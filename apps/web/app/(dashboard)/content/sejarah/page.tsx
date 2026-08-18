@@ -36,7 +36,7 @@ export default function SejarahPage() {
       setKonten(sejarah.konten || '');
       setIsVisible(sejarah.isVisible);
     } catch {
-      toast.error('Gagal memuat data sejarah');
+      toast('error', 'Gagal memuat data sejarah');
     } finally {
       setLoading(false);
     }
@@ -46,9 +46,9 @@ export default function SejarahPage() {
     setSaving(true);
     try {
       await apiClient.patch('/settings/sejarah', { konten, isVisible });
-      toast.success('Konten sejarah berhasil disimpan');
+      toast('success', 'Konten sejarah berhasil disimpan');
     } catch {
-      toast.error('Gagal menyimpan konten sejarah');
+      toast('error', 'Gagal menyimpan konten sejarah');
     } finally {
       setSaving(false);
     }
