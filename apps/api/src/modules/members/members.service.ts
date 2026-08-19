@@ -110,7 +110,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // Override for custom caching key + search/filter + deletedAt + hierarchical filters.
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
-    const cacheKey = `members:list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}:${filter.statusData || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}`;
+    const cacheKey = `members:list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}:${filter.statusData || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}:${filter.tanpaFoto || ''}`;
 
     return this.baseFindAll(
       cacheKey,
@@ -126,6 +126,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             { email: { contains: filter.search, mode: 'insensitive' } },
           ];
         }
+        if (filter.tanpaFoto === 'true') where.fotoPath = null;
         if (filter.rantingId) where.rantingId = filter.rantingId;
         if (filter.statusKeanggotaan) where.statusKeanggotaan = filter.statusKeanggotaan;
         if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;

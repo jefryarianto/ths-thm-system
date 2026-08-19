@@ -173,4 +173,9 @@ export class MemberFilterDto {
   @IsOptional()
   @IsString()
   statusData?: string;
+
+  @ApiPropertyOptional({ description: 'Filter anggota tanpa foto (tanpaFoto=true)' })
+  @IsOptional()
+  @IsString()
+  tanpaFoto?: string;
 }

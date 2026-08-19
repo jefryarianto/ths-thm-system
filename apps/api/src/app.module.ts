@@ -49,6 +49,7 @@ import { PenandatanganModule } from './modules/penandatangan/penandatangan.modul
 import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
 import { PublicModule } from './modules/public/public.module';
 import { ContentModule } from './modules/content/content.module';
+import { MutationsModule } from './modules/mutations/mutations.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ContentModule } from './modules/content/content.module';
     TingkatanModule,
     PublicModule,
     ContentModule,
+    MutationsModule,
     CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,

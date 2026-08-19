@@ -36,6 +36,7 @@ import {
   PenLine,
   Globe,
   BookOpen,
+  ArrowLeftRight,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -98,6 +99,7 @@ const menuGroups: MenuGroup[] = [
     label: 'Keanggotaan',
     items: [
       { href: '/members', label: 'Anggota', icon: Users, minRole: 'admin_ranting' },
+      { href: '/members/mutasi', label: 'Mutasi', icon: ArrowLeftRight, minRole: 'admin_ranting' },
       // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
       { href: '/candidates', label: 'Calon', icon: UserPlus, minRole: 'admin_kegiatan' },
       { href: '/registrations', label: 'Pendaftaran', icon: UserPlus, minRole: 'admin_ranting' },

@@ -20,8 +20,10 @@ import FilterSelect from '@/components/ui/filter-select';
 import { useToast } from '@/components/ui/toast';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import MemberActions from '@/components/members/MemberActions';
+import MutationModal from '@/components/members/MutationModal';
 import MemberStatCards from '@/components/members/MemberStatCards';
 import { StatusBadge, STATUS_LABELS, formatDate, toProperCase } from '@/components/members/constants';
+import { useAuth } from '@/hooks/use-auth';
 
 // ─── Page ───
 
@@ -29,7 +31,9 @@ import { StatusBadge, STATUS_LABELS, formatDate, toProperCase } from '@/componen
 export default function MembersPage() {
   const router = useRouter();
   const toast = useToast();
+  const { isAdmin } = useAuth();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [mutasiMember, setMutasiMember] = useState<Member | null>(null);
 
   // Stats
   const [stats, setStats] = useState({ total: 0, aktif: 0, pendingValidasi: 0, incomplete: 0 });
@@ -52,6 +56,7 @@ export default function MembersPage() {
       { key: 'distrikId', defaultValue: '' },
       { key: 'wilayahId', defaultValue: '' },
       { key: 'rantingId', defaultValue: '' },
+      { key: 'tanpaFoto', defaultValue: '' },
     ],
   });
   const debouncedSearch = useDebounce(search, 300);
@@ -69,6 +74,7 @@ export default function MembersPage() {
     if (filters.statusKeanggotaan) params.statusKeanggotaan = filters.statusKeanggotaan;
     if (filters.statusData) params.statusData = filters.statusData;
     if (filters.statusValidasi) params.statusValidasi = filters.statusValidasi;
+    if (filters.tanpaFoto) params.tanpaFoto = filters.tanpaFoto;
     return apiClient.get('/members', { params }).then((r) => r.data);
   }, [
     page,
@@ -79,6 +85,7 @@ export default function MembersPage() {
     filters.distrikId,
     filters.wilayahId,
     filters.rantingId,
+    filters.tanpaFoto,
   ]);
 
   interface OrgNode { id: string; name: string; children?: OrgNode[]; }
@@ -135,6 +142,30 @@ export default function MembersPage() {
   }, [fetchStats]);
 
   // ─── Actions ───
+
+  const handleUploadPhoto = async (id: string, file: File) => {
+    setActionLoading(id);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetch(`/api/upload/member-photo/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast('success', 'Foto berhasil diupload');
+        refetch();
+      } else {
+        toast('error', data.message || 'Gagal upload foto');
+      }
+    } catch {
+      toast('error', 'Gagal upload foto. Silakan coba lagi.');
+    }
+    setActionLoading(null);
+  };
 
   const handleAction = async (id: string, action: string) => {
     if (action === 'remove') {
@@ -342,6 +373,15 @@ export default function MembersPage() {
           ]}
           placeholder="Semua Validasi"
         />
+        <FilterSelect
+          value={filters.tanpaFoto}
+          onChange={(v) => setFilter('tanpaFoto', v)}
+          options={[
+            { value: 'true', label: 'Tanpa Foto' },
+            { value: 'false', label: 'Dengan Foto' },
+          ]}
+          placeholder="Semua Foto"
+        />
       </SearchBar>
 
       {/* Error Message */}
@@ -378,8 +418,17 @@ export default function MembersPage() {
             actionLoading={actionLoading}
             onAction={handleAction}
             onViewDetail={(id) => router.push(`/members/${id}`)}
+            onMutate={isAdmin ? (id) => setMutasiMember(members.find((x) => x.id === id) ?? null) : undefined}
+            onUploadPhoto={isAdmin ? handleUploadPhoto : undefined}
           />
         )}
+      />
+
+      <MutationModal
+        open={!!mutasiMember}
+        onClose={() => setMutasiMember(null)}
+        onSuccess={refetch}
+        member={mutasiMember}
       />
     </PageContainer>
     </PermissionGuard>

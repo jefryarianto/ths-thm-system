@@ -308,6 +308,8 @@ model Ranting {
   calonAnggotas CalonAnggota[]
   latihans      Latihan[]
   kepengurusans Kepengurusan[]
+  transferFrom  TransferRequest[] @relation("TransferFrom")
+  transferTo    TransferRequest[] @relation("TransferTo")
 
   @@unique([wilayahId, kodeRanting])
   @@map("ranting")
@@ -415,6 +417,7 @@ model Anggota {
   iuranRecurrings         IuranRecurring[]
   memberReferralsAsReferrer MemberReferral[] @relation("Referrer")
   memberReferralsAsReferred MemberReferral[] @relation("Referred")
+  transferRequests          TransferRequest[]
 
   @@index([statusData])
   @@map("anggota")
@@ -1696,7 +1699,7 @@ model QueueUptimeEvent {
   @@map("queue_uptime_events")
 }
 
-// ── Member Transfer ──────────────────────────────────────
+// ── Member Transfer (Mutasi) ─────────────────────────────
 
 model TransferRequest {
   id           String   @id @default(uuid())
@@ -1704,7 +1707,9 @@ model TransferRequest {
   fromRantingId String  @map("from_ranting_id")
   toRantingId  String   @map("to_ranting_id")
   reason       String?
+  scope        String   @default("distrik") // 'distrik' | 'nasional'
   status       String   @default("pending")
+  requestedBy  String?  @map("requested_by")
   approvedBy   String?  @map("approved_by")
   approvedAt   DateTime? @map("approved_at")
   rejectedBy   String?  @map("rejected_by")
@@ -1713,8 +1718,33 @@ model TransferRequest {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  anggota     Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  fromRanting Ranting  @relation("TransferFrom", fields: [fromRantingId], references: [id], onDelete: Cascade)
+  toRanting   Ranting  @relation("TransferTo", fields: [toRantingId], references: [id], onDelete: Cascade)
+  approvals   TransferApproval[]
+
   @@index([status])
   @@map("transfer_requests")
+}
+
+model TransferApproval {
+  id                String   @id @default(uuid())
+  transferRequestId String   @map("transfer_request_id")
+  side              String   // 'asal' | 'tujuan'
+  level             String   // 'ranting' | 'wilayah' | 'distrik'
+  status            String   @default("pending")
+  order             Int      @default(0)
+  decidedBy         String?  @map("decided_by")
+  decidedAt         DateTime? @map("decided_at")
+  note              String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  transferRequest TransferRequest @relation(fields: [transferRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([transferRequestId, side, level])
+  @@index([status])
+  @@map("transfer_approvals")
 }
 
 // ── Predictive Analytics ─────────────────────────────────

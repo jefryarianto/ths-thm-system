@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import {
   CheckCircle2, Shield, UserX, Eye, MoreVertical, Edit, Trash2,
-  IdCard, FileText
+  IdCard, FileText, ArrowLeftRight, Image
 } from 'lucide-react';
 
 interface MemberActionsProps {
@@ -15,6 +15,8 @@ interface MemberActionsProps {
   actionLoading: string | null;
   onAction: (id: string, action: string) => void;
   onViewDetail: (id: string) => void;
+  onMutate?: (id: string) => void;
+  onUploadPhoto?: (id: string, file: File) => void;
 }
 
 export default function MemberActions({
@@ -22,9 +24,12 @@ export default function MemberActions({
   actionLoading,
   onAction,
   onViewDetail,
+  onMutate,
+  onUploadPhoto,
 }: MemberActionsProps) {
   const [showMenu, setShowMenu] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   const toggleMenu = () => {
@@ -33,7 +38,7 @@ export default function MemberActions({
       const spaceBelow = window.innerHeight - rect.bottom;
       // ~7 item menu × 36px — bila ruang di bawah tidak cukup (baris terakhir
       // halaman), buka menu ke atas agar seluruh menu tetap terlihat.
-      const estimatedMenuHeight = 260;
+      const estimatedMenuHeight = 320;
       setMenuStyle({
         position: 'fixed' as const,
         ...(spaceBelow < estimatedMenuHeight
@@ -51,6 +56,16 @@ export default function MemberActions({
     { label: 'Edit Anggota', icon: Edit, action: () => onViewDetail(member.id) },
     { label: 'Kartu Digital (KTA)', icon: IdCard, action: () => window.open(`/members/${member.id}?tab=card`, '_blank') },
     { label: 'Dokumen', icon: FileText, action: () => onViewDetail(member.id) },
+    ...(onMutate
+      ? [{ label: 'Mutasi', icon: ArrowLeftRight, action: () => onMutate!(member.id) }]
+      : []),
+    ...(onUploadPhoto
+      ? [{
+          label: 'Ubah Foto',
+          icon: Image,
+          action: () => fileInputRef.current?.click(),
+        }]
+      : []),
     ...(member.statusValidasi === 'pending'
       ? [{ label: 'Setujui', icon: CheckCircle2, action: () => onAction(member.id, 'approve') }]
       : []),
@@ -114,6 +129,19 @@ export default function MemberActions({
           </>
         )}
       </div>
+      {onUploadPhoto && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onUploadPhoto(member.id, file);
+            e.target.value = '';
+          }}
+        />
+      )}
     </div>
   );
 }
