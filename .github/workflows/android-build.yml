@@ -108,7 +108,7 @@ jobs:
         run: |
           BT_DIR="$ANDROID_HOME/build-tools"
           BT=$(ls "$BT_DIR" | sort -V | tail -1)
-          APK="apps/mobile/android/app/build/outputs/apk/release/app-arm64-v8a-release.apk"
+          APK="apps/mobile/android/app/build/outputs/apk/release/app-release.apk"
           echo "build-tools: $BT"
           "$BT_DIR/$BT/apksigner" verify --print-certs "$APK" | head -4
 
