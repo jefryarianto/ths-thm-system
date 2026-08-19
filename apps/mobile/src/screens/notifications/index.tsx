@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
 import { useNotifications, formatTime, TYPE_ICONS, NotificationItem } from '../../hooks/use-notifications';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -54,13 +56,20 @@ export default function NotificationsScreen() {
     navigateToNotification(item);
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat notifikasi..." />;
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifikasi</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }}>
+          <Ionicons name="arrow-back" size={22} color="#111827" />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Notifikasi</Text>
+        </View>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={markAllAsRead}>
             <Text style={styles.markAllRead}>Tandai semua dibaca ({unreadCount})</Text>
@@ -122,7 +131,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 12,
     paddingBottom: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,

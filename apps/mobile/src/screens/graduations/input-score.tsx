@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
@@ -32,6 +33,7 @@ interface ParticipantScore {
 }
 
 export default function InputScoreScreen() {
+  const insets = useSafeAreaInsets();
   const { id: graduationId } = useLocalSearchParams<{ id: string }>();
 
   // Local state
@@ -177,7 +179,7 @@ export default function InputScoreScreen() {
 
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
@@ -242,7 +244,7 @@ export default function InputScoreScreen() {
   if (formState === 'select_participant') {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
@@ -292,7 +294,7 @@ export default function InputScoreScreen() {
   if (formState === 'input_scores' || formState === 'submitting') {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={handleBackToList} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
@@ -448,7 +450,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2563eb',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',

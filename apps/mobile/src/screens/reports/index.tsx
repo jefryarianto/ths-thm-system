@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
@@ -28,6 +29,8 @@ export default function ReportsScreen() {
     [],
   );
   const { refreshing, onRefresh } = useRefresh(refetch);
+
+  const insets = useSafeAreaInsets();
 
   if (loading) return <LoadingView message="Memuat laporan..." />;
   if (!stats)
@@ -91,7 +94,7 @@ export default function ReportsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <BackButton />
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Laporan & Statistik</Text>
         <Text style={styles.headerSub}>Overview data organisasi</Text>
       </View>
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
   errorText: { fontSize: 14, color: '#dc2626' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
   content: { padding: 16 },

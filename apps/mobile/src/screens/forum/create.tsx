@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
@@ -63,12 +64,14 @@ export default function CreateThreadScreen() {
     setSubmitting(false);
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat kategori..." />;
 
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
@@ -156,7 +159,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2563eb',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',

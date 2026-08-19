@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import {
@@ -90,6 +91,8 @@ export default function ApprovalsListScreen() {
     [refetch],
   );
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat persetujuan..." />;
 
   if (error) return <ErrorView message={error} onRetry={refetch} />;
@@ -97,7 +100,7 @@ export default function ApprovalsListScreen() {
   return (
     <View style={styles.container}>
       <BackButton />
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Persetujuan</Text>
@@ -250,7 +253,7 @@ function ApprovalCard({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },

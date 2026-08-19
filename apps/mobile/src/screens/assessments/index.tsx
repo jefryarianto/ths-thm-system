@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useApi } from '../../hooks/use-api';
@@ -35,12 +36,14 @@ export default function AssessmentsScreen() {
 
   const { refreshing, onRefresh } = useRefresh(refetch);
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat aspek penilaian..." />;
 
   return (
     <View style={styles.container}>
       <BackButton />
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Aspek Penilaian</Text>
           <Text style={styles.headerSub}>{(assessments ?? []).length} aspek</Text>
@@ -85,7 +88,7 @@ export default function AssessmentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
   addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', position: 'absolute', right: 24, top: 60 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },

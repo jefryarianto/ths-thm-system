@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -30,6 +31,7 @@ interface ScanHistoryItem {
 }
 
 export default function QRScanScreen() {
+  const insets = useSafeAreaInsets();
   const [scanMode, setScanMode] = useState<'verify' | 'checkin' | 'lookup'>('verify');
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
@@ -334,7 +336,7 @@ export default function QRScanScreen() {
   if (!permission) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}><Text style={styles.headerTitle}>QR Scanner</Text></View>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}><Text style={styles.headerTitle}>QR Scanner</Text></View>
         <View style={styles.scannerArea}><ActivityIndicator size="large" color="#2563eb" /></View>
       </View>
     );
@@ -343,7 +345,7 @@ export default function QRScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}><Text style={styles.headerTitle}>QR Scanner</Text></View>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}><Text style={styles.headerTitle}>QR Scanner</Text></View>
         <View style={styles.scannerArea}>
           <Ionicons name="camera-outline" size={64} color="#6b7280" />
           <Text style={styles.scannerHint}>Izin kamera diperlukan untuk scan QR code</Text>
@@ -358,7 +360,7 @@ export default function QRScanScreen() {
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>QR Scanner</Text>
       </View>
 
@@ -562,7 +564,7 @@ export default function QRScanScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#111827', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#111827', padding: 24, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   modeSelector: { flexDirection: 'row', padding: 12, gap: 8 },
   modeTab: {

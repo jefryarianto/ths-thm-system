@@ -300,9 +300,10 @@ interface ScreenShellProps {
  * - 'reference' variant: back+title+refresh button, paddingTop 54, supports badge
  */
 export function ScreenShell({ title, children, variant, onRefresh, badgeLabel, badgeColor, badgeBg }: ScreenShellProps) {
+  const insets = useSafeAreaInsets();
   return (
     <View style={shellStyles.container}>
-      <View style={[shellStyles.header, variant === 'detail' ? shellStyles.headerDetail : shellStyles.headerReference]}>
+      <View style={[shellStyles.header, { paddingTop: insets.top + (variant === 'detail' ? 16 : 12) }, variant === 'detail' ? shellStyles.headerDetail : shellStyles.headerReference]}>
         <TouchableOpacity onPress={() => router.back()} style={shellStyles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
@@ -345,11 +346,14 @@ export function ReferenceScreenState({
   title: string;
   onRetry: () => void;
 }) {
+  const insets = useSafeAreaInsets();
+  const safeHeader = { backgroundColor: '#2563eb', paddingTop: insets.top + 12, paddingBottom: 14, paddingHorizontal: 16 } as const;
+
   // ID guard
   if (!id) {
     return (
       <View style={referenceStyles.container}>
-        <View style={referenceStyles.header}>
+        <View style={safeHeader}>
           <View style={referenceStyles.headerRow}>
             <TouchableOpacity onPress={() => router.back()} style={referenceStyles.backBtn}>
               <Ionicons name="arrow-back" size={22} color="#fff" />
@@ -366,7 +370,7 @@ export function ReferenceScreenState({
   if (loading) {
     return (
       <View style={referenceStyles.container}>
-        <View style={referenceStyles.header}>
+        <View style={safeHeader}>
           <View style={referenceStyles.headerRow}>
             <TouchableOpacity onPress={() => router.back()} style={referenceStyles.backBtn}>
               <Ionicons name="arrow-back" size={22} color="#fff" />
@@ -386,7 +390,7 @@ export function ReferenceScreenState({
   if (error) {
     return (
       <View style={referenceStyles.container}>
-        <View style={referenceStyles.header}>
+        <View style={safeHeader}>
           <View style={referenceStyles.headerRow}>
             <TouchableOpacity onPress={() => router.back()} style={referenceStyles.backBtn}>
               <Ionicons name="arrow-back" size={22} color="#fff" />
@@ -479,11 +483,9 @@ const shellStyles = StyleSheet.create({
   },
   headerDetail: {
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 16,
   },
   headerReference: {
-    paddingTop: 54,
     paddingBottom: 14,
     paddingHorizontal: 16,
   },

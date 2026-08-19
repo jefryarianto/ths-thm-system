@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useForumCategories } from '../../hooks/use-forum';
@@ -10,11 +11,13 @@ export default function ForumScreen() {
   const { data: categories, loading, refetch } = useForumCategories();
   const { refreshing, onRefresh } = useRefresh(refetch);
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat forum..." />;
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View>
           <Text style={styles.headerTitle}>Forum Komunitas</Text>
           <Text style={styles.headerSub}>{(categories ?? []).length} kategori</Text>
@@ -75,7 +78,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2563eb',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -61,6 +62,8 @@ export default function ApprovalDetailScreen() {
     );
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat detail..." />;
   if (error || !approval) {
     return (
@@ -76,7 +79,7 @@ export default function ApprovalDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#fff" />

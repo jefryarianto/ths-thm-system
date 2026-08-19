@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
 import { LoadingView, SearchBar } from '../../components/ui/shared';
@@ -92,12 +93,14 @@ export default function ExaminersScreen() {
     setToggling(null);
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat data penguji..." />;
 
   return (
     <View style={styles.container}>
       <BackButton />
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Manajemen Penguji</Text>
           <Text style={styles.headerSub}>{filtered.length} penguji</Text>
@@ -232,7 +235,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#111827',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',

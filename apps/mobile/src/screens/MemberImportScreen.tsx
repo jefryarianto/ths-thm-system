@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
@@ -46,11 +47,13 @@ export default function MemberImportScreen() {
     }
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Mengupload file CSV..." />;
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
@@ -110,7 +113,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2563eb',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',

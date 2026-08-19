@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient, { unwrap, toAbsoluteUrl } from '../../lib/api-client';
 import { usePaginatedList } from '../../hooks/use-api';
@@ -87,6 +88,8 @@ export default function DuesScreen() {
 
   const { refreshing, onRefresh } = useRefresh(refetch);
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat iuran..." />;
 
   // Gagal memuat data → tampilkan pesan jelas + tombol coba lagi
@@ -94,7 +97,10 @@ export default function DuesScreen() {
   if (error && allDues.length === 0) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={styles.totalLabel}>Total Pembayaran</Text>
             <Text style={styles.totalAmount}>Rp 0</Text>
@@ -109,7 +115,10 @@ export default function DuesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={styles.totalLabel}>Total Pembayaran</Text>
           <Text style={styles.totalAmount}>Rp {total.toLocaleString('id-ID')}</Text>
@@ -211,7 +220,7 @@ export default function DuesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, flexDirection: 'row', alignItems: 'center' },
+  header: { backgroundColor: '#2563eb', padding: 24, flexDirection: 'row', alignItems: 'center' },
   totalLabel: { color: '#bfdbfe', fontSize: 13 },
   totalAmount: { color: '#fff', fontSize: 28, fontWeight: '700', marginTop: 4 },
   countLabel: { color: '#bfdbfe', fontSize: 12, marginTop: 6 },

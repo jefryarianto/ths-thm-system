@@ -8,6 +8,7 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForumThreads } from '../../hooks/use-forum';
@@ -24,11 +25,13 @@ export default function ForumThreadsScreen() {
   const { data: threads, loading, refetch } = useForumThreads(categoryId!, search);
   const { refreshing, onRefresh } = useRefresh(refetch);
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat thread..." />;
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
@@ -127,7 +130,6 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2563eb',
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',

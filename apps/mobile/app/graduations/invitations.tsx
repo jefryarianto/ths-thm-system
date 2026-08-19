@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, router } from 'expo-router';
 import apiClient, { unwrap } from '../../src/lib/api-client';
@@ -89,11 +90,13 @@ export default function InvitationsScreen() {
     );
   };
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat undangan..." />;
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
@@ -194,8 +197,8 @@ export default function InvitationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
-  headerBack: { position: 'absolute', left: 8, top: 56, zIndex: 10, padding: 8 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
+  headerBack: { padding: 4, marginRight: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },

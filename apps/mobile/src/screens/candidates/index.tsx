@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCandidates, STATUS_STYLES, STATUS_FILTERS } from '../../hooks/use-candidates';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -13,12 +14,14 @@ export default function CandidatesScreen() {
   const { data: candidates, loading, refetch } = useCandidates(search, filterStatus);
   const { refreshing, onRefresh } = useRefresh(refetch);
 
+  const insets = useSafeAreaInsets();
+
   if (loading) return <LoadingView message="Memuat calon anggota..." />;
 
   return (
     <View style={styles.container}>
       <BackButton />
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Calon Anggota</Text>
         <Text style={styles.headerSub}>{(candidates ?? []).length} calon</Text>
       </View>
@@ -85,7 +88,7 @@ export default function CandidatesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingTop: 60, paddingBottom: 20 },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
   headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
   card: {
