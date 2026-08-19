@@ -300,12 +300,18 @@ export default function OrgStructureSettingsPage() {
   };
 
   const handleDelete = async (id: string, level: OrgLevel) => {
-    if (!(await confirm(`Yakin ingin menghapus ${level} ini? Data terkait akan ikut terhapus.`))) return;
+    if (
+      !(await confirm(
+        `Yakin ingin menghapus ${level} ini? Seluruh data di dalamnya (anggota, calon anggota, latihan, iuran, dokumen, chat, forum, dan lainnya) akan terhapus permanen dan tidak dapat dikembalikan.`,
+      ))
+    )
+      return;
     try {
       await apiClient.delete(`/org-structure/${level}/${id}`);
       await fetchData();
-    } catch {
-      toast('error', 'Gagal menghapus');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal menghapus');
     }
   };
 

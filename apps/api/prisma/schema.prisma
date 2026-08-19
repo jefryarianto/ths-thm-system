@@ -284,7 +284,7 @@ model Wilayah {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  distrik       Distrik   @relation(fields: [distrikId], references: [id])
+  distrik       Distrik   @relation(fields: [distrikId], references: [id], onDelete: Cascade)
   rantings      Ranting[]
   kepengurusans Kepengurusan[]
 
@@ -302,7 +302,7 @@ model Ranting {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  wilayah       Wilayah        @relation(fields: [wilayahId], references: [id])
+  wilayah       Wilayah        @relation(fields: [wilayahId], references: [id], onDelete: Cascade)
   users         User[]
   anggota       Anggota[]
   calonAnggotas CalonAnggota[]
@@ -322,7 +322,7 @@ model UnitLatihan {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  distrik Distrik @relation(fields: [distrikId], references: [id])
+  distrik Distrik @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
   @@map("unit_latihan")
 }
@@ -344,7 +344,7 @@ model User {
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  ranting                     Ranting?            @relation(fields: [rantingId], references: [id])
+  ranting                     Ranting?            @relation(fields: [rantingId], references: [id], onDelete: SetNull)
   notifikasis                 Notifikasi[]
   deviceTokens                DeviceToken[]
   tandaTangans                TandaTangan[]
@@ -393,7 +393,7 @@ model Anggota {
   updatedAt         DateTime          @updatedAt @map("updated_at")
   deletedAt         DateTime?         @map("deleted_at")
 
-  ranting                 Ranting                  @relation(fields: [rantingId], references: [id])
+  ranting                 Ranting                  @relation(fields: [rantingId], references: [id], onDelete: Cascade)
   klaims                  Klaim[]
   dokumen                 Dokumen[]
   iuran                   Iuran[]
@@ -436,7 +436,7 @@ model CalonAnggota {
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
-  ranting          Ranting           @relation(fields: [rantingId], references: [id])
+  ranting          Ranting           @relation(fields: [rantingId], references: [id], onDelete: Cascade)
   usulOlehUser     User              @relation("CalonAnggotaUsul", fields: [usulOlehUserId], references: [id])
   nilaiPendadarans NilaiPendadaran[]
   hasilPendadarans HasilPendadaran[]
@@ -473,7 +473,7 @@ model Klaim {
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
-  anggota Anggota @relation(fields: [anggotaId], references: [id])
+  anggota Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@map("klaim")
 }
@@ -529,7 +529,7 @@ model UndanganPendadaran {
   updatedAt    DateTime          @updatedAt @map("updated_at")
 
   kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
-  anggota  Anggota  @relation(fields: [anggotaId], references: [id])
+  anggota  Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@unique([kegiatanId, anggotaId])
   @@map("undangan_pendadaran")
@@ -554,7 +554,7 @@ model Latihan {
   createdAt                    DateTime @default(now()) @map("created_at")
   updatedAt                    DateTime @updatedAt @map("updated_at")
 
-  ranting  Ranting           @relation(fields: [rantingId], references: [id])
+  ranting  Ranting           @relation(fields: [rantingId], references: [id], onDelete: Cascade)
   kegiatan Kegiatan?         @relation(fields: [kegiatanId], references: [id])
   pelatih  User              @relation("LatihanPelatih", fields: [pelatihId], references: [id])
   absensi  AbsensiLatihan[]
@@ -572,8 +572,8 @@ model AbsensiLatihan {
   catatan   String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  latihan Latihan @relation(fields: [latihanId], references: [id])
-  anggota Anggota @relation(fields: [anggotaId], references: [id])
+  latihan Latihan @relation(fields: [latihanId], references: [id], onDelete: Cascade)
+  anggota Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@map("absensi_latihan")
 }
@@ -587,8 +587,8 @@ model EvaluasiLatihan {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  latihan Latihan @relation(fields: [latihanId], references: [id])
-  anggota Anggota @relation(fields: [anggotaId], references: [id])
+  latihan Latihan @relation(fields: [latihanId], references: [id], onDelete: Cascade)
+  anggota Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@map("evaluasi_latihan")
 }
@@ -600,7 +600,7 @@ model KegiatanPeserta {
   createdAt  DateTime @default(now()) @map("created_at")
 
   kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
-  anggota  Anggota  @relation(fields: [anggotaId], references: [id])
+  anggota  Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@map("kegiatan_peserta")
 }
@@ -613,7 +613,7 @@ model PresensiKegiatan {
   createdAt  DateTime @default(now()) @map("created_at")
 
   kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id])
-  anggota  Anggota  @relation(fields: [anggotaId], references: [id])
+  anggota  Anggota  @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@map("presensi_kegiatan")
 }
@@ -703,8 +703,8 @@ model NilaiPendadaran {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   kegiatan      Kegiatan      @relation(fields: [kegiatanId], references: [id])
-  calonAnggota  CalonAnggota  @relation(fields: [calonAnggotaId], references: [id])
-  anggota       Anggota?      @relation(fields: [anggotaId], references: [id])
+  calonAnggota  CalonAnggota  @relation(fields: [calonAnggotaId], references: [id], onDelete: Cascade)
+  anggota       Anggota?      @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
   itemPenilaian ItemPenilaian @relation(fields: [itemPenilaianId], references: [id])
   penguji       User          @relation("NilaiPendadaranPenguji", fields: [pengujiUserId], references: [id])
   ujianPraktek  UjianPraktek? @relation(fields: [ujianPraktekId], references: [id])
@@ -726,7 +726,7 @@ model HasilPendadaran {
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
   kegiatan       Kegiatan     @relation(fields: [kegiatanId], references: [id])
-  calonAnggota   CalonAnggota @relation(fields: [calonAnggotaId], references: [id])
+  calonAnggota   CalonAnggota @relation(fields: [calonAnggotaId], references: [id], onDelete: Cascade)
   divalidasiUser User?        @relation("HasilPendadaranValidasi", fields: [divalidasiOleh], references: [id])
 
   @@map("hasil_pendadaran")
@@ -805,7 +805,7 @@ model Dokumen {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
-  anggota      Anggota       @relation(fields: [anggotaId], references: [id])
+  anggota      Anggota       @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
   qrValidation QRValidation?
 
   @@map("dokumen")
@@ -820,7 +820,7 @@ model QRValidation {
   scanCount Int       @default(0) @map("scan_count")
   createdAt DateTime  @default(now()) @map("created_at")
 
-  dokumen Dokumen @relation(fields: [dokumenId], references: [id])
+  dokumen Dokumen @relation(fields: [dokumenId], references: [id], onDelete: Cascade)
 
   @@map("qr_validation")
 }
@@ -960,7 +960,7 @@ model Iuran {
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
 
-  anggota     Anggota @relation(fields: [anggotaId], references: [id])
+  anggota     Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
   verifikator User?   @relation("IuranVerifikator", fields: [diverifikasiOleh], references: [id])
   payments    PaymentTransaction[]
 
@@ -980,7 +980,7 @@ model PaymentTransaction {
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
-  iuran Iuran @relation(fields: [iuranId], references: [id])
+  iuran Iuran @relation(fields: [iuranId], references: [id], onDelete: Cascade)
 
   @@index([iuranId])
   @@index([orderId])
@@ -1216,9 +1216,9 @@ model Kepengurusan {
   periode       Periode  @relation(fields: [periodeId], references: [id])
   
   nasional      Nasional? @relation(fields: [nasionalId], references: [id])
-  distrik       Distrik?  @relation(fields: [distrikId], references: [id])
-  wilayah       Wilayah?  @relation(fields: [wilayahId], references: [id])
-  ranting       Ranting?  @relation(fields: [rantingId], references: [id])
+  distrik       Distrik?  @relation(fields: [distrikId], references: [id], onDelete: Cascade)
+  wilayah       Wilayah?  @relation(fields: [wilayahId], references: [id], onDelete: Cascade)
+  ranting       Ranting?  @relation(fields: [rantingId], references: [id], onDelete: Cascade)
 
   @@map("kepengurusan")
 }
@@ -1398,7 +1398,7 @@ model ForumThread {
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   category ForumCategory @relation(fields: [categoryId], references: [id])
-  author   Anggota       @relation(fields: [authorId], references: [id])
+  author   Anggota       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   posts    ForumPost[]
 
   @@index([categoryId])
@@ -1417,7 +1417,7 @@ model ForumPost {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   thread ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  author Anggota     @relation(fields: [authorId], references: [id])
+  author Anggota     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
   @@index([authorId])
@@ -1455,7 +1455,7 @@ model CheckIn {
 
   qrCode   QrCode    @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
   anggota  Anggota   @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
-  latihan  Latihan?  @relation(fields: [latihanId], references: [id])
+  latihan  Latihan?  @relation(fields: [latihanId], references: [id], onDelete: Cascade)
   kegiatan Kegiatan? @relation(fields: [kegiatanId], references: [id])
 
   @@index([anggotaId])
