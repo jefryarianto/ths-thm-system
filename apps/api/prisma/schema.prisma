@@ -219,6 +219,19 @@ model Sejarah {
   @@map("sejarah")
 }
 
+model Sambutan {
+  id        String   @id @default(uuid())
+  judul     String
+  konten    String   @db.Text
+  tokoh     String?
+  fotoTokoh String?  @map("foto_tokoh")
+  isVisible Boolean  @default(true) @map("is_visible")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sambutan")
+}
+
 model Organisasi {
   id        String   @id @default(uuid())
   struktur  Json     @map("struktur")

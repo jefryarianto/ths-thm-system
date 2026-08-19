@@ -31,6 +31,18 @@ export class PublicController {
   }
 
   @Public()
+  @Get('sambutan')
+  async getSambutan() {
+    return this.publicService.getSambutan();
+  }
+
+  @Public()
+  @Get('beranda')
+  async getBeranda() {
+    return this.publicService.getBeranda();
+  }
+
+  @Public()
   @Get('organisasi')
   async getOrganisasi() {
     return this.publicService.getOrganisasi();
@@ -40,5 +52,11 @@ export class PublicController {
   @Get('bank-info')
   async getBankInfo() {
     return this.publicService.getBankInfo();
+  }
+
+  @Public()
+  @Get('kepengurusan')
+  async getKepengurusan() {
+    return this.publicService.getKepengurusan();
   }
 }
