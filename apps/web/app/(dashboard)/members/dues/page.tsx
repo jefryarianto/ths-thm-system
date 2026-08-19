@@ -85,7 +85,7 @@ export default function MemberDuesPage() {
       setProofNotes((prev) => ({ ...prev, [id]: '' }));
       toast('success', 'Bukti pembayaran berhasil dikirim');
     } catch (err: any) {
-      toast('error', err?.response?.data?.message || 'Gagal mengirim bukti');
+      toast('error', err?.message || 'Gagal mengirim bukti');
     }
     setUploadingId(null);
   };

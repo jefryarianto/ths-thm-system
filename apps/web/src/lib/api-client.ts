@@ -4,9 +4,6 @@ import axios from 'axios';
 // Next.js rewrites in next.config.js proxy /api/* to the backend on the server side.
 const apiClient = axios.create({
   baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 let isRefreshing = false;

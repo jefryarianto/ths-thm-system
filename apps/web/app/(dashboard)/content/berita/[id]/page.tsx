@@ -83,9 +83,7 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
     try {
       const formData = new FormData();
       formData.append('image', file);
-      await apiClient.post(`/content/berita/${id}/image`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await apiClient.post(`/content/berita/${id}/image`, formData);
       toast('success', 'Gambar berhasil diupload');
       fetchData();
     } catch {

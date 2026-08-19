@@ -17,6 +17,7 @@ import PageHeader from '@/components/ui/page-header';
 import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import { useToast } from '@/components/ui/toast';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import MemberActions from '@/components/members/MemberActions';
 import MemberStatCards from '@/components/members/MemberStatCards';
@@ -27,6 +28,7 @@ import { StatusBadge, STATUS_LABELS, formatDate, toProperCase } from '@/componen
 
 export default function MembersPage() {
   const router = useRouter();
+  const toast = useToast();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Stats
@@ -135,17 +137,29 @@ export default function MembersPage() {
   // ─── Actions ───
 
   const handleAction = async (id: string, action: string) => {
+    if (action === 'remove') {
+      if (!window.confirm('Yakin ingin menghapus anggota ini? Tindakan ini tidak dapat dibatalkan.')) {
+        return;
+      }
+    }
+
     setActionLoading(id);
     try {
       if (action === 'suspend' || action === 'reactivate') {
         await apiClient.patch(`/members/${id}/${action}`, {});
+      } else if (action === 'remove') {
+        await apiClient.delete(`/members/${id}`);
       } else {
         await apiClient.post(`/members/${id}/${action}`, {});
       }
       refetch();
       fetchStats();
-    } catch {
-      /* ignore */
+      if (action === 'remove') toast('success', 'Anggota berhasil dihapus');
+    } catch (err) {
+      const msg =
+        (err as { message?: string })?.message ||
+        (action === 'remove' ? 'Gagal menghapus anggota' : 'Tindakan gagal, coba lagi');
+      toast('error', msg);
     }
     setActionLoading(null);
   };
