@@ -462,4 +462,39 @@ describe('AuthService', () => {
       );
     });
   });
+
+  describe('setRefreshTokenCookie', () => {
+    it('should set maxAge to 7 days (604800000 ms) for "7d", not 7 ms', () => {
+      const cookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+      const res = {
+        cookie: (name: string, value: string, options: Record<string, unknown>) =>
+          cookies.push({ name, value, options }),
+      } as unknown as import('express').Response;
+
+      service.setRefreshTokenCookie(res, 'refresh-token-xyz');
+
+      expect(cookies).toHaveLength(1);
+      expect(cookies[0].name).toBe('refreshToken');
+      expect(cookies[0].value).toBe('refresh-token-xyz');
+      expect(cookies[0].options.maxAge).toBe(7 * 24 * 60 * 60 * 1000);
+      // nodeEnv 'test' → cookie tidak secure
+      expect(cookies[0].options.secure).toBe(false);
+      expect(cookies[0].options.httpOnly).toBe(true);
+    });
+
+    it('should handle short durations (e.g. "15m") as milliseconds', () => {
+      const cookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
+      const res = {
+        cookie: (name: string, value: string, options: Record<string, unknown>) =>
+          cookies.push({ name, value, options }),
+      } as unknown as import('express').Response;
+
+      const serviceWithShortTtl = Object.assign(Object.create(Object.getPrototypeOf(service)), service, {
+        envConfig: { ...(service as unknown as { envConfig: Record<string, unknown> }).envConfig, jwtRefreshExpiresIn: '15m' },
+      });
+
+      serviceWithShortTtl.setRefreshTokenCookie(res, 'rt');
+      expect(cookies[0].options.maxAge).toBe(15 * 60 * 1000);
+    });
+  });
 });

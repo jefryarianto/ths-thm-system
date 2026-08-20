@@ -131,6 +131,34 @@ describe('THS-THM API (e2e)', () => {
           expect(res.body.data.email).toBe('e2e@test.com');
         });
     });
+
+    it('POST /api/auth/refresh — should refresh via httpOnly cookie WITHOUT body', async () => {
+      const loginRes = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ identifier: 'e2e@test.com', password: 'test1234' });
+
+      const setCookie = loginRes.headers['set-cookie']?.[0];
+      expect(setCookie).toBeDefined();
+      const cookiePair = setCookie.split(';')[0]; // "refreshToken=..."
+
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .set('Cookie', cookiePair)
+        .send({}) // web client mengirim body kosong — hanya cookie
+        .expect(201);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.accessToken).toBeDefined();
+      // Cookie baru dirotasi (refresh-token rotation)
+      expect(res.headers['set-cookie']?.[0]).toBeDefined();
+    });
+
+    it('POST /api/auth/refresh — should reject when neither body nor cookie provided', () => {
+      return request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .send({})
+        .expect(401);
+    });
   });
 
   // ─── Notifications ───

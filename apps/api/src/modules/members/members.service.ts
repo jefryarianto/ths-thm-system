@@ -1,10 +1,12 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import * as crypto from 'crypto';
 import { welcomeMemberEmail, escapeHtml } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { normalizePhone } from '../../common/utils/phone.util';
 import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
 import { CacheService } from '../../common/services/cache.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
@@ -15,7 +17,15 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { ApprovalService } from '../approvals/approval.service';
 import bcrypt from 'bcryptjs';
 
-const DEFAULT_PASSWORD = 'thsthm123456';
+/**
+ * Password awal akun anggota yang dibuat/di-reset sistem.
+ * Diambil dari env `DEFAULT_PASSWORD`; jika kosong:
+ * - produksi → fallback nilai legacy (env.validation.ts sudah memberi warning agar diset)
+ * - dev/test → acak sekali-jalan (lebih aman daripada konstanta publik yang ditebak)
+ */
+const DEFAULT_PASSWORD =
+  process.env.DEFAULT_PASSWORD ||
+  (process.env.NODE_ENV === 'production' ? 'thsthm123456' : crypto.randomBytes(6).toString('hex'));
 
 @Injectable()
 export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMemberDto> {
@@ -51,6 +61,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     return {
       ...dto,
       rantingId,
+      noHpNormalized: dto.noHp ? normalizePhone(dto.noHp) : null,
       tanggalLahir: dto.tanggalLahir
         ? parseDateSafe(dto.tanggalLahir)
         : undefined,
@@ -98,7 +109,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     if (dto.tempatDadar !== undefined) data.tempatDadar = dto.tempatDadar;
     if (dto.tahunDadar !== undefined) data.tahunDadar = dto.tahunDadar;
     if (dto.alamat !== undefined) data.alamat = dto.alamat;
-    if (dto.noHp !== undefined) data.noHp = dto.noHp;
+    if (dto.noHp !== undefined) {
+      data.noHp = dto.noHp;
+      data.noHpNormalized = normalizePhone(dto.noHp);
+    }
     if (dto.email !== undefined) data.email = dto.email;
     if (dto.tingkat !== undefined) data.tingkat = dto.tingkat;
     if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
@@ -341,6 +355,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             tahunDadar: parsedTahunDadar ? parseInt(String(parsedTahunDadar), 10) : null,
             fotoPath: row.foto || row.fotoPath || row.foto_path || null,
             noHp: row.no_hp || row.phone || null,
+            noHpNormalized: normalizePhone(row.no_hp || row.phone),
             email: row.email || null,
             alamat: row.alamat || row.address || null,
             rantingId,

@@ -47,7 +47,9 @@ export async function paginate<T>(
   } = {},
 ): Promise<PaginatedResult<T>> {
   const page = options.page || 1;
-  const limit = options.limit || 10;
+  // Cap limit untuk mencegah klien meminta jumlah baris tak terbatas
+  const MAX_LIMIT = 100;
+  const limit = Math.min(options.limit || 10, MAX_LIMIT);
 
   const queryArgs: Record<string, unknown> = {
     where,

@@ -25,21 +25,6 @@ export class RegisterDto {
   @IsString()
   namaLengkap: string;
 
-  @ApiProperty({
-    enum: [
-      'superadmin',
-      'admin_distrik',
-      'admin_wilayah',
-      'admin_ranting',
-      'admin_kegiatan',
-      'penguji',
-      'anggota',
-    ],
-  })
-  @IsOptional()
-  @IsString()
-  role?: string;
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
@@ -47,9 +32,13 @@ export class RegisterDto {
 }
 
 export class RefreshDto {
-  @ApiProperty()
+  // Opsional: mobile mengirim refreshToken via body, web via httpOnly cookie.
+  // Body kosong TIDAK boleh ditolak validasi (whitelist+forbidNonWhitelisted),
+  // jika tidak path refresh cookie di controller tidak pernah tercapai.
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export class ForgotPasswordDto {

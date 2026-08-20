@@ -29,6 +29,12 @@ export function validateEnv() {
     );
   }
 
+  if (process.env.NODE_ENV === 'production' && !process.env.DEFAULT_PASSWORD) {
+    console.warn(
+      '⚠️  DEFAULT_PASSWORD belum diset. Akun anggota baru akan memakai password acak sekali jalan — set DEFAULT_PASSWORD untuk pengalaman login yang konsisten.',
+    );
+  }
+
   console.log('✅ Environment variables validated');
 }
 
@@ -54,4 +60,5 @@ export const env = {
   },
   redisUrl: process.env.REDIS_URL || '',
   resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET || '',
+  defaultPassword: process.env.DEFAULT_PASSWORD || '',
 };

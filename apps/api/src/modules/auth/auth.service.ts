@@ -16,6 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { resetPasswordEmail, escapeHtml } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
+import { normalizePhone } from '../../common/utils/phone.util';
 import {
   LoginDto,
   RegisterDto,
@@ -41,6 +42,28 @@ interface OAuthUserProfile {
   email?: string;
   name: string;
   photo?: string;
+}
+
+/**
+ * Parse durasi JWT ('7d', '15m', '1h', '30s', '500ms', atau angka mentah
+ * dalam milidetik) menjadi milidetik. Mengembalikan `null` jika tidak dikenal.
+ */
+function parseDurationToMs(value: string): number | null {
+  const trimmed = value.trim();
+  const match = /^(\d+)\s*(ms|s|m|h|d)$/i.exec(trimmed);
+  if (match) {
+    const n = parseInt(match[1], 10);
+    const factor: Record<string, number> = {
+      ms: 1,
+      s: 1000,
+      m: 60 * 1000,
+      h: 60 * 60 * 1000,
+      d: 24 * 60 * 60 * 1000,
+    };
+    return n * factor[match[2].toLowerCase()];
+  }
+  const numeric = parseInt(trimmed, 10);
+  return Number.isNaN(numeric) ? null : numeric;
 }
 
 @Injectable()
@@ -132,10 +155,7 @@ export class AuthService {
    * `+62xxx` / `62xxx` → `0xxx` supaya pencocokan konsisten.
    */
   private normalizePhone(raw: string): string {
-    let s = raw.replace(/[\s\-().]/g, '');
-    if (s.startsWith('+62')) s = '0' + s.slice(3);
-    else if (s.startsWith('62')) s = '0' + s.slice(2);
-    return s;
+    return normalizePhone(raw);
   }
 
   /**
@@ -144,17 +164,13 @@ export class AuthService {
    */
   private async findUserByMemberPhone(phoneInput: string) {
     const target = this.normalizePhone(phoneInput);
-    const candidates = await this.prisma.anggota.findMany({
-      where: {
-        noHp: { not: null },
-        NOT: { noHp: '' },
-      },
+    // Gunakan kolom terindeks noHpNormalized (diisi saat create/import & backfill migrasi)
+    // alih-alih memuat hingga 2000 baris lalu normalisasi di JS.
+    const member = await this.prisma.anggota.findFirst({
+      where: { noHpNormalized: target },
       select: { noHp: true, email: true, namaLengkap: true },
-      take: 2000,
     });
-    return (
-      candidates.find((c) => c.noHp && this.normalizePhone(c.noHp) === target) || null
-    );
+    return member;
   }
 
   async register(dto: RegisterDto, response?: Response) {
@@ -613,9 +629,8 @@ export class AuthService {
   }
 
   setRefreshTokenCookie(res: Response, refreshToken: string) {
-    // expiresIn from env.validation.ts is a string like '7d', convert to seconds
-    const expiresInSeconds = parseInt(this.envConfig.jwtRefreshExpiresIn); // Assuming '7d' is handled as 7 * 24 * 60 * 60 seconds
-    const maxAge = expiresInSeconds * 1000; // in milliseconds
+    // Convert JWT duration ('7d') to milliseconds for cookie maxAge.
+    const maxAge = parseDurationToMs(this.envConfig.jwtRefreshExpiresIn) ?? 7 * 24 * 60 * 60 * 1000;
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,

@@ -6,18 +6,15 @@ RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app
 
-# Copy dependency definition files first for layer caching
+# Copy ALL source + dependency definition files (single copy for one install)
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
-COPY apps/web/package.json ./apps/web/package.json
-COPY apps/web/tsconfig.json ./apps/web/tsconfig.json
-COPY apps/web/next.config.* ./apps/web/
-
-# Install ALL dependencies (including devDeps for build)
-RUN echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --ignore-scripts
-
-# Copy source files AFTER install (preserves layer cache)
-COPY apps/web/ ./apps/web/
+COPY apps/ ./apps/
 COPY packages/ ./packages/
+
+# Install ALL dependencies (incl. devDeps) + run prepare scripts (prisma generate) once.
+# supportedArchitectures + retries MUST live in pnpm-workspace.yaml (pnpm v11 ignores them in .npmrc).
+RUN printf "\nsupportedArchitectures:\n  os:\n    - linux\n  cpu:\n    - x64\npreferOffline: true\nfetchRetries: 10\nfetchRetryFactor: 2\nfetchRetryMinTimeout: 5000\nfetchRetryMaxTimeout: 60000\nnetworkConcurrency: 4\n" >> pnpm-workspace.yaml && \
+    pnpm install --frozen-lockfile --fetch-timeout 1200000
 
 # Build with realtime features enabled for production
 RUN NEXT_PUBLIC_ENABLE_REALTIME=true pnpm --filter @ths-thm/web build
@@ -39,8 +36,8 @@ COPY --from=builder /app/apps/web/next.config.* ./
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/package.json
 RUN corepack enable && corepack prepare pnpm@11.18.0 --activate && \
-    echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --prod --ignore-scripts && \
-    rm -f .npmrc
+    printf "\nsupportedArchitectures:\n  os:\n    - linux\n  cpu:\n    - x64\npreferOffline: true\nfetchRetries: 10\nfetchRetryFactor: 2\nfetchRetryMinTimeout: 5000\nfetchRetryMaxTimeout: 60000\nnetworkConcurrency: 4\n" >> pnpm-workspace.yaml && \
+    pnpm install --frozen-lockfile --prod --ignore-scripts
 
 ENV NODE_ENV=production
 EXPOSE 3000
