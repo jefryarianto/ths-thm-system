@@ -40,6 +40,7 @@ describe('DocumentsService', () => {
     anggota: {
       findUnique: jest.fn(),
     },
+    $transaction: jest.fn((fn) => fn(mockPrisma)),
   };
 
   const mockScopeHelper = {

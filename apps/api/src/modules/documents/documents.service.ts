@@ -121,20 +121,24 @@ export class DocumentsService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/documents/verify/${token}`;
     const nomorDokumen = `DOC-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    const doc = await this.prisma.dokumen.create({
-      data: {
-        anggotaId: dto.memberId,
-        tipe: dto.type as never,
-        nomorDokumen,
-        verificationUrl,
-        signatureId: dto.signatureId,
-        stampId: dto.stampId,
-        status: 'generated',
-      },
-    });
+    const doc = await (this.prisma as any).$transaction(async (tx: any) => {
+      const created = await tx.dokumen.create({
+        data: {
+          anggotaId: dto.memberId,
+          tipe: dto.type as never,
+          nomorDokumen,
+          verificationUrl,
+          signatureId: dto.signatureId,
+          stampId: dto.stampId,
+          status: 'generated',
+        },
+      });
 
-    await this.prisma.qRValidation.create({
-      data: { dokumenId: doc.id, token, isValid: true },
+      await tx.qRValidation.create({
+        data: { dokumenId: created.id, token, isValid: true },
+      });
+
+      return created;
     });
 
     const qrDataUrl = await QRCode.toDataURL(verificationUrl, { width: 200, margin: 2 });
@@ -471,18 +475,22 @@ export class DocumentsService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${token}`;
     const nomorDokumen = `SPD-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    const doc = await this.prisma.dokumen.create({
-      data: {
-        anggotaId: dto.memberId,
-        tipe: 'sertifikat_pendadaran',
-        nomorDokumen,
-        verificationUrl,
-        status: 'generated',
-      },
-    });
+    const doc = await (this.prisma as any).$transaction(async (tx: any) => {
+      const created = await tx.dokumen.create({
+        data: {
+          anggotaId: dto.memberId,
+          tipe: 'sertifikat_pendadaran',
+          nomorDokumen,
+          verificationUrl,
+          status: 'generated',
+        },
+      });
 
-    await this.prisma.qRValidation.create({
-      data: { dokumenId: doc.id, token, isValid: true },
+      await tx.qRValidation.create({
+        data: { dokumenId: created.id, token, isValid: true },
+      });
+
+      return created;
     });
 
     const qrDataUrl = await QRCode.toDataURL(verificationUrl, { width: 200, margin: 2 });
@@ -617,18 +625,22 @@ export class DocumentsService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${token}`;
     const nomorDokumen = `PP-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    const doc = await this.prisma.dokumen.create({
-      data: {
-        anggotaId: dto.memberId,
-        tipe: 'piagam_prestasi',
-        nomorDokumen,
-        verificationUrl,
-        status: 'generated',
-      },
-    });
+    const doc = await (this.prisma as any).$transaction(async (tx: any) => {
+      const created = await tx.dokumen.create({
+        data: {
+          anggotaId: dto.memberId,
+          tipe: 'piagam_prestasi',
+          nomorDokumen,
+          verificationUrl,
+          status: 'generated',
+        },
+      });
 
-    await this.prisma.qRValidation.create({
-      data: { dokumenId: doc.id, token, isValid: true },
+      await tx.qRValidation.create({
+        data: { dokumenId: created.id, token, isValid: true },
+      });
+
+      return created;
     });
 
     const qrDataUrl = await QRCode.toDataURL(verificationUrl, { width: 200, margin: 2 });

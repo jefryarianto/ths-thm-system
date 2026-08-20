@@ -273,25 +273,35 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
 
     let member;
     try {
-      member = await this.prisma.anggota.create({
-        data: {
-          namaLengkap: candidate.namaLengkap,
-          jenisKelamin: candidate.jenisKelamin,
-          tempatLahir: candidate.tempatLahir,
-          tanggalLahir: candidate.tanggalLahir ?? null,
-          tempatDadar: dto?.tempatDadar || null,
-          tahunDadar: dto?.tahunDadar || null,
-          alamat: candidate.alamat,
-          noHp: candidate.noHp,
-          noHpNormalized: normalizePhone(candidate.noHp),
-          email: candidate.email,
-          rantingId: candidate.rantingId,
-          tingkat: dto?.tingkat || candidate.tingkat || null,
-          nomorAnggota: await this.nraService.generateMemberNumber(candidate.rantingId, dto?.tahunDadar),
-          statusKeanggotaan: 'aktif',
-          statusData: 'complete',
-          statusValidasi: 'approved',
-        },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      member = await (this.prisma as any).$transaction(async (tx: any) => {
+        const created = await tx.anggota.create({
+          data: {
+            namaLengkap: candidate.namaLengkap,
+            jenisKelamin: candidate.jenisKelamin,
+            tempatLahir: candidate.tempatLahir,
+            tanggalLahir: candidate.tanggalLahir ?? null,
+            tempatDadar: dto?.tempatDadar || null,
+            tahunDadar: dto?.tahunDadar || null,
+            alamat: candidate.alamat,
+            noHp: candidate.noHp,
+            noHpNormalized: normalizePhone(candidate.noHp),
+            email: candidate.email,
+            rantingId: candidate.rantingId,
+            tingkat: dto?.tingkat || candidate.tingkat || null,
+            nomorAnggota: await this.nraService.generateMemberNumber(candidate.rantingId, dto?.tahunDadar),
+            statusKeanggotaan: 'aktif',
+            statusData: 'complete',
+            statusValidasi: 'approved',
+          },
+        });
+
+        await tx.calonAnggota.update({
+          where: { id },
+          data: { status: 'lulus', tingkat: dto?.tingkat || candidate.tingkat },
+        });
+
+        return created;
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -299,11 +309,6 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
       }
       throw error;
     }
-
-    await this.prisma.calonAnggota.update({
-      where: { id },
-      data: { status: 'lulus', tingkat: dto?.tingkat || candidate.tingkat },
-    });
 
     // Send welcome email
     if (candidate.email) {

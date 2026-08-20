@@ -49,6 +49,7 @@ describe('CandidatesService', () => {
     importLog: {
       create: jest.fn().mockResolvedValue(undefined),
     },
+    $transaction: jest.fn((fn) => fn(mockPrisma)),
   };
 
   const mockNraService = {

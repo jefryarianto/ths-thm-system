@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Optional, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { DocumentBatchJob, DocumentJob } from '@prisma/client';
 import {
   IJobQueue,
   JobPayload,
@@ -97,33 +98,36 @@ export class DocumentBatchService implements OnApplicationShutdown {
     memberIds: string[],
     createdBy?: string,
   ): Promise<{ batchId: string; totalJobs: number }> {
-    // 1. Create batch record
-    const batch = await this.prisma.documentBatchJob.create({
-      data: {
-        type,
-        totalJobs: memberIds.length,
-        status: 'pending',
-        createdBy,
-      },
-    });
-
     if (!this.queue) {
       throw new Error('Queue not initialized. Make sure initQueue() was called.');
     }
 
-    // 2. Create individual job records (batch insert)
-    const jobRecords = await this.prisma.documentJob.createManyAndReturn({
-      data: memberIds.map((memberId) => ({
-        batchId: batch.id,
-        memberId,
-        status: 'pending',
-      })),
-    });
+    // 1-3. Create batch + jobs + update status dalam satu transaksi atomik
+    const { batch, jobRecords }: { batch: DocumentBatchJob; jobRecords: DocumentJob[] } =
+      await (this.prisma as any).$transaction(async (tx: any) => {
+      const createdBatch = await tx.documentBatchJob.create({
+        data: {
+          type,
+          totalJobs: memberIds.length,
+          status: 'pending',
+          createdBy,
+        },
+      });
 
-    // 3. Update batch status to processing
-    await this.prisma.documentBatchJob.update({
-      where: { id: batch.id },
-      data: { status: 'processing' },
+      const createdJobs = await tx.documentJob.createManyAndReturn({
+        data: memberIds.map((memberId) => ({
+          batchId: createdBatch.id,
+          memberId,
+          status: 'pending',
+        })),
+      });
+
+      await tx.documentBatchJob.update({
+        where: { id: createdBatch.id },
+        data: { status: 'processing' },
+      });
+
+      return { batch: createdBatch, jobRecords: createdJobs };
     });
 
     // 4. Enqueue jobs
@@ -230,16 +234,17 @@ export class DocumentBatchService implements OnApplicationShutdown {
     });
     if (!batch || batch.status !== 'processing') return false;
 
-    await this.prisma.documentBatchJob.update({
-      where: { id: batchId },
-      data: { status: 'cancelled' },
-    });
-
-    // Cancel pending jobs
-    await this.prisma.documentJob.updateMany({
-      where: { batchId, status: 'pending' },
-      data: { status: 'failed', error: 'Batch cancelled' },
-    });
+    await (this.prisma as any).$transaction([
+      this.prisma.documentBatchJob.update({
+        where: { id: batchId },
+        data: { status: 'cancelled' },
+      }),
+      // Cancel pending jobs
+      this.prisma.documentJob.updateMany({
+        where: { batchId, status: 'pending' },
+        data: { status: 'failed', error: 'Batch cancelled' },
+      }),
+    ]);
 
     return true;
   }
@@ -308,19 +313,20 @@ export class DocumentBatchService implements OnApplicationShutdown {
     }
 
     // Reset failed jobs to pending
-    await this.prisma.documentJob.updateMany({
-      where: where as never,
-      data: { status: 'pending', error: null, retryCount: { increment: 1 } },
-    });
-
-    // Update batch status back to processing, reset failed counter
-    // Note: there's a benign transient where a concurrently-processing job's
-    // handleJobFailed could increment failed before we reset it. Prisma's
-    // atomic increment handles this correctly in the final count.
-    await this.prisma.documentBatchJob.update({
-      where: { id: batchId },
-      data: { status: 'processing', failed: 0 },
-    });
+    await (this.prisma as any).$transaction([
+      this.prisma.documentJob.updateMany({
+        where: where as never,
+        data: { status: 'pending', error: null, retryCount: { increment: 1 } },
+      }),
+      // Update batch status back to processing, reset failed counter
+      // Note: there's a benign transient where a concurrently-processing job's
+      // handleJobFailed could increment failed before we reset it. Prisma's
+      // atomic increment handles this correctly in the final count.
+      this.prisma.documentBatchJob.update({
+        where: { id: batchId },
+        data: { status: 'processing', failed: 0 },
+      }),
+    ]);
 
     // Re-enqueue all retried jobs
     const payloads: JobPayload[] = failedJobs.map((job) => ({

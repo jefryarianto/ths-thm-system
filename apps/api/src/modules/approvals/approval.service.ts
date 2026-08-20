@@ -51,26 +51,29 @@ export class ApprovalService {
       return { autoApproved: true };
     }
 
-    // Create approval request
-    const request = await this.prisma.approvalRequest.create({
-      data: {
-        requestType: dto.requestType,
-        itemId: dto.itemId,
-        submittedBy: userId,
-        status: 'pending',
-      },
-    });
-
-    // Create levels
-    for (const level of levels) {
-      await this.prisma.approvalRequestLevel.create({
+    // Create approval request + levels dalam satu transaksi atomik
+    const request = await (this.prisma as any).$transaction(async (tx: any) => {
+      const created = await tx.approvalRequest.create({
         data: {
-          requestId: request.id,
-          approvalLevelId: level.id,
+          requestType: dto.requestType,
+          itemId: dto.itemId,
+          submittedBy: userId,
           status: 'pending',
         },
       });
-    }
+
+      for (const level of levels) {
+        await tx.approvalRequestLevel.create({
+          data: {
+            requestId: created.id,
+            approvalLevelId: level.id,
+            status: 'pending',
+          },
+        });
+      }
+
+      return created;
+    });
 
     this.logger.log(`Approval request created: ${request.id} type=${dto.requestType}`);
 
@@ -98,22 +101,28 @@ export class ApprovalService {
     const currentLevel = request.levels.find((l) => l.status === 'pending');
     if (!currentLevel) throw new ForbiddenException('Semua level sudah diproses');
 
-    // Approve current level
-    await this.prisma.approvalRequestLevel.update({
-      where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
-      data: { status: 'approved', decidedBy: userId, decidedAt: new Date(), note: note || null },
+    // Approve current level + (bila final) set status request dalam satu transaksi
+    await (this.prisma as any).$transaction(async (tx: any) => {
+      await tx.approvalRequestLevel.update({
+        where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
+        data: { status: 'approved', decidedBy: userId, decidedAt: new Date(), note: note || null },
+      });
+
+      // Check if all levels are approved
+      const remainingLevels = request.levels.filter((l) => l.status === 'pending' && l.approvalLevelId !== currentLevel.approvalLevelId);
+
+      if (remainingLevels.length === 0) {
+        await tx.approvalRequest.update({
+          where: { id: requestId },
+          data: { status: 'approved', completedAt: new Date() },
+        });
+      }
     });
 
-    // Check if all levels are approved
     const remainingLevels = request.levels.filter((l) => l.status === 'pending' && l.approvalLevelId !== currentLevel.approvalLevelId);
-    
+
     if (remainingLevels.length === 0) {
       // All approved — finalize
-      await this.prisma.approvalRequest.update({
-        where: { id: requestId },
-        data: { status: 'approved', completedAt: new Date() },
-      });
-      
       await this.finalizeApproval(request);
       this.logger.log(`Approval completed: ${requestId}`);
       this.audit('APPROVAL_APPROVE', requestId, userId, { finalized: true, note });
@@ -137,17 +146,20 @@ export class ApprovalService {
 
     // Reject current pending level
     const currentLevel = request.levels.find((l) => l.status === 'pending');
-    if (currentLevel) {
-      await this.prisma.approvalRequestLevel.update({
-        where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
-        data: { status: 'rejected', decidedBy: userId, decidedAt: new Date(), note: note || null },
-      });
-    }
 
-    // Reject whole request
-    await this.prisma.approvalRequest.update({
-      where: { id: requestId },
-      data: { status: 'rejected', completedAt: new Date() },
+    // Reject level + request dalam satu transaksi atomik
+    await (this.prisma as any).$transaction(async (tx: any) => {
+      if (currentLevel) {
+        await tx.approvalRequestLevel.update({
+          where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
+          data: { status: 'rejected', decidedBy: userId, decidedAt: new Date(), note: note || null },
+        });
+      }
+
+      await tx.approvalRequest.update({
+        where: { id: requestId },
+        data: { status: 'rejected', completedAt: new Date() },
+      });
     });
 
     this.logger.log(`Approval rejected: ${requestId}`);

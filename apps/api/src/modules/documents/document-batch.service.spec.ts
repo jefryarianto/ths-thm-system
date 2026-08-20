@@ -61,6 +61,9 @@ const mockPrisma = {
   user: {
     findUnique: jest.fn(),
   },
+  $transaction: jest.fn((ops: unknown) =>
+    typeof ops === 'function' ? ops(mockPrisma) : Promise.all(ops as Promise<unknown>[]),
+  ),
 };
 
 const mockEventsGateway: any = {
