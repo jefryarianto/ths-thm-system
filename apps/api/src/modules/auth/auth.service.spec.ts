@@ -28,6 +28,8 @@ describe('AuthService', () => {
     phone: null,
     mustChangePassword: false,
     refreshToken: null,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -150,6 +152,70 @@ describe('AuthService', () => {
       );
     });
 
+    it('should record failed attempt and lock account after max attempts', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, failedLoginAttempts: 4 });
+      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
+
+      await expect(service.login({ identifier: 'test@ths-thm.org', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: expect.objectContaining({ lockedUntil: expect.any(Date) }),
+      });
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'ACCOUNT_LOCKED', entityId: 'u1' }),
+      );
+    });
+
+    it('should reject login while account is locked', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        lockedUntil: new Date(Date.now() + 60_000),
+      });
+
+      await expect(
+        service.login({ identifier: 'test@ths-thm.org', password: 'password123' }),
+      ).rejects.toThrow('terkunci');
+      // Password yang benar pun tidak dihitung sebagai percobaan sukses
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should reset failed attempts and lockout on successful login', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, failedLoginAttempts: 2 });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, failedLoginAttempts: 0 });
+
+      const result = await service.login({ identifier: 'test@ths-thm.org', password: 'password123' });
+      expect(result.user.email).toBe('test@ths-thm.org');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
+    });
+  });
+
+  describe('unlockAccount', () => {
+    it('should reset lockout fields and write ACCOUNT_UNLOCKED audit', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, lockedUntil: new Date() });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, lockedUntil: null });
+
+      const result = await service.unlockAccount('u1');
+      expect(result.success).toBe(true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'ACCOUNT_UNLOCKED', entityId: 'u1' }),
+      );
+    });
+
+    it('should throw NotFound for unknown user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      await expect(service.unlockAccount('nope')).rejects.toThrow(NotFoundException);
+    });
+  });
+
     it('should return mustChangePassword without tokens when flag is set', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, mustChangePassword: true });
       mockJwt.sign.mockReturnValue('force-change-token');
@@ -161,7 +227,6 @@ describe('AuthService', () => {
       expect((result as { accessToken?: string }).accessToken).toBeUndefined();
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
-  });
 
   describe('forceChangePassword', () => {
     it('should update password and clear mustChangePassword flag', async () => {

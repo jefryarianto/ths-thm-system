@@ -18,6 +18,7 @@ import {
 } from './dto/auth.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { Request, Response } from 'express';
 import { env } from '../../config/env.validation';
 import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
@@ -137,6 +138,17 @@ export class AuthController {
       this.authService.clearRefreshTokenCookie(res);
     }
     return { success: true, message: 'Sesi dicabut' };
+  }
+
+  @Post('admin/unlock')
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Buka kunci akun yang terkunci (anti brute-force)' })
+  async unlockAccount(@Body() dto: { userId: string }, @Req() req: Request) {
+    return this.authService.unlockAccount(dto.userId, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
   }
 
   @Get('me')

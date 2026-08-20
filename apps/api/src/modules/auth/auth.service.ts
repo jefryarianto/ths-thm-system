@@ -51,6 +51,14 @@ interface AuthMeta {
   deviceName?: string;
 }
 
+/** Jumlah gagal login maksimal sebelum akun dikunci. */
+const MAX_FAILED_ATTEMPTS = Math.max(
+  3,
+  parseInt(process.env.MAX_FAILED_LOGIN_ATTEMPTS || '5', 10) || 5,
+);
+/** Durasi kunci akun (ms) setelah melewati batas gagal login. */
+const LOCKOUT_MS = Math.max(60_000, parseInt(process.env.ACCOUNT_LOCKOUT_MS || '900000', 10) || 900_000);
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -138,8 +146,36 @@ export class AuthService {
       }
     }
 
-    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
+    if (!user) {
+      // Jangan bocorkan keberadaan akun — pesan tetap sama untuk email/HP salah.
       throw new UnauthorizedException('Email/HP atau password salah');
+    }
+
+    // Anti brute-force: akun yang sedang terkunci ditolak sebelum verifikasi password.
+    if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+      this.logAuthAudit(
+        'ACCOUNT_LOCKED_ATTEMPT',
+        user.id,
+        { lockedUntil: user.lockedUntil.toISOString() },
+        meta,
+      );
+      throw new UnauthorizedException(
+        'Akun terkunci sementara karena terlalu banyak percobaan gagal. Coba lagi nanti.',
+      );
+    }
+
+    const passwordOk = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!passwordOk) {
+      await this.recordFailedLogin(user, meta);
+      throw new UnauthorizedException('Email/HP atau password salah');
+    }
+
+    // Sukses — reset penghitung gagal login & kunci akun.
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0, lockedUntil: null },
+      });
     }
 
     this.logAuthAudit(
@@ -169,6 +205,50 @@ export class AuthService {
       return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
     }
     return { user: await this.sanitizeUser(user), ...tokens };
+  }
+
+  /**
+   * Catat satu percobaan login gagal. Setelah melewati ambang MAX_FAILED_ATTEMPTS,
+   * akun dikunci sementara selama LOCKOUT_MS (anti brute-force per akun).
+   */
+  private async recordFailedLogin(
+    user: { id: string; failedLoginAttempts: number },
+    meta?: AuthMeta,
+  ): Promise<void> {
+    const next = (user.failedLoginAttempts ?? 0) + 1;
+    this.logAuthAudit('LOGIN_FAIL', user.id, { attempt: next, maxAttempts: MAX_FAILED_ATTEMPTS }, meta);
+    if (next >= MAX_FAILED_ATTEMPTS) {
+      const lockedUntil = new Date(Date.now() + LOCKOUT_MS);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: next, lockedUntil },
+      });
+      this.logAuthAudit(
+        'ACCOUNT_LOCKED',
+        user.id,
+        { lockedUntil: lockedUntil.toISOString(), lockoutMs: LOCKOUT_MS },
+        meta,
+      );
+    } else {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: next },
+      });
+    }
+  }
+
+  /**
+   * Buka kunci akun (admin). Reset penghitung + timestamp kunci, catat audit.
+   */
+  async unlockAccount(userId: string, meta?: AuthMeta) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Pengguna tidak ditemukan');
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { failedLoginAttempts: 0, lockedUntil: null },
+    });
+    this.logAuthAudit('ACCOUNT_UNLOCKED', userId, null, meta);
+    return { success: true, message: 'Akun dibuka' };
   }
 
   /**
