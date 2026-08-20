@@ -35,7 +35,7 @@ export default function DocumentsScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }}>
+        <TouchableOpacity onPress={() => router.navigate('/(tabs)/home' as never)} style={{ padding: 4, marginRight: 8 }}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
