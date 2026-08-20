@@ -12,29 +12,37 @@ export class ExportService {
   constructor(private readonly prisma: PrismaService) {}
 
   async exportToXlsx(type: string, scope?: UserScope): Promise<Buffer> {
-    let data: Record<string, unknown>[] = [];
-    let headers: string[] = [];
-
-    ({ data, headers } = await this.getExportData(type, scope));
-
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
-
-    // Set column widths
-    worksheet['!cols'] = headers.map((h) => ({ wch: Math.max(h.length * 2, 15) }));
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, type.toUpperCase());
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-    return buffer;
+    const { content } = await this.exportData(type, 'xlsx', scope);
+    return content as Buffer;
   }
 
   async exportToCsv(type: string, scope?: UserScope): Promise<string> {
-    const { data: xlsxData, headers } = await this.getExportData(type, scope);
+    const { content } = await this.exportData(type, 'csv', scope);
+    return content as string;
+  }
+
+  /**
+   * Ekspor data dalam format xlsx/csv sekaligus mengembalikan jumlah baris
+   * agar pemanggil bisa mencatat audit unduhan (jumlah baris yang diunduh).
+   */
+  async exportData(
+    type: string,
+    format: 'xlsx' | 'csv',
+    scope?: UserScope,
+  ): Promise<{ content: Buffer | string; rowCount: number; headers: string[] }> {
+    const { data, headers } = await this.getExportData(type, scope);
+    const sheetName = type.toUpperCase().slice(0, 31);
+    const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+    worksheet['!cols'] = headers.map((h) => ({ wch: Math.max(h.length * 2, 15) }));
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(xlsxData, { header: headers });
-    XLSX.utils.book_append_sheet(workbook, worksheet, type.toUpperCase());
-    const csv = XLSX.write(workbook, { type: 'string', bookType: 'csv' });
-    return csv;
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+    if (format === 'csv') {
+      const csv = XLSX.write(workbook, { type: 'string', bookType: 'csv' });
+      return { content: '\uFEFF' + csv, rowCount: data.length, headers };
+    }
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    return { content: buffer, rowCount: data.length, headers };
   }
 
   /** Shared data fetcher for all export types, used by both XLSX and CSV export. */
@@ -52,6 +60,8 @@ export class ExportService {
         return this.getGraduationData(scope);
       case 'assessments':
         return this.getAssessmentData(scope);
+      case 'audit_logs':
+        return this.getAuditLogData(scope);
       default:
         throw new Error(`Unknown export type: ${type}`);
     }
@@ -192,6 +202,36 @@ export class ExportService {
       ITEM: s.itemPenilaian?.namaItem || '-',
       SKOR: Number(s.skor),
       TANGGAL: s.createdAt.toISOString().split('T')[0],
+    }));
+
+    return { data, headers };
+  }
+
+  private async getAuditLogData(_scope?: UserScope) {
+    const logs = await this.prisma.auditLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5000,
+    });
+
+    const headers = [
+      'NO',
+      'WAKTU',
+      'AKSI',
+      'ENTITAS',
+      'ID ENTITAS',
+      'USER ID',
+      'IP',
+      'DETAIL',
+    ];
+    const data = logs.map((l, i) => ({
+      NO: i + 1,
+      WAKTU: l.createdAt.toISOString(),
+      AKSI: l.action,
+      ENTITAS: l.entity,
+      'ID ENTITAS': l.entityId || '-',
+      'USER ID': l.userId || '-',
+      IP: l.ipAddress || '-',
+      DETAIL: l.details ? JSON.stringify(l.details) : '-',
     }));
 
     return { data, headers };

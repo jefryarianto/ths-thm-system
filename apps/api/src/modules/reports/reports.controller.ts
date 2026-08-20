@@ -1,11 +1,22 @@
-import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, Res, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { ReportsService } from './reports.service';
 import { ExportService } from './export.service';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+
+const VALID_EXPORT_TYPES = new Set([
+  'members',
+  'dues',
+  'trainings',
+  'candidates',
+  'graduations',
+  'assessments',
+  'audit_logs',
+]);
 
 @ApiTags('Reports')
 @Controller('reports')
@@ -15,6 +26,7 @@ export class ReportsController {
     private readonly prisma: PrismaService,
     private readonly reportsService: ReportsService,
     private readonly exportService: ExportService,
+    private readonly audit: PersistentAuditService,
   ) {}
 
   @Get('dashboard')
@@ -86,7 +98,7 @@ export class ReportsController {
   }
 
   @Get('export/:type')
-  @ApiOperation({ summary: 'Ekspor data ke XLSX/CSV' })
+  @ApiOperation({ summary: 'Ekspor data ke XLSX/CSV (teraudit)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting')
   async exportData(
     @Param('type') type: string,
@@ -94,30 +106,40 @@ export class ReportsController {
     @Req() req: ScopedRequest,
     @Res() res: Response,
   ) {
-    const fmt = format || 'xlsx';
+    const fmt = (format || 'xlsx').toLowerCase();
+    if (fmt !== 'xlsx' && fmt !== 'csv') {
+      throw new BadRequestException('Format harus xlsx atau csv');
+    }
+    if (!VALID_EXPORT_TYPES.has(type)) {
+      throw new BadRequestException(`Tipe ekspor tidak dikenal: ${type}`);
+    }
+
+    const { content, rowCount } = await this.exportService.exportData(type, fmt, req.scope);
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `${type}-export-${date}.${fmt}`;
 
     if (fmt === 'csv') {
-      const csv = await this.exportService.exportToCsv(type, req.scope);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${type}-export-${new Date().toISOString().slice(0, 10)}.csv"`,
-      );
-      // Add BOM for Excel compatibility
-      res.send('\uFEFF' + csv);
     } else {
-      const buffer = await this.exportService.exportToXlsx(type, req.scope);
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${type}-export-${new Date().toISOString().slice(0, 10)}.xlsx"`,
-      );
-      res.send(buffer);
     }
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(content);
+
+    // Catat audit unduhan (best-effort).
+    await this.audit.log({
+      action: 'EXPORT_DOWNLOADED',
+      entity: type,
+      entityId: null,
+      userId: req.user?.id ?? null,
+      ipAddress: req.ip,
+      userAgent: (req as unknown as Request).get('user-agent'),
+      details: { format: fmt, rowCount, fileName: filename },
+    });
   }
 
   @Get('export/audit-log')
-  @ApiOperation({ summary: 'Ekspor log audit' })
+  @ApiOperation({ summary: 'Ekspor log email (CSV)' })
   @Roles('superadmin')
   async exportAuditLog(@Query('from') from: string, @Query('to') to: string, @Res() res: Response) {
     const logs = await this.prisma.emailLog.findMany({
