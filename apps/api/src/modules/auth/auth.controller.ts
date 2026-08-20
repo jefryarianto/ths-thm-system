@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile, Delete, Param } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -104,12 +104,39 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Keluar — hapus refresh token (server + cookie)' })
   async logout(@CurrentUser() user: { id: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
     this.authService.clearRefreshTokenCookie(res);
-    await this.authService.logout(user.id, {
+    await this.authService.logout(user.id, refreshToken, {
       ip: req.ip,
       userAgent: req.get('user-agent'),
     });
     return { success: true, message: 'Berhasil keluar' };
+  }
+
+  @Get('sessions')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Daftar sesi aktif' })
+  listSessions(@CurrentUser() user: { id: string }) {
+    return this.authService.listSessions(user.id);
+  }
+
+  @Delete('sessions/:id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cabut sesi tertentu (logout perangkat lain)' })
+  async revokeSession(
+    @CurrentUser() user: { id: string },
+    @Param('id') sessionId: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const wasCurrent = await this.authService.revokeSession(user.id, sessionId, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+    if (wasCurrent) {
+      this.authService.clearRefreshTokenCookie(res);
+    }
+    return { success: true, message: 'Sesi dicabut' };
   }
 
   @Get('me')

@@ -48,6 +48,7 @@ interface OAuthUserProfile {
 interface AuthMeta {
   ip?: string;
   userAgent?: string;
+  deviceName?: string;
 }
 
 @Injectable()
@@ -162,6 +163,7 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user);
+    await this.createSession(user.id, tokens.refreshToken, meta);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
       return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
@@ -208,6 +210,7 @@ export class AuthService {
       },
     });
     const tokens = await this.generateTokens(user);
+    await this.createSession(user.id, tokens.refreshToken);
     if (response) {
       this.setRefreshTokenCookie(response, tokens.refreshToken);
       return { user: await this.sanitizeUser(user), accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
@@ -221,9 +224,55 @@ export class AuthService {
         secret: this.envConfig.jwtRefreshSecret,
       });
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (!user || user.refreshToken !== refreshToken)
+      if (!user) throw new UnauthorizedException('Token tidak valid');
+
+      // Reuse detection: JWT valid tapi token bukan yang aktif → token lama
+      // dipakai ulang (indikasi dicuri). Revoke seluruh sesi pengguna.
+      if (user.refreshToken !== refreshToken) {
+        await this.revokeAllSessions(user.id);
+        this.logAuthAudit('REUSE_DETECTED', user.id, null, meta);
         throw new UnauthorizedException('Token tidak valid');
+      }
+
       const tokens = await this.generateTokens(user);
+
+      const session = await this.prisma.userSession.findUnique({
+        where: { refreshToken },
+      });
+      if (session && session.userId === user.id && !session.revokedAt) {
+        // Rotasi token pada sesi yang sama
+        await this.prisma.userSession.update({
+          where: { id: session.id },
+          data: {
+            refreshToken: tokens.refreshToken,
+            lastUsedAt: new Date(),
+            ipAddress: meta?.ip ?? session.ipAddress,
+            userAgent: meta?.userAgent ?? session.userAgent,
+            deviceName: meta?.deviceName ?? session.deviceName,
+          },
+        });
+      } else if (session) {
+        // Sesi sudah direvoke / milik user lain → token disalahgunakan
+        await this.revokeAllSessions(user.id);
+        this.logAuthAudit('REUSE_DETECTED', user.id, null, meta);
+        throw new UnauthorizedException('Token tidak valid');
+      } else {
+        // Sesi pra-migrasi: belum ada baris sesi → adopsi jadi sesi baru
+        await this.prisma.userSession.create({
+          data: {
+            userId: user.id,
+            refreshToken: tokens.refreshToken,
+            deviceName: meta?.deviceName ?? null,
+            ipAddress: meta?.ip ?? null,
+            userAgent: meta?.userAgent ?? null,
+          },
+        });
+      }
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken: tokens.refreshToken },
+      });
       this.logAuthAudit('REFRESH_TOKEN', user.id, null, meta);
       return tokens;
     } catch {
@@ -231,12 +280,101 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string, meta?: AuthMeta) {
+  async listSessions(userId: string) {
+    const sessions = await this.prisma.userSession.findMany({
+      where: { userId, revokedAt: null },
+      orderBy: { lastUsedAt: 'desc' },
+      select: {
+        id: true,
+        deviceName: true,
+        ipAddress: true,
+        userAgent: true,
+        lastUsedAt: true,
+        createdAt: true,
+        refreshToken: true,
+      },
+    });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { refreshToken: true },
+    });
+    return sessions.map((s) => ({
+      id: s.id,
+      deviceName: s.deviceName,
+      ipAddress: s.ipAddress,
+      userAgent: s.userAgent,
+      lastUsedAt: s.lastUsedAt,
+      createdAt: s.createdAt,
+      isCurrent: user?.refreshToken === s.refreshToken,
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string, meta?: AuthMeta): Promise<boolean> {
+    const session = await this.prisma.userSession.findUnique({
+      where: { id: sessionId },
+    });
+    if (!session || session.userId !== userId) {
+      throw new NotFoundException('Sesi tidak ditemukan');
+    }
+    await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { refreshToken: true },
+    });
+    const wasCurrent = user?.refreshToken === session.refreshToken;
+    if (wasCurrent) {
+      // Sesi yang direvoke adalah sesi aktif → logout total
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { refreshToken: null },
+      });
+    }
+    this.logAuthAudit('SESSION_REVOKE', userId, { sessionId }, meta);
+    return wasCurrent;
+  }
+
+  private async revokeAllSessions(userId: string) {
+    await this.prisma.userSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
+    });
+  }
+
+  async logout(userId: string, refreshToken?: string, meta?: AuthMeta) {
+    if (refreshToken) {
+      await this.prisma.userSession.updateMany({
+        where: { userId, refreshToken, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
     await this.prisma.user.update({
       where: { id: userId },
       data: { refreshToken: null },
     });
     this.logAuthAudit('LOGOUT', userId, null, meta);
+  }
+
+  private async createSession(userId: string, refreshToken: string, meta?: AuthMeta) {
+    try {
+      await this.prisma.userSession.create({
+        data: {
+          userId,
+          refreshToken,
+          deviceName: meta?.deviceName ?? null,
+          ipAddress: meta?.ip ?? null,
+          userAgent: meta?.userAgent ?? null,
+        },
+      });
+    } catch {
+      // Best-effort: gagal mencatat sesi tidak menghalangi login
+    }
   }
 
   async getProfile(userId: string) {
@@ -644,6 +782,7 @@ export class AuthService {
       if (!user) throw new NotFoundException('User tidak ditemukan');
 
       const tokens = await this.generateTokens(user);
+      await this.createSession(user.id, tokens.refreshToken);
       this.logAuthAudit('LOGIN', user.id, { method: 'magic-link' });
       return { user: await this.sanitizeUser(user), ...tokens };
     } catch {

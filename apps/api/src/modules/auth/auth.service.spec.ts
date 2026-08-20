@@ -45,6 +45,13 @@ describe('AuthService', () => {
       findMany: jest.fn(),
       update: jest.fn(),
     },
+    userSession: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn().mockResolvedValue({ id: 's1' }),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
     auditLog: {
       create: jest.fn().mockResolvedValue({ id: 'a1' }),
     },
@@ -469,9 +476,46 @@ describe('AuthService', () => {
       mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', role: 'anggota' });
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-rt' });
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
+      mockPrisma.userSession.findUnique.mockResolvedValue({
+        id: 's1',
+        userId: 'u1',
+        refreshToken: 'valid-rt',
+        revokedAt: null,
+        ipAddress: null,
+        userAgent: null,
+        deviceName: null,
+      });
+      mockPrisma.userSession.update.mockResolvedValue({ id: 's1' });
 
       const result = await service.refreshToken('valid-rt');
       expect(result.accessToken).toBe('mock-jwt-token');
+      // Sesi di-rotasi dengan token baru
+      expect(mockPrisma.userSession.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 's1' },
+          data: expect.objectContaining({ refreshToken: 'mock-jwt-token' }),
+        }),
+      );
+    });
+
+    it('should revoke all sessions when a stale/reused token is presented', async () => {
+      mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', role: 'anggota' });
+      // user.refreshToken sudah ter-rotasi → token lama dianggap reuse
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'current-rt' });
+      mockPrisma.userSession.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: null });
+
+      await expect(service.refreshToken('old-stolen-rt')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(mockPrisma.userSession.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'u1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'REUSE_DETECTED', entityId: 'u1' }),
+      );
     });
 
     it('should throw UnauthorizedException for invalid refresh token', async () => {
@@ -482,6 +526,49 @@ describe('AuthService', () => {
       await expect(service.refreshToken('invalid-rt')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('sessions', () => {
+    it('should list active sessions with isCurrent flag', async () => {
+      mockPrisma.userSession.findMany.mockResolvedValue([
+        { id: 's1', deviceName: null, ipAddress: '1.1.1.1', userAgent: 'ua', lastUsedAt: new Date(), createdAt: new Date(), refreshToken: 'rt-active' },
+        { id: 's2', deviceName: 'Android', ipAddress: '2.2.2.2', userAgent: 'ua2', lastUsedAt: new Date(), createdAt: new Date(), refreshToken: 'rt-other' },
+      ]);
+      mockPrisma.user.findUnique.mockResolvedValue({ refreshToken: 'rt-active' });
+
+      const result = await service.listSessions('u1');
+      expect(result).toHaveLength(2);
+      expect(result[0].isCurrent).toBe(true);
+      expect(result[1].isCurrent).toBe(false);
+    });
+
+    it('should revoke a session and clear token when it is the current session', async () => {
+      mockPrisma.userSession.findUnique.mockResolvedValue({
+        id: 's1',
+        userId: 'u1',
+        refreshToken: 'rt-active',
+        revokedAt: null,
+      });
+      mockPrisma.userSession.update.mockResolvedValue({ id: 's1', revokedAt: new Date() });
+      mockPrisma.user.findUnique.mockResolvedValue({ refreshToken: 'rt-active' });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: null });
+
+      const wasCurrent = await service.revokeSession('u1', 's1');
+      expect(wasCurrent).toBe(true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { refreshToken: null },
+      });
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'SESSION_REVOKE', entityId: 'u1' }),
+      );
+    });
+
+    it('should throw NotFound when session belongs to another user', async () => {
+      mockPrisma.userSession.findUnique.mockResolvedValue({ id: 's9', userId: 'other', refreshToken: 'x' });
+
+      await expect(service.revokeSession('u1', 's9')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -545,6 +632,8 @@ describe('AuthService', () => {
     it('should write REFRESH_TOKEN audit on token refresh', async () => {
       mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org' });
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-refresh' });
+      // Belum ada baris sesi → adopsi jadi sesi baru (create)
+      mockPrisma.userSession.findUnique.mockResolvedValue(undefined);
 
       await service.refreshToken('valid-refresh', { ip: '1.2.3.4' });
 
@@ -558,7 +647,7 @@ describe('AuthService', () => {
     it('should clear refreshToken in DB and write LOGOUT audit', async () => {
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: null });
 
-      await service.logout('u1', { ip: '1.2.3.4', userAgent: 'test-agent' });
+      await service.logout('u1', undefined, { ip: '1.2.3.4', userAgent: 'test-agent' });
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
