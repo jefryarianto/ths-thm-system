@@ -3,6 +3,7 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
@@ -12,12 +13,9 @@ function getJwtSecret(): string {
   if (process.env.JWT_SECRET) {
     return process.env.JWT_SECRET;
   }
-
-  // Allow tests to run without explicit env configuration
   if (process.env.NODE_ENV === 'test') {
     return 'test-secret';
   }
-
   throw new Error('JWT_SECRET environment variable is required for EventsGateway');
 }
 
@@ -25,60 +23,106 @@ const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
   : ['http://localhost:3000'];
 
+/** Batas koneksi per IP per menit (anti connection flood). */
+const MAX_CONNECTIONS_PER_IP_PER_MIN = Math.max(
+  5,
+  parseInt(process.env.SOCKET_MAX_CONNECTIONS_PER_IP || '20', 10) || 20,
+);
+/** Batas paket (event dari client) per socket per 10 detik. */
+const MAX_PACKETS_PER_WINDOW = Math.max(
+  10,
+  parseInt(process.env.SOCKET_MAX_PACKETS_PER_WINDOW || '30', 10) || 30,
+);
+const PACKET_WINDOW_MS = 10_000;
+
 @WebSocketGateway({
   cors: { origin: corsOrigins },
   namespace: '/',
 })
-export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class EventsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
   private logger = new Logger('EventsGateway');
   // userId → Set<socketId>
   private userSockets = new Map<string, Set<string>>();
+  // ip → timestamps of recent connection attempts (sliding window per menit)
+  private ipConnections = new Map<string, number[]>();
+  // socketId → array of packet timestamps (sliding window per 10 detik)
+  private packetWindows = new Map<string, number[]>();
+  private throttledPackets = 0;
+  private rejectedConnections = 0;
 
-  handleConnection(client: Socket) {
-    try {
+  afterInit(server: Server) {
+    // Middleware handshake: rate-limit per IP + verifikasi JWT WAJIB.
+    // Koneksi tanpa token valid ditolak di level handshake (bukan sekadar
+    // "connect without auth" seperti sebelumnya).
+    server.use((socket, next) => {
+      const ip = socket.handshake.address || 'unknown';
+      const now = Date.now();
+      const recent = (this.ipConnections.get(ip) || []).filter((t) => now - t < 60_000);
+      if (recent.length >= MAX_CONNECTIONS_PER_IP_PER_MIN) {
+        this.rejectedConnections++;
+        this.logger.warn(`Connection flood from IP ${ip} — menolak koneksi`);
+        return next(new Error('terlalu banyak koneksi'));
+      }
+      recent.push(now);
+      this.ipConnections.set(ip, recent);
+
       const token =
-        client.handshake.auth?.token ||
-        client.handshake.headers?.authorization?.replace('Bearer ', '');
+        socket.handshake.auth?.token ||
+        socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
       if (!token) {
-        this.logger.debug(`Unauthenticated client connected: ${client.id}`);
-        return;
+        this.rejectedConnections++;
+        this.logger.warn(`Koneksi tanpa token ditolak dari ${ip}`);
+        return next(new Error('tidak terautentikasi'));
       }
 
-      const payload = jwt.verify(token, getJwtSecret()) as {
-        sub: string;
-        email: string;
-        role: string;
-      };
-      const userId = payload.sub;
-
-      // Attach userId and role to socket for later use
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client as any).userId = userId;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client as any).role = payload.role;
-
-      // Track user sockets
-      if (!this.userSockets.has(userId)) {
-        this.userSockets.set(userId, new Set());
+      try {
+        const payload = jwt.verify(token, getJwtSecret()) as {
+          sub: string;
+          email: string;
+          role: string;
+        };
+        socket.data.userId = payload.sub;
+        socket.data.role = payload.role;
+        next();
+      } catch {
+        this.rejectedConnections++;
+        this.logger.warn(`Token tidak valid ditolak dari ${ip}`);
+        next(new Error('token tidak valid'));
       }
-      this.userSockets.get(userId)!.add(client.id);
+    });
+  }
 
-      // Join user-specific room
-      client.join(`user:${userId}`);
-
-      this.logger.log(`Client connected: ${client.id} (user: ${userId})`);
-    } catch {
-      this.logger.warn(`Invalid token for client ${client.id}, connecting without auth`);
+  handleConnection(client: Socket) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId) {
+      // Seharusnya tidak terjadi (middleware sudah menolak) — jaga-jaga.
+      client.disconnect(true);
+      return;
     }
+
+    // Track user sockets
+    if (!this.userSockets.has(userId)) {
+      this.userSockets.set(userId, new Set());
+    }
+    this.userSockets.get(userId)!.add(client.id);
+
+    // Join user-specific room
+    client.join(`user:${userId}`);
+
+    // Throttle paket dari client (per socket, sliding window 10 detik).
+    client.onAny(() => this.trackPacket(client));
+
+    this.logger.log(`Client connected: ${client.id} (user: ${userId})`);
   }
 
   handleDisconnect(client: Socket) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
+    const userId = client.data.userId as string | undefined;
     if (userId) {
       const sockets = this.userSockets.get(userId);
       if (sockets) {
@@ -86,7 +130,24 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         if (sockets.size === 0) this.userSockets.delete(userId);
       }
     }
+    this.packetWindows.delete(client.id);
     this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  private trackPacket(client: Socket): void {
+    const now = Date.now();
+    const window = (this.packetWindows.get(client.id) || []).filter(
+      (t) => now - t < PACKET_WINDOW_MS,
+    );
+    window.push(now);
+    this.packetWindows.set(client.id, window);
+    if (window.length > MAX_PACKETS_PER_WINDOW) {
+      this.throttledPackets++;
+      this.logger.warn(
+        `Client ${client.id} melebihi batas paket — putuskan koneksi`,
+      );
+      client.disconnect(true);
+    }
   }
 
   // ─── Emit to specific user (notification:new event) ───
@@ -121,11 +182,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // ─── Emit to users with specific role ───
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendToRole(role: string, data: any) {
-    // Iterate all connected clients and emit to matching roles
     this.server.sockets.sockets.forEach((socket: Socket) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const userRole = (socket as any).role;
-      if (userRole === role) {
+      if (socket.data.role === role) {
         socket.emit('notification:new', data);
       }
     });
@@ -141,30 +199,25 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Returns comprehensive WebSocket connection statistics for monitoring.
+   * Comprehensive WebSocket statistics for monitoring, termasuk metrik
+   * throttle/penolakan koneksi.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getStats(): Record<string, any> {
     const sockets = this.server.sockets.sockets;
     const rooms = this.server.sockets.adapter.rooms;
 
-    // Count connected users and their socket counts
     const userCounts: Record<string, number> = {};
     this.userSockets.forEach((socketIds, userId) => {
       userCounts[userId] = socketIds.size;
     });
 
-    // Build room stats (skip default rooms that start with user: for brevity?)
-    // Actually let's show all rooms
     const roomStats: Array<{ room: string; sockets: number }> = [];
     rooms.forEach((socketSet, roomName) => {
-      // Skip the default socket.io room (the room with the same name as socket id)
       if (!sockets.has(roomName)) {
         roomStats.push({ room: roomName, sockets: socketSet.size });
       }
     });
-
-    // Sort rooms by socket count descending
     roomStats.sort((a, b) => b.sockets - a.sockets);
 
     return {
@@ -172,6 +225,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       uniqueUsers: this.userSockets.size,
       rooms: roomStats,
       userConnectionCounts: userCounts,
+      security: {
+        throttledPackets: this.throttledPackets,
+        rejectedConnections: this.rejectedConnections,
+        maxConnectionsPerIpPerMin: MAX_CONNECTIONS_PER_IP_PER_MIN,
+        maxPacketsPerWindow: MAX_PACKETS_PER_WINDOW,
+      },
       timestamp: new Date().toISOString(),
     };
   }

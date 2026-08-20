@@ -22,6 +22,7 @@ describe('EventsGateway', () => {
     const emittedEvents: Array<{ event: string; args: any[] }> = [];
     return {
       id,
+      data: {},
       handshake: {
         auth: token ? { token } : {},
         headers: token ? {} : {},
@@ -32,6 +33,7 @@ describe('EventsGateway', () => {
         emittedEvents.push({ event, args });
       }),
       disconnect: jest.fn(),
+      onAny: jest.fn(),
       _joins: joins,
       _emitted: emittedEvents,
     } as any;
@@ -51,6 +53,7 @@ describe('EventsGateway', () => {
       }),
       sockets: {
         sockets,
+        adapter: { rooms: new Map<string, Set<string>>() },
       },
       _roomEmits: roomEmits,
     } as any;
@@ -73,35 +76,48 @@ describe('EventsGateway', () => {
   describe('handleConnection', () => {
     it('should connect client with valid token', () => {
       const socket = createMockSocket('sock-1', 'valid-token');
+      socket.data.userId = 'user-1';
+      socket.data.role = 'admin_distrik';
       gateway.handleConnection(socket);
       expect(socket.join).toHaveBeenCalledWith('user:user-1');
       expect(gateway.isUserOnline('user-1')).toBe(true);
     });
 
-    it('should connect client without token (no disconnect)', () => {
+    it('should disconnect client without authenticated userId (middleware rejects first)', () => {
       const socket = createMockSocket('sock-1');
       gateway.handleConnection(socket);
-      expect(socket.disconnect).not.toHaveBeenCalled();
+      expect(socket.disconnect).toHaveBeenCalled();
       expect(socket.join).not.toHaveBeenCalled();
     });
 
-    it('should connect client with invalid token (no disconnect)', () => {
+    it('should disconnect client with invalid token (middleware rejects first)', () => {
       const socket = createMockSocket('sock-1', 'bad-token');
       gateway.handleConnection(socket);
-      expect(socket.disconnect).not.toHaveBeenCalled();
+      expect(socket.disconnect).toHaveBeenCalled();
       expect(socket.join).not.toHaveBeenCalled();
     });
 
-    it('should attach role from JWT payload to socket', () => {
+    it('should attach role and userId from JWT payload to socket.data', () => {
       const socket = createMockSocket('sock-1', 'valid-token');
+      socket.data.userId = 'user-1';
+      socket.data.role = 'admin_distrik';
       gateway.handleConnection(socket);
-      expect((socket as any).userId).toBe('user-1');
-      expect((socket as any).role).toBe('admin_distrik');
+      expect(socket.data.userId).toBe('user-1');
+      expect(socket.data.role).toBe('admin_distrik');
+    });
+
+    it('should register a packet throttle on the socket', () => {
+      const socket = createMockSocket('sock-1', 'valid-token');
+      socket.data.userId = 'user-1';
+      gateway.handleConnection(socket);
+      expect(socket.onAny).toHaveBeenCalled();
     });
 
     it('should track multiple sockets per user', () => {
       const s1 = createMockSocket('s1', 'valid-token');
       const s2 = createMockSocket('s2', 'valid-token');
+      s1.data.userId = 'user-1';
+      s2.data.userId = 'user-1';
       gateway.handleConnection(s1);
       gateway.handleConnection(s2);
       expect(gateway.getOnlineUserCount()).toBe(1);
@@ -113,6 +129,8 @@ describe('EventsGateway', () => {
     it('should remove socket from tracking', () => {
       const s1 = createMockSocket('s1', 'valid-token');
       const s2 = createMockSocket('s2', 'valid-token');
+      s1.data.userId = 'user-1';
+      s2.data.userId = 'user-1';
       gateway.handleConnection(s1);
       gateway.handleConnection(s2);
       expect(gateway.getOnlineUserCount()).toBe(1);
@@ -126,7 +144,7 @@ describe('EventsGateway', () => {
 
     it('should handle disconnect for unknown socket gracefully', () => {
       const unknown = createMockSocket('unknown');
-      (unknown as any).userId = undefined;
+      unknown.data.userId = undefined;
       expect(() => gateway.handleDisconnect(unknown)).not.toThrow();
     });
   });
@@ -162,6 +180,10 @@ describe('EventsGateway', () => {
     it('should emit to sockets with matching role', () => {
       const s1 = createMockSocket('s1', 'valid-token');
       const s2 = createMockSocket('s2', 'valid-token-2');
+      s1.data.userId = 'user-1';
+      s1.data.role = 'admin_distrik';
+      s2.data.userId = 'user-2';
+      s2.data.role = 'anggota';
       gateway.handleConnection(s1);
       gateway.handleConnection(s2);
       // In real Socket.IO, server.sockets.sockets is managed automatically.
@@ -176,6 +198,8 @@ describe('EventsGateway', () => {
 
     it('should not emit to any socket if no matching role', () => {
       const s1 = createMockSocket('s1', 'valid-token');
+      s1.data.userId = 'user-1';
+      s1.data.role = 'anggota';
       gateway.handleConnection(s1);
       gateway.server.sockets.sockets.set('s1', s1);
 
@@ -192,6 +216,7 @@ describe('EventsGateway', () => {
 
     it('should return true for connected user', () => {
       const s1 = createMockSocket('s1', 'valid-token');
+      s1.data.userId = 'user-1';
       gateway.handleConnection(s1);
       expect(gateway.isUserOnline('user-1')).toBe(true);
     });
@@ -205,9 +230,86 @@ describe('EventsGateway', () => {
     it('should count unique users, not sockets', () => {
       const s1 = createMockSocket('s1', 'valid-token');
       const s2 = createMockSocket('s2', 'valid-token');
+      s1.data.userId = 'user-1';
+      s2.data.userId = 'user-1';
       gateway.handleConnection(s1);
       gateway.handleConnection(s2);
       expect(gateway.getOnlineUserCount()).toBe(1); // same user, 2 sockets
+    });
+  });
+
+  // ─── afterInit (handshake middleware) ───
+  describe('afterInit', () => {
+    it('should accept a connection with valid token and attach payload to socket.data', () => {
+      const socket = createMockSocket('sock-1', 'valid-token');
+      socket.handshake.address = '1.2.3.4';
+      const next = jest.fn();
+      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      expect(next).toHaveBeenCalled();
+      expect(socket.data.userId).toBe('user-1');
+      expect(socket.data.role).toBe('admin_distrik');
+    });
+
+    it('should reject a connection with missing token', () => {
+      const socket = createMockSocket('sock-1');
+      socket.handshake.address = '1.2.3.4';
+      const next = jest.fn();
+      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      expect(next.mock.calls[0][0]?.message).toBe('tidak terautentikasi');
+    });
+
+    it('should reject a connection with invalid token', () => {
+      const socket = createMockSocket('sock-1', 'bad-token');
+      socket.handshake.address = '1.2.3.4';
+      const next = jest.fn();
+      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      expect(next.mock.calls[0][0]?.message).toBe('token tidak valid');
+    });
+
+    it('should reject a connection when IP exceeds connection rate limit', () => {
+      const socket = createMockSocket('sock-1', 'valid-token');
+      socket.handshake.address = '10.0.0.1';
+      const next = jest.fn();
+      (gateway as unknown as { ipConnections: Map<string, number[]> }).ipConnections.set(
+        '10.0.0.1',
+        Array(20).fill(Date.now()),
+      );
+      gateway.afterInit({ use: (mw: (s: unknown, n: unknown) => void) => mw(socket, next) } as never);
+      expect(next.mock.calls[0][0]?.message).toBe('terlalu banyak koneksi');
+    });
+  });
+
+  // ─── packet throttle ───
+  describe('trackPacket', () => {
+    it('should disconnect a socket that exceeds the packet window limit', () => {
+      const socket = createMockSocket('sock-1', 'valid-token');
+      socket.data.userId = 'user-1';
+      gateway.handleConnection(socket);
+      // Pakai window dengan timestamps identik agar semua masuk satu jendela
+      const now = Date.now();
+      const timestamps = Array(40).fill(now);
+      (gateway as unknown as { packetWindows: Map<string, number[]> }).packetWindows.set(
+        'sock-1',
+        timestamps,
+      );
+      (gateway as unknown as { trackPacket: (c: unknown) => void }).trackPacket.call(gateway, socket);
+      expect(socket.disconnect).toHaveBeenCalled();
+      const stats = gateway.getStats();
+      expect(stats.security.throttledPackets).toBe(1);
+    });
+
+    it('should not disconnect a socket within the packet limit', () => {
+      const socket = createMockSocket('sock-1', 'valid-token');
+      socket.data.userId = 'user-1';
+      gateway.handleConnection(socket);
+      const now = Date.now();
+      const timestamps = Array(5).fill(now);
+      (gateway as unknown as { packetWindows: Map<string, number[]> }).packetWindows.set(
+        'sock-1',
+        timestamps,
+      );
+      (gateway as unknown as { trackPacket: (c: unknown) => void }).trackPacket.call(gateway, socket);
+      expect(socket.disconnect).not.toHaveBeenCalled();
     });
   });
 });
