@@ -16,8 +16,6 @@ export default defineConfig({
     trace: 'on-first-retry',
     headless: true,
   },
-  // In CI, auto-create missing visual regression baselines instead of failing.
-  updateSnapshots: isCI ? 'missing' : undefined,
   projects: [
     {
       name: 'chromium',

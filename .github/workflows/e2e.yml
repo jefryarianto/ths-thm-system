@@ -184,14 +184,11 @@ jobs:
         working-directory: apps/web
         shell: bash
         run: |
-          UPDATE_FLAG=""
-          if [ "${{ inputs.update_snapshots }}" = "true" ]; then
-            UPDATE_FLAG="--update-snapshots"
-            echo "   📸 Updating visual regression snapshots"
-          fi
+          # Always pass --update-snapshots in CI: when baselines exist they are
+          # compared (test fails on diff); when missing they are created.
           npx playwright test \
             --shard=${{ matrix.shard }}/${{ strategy.job-total }} \
-            $UPDATE_FLAG
+            --update-snapshots
         env:
           E2E_BASE_URL: http://localhost:3002
           CI: true
