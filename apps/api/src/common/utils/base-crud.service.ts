@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from './scope-helpers';
 import { CacheService } from '../services/cache.service';
 import { PersistentAuditService } from '../services/persistent-audit.service';
+import { RevisionService } from '../services/revision.service';
 import { UserScope } from '../interfaces/user-scope.interface';
 import { paginate } from './pagination';
 
@@ -13,6 +14,13 @@ import { paginate } from './pagination';
  * versi saat ini — mismatch menghasilkan ConflictException (409).
  */
 export const OPTIMISTIC_VERSIONED_MODELS = new Set(['anggota', 'klaim']);
+
+/**
+ * Model yang dicatat riwayat revisinya (diff audit) otomatis pada setiap
+ * baseUpdate. Data kritikal yang keliru diedit bisa dipulihkan lewat
+ * endpoint admin/revisions.
+ */
+export const REVISION_TRACKED_MODELS = new Set(['anggota', 'klaim', 'iuran', 'calonAnggota', 'latihan']);
 
 /**
  * Scope strategy determines how the base class verifies data access.
@@ -84,6 +92,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     protected readonly cache: CacheService,
     private readonly config: CrudConfig,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
+    @Optional() protected readonly revisions?: RevisionService,
   ) {
     this.logger = new Logger(this.constructor.name);
     this.CACHE_PREFIX = config.prefix;
@@ -396,12 +405,21 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     dto: TUpdateDto,
     scope?: UserScope,
     message?: string,
+    userId?: string,
   ): Promise<{ data: T; message: string }> {
     await this.verifyScope(id, scope);
     const data = await this.beforeUpdate(id, dto);
     // Field `version` adalah kontrol konkurensi — jangan tulis nilai client mentah.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (data as any).version;
+
+    // Snapshot sebelum-perubahan untuk riwayat revisi (diff audit).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let beforeRow: Record<string, unknown> | null = null;
+    if (REVISION_TRACKED_MODELS.has(this.config.model) && this.revisions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      beforeRow = (await this.prismaDelegate.findUnique({ where: { id } })) as Record<string, unknown> | null;
+    }
 
     // ── Optimistic locking ─────────────────────────────────
     // Model berkolom `version`: bila client mengirim `version`, kita cek versi
@@ -445,6 +463,15 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     await this.afterUpdate(updated, dto);
     this.invalidateCache();
     this.audit('UPDATE', this.config.model, id);
+    if (REVISION_TRACKED_MODELS.has(this.config.model) && this.revisions && beforeRow) {
+      await this.revisions.recordUpdate(
+        this.config.model,
+        id,
+        beforeRow,
+        updated as Record<string, unknown>,
+        userId ?? null,
+      );
+    }
     return {
       data: updated,
       message: message || 'Data berhasil diperbarui',

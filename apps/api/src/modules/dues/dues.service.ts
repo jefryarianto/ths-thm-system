@@ -10,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { RevisionService } from '../../common/services/revision.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { paymentConfirmationEmail } from '../../mail/email-templates';
 import {
@@ -36,12 +37,13 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
+    @Optional() protected readonly revisions?: RevisionService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'iuran',
       prefix: 'dues:',
       scopeStrategy: 'anggota_indirect',
-    }, persistentAudit);
+    }, persistentAudit, revisions);
   }
 
   // ── Hooks ───────────────────────────────────────────────
@@ -169,8 +171,8 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return this.baseCreate(dto, undefined, undefined, 'Pembayaran iuran berhasil dicatat');
   }
 
-  async update(id: string, dto: UpdateDueDto, scope?: UserScope) {
-    return this.baseUpdate(id, dto, scope, 'Data iuran berhasil diperbarui');
+  async update(id: string, dto: UpdateDueDto, scope?: UserScope, userId?: string) {
+    return this.baseUpdate(id, dto, scope, 'Data iuran berhasil diperbarui', userId);
   }
 
   async remove(id: string, scope?: UserScope) {

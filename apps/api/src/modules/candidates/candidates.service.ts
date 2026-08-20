@@ -5,6 +5,7 @@ import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.servic
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { RevisionService } from '../../common/services/revision.service';
 import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -30,8 +31,9 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     private readonly memberMailService: MemberMailService,
     private readonly nraService: NraService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
+    @Optional() protected readonly revisions?: RevisionService,
   ) {
-    super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit);
+    super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit, revisions);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -195,9 +197,9 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     }
   }
 
-  async update(id: string, dto: UpdateCandidateDto, scope?: UserScope) {
+  async update(id: string, dto: UpdateCandidateDto, scope?: UserScope, userId?: string) {
     // `baseUpdate` calls `beforeUpdate` for date parsing, then verifies scope
-    return this.baseUpdate(id, dto, scope, 'Data calon anggota berhasil diperbarui');
+    return this.baseUpdate(id, dto, scope, 'Data calon anggota berhasil diperbarui', userId);
   }
 
   async remove(id: string, scope?: UserScope) {

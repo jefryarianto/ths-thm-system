@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { RevisionService } from '../../common/services/revision.service';
 import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { attendanceConfirmationEmail } from '../../mail/email-templates';
@@ -36,8 +37,9 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
+    @Optional() protected readonly revisions?: RevisionService,
   ) {
-    super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit);
+    super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit, revisions);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -133,9 +135,9 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     return this.baseCreate(dto, scope, userId, 'Latihan berhasil dibuat');
   }
 
-  async update(id: string, dto: UpdateTrainingDto, scope?: UserScope) {
+  async update(id: string, dto: UpdateTrainingDto, scope?: UserScope, userId?: string) {
     // `beforeUpdate` hook handles field mapping
-    return this.baseUpdate(id, dto, scope, 'Latihan berhasil diperbarui');
+    return this.baseUpdate(id, dto, scope, 'Latihan berhasil diperbarui', userId);
   }
 
   async remove(id: string, scope?: UserScope) {

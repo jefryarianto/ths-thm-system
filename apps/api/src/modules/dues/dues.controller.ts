@@ -32,7 +32,7 @@ export class DuesController {
   @Patch(':id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Update iuran' })
   update(@Param('id') id: string, @Body() dto: UpdateDueDto, @Req() req: ScopedRequest) {
-    return this.service.update(id, dto, req.scope);
+    return this.service.update(id, dto, req.scope, req.user?.id);
   }
 
   @Delete(':id')

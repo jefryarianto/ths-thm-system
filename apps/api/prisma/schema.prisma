@@ -370,6 +370,7 @@ model User {
   auditLogs                   AuditLog[]
   kepengurusans               Kepengurusan[]
   userSessions                UserSession[]
+  dataRevisions               DataRevision[] @relation("DataRevisionChangedBy")
 
   @@map("users")
 }
@@ -1110,6 +1111,23 @@ model AuditLog {
 }
 
 // ── Import Logs (Audit Trail) ───────────────────────────
+
+model DataRevision {
+  id        String   @id @default(uuid())
+  entity    String // model name lowercase, e.g. 'anggota', 'klaim', 'iuran'
+  entityId  String   @map("entity_id")
+  action    String   @default("UPDATE") // 'UPDATE' | 'RESTORE'
+  before    Json? // data sebelum perubahan
+  after     Json? // data setelah perubahan
+  diff      Json? // daftar perubahan field: [{ field, before, after }]
+  changedById String? @map("changed_by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  changedBy User? @relation("DataRevisionChangedBy", fields: [changedById], references: [id])
+
+  @@index([entity, entityId, createdAt(sort: Desc)])
+  @@map("data_revisions")
+}
 
 model ImportLog {
   id          String   @id @default(uuid())

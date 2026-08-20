@@ -19,6 +19,8 @@ import { DbBackupController } from './controllers/db-backup.controller';
 import { MetricsService } from './services/metrics.service';
 import { MetricsController } from './controllers/metrics.controller';
 import { MetricsInterceptor } from './interceptors/metrics.interceptor';
+import { RevisionService } from './services/revision.service';
+import { RevisionController } from './controllers/revision.controller';
 import { NotificationsModule } from '../modules/notifications/notifications.module';
 
 @Global()
@@ -31,6 +33,7 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
     CacheManagementController,
     DbBackupController,
     MetricsController,
+    RevisionController,
   ],
   providers: [
     ScopeHelper,
@@ -46,6 +49,7 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
     DbBackupService,
     MetricsService,
     MetricsInterceptor,
+    RevisionService,
     { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
   ],
   exports: [
@@ -61,6 +65,7 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
     PersistentAuditService,
     DbBackupService,
     MetricsService,
+    RevisionService,
   ],
 })
 export class ScopeModule {}

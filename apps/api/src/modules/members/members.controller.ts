@@ -72,7 +72,7 @@ export class MembersController {
   @Patch(':id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui anggota' })
   update(@Param('id') id: string, @Body() dto: UpdateMemberDto, @Req() req: ScopedRequest) {
-    return this.membersService.update(id, dto, req.scope);
+    return this.membersService.update(id, dto, req.scope, req.user?.id);
   }
 
   @Delete(':id')

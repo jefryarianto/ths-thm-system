@@ -33,7 +33,7 @@ export class CandidatesController {
   @Patch(':id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui kandidat' })
   update(@Param('id') id: string, @Body() dto: UpdateCandidateDto, @Req() req: ScopedRequest) {
-    return this.candidatesService.update(id, dto, req.scope);
+    return this.candidatesService.update(id, dto, req.scope, req.user?.id);
   }
 
   @Delete(':id')
