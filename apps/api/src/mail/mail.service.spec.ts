@@ -25,6 +25,9 @@ describe('MailService', () => {
     suppressedEmail: {
       findUnique: jest.fn(),
     },
+    emailTemplate: {
+      findUnique: jest.fn(),
+    },
   };
 
   const originalResendKey = process.env.RESEND_API_KEY;
@@ -269,6 +272,86 @@ describe('MailService', () => {
       // Then logToDb creates the "failed" log entry
       expect(result.succeeded).toBe(0);
       expect(result.failed).toBe(2);
+    });
+  });
+
+  describe('discoverVariables', () => {
+    it('should extract unique {{var}} tokens', () => {
+      const input = 'Halo {{nama}}, nomor {{nomorAnggota}} & {{ nama }} lagi';
+      expect(service.discoverVariables(input)).toEqual(['nama', 'nomorAnggota']);
+    });
+
+    it('should return empty array when no tokens', () => {
+      expect(service.discoverVariables('Tidak ada variabel')).toEqual([]);
+    });
+  });
+
+  describe('previewTemplate', () => {
+    it('should render default template with sample variables', async () => {
+      mockPrisma.emailTemplate.findUnique.mockResolvedValue(null);
+
+      const preview = await service.previewTemplate('welcomeMemberEmail');
+
+      expect(preview.name).toBe('welcomeMemberEmail');
+      expect(preview.isCustom).toBe(false);
+      expect(preview.variables).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'nama' })]),
+      );
+      expect(preview.subject).toContain('Selamat Datang');
+      expect(preview.html).toContain('Budi Santoso');
+    });
+
+    it('should use active DB custom template', async () => {
+      mockPrisma.emailTemplate.findUnique.mockResolvedValue({
+        name: 'welcomeMemberEmail',
+        subject: 'Custom {{nama}} — THS',
+        htmlBody: '<p>Halo {{nama}}!</p>',
+        isActive: true,
+      });
+
+      const preview = await service.previewTemplate('welcomeMemberEmail');
+
+      expect(preview.isCustom).toBe(true);
+      expect(preview.subject).toBe('Custom Budi Santoso — THS');
+      expect(preview.html).toContain('Halo Budi Santoso!');
+    });
+
+    it('should substitute provided variables over samples', async () => {
+      mockPrisma.emailTemplate.findUnique.mockResolvedValue(null);
+
+      const preview = await service.previewTemplate(
+        'welcomeMemberEmail',
+        undefined,
+        { nama: 'Siti Aminah' },
+      );
+
+      expect(preview.html).toContain('Siti Aminah');
+      expect(preview.html).not.toContain('Budi Santoso');
+    });
+
+    it('should preview draft subject/htmlBody even when DB default exists', async () => {
+      mockPrisma.emailTemplate.findUnique.mockResolvedValue(null);
+
+      const preview = await service.previewTemplate(
+        'generalNotificationEmail',
+        {
+          subject: 'Draft {{nama}}',
+          htmlBody: '<p>{{nama}}, {{judul}}</p>',
+        },
+        { judul: 'Rapat' },
+      );
+
+      expect(preview.subject).toBe('Draft Budi Santoso');
+      expect(preview.html).toContain('Rapat');
+      expect(preview.html).toContain('Budi Santoso');
+    });
+
+    it('should throw NotFoundException for unknown template', async () => {
+      mockPrisma.emailTemplate.findUnique.mockResolvedValue(null);
+
+      await expect(service.previewTemplate('unknownTemplate')).rejects.toThrow(
+        'Template "unknownTemplate" tidak dikenal',
+      );
     });
   });
 });

@@ -670,22 +670,44 @@ export class MailController {
   @ApiOperation({ summary: 'Ambil semua email template dengan override dari DB' })
   async getTemplates() {
     const customTemplates = await this.prisma.emailTemplate.findMany();
-    // Import template definitions from shared constant
-    // We list known template names from the definitions and merge with DB overrides
     const customMap = new Map(customTemplates.map((t) => [t.name, t]));
 
-    // Return just the list of template names and whether they have custom overrides
-    return {
-      success: true,
-      data: customTemplates.map((t: { id: string; name: string; subject: string; htmlBody: string; isActive: boolean; updatedAt: Date }) => ({
-        id: t.id,
-        name: t.name,
-        subject: t.subject,
-        htmlBody: t.htmlBody,
-        isActive: t.isActive,
-        updatedAt: t.updatedAt,
-      })),
-    };
+    const registry = this.mailService.listTemplateDefinitions();
+    const data = registry.map((def) => {
+      const custom = customMap.get(def.name);
+      return {
+        name: def.name,
+        label: def.label,
+        variables: def.variables,
+        isCustom: Boolean(custom && custom.isActive),
+        ...(custom
+          ? {
+              id: custom.id,
+              subject: custom.subject,
+              htmlBody: custom.htmlBody,
+              isActive: custom.isActive,
+              updatedAt: custom.updatedAt,
+            }
+          : {}),
+      };
+    });
+
+    return { success: true, data };
+  }
+
+  @Get('templates/registry')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Daftar semua template + katalog variabel {{...}} untuk editor' })
+  async getTemplateRegistry() {
+    const customs = await this.prisma.emailTemplate.findMany();
+    const customMap = new Map(customs.map((t) => [t.name, t]));
+    const data = this.mailService.listTemplateDefinitions().map((def) => ({
+      name: def.name,
+      label: def.label,
+      variables: def.variables,
+      isCustom: Boolean(customMap.get(def.name)?.isActive),
+    }));
+    return { success: true, data };
   }
 
   @Get('templates/:name')
@@ -707,6 +729,30 @@ export class MailController {
             updatedAt: custom.updatedAt,
           }
         : null,
+    };
+  }
+
+  @Post('templates/:name/preview')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Pratinjau template (default/custom/draft) dengan variabel contoh' })
+  async previewTemplate(
+    @Param('name') name: string,
+    @Body() body: { subject?: string; htmlBody?: string; variables?: Record<string, string> },
+  ) {
+    const preview = await this.mailService.previewTemplate(
+      name,
+      body.subject !== undefined || body.htmlBody !== undefined
+        ? { subject: body.subject || '', htmlBody: body.htmlBody || '' }
+        : undefined,
+      body.variables,
+    );
+
+    // Variabel yang tersisa (belum diisi) agar editor tahu yang kurang
+    const unresolved = this.mailService.discoverVariables(preview.subject + preview.html);
+
+    return {
+      success: true,
+      data: { ...preview, unresolved },
     };
   }
 

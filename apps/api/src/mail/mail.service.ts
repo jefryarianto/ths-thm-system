@@ -1,7 +1,8 @@
-﻿import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { env } from '../config/env.validation';
 import { escapeHtml, escapeRegex } from './html-utils';
+import { getTemplateDefinition, listTemplateDefinitions } from './template-registry';
 
 export interface SendMailOptions {
   to: string;
@@ -161,6 +162,93 @@ export class MailService {
     }
 
     return { retried, succeeded, failed: retried - succeeded };
+  }
+
+  /**
+   * Temukan semua placeholder `{{var}}` dalam sebuah string.
+   */
+  discoverVariables(input: string): string[] {
+    const matches = input.match(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g) || [];
+    const names = matches.map((m) => {
+      const inner = m.replace(/[{}]/g, '').trim();
+      return inner.split(/\s+/)[0];
+    });
+    return [...new Set(names)];
+  }
+
+  /**
+   * Pratinjau sebuah template email (default atau custom dari DB).
+   * Menemukan placeholder {{var}}, lalu menggantinya dengan nilai contoh /
+   * nilai yang dikirim pemanggil. Dipakai endpoint preview di mail.controller.
+   */
+  async previewTemplate(
+    name: string,
+    custom?: { subject?: string; htmlBody?: string },
+    variables?: Record<string, string>,
+  ): Promise<{
+    name: string;
+    isCustom: boolean;
+    variables: Array<{ name: string; sample: string; description?: string }>;
+    subject: string;
+    html: string;
+  }> {
+    const definition = getTemplateDefinition(name);
+    if (!definition) {
+      throw new NotFoundException(`Template "${name}" tidak dikenal`);
+    }
+
+    // Gabungkan nilai: variabel yang dikirim client menimpa nilai contoh
+    const sampleMap: Record<string, string> = {};
+    for (const v of definition.variables) {
+      sampleMap[v.name] = variables?.[v.name] ?? v.sample;
+    }
+
+    // Cari custom override aktif di DB
+    const dbCustom = await this.prisma.emailTemplate.findUnique({ where: { name } });
+    const useCustom = dbCustom && dbCustom.isActive;
+    const isCustom = Boolean(useCustom);
+
+    let subject: string;
+    let htmlBody: string;
+    if (useCustom) {
+      subject = dbCustom.subject;
+      htmlBody = dbCustom.htmlBody;
+    } else if (custom) {
+      subject = custom.subject || '';
+      htmlBody = custom.htmlBody || '';
+    } else {
+      // Render default dengan nilai contoh (nilai dari client menimpa contoh)
+      const defaultTpl = definition.renderDefault(sampleMap);
+      subject = defaultTpl.subject;
+      htmlBody = defaultTpl.html;
+    }
+
+    let renderedSubject = subject;
+    let renderedHtml = htmlBody;
+    for (const [key, rawValue] of Object.entries(sampleMap)) {
+      const safeKey = escapeRegex(key);
+      const regex = new RegExp(`\\{\\{\\s*${safeKey}\\s*\\}\\}`, 'gi');
+      const safeValue = escapeHtml(rawValue);
+      renderedSubject = renderedSubject.replace(regex, safeValue);
+      renderedHtml = renderedHtml.replace(regex, safeValue);
+    }
+
+    return {
+      name,
+      isCustom,
+      variables: definition.variables,
+      subject: renderedSubject,
+      html: renderedHtml,
+    };
+  }
+
+  /** Daftar semua template + definisi variabelnya (untuk UI admin). */
+  listTemplateDefinitions() {
+    return listTemplateDefinitions().map((def) => ({
+      name: def.name,
+      label: def.label,
+      variables: def.variables,
+    }));
   }
 
   /**
