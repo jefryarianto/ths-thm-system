@@ -416,8 +416,13 @@ export class AuthService {
         },
       });
 
-      // If data is now complete, trigger approval workflow
       if (statusData === 'complete') {
+        // Data is complete → clear stale 'data_incomplete' notifications
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.prisma as any).notifikasi.deleteMany({
+          where: { userId: anggotaId, tipe: 'data_incomplete' },
+        });
+
         // Set statusValidasi to pending
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (this.prisma as any).anggota.update({
@@ -431,6 +436,25 @@ export class AuthService {
             { requestType: 'member_update', itemId: anggotaId },
             userId,
           );
+        }
+      } else {
+        // Data still incomplete → update existing 'data_incomplete' notification text
+        // so it always reflects the current missing fields (no stale messages)
+        const missingList = missingFields.map((f) => f.replace(/_/g, ' ')).join(', ');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const existing = await (this.prisma as any).notifikasi.findFirst({
+          where: { userId: anggotaId, tipe: 'data_incomplete', isRead: false },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (existing) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (this.prisma as any).notifikasi.update({
+            where: { id: existing.id },
+            data: {
+              judul: '📋 Data Anggota Belum Lengkap',
+              isi: `Data keanggotaan Anda masih belum lengkap. Segera lengkapi: ${missingList}.`,
+            },
+          });
         }
       }
     } catch (error) {
