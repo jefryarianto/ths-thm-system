@@ -30,6 +30,7 @@ import { DuesModule } from './modules/dues/dues.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { SearchModule } from './modules/search/search.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { MailModule } from './mail/mail.module';
@@ -92,6 +93,7 @@ import { MutationsModule } from './modules/mutations/mutations.module';
     PaymentsModule,
     NotificationsModule,
     ReportsModule,
+    SearchModule,
     SettingsModule,
     GamificationModule,
     MailModule,

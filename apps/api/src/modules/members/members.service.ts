@@ -140,6 +140,9 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             { namaLengkap: { contains: filter.search, mode: 'insensitive' } },
             { nomorAnggota: { contains: filter.search, mode: 'insensitive' } },
             { email: { contains: filter.search, mode: 'insensitive' } },
+            { noHp: { contains: filter.search, mode: 'insensitive' } },
+            { alamat: { contains: filter.search, mode: 'insensitive' } },
+            { tingkat: { contains: filter.search, mode: 'insensitive' } },
           ];
         }
         if (filter.tanpaFoto === 'true') where.fotoPath = null;
