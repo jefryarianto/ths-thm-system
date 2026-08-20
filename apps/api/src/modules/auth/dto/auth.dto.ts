@@ -16,6 +16,22 @@ export class LoginDto {
   @ApiProperty({ example: 'password123' })
   @IsString()
   password: string;
+
+  @ApiPropertyOptional({
+    description: 'Kode TOTP 6 digit — wajib bila user sudah mengaktifkan 2FA',
+    example: '123456',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Kode 2FA harus 6 digit angka' })
+  totpCode?: string;
+}
+
+export class TotpCodeDto {
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'Kode 2FA harus 6 digit angka' })
+  code: string;
 }
 
 export class RegisterDto {

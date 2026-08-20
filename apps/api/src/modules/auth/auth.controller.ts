@@ -15,6 +15,7 @@ import {
   ForceChangePasswordDto,
   MagicLinkDto,
   MagicLinkVerifyDto,
+  TotpCodeDto,
 } from './dto/auth.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -163,6 +164,36 @@ export class AuthController {
   @ApiOperation({ summary: 'Perbarui profil pengguna' })
   updateProfile(@CurrentUser() user: { id: string }, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(user.id, dto);
+  }
+
+  // ── 2FA (TOTP) ──────────────────────────────────────────
+
+  @Get('2fa/status')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Status autentikasi dua langkah' })
+  get2faStatus(@CurrentUser() user: { id: string }) {
+    return this.authService.get2faStatus(user.id);
+  }
+
+  @Post('2fa/setup')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mulai setup 2FA — kembalikan secret + QR code' })
+  setup2fa(@CurrentUser() user: { id: string }) {
+    return this.authService.setup2fa(user.id);
+  }
+
+  @Post('2fa/verify')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Aktifkan 2FA dengan verifikasi kode pertama' })
+  enable2fa(@CurrentUser() user: { id: string }, @Body() dto: TotpCodeDto) {
+    return this.authService.enable2fa(user.id, dto.code);
+  }
+
+  @Post('2fa/disable')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Nonaktifkan 2FA (memerlukan kode saat ini)' })
+  disable2fa(@CurrentUser() user: { id: string }, @Body() dto: TotpCodeDto) {
+    return this.authService.disable2fa(user.id, dto.code);
   }
 
   @Patch('change-password')

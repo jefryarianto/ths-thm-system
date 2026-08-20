@@ -30,6 +30,12 @@ import {
 } from './dto/auth.dto';
 import { ApprovalService } from '../approvals/approval.service';
 import { validateImageMagicBytes } from '../../common/utils/image-upload.util';
+import {
+  generateTotpSecret,
+  verifyTotpCode,
+  buildOtpauthUrl,
+  totpQrDataUrl,
+} from '../../common/utils/totp.util';
 
 interface UserPayload {
   id: string;
@@ -176,6 +182,20 @@ export class AuthService {
         where: { id: user.id },
         data: { failedLoginAttempts: 0, lockedUntil: null },
       });
+    }
+
+    // ── 2FA (TOTP): bila aktif, kode wajib benar sebelum token diterbitkan ──
+    if (user.totpEnabled) {
+      if (!dto.totpCode || !verifyTotpCode(user.totpSecret || '', dto.totpCode)) {
+        this.logAuthAudit(
+          'TOTP_FAIL',
+          user.id,
+          { reason: !dto.totpCode ? 'missing_code' : 'invalid_code' },
+          meta,
+        );
+        throw new UnauthorizedException('Kode verifikasi dua langkah salah atau kedaluwarsa');
+      }
+      this.logAuthAudit('TOTP_SUCCESS', user.id, {}, meta);
     }
 
     this.logAuthAudit(
@@ -968,6 +988,81 @@ export class AuthService {
     return { ...(await this.sanitizeUser(user)), refreshToken: await this.generateTokens(user).then((tokens) => tokens.refreshToken) };
   }
 
+  // ── 2FA (TOTP) ───────────────────────────────────────────
+
+  async get2faStatus(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    return {
+      enabled: user.totpEnabled,
+      verifiedAt: user.totpVerifiedAt,
+      hasPendingSetup: !!user.totpSecret && !user.totpEnabled,
+    };
+  }
+
+  /** Mulai setup 2FA: simpan secret (belum aktif) + kembalikan QR untuk app authenticator. */
+  async setup2fa(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    if (user.totpEnabled) {
+      throw new ConflictException('Autentikasi dua langkah sudah aktif');
+    }
+
+    const secret = user.totpSecret || generateTotpSecret();
+    const otpauthUrl = buildOtpauthUrl(secret, user.email, 'THS-THM');
+    const qrDataUrl = await totpQrDataUrl(otpauthUrl);
+
+    if (!user.totpSecret) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { totpSecret: secret },
+      });
+    }
+
+    return { secret, otpauthUrl, qrDataUrl };
+  }
+
+  /** Verifikasi kode pertama untuk mengaktifkan 2FA. */
+  async enable2fa(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    if (user.totpEnabled) throw new ConflictException('Autentikasi dua langkah sudah aktif');
+    if (!user.totpSecret) throw new BadRequestException('Lakukan setup 2FA terlebih dahulu');
+
+    if (!verifyTotpCode(user.totpSecret, code)) {
+      this.logAuthAudit('TOTP_FAIL', userId, { reason: 'invalid_enable_code' });
+      throw new UnauthorizedException('Kode verifikasi salah');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpEnabled: true, totpVerifiedAt: new Date() },
+    });
+    this.logAuthAudit('TOTP_ENABLED', userId, {});
+    return { enabled: true };
+  }
+
+  /** Nonaktifkan 2FA setelah memverifikasi kode saat ini. */
+  async disable2fa(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    if (!user.totpEnabled || !user.totpSecret) {
+      throw new BadRequestException('Autentikasi dua langkah tidak aktif');
+    }
+
+    if (!verifyTotpCode(user.totpSecret, code)) {
+      this.logAuthAudit('TOTP_FAIL', userId, { reason: 'invalid_disable_code' });
+      throw new UnauthorizedException('Kode verifikasi salah');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpEnabled: false, totpSecret: null, totpVerifiedAt: null },
+    });
+    this.logAuthAudit('TOTP_DISABLED', userId, {});
+    return { enabled: false };
+  }
+
   /**
    * Strip sensitive fields from a user object and attach the member's
    * profile photo path (fotoPath) if available.
@@ -985,12 +1080,23 @@ export class AuthService {
     mustChangePassword?: boolean;
     passwordHash?: string;
     refreshToken?: string | null;
+    totpSecret?: string | null;
+    totpEnabled?: boolean;
+    totpVerifiedAt?: Date | null;
+    failedLoginAttempts?: number;
+    lockedUntil?: Date | null;
   }) {
     const {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       passwordHash,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       refreshToken,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      totpSecret,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      failedLoginAttempts,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      lockedUntil,
       ...safe
     } = user;
 

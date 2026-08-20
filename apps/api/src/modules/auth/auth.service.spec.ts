@@ -12,7 +12,17 @@ jest.mock('bcryptjs', () => ({
   hash: jest.fn().mockResolvedValue('$2b$12$hashedpassword'),
 }));
 
+jest.mock('../../common/utils/totp.util', () => ({
+  generateTotpSecret: jest.fn(() => 'MOCK2FASECRET'),
+  verifyTotpCode: jest.fn(() => true),
+  buildOtpauthUrl: jest.fn(
+    () => 'otpauth://totp/THS-THM:test%40ths-thm.org?secret=MOCK2FASECRET',
+  ),
+  totpQrDataUrl: jest.fn(() => Promise.resolve('data:image/png;base64,xxxx')),
+}));
+
 import bcrypt from 'bcryptjs';
+import { verifyTotpCode } from '../../common/utils/totp.util';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -30,6 +40,9 @@ describe('AuthService', () => {
     refreshToken: null,
     failedLoginAttempts: 0,
     lockedUntil: null,
+    totpSecret: null,
+    totpEnabled: false,
+    totpVerifiedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -191,6 +204,110 @@ describe('AuthService', () => {
         where: { id: 'u1' },
         data: { failedLoginAttempts: 0, lockedUntil: null },
       });
+    });
+  });
+
+  describe('login with 2FA', () => {
+    beforeEach(() => {
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      (verifyTotpCode as jest.Mock).mockReturnValue(true);
+    });
+
+    it('should require TOTP code when 2FA is enabled', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      await expect(
+        service.login({ identifier: 'test@ths-thm.org', password: 'password123' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should reject invalid TOTP code', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      (verifyTotpCode as jest.Mock).mockReturnValueOnce(false);
+      await expect(
+        service.login({ identifier: 'test@ths-thm.org', password: 'password123', totpCode: '000000' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should login successfully with valid TOTP code', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: true });
+      const result = await service.login({
+        identifier: 'test@ths-thm.org',
+        password: 'password123',
+        totpCode: '123456',
+      });
+      expect(result.user.email).toBe('test@ths-thm.org');
+    });
+  });
+
+  describe('2fa lifecycle', () => {
+    beforeEach(() => {
+      (verifyTotpCode as jest.Mock).mockReturnValue(true);
+    });
+
+    it('should return 2FA status', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: false });
+      const status = await service.get2faStatus('u1');
+      expect(status.enabled).toBe(false);
+      expect(status.hasPendingSetup).toBe(false);
+    });
+
+    it('should generate secret, otpauth url and QR on setup', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpSecret: 'MOCK2FASECRET' });
+      const result = await service.setup2fa('u1');
+      expect(result.secret).toBe('MOCK2FASECRET');
+      expect(result.otpauthUrl).toContain('otpauth://totp/');
+      expect(result.qrDataUrl).toContain('data:image/png');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { totpSecret: 'MOCK2FASECRET' },
+      });
+    });
+
+    it('should reject setup when 2FA already enabled', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      await expect(service.setup2fa('u1')).rejects.toThrow(ConflictException);
+    });
+
+    it('should enable 2FA with a valid code', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: true });
+      const result = await service.enable2fa('u1', '123456');
+      expect(result.enabled).toBe(true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: expect.objectContaining({ totpEnabled: true, totpVerifiedAt: expect.any(Date) }),
+      });
+    });
+
+    it('should reject enabling with a wrong code', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpSecret: 'MOCK2FASECRET' });
+      (verifyTotpCode as jest.Mock).mockReturnValueOnce(false);
+      await expect(service.enable2fa('u1', '000000')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should disable 2FA after verifying current code', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpEnabled: true, totpSecret: 'MOCK2FASECRET' });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: false, totpSecret: null });
+      const result = await service.disable2fa('u1', '123456');
+      expect(result.enabled).toBe(false);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { totpEnabled: false, totpSecret: null, totpVerifiedAt: null },
+      });
+    });
+
+    it('should not expose totpSecret in sanitized user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, totpSecret: 'SECRET', totpEnabled: true });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, totpEnabled: true });
+      const result = await service.login({
+        identifier: 'test@ths-thm.org',
+        password: 'password123',
+        totpCode: '123456',
+      });
+      expect((result.user as Record<string, unknown>).totpSecret).toBeUndefined();
+      expect((result.user as Record<string, unknown>).totpEnabled).toBe(true);
     });
   });
 
