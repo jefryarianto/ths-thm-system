@@ -1,11 +1,14 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { getRequestId } from '../utils/request-context';
+import { structuredLog } from '../utils/structured-logger';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
+    const requestId = getRequestId();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -32,11 +35,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
+    structuredLog(status >= 500 ? 'error' : 'warn', 'error', {
+      requestId,
+      context: 'http',
+      status,
+      message,
+      errorName: (exception as Error)?.name,
+      errorMessage: (exception as Error)?.message,
+    });
+
     response.status(status).json({
       success: false,
       message: Array.isArray(message) ? message[0] : message,
       statusCode: status,
       timestamp: new Date().toISOString(),
+      requestId,
     });
   }
 }

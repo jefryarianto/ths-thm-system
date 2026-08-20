@@ -8,6 +8,7 @@ import { setupSwagger } from './config/swagger-scope';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { validateEnv } from './config/env.validation';
 
 async function bootstrap() {
@@ -18,6 +19,7 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
+  app.use(new RequestContextMiddleware().use);
 
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())

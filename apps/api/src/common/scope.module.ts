@@ -13,11 +13,19 @@ import { NraService } from './services/nra.service';
 import { ApiKeyStore } from './guards/api-key.guard';
 import { ApiKeyManagementController } from './controllers/api-key-management.controller';
 import { CacheManagementController } from './controllers/cache-management.controller';
+import { DbBackupService } from './services/db-backup.service';
+import { DbBackupController } from './controllers/db-backup.controller';
 
 @Global()
 @Module({
   imports: [],
-  controllers: [AuditLogController, AuditSseController, ApiKeyManagementController, CacheManagementController],
+  controllers: [
+    AuditLogController,
+    AuditSseController,
+    ApiKeyManagementController,
+    CacheManagementController,
+    DbBackupController,
+  ],
   providers: [
     ScopeHelper,
     AuditLogStore,
@@ -29,7 +37,20 @@ import { CacheManagementController } from './controllers/cache-management.contro
     NraService,
     ApiKeyStore,
     PersistentAuditService,
+    DbBackupService,
   ],
-  exports: [ScopeHelper, AuditService, AuditLogStore, EventBusService, CacheService, CsvImportService, MemberMailService, NraService, ApiKeyStore, PersistentAuditService],
+  exports: [
+    ScopeHelper,
+    AuditService,
+    AuditLogStore,
+    EventBusService,
+    CacheService,
+    CsvImportService,
+    MemberMailService,
+    NraService,
+    ApiKeyStore,
+    PersistentAuditService,
+    DbBackupService,
+  ],
 })
 export class ScopeModule {}

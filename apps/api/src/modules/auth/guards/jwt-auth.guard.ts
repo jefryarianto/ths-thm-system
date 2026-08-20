@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../../../common/decorators/roles.decorator';
 import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
+import { requestContextStore } from '../../../common/utils/request-context';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -17,6 +18,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
     if (isPublic) return true;
     return super.canActivate(context);
+  }
+
+  handleRequest<TUser = { id?: string }>(err: unknown, user: TUser) {
+    if (err) throw err;
+    if (user && (user as { id?: string }).id) {
+      const ctx = requestContextStore.getStore();
+      if (ctx) ctx.userId = (user as unknown as { id: string }).id;
+    }
+    return user;
   }
 }
 
