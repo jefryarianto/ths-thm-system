@@ -97,6 +97,8 @@ videoths*.mp4
 
 # APK build output (terlalu besar utk GitHub >100MB)
 _scripts/*.apk
+*.apk
+*.aab
 
 # Secret/token test files
 _scripts/admin-token.txt
