@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from './scope-helpers';
 import { CacheService } from '../services/cache.service';
+import { PersistentAuditService } from '../services/persistent-audit.service';
 import { UserScope } from '../interfaces/user-scope.interface';
 import { paginate } from './pagination';
 
@@ -75,9 +76,33 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     protected readonly scopeHelper: ScopeHelper,
     protected readonly cache: CacheService,
     private readonly config: CrudConfig,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     this.logger = new Logger(this.constructor.name);
     this.CACHE_PREFIX = config.prefix;
+  }
+
+  /**
+   * Best-effort audit trail (best effort — gagal menulis tidak memblokir request).
+   * Dipanggil otomatis dari baseCreate/baseUpdate/baseRemove; subclass dapat
+   * memanggil langsung untuk operasi domain (approve/reject/import).
+   */
+  protected audit(
+    action: string,
+    entity: string,
+    entityId: string | null,
+    userId?: string | null,
+    details?: Record<string, unknown> | null,
+  ): void {
+    void this.persistentAudit?.log({
+      action,
+      entity,
+      entityId,
+      userId: userId ?? null,
+      ipAddress: null,
+      userAgent: null,
+      details: details ?? null,
+    });
   }
 
   // ── Prisma delegate accessor ────────────────────────────
@@ -343,6 +368,8 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     const entity = await this.prismaDelegate.create({ data });
     await this.afterCreate(entity, dto);
     this.invalidateCache();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.audit('CREATE', this.config.model, (entity as any)?.id ?? null, userId);
     return {
       data: entity,
       message: message || 'Data berhasil ditambahkan',
@@ -376,6 +403,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     }
     await this.afterUpdate(updated, dto);
     this.invalidateCache();
+    this.audit('UPDATE', this.config.model, id);
     return {
       data: updated,
       message: message || 'Data berhasil diperbarui',
@@ -416,6 +444,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
 
     await this.afterRemove(id);
     this.invalidateCache();
+    this.audit(this.config.softDelete ? 'SOFT_DELETE' : 'DELETE', this.config.model, id);
     return { message: message || 'Data berhasil dihapus' };
   }
 

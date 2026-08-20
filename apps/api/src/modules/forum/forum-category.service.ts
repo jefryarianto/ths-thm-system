@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/forum.dto';
 
@@ -11,13 +12,14 @@ export class ForumCategoryService extends BaseCrudService<CreateCategoryDto, Upd
     prisma: PrismaService,
     scopeHelper: ScopeHelper,
     cache: CacheService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'forumCategory',
       prefix: 'forum:categories:',
       notFound: 'Kategori tidak ditemukan',
       scopeStrategy: 'ranting',
-    });
+    }, persistentAudit);
   }
 
   /** Default include (thread count) + ordering for listing */

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
@@ -21,13 +22,14 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     scopeHelper: ScopeHelper,
     cache: CacheService,
     private readonly mailService: MailService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'user',
       prefix: 'users:',
       notFound: 'User tidak ditemukan',
       scopeStrategy: 'ranting',
-    });
+    }, persistentAudit);
   }
 
   // ═══════════════════════════════════════════════════════════

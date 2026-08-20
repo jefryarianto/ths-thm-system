@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { MailService } from '../../mail/mail.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { claimStatusEmail } from '../../mail/email-templates';
@@ -19,13 +20,14 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     scopeHelper: ScopeHelper,
     cache: CacheService,
     private readonly mailService: MailService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'klaim',
       prefix: 'claims:',
       notFound: 'Klaim tidak ditemukan',
       scopeStrategy: 'anggota_indirect',
-    });
+    }, persistentAudit);
   }
 
   // ── Hooks ──────────────────────────────────────────────
@@ -93,6 +95,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     await this.prismaDelegate.update({ where: { id }, data: { status: 'disetujui' } });
     this.sendClaimStatusEmail(claim.anggota, 'disetujui');
     this.invalidateCache();
+    this.audit('CLAIM_APPROVE', 'Klaim', id);
     // void — interceptor returns { success: true }
   }
 
@@ -109,6 +112,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     await this.prismaDelegate.update({ where: { id }, data: updateData });
     this.sendClaimStatusEmail(claim.anggota, 'ditolak', reason);
     this.invalidateCache();
+    this.audit('CLAIM_REJECT', 'Klaim', id, undefined, { reason });
     // void — interceptor returns { success: true }
   }
 

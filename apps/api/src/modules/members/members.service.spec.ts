@@ -8,6 +8,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 describe('MembersService', () => {
   let service: MembersService;
@@ -98,6 +99,10 @@ describe('MembersService', () => {
     sendToMemberWithArgs: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockAudit = {
+    log: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -108,6 +113,7 @@ describe('MembersService', () => {
         { provide: CacheService, useValue: mockCache },
         { provide: MemberMailService, useValue: mockMemberMailService },
         { provide: NraService, useValue: mockNraService },
+        { provide: PersistentAuditService, useValue: mockAudit },
       ],
     }).compile();
 
@@ -404,6 +410,33 @@ describe('MembersService', () => {
       expect(result.errors).toBe(0);
       expect(result.warnings).toBe(1);
       expect(result.details[0].warning).toContain('sudah terdaftar');
+    });
+
+    it('should write MEMBER_IMPORT audit after import', async () => {
+      const { result } = await runImport([
+        {
+          nama_lengkap: 'Audit Member',
+          jenis_kelamin: 'L',
+          ranting_id: 'r1',
+          email: 'audit@test.com',
+          tempat_lahir: 'Jakarta',
+          tanggal_lahir: '1990-01-15',
+          tempat_dadar: 'Bandung',
+          tahun_dadar: '2020',
+          alamat: 'Jl. Audit No. 1',
+          no_hp: '081299887766',
+          tingkat: 'Pratama',
+        },
+      ]);
+
+      expect(result.success).toBe(1);
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'MEMBER_IMPORT',
+          entity: 'Anggota',
+          details: expect.objectContaining({ success: 1, errors: 0 }),
+        }),
+      );
     });
   });
 

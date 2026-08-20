@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 export interface SubmitApprovalDto {
   requestType: 'member_create' | 'member_update' | 'claim' | 'letter' | 'certificate';
@@ -18,7 +19,25 @@ export class ApprovalService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     @Optional() private readonly notificationsService?: NotificationsService,
+    @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
+
+  private audit(
+    action: string,
+    entityId: string,
+    userId?: string,
+    details?: Record<string, unknown> | null,
+  ) {
+    void this.persistentAudit?.log({
+      action,
+      entity: 'ApprovalRequest',
+      entityId,
+      userId: userId ?? null,
+      ipAddress: null,
+      userAgent: null,
+      details: details ?? null,
+    });
+  }
 
   async submit(dto: SubmitApprovalDto, userId: string, scope?: UserScope) {
     // Get approval levels based on request type
@@ -54,6 +73,11 @@ export class ApprovalService {
     }
 
     this.logger.log(`Approval request created: ${request.id} type=${dto.requestType}`);
+
+    this.audit('APPROVAL_SUBMIT', request.id, userId, {
+      requestType: dto.requestType,
+      itemId: dto.itemId,
+    });
 
     // Send notification to first-level approvers
     await this.notifyApprovers(request.id, levels[0].id, scope, dto.requestType);
@@ -92,10 +116,12 @@ export class ApprovalService {
       
       await this.finalizeApproval(request);
       this.logger.log(`Approval completed: ${requestId}`);
+      this.audit('APPROVAL_APPROVE', requestId, userId, { finalized: true, note });
     } else {
       // Notify next level approvers
       const nextLevel = remainingLevels[0];
       await this.notifyApprovers(requestId, nextLevel.approvalLevelId, scope, request.requestType);
+      this.audit('APPROVAL_APPROVE', requestId, userId, { finalized: false, note });
     }
 
   }
@@ -125,6 +151,7 @@ export class ApprovalService {
     });
 
     this.logger.log(`Approval rejected: ${requestId}`);
+    this.audit('APPROVAL_REJECT', requestId, userId, { note });
   }
 
   async findOne(id: string, scope?: UserScope) {

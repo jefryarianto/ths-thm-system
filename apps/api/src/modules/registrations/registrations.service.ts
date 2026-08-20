@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { registrationApprovedEmail, registrationRejectedEmail } from '../../mail/email-templates';
@@ -10,6 +10,7 @@ import {
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 @Injectable()
 export class RegistrationsService extends BaseCrudService<CreateRegistrationDto, UpdateRegistrationDto> {
@@ -18,13 +19,14 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
     scopeHelper: ScopeHelper,
     cache: CacheService,
     private readonly mailService: MailService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'pendaftaran',
       prefix: 'registrations:',
       notFound: 'Pendaftaran tidak ditemukan',
       // No scope strategy — registrations are not scoped to ranting
-    });
+    }, persistentAudit);
   }
 
   // ── Hooks ──────────────────────────────────────────────

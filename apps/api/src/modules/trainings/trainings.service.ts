@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { attendanceConfirmationEmail } from '../../mail/email-templates';
@@ -34,8 +35,9 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     private readonly memberMailService: MemberMailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, CRUD_CONFIG);
+    super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit);
   }
 
   // ═══════════════════════════════════════════════════════════

@@ -9,6 +9,7 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { normalizePhone } from '../../common/utils/phone.util';
 import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
@@ -39,6 +40,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     private readonly nraService: NraService,
     @Optional() private readonly notificationsService?: NotificationsService,
     @Optional() private readonly approvalService?: ApprovalService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'anggota',
@@ -46,7 +48,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       notFound: 'Anggota tidak ditemukan',
       softDelete: true,
       scopeStrategy: 'ranting',
-    });
+    }, persistentAudit);
   }
 
   // ── Hook: transform DTO before create ────────────────────
@@ -416,6 +418,11 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     });
 
     this.invalidateCache();
+    this.audit('MEMBER_IMPORT', 'Anggota', 'bulk', undefined, {
+      success: results.success,
+      errors: results.errors,
+      warnings: results.warnings,
+    });
     return results;
   }
 

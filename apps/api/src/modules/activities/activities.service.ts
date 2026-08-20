@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { activityInvitationEmail } from '../../mail/email-templates';
 import {
@@ -12,6 +12,7 @@ import {
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 
@@ -22,12 +23,13 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     protected readonly scopeHelper: ScopeHelper,
     protected readonly cache: CacheService,
     private readonly memberMailService: MemberMailService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'kegiatan',
       prefix: 'activities:',
       scopeStrategy: 'kegiatan',
-    });
+    }, persistentAudit);
   }
 
   // ── Hooks ───────────────────────────────────────────────

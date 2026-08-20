@@ -3,11 +3,13 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Optional,
 } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
@@ -46,13 +48,14 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     private readonly nraService: NraService,
     private readonly memberMailService: MemberMailService,
     private readonly notificationsService: NotificationsService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'kegiatan',
       prefix: 'graduations:',
       notFound: 'Pendadaran tidak ditemukan',
       scopeStrategy: 'kegiatan',
-    });
+    }, persistentAudit);
   }
 
   // ═══════════════════════════════════════════════════════════

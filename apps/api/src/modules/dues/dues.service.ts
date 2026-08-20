@@ -4,10 +4,12 @@ import {
   forwardRef,
   NotFoundException,
   ForbiddenException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { paymentConfirmationEmail } from '../../mail/email-templates';
 import {
@@ -33,12 +35,13 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     private readonly memberMailService: MemberMailService,
     @Inject(forwardRef(() => GamificationService))
     private readonly gamificationService: GamificationService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'iuran',
       prefix: 'dues:',
       scopeStrategy: 'anggota_indirect',
-    });
+    }, persistentAudit);
   }
 
   // ── Hooks ───────────────────────────────────────────────
@@ -321,6 +324,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
+    this.audit('DUE_IMPORT', 'Iuran', 'bulk', undefined, { success, failed: data.length - success });
     return { imported: success, failed: data.length - success };
   }
 

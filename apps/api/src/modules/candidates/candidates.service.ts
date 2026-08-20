@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
@@ -28,8 +29,9 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     private readonly csvImportService: CsvImportService,
     private readonly memberMailService: MemberMailService,
     private readonly nraService: NraService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
-    super(prisma, scopeHelper, cache, CRUD_CONFIG);
+    super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -317,6 +319,10 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
 
     this.invalidateCache();
     this.cache.invalidatePrefix('members:');
+    this.audit('CANDIDATE_APPROVE', 'CalonAnggota', id, undefined, {
+      memberId: member.id,
+      nomorAnggota: member.nomorAnggota,
+    });
     return member;
   }
 
@@ -342,6 +348,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     }
 
     this.invalidateCache();
+    this.audit('CANDIDATE_REJECT', 'CalonAnggota', id, undefined, { reason });
     // void — interceptor returns { success: true }
   }
 

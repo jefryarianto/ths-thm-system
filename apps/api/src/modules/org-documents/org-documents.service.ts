@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
 import {
@@ -19,12 +20,13 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
     protected readonly scopeHelper: ScopeHelper,
     protected readonly cache: CacheService,
     private readonly mailService: MailService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'dokumenOrganisasi',
       prefix: 'org-documents:',
       notFound: 'Dokumen tidak ditemukan',
-    });
+    }, persistentAudit);
   }
 
   // ── Hook: notify admins after create ─────────────────

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import {
   CreatePeriodDto,
@@ -16,12 +17,13 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
     protected readonly prisma: PrismaService,
     protected readonly scopeHelper: ScopeHelper,
     protected readonly cache: CacheService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'periode',
       prefix: 'settings:',
       notFound: 'Periode tidak ditemukan',
-    });
+    }, persistentAudit);
   }
 
   // ── Key-Value Settings ──────────────────────────────
@@ -36,6 +38,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
         create: { key, value: value as never },
       });
     }
+    this.audit('SETTINGS_UPDATE', 'Setting', 'settings', undefined, { keys: Object.keys(dto) });
   }
 
   // ── Period CRUD (via BaseCrudService) ──────────────
@@ -165,21 +168,25 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
 
   async updateSejarah(body: { konten: string; isVisible?: boolean }) {
     const existing = await (this.prisma as any).sejarah.findFirst();
+    let result;
     if (existing) {
-      return (this.prisma as any).sejarah.update({
+      result = await (this.prisma as any).sejarah.update({
         where: { id: existing.id },
         data: {
           konten: body.konten,
           ...(body.isVisible !== undefined && { isVisible: body.isVisible }),
         },
       });
+    } else {
+      result = await (this.prisma as any).sejarah.create({
+        data: {
+          konten: body.konten,
+          isVisible: body.isVisible ?? true,
+        },
+      });
     }
-    return (this.prisma as any).sejarah.create({
-      data: {
-        konten: body.konten,
-        isVisible: body.isVisible ?? true,
-      },
-    });
+    this.audit('SEJARAH_UPDATE', 'Sejarah', 'sejarah', undefined, { id: result?.id });
+    return result;
   }
 
   // ── Organisasi (public content) ────────────────────
@@ -196,20 +203,24 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
 
   async updateOrganisasi(body: { struktur: unknown; isVisible?: boolean }) {
     const existing = await (this.prisma as any).organisasi.findFirst();
+    let result;
     if (existing) {
-      return (this.prisma as any).organisasi.update({
+      result = await (this.prisma as any).organisasi.update({
         where: { id: existing.id },
         data: {
           struktur: body.struktur,
           ...(body.isVisible !== undefined && { isVisible: body.isVisible }),
         },
       });
+    } else {
+      result = await (this.prisma as any).organisasi.create({
+        data: {
+          struktur: body.struktur,
+          isVisible: body.isVisible ?? true,
+        },
+      });
     }
-    return (this.prisma as any).organisasi.create({
-      data: {
-        struktur: body.struktur,
-        isVisible: body.isVisible ?? true,
-      },
-    });
+    this.audit('ORGANISASI_UPDATE', 'Organisasi', 'organisasi', undefined, { id: result?.id });
+    return result;
   }
 }

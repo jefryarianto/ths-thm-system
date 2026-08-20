@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.helper';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 export interface BankInfo {
   id: string;
@@ -38,7 +39,20 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
     private readonly cache: CacheService,
+    @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
+
+  private audit(action: string, entity: string, entityId: string, details?: Record<string, unknown> | null) {
+    void this.persistentAudit?.log({
+      action,
+      entity,
+      entityId,
+      userId: null,
+      ipAddress: null,
+      userAgent: null,
+      details: details ?? null,
+    });
+  }
 
   // ── Bank Info CRUD ──
 
@@ -304,6 +318,8 @@ export class PaymentsService {
         buktiBayarPath: null,
       },
     });
+
+    this.audit('PAYMENT_REJECT', 'Iuran', iuranId);
 
     this.cache.invalidatePrefix('dues:');
     this.cache.invalidatePrefix('reports:');

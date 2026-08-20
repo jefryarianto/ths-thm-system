@@ -4,10 +4,12 @@ import {
   BadRequestException,
   Inject,
   forwardRef,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -64,12 +66,13 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
     protected readonly cache: CacheService,
     @Inject(forwardRef(() => NotificationsService))
     private readonly notificationsService: NotificationsService,
+    @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'gamificationReward',
       prefix: 'rewards:',
       notFound: 'Reward tidak ditemukan',
-    });
+    }, persistentAudit);
   }
 
   // ── Hook: transform DTO before create ──────────────

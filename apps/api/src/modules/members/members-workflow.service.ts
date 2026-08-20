@@ -1,14 +1,28 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 @Injectable()
 export class MembersWorkflowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scopeHelper: ScopeHelper,
+    @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
+
+  private audit(action: string, id: string, details?: Record<string, unknown> | null) {
+    void this.persistentAudit?.log({
+      action,
+      entity: 'Anggota',
+      entityId: id,
+      userId: null,
+      ipAddress: null,
+      userAgent: null,
+      details: details ?? null,
+    });
+  }
 
   async validate(id: string, scope?: UserScope) {
     const member = await this.prisma.anggota.findUnique({
@@ -82,6 +96,8 @@ export class MembersWorkflowService {
       data: { statusValidasi: 'approved', statusKeanggotaan: 'aktif' },
     });
 
+    this.audit('MEMBER_APPROVE', id);
+
     // void — interceptor returns { success: true }
   }
 
@@ -100,6 +116,8 @@ export class MembersWorkflowService {
       data: { statusKeanggotaan: 'nonaktif' },
     });
 
+    this.audit('MEMBER_SUSPEND', id);
+
     // void — interceptor returns { success: true }
   }
 
@@ -117,6 +135,8 @@ export class MembersWorkflowService {
       where: { id },
       data: { statusKeanggotaan: 'aktif' },
     });
+
+    this.audit('MEMBER_REACTIVATE', id);
 
     // void — interceptor returns { success: true }
   }
