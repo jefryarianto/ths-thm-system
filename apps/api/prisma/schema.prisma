@@ -414,6 +414,7 @@ model Anggota {
   isImported        Boolean           @default(false) @map("is_imported")
   importSource      String?           @map("import_source")
   importedAt        DateTime?         @map("imported_at")
+  version           Int               @default(0) @map("version")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
   deletedAt         DateTime?         @map("deleted_at")
@@ -499,6 +500,7 @@ model Klaim {
   tipe      TipeKlaim
   status    StatusKlaim @default(pending)
   catatan   String?
+  version   Int         @default(0) @map("version")
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 

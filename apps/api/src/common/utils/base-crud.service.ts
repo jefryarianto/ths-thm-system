@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger, Optional } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from './scope-helpers';
@@ -6,6 +6,13 @@ import { CacheService } from '../services/cache.service';
 import { PersistentAuditService } from '../services/persistent-audit.service';
 import { UserScope } from '../interfaces/user-scope.interface';
 import { paginate } from './pagination';
+
+/**
+ * Model Prisma yang memakai optimistic locking (kolom `version`).
+ * Bila client mengirim `version` pada update DTO, baseUpdate memverifikasi
+ * versi saat ini — mismatch menghasilkan ConflictException (409).
+ */
+export const OPTIMISTIC_VERSIONED_MODELS = new Set(['anggota', 'klaim']);
 
 /**
  * Scope strategy determines how the base class verifies data access.
@@ -392,12 +399,46 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
   ): Promise<{ data: T; message: string }> {
     await this.verifyScope(id, scope);
     const data = await this.beforeUpdate(id, dto);
+    // Field `version` adalah kontrol konkurensi — jangan tulis nilai client mentah.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (data as any).version;
+
+    // ── Optimistic locking ─────────────────────────────────
+    // Model berkolom `version`: bila client mengirim `version`, kita cek versi
+    // terkini. Tidak cocok → 409 Conflict (data diubah pihak lain).
+    let where: { id: string; version?: number } = { id };
+    const requestedVersion = (dto as unknown as { version?: number | string })?.version;
+    if (
+      OPTIMISTIC_VERSIONED_MODELS.has(this.config.model) &&
+      requestedVersion !== undefined &&
+      requestedVersion !== null
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const current = await (this.prismaDelegate as any).findUnique({
+        where: { id },
+        select: { version: true },
+      });
+      if (!current) {
+        throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
+      }
+      if (Number(current.version) !== Number(requestedVersion)) {
+        throw new ConflictException(
+          'Data telah diubah oleh pengguna lain. Muat ulang data lalu coba lagi.',
+        );
+      }
+      // Naikkan versi secara atomik bersamaan dengan update.
+      data.version = Number(current.version) + 1;
+      where = { id, version: Number(current.version) };
+    }
+
     let updated: T;
     try {
-      updated = await this.prismaDelegate.update({ where: { id }, data });
+      updated = await this.prismaDelegate.update({ where, data });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
+        throw new ConflictException(
+          'Data telah diubah oleh pengguna lain. Muat ulang data lalu coba lagi.',
+        );
       }
       throw error;
     }

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "anggota" ADD COLUMN "version" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "klaim" ADD COLUMN "version" INTEGER NOT NULL DEFAULT 0;
