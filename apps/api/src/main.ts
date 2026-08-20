@@ -114,6 +114,40 @@ async function bootstrap() {
 
   await app.listen(process.env.APP_PORT || 3001);
 
+  // One-time cleanup: delete stale data_incomplete notifications.
+  // Runs on first boot after deploy; uses a Prisma flag to ensure idempotency.
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      const staleNotifs = await prisma.notifikasi.findMany({
+        where: { tipe: 'data_incomplete' },
+        select: { id: true, userId: true },
+      });
+      if (staleNotifs.length > 0) {
+        const anggotaIds = [...new Set(staleNotifs.map((n: any) => n.userId))];
+        const members = await prisma.anggota.findMany({
+          where: { id: { in: anggotaIds } },
+          select: { id: true, namaLengkap: true, tempatLahir: true, tanggalLahir: true, alamat: true, noHp: true, email: true },
+        });
+        const completeIds = new Set(
+          members
+            .filter((m: any) => m.namaLengkap && m.tempatLahir && m.tanggalLahir && m.alamat && m.noHp && m.email)
+            .map((m: any) => m.id),
+        );
+        const toDelete = staleNotifs.filter((n: any) => completeIds.has(n.userId));
+        if (toDelete.length > 0) {
+          await prisma.notifikasi.deleteMany({ where: { id: { in: toDelete.map((n: any) => n.id) } } });
+          console.log(`🧹 Cleaned up ${toDelete.length} stale data_incomplete notifications`);
+        }
+      }
+      await prisma.$disconnect();
+    } catch (err) {
+      console.warn('⚠️ Startup notification cleanup skipped:', (err as Error).message);
+    }
+  }
+
   console.log(`🚀 THS-THM API running on port ${process.env.APP_PORT || 3001}`);
   console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${process.env.APP_PORT || 3001}/api/health`);
