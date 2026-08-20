@@ -371,6 +371,19 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
           } as any,
         });
 
+        // Peringatan non-blocking: nomor HP sudah terdaftar untuk anggota lain
+        const normalizedPhone = normalizePhone(row.no_hp || row.phone);
+        const existingWithPhone = normalizedPhone
+          ? await this.prisma.anggota.findFirst({
+              where: { noHpNormalized: normalizedPhone, deletedAt: null },
+              select: { id: true, nomorAnggota: true },
+            })
+          : null;
+        const dupPhoneWarning =
+          existingWithPhone && existingWithPhone.id !== member.id
+            ? `Nomor HP ${row.no_hp || row.phone} sudah terdaftar untuk anggota ${existingWithPhone.nomorAnggota || existingWithPhone.id}.`
+            : undefined;
+
         // Auto-create User account for the imported member
         if (member.email) {
           await this.autoCreateUser(member.email, member.namaLengkap, member.rantingId, member.noHp, member.id);
@@ -385,7 +398,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         if (missingFields.length > 0) {
           await this.sendIncompleteDataNotification(member.id, member.email, member.namaLengkap, missingFields);
 
-          return { success: true, skip: true, missingFields };
+          return { success: true, skip: true, missingFields, warning: dupPhoneWarning };
         }
 
         // Send welcome email for complete data
@@ -398,7 +411,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
           );
         }
 
-        return { success: true };
+        return { success: true, warning: dupPhoneWarning };
       },
     });
 

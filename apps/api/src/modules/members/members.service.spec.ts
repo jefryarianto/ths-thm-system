@@ -222,7 +222,7 @@ describe('MembersService', () => {
       mockCsvImportService.importRows.mockImplementation(
         async (_data: any[], options: any) => {
           capturedProcessor = options.rowProcessor;
-          const result: any = { success: 0, incomplete: 0, errors: 0, details: [] };
+          const result: any = { success: 0, incomplete: 0, errors: 0, warnings: 0, details: [] };
           for (const row of _data) {
             const helpers: any = {
               email: row.email?.toString().trim().toLowerCase(),
@@ -234,6 +234,10 @@ describe('MembersService', () => {
               result.incomplete++;
             } else if (processed.success) {
               result.success++;
+              if (processed.warning) {
+                result.warnings++;
+                result.details.push({ row, error: '', warning: processed.warning });
+              }
             } else {
               result.errors++;
               result.details.push({ row, error: processed.error });
@@ -372,6 +376,34 @@ describe('MembersService', () => {
 
       expect(result.success).toBe(1);
       expect(createdData.rantingId).toBe('r1');
+    });
+
+    it('should warn (non-blocking) when phone is already registered to another member', async () => {
+      mockPrisma.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1', email: 'new@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'm99', nomorAnggota: '0114-0101-999-2020' });
+
+      const { result } = await runImport([
+        {
+          nama_lengkap: 'Duplikat HP',
+          jenis_kelamin: 'L',
+          ranting_id: 'r1',
+          email: 'dup-phone@test.com',
+          tempat_lahir: 'Jakarta',
+          tanggal_lahir: '1990-01-15',
+          tempat_dadar: 'Bandung',
+          tahun_dadar: '2020',
+          alamat: 'Jl. Test No. 1',
+          no_hp: '081234567890',
+          tingkat: 'Pratama',
+        },
+      ]);
+
+      expect(result.success).toBe(1);
+      expect(result.errors).toBe(0);
+      expect(result.warnings).toBe(1);
+      expect(result.details[0].warning).toContain('sudah terdaftar');
     });
   });
 

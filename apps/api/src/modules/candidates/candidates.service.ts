@@ -228,7 +228,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
           return { success: false, error: `Format email "${emailVal}" tidak valid` };
         }
 
-        const hpVal = (row.no_hp || row.phone || '').replace(/[\s-]/g, '');
+        const hpVal = (row.no_hp || row.phone || '').replace(/[\s\-().]/g, '');
         if (hpVal && !/^(\+?62|0)\d{8,13}$/.test(hpVal)) {
           return { success: false, error: `Format nomor HP "${row.no_hp || row.phone}" tidak valid (mulai 0/+62, 9-14 digit)` };
         }

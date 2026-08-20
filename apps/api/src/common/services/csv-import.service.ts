@@ -30,7 +30,7 @@ export interface CsvImportOptions<T> {
   rowProcessor: (
     row: T,
     helpers: ImportRowHelpers,
-  ) => Promise<{ success: boolean; skip?: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; skip?: boolean; error?: string; warning?: string }>;
   /**
    * Extract the email from a row (lowercased/trimmed) for duplicate checking.
    * Return undefined/null to skip email check for this row.
@@ -65,7 +65,8 @@ export interface CsvImportResult {
   success: number;
   incomplete: number;
   errors: number;
-  details: Array<{ row: unknown; error: string; missingFields?: string[]; memberId?: string }>;
+  warnings: number;
+  details: Array<{ row: unknown; error: string; warning?: string; missingFields?: string[]; memberId?: string }>;
 }
 
 // ─── Unified Import Pipeline — field & config interfaces ───
@@ -121,7 +122,7 @@ export interface ImportModuleConfig {
   rowProcessor: (
     row: Record<string, unknown>,
     helpers: ImportRowHelpers,
-  ) => Promise<{ success: boolean; skip?: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; skip?: boolean; error?: string; warning?: string }>;
 }
 
 /**
@@ -194,7 +195,7 @@ export class CsvImportService {
       );
     }
 
-    const result: CsvImportResult = { success: 0, incomplete: 0, errors: 0, details: [] };
+    const result: CsvImportResult = { success: 0, incomplete: 0, errors: 0, warnings: 0, details: [] };
 
     // Extract emails and names from all rows for batch duplicate check
     const emails = (
@@ -278,6 +279,12 @@ export class CsvImportService {
           if (email) existingEmails.add(email);
           if (namaLengkap) existingNames.add(namaLengkap);
           result.success++;
+
+          // Non-blocking warnings (e.g. duplicate phone) surfaced in result + import log
+          if (processed.warning) {
+            result.warnings++;
+            result.details.push({ row, error: '', warning: processed.warning });
+          }
         } else {
           result.errors++;
           result.details.push({
