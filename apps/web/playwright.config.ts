@@ -15,6 +15,11 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3002',
     trace: 'on-first-retry',
     headless: true,
+    // Auto-update missing snapshot baselines — new baselines are created on
+    // first run and compared on subsequent runs.
+    toHaveScreenshot: {
+      updateSnapshots: process.env.CI ? 'missing' : 'off',
+    },
   },
   projects: [
     {
