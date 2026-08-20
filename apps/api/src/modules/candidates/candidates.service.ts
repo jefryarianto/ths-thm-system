@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Optional, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
@@ -13,6 +13,7 @@ import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
 import { normalizePhone } from '../../common/utils/phone.util';
+import { ImportBatchService } from '../imports/import-batch.service';
 
 const CRUD_CONFIG: CrudConfig = {
   model: 'calonAnggota',
@@ -22,7 +23,7 @@ const CRUD_CONFIG: CrudConfig = {
 };
 
 @Injectable()
-export class CandidatesService extends BaseCrudService<CreateCandidateDto, UpdateCandidateDto> {
+export class CandidatesService extends BaseCrudService<CreateCandidateDto, UpdateCandidateDto> implements OnModuleInit {
   constructor(
     prisma: PrismaService,
     scopeHelper: ScopeHelper,
@@ -32,8 +33,15 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     private readonly nraService: NraService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
+    @Optional() private readonly importBatchService?: ImportBatchService,
   ) {
     super(prisma, scopeHelper, cache, CRUD_CONFIG, persistentAudit, revisions);
+  }
+
+  onModuleInit(): void {
+    this.importBatchService?.registerProcessor('candidates', (row) =>
+      this.importCandidateRow(row),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -215,7 +223,18 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
     const results = await this.csvImportService.importRows(data, {
       module: 'candidates',
       duplicateTables: { anggota: true, calonAnggota: true },
-      rowProcessor: async (row) => {
+      rowProcessor: async (row) => this.importCandidateRow(row),
+    });
+
+    this.invalidateCache();
+    return results;
+  }
+
+  /**
+   * Proses satu baris import calon anggota. Dipakai oleh importCsv (sinkron)
+   * maupun impor massal asinkron (ImportBatchService).
+   */
+  async importCandidateRow(row: any) {
         // Server-side field validation
         const nameValue = (row.nama_lengkap || row.nama || row.name || '').trim();
         if (!nameValue) {
@@ -256,12 +275,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
         });
 
         return { success: true };
-      },
-    });
-
-    this.invalidateCache();
-    return results;
-  }
+    }
 
   async validate(id: string) {
     const candidate = await this.prisma.calonAnggota.findUnique({ where: { id } });

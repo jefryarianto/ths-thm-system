@@ -371,6 +371,7 @@ model User {
   kepengurusans               Kepengurusan[]
   userSessions                UserSession[]
   dataRevisions               DataRevision[] @relation("DataRevisionChangedBy")
+  importBatches               ImportBatch[]  @relation("ImportBatchImportedBy")
 
   @@map("users")
 }
@@ -1127,6 +1128,46 @@ model DataRevision {
 
   @@index([entity, entityId, createdAt(sort: Desc)])
   @@map("data_revisions")
+}
+
+model ImportBatch {
+  id           String   @id @default(uuid())
+  module       String // 'members' | 'candidates' | ...
+  fileName     String?  @map("file_name")
+  totalRows    Int      @map("total_rows")
+  processed    Int      @default(0)
+  success      Int      @default(0)
+  errors       Int      @default(0)
+  status       String   @default("pending") // pending | processing | completed | completed_with_errors
+  scope        Json? // scope pengimpor (ranting/wilayah/distrik) untuk dipakai saat proses baris
+  details      Json? // ringkasan error
+  importedById String?  @map("imported_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  completedAt  DateTime? @map("completed_at")
+
+  importedBy User?              @relation("ImportBatchImportedBy", fields: [importedById], references: [id])
+  items      ImportBatchItem[]
+
+  @@index([module])
+  @@index([importedById])
+  @@index([createdAt(sort: Desc)])
+  @@map("import_batches")
+}
+
+model ImportBatchItem {
+  id        String   @id @default(uuid())
+  batchId   String   @map("batch_id")
+  rowIndex  Int      @map("row_index")
+  row       Json
+  status    String   @default("pending") // pending | success | error
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@map("import_batch_items")
 }
 
 model ImportLog {

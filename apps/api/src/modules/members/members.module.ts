@@ -7,9 +7,10 @@ import { PenandatanganModule } from '../penandatangan/penandatangan.module';
 import { TingkatanModule } from '../tingkatan/tingkatan.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ApprovalModule } from '../approvals/approval.module';
+import { ImportsModule } from '../imports/imports.module';
 
 @Module({
-  imports: [PenandatanganModule, TingkatanModule, NotificationsModule, ApprovalModule],
+  imports: [PenandatanganModule, TingkatanModule, NotificationsModule, ApprovalModule, ImportsModule],
   controllers: [MembersController],
   providers: [MembersService, MembersDigitalCardService, MembersWorkflowService],
   exports: [MembersService],

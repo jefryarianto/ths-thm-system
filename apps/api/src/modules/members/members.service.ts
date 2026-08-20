@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, Optional, OnModuleInit } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import * as crypto from 'crypto';
 import { welcomeMemberEmail, escapeHtml } from '../../mail/email-templates';
@@ -17,6 +17,7 @@ import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApprovalService } from '../approvals/approval.service';
+import { ImportBatchService } from '../imports/import-batch.service';
 import bcrypt from 'bcryptjs';
 
 /**
@@ -30,7 +31,7 @@ const DEFAULT_PASSWORD =
   (process.env.NODE_ENV === 'production' ? 'thsthm123456' : crypto.randomBytes(6).toString('hex'));
 
 @Injectable()
-export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMemberDto> {
+export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMemberDto> implements OnModuleInit {
 
   constructor(
     protected readonly prisma: PrismaService,
@@ -43,6 +44,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     @Optional() private readonly approvalService?: ApprovalService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
+    @Optional() private readonly importBatchService?: ImportBatchService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'anggota',
@@ -51,6 +53,12 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       softDelete: true,
       scopeStrategy: 'ranting',
     }, persistentAudit, revisions);
+  }
+
+  onModuleInit(): void {
+    this.importBatchService?.registerProcessor('members', (row, scope) =>
+      this.importMemberRow(row, scope),
+    );
   }
 
   // ── Hook: transform DTO before create ────────────────────
@@ -241,7 +249,23 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     const results = await this.csvImportService.importRows(data, {
       module: 'members',
       duplicateTables: { anggota: true, calonAnggota: true, anggotaDeletedFilter: true },
-      rowProcessor: async (row, helpers) => {
+      rowProcessor: async (row, helpers) => this.importMemberRow(row, scope),
+    });
+
+    this.invalidateCache();
+    this.audit('MEMBER_IMPORT', 'Anggota', 'bulk', undefined, {
+      success: results.success,
+      errors: results.errors,
+      warnings: results.warnings,
+    });
+    return results;
+  }
+
+  /**
+   * Proses satu baris import anggota. Dipakai oleh importCsv (sinkron) maupun
+   * impor massal asinkron (ImportBatchService).
+   */
+  async importMemberRow(row: any, scope?: UserScope) {
         const missingFields = this.validateCsvRow(row);
 
         // Normalize ranting: accept ranting_id from CSV
@@ -419,17 +443,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         }
 
         return { success: true, warning: dupPhoneWarning };
-      },
-    });
-
-    this.invalidateCache();
-    this.audit('MEMBER_IMPORT', 'Anggota', 'bulk', undefined, {
-      success: results.success,
-      errors: results.errors,
-      warnings: results.warnings,
-    });
-    return results;
-  }
+    }
 
   // ── Domain: export CSV ───────────────────────────────────
 
