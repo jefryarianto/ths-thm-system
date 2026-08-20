@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScopeHelper } from './utils/scope-helpers';
 import { AuditService } from './services/audit.service';
 import { AuditLogStore } from './services/audit-log-store.service';
@@ -15,16 +16,21 @@ import { ApiKeyManagementController } from './controllers/api-key-management.con
 import { CacheManagementController } from './controllers/cache-management.controller';
 import { DbBackupService } from './services/db-backup.service';
 import { DbBackupController } from './controllers/db-backup.controller';
+import { MetricsService } from './services/metrics.service';
+import { MetricsController } from './controllers/metrics.controller';
+import { MetricsInterceptor } from './interceptors/metrics.interceptor';
+import { NotificationsModule } from '../modules/notifications/notifications.module';
 
 @Global()
 @Module({
-  imports: [],
+  imports: [NotificationsModule],
   controllers: [
     AuditLogController,
     AuditSseController,
     ApiKeyManagementController,
     CacheManagementController,
     DbBackupController,
+    MetricsController,
   ],
   providers: [
     ScopeHelper,
@@ -38,6 +44,9 @@ import { DbBackupController } from './controllers/db-backup.controller';
     ApiKeyStore,
     PersistentAuditService,
     DbBackupService,
+    MetricsService,
+    MetricsInterceptor,
+    { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
   ],
   exports: [
     ScopeHelper,
@@ -51,6 +60,7 @@ import { DbBackupController } from './controllers/db-backup.controller';
     ApiKeyStore,
     PersistentAuditService,
     DbBackupService,
+    MetricsService,
   ],
 })
 export class ScopeModule {}
