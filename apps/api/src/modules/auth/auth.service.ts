@@ -18,10 +18,10 @@ import { resetPasswordEmail, escapeHtml } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
 import { normalizePhone } from '../../common/utils/phone.util';
 import { parseDurationToMs } from '../../common/utils/duration.util';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import {
   LoginDto,
   RegisterDto,
-  RefreshDto,
   ForgotPasswordDto,
   ResetPasswordDto,
   UpdateProfileDto,
@@ -45,6 +45,11 @@ interface OAuthUserProfile {
   photo?: string;
 }
 
+interface AuthMeta {
+  ip?: string;
+  userAgent?: string;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -55,9 +60,27 @@ export class AuthService {
     private readonly mailService: MailService,
     @Inject('ENV') private readonly envConfig: typeof env,
     @Optional() private readonly approvalService?: ApprovalService,
+    @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
 
-  async login(dto: LoginDto, response?: Response) {
+  logAuthAudit(
+    action: string,
+    userId: string,
+    details?: Record<string, unknown> | null,
+    meta?: AuthMeta,
+  ) {
+    void this.persistentAudit?.log({
+      action,
+      entity: 'User',
+      entityId: userId,
+      userId,
+      ipAddress: meta?.ip ?? null,
+      userAgent: meta?.userAgent ?? null,
+      details: details ?? null,
+    });
+  }
+
+  async login(dto: LoginDto, response?: Response, meta?: AuthMeta) {
     // Identifier bisa berupa email ATAU nomor HP
     const rawIdentifier = dto.identifier.trim();
     const cleaned = rawIdentifier.replace(/[\s\-().]/g, '');
@@ -117,6 +140,13 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Email/HP atau password salah');
     }
+
+    this.logAuthAudit(
+      'LOGIN',
+      user.id,
+      { method: isPhone ? 'phone' : 'email', mustChangePassword: user.mustChangePassword },
+      meta,
+    );
 
     // Wajib ganti password (login pertama kali / credential direset admin)
     if (user.mustChangePassword) {
@@ -185,7 +215,7 @@ export class AuthService {
     return { user: await this.sanitizeUser(user), ...tokens };
   }
 
-  async refreshToken(refreshToken: string) {
+  async refreshToken(refreshToken: string, meta?: AuthMeta) {
     try {
       const payload = this.jwtService.verify(refreshToken, {
         secret: this.envConfig.jwtRefreshSecret,
@@ -194,10 +224,19 @@ export class AuthService {
       if (!user || user.refreshToken !== refreshToken)
         throw new UnauthorizedException('Token tidak valid');
       const tokens = await this.generateTokens(user);
+      this.logAuthAudit('REFRESH_TOKEN', user.id, null, meta);
       return tokens;
     } catch {
       throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
     }
+  }
+
+  async logout(userId: string, meta?: AuthMeta) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
+    });
+    this.logAuthAudit('LOGOUT', userId, null, meta);
   }
 
   async getProfile(userId: string) {
@@ -536,7 +575,7 @@ export class AuthService {
    * Ubah password saat login pertama kali (mustChangePassword = true).
    * Token sementara diambil dari response login dan diverifikasi di sini.
    */
-  async forceChangePassword(dto: ForceChangePasswordDto) {
+  async forceChangePassword(dto: ForceChangePasswordDto, meta?: AuthMeta) {
     try {
       const payload = this.jwtService.verify(dto.token, {
         secret: this.envConfig.jwtRefreshSecret,
@@ -557,6 +596,8 @@ export class AuthService {
           mustChangePassword: false,
         },
       });
+
+      this.logAuthAudit('PASSWORD_CHANGE', user.id, { forced: true }, meta);
 
       return { success: true, message: 'Password berhasil diubah' };
     } catch (error) {
@@ -603,6 +644,7 @@ export class AuthService {
       if (!user) throw new NotFoundException('User tidak ditemukan');
 
       const tokens = await this.generateTokens(user);
+      this.logAuthAudit('LOGIN', user.id, { method: 'magic-link' });
       return { user: await this.sanitizeUser(user), ...tokens };
     } catch {
       throw new UnauthorizedException('Token tidak valid atau kadaluarsa');

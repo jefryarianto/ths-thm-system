@@ -69,6 +69,21 @@ export class RoleBasedThrottlerGuard extends ThrottlerGuard {
     const user = req['user'] as { role?: string } | undefined;
     const role = user?.role || 'anonymous';
 
+    // Hormati @Throttle eksplisit di handler (mis. magic-link yang lebih ketat).
+    // Role default hanya dipakai bila tidak ada override per-route.
+    const handler = requestProps.context.getHandler();
+    const classRef = requestProps.context.getClass();
+    const throttlerName = requestProps.throttler.name;
+    // Nama metadata internal @nestjs/throttler (nilai constant paket):
+    // 'THROTTLER:LIMIT' / 'THROTTLER:TTL' — tidak diekspor dari index publik.
+    const routeLimit = this.reflector.getAllAndOverride('THROTTLER:LIMIT' + throttlerName, [handler, classRef]);
+    const routeTtl = this.reflector.getAllAndOverride('THROTTLER:TTL' + throttlerName, [handler, classRef]);
+    if (routeLimit != null) {
+      requestProps.limit = routeLimit as number;
+      if (routeTtl != null) requestProps.ttl = routeTtl as number;
+      return super.handleRequest(requestProps);
+    }
+
     // Get role-specific limits
     const roleLimits = ROLE_RATE_LIMITS[role];
     if (roleLimits) {

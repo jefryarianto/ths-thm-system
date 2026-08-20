@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
@@ -40,9 +41,12 @@ export class AuthController {
   @Post('login')
   @Public()
   @ApiOperation({ summary: 'Login pengguna' })
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // Pass `res` so the service sets the HttpOnly cookie internally
-    const result = await this.authService.login(dto, res);
+    const result = await this.authService.login(dto, res, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
     return result;
   }
 
@@ -62,7 +66,10 @@ export class AuthController {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token tidak ditemukan');
     }
-    const result = await this.authService.refreshToken(refreshToken);
+    const result = await this.authService.refreshToken(refreshToken, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
     this.authService.setRefreshTokenCookie(res, result.refreshToken);
     // Kembalikan refreshToken (rotasi) agar mobile bisa menyimpan token baru;
     // cookie tetap dipakai web.
@@ -86,8 +93,23 @@ export class AuthController {
   @Post('force-change-password')
   @Public()
   @ApiOperation({ summary: 'Ubah kata sandi saat login pertama kali (mustChangePassword)' })
-  forceChangePassword(@Body() dto: ForceChangePasswordDto) {
-    return this.authService.forceChangePassword(dto);
+  forceChangePassword(@Body() dto: ForceChangePasswordDto, @Req() req: Request) {
+    return this.authService.forceChangePassword(dto, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+  }
+
+  @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Keluar — hapus refresh token (server + cookie)' })
+  async logout(@CurrentUser() user: { id: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    this.authService.clearRefreshTokenCookie(res);
+    await this.authService.logout(user.id, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+    return { success: true, message: 'Berhasil keluar' };
   }
 
   @Get('me')
@@ -121,6 +143,7 @@ export class AuthController {
 
   @Post('magic-link')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @ApiOperation({ summary: 'Kirim tautan ajaib' })
   sendMagicLink(@Body() dto: MagicLinkDto) {
     return this.authService.sendMagicLink(dto.email);
@@ -128,6 +151,7 @@ export class AuthController {
 
   @Post('magic-link/verify')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @ApiOperation({ summary: 'Verifikasi tautan ajaib' })
   verifyMagicLink(@Body() dto: MagicLinkVerifyDto) {
     return this.authService.loginWithMagicLink(dto.token);
@@ -158,6 +182,10 @@ export class AuthController {
 
     const tokens = await this.authService.generateTokens(user);
     this.authService.setRefreshTokenCookie(res, tokens.refreshToken);
+    this.authService.logAuthAudit('LOGIN', user.id, { method: 'google' }, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
 
     const redirectUrl = `${this.envConfig.frontendUrl}/login?token=${tokens.accessToken}&refresh=${tokens.refreshToken}`;
     return res.redirect(redirectUrl);

@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 // Mock bcryptjs at module level so all tests can use it
 jest.mock('bcryptjs', () => ({
@@ -44,6 +45,13 @@ describe('AuthService', () => {
       findMany: jest.fn(),
       update: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn().mockResolvedValue({ id: 'a1' }),
+    },
+  };
+
+  const mockAudit = {
+    log: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockMailService = {
@@ -67,6 +75,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwt },
         { provide: MailService, useValue: mockMailService },
         { provide: 'ENV', useValue: { jwtRefreshSecret: 'test-refresh-secret', jwtRefreshExpiresIn: '7d', nodeEnv: 'test', frontendUrl: 'http://localhost:3000' } },
+        { provide: PersistentAuditService, useValue: mockAudit },
       ],
     }).compile();
 
@@ -508,6 +517,56 @@ describe('AuthService', () => {
 
       serviceWithShortTtl.setRefreshTokenCookie(res, 'rt');
       expect(cookies[0].options.maxAge).toBe(15 * 60 * 1000);
+    });
+  });
+
+  describe('audit trail', () => {
+    it('should write LOGIN audit on successful login', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
+
+      await service.login({ identifier: 'test@ths-thm.org', password: 'password123' }, undefined, {
+        ip: '1.2.3.4',
+        userAgent: 'test-agent',
+      });
+
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'LOGIN',
+          entity: 'User',
+          entityId: 'u1',
+          userId: 'u1',
+          ipAddress: '1.2.3.4',
+          userAgent: 'test-agent',
+        }),
+      );
+    });
+
+    it('should write REFRESH_TOKEN audit on token refresh', async () => {
+      mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-refresh' });
+
+      await service.refreshToken('valid-refresh', { ip: '1.2.3.4' });
+
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'REFRESH_TOKEN', entityId: 'u1' }),
+      );
+    });
+  });
+
+  describe('logout', () => {
+    it('should clear refreshToken in DB and write LOGOUT audit', async () => {
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: null });
+
+      await service.logout('u1', { ip: '1.2.3.4', userAgent: 'test-agent' });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { refreshToken: null },
+      });
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'LOGOUT', entityId: 'u1', ipAddress: '1.2.3.4' }),
+      );
     });
   });
 });

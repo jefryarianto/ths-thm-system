@@ -7,6 +7,7 @@ import { AuditSseController } from './controllers/audit-sse.controller';
 import { EventBusService } from './services/event-bus.service';
 import { CacheService } from './services/cache.service';
 import { CsvImportService } from './services/csv-import.service';
+import { PersistentAuditService } from './services/persistent-audit.service';
 import { MemberMailService } from './services/member-mail.service';
 import { NraService } from './services/nra.service';
 import { ApiKeyStore } from './guards/api-key.guard';
@@ -27,7 +28,8 @@ import { CacheManagementController } from './controllers/cache-management.contro
     MemberMailService,
     NraService,
     ApiKeyStore,
+    PersistentAuditService,
   ],
-  exports: [ScopeHelper, AuditService, AuditLogStore, EventBusService, CacheService, CsvImportService, MemberMailService, NraService, ApiKeyStore],
+  exports: [ScopeHelper, AuditService, AuditLogStore, EventBusService, CacheService, CsvImportService, MemberMailService, NraService, ApiKeyStore, PersistentAuditService],
 })
 export class ScopeModule {}
