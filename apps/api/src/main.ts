@@ -8,8 +8,11 @@ import { setupSwagger } from './config/swagger-scope';
 import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { validateEnv } from './config/env.validation';
 
 async function bootstrap() {
+  validateEnv();
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
   });

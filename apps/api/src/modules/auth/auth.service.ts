@@ -17,6 +17,7 @@ import { MailService } from '../../mail/mail.service';
 import { resetPasswordEmail, escapeHtml } from '../../mail/email-templates';
 import { env } from '../../config/env.validation';
 import { normalizePhone } from '../../common/utils/phone.util';
+import { parseDurationToMs } from '../../common/utils/duration.util';
 import {
   LoginDto,
   RegisterDto,
@@ -42,28 +43,6 @@ interface OAuthUserProfile {
   email?: string;
   name: string;
   photo?: string;
-}
-
-/**
- * Parse durasi JWT ('7d', '15m', '1h', '30s', '500ms', atau angka mentah
- * dalam milidetik) menjadi milidetik. Mengembalikan `null` jika tidak dikenal.
- */
-function parseDurationToMs(value: string): number | null {
-  const trimmed = value.trim();
-  const match = /^(\d+)\s*(ms|s|m|h|d)$/i.exec(trimmed);
-  if (match) {
-    const n = parseInt(match[1], 10);
-    const factor: Record<string, number> = {
-      ms: 1,
-      s: 1000,
-      m: 60 * 1000,
-      h: 60 * 60 * 1000,
-      d: 24 * 60 * 60 * 1000,
-    };
-    return n * factor[match[2].toLowerCase()];
-  }
-  const numeric = parseInt(trimmed, 10);
-  return Number.isNaN(numeric) ? null : numeric;
 }
 
 @Injectable()
@@ -323,7 +302,7 @@ export class AuthService {
         // Recalculate missing fields and trigger approval workflow
         await this.triggerProfileApproval(anggota.id, userId);
       } else {
-        console.warn(
+        this.logger.warn(
           `updateProfile: No Anggota record found for user ${userId} (email: ${user.email}) — profile fields not synced`,
         );
       }

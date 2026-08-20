@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { parseDurationToMs } from '../common/utils/duration.util';
 
 export function validateEnv() {
     const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
@@ -33,6 +34,18 @@ export function validateEnv() {
     console.warn(
       '⚠️  DEFAULT_PASSWORD belum diset. Akun anggota baru akan memakai password acak sekali jalan — set DEFAULT_PASSWORD untuk pengalaman login yang konsisten.',
     );
+  }
+
+  const durationVars: Array<[string, string]> = [
+    ['JWT_EXPIRES_IN', process.env.JWT_EXPIRES_IN || '15m'],
+    ['JWT_REFRESH_EXPIRES_IN', process.env.JWT_REFRESH_EXPIRES_IN || '7d'],
+  ];
+  for (const [name, value] of durationVars) {
+    if (parseDurationToMs(value) === null) {
+      console.warn(
+        `⚠️  ${name}="${value}" bukan format durasi yang valid (contoh: 15m, 7d, 1h, 30s). Gunakan format yang benar untuk menghindari perilaku tak terduga.`,
+      );
+    }
   }
 
   console.log('✅ Environment variables validated');

@@ -1,5 +1,12 @@
-import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsOptional, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/**
+ * Kebijakan password: min 8 karakter, wajib kombinasi huruf & angka.
+ */
+const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const PASSWORD_MESSAGE =
+  'Password minimal 8 karakter dan harus mengandung huruf serta angka';
 
 export class LoginDto {
   @ApiProperty({ example: 'admin@ths-thm.org atau 081234567890' })
@@ -18,7 +25,7 @@ export class RegisterDto {
 
   @ApiProperty({ example: 'password123' })
   @IsString()
-  @MinLength(6)
+  @Matches(PASSWORD_RULE, { message: PASSWORD_MESSAGE })
   password: string;
 
   @ApiProperty({ example: 'Ahmad Fauzi' })
@@ -54,7 +61,7 @@ export class ResetPasswordDto {
 
   @ApiProperty()
   @IsString()
-  @MinLength(6)
+  @Matches(PASSWORD_RULE, { message: PASSWORD_MESSAGE })
   newPassword: string;
 }
 
@@ -97,7 +104,7 @@ export class ChangePasswordDto {
 
   @ApiProperty()
   @IsString()
-  @MinLength(6)
+  @Matches(PASSWORD_RULE, { message: PASSWORD_MESSAGE })
   newPassword: string;
 }
 
@@ -108,7 +115,7 @@ export class ForceChangePasswordDto {
 
   @ApiProperty()
   @IsString()
-  @MinLength(6)
+  @Matches(PASSWORD_RULE, { message: PASSWORD_MESSAGE })
   newPassword: string;
 }
 
