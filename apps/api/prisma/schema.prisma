@@ -1153,6 +1153,21 @@ model EmailEvent {
   @@map("email_events")
 }
 
+// Webhook yang sudah diproses — kunci deduplikasi atomik berbasis unique
+// constraint (svix-id) agar idempoten bahkan saat ada webhook ganda konkurren.
+model WebhookEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique @map("event_id") // svix-id dari provider
+  provider    String   @map("provider") // 'resend'
+  eventType   String?  @map("event_type")
+  payload     Json?
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@index([provider])
+  @@index([processedAt(sort: Desc)])
+  @@map("webhook_events")
+}
+
 model EmailLog {
   id        String   @id @default(uuid())
   to        String

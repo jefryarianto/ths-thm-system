@@ -14,6 +14,7 @@ import {
   Headers,
   ForbiddenException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Request } from 'express';
 import * as crypto from 'crypto';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiExcludeEndpoint } from '@nestjs/swagger';
@@ -390,17 +391,49 @@ export class MailController {
       throw new ForbiddenException('Signature verification error');
     }
 
-    // Idempotency: check if we already processed this webhook (by svix-id)
+    // Idempotency ATOMIK: klaim via unique constraint pada webhook_events.event_id
+    // (svix-id). Insert yang sukses = proses; P2002 = sudah diproses (aman dari
+    // webhook ganda yang datang konkurren / retry provider).
+    const eventType = (payload.type as string) || '';
     if (svixId) {
-      const exists = await this.prisma.emailEvent.findFirst({
-        where: { data: { path: ['svixId'], equals: svixId } },
-      });
-      if (exists) {
-        this.logger.log(`Webhook ${svixId} already processed, skipping`);
-        return { success: true, message: 'Already processed' };
+      try {
+        await this.prisma.webhookEvent.create({
+          data: {
+            eventId: svixId,
+            provider: 'resend',
+            eventType,
+            payload: payload as never,
+          },
+          select: { id: true },
+        });
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          this.logger.log(`Webhook ${svixId} already processed, skipping`);
+          return { success: true, message: 'Already processed' };
+        }
+        throw err;
       }
     }
 
+    try {
+      await this.processWebhookEvent(payload, svixId);
+    } catch (err) {
+      // Proses gagal → lepaskan klaim agar provider bisa retry.
+      if (svixId) {
+        await this.prisma.webhookEvent
+          .deleteMany({ where: { eventId: svixId } })
+          .catch(() => undefined);
+      }
+      throw err;
+    }
+
+    return { success: true };
+  }
+
+  private async processWebhookEvent(
+    payload: Record<string, unknown>,
+    svixId?: string,
+  ): Promise<void> {
     const eventType = (payload.type as string) || '';
     const eventData = (payload.data as Record<string, unknown>) || {};
     const emailId = eventData.email_id as string | undefined;
@@ -456,8 +489,6 @@ export class MailController {
         );
       }
     }
-
-    return { success: true };
   }
 
   @Get('logs/engagement')

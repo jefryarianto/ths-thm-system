@@ -19,6 +19,7 @@ import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import {
   buildImageUploadOptions,
   validateImageMagicBytes,
+  validateImageUploadSecurity,
 } from '../../common/utils/image-upload.util';
 
 @ApiTags('Upload')
@@ -53,6 +54,18 @@ export class UploadController {
       throw new BadRequestException(
         'File tidak valid: format gambar tidak dikenali. Upload file JPEG, PNG, WebP, atau GIF.',
       );
+    }
+
+    // Whitelist ekstensi + kecocokan format-ekstensi + batas dimensi
+    try {
+      await validateImageUploadSecurity(file.path, file.originalname);
+    } catch (err) {
+      try {
+        unlinkSync(file.path);
+      } catch {
+        // Best-effort cleanup
+      }
+      throw err;
     }
 
     // Update member's fotoPath with the saved filename
