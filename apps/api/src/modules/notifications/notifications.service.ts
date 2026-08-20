@@ -449,6 +449,52 @@ export class NotificationsService {
     });
   }
 
+
+  /**
+   * One-time cleanup: delete stale data_incomplete notifications.
+   * notifikasi.userId stores anggota.id (not User.id) for data_incomplete type.
+   */
+  async cleanupStaleIncompleteNotifications() {
+    const staleNotifs = await this.prisma.notifikasi.findMany({
+      where: { tipe: 'data_incomplete' },
+      select: { id: true, userId: true },
+    });
+
+    if (staleNotifs.length === 0) return { deleted: 0, kept: 0 };
+
+    // notifikasi.userId = anggota.id for data_incomplete notifications
+    const anggotaIds = [...new Set(staleNotifs.map((n) => n.userId))];
+
+    const members = await this.prisma.anggota.findMany({
+      where: { id: { in: anggotaIds } },
+      select: { id: true, namaLengkap: true, tempatLahir: true, tanggalLahir: true, alamat: true, noHp: true, email: true },
+    });
+
+    const completeAnggotaIds = new Set<string>();
+    for (const m of members) {
+      if (m.namaLengkap && m.tempatLahir && m.tanggalLahir && m.alamat && m.noHp && m.email) {
+        completeAnggotaIds.add(m.id);
+      }
+    }
+
+    const toDelete = staleNotifs.filter((n) => completeAnggotaIds.has(n.userId));
+    const toKeep = staleNotifs.filter((n) => !completeAnggotaIds.has(n.userId));
+
+    if (toDelete.length > 0) {
+      await this.prisma.notifikasi.deleteMany({
+        where: { id: { in: toDelete.map((n) => n.id) } },
+      });
+    }
+
+    for (const aid of completeAnggotaIds) {
+      this.cache?.invalidatePrefix(this.CACHE_PREFIX + aid);
+    }
+
+    this.logger.log(`cleanupStaleIncompleteNotifications: deleted ${toDelete.length}, kept ${toKeep.length}`);
+    return { deleted: toDelete.length, kept: toKeep.length };
+  }
+
+
   private async sendEmailNotification(userId: string, judul: string, isi: string, tipe?: string): Promise<void> {
     try {
       if (tipe) {

@@ -185,6 +185,13 @@ export class NotificationsController {
     return this.service.sendIncompleteNotifications(dto?.memberIds);
   }
 
+
+  @Post('cleanup-stale-incomplete')
+  @ApiOperation({ summary: 'Hapus notifikasi data_incomplete stale (one-time cleanup)' })
+  @Roles('superadmin')
+  cleanupStaleIncomplete() {
+    return this.service.cleanupStaleIncompleteNotifications();
+  }
   @Post('fcm-token')
   @ApiOperation({ summary: 'Daftarkan token FCM' })
   @Roles(
