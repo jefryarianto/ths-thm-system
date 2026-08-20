@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../../src/lib/api-client';
 
 interface Reward {
@@ -76,6 +77,7 @@ export default function AdminRewardsScreen() {
     stock: '0',
   });
   const [saving, setSaving] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     fetchData();
@@ -185,7 +187,7 @@ export default function AdminRewardsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>

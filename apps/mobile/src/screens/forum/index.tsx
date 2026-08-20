@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useForumCategories } from '../../hooks/use-forum';
 import { useRefresh } from '../../hooks/use-refresh';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingView, BackButton } from '../../components/ui/shared';
 
 export default function ForumScreen() {
   const { data: categories, loading, refetch } = useForumCategories();
@@ -17,6 +17,7 @@ export default function ForumScreen() {
 
   return (
     <View style={styles.container}>
+      <BackButton />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View>
           <Text style={styles.headerTitle}>Forum Komunitas</Text>

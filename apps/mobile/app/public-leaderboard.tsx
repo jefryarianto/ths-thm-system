@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../src/lib/api-client';
 
 interface LeaderboardEntry {
@@ -42,6 +43,7 @@ function getLevel(points: number) {
 export default function PublicLeaderboardScreen() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function PublicLeaderboardScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
