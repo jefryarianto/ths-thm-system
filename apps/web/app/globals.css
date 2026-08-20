@@ -38,6 +38,10 @@
     --tooltip-border: #e5e7eb;
     --tooltip-color: #111827;
     --tooltip-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --green-primary: #0B5C36;
+    --green-dark: #073e25;
+    --gold-primary: #C8A951;
+    --gold-dark: #8a6e28;
   }
 
   .dark {

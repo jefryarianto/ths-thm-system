@@ -5,6 +5,7 @@ import { PublicLayout } from '@/components';
 import apiClient from '@/lib/api-client';
 import { ChevronDown, ChevronRight, Building2, MapPin, Users, Loader2 } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import Link from 'next/link';
 
 interface OrgNode {
   id: string;
@@ -31,10 +32,10 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
   const hasChildren = node.children && node.children.length > 0;
 
   const levelStyles = [
-    'bg-blue-900 text-white font-bold',
-    'bg-blue-50 text-blue-900 font-semibold',
-    'bg-green-50 text-green-800 font-medium',
-    'bg-white text-gray-700',
+    'bg-primary-500 text-white font-bold',
+    'bg-primary-50 text-primary-500 font-semibold border-l-4 border-primary-500',
+    'bg-gold-50 text-gold-700 font-medium border-l-4 border-gold-400',
+    'bg-gray-50 text-gray-700 border-l-4 border-gray-200',
   ];
 
   const levelStyle = levelStyles[Math.min(depth, levelStyles.length - 1)];
@@ -94,12 +95,23 @@ export default function KepengurusanPage() {
 
   return (
     <PublicLayout>
-      <section className="max-w-4xl mx-auto px-4 py-8 sm:py-16">
-        <h1 className="text-2xl sm:text-4xl font-black text-blue-900 mb-8 sm:mb-12 text-center">{t.kepengurusan.title}</h1>
-        
+      {/* Page Header */}
+      <div className="bg-gradient-to-r from-primary-500 to-primary-700 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
+            <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
+            <ChevronRight size={14} />
+            <span className="text-gold-400">{t.nav.kepengurusan}</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.kepengurusan.title}</h1>
+          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
+        </div>
+      </div>
+
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-blue-600" />
+            <Loader2 size={32} className="animate-spin text-primary-500" />
           </div>
         ) : data ? (
           <>
@@ -110,14 +122,14 @@ export default function KepengurusanPage() {
                 { label: t.kepengurusan.ranting, value: data.summary.totalRanting },
                 { label: t.kepengurusan.anggota, value: data.summary.totalMembers },
               ].map((card) => (
-                <div key={card.label} className="bg-blue-50 p-4 rounded-xl text-center">
-                  <div className="text-2xl font-bold text-blue-900">{card.value}</div>
-                  <div className="text-sm text-blue-700">{card.label}</div>
+                <div key={card.label} className="bg-white border border-gray-100 rounded-xl p-4 text-center hover:shadow-md transition-all">
+                  <div className="text-2xl font-bold text-primary-500">{card.value}</div>
+                  <div className="text-sm text-gray-500 mt-1">{card.label}</div>
                 </div>
               ))}
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
               {data.tree.map((nasional) => (
                 <TreeNode key={nasional.id} node={nasional} depth={0} />
               ))}

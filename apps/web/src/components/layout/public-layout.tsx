@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ReactNode, useState } from 'react';
-import { Menu, X, Globe } from 'lucide-react';
+import { ReactNode, useState, useEffect } from 'react';
+import { Menu, X, Globe, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
 
 interface PublicLayoutProps {
@@ -12,6 +12,13 @@ interface PublicLayoutProps {
 export default function PublicLayout({ children }: PublicLayoutProps) {
   const { locale, t, setLocale } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const NAV_LINKS = [
     { href: '/sejarah', label: t.nav.sejarah },
@@ -23,58 +30,84 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   ];
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white'>
-      <nav className='bg-white shadow-sm border-b'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between h-16 items-center'>
-            <div className='flex items-center gap-3'>
-              <div className='w-10 h-10 rounded-full bg-yellow-400 border-2 border-blue-900 flex items-center justify-center font-bold text-blue-900 text-sm'>
-                THS
+    <div className="min-h-screen bg-white">
+      {/* ── Top Utility Bar ── */}
+      <div className="bg-primary-500 text-white text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:flex items-center gap-1">
+              <Phone size={11} />
+              <span>THS-THM</span>
+            </span>
+            <span className="hidden md:flex items-center gap-1">
+              <Mail size={11} />
+              <span>info@ths-thm.cloud</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
+              className="flex items-center gap-1 hover:text-gold-300 transition-colors"
+            >
+              <Globe size={12} />
+              <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
+            </button>
+            <Link href="/login" className="hover:text-gold-300 transition-colors">
+              {t.nav.login}
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Navbar ── */}
+      <nav
+        className={`bg-white sticky top-0 z-50 transition-shadow duration-300 ${
+          scrolled ? 'shadow-lg' : 'shadow-sm'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3 shrink-0">
+              <div className="w-10 h-10 rounded-full bg-primary-500 border-2 border-gold-400 flex items-center justify-center">
+                <span className="font-bold text-white text-xs">THS</span>
               </div>
-              <span className='font-bold text-blue-900 text-lg'>THS-THM</span>
-            </div>
+              <div className="hidden sm:block">
+                <span className="font-bold text-primary-500 text-lg leading-tight block">
+                  THS-THM
+                </span>
+                <span className="text-[10px] text-gray-400 leading-tight">
+                  Taman Harapan Siswa
+                </span>
+              </div>
+            </Link>
 
             {/* Desktop Navigation */}
-            <div className='hidden md:flex md:items-center md:gap-6'>
-              <div className='flex items-center gap-4'>
-                {NAV_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className='text-blue-900 hover:text-blue-700 font-medium transition-colors'
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-              <div className='flex items-center gap-4 ml-8 border-l border-gray-200 pl-8'>
-                <button
-                  onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
-                  className='flex items-center gap-1 px-2 py-1 text-sm text-blue-900 hover:bg-blue-50 rounded-lg transition-colors'
+            <div className="hidden lg:flex lg:items-center lg:gap-1">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="px-3 py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"
                 >
-                  <Globe size={16} />
-                  <span className='font-medium'>{locale === 'id' ? 'EN' : 'ID'}</span>
-                </button>
-                <Link href='/login' className='text-blue-900 hover:text-blue-700 font-medium'>
-                  {t.nav.login}
+                  {link.label}
                 </Link>
-                <Link href='/daftar' className='bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800 font-medium'>
-                  {t.nav.daftar}
-                </Link>
-              </div>
+              ))}
             </div>
 
-            {/* Mobile Menu Button */}
-            <div className='flex items-center gap-2 md:hidden'>
-              <button
-                onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
-                className='p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors'
+            {/* Right side: Search + CTA */}
+            <div className="flex items-center gap-3">
+              <Link
+                href="/daftar"
+                className="hidden sm:inline-flex items-center gap-2 bg-gold-500 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-gold-600 transition-colors shadow-sm"
               >
-                <Globe size={20} />
-              </button>
+                {t.nav.daftar}
+              </Link>
+
+              {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className='p-2 rounded-lg text-blue-900 hover:bg-blue-50 transition-colors'
+                className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
               >
@@ -82,60 +115,149 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Mobile Navigation Drawer */}
-          {mobileMenuOpen && (
-            <div className='md:hidden py-4 border-t border-gray-100 animate-slide-down'>
-              <div className='flex flex-col gap-2'>
-                {NAV_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className='px-4 py-3 text-blue-900 hover:bg-blue-50 rounded-lg font-medium transition-colors'
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                <div className='pt-2 border-t border-gray-100 flex flex-col gap-2'>
-                  <Link
-                    href='/login'
-                    className='px-4 py-3 text-blue-900 hover:bg-blue-50 rounded-lg font-medium transition-colors'
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t.nav.login}
-                  </Link>
-                  <Link
-                    href='/daftar'
-                    className='px-4 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 font-medium transition-colors text-center'
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t.nav.daftar}
-                  </Link>
-                </div>
+        {/* ── Mobile Navigation Drawer ── */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-gray-100 bg-white animate-slide-down">
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-500 rounded-lg font-semibold transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
+                <Link
+                  href="/login"
+                  className="block px-4 py-3 text-primary-500 hover:bg-primary-50 rounded-lg font-semibold transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t.nav.login}
+                </Link>
+                <Link
+                  href="/daftar"
+                  className="block px-4 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 font-bold transition-colors text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t.nav.daftar}
+                </Link>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </nav>
 
       <main>{children}</main>
 
-      <footer className='bg-gray-900 text-gray-400 py-12'>
-        <div className='max-w-7xl mx-auto px-4'>
-          <div className='grid grid-cols-2 md:grid-cols-6 gap-6 mb-8'>
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className='text-gray-300 hover:text-white transition-colors text-center'
-              >
-                {link.label}
-              </Link>
-            ))}
+      {/* ── Footer ── */}
+      <footer className="bg-primary-500 text-white">
+        {/* Main Footer */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Column 1: About */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-gold-400 flex items-center justify-center">
+                  <span className="font-bold text-white text-xs">THS</span>
+                </div>
+                <div>
+                  <span className="font-bold text-white text-lg leading-tight block">
+                    THS-THM
+                  </span>
+                  <span className="text-[10px] text-white/60 leading-tight">
+                    Taman Harapan Siswa / Murid
+                  </span>
+                </div>
+              </div>
+              <p className="text-white/70 text-sm leading-relaxed">
+                Sistem Manajemen Organisasi THS-THM — Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
+              </p>
+            </div>
+
+            {/* Column 2: Navigasi */}
+            <div>
+              <h4 className="font-bold text-gold-400 mb-4 text-sm uppercase tracking-wider">
+                Navigasi
+              </h4>
+              <ul className="space-y-2">
+                {NAV_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1"
+                    >
+                      <ChevronRight size={12} />
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 3: Akses Cepat */}
+            <div>
+              <h4 className="font-bold text-gold-400 mb-4 text-sm uppercase tracking-wider">
+                Akses Cepat
+              </h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/login" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1">
+                    <ChevronRight size={12} />
+                    {t.nav.login}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/daftar" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1">
+                    <ChevronRight size={12} />
+                    {t.nav.daftar}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/sejarah" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1">
+                    <ChevronRight size={12} />
+                    {t.nav.sejarah}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Kontak */}
+            <div>
+              <h4 className="font-bold text-gold-400 mb-4 text-sm uppercase tracking-wider">
+                Kontak
+              </h4>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400" />
+                  <span>Indonesia</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <Mail size={14} className="shrink-0 mt-0.5 text-gold-400" />
+                  <span>info@ths-thm.cloud</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <Phone size={14} className="shrink-0 mt-0.5 text-gold-400" />
+                  <span>THS-THM</span>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className='border-t border-gray-800 pt-8 text-center'>
-            <p>&copy; {new Date().getFullYear()} THS-THM. All rights reserved.</p>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-white/50 text-xs">
+              &copy; {new Date().getFullYear()} THS-THM. All rights reserved.
+            </p>
+            <p className="text-white/30 text-xs">
+              Dikelola oleh Tim Teknologi THS-THM
+            </p>
           </div>
         </div>
       </footer>
