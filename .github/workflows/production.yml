@@ -196,6 +196,9 @@ jobs:
             echo "   Pulling images..."
             docker compose -f docker-compose.production.yml pull
 
+            # Resolve any stuck migrations from previous failed deploys
+            docker compose -f docker-compose.production.yml run --rm api \
+              sh -c "npx prisma migrate resolve --rolled-back 20260820103000_cleanup_stale_notifications || true" 2>&1 || true
             # Run database migrations before restarting
             # Production image flattens API to /app/ — prisma/ is at /app/prisma/
             echo "   Running database migrations..."
