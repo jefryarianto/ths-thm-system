@@ -106,6 +106,18 @@ describe('AuthService', () => {
       expect(result.user.email).toBe('test@ths-thm.org');
     });
 
+    it('should normalize phone format (+62 → 0) when looking up user.phone', async () => {
+      // Primary lookup dengan format asli miss, lookup ternormalisasi hit
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'refresh-token' });
+
+      const result = await service.login({ identifier: '+628123456789', password: 'password123' });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '+628123456789' } });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { phone: '08123456789' } });
+      expect(result.user.email).toBe('test@ths-thm.org');
+    });
+
     it('should throw UnauthorizedException for non-existent user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       await expect(
@@ -274,6 +286,7 @@ describe('AuthService', () => {
         data: expect.objectContaining({
           namaLengkap: 'Anggota User',
           noHp: '081234567890',
+          noHpNormalized: '081234567890',
           alamat: 'Jl. Test No. 123',
         }),
       });

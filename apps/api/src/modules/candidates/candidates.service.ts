@@ -10,6 +10,7 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { CsvImportService } from '../../common/services/csv-import.service';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { NraService } from '../../common/services/nra.service';
+import { normalizePhone } from '../../common/utils/phone.util';
 
 const CRUD_CONFIG: CrudConfig = {
   model: 'calonAnggota',
@@ -280,6 +281,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
           tahunDadar: dto?.tahunDadar || null,
           alamat: candidate.alamat,
           noHp: candidate.noHp,
+          noHpNormalized: normalizePhone(candidate.noHp),
           email: candidate.email,
           rantingId: candidate.rantingId,
           tingkat: dto?.tingkat || candidate.tingkat || null,

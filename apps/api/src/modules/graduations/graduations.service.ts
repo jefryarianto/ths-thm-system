@@ -26,6 +26,7 @@ import {
   GenerateDocsDto,
 } from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { normalizePhone } from '../../common/utils/phone.util';
 
 /** Shape expected by DocumentsService.generateCertificate (#aspects). */
 interface AspectScore {
@@ -554,6 +555,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
           tanggalLahir: candidate.tanggalLahir ?? null,
           alamat: candidate.alamat,
           noHp: candidate.noHp,
+          noHpNormalized: normalizePhone(candidate.noHp),
           email: candidate.email,
           rantingId: candidate.rantingId,
           tingkat: candidate.tingkat || null,

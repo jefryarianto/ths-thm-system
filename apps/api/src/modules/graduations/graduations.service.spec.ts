@@ -323,7 +323,7 @@ describe('GraduationsService', () => {
 
       expect(mockPrisma.anggota.create).toHaveBeenCalledTimes(1);
       expect(mockPrisma.anggota.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ email: mockCandidate.email }) }),
+        expect.objectContaining({ data: expect.objectContaining({ email: mockCandidate.email, noHpNormalized: '08123456789' }) }),
       );
       expect(mockDocumentsService.generateCertificate).toHaveBeenCalledWith(
         expect.objectContaining({ memberId: 'a1', finalScore: 85 }),

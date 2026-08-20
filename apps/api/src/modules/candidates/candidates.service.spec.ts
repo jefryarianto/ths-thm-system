@@ -280,6 +280,9 @@ describe('CandidatesService', () => {
       expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
       expect(result.nomorAnggota).toBe('0114-0101-011-2026');
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.anggota.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ noHpNormalized: '0812' }) }),
+      );
     });
 
     it('should use tahunDadar when provided', async () => {

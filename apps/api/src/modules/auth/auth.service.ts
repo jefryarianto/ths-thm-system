@@ -87,6 +87,16 @@ export class AuthService {
       ? await this.prisma.user.findUnique({ where: { phone: cleaned } })
       : await this.prisma.user.findUnique({ where: { email: rawIdentifier } });
 
+    // Fallback #0: user.phone mungkin tersimpan dalam format berbeda
+    // (mentah '0812...' vs '+62812...'). Normalisasi identitas supaya cocok
+    // apa pun format penyimpanannya.
+    if (!user && isPhone) {
+      const normalized = this.normalizePhone(cleaned);
+      if (normalized && normalized !== cleaned) {
+        user = await this.prisma.user.findUnique({ where: { phone: normalized } });
+      }
+    }
+
     // Fallback #1: email case-insensitive (Postgres findUnique bersifat case-sensitive)
     if (!user && !isPhone) {
       user = await this.prisma.user.findFirst({
@@ -280,7 +290,10 @@ export class AuthService {
     if (hasAnggotaFields) {
       const anggotaData: Record<string, unknown> = {};
       if (dto.namaLengkap) anggotaData.namaLengkap = dto.namaLengkap;
-      if (dto.noHp !== undefined) anggotaData.noHp = dto.noHp;
+      if (dto.noHp !== undefined) {
+        anggotaData.noHp = dto.noHp;
+        anggotaData.noHpNormalized = normalizePhone(dto.noHp);
+      }
       if (dto.alamat !== undefined) anggotaData.alamat = dto.alamat;
       if (dto.tempatLahir) anggotaData.tempatLahir = dto.tempatLahir;
       if (dto.tanggalLahir) anggotaData.tanggalLahir = new Date(dto.tanggalLahir);
