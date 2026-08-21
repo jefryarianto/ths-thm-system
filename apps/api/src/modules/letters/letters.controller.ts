@@ -96,13 +96,13 @@ export class LettersController {
   }
 
   @Get('incoming/export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Ekspor surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_ranting', { summary: 'Ekspor surat masuk' })
   incomingExport() {
     return this.service.incomingExport();
   }
 
   @Get('outgoing/export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Ekspor surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_ranting', { summary: 'Ekspor surat keluar' })
   outgoingExport() {
     return this.service.outgoingExport();
   }

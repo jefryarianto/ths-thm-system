@@ -42,7 +42,7 @@ export class PaymentsController {
   }
 
   @Get('bank-info/all')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_ranting', { summary: 'Dapatkan semua rekening bank (termasuk non-aktif) — Admin' })
   getAllBankInfo() {
     return this.service.getAllBankInfo();
   }

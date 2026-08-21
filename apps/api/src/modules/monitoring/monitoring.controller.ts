@@ -13,28 +13,28 @@ export class MonitoringController {
   // ── Alerts CRUD ────────────────────────────────────
 
   @Get('alerts')
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_ranting')
   @ApiOperation({ summary: 'Daftar semua alert threshold' })
   async findAll() {
     return this.service.findAll();
   }
 
   @Get('alerts/:id')
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_ranting')
   @ApiOperation({ summary: 'Detail alert threshold' })
   async findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Post('alerts')
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_ranting')
   @ApiOperation({ summary: 'Tambah alert threshold baru' })
   async create(@Body() dto: CreateMonitoringAlertDto) {
     return this.service.create(dto);
   }
 
   @Patch('alerts/:id')
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_ranting')
   @ApiOperation({ summary: 'Perbarui alert threshold' })
   async update(@Param('id') id: string, @Body() dto: UpdateMonitoringAlertDto) {
     return this.service.update(id, dto);
@@ -48,7 +48,7 @@ export class MonitoringController {
   }
 
   @Post('alerts/:id/toggle')
-  @Roles('superadmin', 'admin_distrik')
+  @Roles('superadmin', 'admin_distrik', 'admin_ranting')
   @ApiOperation({ summary: 'Aktif/nonaktifkan alert' })
   async toggle(@Param('id') id: string) {
     return this.service.toggle(id);
