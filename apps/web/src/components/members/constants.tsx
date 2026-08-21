@@ -4,8 +4,8 @@ import DetailRow from '@/components/ui/detail-row';
 export const STATUS_BADGES: Record<string, string> = {
   aktif: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
   nonaktif: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
-  pending: 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400',
-  approved: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
+  pending: 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400',
+  approved: 'bg-navy-100 dark:bg-navy-950 text-navy-700 dark:text-navy-400',
   rejected: 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
   complete: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400',
   incomplete: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
@@ -62,13 +62,13 @@ const STATUS_STYLES: Record<string, string> = {
   nonaktif:
     'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
   pindah:
-    'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+    'bg-navy-100 dark:bg-navy-950 text-navy-700 dark:text-navy-400 border-navy-200 dark:border-navy-800',
   keluar:
     'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
   meninggal:
     'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
   pending:
-    'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800',
+    'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
   approved:
     'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
   rejected:
@@ -160,7 +160,7 @@ export function DetailStats({
   ] as const;
 
   const colorStyles: Record<string, string> = {
-    blue: 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400',
+    navy: 'bg-navy-50 dark:bg-navy-950 text-navy-600 dark:text-navy-400',
     green: 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400',
     purple: 'bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400',
     yellow: 'bg-yellow-50 dark:bg-yellow-950 text-yellow-600 dark:text-yellow-400',

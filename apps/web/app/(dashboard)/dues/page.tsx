@@ -132,7 +132,7 @@ export default function DuesPage() {
         <CanCreate module="dues">
           <button
             onClick={() => router.push('/dues/new')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
           >
             <Plus size={16} /> Tambah Iuran
           </button>
@@ -181,7 +181,7 @@ export default function DuesPage() {
               <div className="flex items-center justify-end gap-1">
                 <button
                   onClick={() => router.push(`/dues/${d.id}`)}
-                  className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                  className="p-1.5 text-navy-600 hover:bg-navy-50 dark:hover:bg-navy-950 rounded-md transition-colors"
                   title="Lihat Detail"
                 >
                   <ExternalLink size={14} />

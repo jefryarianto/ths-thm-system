@@ -224,7 +224,7 @@ export default function MembersPage() {
           </div>
           <Link
             href={`/members/${m.id}`}
-            className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition"
+            className="font-medium text-gray-900 dark:text-white hover:text-gold-500 dark:hover:text-gold-400 hover:underline transition"
             title="Lihat detail anggota"
           >
             {toProperCase(m.namaLengkap)}
@@ -265,7 +265,7 @@ export default function MembersPage() {
       key: 'tingkat',
       label: 'Tingkatan',
       render: (m: Member) => (
-        <span className="text-xs font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded-full">{m.tingkat || '-'}</span>
+        <span className="text-xs font-medium text-navy-700 dark:text-navy-400 bg-navy-50 dark:bg-navy-950 px-2 py-0.5 rounded-full">{m.tingkat || '-'}</span>
       ),
     },
     {
@@ -297,7 +297,7 @@ export default function MembersPage() {
         <CanCreate module="members">
           <button
             onClick={() => router.push('/members/new')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
           >
             <Plus size={16} /> Tambah
           </button>

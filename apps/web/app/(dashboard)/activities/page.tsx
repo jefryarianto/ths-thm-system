@@ -87,7 +87,7 @@ export default function ActivitiesPage() {
         <CanCreate module="activities">
           <button
             onClick={() => router.push('/activities/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
           >
             <Plus size={14} /> Tambah
           </button>
@@ -142,29 +142,29 @@ export default function ActivitiesPage() {
         renderRow={(row: ActivityRow) => (
           <tr
             key={row.id}
-            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-navy-50/50 dark:hover:bg-gray-800 transition-colors"
           >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
             </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+            <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden sm:table-cell">
               <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
                 {row.tipe}
               </span>
             </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell whitespace-nowrap">
+            <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden md:table-cell whitespace-nowrap">
               {new Date(row.tanggalMulai).toLocaleDateString('id-ID')}
               {row.tanggalSelesai &&
                 ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
             </td>
-            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+            <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden lg:table-cell">
               <div className="flex items-center gap-1">
-                <MapPin size={12} className="text-gray-400" />
+                <MapPin size={12} className="text-navy-400" />
                 {row.lokasi || '-'}
               </div>
             </td>
             <td className="px-4 py-3 text-center hidden xl:table-cell">
-              <span className="text-gray-600 dark:text-gray-400">{row.pesertaCount ?? '-'}</span>
+              <span className="text-gray-600 dark:text-navy-400">{row.pesertaCount ?? '-'}</span>
             </td>
             <td className="px-4 py-3">
               <span
