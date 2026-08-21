@@ -58,6 +58,7 @@ export default function DataTable<T>({
   actions,
   colSpan,
   skeletonRows = 5,
+  renderMobileCard,
 }: DataTableProps<T>) {
   // Determine if we should auto-render rows using column render functions
   const hasColumnRender = columns.some((c) => c.render);
