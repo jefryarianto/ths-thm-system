@@ -19,7 +19,7 @@ export class ActivitiesController {
   constructor(private readonly service: ActivitiesService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil semua kegiatan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota', { summary: 'Ambil semua kegiatan' })
   findAll(@Query() q: ActivityFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(q, req.scope);
   }

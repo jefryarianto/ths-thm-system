@@ -48,7 +48,7 @@ export class DocumentsController {
   @Get()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua dokumen' })
-  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan')
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota')
   @RequireScope('branch')
   findAll(@Query() q: DocumentFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(q, req.scope);

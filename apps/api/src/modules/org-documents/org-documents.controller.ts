@@ -24,7 +24,7 @@ export class OrgDocumentsController extends BaseCrudController {
   // After:  @CrudAuth(...) = 1 line
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota', {
     summary: 'Ambil semua dokumen organisasi',
   })
   findAll(@Query() q: OrgDocumentFilterDto) {
