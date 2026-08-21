@@ -42,25 +42,25 @@ export function LandingPageContent() {
   return (
     <PublicLayout>
       {/* ── Hero Section ── */}
-      <section className="relative bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 text-white overflow-hidden">
+      <section className="relative bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 text-white overflow-hidden">
         {/* Decorative pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-accent-400/30 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gold-300 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gold-400/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gold-400/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-accent-500/20 backdrop-blur-sm text-accent-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-accent-400/30">
-              <span className="w-2 h-2 bg-accent-400 rounded-full animate-pulse" />
+            <div className="inline-flex items-center gap-2 bg-gold-400/10 backdrop-blur-sm text-gold-400 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-gold-400/20">
+              <span className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
               Organisasi Berkemajuan
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 font-serif">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold leading-[1.1] mb-6">
               TUNGGAL HATI{' '}
-              <span className="text-accent-400">SEMINARI</span>
+              <span className="text-gold-400">SEMINARI</span>
               <br />
               TUNGGAL HATI{' '}
-              <span className="text-accent-400">MARIA</span>
+              <span className="text-gold-400">MARIA</span>
             </h1>
             <p className="text-lg sm:text-xl text-white/80 max-w-2xl mb-10 leading-relaxed">
               Sistem Manajemen Organisasi THS-THM — Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
@@ -68,7 +68,7 @@ export function LandingPageContent() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/daftar"
-                className="inline-flex items-center justify-center gap-2 bg-accent-500 text-white px-8 py-3.5 rounded-lg text-lg font-bold hover:bg-accent-600 shadow-lg transition-all"
+                className="inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-900 px-8 py-3.5 rounded-xl text-lg font-bold hover:bg-gold-300 shadow-elegant-md transition-all duration-200 transition-all"
               >
                 Daftar Anggota Baru
                 <ArrowRight size={18} />
@@ -95,7 +95,7 @@ export function LandingPageContent() {
               { label: 'Tahun Berdiri', value: '1980+' },
             ].map((stat) => (
               <div key={stat.label} className="py-6 px-4 text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-accent-600">{stat.value}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-navy-800">{stat.value}</div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">{stat.label}</div>
               </div>
             ))}
@@ -104,12 +104,12 @@ export function LandingPageContent() {
       </section>
 
       {/* ── Fitur Utama ── */}
-      <section className="py-16 sm:py-20 bg-gray-50">
+      <section className="py-16 sm:py-20 bg-[#F8F9FA]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <span className="text-accent-500 text-sm font-semibold uppercase tracking-wider">Layanan Kami</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-primary-800 mt-2">Fitur Utama</h2>
-            <div className="w-16 h-1 bg-accent-500 mx-auto mt-4 rounded-full" />
+            <span className="text-gold-500 text-sm font-semibold uppercase tracking-wider">Layanan Kami</span>
+            <h2 className="text-3xl sm:text-4xl font-bold font-serif font-bold text-navy-800 mt-2">Fitur Utama</h2>
+            <div className="w-16 h-1 bg-gold-400 mx-auto mt-4 rounded-full" />
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f) => (
@@ -117,11 +117,11 @@ export function LandingPageContent() {
                 key={f.title}
                 className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg hover:border-accent-200 transition-all group"
               >
-                <div className="w-12 h-12 rounded-lg bg-accent-50 flex items-center justify-center mb-4 group-hover:bg-accent-500 transition-colors">
-                  <f.icon size={24} className="text-accent-500 group-hover:text-white transition-colors" />
+                <div className="w-12 h-12 rounded-lg bg-navy-50 flex items-center justify-center mb-4 group-hover:bg-navy-800 transition-colors duration-200">
+                  <f.icon size={24} className="text-navy-600 group-hover:text-white transition-colors" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{f.desc}</p>
+                <h3 className="text-lg font-bold text-navy-800 mb-2">{f.title}</h3>
+                <p className="text-navy-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -134,12 +134,12 @@ export function LandingPageContent() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-10">
               <div>
-                <span className="text-accent-500 text-sm font-semibold uppercase tracking-wider">Informasi Terkini</span>
-                <h2 className="text-3xl sm:text-4xl font-bold text-primary-800 mt-2">Berita Terbaru</h2>
+                <span className="text-gold-500 text-sm font-semibold uppercase tracking-wider">Informasi Terkini</span>
+                <h2 className="text-3xl sm:text-4xl font-bold font-serif font-bold text-navy-800 mt-2">Berita Terbaru</h2>
               </div>
               <Link
                 href="/berita"
-                className="hidden sm:inline-flex items-center gap-1 text-accent-500 font-semibold text-sm hover:text-accent-600 transition-colors"
+                className="hidden sm:inline-flex items-center gap-1 text-gold-500 font-semibold text-sm hover:text-navy-800 transition-colors"
               >
                 Lihat Semua
                 <ArrowRight size={16} />
@@ -155,18 +155,18 @@ export function LandingPageContent() {
                     i === 0 ? 'md:col-span-2 lg:col-span-1' : ''
                   }`}
                 >
-                  <div className="bg-primary-100 h-48 flex items-center justify-center">
+                  <div className="bg-navy-100 h-48 flex items-center justify-center">
                     <span className="text-6xl opacity-30">📰</span>
                   </div>
                   <div className="p-5">
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                    <div className="flex items-center gap-2 text-xs text-navy-400 mb-2">
                       <Calendar size={12} />
                       <time>{formatTanggal(n.tanggal)}</time>
                     </div>
-                    <h3 className="font-bold text-gray-900 group-hover:text-accent-600 transition-colors line-clamp-2 mb-2">
+                    <h3 className="font-bold text-gray-900 group-hover:text-navy-800 transition-colors line-clamp-2 mb-2">
                       {n.judul}
                     </h3>
-                    <p className="text-sm text-gray-500 line-clamp-2">{n.ringkasan}</p>
+                    <p className="text-sm text-navy-500 line-clamp-2">{n.ringkasan}</p>
                   </div>
                 </Link>
               ))}
@@ -175,7 +175,7 @@ export function LandingPageContent() {
             <div className="text-center mt-10 sm:hidden">
               <Link
                 href="/berita"
-                className="inline-flex items-center gap-1 text-accent-600 font-semibold text-sm hover:text-accent-700"
+                className="inline-flex items-center gap-1 text-navy-800 font-semibold text-sm hover:text-accent-700"
               >
                 Lihat Semua Berita
                 <ArrowRight size={16} />
@@ -186,9 +186,9 @@ export function LandingPageContent() {
       )}
 
       {/* ── CTA Section ── */}
-      <section className="bg-gradient-to-r from-primary-700 to-primary-900 py-16">
+      <section className="bg-gradient-to-r from-navy-800 to-navy-900 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-serif">
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white mb-4">
             Bergabunglah dengan THS-THM
           </h2>
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
@@ -197,7 +197,7 @@ export function LandingPageContent() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/daftar"
-              className="inline-flex items-center justify-center gap-2 bg-accent-500 text-white px-8 py-3.5 rounded-lg text-lg font-bold hover:bg-accent-600 shadow-lg transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-900 px-8 py-3.5 rounded-xl text-lg font-bold hover:bg-gold-300 shadow-elegant-md transition-all duration-200 transition-all"
             >
               Daftar Sekarang
               <ArrowRight size={18} />

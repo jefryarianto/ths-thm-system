@@ -61,7 +61,7 @@ function OAuthCallbackHandler() {
 function BackgroundBlobs() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
-      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] animate-blob rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/20 blur-3xl" />
+      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] animate-blob rounded-full bg-gradient-to-br from-gold-400/10 to-navy-400/10 blur-3xl" />
       <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] animate-blob animation-delay-2000 rounded-full bg-gradient-to-tr from-cyan-400/20 to-blue-500/30 blur-3xl" />
       <div className="absolute left-1/2 top-1/3 h-[400px] w-[400px] animate-blob animation-delay-4000 rounded-full bg-gradient-to-r from-indigo-400/20 to-purple-400/20 blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 h-[300px] w-[300px] animate-blob animation-delay-6000 rounded-full bg-gradient-to-bl from-sky-400/15 to-blue-600/20 blur-3xl" />
@@ -123,7 +123,7 @@ function FloatingInput({
         <Icon
           size={18}
           className={`transition-colors duration-200 ${
-            isFloating ? 'text-blue-500' : 'text-gray-400'
+            isFloating ? 'text-navy-500' : 'text-gray-400'
           }`}
         />
       </div>
@@ -240,7 +240,7 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-3xl bg-white/70 shadow-2xl shadow-blue-900/10 backdrop-blur-xl dark:bg-gray-900/70 dark:shadow-blue-900/20">
           <div className="grid min-h-[600px] lg:grid-cols-5">
             {/* ── LEFT PANEL — Branding ── */}
-            <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#0D2B4E] via-[#0A1F3A] to-[#061528] lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
+            <div className="relative hidden overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
               {/* Decorative elements */}
               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
               <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-yellow-400/10 blur-3xl" />
@@ -260,7 +260,7 @@ export default function LoginPage() {
                   <h1 className="text-3xl font-extrabold tracking-tight text-white xl:text-4xl">
                     THS-THM
                   </h1>
-                  <p className="mt-2 max-w-xs text-base leading-relaxed text-blue-200/90">
+                  <p className="mt-2 max-w-xs text-base leading-relaxed text-gold-400/80">
                     Sistem Manajemen Organisasi — Kelola organisasi secara digital dalam satu
                     platform terpadu.
                   </p>
@@ -280,7 +280,7 @@ export default function LoginPage() {
                   className="mt-10 border-t border-white/10 pt-6 animate-fade-in-up"
                   style={{ animationDelay: '800ms', animationFillMode: 'both' }}
                 >
-                  <p className="text-sm italic text-blue-200/70">
+                  <p className="text-sm italic text-white/50">
                     &ldquo;Bersama membangun organisasi yang lebih baik, transparan, dan efisien.&rdquo;
                   </p>
                 </div>
@@ -311,7 +311,7 @@ export default function LoginPage() {
                   style={{ animationDelay: '100ms', animationFillMode: 'both' }}
                 >
                   <div className="mb-2 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-navy-700 to-navy-800 shadow-sm">
                       <LogIn size={20} className="text-white" />
                     </div>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -406,13 +406,13 @@ export default function LoginPage() {
                         type="checkbox"
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#1B3A5C] dark:border-gray-600"
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-navy-700 dark:border-gray-600"
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">Ingat saya</span>
                     </label>
                     <Link
                       href="/forgot-password"
-                      className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      className="text-sm font-medium text-navy-600 transition-colors hover:text-navy-800 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       Lupa Password?
                     </Link>
@@ -423,7 +423,7 @@ export default function LoginPage() {
                     type="submit"
                     data-testid="login-submit"
                     disabled={loading}
-                    className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#1B3A5C] to-[#0D1F33] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:shadow-xl hover:shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-[#1B3A5C] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus:ring-offset-gray-900"
+                    className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-navy-800 to-navy-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-navy-800/25 transition-all duration-200 hover:shadow-xl hover:shadow-navy-800/30 hover:from-navy-700 hover:to-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus:ring-offset-gray-900"
                   >
                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
                     <span className="relative flex items-center justify-center gap-2">
@@ -465,7 +465,7 @@ export default function LoginPage() {
                 >
                   <a
                     href={`${API_URL}/api/auth/google`}
-                    className="group flex items-center justify-center gap-3 rounded-xl border-2 border-gray-200 bg-white/50 px-6 py-3 text-sm font-medium text-gray-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-blue-200 hover:bg-blue-50/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/20"
+                    className="group flex items-center justify-center gap-3 rounded-xl border-2 border-gray-200 bg-white/50 px-6 py-3 text-sm font-medium text-gray-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-gold-300 hover:bg-gold-50/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:border-gold-400 dark:hover:bg-gold-900/20"
                   >
                     <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
                       <path
@@ -499,7 +499,7 @@ export default function LoginPage() {
                     Belum punya akun?{' '}
                     <Link
                       href="/daftar"
-                      className="font-semibold text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      className="font-semibold text-navy-600 transition-colors hover:text-navy-800 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       Daftar Anggota Baru
                     </Link>

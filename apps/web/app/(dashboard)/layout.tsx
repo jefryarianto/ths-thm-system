@@ -479,10 +479,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED;
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
+    <div className="flex h-screen bg-[#F8F9FA] dark:bg-gray-950">
       {/* Sidebar */}
       <aside
-        className="bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-all duration-300 ease-in-out"
+        className="bg-navy-800 border-r border-navy-700 flex flex-col transition-all duration-300 ease-in-out"
         style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       >
         {/* Brand + Toggle */}
@@ -502,12 +502,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 alt="THS-THM"
                 className="h-8 w-8 shrink-0 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
               />
-              <span className="text-lg font-bold text-blue-700 dark:text-blue-400 truncate">THS-THM</span>
+              <span className="text-lg font-serif font-bold text-white truncate">THS-THM</span>
             </Link>
           )}
           <button
             onClick={toggleSidebar}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0"
+            className="p-1.5 rounded-xl hover:bg-navy-700 transition-colors text-navy-300 hover:text-white shrink-0"
             title={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
             aria-label={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
             aria-expanded={!collapsed}
@@ -550,7 +550,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.label)}
-                  className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-navy-400 hover:text-navy-200 transition-colors"
                   title={
                     collapsedGroups.has(group.label)
                       ? `Buka grup ${group.label}`
@@ -592,8 +592,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   // Shared classes for both external and internal links
                   const linkClasses = `flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition-colors ${
                     isActive
-                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? 'bg-navy-700 text-gold-400 font-medium'
+                      : 'text-navy-200 hover:bg-navy-700 hover:text-white'
                   } ${collapsed ? 'justify-center px-2' : ''}`;
 
                   const content = (
@@ -684,8 +684,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
-          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
+        <header className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between h-14 shrink-0">
+          <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-navy-50 transition-colors text-navy-500 hover:text-navy-700" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
           </h2>
@@ -693,7 +693,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <ThemeToggle />
             <Link
               href="/notifications"
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="relative p-2 rounded-xl hover:bg-navy-50 transition-colors"
             >
               <Bell size={20} className="text-gray-600 dark:text-gray-300" />
               {unreadCount > 0 && (
@@ -707,7 +707,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen((prev) => !prev)}
-                  className={`flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                  className={`flex items-center gap-2 p-1.5 rounded-xl hover:bg-navy-50 transition-colors ${
                     profileOpen ? 'bg-gray-100 dark:bg-gray-800' : ''
                   }`}
                   title={user.namaLengkap}
@@ -726,7 +726,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-elegant-lg border border-gray-100 py-1 z-50">
                     <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {user.namaLengkap}
@@ -750,7 +750,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                      className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <LogOut size={16} className="shrink-0" />
                       Keluar
