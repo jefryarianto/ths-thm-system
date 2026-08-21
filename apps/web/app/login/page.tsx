@@ -138,13 +138,13 @@ function FloatingInput({
         required
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="peer block w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 pb-2.5 pl-12 pt-7 text-sm text-gray-900 backdrop-blur-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-0 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-100 dark:focus:border-blue-400"
+        className="peer block w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 pb-2.5 pl-12 pt-7 text-sm text-gray-900 backdrop-blur-sm transition-all duration-200 focus:border-[#1B3A5C] focus:outline-none focus:ring-0 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-100 dark:focus:border-blue-400"
       />
       <label
         htmlFor={id}
         className={`pointer-events-none absolute left-12 transition-all duration-200 ${
           isFloating
-            ? 'top-2 text-[11px] font-medium text-blue-600 dark:text-blue-400'
+            ? 'top-2 text-[11px] font-medium text-[#1B3A5C]'
             : 'top-1/2 -translate-y-1/2 text-sm text-gray-400'
         }`}
       >
@@ -225,8 +225,8 @@ export default function LoginPage() {
   const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 p-4 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 sm:p-6 lg:p-8">
-      <BackgroundBlobs />
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br bg-white">
+      
       <Suspense fallback={null}>
         <OAuthCallbackHandler />
       </Suspense>
@@ -240,7 +240,7 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-3xl bg-white/70 shadow-2xl shadow-blue-900/10 backdrop-blur-xl dark:bg-gray-900/70 dark:shadow-blue-900/20">
           <div className="grid min-h-[600px] lg:grid-cols-5">
             {/* ── LEFT PANEL — Branding ── */}
-            <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
+            <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#0D2B4E] via-[#0A1F3A] to-[#061528] lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
               {/* Decorative elements */}
               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
               <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-yellow-400/10 blur-3xl" />
@@ -406,7 +406,7 @@ export default function LoginPage() {
                         type="checkbox"
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600"
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#1B3A5C] dark:border-gray-600"
                       />
                       <span className="text-sm text-gray-600 dark:text-gray-400">Ingat saya</span>
                     </label>
@@ -423,7 +423,7 @@ export default function LoginPage() {
                     type="submit"
                     data-testid="login-submit"
                     disabled={loading}
-                    className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:shadow-xl hover:shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus:ring-offset-gray-900"
+                    className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#1B3A5C] to-[#0D1F33] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:shadow-xl hover:shadow-blue-600/30 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-[#1B3A5C] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus:ring-offset-gray-900"
                   >
                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
                     <span className="relative flex items-center justify-center gap-2">

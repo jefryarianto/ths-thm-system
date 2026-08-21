@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ReactNode, useState, useEffect } from 'react';
 import { Menu, X, Globe, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useI18n } from '@/i18n/context';
 
 interface PublicLayoutProps {
@@ -45,7 +46,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <ThemeToggle />
+              <button
               onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
               className="flex items-center gap-1 hover:text-accent-400 transition-colors"
             >

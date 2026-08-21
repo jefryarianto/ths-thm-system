@@ -37,6 +37,7 @@ import {
   Globe,
   BookOpen,
   ArrowLeftRight,
+  ArrowLeft,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -684,6 +685,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
         {/* Header */}
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
+          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
           </h2>
