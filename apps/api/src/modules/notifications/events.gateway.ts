@@ -204,6 +204,21 @@ export class EventsGateway
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getStats(): Record<string, any> {
+    if (!this.server?.sockets) {
+      return {
+        totalConnections: 0,
+        uniqueUsers: 0,
+        rooms: [],
+        userConnectionCounts: {},
+        security: {
+          throttledPackets: this.throttledPackets,
+          rejectedConnections: this.rejectedConnections,
+          maxConnectionsPerIpPerMin: MAX_CONNECTIONS_PER_IP_PER_MIN,
+          maxPacketsPerWindow: MAX_PACKETS_PER_WINDOW,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
     const sockets = this.server.sockets.sockets;
     const rooms = this.server.sockets.adapter.rooms;
 

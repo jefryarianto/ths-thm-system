@@ -66,9 +66,16 @@ export default function WsMonitorPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const { data } = await apiClient.get('/notifications/ws-stats');
-      setStats(data?.data || data);
-      setError(null);
+      const { data: res } = await apiClient.get('/notifications/ws-stats');
+      // TransformInterceptor wraps as { success, data: stats }
+      const statsData = res?.data ?? res;
+      if (statsData && typeof statsData === 'object' && 'totalConnections' in statsData) {
+        setStats(statsData as WsStats);
+        setError(null);
+      } else {
+        setStats(null);
+        setError('Format data tidak valid');
+      }
     } catch (err) {
       setError((err as { message?: string })?.message || 'Gagal memuat data');
     }
