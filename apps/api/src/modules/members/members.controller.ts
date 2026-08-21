@@ -52,13 +52,13 @@ export class MembersController {
   }
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil semua anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Ambil semua anggota' })
   findAll(@Query() filter: MemberFilterDto, @Req() req: ScopedRequest) {
     return this.membersService.findAll(filter, req.scope);
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ambil detail anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Ambil detail anggota' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.findOne(id, req.scope);
   }
