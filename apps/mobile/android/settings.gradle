@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'THS-THM Mobile'
+rootProject.name = 'THS-THM'
 
 dependencyResolutionManagement {
   versionCatalogs {
