@@ -42,6 +42,8 @@ interface DataTableProps<T> {
   /** Override auto-calculated colSpan */
   colSpan?: number;
   skeletonRows?: number;
+  /** Render function for mobile card view (shown on screens < md) */
+  renderMobileCard?: (item: T, index: number) => React.ReactNode;
 }
 
 export default function DataTable<T>({
