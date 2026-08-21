@@ -39,7 +39,7 @@ export class MailController {
   ) {}
 
   @Get('status')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async getStatus() {
     return {
       success: true,
@@ -61,7 +61,7 @@ export class MailController {
   }
 
   @Post('test')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async test(@Body() dto: TestMailDto) {
     const sent = await this.mailService.sendMail({
       to: dto.email,
@@ -86,7 +86,7 @@ export class MailController {
   }
 
   @Post('templates/test-send')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Kirim test email menggunakan template custom (subject & HTML body dari editor)' })
   async testSendTemplate(
     @Body()
@@ -176,7 +176,7 @@ export class MailController {
   }
 
   @Post('retry')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async retryFailed(@Body() body: { ids?: string[] }) {
     const result = await this.mailService.retryFailedEmails(body.ids);
 
@@ -226,7 +226,7 @@ export class MailController {
   // ─── Email Logs ───
 
   @Get('logs')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'status', required: false })
@@ -274,7 +274,7 @@ export class MailController {
   }
 
   @Get('logs/export')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'module', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -492,7 +492,7 @@ export class MailController {
   }
 
   @Get('logs/engagement')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async getEngagement() {
     // Aggregate EmailEvent counts by event type
     const events = await this.prisma.emailEvent.groupBy({
@@ -595,7 +595,7 @@ export class MailController {
   }
 
   @Get('suppressions')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async getSuppressions(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -618,7 +618,7 @@ export class MailController {
   }
 
   @Delete('suppressions/:id')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async removeSuppression(@Param('id') id: string) {
     try {
       await this.prisma.suppressedEmail.delete({ where: { id } });
@@ -629,7 +629,7 @@ export class MailController {
   }
 
   @Post('suppressions')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async addSuppression(@Body() body: { email: string; reason?: string }) {
     if (!body.email || !body.email.includes('@')) {
       return { success: false, message: 'Email tidak valid' };
@@ -650,7 +650,7 @@ export class MailController {
   }
 
   @Post('suppressions/clear')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async clearSuppressions(@Body() body: { ids?: string[] }) {
     if (body.ids && body.ids.length > 0) {
       await this.prisma.suppressedEmail.deleteMany({
@@ -666,7 +666,7 @@ export class MailController {
   // ─── Email Templates (custom overrides) ───
 
   @Get('templates')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Ambil semua email template dengan override dari DB' })
   async getTemplates() {
     const customTemplates = await this.prisma.emailTemplate.findMany();
@@ -696,7 +696,7 @@ export class MailController {
   }
 
   @Get('templates/registry')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Daftar semua template + katalog variabel {{...}} untuk editor' })
   async getTemplateRegistry() {
     const customs = await this.prisma.emailTemplate.findMany();
@@ -711,7 +711,7 @@ export class MailController {
   }
 
   @Get('templates/:name')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Ambil detail email template (custom override jika ada)' })
   async getTemplate(@Param('name') name: string) {
     const custom = await this.prisma.emailTemplate.findUnique({
@@ -733,7 +733,7 @@ export class MailController {
   }
 
   @Post('templates/:name/preview')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Pratinjau template (default/custom/draft) dengan variabel contoh' })
   async previewTemplate(
     @Param('name') name: string,
@@ -757,7 +757,7 @@ export class MailController {
   }
 
   @Put('templates/:name')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Simpan/ubah custom email template override' })
   async upsertTemplate(
     @Param('name') name: string,
@@ -784,7 +784,7 @@ export class MailController {
   }
 
   @Delete('templates/:name')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiOperation({ summary: 'Hapus custom email template (kembali ke default)' })
   async deleteTemplate(@Param('name') name: string) {
     await this.prisma.emailTemplate.delete({ where: { name } }).catch(() => {
@@ -794,7 +794,7 @@ export class MailController {
   }
 
   @Get('modules')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   async getModules() {
     const modules = await this.prisma.$queryRaw<Array<{ module: string; count: bigint }>>`
       SELECT DISTINCT metadata->>'module' as module, COUNT(*)::bigint as count
@@ -815,7 +815,7 @@ export class MailController {
   }
 
   @Get('logs/stats')
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin_distrik')
   @ApiQuery({ name: 'module', required: false })
   @ApiQuery({ name: 'startDate', required: false })
   @ApiQuery({ name: 'endDate', required: false })
