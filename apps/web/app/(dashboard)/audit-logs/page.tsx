@@ -155,7 +155,7 @@ export default function AuditLogsPage() {
       ? localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       : '') || '';
 
-  const { connected: sseConnected } = useSSE('/audit-logs/stream', {
+  const { connected: sseConnected } = useSSE('/api/audit-logs/stream', {
     token: sseToken,
     enabled: !!sseToken,
     maxRetries: 10,
@@ -205,7 +205,7 @@ export default function AuditLogsPage() {
       if (dateTo) params.set('endDate', dateTo);
 
       const qs = params.toString();
-      const url = `/audit-logs/export${qs ? `?${qs}` : ''}`;
+      const url = `/api/audit-logs/export${qs ? `?${qs}` : ''}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Export failed');
 
