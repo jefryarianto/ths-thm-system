@@ -90,7 +90,7 @@ export class AuditLogStore {
    */
   query(filters?: FilterParams & { limit?: number; offset?: number }): {
     data: AuditLogEntry[];
-    total: number;
+    meta: { total: number; totalPages: number };
   } {
     const filtered = this.applyFilters(filters);
 
@@ -98,8 +98,9 @@ export class AuditLogStore {
     const limit = filters?.limit ?? 50;
     const offset = filters?.offset ?? 0;
     const data = filtered.slice(offset, offset + limit);
+    const totalPages = Math.ceil(total / limit);
 
-    return { data, total };
+    return { data, meta: { total, totalPages } };
   }
 
   /**

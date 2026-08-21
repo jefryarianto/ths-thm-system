@@ -130,8 +130,9 @@ export default function AuditLogsPage() {
     try {
       const params = buildParams();
       const { data: res } = await apiClient.get('/audit-logs', { params });
-      setData(res.data || []);
-      setTotal(res.total || 0);
+      // TransformInterceptor flattens { data, meta } → { success, data, meta }
+      setData(Array.isArray(res.data) ? res.data : []);
+      setTotal(res.meta?.total ?? (typeof res.total === 'number' ? res.total : 0));
     } catch {
       setError('Gagal memuat audit log');
     }
@@ -206,7 +207,10 @@ export default function AuditLogsPage() {
 
       const qs = params.toString();
       const url = `/api/audit-logs/export${qs ? `?${qs}` : ''}`;
-      const response = await fetch(url);
+      const token = localStorage.getItem('accessToken') || '';
+      const response = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!response.ok) throw new Error('Export failed');
 
       const blob = await response.blob();

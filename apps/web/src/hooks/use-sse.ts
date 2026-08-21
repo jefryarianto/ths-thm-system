@@ -80,16 +80,31 @@ export function useSSE(
       es = new EventSource(fullUrl);
       eventSourceRef.current = es;
 
-      // Listen for named events from the server
+      // Listen for the 'connected' named event from the server
       es.addEventListener('connected', () => {
         retryCountRef.current = 0;
         setConnected(true);
         onConnectedRef.current?.();
       });
 
-      // Listen for all named events from the server (audit:new, error, etc.)
-      // Named events are handled via addEventListener, but we use onmessage
-      // as a fallback for unnamed events from older server implementations.
+      // Listen for the 'error' named event (auth failure, rate limit, etc.)
+      es.addEventListener('error', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data);
+          // Auth errors: stop reconnecting
+          if (data.code === 'UNAUTHORIZED' || data.code === 'FORBIDDEN') {
+            shouldReconnectRef.current = false;
+          }
+          onEventRef.current?.('error', data);
+        } catch {
+          // non-JSON error event — ignore
+        }
+      });
+
+      // Listen for custom named events (audit:new, etc.) via onmessage.
+      // NOTE: onmessage only fires for unnamed events in the SSE spec,
+      // but most named events also fire onmessage in practice. For
+      // reliability, register a generic listener that captures all named events.
       es.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
@@ -98,6 +113,20 @@ export function useSSE(
           // ignore non-JSON messages (like comment-only heartbeats)
         }
       };
+
+      // Generic catch-all: listen for any named event not handled above.
+      // Use addEventListener for each known event type.
+      const knownNamedEvents = ['audit:new'];
+      for (const eventName of knownNamedEvents) {
+        es.addEventListener(eventName, (e: MessageEvent) => {
+          try {
+            const data = JSON.parse(e.data);
+            onEventRef.current?.(eventName, data);
+          } catch {
+            // non-JSON event data — ignore
+          }
+        });
+      }
 
       es.onerror = () => {
         // Don't update state if destroyed
