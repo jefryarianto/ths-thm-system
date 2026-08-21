@@ -18,7 +18,7 @@ export class DuesController {
   constructor(private readonly service: DuesService) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Daftar semua iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Daftar semua iuran' })
   findAll(@Query() query: DueFilterDto, @Req() req: ScopedRequest) {
     return this.service.findAll(query, req.scope);
   }

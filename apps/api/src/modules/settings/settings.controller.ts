@@ -41,7 +41,7 @@ export class SettingsController {
   ) {}
 
   @Get()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil semua pengaturan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil semua pengaturan' })
   async getAllSettings() {
     const settings = await this.prisma.setting.findMany();
     const config = settings.reduce(
@@ -62,7 +62,7 @@ export class SettingsController {
   }
 
   @Get('periods')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil daftar periode' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil daftar periode' })
   async getPeriods() {
     return this.settingsService.getPeriods();
   }
@@ -86,7 +86,7 @@ export class SettingsController {
   }
 
   @Get('signatures')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil daftar tanda tangan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil daftar tanda tangan' })
   async getSignatures() {
     return this.settingsService.getSignatures();
   }
@@ -98,7 +98,7 @@ export class SettingsController {
   }
 
   @Get('stamp')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil stempel aktif' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil stempel aktif' })
   async getStamp() {
     return this.settingsService.getStamp();
   }
@@ -163,7 +163,7 @@ export class SettingsController {
   // ── Sejarah (public content) ──────────────────────
 
   @Get('sejarah')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil konten sejarah' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil konten sejarah' })
   async getSejarah() {
     return this.settingsService.getSejarah();
   }
@@ -177,7 +177,7 @@ export class SettingsController {
   // ── Organisasi (public content) ────────────────────
 
   @Get('organisasi')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil struktur organisasi' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil struktur organisasi' })
   async getOrganisasi() {
     return this.settingsService.getOrganisasi();
   }
@@ -189,7 +189,7 @@ export class SettingsController {
   }
 
   @Get('branding/colors')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil warna branding' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil warna branding' })
   async getBrandingColors() {
     const setting = await this.prisma.setting.findUnique({ where: { key: 'branding' } });
     const colors = setting?.value || {
@@ -211,7 +211,7 @@ export class SettingsController {
   }
 
   @Get(':key')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { scope: 'national', summary: 'Ambil pengaturan by key' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil pengaturan by key' })
   async getSetting(@Param('key') key: string) {
     const setting = await this.prisma.setting.findUnique({ where: { key } });
     if (!setting) {

@@ -67,7 +67,7 @@ export class CandidatesController {
   }
 
   @Get('export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Download data kandidat sebagai CSV' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Download data kandidat sebagai CSV' })
   async exportCsv(@Query() filter: CandidateFilterDto, @Req() req: ScopedRequest, @Res() res: Response) {
     const csv = await this.candidatesService.exportCsv(filter, req.scope);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');

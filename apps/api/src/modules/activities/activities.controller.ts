@@ -25,7 +25,7 @@ export class ActivitiesController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil detail kegiatan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota', { summary: 'Ambil detail kegiatan' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope);
   }
@@ -70,7 +70,7 @@ export class ActivitiesController {
   }
 
   @Get(':id/presence')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil presensi kegiatan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota', { summary: 'Ambil presensi kegiatan' })
   getPresence(@Param('id') id: string) {
     return this.service.getPresence(id);
   }
@@ -82,7 +82,7 @@ export class ActivitiesController {
   }
 
   @Get(':id/documents')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil dokumen kegiatan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'anggota', { summary: 'Ambil dokumen kegiatan' })
   getDocuments(@Param('id') id: string) {
     return this.service.getDocuments(id);
   }
