@@ -46,10 +46,10 @@ export default function BeritaPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 py-12">
+      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.berita.title}</h1>
-          <div className="w-16 h-1 bg-gold-400 mx-auto mt-4 rounded-full" />
+          <div className="w-16 h-1 bg-accent-400 mx-auto mt-4 rounded-full" />
         </div>
       </div>
 
@@ -170,7 +170,7 @@ export default function BeritaPage() {
 
               {/* Quick Links */}
               <div className="bg-primary-500 rounded-xl p-5 text-white">
-                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-gold-400">
+                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-accent-400">
                   Akses Cepat
                 </h3>
                 <ul className="space-y-2">

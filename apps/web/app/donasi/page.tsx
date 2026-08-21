@@ -63,16 +63,16 @@ export default function DonasiPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 py-12">
+      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <ChevronRight size={14} />
-            <span className="text-gold-400">{t.nav.donasi}</span>
+            <span className="text-accent-400">{t.nav.donasi}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.donasi.title}</h1>
           <p className="text-white/70 mt-3 max-w-2xl">{t.donasi.subtitle}</p>
-          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
+          <div className="w-16 h-1 bg-accent-400 mt-4 rounded-full" />
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export default function DonasiPage() {
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {bankInfo.map((rek) => (
                   <div key={rek.id} className="bg-white rounded-xl p-6 border border-gray-100 text-center hover:shadow-lg transition-all group">
-                    <div className="w-14 h-14 mx-auto rounded-xl bg-primary-50 flex items-center justify-center mb-4 group-hover:bg-primary-500 transition-colors">
+                    <div className="w-14 h-14 mx-auto rounded-xl bg-accent-50 flex items-center justify-center mb-4 group-hover:bg-primary-500 transition-colors">
                       <span className="text-2xl">🏦</span>
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 mb-2">{rek.bankName}</h3>
@@ -129,7 +129,7 @@ export default function DonasiPage() {
                       </div>
                       <Link
                         href="/daftar"
-                        className="flex items-center justify-center gap-2 w-full bg-gold-500 text-white py-2.5 rounded-lg hover:bg-gold-600 font-bold transition-colors"
+                        className="flex items-center justify-center gap-2 w-full bg-accent-500 text-white py-2.5 rounded-lg hover:bg-accent-600 font-bold transition-colors"
                       >
                         <Heart size={16} />
                         {t.donasi.donasiSekarang}

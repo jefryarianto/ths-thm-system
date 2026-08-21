@@ -30,9 +30,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* ── Top Utility Bar ── */}
-      <div className="bg-primary-500 text-white text-xs">
+      <div className="bg-primary-800 text-white text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
           <div className="flex items-center gap-4">
             <span className="hidden sm:flex items-center gap-1">
@@ -47,12 +47,12 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
-              className="flex items-center gap-1 hover:text-gold-300 transition-colors"
+              className="flex items-center gap-1 hover:text-accent-400 transition-colors"
             >
               <Globe size={12} />
               <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
             </button>
-            <Link href="/login" className="hover:text-gold-300 transition-colors">
+            <Link href="/login" className="hover:text-accent-400 transition-colors">
               {t.nav.login}
             </Link>
           </div>
@@ -69,11 +69,11 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 rounded-full bg-primary-500 border-2 border-gold-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center shadow-md">
                 <span className="font-bold text-white text-xs">THS</span>
               </div>
               <div className="hidden sm:block">
-                <span className="font-bold text-primary-500 text-lg leading-tight block">
+                <span className="font-bold text-primary-800 text-lg leading-tight block tracking-tight">
                   THS-THM
                 </span>
                 <span className="text-[10px] text-gray-400 leading-tight">
@@ -88,7 +88,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-3 py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"
+                  className="px-3 py-2 text-sm font-semibold text-gray-700 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -99,7 +99,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <div className="flex items-center gap-3">
               <Link
                 href="/daftar"
-                className="hidden sm:inline-flex items-center gap-2 bg-gold-500 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-gold-600 transition-colors shadow-sm"
+                className="hidden sm:inline-flex items-center gap-2 bg-accent-500 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-accent-600 shadow-sm transition-colors shadow-sm"
               >
                 {t.nav.daftar}
               </Link>
@@ -134,14 +134,14 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-3 text-primary-500 hover:bg-primary-50 rounded-lg font-semibold transition-colors"
+                  className="block px-4 py-3 text-primary-700 hover:bg-primary-50 rounded-lg font-semibold transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.login}
                 </Link>
                 <Link
                   href="/daftar"
-                  className="block px-4 py-3 bg-gold-500 text-white rounded-lg hover:bg-gold-600 font-bold transition-colors text-center"
+                  className="block px-4 py-3 bg-accent-500 text-white rounded-lg hover:bg-accent-600 font-bold transition-colors text-center"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.daftar}
@@ -155,14 +155,14 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       <main>{children}</main>
 
       {/* ── Footer ── */}
-      <footer className="bg-primary-500 text-white">
+      <footer className="bg-primary-800 text-white">
         {/* Main Footer */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Column 1: About */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-gold-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                   <span className="font-bold text-white text-xs">THS</span>
                 </div>
                 <div>
@@ -181,7 +181,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 2: Navigasi */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-sm uppercase tracking-wider">
+              <h4 className="font-bold text-accent-400 mb-4 text-xs uppercase tracking-widest">
                 Navigasi
               </h4>
               <ul className="space-y-2">
@@ -201,7 +201,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 3: Akses Cepat */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-sm uppercase tracking-wider">
+              <h4 className="font-bold text-accent-400 mb-4 text-xs uppercase tracking-widest">
                 Akses Cepat
               </h4>
               <ul className="space-y-2">
@@ -228,20 +228,20 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 4: Kontak */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-sm uppercase tracking-wider">
+              <h4 className="font-bold text-accent-400 mb-4 text-xs uppercase tracking-widest">
                 Kontak
               </h4>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400" />
+                  <MapPin size={14} className="shrink-0 mt-0.5 text-accent-400/50" />
                   <span>Indonesia</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <Mail size={14} className="shrink-0 mt-0.5 text-gold-400" />
+                  <Mail size={14} className="shrink-0 mt-0.5 text-accent-400/50" />
                   <span>info@ths-thm.cloud</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <Phone size={14} className="shrink-0 mt-0.5 text-gold-400" />
+                  <Phone size={14} className="shrink-0 mt-0.5 text-accent-400/50" />
                   <span>THS-THM</span>
                 </li>
               </ul>

@@ -38,15 +38,15 @@ export default function OrganisasiPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 py-12">
+      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <ChevronRight size={14} />
-            <span className="text-gold-400">{t.nav.organisasi}</span>
+            <span className="text-accent-400">{t.nav.organisasi}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.organisasi.title}</h1>
-          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
+          <div className="w-16 h-1 bg-accent-400 mt-4 rounded-full" />
         </div>
       </div>
 
@@ -64,8 +64,8 @@ export default function OrganisasiPage() {
                   className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg transition-all group"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center shrink-0 group-hover:bg-primary-500 transition-colors">
-                      <Building2 size={18} className="text-primary-500 group-hover:text-white transition-colors" />
+                    <div className="w-10 h-10 rounded-lg bg-accent-50 flex items-center justify-center shrink-0 group-hover:bg-primary-500 transition-colors">
+                      <Building2 size={18} className="text-accent-500 group-hover:text-white transition-colors" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-primary-500 mb-1">{item.jabatan}</h3>

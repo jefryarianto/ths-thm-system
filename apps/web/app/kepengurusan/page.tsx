@@ -32,9 +32,9 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
   const hasChildren = node.children && node.children.length > 0;
 
   const levelStyles = [
-    'bg-primary-500 text-white font-bold',
+    'bg-primary-800 text-white font-bold',
     'bg-primary-50 text-primary-500 font-semibold border-l-4 border-primary-500',
-    'bg-gold-50 text-gold-700 font-medium border-l-4 border-gold-400',
+    'bg-gold-50 text-gold-700 font-medium border-l-4 border-accent-400',
     'bg-gray-50 text-gray-700 border-l-4 border-gray-200',
   ];
 
@@ -96,15 +96,15 @@ export default function KepengurusanPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 py-12">
+      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <ChevronRight size={14} />
-            <span className="text-gold-400">{t.nav.kepengurusan}</span>
+            <span className="text-accent-400">{t.nav.kepengurusan}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.kepengurusan.title}</h1>
-          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
+          <div className="w-16 h-1 bg-accent-400 mt-4 rounded-full" />
         </div>
       </div>
 

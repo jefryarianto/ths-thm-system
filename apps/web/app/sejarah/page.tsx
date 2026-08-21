@@ -30,15 +30,15 @@ export default function SejarahPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 py-12">
+      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <ChevronRight size={14} />
-            <span className="text-gold-400">Sejarah</span>
+            <span className="text-accent-400">Sejarah</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.sejarah.title}</h1>
-          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
+          <div className="w-16 h-1 bg-accent-400 mt-4 rounded-full" />
         </div>
       </div>
 
@@ -53,7 +53,7 @@ export default function SejarahPage() {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl border border-gray-100 p-6 sm:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-accent-50 flex items-center justify-center">
                     <BookOpen size={20} className="text-primary-500" />
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">{t.sejarah.title}</h2>
@@ -97,7 +97,7 @@ export default function SejarahPage() {
 
               {/* Tentang THS-THM */}
               <div className="bg-primary-500 rounded-xl p-5 text-white">
-                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-gold-400">
+                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-accent-400">
                   Tentang THS-THM
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
