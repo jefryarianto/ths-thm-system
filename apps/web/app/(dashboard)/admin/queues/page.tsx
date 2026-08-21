@@ -283,7 +283,7 @@ export default function QueueMonitorPage() {
 
         const notif = new Notification('🔴 Koneksi Antrean Terputus', {
           body: `Koneksi ke antrean ${queueHealth.queueName} terputus.${errorMsg}`,
-          icon: '/logo.png',
+          icon: '/logo.svg',
           tag: 'queue-disconnected',
           requireInteraction: true,
         });
@@ -319,7 +319,7 @@ export default function QueueMonitorPage() {
 
         const notif = new Notification('✅ Koneksi Antrean Pulih', {
           body,
-          icon: '/logo.png',
+          icon: '/logo.svg',
           tag: 'queue-reconnected',
         });
         notif.onclick = () => {

@@ -220,7 +220,7 @@ export default function MembersPage() {
               onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.classList.remove('hidden'); }} />
           ) : null}
           <div className={`w-8 h-8 rounded-full ${m.fotoPath ? 'hidden' : ''}`}>
-            <img src="/logo.png" alt="" className="w-8 h-8 rounded-full object-cover" />
+            <img src="/logo.svg" alt="" className="w-8 h-8 rounded-full object-cover" />
           </div>
           <Link
             href={`/members/${m.id}`}

@@ -88,7 +88,7 @@ export default function IncompleteMembersPage() {
       render: (m: Member) => (
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-            <img src="/logo.png" alt="" className="w-full h-full object-cover" />
+            <img src="/logo.svg" alt="" className="w-full h-full object-cover" />
           </div>
           <div>
             <Link

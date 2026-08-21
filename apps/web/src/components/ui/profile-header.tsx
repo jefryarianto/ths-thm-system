@@ -7,7 +7,7 @@ import { RefreshCw, Upload } from 'lucide-react';
 
 export interface ProfileAvatar {
   src?: string | null;
-  /** Fallback image (defaults to /logo.png) */
+  /** Fallback image (defaults to /logo.svg) */
   fallback?: string;
   /** If set, shows a hover overlay to upload a new photo */
   onUpload?: (file: File) => Promise<void>;
@@ -92,7 +92,7 @@ export default function ProfileHeader({
                   />
                 ) : null}
                 <img
-                  src={avatar.fallback || '/logo.png'}
+                  src={avatar.fallback || '/logo.svg'}
                   alt=""
                   className={`w-full h-full object-cover ${avatar.src ? 'hidden' : ''}`}
                 />

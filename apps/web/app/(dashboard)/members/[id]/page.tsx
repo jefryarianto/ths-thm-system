@@ -415,7 +415,7 @@ export default function MemberDetailPage() {
         : `<img src="${photoIconSrc}" alt="foto" style="width:100px;height:100px;object-fit:contain;opacity:0.9"/>`;
       const signerName = data.data.card?.signerName || 'Koordinator Distrik';
       const signerTitle = data.data.card?.signerTitle || '';
-      const logoUrl = `${window.location.origin}/logo.png`;
+      const logoUrl = `${window.location.origin}/logo.svg`;
       const petaUrl = `${window.location.origin}/peta-indonesia.png`;
       const sig = FRONT.signer;
 
@@ -1025,7 +1025,7 @@ export default function MemberDetailPage() {
                             className="relative rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
                             style={{ width: FRONT.logo.size, height: FRONT.logo.size }}
                           >
-                            <img src="/logo.png" alt="THS-THM" style={{ width: FRONT.logo.img, height: FRONT.logo.img, objectFit: 'contain' }} />
+                            <img src="/logo.svg" alt="THS-THM" style={{ width: FRONT.logo.img, height: FRONT.logo.img, objectFit: 'contain' }} />
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/55 to-transparent" />
                           </div>
                           <div style={{ lineHeight: FRONT.header.row.lineHeight }}>

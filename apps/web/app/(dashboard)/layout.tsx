@@ -490,7 +490,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {collapsed ? (
             <Link href={user ? getHomePathForRole(user.role) : '/members'} className="mx-auto">
               <img
-                src="/logo.png"
+                src="/logo.svg"
                 alt="THS-THM"
                 className="h-8 w-8 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
               />
@@ -498,7 +498,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           ) : (
             <Link href={user ? getHomePathForRole(user.role) : '/members'} className="flex items-center gap-2 min-w-0">
               <img
-                src="/logo.png"
+                src="/logo.svg"
                 alt="THS-THM"
                 className="h-8 w-8 shrink-0 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
               />

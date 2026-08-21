@@ -232,7 +232,7 @@ export default function ProfilePage() {
                           <img src={`/api/uploads/${member.fotoPath}`} alt="" className="w-full h-full object-cover"
                             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                         ) : null}
-                        <img src="/logo.png" alt="" className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`} />
+                        <img src="/logo.svg" alt="" className={`w-full h-full object-cover ${member.fotoPath ? 'hidden' : ''}`} />
                       </div>
                       <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 cursor-pointer transition">
                         <Upload size={24} className="text-white" />

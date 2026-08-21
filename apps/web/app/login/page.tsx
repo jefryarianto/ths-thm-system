@@ -253,7 +253,7 @@ export default function LoginPage() {
                   style={{ animationDelay: '100ms', animationFillMode: 'both' }}
                 >
                   <img
-                    src="/logo.png"
+                    src="/logo.svg"
                     alt="THS-THM Logo"
                     className="mb-6 h-16 w-16 rounded-2xl shadow-lg ring-4 ring-white/20 object-cover"
                   />
@@ -293,7 +293,7 @@ export default function LoginPage() {
                 {/* Mobile Logo (visible only on small screens) */}
                 <div className="mb-8 text-center lg:hidden">
                   <img
-                    src="/logo.png"
+                    src="/logo.svg"
                     alt="THS-THM Logo"
                     className="mx-auto mb-4 h-14 w-14 rounded-2xl shadow-lg object-cover"
                   />
