@@ -30,21 +30,21 @@ export default function SejarahPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
+      <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <ChevronRight size={14} />
-            <span className="text-accent-400">Sejarah</span>
+            <span className="text-gold-400">Sejarah</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.sejarah.title}</h1>
-          <div className="w-16 h-1 bg-accent-400 mt-4 rounded-full" />
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white font-serif">{t.sejarah.title}</h1>
+          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
       </div>
 
       {loading ? (
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 border-t-transparent" />
         </div>
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -53,15 +53,15 @@ export default function SejarahPage() {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl border border-gray-100 p-6 sm:p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-accent-50 flex items-center justify-center">
-                    <BookOpen size={20} className="text-primary-500" />
+                  <div className="w-10 h-10 rounded-lg bg-gold-50 flex items-center justify-center">
+                    <BookOpen size={20} className="text-navy-800" />
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">{t.sejarah.title}</h2>
                 </div>
                 <div
                   className="prose prose-green max-w-none text-gray-700 leading-relaxed
-                    prose-headings:text-primary-500 prose-headings:font-serif
-                    prose-a:text-primary-500 prose-strong:text-gray-900"
+                    prose-headings:text-navy-800 prose-headings:font-serif
+                    prose-a:text-navy-800 prose-strong:text-gray-900"
                   dangerouslySetInnerHTML={{ __html: data?.konten || `<p class="text-gray-400">${t.sejarah.empty}</p>` }}
                 />
               </div>
@@ -83,8 +83,8 @@ export default function SejarahPage() {
                         href={link.href}
                         className={`flex items-center gap-2 text-sm py-2 px-3 rounded-lg transition-colors ${
                           link.active
-                            ? 'bg-primary-50 text-primary-500 font-semibold'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-navy-50 text-navy-800 font-semibold'
+                            : 'text-gray-600 hover:bg-[#F8F9FA] hover:text-gray-900'
                         }`}
                       >
                         <ChevronRight size={14} />
@@ -96,8 +96,8 @@ export default function SejarahPage() {
               </div>
 
               {/* Tentang THS-THM */}
-              <div className="bg-primary-500 rounded-xl p-5 text-white">
-                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-accent-400">
+              <div className="bg-navy-800 rounded-xl p-5 text-white">
+                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-gold-400">
                   Tentang THS-THM
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">

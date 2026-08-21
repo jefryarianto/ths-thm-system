@@ -63,37 +63,37 @@ export default function DonasiPage() {
   return (
     <PublicLayout>
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary-700 to-primary-900 py-12">
+      <div className="bg-gradient-to-r from-navy-700 to-navy-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-sm mb-2">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <ChevronRight size={14} />
-            <span className="text-accent-400">{t.nav.donasi}</span>
+            <span className="text-gold-400">{t.nav.donasi}</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white font-serif">{t.donasi.title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white font-serif">{t.donasi.title}</h1>
           <p className="text-white/70 mt-3 max-w-2xl">{t.donasi.subtitle}</p>
-          <div className="w-16 h-1 bg-accent-400 mt-4 rounded-full" />
+          <div className="w-16 h-1 bg-gold-400 mt-4 rounded-full" />
         </div>
       </div>
 
       {loading ? (
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent" />
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 border-t-transparent" />
         </div>
       ) : (
         <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
           {/* Bank Info */}
           <div>
-            <h2 className="text-2xl font-bold text-primary-500 mb-6 font-serif">{t.donasi.rekeningTitle}</h2>
+            <h2 className="text-2xl font-bold text-navy-800 mb-6 font-serif">{t.donasi.rekeningTitle}</h2>
             {bankInfo.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {bankInfo.map((rek) => (
                   <div key={rek.id} className="bg-white rounded-xl p-6 border border-gray-100 text-center hover:shadow-lg transition-all group">
-                    <div className="w-14 h-14 mx-auto rounded-xl bg-accent-50 flex items-center justify-center mb-4 group-hover:bg-primary-500 transition-colors">
+                    <div className="w-14 h-14 mx-auto rounded-xl bg-gold-50 flex items-center justify-center mb-4 group-hover:bg-navy-800 transition-colors">
                       <span className="text-2xl">🏦</span>
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 mb-2">{rek.bankName}</h3>
-                    <p className="font-mono text-lg text-primary-500 mb-1 font-semibold">{rek.accountNumber}</p>
+                    <p className="font-mono text-lg text-navy-800 mb-1 font-semibold">{rek.accountNumber}</p>
                     <p className="text-sm text-gray-500">a.n. {rek.accountName}</p>
                   </div>
                 ))}
@@ -105,7 +105,7 @@ export default function DonasiPage() {
 
           {/* Program Donasi */}
           <div>
-            <h2 className="text-2xl font-bold text-primary-500 mb-6 font-serif">{t.donasi.programTitle}</h2>
+            <h2 className="text-2xl font-bold text-navy-800 mb-6 font-serif">{t.donasi.programTitle}</h2>
             {programDonasi.length > 0 ? (
               <div className="grid gap-6">
                 {programDonasi.map((prog) => {
@@ -114,22 +114,22 @@ export default function DonasiPage() {
                     <div key={prog.id} className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-lg transition-all">
                       <div className="flex justify-between items-start mb-3">
                         <h3 className="text-lg font-bold text-gray-900">{prog.nama}</h3>
-                        <span className="text-sm text-primary-500 font-bold">{persen}%</span>
+                        <span className="text-sm text-navy-800 font-bold">{persen}%</span>
                       </div>
                       <p className="text-sm text-gray-500 mb-4">{prog.deskripsi}</p>
                       <div className="w-full bg-gray-100 rounded-full h-3 mb-3">
                         <div
-                          className="bg-gradient-to-r from-primary-400 to-primary-500 h-3 rounded-full transition-all duration-500"
+                          className="bg-gradient-to-r from-navy-400 to-navy-800 h-3 rounded-full transition-all duration-500"
                           style={{ width: `${persen}%` }}
                         />
                       </div>
                       <div className="flex justify-between text-sm text-gray-500 mb-4">
-                        <span>Terkumpul: <span className="font-semibold text-primary-500">{formatRupiah(Number(prog.terkumpul))}</span></span>
+                        <span>Terkumpul: <span className="font-semibold text-navy-800">{formatRupiah(Number(prog.terkumpul))}</span></span>
                         <span>Target: <span className="font-semibold text-gray-700">{formatRupiah(Number(prog.targetDana))}</span></span>
                       </div>
                       <Link
                         href="/daftar"
-                        className="flex items-center justify-center gap-2 w-full bg-accent-500 text-white py-2.5 rounded-lg hover:bg-accent-600 font-bold transition-colors"
+                        className="flex items-center justify-center gap-2 w-full bg-gold-400 text-white py-2.5 rounded-xl hover:bg-gold-500 transition-all duration-200 font-bold transition-colors"
                       >
                         <Heart size={16} />
                         {t.donasi.donasiSekarang}
@@ -145,8 +145,8 @@ export default function DonasiPage() {
 
           {/* QRIS */}
           {qrisImage && (
-            <div className="bg-primary-50 rounded-xl p-8 text-center border border-primary-100">
-              <h3 className="text-xl font-bold text-primary-500 mb-3 font-serif">{t.donasi.qrisTitle}</h3>
+            <div className="bg-navy-50 rounded-xl p-8 text-center border border-navy-100">
+              <h3 className="text-xl font-bold text-navy-800 mb-3 font-serif">{t.donasi.qrisTitle}</h3>
               <p className="text-gray-600 mb-4">{t.donasi.qrisDesc}</p>
               <img
                 src={qrisImage}
