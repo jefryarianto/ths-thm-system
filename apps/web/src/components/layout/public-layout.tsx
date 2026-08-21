@@ -71,15 +71,13 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
-              <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center shadow-md">
-                <span className="font-bold text-white text-xs">THS</span>
-              </div>
+              <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain shadow-md" />
               <div className="hidden sm:block">
                 <span className="font-bold text-primary-800 text-lg leading-tight block tracking-tight">
                   THS-THM
                 </span>
                 <span className="text-[10px] text-gray-400 leading-tight">
-                  Taman Harapan Siswa
+                  Tunggal Hati Seminari &mdash; Tunggal Hati Maria
                 </span>
               </div>
             </Link>
@@ -164,15 +162,13 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             {/* Column 1: About */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                  <span className="font-bold text-white text-xs">THS</span>
-                </div>
+                <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain" />
                 <div>
                   <span className="font-bold text-white text-lg leading-tight block">
                     THS-THM
                   </span>
                   <span className="text-[10px] text-white/60 leading-tight">
-                    Taman Harapan Siswa / Murid
+                    Tunggal Hati Seminari &mdash; Tunggal Hati Maria
                   </span>
                 </div>
               </div>

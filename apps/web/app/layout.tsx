@@ -7,7 +7,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'THS-THM System Manajemen',
-  description: 'Sistem Manajemen THS-THM (Taman Harapan Siswa / Taman Harapan Murid)',
+  description: 'Sistem Manajemen THS-THM — Tunggal Hati Seminari & Tunggal Hati Maria',
   icons: {
     icon: '/favicon.png',
     apple: '/apple-icon.png',

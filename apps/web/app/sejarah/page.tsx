@@ -101,7 +101,7 @@ export default function SejarahPage() {
                   Tentang THS-THM
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Taman Harapan Siswa / Taman Harapan Murid adalah organisasi yang bergerak dalam bidang pendidikan dan pembinaan generasi muda.
+                  Tunggal Hati Seminari (THS) dan Tunggal Hati Maria (THM) adalah organisasi yang bergerak dalam bidang pendidikan dan pembinaan generasi muda Katolik.
                 </p>
               </div>
             </aside>
