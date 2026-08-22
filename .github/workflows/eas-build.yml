@@ -31,10 +31,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Expo CLI
-        run: pnpm add -g expo-cli
+        run: corepack enable && corepack prepare expo --activate
 
       - name: Login to Expo
-        run: echo "${{ secrets.EXPO_TOKEN }}" | npx expo login --non-interactive
+        run: |
+          echo "${{ secrets.EXPO_TOKEN }}" | npx expo login --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
