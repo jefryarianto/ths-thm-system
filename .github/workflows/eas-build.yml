@@ -1,0 +1,68 @@
+name: EAS Build (Android APK)
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  eas-build-android:
+    name: Build APK with EAS
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Expo CLI
+        run: pnpm add -g expo-cli
+
+      - name: Login to Expo
+        run: echo "${{ secrets.EXPO_TOKEN }}" | npx expo login --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android APK with EAS
+        run: |
+          cd apps/mobile
+          npx eas build \
+            --platform android \
+            --profile production-apk \
+            --non-interactive \
+            --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_API_URL: https://ths-thm.cloud
+
+      - name: Wait for EAS build to complete
+        run: |
+          cd apps/mobile
+          npx eas build:status --platform android --profile production-apk --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Download APK artifact
+        run: |
+          cd apps/mobile
+          # EAS stores artifacts in a specific location
+          # This step would need to be adjusted based on EAS output
+          mkdir -p apk
+          # EAS CLI doesn't directly download, but we can use the build ID to fetch
+          # For now, this is a placeholder - EAS artifacts are typically downloaded via URL
+          echo "APK will be available in EAS dashboard"
