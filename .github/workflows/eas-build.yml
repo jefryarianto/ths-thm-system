@@ -30,13 +30,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Android APK with EAS (local)
+      - name: Build Android APK with EAS (cloud)
         run: |
           cd apps/mobile
           npx eas build \
             --platform android \
             --profile production-apk \
-            --local
+            --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_API_URL: https://ths-thm.cloud
