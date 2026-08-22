@@ -101,7 +101,11 @@ jobs:
           # WAJIB: URL API yang di-bake ke bundle (tanpa ini APK menunjuk
           # http://localhost:3001 dan TIDAK bisa dipakai di HP sungguhan)
           EXPO_PUBLIC_API_URL: https://ths-thm.cloud
-        run: ./gradlew assembleRelease --no-daemon --stacktrace --info
+        run: |
+          ./gradlew tasks --all | grep -i "assemble" || true
+          ./gradlew assembleRelease --no-daemon --stacktrace --info
+          echo "--- Build outputs ---"
+          find app/build/outputs -type f 2>/dev/null || true
 
       - name: Verify APK signature
         shell: bash

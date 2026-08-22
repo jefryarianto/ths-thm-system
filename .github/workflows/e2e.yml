@@ -407,6 +407,7 @@ jobs:
         run: |
           rm -rf dist
           npx tsc -p tsconfig.build.json
+          ls -la dist/
         timeout-minutes: 5
 
       - name: Build Web
@@ -420,8 +421,11 @@ jobs:
         shell: bash
         run: |
           cd apps/api
+          ls -la dist/
           node dist/main.js > ./smoke-test-api.log 2>&1 &
           echo "API_PID=$!" >> $GITHUB_ENV
+          sleep 2
+          ps -p $API_PID -o pid,cmd || true
 
       - name: Wait for API health
         shell: bash
@@ -546,8 +550,8 @@ jobs:
         with:
           name: smoke-test-logs
           path: |
-            smoke-test-api.log
-            smoke-test-web.log
+            apps/api/smoke-test-api.log
+            apps/web/smoke-test-web.log
           retention-days: 7
 
       - name: Smoke test summary
