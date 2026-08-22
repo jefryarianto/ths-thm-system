@@ -28,7 +28,7 @@ allowBuilds:
   '@nestjs/core': true
   '@prisma/client': true
   '@prisma/engines': true
-  dtrace-provider: set this to true or false
+  dtrace-provider: true
   'msgpackr-extract': true
   'prisma': true
   'protobufjs': true
