@@ -58,19 +58,19 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 3
-     environment:
-       UPLOAD_DIR: /app/storage/uploads
-       DATABASE_URL: postgresql://ths_thm:${DB_PASSWORD}@postgres:5432/ths_thm_db
-       REDIS_URL: redis://redis:6379
-       JWT_SECRET: ${JWT_SECRET}
-       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-       JWT_EXPIRES_IN: 15m
-       JWT_REFRESH_EXPIRES_IN: 7d
-       APP_PORT: 3001
-       NODE_ENV: production
-       FRONTEND_URL: https://ths-thm.cloud
-       DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
-       CORS_ORIGINS: https://ths-thm.cloud,https://staging.ths-thm.cloud,http://localhost:3000
+    environment:
+      UPLOAD_DIR: /app/storage/uploads
+      DATABASE_URL: postgresql://ths_thm:${DB_PASSWORD}@postgres:5432/ths_thm_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      APP_PORT: 3001
+      NODE_ENV: production
+      FRONTEND_URL: https://ths-thm.cloud
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
+      CORS_ORIGINS: https://ths-thm.cloud,https://staging.ths-thm.cloud,http://localhost:3000
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_DOMAIN: ${RESEND_DOMAIN:-ths-thm.cloud}
       SMTP_HOST: ${SMTP_HOST}
