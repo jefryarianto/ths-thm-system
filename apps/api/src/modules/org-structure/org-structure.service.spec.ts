@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { OrgStructureService } from './org-structure.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/services/cache.service';
 
 describe('OrgStructureService', () => {
   let service: OrgStructureService;
@@ -10,16 +11,39 @@ describe('OrgStructureService', () => {
   const mockPrisma = {
     distrik: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       delete: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     wilayah: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       delete: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     ranting: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       delete: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
+    nasional: {
+      findFirst: jest.fn(),
+    },
+  };
+
+  const mockCache = {
+    getOrSet: jest.fn(async (key: string, factory: () => Promise<any>, ttlMs?: number) => factory()),
+    invalidatePrefix: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    clear: jest.fn(),
+    getStats: jest.fn(() => ({ size: 0, keys: [] })),
+    isRedisConnected: jest.fn(() => false),
   };
 
   beforeEach(async () => {
@@ -27,6 +51,7 @@ describe('OrgStructureService', () => {
       providers: [
         OrgStructureService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: CacheService, useValue: mockCache },
       ],
     }).compile();
 
