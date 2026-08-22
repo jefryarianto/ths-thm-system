@@ -68,7 +68,7 @@ const baseEnvSchema = z.object({
   FIREBASE_PRIVATE_KEY: z.string().optional(),
 
   // Monitoring
-  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_DSN: z.string().url().optional().or(z.literal('')),
 });
 
 // Additional validation
