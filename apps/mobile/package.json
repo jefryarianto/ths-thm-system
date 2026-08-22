@@ -61,6 +61,7 @@
      "@babel/core": "^7.24.0",
      "@expo/metro-config": "^0.18.0",
      "@testing-library/react-native": "^12.4.3",
+     "@ths-thm/card-design": "workspace:*",
      "@types/react": "~18.2.79",
      "eas-cli": "^14.0.0",
      "eslint": "^8.57.1",

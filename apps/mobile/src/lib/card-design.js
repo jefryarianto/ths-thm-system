@@ -4,4 +4,4 @@
  * lewat alias `../lib/card-design`. Package plain CJS — Metro membundelnya langsung.
  */
 'use strict';
-module.exports = require('../../../../packages/card-design');
+module.exports = require('@ths-thm/card-design');
