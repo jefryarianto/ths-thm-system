@@ -1,3 +1,4 @@
+/* eslint-env node */
 /**
  * SPEC DESAIN KARTU KTA (CR80 landscape 856×540) — SUMBER TUNGGAL.
  *
