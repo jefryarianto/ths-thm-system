@@ -11,6 +11,7 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+COPY packages/shared-types/package.json ./packages/shared-types/package.json
 COPY packages/templates/package.json ./packages/templates/package.json
 
 # Install all dependencies
@@ -22,11 +23,15 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
 # Clean up pnpm-created workspace node_modules before copying source
-RUN rm -rf apps/api/node_modules packages/templates/node_modules 2>/dev/null; exit 0
+RUN rm -rf apps/api/node_modules packages/shared-types/node_modules packages/templates/node_modules 2>/dev/null; exit 0
 
 # Copy source files
 COPY apps/api/ ./apps/api/
+COPY packages/shared-types/ ./packages/shared-types/
 COPY packages/templates/ ./packages/templates/
+
+# Build shared-types before building API
+RUN cd packages/shared-types && pnpm run build
 
 # Generate Prisma client and build
 RUN cd apps/api && pnpm exec prisma generate
