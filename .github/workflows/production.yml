@@ -36,13 +36,13 @@ jobs:
       - name: Install pnpm (version from package.json packageManager)
         uses: pnpm/action-setup@v4
 
-       - name: Install dependencies
-         run: pnpm install --no-frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
-       - name: Build shared-types
-         run: pnpm --filter @ths-thm/shared-types build
+      - name: Build shared-types
+        run: pnpm --filter @ths-thm/shared-types build
 
-       - name: Generate Prisma Client
+      - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
 
       - name: Set up Docker Buildx

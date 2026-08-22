@@ -144,13 +144,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-       - name: Install dependencies
-         run: pnpm install --no-frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
-       - name: Build shared-types
-         run: pnpm --filter @ths-thm/shared-types build
+      - name: Build shared-types
+        run: pnpm --filter @ths-thm/shared-types build
 
-       - name: Install Playwright browsers (Chromium only)
+      - name: Install Playwright browsers (Chromium only)
         working-directory: apps/web
         run: npx playwright install chromium --with-deps
 
@@ -379,14 +379,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-       - name: Install dependencies
-         run: pnpm install --no-frozen-lockfile
-         # devDependencies required for build — NODE_ENV must NOT be production here
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+        # devDependencies required for build — NODE_ENV must NOT be production here
 
-       - name: Build shared-types
-         run: pnpm --filter @ths-thm/shared-types build
+      - name: Build shared-types
+        run: pnpm --filter @ths-thm/shared-types build
 
-       - name: Generate Prisma Client
+      - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
 
       - name: Run database migrations
