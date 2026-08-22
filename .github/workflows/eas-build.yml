@@ -30,13 +30,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Login to Expo
-        run: |
-          echo "${{ secrets.EXPO_TOKEN }}" | npx expo login
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          CI: 1
-
       - name: Build Android APK with EAS (local)
         run: |
           cd apps/mobile
