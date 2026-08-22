@@ -38,31 +38,21 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build Android APK with EAS
+      - name: Build Android APK with EAS (local)
         run: |
           cd apps/mobile
           npx eas build \
             --platform android \
             --profile production-apk \
-            --non-interactive \
-            --no-wait
+            --local \
+            --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_API_URL: https://ths-thm.cloud
 
-      - name: Wait for EAS build to complete
-        run: |
-          cd apps/mobile
-          npx eas build:status --platform android --profile production-apk --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Download APK artifact
-        run: |
-          cd apps/mobile
-          # EAS stores artifacts in a specific location
-          # This step would need to be adjusted based on EAS output
-          mkdir -p apk
-          # EAS CLI doesn't directly download, but we can use the build ID to fetch
-          # For now, this is a placeholder - EAS artifacts are typically downloaded via URL
-          echo "APK will be available in EAS dashboard"
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
