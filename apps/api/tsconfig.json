@@ -19,6 +19,9 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "paths": {
+      "@ths-thm/shared-types": ["../../packages/shared-types/dist/index.d.ts"]
+    },
     "incremental": true
   },
   "include": ["src/**/*"],
