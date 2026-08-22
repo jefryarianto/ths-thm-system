@@ -346,8 +346,8 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://ths_thm:ths_thm_password@localhost:5432/ths_thm_smoke
-      JWT_SECRET: smoke-test-jwt-secret
-      JWT_REFRESH_SECRET: smoke-test-jwt-refresh-secret
+      JWT_SECRET: smoke-test-jwt-secret-please-make-me-at-least-32-chars-long
+      JWT_REFRESH_SECRET: smoke-test-jwt-refresh-secret-please-make-me-at-least-32-chars
       APP_PORT: 3001
       NEXT_PUBLIC_API_URL: http://localhost:3001
       # NODE_ENV deliberately NOT set to production here so pnpm install
