@@ -50,6 +50,20 @@ const COLORS = Object.freeze({
   white: '#ffffff',
 });
 
+// ─── Palet UI (Design Tokens) ────────────────────────────────────────────────
+const PALETTES = Object.freeze({
+  navy: {
+    50: '#f0f4f8', 100: '#d9e2ec', 200: '#b6c5d8', 300: '#8da2b9',
+    400: '#627d98', 500: '#486581', 600: '#334e68', 700: '#243b53',
+    800: '#1A2E40', 900: '#102a43', 950: '#0a1929',
+  },
+  gold: {
+    50: '#fdf9ef', 100: '#f9f0d4', 200: '#f0dda5', 300: '#e5c76e',
+    400: '#D4AF37', 500: '#c9a22e', 600: '#a67c1e', 700: '#7d5e17',
+    800: '#5a4312', 900: '#3d2e0d',
+  },
+});
+
 // ─── Layout SISI DEPAN ──────────────────────────────────────────────────────
 const FRONT = Object.freeze({
   header: Object.freeze({
@@ -119,7 +133,6 @@ const BACK = Object.freeze({
 
 // ─── Dekorasi (SVG): jalur & gradien kanon — dipakai mobile, web, dan preview ───
 const DECOR = Object.freeze({
-  // Path ombak latar depan (urutan tumpukan: w1, w2, w3)
   wavyPaths: [
     'M-60 110 C 140 30, 320 200, 500 110 S 780 20, 916 100 L 916 560 L -60 560 Z',
     'M-40 300 C 180 200, 380 380, 560 300 S 780 220, 900 290 L 900 560 L -40 560 Z',
@@ -198,7 +211,6 @@ function guillocheSvg(side) {
 const CAMERA = Object.freeze({
   overlay: Object.freeze({
     dimColor: 'rgba(0,0,0,0.5)',
-    // Faktor flex area gelap di luar bingkai (atas / samping / bawah)
     dimTop: 1.1,
     dimSide: 1,
     dimBottom: 1.4,
@@ -266,19 +278,16 @@ function photoCrop(boxW, boxH) {
 
 // ─── Helper format data (sama di semua renderer) ───────────────────────────
 const fmt = {
-  /** "OEBAFOK, 6 JULI 1983" (tanpa konversi ke uppercase — pemanggil yang menentukan). */
   ttl(tempatLahir, tanggalLahir) {
     return [tempatLahir || '-', tanggalLahir ? fmt.dateId(tanggalLahir) : '-'].filter(Boolean).join(', ');
   },
   dadar(tempatDadar, tahunDadar) {
     return [tempatDadar, tahunDadar].filter(Boolean).join(', ') || '-';
   },
-  /** Format tanggal panjang id-ID: "17 Agustus 2031". */
   dateId(d) {
     const date = d instanceof Date ? d : new Date(d);
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   },
-  /** Tanggal berlaku kartu = +5 tahun dari `base` (default sekarang). */
   validUntilDate(base = new Date()) {
     const d = new Date(base);
     d.setFullYear(d.getFullYear() + 5);
@@ -290,7 +299,6 @@ const fmt = {
 };
 
 // ─── CSS untuk renderer DOM (web print preview & preview HTML) ─────────────
-// Semua nilai ditarik dari konstanta di atas — satu sumber, tidak bisa melenceng.
 function cardCss() {
   const f = FRONT;
   const b = BACK;
@@ -392,6 +400,7 @@ module.exports = {
   CAMERA,
   FONTS,
   COLORS,
+  PALETTES,
   FRONT,
   BACK,
   DECOR,

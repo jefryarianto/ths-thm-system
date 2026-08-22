@@ -20,6 +20,7 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "db:seed": "prisma db seed",
     "swagger:export": "ts-node scripts/generate-swagger.ts",
+    "generate:client": "npx openapi-typescript ./swagger.json --output ../web/src/types/api.d.ts",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "tsc:check": "tsc --noEmit",
@@ -45,6 +46,7 @@
     "@socket.io/redis-adapter": "^8.3.0",
     "@types/node-cron": "^3.0.11",
     "bcryptjs": "^2.4.3",
+    "@ths-thm/shared-types": "workspace:*",
     "bullmq": "^5.80.11",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -67,6 +69,7 @@
     "sharp": "^0.35.3",
     "socket.io": "^4.8.3",
     "uuid": "^14.0.1",
+    "zod": "^3.22.4",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {

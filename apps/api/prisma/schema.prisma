@@ -309,6 +309,7 @@ model Ranting {
   kepengurusans Kepengurusan[]
   transferFrom  TransferRequest[] @relation("TransferFrom")
   transferTo    TransferRequest[] @relation("TransferTo")
+  auditLogs     AuditLog[]
 
   @@unique([wilayahId, kodeRanting])
   @@map("ranting")
@@ -372,6 +373,9 @@ model User {
   userSessions                UserSession[]
   dataRevisions               DataRevision[] @relation("DataRevisionChangedBy")
   importBatches               ImportBatch[]  @relation("ImportBatchImportedBy")
+  anggotaCreated              Anggota[]      @relation("AnggotaCreatedBy")
+  anggotaUpdated              Anggota[]      @relation("AnggotaUpdatedBy")
+  kegiatanUpdated             Kegiatan[]     @relation("KegiatanUpdatedBy")
 
   @@map("users")
 }
@@ -420,11 +424,15 @@ model Anggota {
   importSource      String?           @map("import_source")
   importedAt        DateTime?         @map("imported_at")
   version           Int               @default(0) @map("version")
+  createdById       String?           @map("created_by_id")
+  updatedById       String?           @map("updated_by_id")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
   deletedAt         DateTime?         @map("deleted_at")
 
   ranting                   Ranting                  @relation(fields: [rantingId], references: [id], onDelete: Cascade)
+  createdBy                 User?                    @relation("AnggotaCreatedBy", fields: [createdById], references: [id])
+  updatedBy                 User?                    @relation("AnggotaUpdatedBy", fields: [updatedById], references: [id])
   klaims                    Klaim[]
   dokumen                   Dokumen[]
   iuran                     Iuran[]
@@ -530,10 +538,12 @@ model Kegiatan {
   status             StatusKegiatan @default(draft)
   pengajuanNilaiOleh String?        @map("pengajuan_nilai_oleh")
   pengajuanNilaiAt   DateTime?      @map("pengajuan_nilai_at")
+  updatedById        String?        @map("updated_by_id")
   createdAt          DateTime       @default(now()) @map("created_at")
   updatedAt          DateTime       @updatedAt @map("updated_at")
 
   creator           User                 @relation("KegiatanCreatedBy", fields: [createdBy], references: [id])
+  updatedBy         User?                @relation("KegiatanUpdatedBy", fields: [updatedById], references: [id])
   adminKegiatanId   String?              @map("admin_kegiatan_id")
   adminKegiatan     User?                @relation("AdminKegiatan", fields: [adminKegiatanId], references: [id])
   latihans          Latihan[]
@@ -1096,12 +1106,14 @@ model AuditLog {
   entity    String // e.g., 'User', 'Assessment', 'Document', 'Approval'
   entityId  String?  @map("entity_id")
   userId    String?  @map("user_id")
+  rantingId String?  @map("ranting_id")
   ipAddress String?  @map("ip_address")
   userAgent String?  @map("user_agent")
   details   Json? // Before/after data, additional context
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User? @relation(fields: [userId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+  ranting Ranting? @relation(fields: [rantingId], references: [id])
 
   @@index([action])
   @@index([entity])
@@ -1934,4 +1946,14 @@ model Tingkatan {
 
   @@index([urutan])
   @@map("tingkatan")
+}
+
+model FeatureFlag {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  isEnabled Boolean  @default(false) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
 }

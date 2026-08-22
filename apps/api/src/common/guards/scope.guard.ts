@@ -76,10 +76,11 @@ export class ScopeGuard implements CanActivate {
     }
 
     // Attach scope info from user's rantingId for services to use
-    if (user.rantingId) {
+    if (user.role === 'superadmin') {
+      request.scope = {};
+    } else if (user.rantingId) {
       request.scope = { rantingId: user.rantingId };
     } else {
-      // Superadmin or admin without rantingId — full scope
       request.scope = {};
     }
 

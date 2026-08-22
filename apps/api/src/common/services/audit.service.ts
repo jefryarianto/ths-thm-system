@@ -102,6 +102,7 @@ export class AuditService {
     userId?: string;
     userEmail?: string;
     userRole?: string;
+    userScope?: { rantingId?: string; wilayahId?: string; distrikId?: string };
     method: string;
     path: string;
     statusCode: number;
@@ -114,6 +115,7 @@ export class AuditService {
       userId: params.userId,
       userEmail: params.userEmail,
       userRole: params.userRole,
+      userScope: params.userScope,
       method: params.method,
       path: params.path,
       statusCode: params.statusCode,
@@ -134,6 +136,7 @@ export class AuditService {
     userId?: string;
     userEmail?: string;
     userRole?: string;
+    userScope?: { rantingId?: string; wilayahId?: string; distrikId?: string };
     method: string;
     path: string;
     statusCode: number;
@@ -146,6 +149,7 @@ export class AuditService {
       userId: params.userId,
       userEmail: params.userEmail,
       userRole: params.userRole,
+      userScope: params.userScope,
       method: params.method,
       path: params.path,
       statusCode: params.statusCode,

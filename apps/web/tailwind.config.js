@@ -1,3 +1,5 @@
+const { PALETTES } = require('@ths-thm/card-design');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
@@ -13,33 +15,9 @@ module.exports = {
         ocr: ['OCR A Extended', 'monospace'],
       },
       colors: {
-        /* ── Sacred Navy (Sekunder 30%) ── */
-        navy: {
-          50: '#f0f4f8',
-          100: '#d9e2ec',
-          200: '#b6c5d8',
-          300: '#8da2b9',
-          400: '#627d98',
-          500: '#486581',
-          600: '#334e68',
-          700: '#243b53',
-          800: '#1A2E40',
-          900: '#102a43',
-          950: '#0a1929',
-        },
-        /* ── Liturgical Gold (Aksen 10%) ── */
-        gold: {
-          50: '#fdf9ef',
-          100: '#f9f0d4',
-          200: '#f0dda5',
-          300: '#e5c76e',
-          400: '#D4AF37',
-          500: '#c9a22e',
-          600: '#a67c1e',
-          700: '#7d5e17',
-          800: '#5a4312',
-          900: '#3d2e0d',
-        },
+        navy: PALETTES.navy,
+        gold: PALETTES.gold,
+        /* ── Legacy aliases for backward compat ── */
         /* ── Legacy aliases for backward compat ── */
         primary: {
           50: '#f0f4f8',

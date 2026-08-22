@@ -1,6 +1,7 @@
 # Build Stage
 FROM node:22-alpine AS builder
 
+# Install dependencies for native modules and Prisma
 RUN apk add --no-cache openssl libc6-compat python3 make g++
 RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
@@ -21,8 +22,6 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 
 # Clean up pnpm-created workspace node_modules before copying source
-# pnpm with shamefully-hoist=true creates symlinks in apps/api/node_modules/
-# that conflict with Docker COPY overlay ("cannot copy to non-directory")
 RUN rm -rf apps/api/node_modules packages/templates/node_modules 2>/dev/null; exit 0
 
 # Copy source files

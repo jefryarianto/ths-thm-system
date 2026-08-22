@@ -8,6 +8,18 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'THS-THM System Manajemen',
   description: 'Sistem Manajemen THS-THM — Tunggal Hati Seminari & Tunggal Hati Maria',
+  manifest: '/manifest.json',
+  themeColor: '#1B2A4A',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'THS-THM',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
   icons: {
     icon: '/favicon.png',
     apple: '/apple-icon.png',

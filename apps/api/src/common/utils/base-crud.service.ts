@@ -109,12 +109,14 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     entityId: string | null,
     userId?: string | null,
     details?: Record<string, unknown> | null,
+    rantingId?: string | null,
   ): void {
     void this.persistentAudit?.log({
       action,
       entity,
       entityId,
       userId: userId ?? null,
+      rantingId: rantingId ?? null,
       ipAddress: null,
       userAgent: null,
       details: details ?? null,
@@ -385,7 +387,9 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     await this.afterCreate(entity, dto);
     this.invalidateCache();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.audit('CREATE', this.config.model, (entity as any)?.id ?? null, userId);
+    const rid = (entity as any)?.rantingId;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.audit('CREATE', this.config.model, (entity as any)?.id ?? null, userId, null, rid);
     return {
       data: entity,
       message: message || 'Data berhasil ditambahkan',
@@ -462,7 +466,9 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     }
     await this.afterUpdate(updated, dto);
     this.invalidateCache();
-    this.audit('UPDATE', this.config.model, id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rid = (updated as any)?.rantingId;
+    this.audit('UPDATE', this.config.model, id, userId, null, rid);
     if (REVISION_TRACKED_MODELS.has(this.config.model) && this.revisions && beforeRow) {
       await this.revisions.recordUpdate(
         this.config.model,
@@ -512,7 +518,11 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
 
     await this.afterRemove(id);
     this.invalidateCache();
-    this.audit(this.config.softDelete ? 'SOFT_DELETE' : 'DELETE', this.config.model, id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const entity = await this.prismaDelegate.findUnique({ where: { id }, select: { rantingId: true } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rid = (entity as any)?.rantingId;
+    this.audit(this.config.softDelete ? 'SOFT_DELETE' : 'DELETE', this.config.model, id, undefined, undefined, rid);
     return { message: message || 'Data berhasil dihapus' };
   }
 

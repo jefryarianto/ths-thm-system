@@ -30,8 +30,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
           status = HttpStatus.NOT_FOUND;
           message = 'Data tidak ditemukan';
           break;
+        case 'P2003':
+          status = HttpStatus.BAD_REQUEST;
+          message = 'Gagal menghapus atau memperbarui: data masih terikat dengan data lain (foreign key constraint)';
+          break;
+        case 'P2024':
+          status = HttpStatus.GATEWAY_TIMEOUT;
+          message = 'Koneksi ke database timeout';
+          break;
+        case 'P2000':
+          status = HttpStatus.BAD_REQUEST;
+          message = 'Nilai data terlalu panjang';
+          break;
+        case 'P2011':
+          status = HttpStatus.BAD_REQUEST;
+          message = 'Field wajib tidak boleh kosong';
+          break;
+        case 'P2012':
+          status = HttpStatus.BAD_REQUEST;
+          message = 'Field wajib hilang';
+          break;
         default:
-          message = 'Database error';
+          message = `Database error (${exception.code})`;
       }
     }
 

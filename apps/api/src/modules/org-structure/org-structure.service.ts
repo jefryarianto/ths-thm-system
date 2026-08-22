@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/services/cache.service';
 import {
   CreateDistrikDto,
   UpdateDistrikDto,
@@ -18,16 +19,25 @@ export interface ImportOrgRow {
 
 @Injectable()
 export class OrgStructureService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   // ─── DISTRIK ───
 
   async getAllDistrik() {
-    const data = await this.prisma.distrik.findMany({
-      orderBy: { nama: 'asc' },
-      include: { _count: { select: { wilayahs: true } } },
-    });
-    return data;
+    return await this.cache.getOrSet(
+      'distrik:all',
+      async () => {
+        const data = await this.prisma.distrik.findMany({
+          orderBy: { nama: 'asc' },
+          include: { _count: { select: { wilayahs: true } } },
+        });
+        return data;
+      },
+      60_000,
+    );
   }
 
   async getDistrik(id: string) {
@@ -55,6 +65,7 @@ export class OrgStructureService {
         nasionalId: dto.nasionalId || nasional?.id || 'seed',
       },
     });
+    this.cache.invalidatePrefix('distrik:all');
     return data;
   }
 
@@ -63,6 +74,7 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Distrik tidak ditemukan');
 
     const data = await this.prisma.distrik.update({ where: { id }, data: dto });
+    this.cache.invalidatePrefix('distrik:all');
     return data;
   }
 
@@ -73,21 +85,29 @@ export class OrgStructureService {
     // Cascade: wilayah, ranting, anggota, calon, latihan, kepengurusan, unit latihan
     // serta seluruh data terkait ikut terhapus (lihat onDelete pada schema).
     await this.prisma.distrik.delete({ where: { id } });
+    this.cache.invalidatePrefix('distrik:all');
   }
 
   // ─── WILAYAH ───
 
   async getAllWilayah(distrikId?: string) {
-    const where = distrikId ? { distrikId } : {};
-    const data = await this.prisma.wilayah.findMany({
-      where,
-      orderBy: { nama: 'asc' },
-      include: {
-        distrik: { select: { id: true, nama: true } },
-        _count: { select: { rantings: true } },
+    const cacheKey = distrikId ? `wilayah:all:${distrikId}` : 'wilayah:all';
+    return await this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const where = distrikId ? { distrikId } : {};
+        const data = await this.prisma.wilayah.findMany({
+          where,
+          orderBy: { nama: 'asc' },
+          include: {
+            distrik: { select: { id: true, nama: true } },
+            _count: { select: { rantings: true } },
+          },
+        });
+        return data;
       },
-    });
-    return data;
+      60_000,
+    );
   }
 
   async getWilayah(id: string) {
@@ -107,6 +127,7 @@ export class OrgStructureService {
 
   async createWilayah(dto: CreateWilayahDto) {
     const data = await this.prisma.wilayah.create({ data: dto });
+    this.cache.invalidatePrefix('wilayah:all');
     return data;
   }
 
@@ -115,6 +136,7 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Wilayah tidak ditemukan');
 
     const data = await this.prisma.wilayah.update({ where: { id }, data: dto });
+    this.cache.invalidatePrefix('wilayah:all');
     return data;
   }
 
@@ -124,21 +146,29 @@ export class OrgStructureService {
 
     // Cascade: ranting, anggota, calon, latihan, kepengurusan beserta data terkait.
     await this.prisma.wilayah.delete({ where: { id } });
+    this.cache.invalidatePrefix('wilayah:all');
   }
 
   // ─── RANTING ───
 
   async getAllRanting(wilayahId?: string) {
-    const where = wilayahId ? { wilayahId } : {};
-    const data = await this.prisma.ranting.findMany({
-      where,
-      orderBy: { nama: 'asc' },
-      include: {
-        wilayah: { select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } } },
-        _count: { select: { anggota: true } },
+    const cacheKey = wilayahId ? `ranting:all:${wilayahId}` : 'ranting:all';
+    return await this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const where = wilayahId ? { wilayahId } : {};
+        const data = await this.prisma.ranting.findMany({
+          where,
+          orderBy: { nama: 'asc' },
+          include: {
+            wilayah: { select: { id: true, nama: true, distrik: { select: { id: true, nama: true } } } },
+            _count: { select: { anggota: true } },
+          },
+        });
+        return data;
       },
-    });
-    return data;
+      60_000,
+    );
   }
 
   async getRanting(id: string) {
@@ -155,6 +185,7 @@ export class OrgStructureService {
 
   async createRanting(dto: CreateRantingDto) {
     const data = await this.prisma.ranting.create({ data: dto });
+    this.cache.invalidatePrefix('ranting:all');
     return data;
   }
 
@@ -163,6 +194,7 @@ export class OrgStructureService {
     if (!existing) throw new NotFoundException('Ranting tidak ditemukan');
 
     const data = await this.prisma.ranting.update({ where: { id }, data: dto });
+    this.cache.invalidatePrefix('ranting:all');
     return data;
   }
 
@@ -173,6 +205,7 @@ export class OrgStructureService {
     // Cascade: anggota, calon, latihan, kepengurusan beserta seluruh data terkait
     // (iuran, klaim, dokumen, absensi, pendadaran, chat, forum, gamification, QR, dll).
     await this.prisma.ranting.delete({ where: { id } });
+    this.cache.invalidatePrefix('ranting:all');
   }
 
   // ─── IMPORT ORGANIZATION DATA ───
@@ -271,6 +304,10 @@ export class OrgStructureService {
         skipped++;
       }
     }
+
+    if (importedDistrik > 0) this.cache.invalidatePrefix('distrik:all');
+    if (importedWilayah > 0) this.cache.invalidatePrefix('wilayah:all');
+    if (importedRanting > 0) this.cache.invalidatePrefix('ranting:all');
 
     return { importedDistrik, importedWilayah, importedRanting, skipped, total: data.length };
   }

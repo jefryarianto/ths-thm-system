@@ -1,3 +1,5 @@
+import { Role } from '@ths-thm/shared-types';
+
 /**
  * Scope context attached to request by ScopeGuard.
  * Services can access this to filter data by scope level.
@@ -18,7 +20,7 @@ export interface ScopedRequest {
   user: {
     id: string;
     email: string;
-    role: string;
+    role: Role;
     rantingId?: string;
     namaLengkap?: string;
   };

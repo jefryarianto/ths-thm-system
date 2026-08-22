@@ -1,68 +1,27 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { RoleBasedThrottlerGuard } from './common/guards/role-throttler.guard';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './prisma/prisma.module';
+
+import {
+  RoleBasedThrottlerGuard,
+  ScopeGuard,
+  ApiKeyGuard,
+  ApiKeyStore,
+  JwtAuthGuard,
+  RolesGuard,
+} from './common';
+import { PrismaModule } from './prisma';
 import { HealthController } from './common/health.controller';
-import { JwtAuthGuard, RolesGuard } from './modules/auth/guards/jwt-auth.guard';
-import { ScopeGuard } from './common/guards/scope.guard';
-import { ApiKeyStore, ApiKeyGuard } from './common/guards/api-key.guard';
 import { ScopeModule } from './common/scope.module';
-import { AuditInterceptor } from './common/interceptors/audit.interceptor';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { MembersModule } from './modules/members/members.module';
-import { CandidatesModule } from './modules/candidates/candidates.module';
-import { RegistrationsModule } from './modules/registrations/registrations.module';
-import { ClaimsModule } from './modules/claims/claims.module';
-import { TrainingsModule } from './modules/trainings/trainings.module';
-import { GraduationsModule } from './modules/graduations/graduations.module';
-import { ActivitiesModule } from './modules/activities/activities.module';
-import { ExaminersModule } from './modules/examiners/examiners.module';
-import { AssessmentsModule } from './modules/assessments/assessments.module';
-import { DocumentsModule } from './modules/documents/documents.module';
-import { OrgDocumentsModule } from './modules/org-documents/org-documents.module';
-import { LettersModule } from './modules/letters/letters.module';
-import { DuesModule } from './modules/dues/dues.module';
-import { PaymentsModule } from './modules/payments/payments.module';
-import { NotificationsModule } from './modules/notifications/notifications.module';
-import { ReportsModule } from './modules/reports/reports.module';
-import { SearchModule } from './modules/search/search.module';
-import { ImportsModule } from './modules/imports/imports.module';
-import { SettingsModule } from './modules/settings/settings.module';
-import { GamificationModule } from './modules/gamification/gamification.module';
-import { MailModule } from './mail/mail.module';
-import { ChatModule } from './modules/chat/chat.module';
-import { ForumModule } from './modules/forum/forum.module';
-import { CronTasksModule } from './modules/cron/cron-tasks.module';
-import { CalendarModule } from './modules/calendar/calendar.module';
-import { ApprovalModule } from './modules/approvals/approval.module';
-import { OrgChartModule } from './modules/org-chart/org-chart.module';
-import { TargetsModule } from './modules/targets/targets.module';
-import { OrgStructureModule } from './modules/org-structure/org-structure.module';
-import { UploadModule } from './modules/upload/upload.module';
-import { QueueDashboardModule } from './modules/queue-dashboard/queue-dashboard.module';
-import { MonitoringModule } from './modules/monitoring/monitoring.module';
-import { UjianPraktekModule } from './modules/ujian-praktek/ujian-praktek.module';
-import { PenandatanganModule } from './modules/penandatangan/penandatangan.module';
-import { TingkatanModule } from './modules/tingkatan/tingkatan.module';
-import { PublicModule } from './modules/public/public.module';
-import { ContentModule } from './modules/content/content.module';
-import { MutationsModule } from './modules/mutations/mutations.module';
+import { AuditInterceptor, TransformInterceptor } from './common';
+
+import * as Modules from './modules';
+import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 
 @Module({
   imports: [
-    ChatModule,
-    ForumModule,
-    PenandatanganModule,
-    TingkatanModule,
-    PublicModule,
-    ContentModule,
-    MutationsModule,
-    CronTasksModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '../../.env', '.env.production'],
@@ -76,70 +35,22 @@ import { MutationsModule } from './modules/mutations/mutations.module';
     ]),
     PrismaModule,
     ScopeModule,
-    AuthModule,
-    UsersModule,
-    MembersModule,
-    CandidatesModule,
-    RegistrationsModule,
-    ClaimsModule,
-    TrainingsModule,
-    GraduationsModule,
-    ActivitiesModule,
-    ExaminersModule,
-    AssessmentsModule,
-    DocumentsModule,
-    OrgDocumentsModule,
-    LettersModule,
-    DuesModule,
-    PaymentsModule,
-    NotificationsModule,
-    ReportsModule,
-    SearchModule,
-    ImportsModule,
-    SettingsModule,
-    GamificationModule,
-    MailModule,
-    CalendarModule,
-    ApprovalModule,
-    OrgChartModule,
-    OrgStructureModule,
-    TargetsModule,
-    UploadModule,
-    QueueDashboardModule,
-    MonitoringModule,
-    UjianPraktekModule,
+    ...Object.values(Modules),
   ],
   controllers: [HealthController],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RoleBasedThrottlerGuard,
-    },
+    { provide: APP_GUARD, useClass: RoleBasedThrottlerGuard },
     ApiKeyStore,
-    {
-      provide: APP_GUARD,
-      useClass: ApiKeyGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ScopeGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AuditInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TransformInterceptor,
-    },
+    { provide: APP_GUARD, useClass: ApiKeyGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: ScopeGuard },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantContextMiddleware).forRoutes('*');
+  }
+}

@@ -45,7 +45,8 @@ import FormField from '@/components/ui/form-field';
 import ExportMenu from '@/components/ui/export-menu';
 import SummaryBar from '@/components/ui/summary-bar';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
-import { StatCardSkeleton, StatCardGridSkeleton, ChartSkeleton } from '@/components/ui/skeletons';
+import { StatCardSkeleton, StatCardGridSkeleton } from '@/components/ui/skeletons';
+import { ChartSkeleton } from '@/components/ui/skeleton';
 import TableSkeleton from '@/components/ui/table-skeleton';
 import { ToastProvider, useToast } from '@/components/ui/toast';
 

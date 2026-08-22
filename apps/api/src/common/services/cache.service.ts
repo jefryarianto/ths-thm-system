@@ -115,6 +115,17 @@ export class CacheService implements OnModuleDestroy {
   }
 
   /**
+   * Alias for getOrSet - cache-aside pattern.
+   */
+  async getOrFetch<T>(
+    key: string,
+    factory: () => Promise<T>,
+    ttlMs: number = 60_000,
+  ): Promise<T> {
+    return this.getOrSet(key, factory, ttlMs);
+  }
+
+  /**
    * Return cache statistics.
    */
   getStats(): { size: number; keys: string[] } {

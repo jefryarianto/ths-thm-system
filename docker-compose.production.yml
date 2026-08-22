@@ -27,13 +27,13 @@ services:
           memory: 256M
 
   redis:
-    image: redis:7-alpine
+    image: valkey/valkey:7-alpine
     container_name: ths-thm-redis
     restart: unless-stopped
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD', 'valkey-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5

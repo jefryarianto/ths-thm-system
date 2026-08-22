@@ -5,9 +5,12 @@ import { useFonts } from 'expo-font';
 import { useAuthStore, AuthState } from '../src/store/auth-store';
 import { GlobalErrorBoundary } from '../src/components/GlobalErrorBoundary';
 import { setupNotificationListeners } from '../src/lib/fcm';
+import { useNotificationDeepLink } from '../src/hooks/useNotificationDeepLink';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
+
+  useNotificationDeepLink();
 
   // Muat font kartu: OCR A Extended (data No. Anggota), Open Sans (header), Roboto (label & teks lain)
   // Kunci useFonts harus sama persis dgn nama family internal TTF ("OCR A Extended", "Open Sans", "Roboto")

@@ -11,6 +11,8 @@ import { createHash } from 'crypto';
 import type { Request, Response } from 'express';
 import { QueueDashboardModule } from '../modules/queue-dashboard/queue-dashboard.module';
 import { MonitoringService } from '../modules/monitoring/monitoring.service';
+import { statSync } from 'fs';
+import * as os from 'os';
 
 /**
  * In-memory 24-hour uptime tracker recording queue connection status
@@ -351,6 +353,55 @@ export class HealthController implements OnApplicationBootstrap {
       dbStatus = 'disconnected';
     }
 
+    // Check Redis connection
+    let redisStatus = 'disconnected';
+    let redisLatencyMs: number | null = null;
+    if (this.cache.isRedisConnected()) {
+      const redisStart = Date.now();
+      try {
+        // Use the internal redis client to ping
+        const redisClient = (this.cache as any).redisClient;
+        if (redisClient) {
+          await redisClient.ping();
+          redisStatus = 'connected';
+          redisLatencyMs = Date.now() - redisStart;
+        }
+      } catch {
+        redisStatus = 'disconnected';
+      }
+    }
+
+    // Check disk space on uploads directory (cached 60s, non-blocking)
+    let diskSpace: { free: string; total: string; used: string; usagePercent: number } | null = null;
+    const uploadDir = process.env.UPLOAD_DIR || './uploads';
+    const diskCacheKey = `health:disk:${uploadDir}`;
+    diskSpace = this.cache.get<{ free: string; total: string; used: string; usagePercent: number }>(diskCacheKey) ?? null;
+    if (!diskSpace) {
+      try {
+        statSync(uploadDir);
+        const { exec } = require('child_process');
+        const dfOutput: string = await new Promise((resolve) => {
+          exec(`df -h "${uploadDir}"`, { encoding: 'utf-8', timeout: 5000 }, (err: Error | null, stdout: string) =>
+            resolve(err ? '' : stdout),
+          );
+        });
+        const lines = dfOutput.trim().split('\n');
+        if (lines.length > 1) {
+          const parts = lines[1].split(/\s+/);
+          if (parts.length >= 5) {
+            const total = parts[1];
+            const used = parts[2];
+            const free = parts[3];
+            const usagePercent = parseInt(parts[4].replace('%', ''), 10);
+            diskSpace = { free, total, used, usagePercent };
+            this.cache.set(diskCacheKey, diskSpace, 60_000);
+          }
+        }
+      } catch {
+        // Disk space check failed, ignore
+      }
+    }
+
     const cacheStats = this.cache.getStats();
     const auditStats = this.auditLogStore.getStats();
     const apiKeys = this.apiKeyStore.getAll();
@@ -365,6 +416,11 @@ export class HealthController implements OnApplicationBootstrap {
           status: dbStatus,
           pool: dbPool,
         },
+        redis: {
+          status: redisStatus,
+          latencyMs: redisLatencyMs,
+        },
+        disk: diskSpace,
         memory: {
           heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
           heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB',
@@ -383,8 +439,56 @@ export class HealthController implements OnApplicationBootstrap {
         apiKeys: {
           active: apiKeys.length,
         },
-        queue: await this.getQueueHealth(),
+        queue: await this.getQueueHealth() as any,
       },
+    };
+  }
+
+  @Get('detailed')
+  @Roles('superadmin')
+  @ApiOperation({ summary: 'Cek kesehatan sistem detail (Admin only)' })
+  async getDetailedHealth() {
+    const basicHealth = await this.check();
+    const memoryUsage = process.memoryUsage();
+    
+    // Additional system info
+    const cpus = os.cpus();
+    const cpuUsage = cpus.map(cpu => ({
+      model: cpu.model,
+      speed: cpu.speed,
+      times: cpu.times,
+    }));
+    
+    // Network interfaces
+    const networkInterfaces = os.networkInterfaces();
+    
+    return {
+      ...basicHealth,
+      data: {
+        ...basicHealth.data,
+        system: {
+          loadAverage: os.loadavg(),
+          uptime: process.uptime(),
+          platform: process.platform,
+          arch: process.arch,
+          cpuCount: cpus.length,
+          cpus: cpuUsage,
+          networkInterfaces,
+        },
+        memory: {
+          ...basicHealth.data.memory,
+          rss: Math.round(memoryUsage.rss / 1024 / 1024) + ' MB',
+          external: Math.round(memoryUsage.external / 1024 / 1024) + ' MB',
+          arrayBuffers: Math.round(memoryUsage.arrayBuffers / 1024 / 1024) + ' MB',
+        },
+        process: {
+          pid: process.pid,
+          version: process.version,
+          argv: process.argv,
+          execPath: process.execPath,
+          cwd: process.cwd(),
+        },
+      }
     };
   }
 

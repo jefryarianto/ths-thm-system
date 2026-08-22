@@ -56,6 +56,10 @@ playwright-report/
 # Security sensitive files (MUST NOT be committed)
 check.sql
 *firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
+apps/api/.env
+apps/api/ths-thm-system-*-firebase-adminsdk-*.json
 temp_key.pem
 api-error.txt
 api-output.txt

@@ -1,6 +1,18 @@
 import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { MemberSchema } from '@ths-thm/shared-types';
+import { z } from 'zod';
+
+export const CreateMemberSchema = MemberSchema.omit({
+  id: true,
+  statusData: true,
+  statusValidasi: true,
+  missingFields: true,
+  createdAt: true,
+  updatedAt: true,
+  nomorAnggota: true, // Assuming this is generated on server
+});
 
 export class CreateMemberDto {
   @ApiProperty()

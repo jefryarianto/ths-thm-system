@@ -1,16 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from '../../common/services/cache.service';
 
 @Injectable()
 export class ContentService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly BERITA_CACHE_KEY = 'content:berita:all';
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cache: CacheService,
+  ) {}
 
   // ── Berita CRUD ──
 
   async getAllBerita() {
-    return this.prisma.berita.findMany({
-      orderBy: { tanggal: 'desc' },
-    });
+    return this.cache.getOrSet(
+      this.BERITA_CACHE_KEY,
+      () =>
+        this.prisma.berita.findMany({
+          orderBy: { tanggal: 'desc' },
+        }),
+      300_000, // 5 minutes cache
+    );
   }
 
   async getBeritaById(id: string) {
@@ -27,7 +38,7 @@ export class ContentService {
     slug: string;
     isVisible?: boolean;
   }) {
-    return this.prisma.berita.create({
+    const berita = await this.prisma.berita.create({
       data: {
         judul: data.judul,
         ringkasan: data.ringkasan,
@@ -37,6 +48,8 @@ export class ContentService {
         isVisible: data.isVisible ?? true,
       },
     });
+    this.cache.del(this.BERITA_CACHE_KEY);
+    return berita;
   }
 
   async updateBerita(
@@ -51,14 +64,20 @@ export class ContentService {
     },
   ) {
     await this.getBeritaById(id);
-    return this.prisma.berita.update({
+    const updated = await this.prisma.berita.update({
       where: { id },
       data,
     });
+    this.cache.del(this.BERITA_CACHE_KEY);
+    this.cache.del(`content:berita:${id}`);
+    return updated;
   }
 
   async deleteBerita(id: string) {
     await this.getBeritaById(id);
-    return this.prisma.berita.delete({ where: { id } });
+    const deleted = await this.prisma.berita.delete({ where: { id } });
+    this.cache.del(this.BERITA_CACHE_KEY);
+    this.cache.del(`content:berita:${id}`);
+    return deleted;
   }
 }

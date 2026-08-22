@@ -19,7 +19,9 @@
     "baseUrl": ".",
     "paths": {
       "@ths-thm/templates": ["packages/templates"],
-      "@ths-thm/csv-templates": ["packages/csv_templates"]
+      "@ths-thm/csv-templates": ["packages/csv_templates"],
+      "@ths-thm/shared-types": ["packages/shared-types/src/index.ts"],
+      "@ths-thm/api-client": ["packages/api-client/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", ".next", ".expo"]

@@ -1,77 +1,43 @@
 /* eslint-disable no-console */
 import { parseDurationToMs } from '../common/utils/duration.util';
+import { validateEnvWithZod, EnvConfig } from './env-schema';
 
-export function validateEnv() {
-    const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
-  const optionalVars = ['REDIS_URL'];
+// Validate and get typed config
+const validated = validateEnvWithZod();
 
-  const missing = requiredVars.filter((key) => !process.env[key]);
+// Export the validated and typed flat config
+export const envConfig: EnvConfig = validated;
 
-  if (missing.length > 0) {
-    console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
-    console.error('   Copy .env.example to .env and fill in the values.');
-    process.exit(1);
-  }
-
-  const notSet = optionalVars.filter((key) => !process.env[key]);
-  if (notSet.length > 0) {
-    console.log(`ℹ️  Optional vars not set: ${notSet.join(', ')} (using defaults)`);
-  }
-
-  if (process.env.JWT_SECRET === 'change-me-to-random-64-char-string') {
-    console.warn(
-      '⚠️  JWT_SECRET masih menggunakan nilai default. Ganti dengan string random yang aman.',
-    );
-  }
-
-  if (process.env.JWT_REFRESH_SECRET === 'change-me-to-random-64-char-string') {
-    console.warn(
-      '⚠️  JWT_REFRESH_SECRET masih menggunakan nilai default. Ganti dengan string random yang aman.',
-    );
-  }
-
-  if (process.env.NODE_ENV === 'production' && !process.env.DEFAULT_PASSWORD) {
-    console.warn(
-      '⚠️  DEFAULT_PASSWORD belum diset. Akun anggota baru akan memakai password acak sekali jalan — set DEFAULT_PASSWORD untuk pengalaman login yang konsisten.',
-    );
-  }
-
-  const durationVars: Array<[string, string]> = [
-    ['JWT_EXPIRES_IN', process.env.JWT_EXPIRES_IN || '15m'],
-    ['JWT_REFRESH_EXPIRES_IN', process.env.JWT_REFRESH_EXPIRES_IN || '7d'],
-  ];
-  for (const [name, value] of durationVars) {
-    if (parseDurationToMs(value) === null) {
-      console.warn(
-        `⚠️  ${name}="${value}" bukan format durasi yang valid (contoh: 15m, 7d, 1h, 30s). Gunakan format yang benar untuk menghindari perilaku tak terduga.`,
-      );
-    }
-  }
-
-  console.log('✅ Environment variables validated');
-}
-
+// Legacy-shaped env object — preserves the original nested shape used
+// throughout the codebase (env.jwtSecret, env.smtp, env.nodeEnv, ...).
+// Built from the Zod-validated config so runtime checks stay in sync.
 export const env = {
-  port: parseInt(process.env.APP_PORT || '3001', 10),
-  nodeEnv: process.env.NODE_ENV || 'development',
-  databaseUrl: process.env.DATABASE_URL!,
-  jwtSecret: process.env.JWT_SECRET!,
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET!,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
-  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-  uploadDir: process.env.UPLOAD_DIR || './uploads',
-  maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10),
-  throttleTtl: parseInt(process.env.THROTTLE_TTL || '60', 10),
-  throttleLimit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
-  apiKeys: process.env.API_KEYS || '',
+  port: validated.APP_PORT,
+  nodeEnv: validated.NODE_ENV,
+  databaseUrl: validated.DATABASE_URL,
+  jwtSecret: validated.JWT_SECRET,
+  jwtRefreshSecret: validated.JWT_REFRESH_SECRET,
+  jwtExpiresIn: validated.JWT_EXPIRES_IN,
+  jwtRefreshExpiresIn: validated.JWT_REFRESH_EXPIRES_IN,
+  frontendUrl: validated.FRONTEND_URL,
+  uploadDir: validated.UPLOAD_DIR,
+  maxFileSize: validated.MAX_FILE_SIZE,
+  throttleTtl: validated.THROTTLE_TTL,
+  throttleLimit: validated.THROTTLE_LIMIT,
+  apiKeys: validated.API_KEYS,
   smtp: {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
+    host: validated.SMTP_HOST,
+    port: validated.SMTP_PORT,
+    user: validated.SMTP_USER || '',
+    pass: validated.SMTP_PASS || '',
   },
-  redisUrl: process.env.REDIS_URL || '',
-  resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET || '',
-  defaultPassword: process.env.DEFAULT_PASSWORD || '',
+  redisUrl: validated.REDIS_URL || '',
+  resendWebhookSecret: validated.RESEND_WEBHOOK_SECRET || '',
+  defaultPassword: validated.DEFAULT_PASSWORD || '',
 };
+
+// Re-export validateEnv for backward compatibility
+export { validateEnvWithZod as validateEnv };
+
+// Re-export parseDurationToMs in case callers relied on it via this module
+export { parseDurationToMs };

@@ -7,6 +7,7 @@ export interface PersistentAuditParams {
   entity: string;
   entityId?: string | null;
   userId?: string | null;
+  rantingId?: string | null;
   ipAddress?: string | null;
   userAgent?: string | null;
   details?: Record<string, unknown> | null;
@@ -31,6 +32,7 @@ export class PersistentAuditService {
           entity: params.entity,
           entityId: params.entityId ?? null,
           userId: params.userId ?? null,
+          rantingId: params.rantingId ?? null,
           ipAddress: params.ipAddress ?? null,
           userAgent: params.userAgent ?? null,
           details: (params.details ?? undefined) as Prisma.InputJsonValue | undefined,
