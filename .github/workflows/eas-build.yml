@@ -32,9 +32,10 @@ jobs:
 
       - name: Login to Expo
         run: |
-          echo "${{ secrets.EXPO_TOKEN }}" | npx expo login --non-interactive
+          echo "${{ secrets.EXPO_TOKEN }}" | npx expo login
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          CI: 1
 
       - name: Build Android APK with EAS (local)
         run: |
@@ -42,11 +43,11 @@ jobs:
           npx eas build \
             --platform android \
             --profile production-apk \
-            --local \
-            --non-interactive
+            --local
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_API_URL: https://ths-thm.cloud
+          CI: 1
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
