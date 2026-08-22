@@ -71,9 +71,10 @@ const baseEnvSchema = z.object({
   SENTRY_DSN: z.string().url().optional().or(z.literal('')),
 });
 
-// Additional validation
+// Additional validation — issues added here are fatal; safeParse returns
+// success: false and validateEnvWithZod() calls process.exit(1).
 const envSchema = baseEnvSchema.superRefine((data, ctx) => {
-  // In production, warn about default secrets
+  // In production, reject insecure or missing secrets
   if (data.NODE_ENV === 'production') {
     if (data.JWT_SECRET === 'change-me-to-random-64-char-string') {
       ctx.addIssue({
