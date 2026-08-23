@@ -54,15 +54,16 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # ── Fix @ths-thm/shared-types module resolution ─────────────────
 # pnpm workspace symlinks are not reliably preserved by Docker COPY.
-# Instead of fighting symlink chains, we create a file-based module alias
-# that uses an absolute require path. Node resolves require("@ths-thm/shared-types")
-# by finding this .js file in node_modules, which then loads the actual code
-# via require("/app/packages/shared-types/dist/index.js").
-COPY --from=builder /app/packages/shared-types/dist /app/packages/shared-types/dist
-RUN rm -rf /app/node_modules/@ths-thm/shared-types && \
-    mkdir -p /app/node_modules/@ths-thm && \
-    printf 'module.exports = require("/app/packages/shared-types/dist/index.js");\n' \
-      > /app/node_modules/@ths-thm/shared-types.js
+# Instead of trying to fix symlinks, we use a Node.js preload script
+# (register-alias.js) that intercepts require() and resolves
+# @ths-thm/shared-types via absolute path. This completely bypasses
+# node_modules resolution for this module.
+#
+# 1. Copy the register-alias preload script
+# 2. Copy shared-types dist to a known absolute path
+# 3. Use -r flag to load the alias before the app starts
+COPY --from=builder /app/apps/api/register-alias.js ./register-alias.js
+COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
@@ -73,4 +74,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main.js"]
+CMD ["node", "-r", "./register-alias.js", "dist/main.js"]
