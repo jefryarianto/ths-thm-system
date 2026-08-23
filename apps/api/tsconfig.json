@@ -12,6 +12,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -19,7 +20,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@ths-thm/shared-types": ["../../packages/shared-types/dist/index.js"]
+      "@ths-thm/shared-types": ["../../packages/shared-types/dist/index.d.ts"]
     },
     "incremental": true
   },
