@@ -211,6 +211,14 @@ jobs:
             docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
             docker compose -f docker-compose.production.yml up -d --remove-orphans
 
+            # Debug: check module resolution in container
+            echo "   Debugging @ths-thm/shared-types..."
+            docker compose -f docker-compose.production.yml exec -T api ls -la /app/node_modules/@ths-thm/ 2>&1 || echo "   (no @ths-thm dir)"
+            docker compose -f docker-compose.production.yml exec -T api cat /app/node_modules/@ths-thm/shared-types.js 2>&1 || echo "   (no shared-types.js)"
+            docker compose -f docker-compose.production.yml exec -T api ls -la /app/node_modules/@ths-thm/shared-types 2>&1 || echo "   (no shared-types dir)"
+            docker compose -f docker-compose.production.yml exec -T api ls -la /app/packages/shared-types/dist/ 2>&1 || echo "   (no packages/shared-types/dist)"
+            docker compose -f docker-compose.production.yml exec -T api node -e "try{require('@ths-thm/shared-types');console.log('✅ require works')}catch(e){console.log('❌',e.message)}" 2>&1 || true
+
             # Wait for health check (via docker compose exec — api port is internal, not exposed on host)
             echo "   Waiting for API health check..."
             for i in $(seq 1 20); do
