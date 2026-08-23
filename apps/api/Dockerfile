@@ -72,18 +72,12 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
 # ── Verify ALL modules resolve at BUILD TIME ─────────────────────────
-# Check each dependency individually, then simulate the full require chain
-RUN node -e "
-var ok = true;
-function check(name) { try { require(name); console.log('OK ' + name); } catch(e) { console.error('FAIL ' + name + ': ' + e.message); ok = false; } }
-check('class-validator');
-check('@nestjs/swagger');
-check('class-transformer');
-check('@ths-thm/shared-types');
-check('./dist/modules/users/dto/user.dto');
-if (!ok) process.exit(1);
-console.log('ALL CHECKS PASSED');
-"
+RUN node -e "try{require('class-validator');console.log('OK class-validator')}catch(e){console.error('FAIL class-validator: '+e.message);process.exit(1)}"
+RUN node -e "try{require('@nestjs/swagger');console.log('OK @nestjs/swagger')}catch(e){console.error('FAIL @nestjs/swagger: '+e.message);process.exit(1)}"
+RUN node -e "try{require('class-transformer');console.log('OK class-transformer')}catch(e){console.error('FAIL class-transformer: '+e.message);process.exit(1)}"
+RUN node -e "try{require('@ths-thm/shared-types');console.log('OK @ths-thm/shared-types')}catch(e){console.error('FAIL @ths-thm/shared-types: '+e.message);process.exit(1)}"
+RUN node -e "try{require('./dist/modules/users/dto/user.dto');console.log('OK user.dto')}catch(e){console.error('FAIL user.dto: '+e.message);process.exit(1)}"
+RUN echo 'ALL CHECKS PASSED'
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
