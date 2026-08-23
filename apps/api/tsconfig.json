@@ -18,10 +18,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "paths": {
-      "@ths-thm/shared-types": ["../../packages/shared-types/dist/index.js"]
-    },
     "incremental": true
   },
   "include": ["src/**/*"],
