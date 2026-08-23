@@ -37,6 +37,9 @@ RUN cd packages/shared-types && pnpm run build
 RUN cd apps/api && pnpm exec prisma generate
 RUN cd apps/api && pnpm run build
 
+# Debug: dump the actual compiled user.dto.js to see what path is embedded
+RUN echo '=== user.dto.js line 16 ===' && sed -n '14,20p' apps/api/dist/modules/users/dto/user.dto.js
+
 # Remove .d.ts and .d.ts.map files from dist — they are not needed at
 # runtime and their embedded relative paths (from tsconfig paths) cause
 # MODULE_NOT_FOUND when NestJS/Swagger metadata scanning tries to resolve
