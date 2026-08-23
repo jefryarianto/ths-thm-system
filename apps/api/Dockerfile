@@ -66,7 +66,7 @@ RUN pnpm --filter @ths-thm/api deploy --prod --legacy --ignore-scripts /app/api-
 # pnpm deploy does not always copy workspace:* dependencies into node_modules.
 # Use COPY --from=builder (not RUN cp) to reliably inject the built package
 # from the builder stage, independent of any cleanup pnpm deploy may do.
-COPY --from=builder /app/node_modules/@ths-thm/shared-types /app/api-deploy/node_modules/@ths-thm/shared-types
+COPY --from=builder /app/packages/shared-types /app/api-deploy/node_modules/@ths-thm/shared-types
 
 # Copy the Prisma client generated during the build stage into the deployed
 # node_modules. The `prisma` CLI is a devDependency (not deployed with --prod),
