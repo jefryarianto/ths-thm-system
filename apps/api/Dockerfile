@@ -37,6 +37,13 @@ RUN cd packages/shared-types && pnpm run build
 RUN cd apps/api && pnpm exec prisma generate
 RUN cd apps/api && pnpm run build
 
+# Remove .d.ts and .d.ts.map files from dist — they are not needed at
+# runtime and their embedded relative paths (from tsconfig paths) cause
+# MODULE_NOT_FOUND when NestJS/Swagger metadata scanning tries to resolve
+# the TypeScript declaration import paths.
+RUN find apps/api/dist -name '*.d.ts' -delete && \
+    find apps/api/dist -name '*.d.ts.map' -delete
+
 # ── Production Stage ──────────────────────────────────────────────
 FROM node:22-alpine AS production
 
@@ -56,9 +63,6 @@ COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
 
 # ── Fix workspace package resolution ────────────────────────────────
-# pnpm uses symlinks → .pnpm store. Docker COPY resolves symlinks but
-# the internal .pnpm paths may break. Replace @ths-thm/shared-types
-# directory entirely with a clean copy.
 RUN rm -rf node_modules/@ths-thm/shared-types && \
     mkdir -p node_modules/@ths-thm/shared-types/dist && \
     cp packages/shared-types/package.json node_modules/@ths-thm/shared-types/ && \
@@ -67,7 +71,7 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
-# Copy startup wrapper (checks modules before launching app)
+# Copy startup wrapper
 COPY apps/api/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
