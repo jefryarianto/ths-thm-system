@@ -37,6 +37,15 @@ RUN cd packages/shared-types && pnpm run build
 RUN cd apps/api && pnpm exec prisma generate
 RUN cd apps/api && pnpm run build
 
+# Replace pnpm symlink for @ths-thm/shared-types with a real directory.
+# Docker COPY resolves symlinks but flattens the chain, breaking pnpm's
+# internal resolution at runtime. A real directory guarantees MODULE_NOT_FOUND
+# never happens in the production image.
+RUN rm -rf /app/node_modules/@ths-thm/shared-types && \
+    mkdir -p /app/node_modules/@ths-thm/shared-types/dist && \
+    cp /app/packages/shared-types/package.json /app/node_modules/@ths-thm/shared-types/ && \
+    cp /app/packages/shared-types/dist/* /app/node_modules/@ths-thm/shared-types/dist/
+
 # Production Stage
 FROM node:22-alpine AS production
 
@@ -50,19 +59,9 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 
 # Copy the entire root node_modules from builder.
-# With shamefully-hoist=true, pnpm hoists all packages (including workspace
-# packages) to root node_modules. This preserves the symlink structure that
-# Node.js uses to resolve @ths-thm/shared-types — which pnpm deploy fails to do.
+# @ths-thm/shared-types is a real directory (symlink replaced in builder stage)
+# so no symlink-chain issues at runtime.
 COPY --from=builder /app/node_modules ./node_modules
-
-# Copy the shared-types package that node_modules symlinks reference.
-# The pnpm symlinks in node_modules point to ../packages/shared-types,
-# so the actual source directory must exist at runtime.
-COPY --from=builder /app/packages/shared-types ./packages/shared-types
-
-# Copy Prisma client and CLI (devDependencies, not in node_modules after install)
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
