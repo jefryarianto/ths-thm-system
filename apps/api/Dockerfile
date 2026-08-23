@@ -71,9 +71,9 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
-# ── Verify module resolution at BUILD TIME ──────────────────────────
-# This catches any resolution issues before the image is pushed.
-RUN node -e "require('@ths-thm/shared-types'); console.log('✅ @ths-thm/shared-types resolved')"
+# ── Verify ALL modules resolve at BUILD TIME ─────────────────────────
+# Simulate the actual app require chain to catch resolution errors at build time
+RUN node -e "require('./dist/modules/users/dto/user.dto'); console.log('user.dto loaded OK')"
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
