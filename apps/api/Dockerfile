@@ -72,8 +72,18 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
 # ── Verify ALL modules resolve at BUILD TIME ─────────────────────────
-# Simulate the actual app require chain to catch resolution errors at build time
-RUN node -e "require('./dist/modules/users/dto/user.dto'); console.log('user.dto loaded OK')"
+# Check each dependency individually, then simulate the full require chain
+RUN node -e "
+var ok = true;
+function check(name) { try { require(name); console.log('OK ' + name); } catch(e) { console.error('FAIL ' + name + ': ' + e.message); ok = false; } }
+check('class-validator');
+check('@nestjs/swagger');
+check('class-transformer');
+check('@ths-thm/shared-types');
+check('./dist/modules/users/dto/user.dto');
+if (!ok) process.exit(1);
+console.log('ALL CHECKS PASSED');
+"
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
