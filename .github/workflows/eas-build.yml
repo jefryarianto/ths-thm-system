@@ -53,6 +53,8 @@ jobs:
           EXPO_NO_DOCTOR: 1
           CI: 1
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          JAVA_OPTS: '-Xmx4096m -XX:MaxMetaspaceSize=1024m'
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2'
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
