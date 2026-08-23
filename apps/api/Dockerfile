@@ -52,19 +52,17 @@ COPY --from=builder /app/apps/api/prisma ./prisma
 # Copy the entire root node_modules from builder
 COPY --from=builder /app/node_modules ./node_modules
 
-# ── Stage shared-types files for entrypoint fix ────────────────────
-# These are individual COPYs (raw file content, not symlinks).
-# The entrypoint script assembles them into node_modules at startup
-# if the Docker COPY of node_modules didn't preserve them correctly.
-COPY --from=builder /app/packages/shared-types/package.json /tmp/shared-types-pkg/package.json
-COPY --from=builder /app/packages/shared-types/dist/index.js /tmp/shared-types-pkg/dist/index.js
-COPY --from=builder /app/packages/shared-types/dist/index.js.map /tmp/shared-types-pkg/dist/index.js.map
-COPY --from=builder /app/packages/shared-types/dist/index.d.ts /tmp/shared-types-pkg/dist/index.d.ts
-COPY --from=builder /app/packages/shared-types/dist/index.d.ts.map /tmp/shared-types-pkg/dist/index.d.ts.map
-
-# Copy entrypoint script
-COPY apps/api/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# ── Fix @ths-thm/shared-types module resolution ─────────────────
+# pnpm workspace symlinks are not reliably preserved by Docker COPY.
+# Instead of fighting symlink chains, we create a file-based module alias
+# that uses an absolute require path. Node resolves require("@ths-thm/shared-types")
+# by finding this .js file in node_modules, which then loads the actual code
+# via require("/app/packages/shared-types/dist/index.js").
+COPY --from=builder /app/packages/shared-types/dist /app/packages/shared-types/dist
+RUN rm -rf /app/node_modules/@ths-thm/shared-types && \
+    mkdir -p /app/node_modules/@ths-thm && \
+    printf 'module.exports = require("/app/packages/shared-types/dist/index.js");\n' \
+      > /app/node_modules/@ths-thm/shared-types.js
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
@@ -74,5 +72,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
-ENTRYPOINT ["/docker-entrypoint.sh", "dumb-init", "--"]
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/main.js"]
