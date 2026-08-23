@@ -52,21 +52,19 @@ COPY --from=builder /app/apps/api/prisma ./prisma
 # Copy the entire root node_modules from builder
 COPY --from=builder /app/node_modules ./node_modules
 
-# ── Fix @ths-thm/shared-types module resolution ──────────────────────
-# pnpm workspace symlinks are NOT reliably preserved by Docker COPY,
-# so we recreate the module explicitly using individual COPY + RUN.
-# Docker COPY follows symlinks but may flatten the chain or produce
-# broken entries. This step always creates a clean, real directory.
-COPY --from=builder /app/packages/shared-types/package.json /tmp/stage-shared-types/package.json
-COPY --from=builder /app/packages/shared-types/dist/index.js /tmp/stage-shared-types/dist/index.js
-COPY --from=builder /app/packages/shared-types/dist/index.js.map /tmp/stage-shared-types/dist/index.js.map
-COPY --from=builder /app/packages/shared-types/dist/index.d.ts /tmp/stage-shared-types/dist/index.d.ts
-COPY --from=builder /app/packages/shared-types/dist/index.d.ts.map /tmp/stage-shared-types/dist/index.d.ts.map
-RUN rm -rf /app/node_modules/@ths-thm/shared-types && \
-    mkdir -p /app/node_modules/@ths-thm/shared-types/dist && \
-    cp /tmp/stage-shared-types/package.json /app/node_modules/@ths-thm/shared-types/ && \
-    cp /tmp/stage-shared-types/dist/* /app/node_modules/@ths-thm/shared-types/dist/ && \
-    rm -rf /tmp/stage-shared-types
+# ── Stage shared-types files for entrypoint fix ────────────────────
+# These are individual COPYs (raw file content, not symlinks).
+# The entrypoint script assembles them into node_modules at startup
+# if the Docker COPY of node_modules didn't preserve them correctly.
+COPY --from=builder /app/packages/shared-types/package.json /tmp/shared-types-pkg/package.json
+COPY --from=builder /app/packages/shared-types/dist/index.js /tmp/shared-types-pkg/dist/index.js
+COPY --from=builder /app/packages/shared-types/dist/index.js.map /tmp/shared-types-pkg/dist/index.js.map
+COPY --from=builder /app/packages/shared-types/dist/index.d.ts /tmp/shared-types-pkg/dist/index.d.ts
+COPY --from=builder /app/packages/shared-types/dist/index.d.ts.map /tmp/shared-types-pkg/dist/index.d.ts.map
+
+# Copy entrypoint script
+COPY apps/api/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
@@ -76,5 +74,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
-ENTRYPOINT ["dumb-init", "--"]
+ENTRYPOINT ["/docker-entrypoint.sh", "dumb-init", "--"]
 CMD ["node", "dist/main.js"]
