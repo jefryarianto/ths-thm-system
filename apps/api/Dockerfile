@@ -67,19 +67,11 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
-# ── Debug: write and run module check script ──────────────────────
-RUN node -e "require('fs').writeFileSync('/tmp/debug.js', [ \
-  'try{require(\"class-validator\");console.log(\"OK class-validator\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
-  'try{require(\"class-transformer\");console.log(\"OK class-transformer\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
-  'try{require(\"@nestjs/swagger\");console.log(\"OK @nestjs/swagger\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
-  'try{require(\"@ths-thm/shared-types\");console.log(\"OK @ths-thm/shared-types\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
-  'try{require(\"zod\");console.log(\"OK zod\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
-  'console.log(\"=== Full chain ===\")', \
-  'try{require(\"./dist/modules/users/dto/user.dto\");console.log(\"OK user.dto\")}catch(e){console.error(\"FAIL user.dto: \"+e.message);console.error(e.stack)}', \
-].join('\\n'))" && node /tmp/debug.js && rm /tmp/debug.js
-
 ENV NODE_ENV=production
 ENV APP_PORT=3001
+# Belt-and-suspenders: explicitly set NODE_PATH so Node.js always finds
+# /app/node_modules regardless of the requiring file's directory depth.
+ENV NODE_PATH=/app/node_modules
 
 EXPOSE 3001
 

@@ -216,7 +216,7 @@ jobs:
               fi
               if [ "$i" -eq 20 ]; then
                 echo "   ❌ Health check FAILED. Container logs:"
-                docker compose -f docker-compose.production.yml logs api --tail=30
+                docker compose -f docker-compose.production.yml logs api --tail=60
                 exit 1
               fi
               echo "   Attempt $i/20..."
