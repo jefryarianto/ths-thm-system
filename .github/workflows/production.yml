@@ -202,16 +202,6 @@ jobs:
             docker compose -f docker-compose.production.yml run --rm api \
               sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
 
-            # Diagnostic: verify the pulled image has the right module resolution
-            echo "   Verifying API image..."
-            docker compose -f docker-compose.production.yml run --rm api \
-              sh -c "node -e \"require('@ths-thm/shared-types'); console.log('✅ shared-types OK')\"" 2>&1 || echo "   ⚠️ Shared-types check failed"
-
-            # Diagnostic: run the app briefly to capture full startup error
-            echo "   Capturing full startup error..."
-            docker compose -f docker-compose.production.yml run --rm api \
-              sh -c "timeout 10 node dist/main.js 2>&1 || true" 2>&1 | head -40
-
             # Stop & remove old containers, then restart with latest config
             echo "   Restarting Docker services..."
             docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
@@ -226,7 +216,7 @@ jobs:
               fi
               if [ "$i" -eq 20 ]; then
                 echo "   ❌ Health check FAILED. Container logs:"
-                docker compose -f docker-compose.production.yml logs api --tail=80
+                docker compose -f docker-compose.production.yml logs api --tail=30
                 exit 1
               fi
               echo "   Attempt $i/20..."
