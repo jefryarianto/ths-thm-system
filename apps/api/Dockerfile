@@ -42,50 +42,27 @@ FROM node:22-alpine AS production
 
 # poppler-utils: menyediakan pdftoppm yang dipakai pdf-poppler (endpoint PNG kartu)
 RUN apk add --no-cache openssl libc6-compat dumb-init poppler-utils
-RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 
 WORKDIR /app
 
-# Copy workspace manifests + API package (needed by pnpm deploy for resolution)
-COPY --from=builder /app/pnpm-lock.yaml ./
-COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
-COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/apps/api/tsconfig.json ./apps/api/tsconfig.json
-COPY --from=builder /app/apps/api/nest-cli.json ./apps/api/nest-cli.json
+# Copy built API output (dist + prisma schema)
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/prisma ./prisma
 
-# Deploy ONLY @ths-thm/api with its production dependencies (no devDeps,
-# no sibling workspace packages such as web/mobile). Result is a
-# self-contained /app/api-deploy with exactly what the API needs at runtime.
-RUN pnpm --filter @ths-thm/api deploy --prod --legacy --ignore-scripts /app/api-deploy
+# Copy the entire root node_modules from builder.
+# With shamefully-hoist=true, pnpm hoists all packages (including workspace
+# packages) to root node_modules. This preserves the symlink structure that
+# Node.js uses to resolve @ths-thm/shared-types — which pnpm deploy fails to do.
+COPY --from=builder /app/node_modules ./node_modules
 
-# pnpm deploy does not always copy workspace:* dependencies into node_modules.
-# Use COPY --from=builder (not RUN cp) to reliably inject the built package
-# from the builder stage, independent of any cleanup pnpm deploy may do.
-COPY --from=builder /app/packages/shared-types /app/api-deploy/node_modules/@ths-thm/shared-types
+# Copy the shared-types package that node_modules symlinks reference.
+# The pnpm symlinks in node_modules point to ../packages/shared-types,
+# so the actual source directory must exist at runtime.
+COPY --from=builder /app/packages/shared-types ./packages/shared-types
 
-# Copy the Prisma client generated during the build stage into the deployed
-# node_modules. The `prisma` CLI is a devDependency (not deployed with --prod),
-# but the generated client at node_modules/.prisma is required at runtime.
-COPY --from=builder /app/node_modules/.prisma /app/api-deploy/node_modules/.prisma
-
-# Copy the Prisma CLI binary for running migrations in production
-COPY --from=builder /app/node_modules/prisma /app/api-deploy/node_modules/prisma
-
-# Move the deployed package to /app. Keep WORKDIR /app because storage paths
-# are resolved relative to process.cwd() (e.g. documents.service.ts uses
-# path.resolve('storage','documents')) and docker-compose mounts ./storage
-# at /app/storage.
-RUN cp -a /app/api-deploy/. /app/ && \
-    rm -rf /app/api-deploy /app/apps /app/packages /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/tsconfig.base.json /app/src /app/test /app/coverage /app/api.log /app/*.tsbuildinfo && \
-    rm -f /app/Dockerfile /app/Dockerfile.test /app/package-lock.json /app/ths-thm-system-*-firebase-adminsdk-*.json && \
-    # Firebase admin SDK is initialized from env vars (FCM_PROJECT_ID/FCM_PRIVATE_KEY/FCM_CLIENT_EMAIL)
-    # so the service-account JSON file is not needed in the image.
-    true
+# Copy Prisma client and CLI (devDependencies, not in node_modules after install)
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
