@@ -50,6 +50,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_API_URL: https://ths-thm.cloud
+          EXPO_NO_DOCTOR: 1
           CI: 1
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
