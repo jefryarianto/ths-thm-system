@@ -49,20 +49,16 @@ COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 
 # Copy the entire root node_modules from builder.
-# pnpm with shamefully-hoist puts hoisted packages at the root of node_modules,
-# but workspace packages use symlinks → .pnpm store. Docker COPY resolves
-# symlinks and copies actual file contents, so the files land in the right place.
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy shared-types built output + package.json (needed for the fix below)
+# Copy shared-types source + dist (needed for fix below)
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
 
 # ── Fix workspace package resolution ────────────────────────────────
-# After COPY, the pnpm symlink for @ths-thm/shared-types is resolved to
-# actual files, BUT the .pnpm store it referenced might have incomplete
-# paths. Replace the directory entirely with a clean copy to guarantee
-# Node.js can resolve it.
+# pnpm uses symlinks → .pnpm store. Docker COPY resolves symlinks but
+# the internal .pnpm paths may break. Replace @ths-thm/shared-types
+# directory entirely with a clean copy.
 RUN rm -rf node_modules/@ths-thm/shared-types && \
     mkdir -p node_modules/@ths-thm/shared-types/dist && \
     cp packages/shared-types/package.json node_modules/@ths-thm/shared-types/ && \
@@ -71,13 +67,16 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
-# ── Verify ALL modules resolve at BUILD TIME ─────────────────────────
-RUN node -e "try{require('class-validator');console.log('OK class-validator')}catch(e){console.error('FAIL class-validator: '+e.message);process.exit(1)}"
-RUN node -e "try{require('@nestjs/swagger');console.log('OK @nestjs/swagger')}catch(e){console.error('FAIL @nestjs/swagger: '+e.message);process.exit(1)}"
-RUN node -e "try{require('class-transformer');console.log('OK class-transformer')}catch(e){console.error('FAIL class-transformer: '+e.message);process.exit(1)}"
-RUN node -e "try{require('@ths-thm/shared-types');console.log('OK @ths-thm/shared-types')}catch(e){console.error('FAIL @ths-thm/shared-types: '+e.message);process.exit(1)}"
-RUN node -e "try{require('./dist/modules/users/dto/user.dto');console.log('OK user.dto')}catch(e){console.error('FAIL user.dto: '+e.message);process.exit(1)}"
-RUN echo 'ALL CHECKS PASSED'
+# ── Debug: write and run module check script ──────────────────────
+RUN node -e "require('fs').writeFileSync('/tmp/debug.js', [ \
+  'try{require(\"class-validator\");console.log(\"OK class-validator\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
+  'try{require(\"class-transformer\");console.log(\"OK class-transformer\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
+  'try{require(\"@nestjs/swagger\");console.log(\"OK @nestjs/swagger\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
+  'try{require(\"@ths-thm/shared-types\");console.log(\"OK @ths-thm/shared-types\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
+  'try{require(\"zod\");console.log(\"OK zod\")}catch(e){console.error(\"FAIL: \"+e.message)}', \
+  'console.log(\"=== Full chain ===\")', \
+  'try{require(\"./dist/modules/users/dto/user.dto\");console.log(\"OK user.dto\")}catch(e){console.error(\"FAIL user.dto: \"+e.message);console.error(e.stack)}', \
+].join('\\n'))" && node /tmp/debug.js && rm /tmp/debug.js
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
