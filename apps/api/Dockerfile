@@ -37,10 +37,9 @@ RUN cd packages/shared-types && pnpm run build
 RUN cd apps/api && pnpm exec prisma generate
 RUN cd apps/api && pnpm run build
 
-# Production Stage
+# ── Production Stage ──────────────────────────────────────────────
 FROM node:22-alpine AS production
 
-# poppler-utils: menyediakan pdftoppm yang dipakai pdf-poppler (endpoint PNG kartu)
 RUN apk add --no-cache openssl libc6-compat dumb-init poppler-utils
 
 WORKDIR /app
@@ -49,21 +48,32 @@ WORKDIR /app
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 
-# Copy the entire root node_modules from builder
+# Copy the entire root node_modules from builder.
+# pnpm with shamefully-hoist puts hoisted packages at the root of node_modules,
+# but workspace packages use symlinks → .pnpm store. Docker COPY resolves
+# symlinks and copies actual file contents, so the files land in the right place.
 COPY --from=builder /app/node_modules ./node_modules
 
-# ── Fix @ths-thm/shared-types module resolution ─────────────────
-# pnpm workspace symlinks are not reliably preserved by Docker COPY.
-# Instead of trying to fix symlinks, we use a Node.js preload script
-# (register-alias.js) that intercepts require() and resolves
-# @ths-thm/shared-types via absolute path. This completely bypasses
-# node_modules resolution for this module.
-#
-# 1. Copy the register-alias preload script
-# 2. Copy shared-types dist to a known absolute path
-# 3. Use -r flag to load the alias before the app starts
-COPY --from=builder /app/apps/api/register-alias.js ./register-alias.js
+# Copy shared-types built output + package.json (needed for the fix below)
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
+COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
+
+# ── Fix workspace package resolution ────────────────────────────────
+# After COPY, the pnpm symlink for @ths-thm/shared-types is resolved to
+# actual files, BUT the .pnpm store it referenced might have incomplete
+# paths. Replace the directory entirely with a clean copy to guarantee
+# Node.js can resolve it.
+RUN rm -rf node_modules/@ths-thm/shared-types && \
+    mkdir -p node_modules/@ths-thm/shared-types/dist && \
+    cp packages/shared-types/package.json node_modules/@ths-thm/shared-types/ && \
+    cp packages/shared-types/dist/index.js node_modules/@ths-thm/shared-types/dist/ && \
+    cp packages/shared-types/dist/index.d.ts node_modules/@ths-thm/shared-types/dist/ && \
+    cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
+    cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
+
+# ── Verify module resolution at BUILD TIME ──────────────────────────
+# This catches any resolution issues before the image is pushed.
+RUN node -e "require('@ths-thm/shared-types'); console.log('✅ @ths-thm/shared-types resolved')"
 
 ENV NODE_ENV=production
 ENV APP_PORT=3001
@@ -74,4 +84,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "-r", "./register-alias.js", "dist/main.js"]
+CMD ["node", "dist/main.js"]

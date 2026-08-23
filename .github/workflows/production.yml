@@ -108,8 +108,6 @@ jobs:
             "${TAG_FLAGS[@]}" \
             "${LABEL_FLAGS[@]}" \
             --file apps/api/Dockerfile \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
             --push \
             .
 
@@ -136,8 +134,6 @@ jobs:
             "${TAG_FLAGS[@]}" \
             "${LABEL_FLAGS[@]}" \
             --file apps/web/Dockerfile \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
             --push \
             .
 
@@ -205,6 +201,11 @@ jobs:
             echo "   Running database migrations..."
             docker compose -f docker-compose.production.yml run --rm api \
               sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
+
+            # Diagnostic: verify the pulled image has the right module resolution
+            echo "   Verifying API image..."
+            docker compose -f docker-compose.production.yml run --rm api \
+              sh -c "node -e \"require('@ths-thm/shared-types'); console.log('✅ shared-types OK')\"" 2>&1 || echo "   ⚠️ Shared-types check failed"
 
             # Stop & remove old containers, then restart with latest config
             echo "   Restarting Docker services..."
