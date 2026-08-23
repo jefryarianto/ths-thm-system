@@ -67,10 +67,12 @@ RUN rm -rf node_modules/@ths-thm/shared-types && \
     cp packages/shared-types/dist/index.js.map node_modules/@ths-thm/shared-types/dist/ && \
     cp packages/shared-types/dist/index.d.ts.map node_modules/@ths-thm/shared-types/dist/
 
+# Copy startup wrapper (checks modules before launching app)
+COPY apps/api/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 ENV NODE_ENV=production
 ENV APP_PORT=3001
-# Belt-and-suspenders: explicitly set NODE_PATH so Node.js always finds
-# /app/node_modules regardless of the requiring file's directory depth.
 ENV NODE_PATH=/app/node_modules
 
 EXPOSE 3001
@@ -79,4 +81,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main.js"]
+CMD ["/app/start.sh"]
