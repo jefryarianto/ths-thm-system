@@ -63,6 +63,12 @@ COPY --from=builder /app/apps/api/nest-cli.json ./apps/api/nest-cli.json
 # self-contained /app/api-deploy with exactly what the API needs at runtime.
 RUN pnpm --filter @ths-thm/api deploy --prod --legacy --ignore-scripts /app/api-deploy
 
+# pnpm deploy does not always copy workspace:* dependencies into node_modules.
+# Explicitly ensure @ths-thm/shared-types is available at runtime.
+RUN mkdir -p /app/api-deploy/node_modules/@ths-thm/shared-types/dist && \
+    cp /app/packages/shared-types/package.json /app/api-deploy/node_modules/@ths-thm/shared-types/ && \
+    cp /app/packages/shared-types/dist/* /app/api-deploy/node_modules/@ths-thm/shared-types/dist/
+
 # Copy the Prisma client generated during the build stage into the deployed
 # node_modules. The `prisma` CLI is a devDependency (not deployed with --prod),
 # but the generated client at node_modules/.prisma is required at runtime.
