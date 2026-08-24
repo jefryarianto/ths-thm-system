@@ -274,10 +274,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const handleSessionExpired = () => {
       toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
     };
+    const handleSessionExpiredRedirect = () => {
+      // Wait 2s so the user can read the toast before navigating away
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    };
 
     window.addEventListener('session-expired', handleSessionExpired);
-    return () => window.removeEventListener('session-expired', handleSessionExpired);
-  }, [toast]);
+    window.addEventListener('session-expired-redirect', handleSessionExpiredRedirect);
+    return () => {
+      window.removeEventListener('session-expired', handleSessionExpired);
+      window.removeEventListener('session-expired-redirect', handleSessionExpiredRedirect);
+    };
+  }, [toast, router]);
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
 

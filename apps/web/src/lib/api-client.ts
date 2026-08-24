@@ -83,10 +83,10 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.setItem('session-expired', 'true');
         if (typeof window !== 'undefined') {
+          // Notify the layout to show toast + redirect via Next.js router
+          // (window.location.href would unmount React before the toast is visible)
           window.dispatchEvent(new CustomEvent('session-expired'));
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 2000);
+          window.dispatchEvent(new CustomEvent('session-expired-redirect'));
         }
       } finally {
 
