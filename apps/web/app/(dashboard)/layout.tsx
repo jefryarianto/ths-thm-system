@@ -349,19 +349,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [collapsedGroups, mounted]);
 
-  // Auto-expand the group that contains the active page (so users never get lost)
+  // Auto-expand ONLY the group that contains the active page, and collapse all others
   useEffect(() => {
     if (!pathname) return;
-    setCollapsedGroups((prev) => {
+    setCollapsedGroups((_prev) => {
       const activeGroup = menuGroups.find((g) =>
         g.items.some((item) => pathname.startsWith(item.href)),
       );
-      if (activeGroup && prev.has(activeGroup.label)) {
-        const next = new Set(prev);
-        next.delete(activeGroup.label);
-        return next;
+      const next = new Set<string>();
+      if (activeGroup) {
+        next.add(activeGroup.label);
       }
-      return prev;
+      return next;
     });
   }, [pathname]);
 

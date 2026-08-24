@@ -670,7 +670,7 @@ export default function MemberDetailPage() {
                       </button>
                     )}
                     <button
-                      onClick={() => router.push(`/members/${member.id}/edit`)}
+                      onClick={() => setShowEditModal(true)}
                       className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
                     >
                       <Pencil size={14} />
