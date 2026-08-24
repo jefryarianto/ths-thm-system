@@ -167,8 +167,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Clear session-expired flag so it doesn't persist after redirect
-    localStorage.removeItem('session-expired');
+    // Check if we were redirected here due to session expiry
+    const isExpired = localStorage.getItem('session-expired') === 'true';
+    if (isExpired) {
+      setError('Sesi Anda telah berakhir. Silakan login kembali.');
+      localStorage.removeItem('session-expired');
+    }
     const oauthError = getOAuthErrorFromUrl();
     if (oauthError) setError(oauthError);
     if (typeof window !== 'undefined' && window.location.search.includes('error=')) {
