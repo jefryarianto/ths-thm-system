@@ -259,10 +259,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { user, isAdmin, isSystemAdmin, hasMinRole } = useAuth();
+  const { user, isAdmin, isSystemAdmin, hasMinRole, isActivityScoped, isActivityAdmin, isActivityPenguji } = useAuth();
   const [queueStats, setQueueStats] = useState<{ waiting: number; active: number } | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  // Activity-scoped roles: assigned kegiatan for sidebar dynamic menus
+  interface AssignedKegiatan {
+    id: string;
+    nama: string;
+    status: string;
+  }
+  const [assignedKegiatan, setAssignedKegiatan] = useState<AssignedKegiatan[]>([]);
   // Per-group collapse (accordion) — Set of group labels that are collapsed
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   // Measured content heights per group — drives the smooth max-height expand/collapse transition
@@ -480,6 +487,43 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => clearInterval(interval);
   }, [mounted]);
 
+  // Fetch assigned kegiatan for activity-scoped roles (admin_kegiatan & penguji)
+  useEffect(() => {
+    if (!mounted || !isActivityScoped) return;
+
+    const fetchAssignedKegiatan = async () => {
+      try {
+        if (isActivityAdmin) {
+          // Admin kegiatan: fetch kegiatan where adminKegiatanId = userId
+          const { data } = await apiClient.get('/graduations', { params: { limit: 50 } });
+          const items = data.data || [];
+          setAssignedKegiatan(
+            items.map((k: { id: string; nama: string; status: string }) => ({
+              id: k.id,
+              nama: k.nama,
+              status: k.status,
+            }))
+          );
+        } else if (isActivityPenguji) {
+          // Penguji: fetch kegiatan where they're assigned as penguji
+          const { data } = await apiClient.get('/graduations', { params: { limit: 50 } });
+          const items = data.data || [];
+          setAssignedKegiatan(
+            items.map((k: { id: string; nama: string; status: string }) => ({
+              id: k.id,
+              nama: k.nama,
+              status: k.status,
+            }))
+          );
+        }
+      } catch {
+        // Ignore errors - sidebar will show empty
+      }
+    };
+
+    fetchAssignedKegiatan();
+  }, [mounted, isActivityScoped, isActivityAdmin, isActivityPenguji]);
+
   // Click outside to close profile dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -541,6 +585,38 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4">
+          {/* Activity-scoped roles: show dynamic menu for assigned kegiatan */}
+          {isActivityScoped && mounted && assignedKegiatan.length > 0 && (
+            <div>
+              {!collapsed && (
+                <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-navy-400">
+                  {isActivityAdmin ? 'Kegiatan Saya' : 'Penilaian Saya'}
+                </div>
+              )}
+              {assignedKegiatan.map((kegiatan) => {
+                const href = isActivityAdmin 
+                  ? `/graduations/${kegiatan.id}` 
+                  : `/graduations/${kegiatan.id}/assessments`;
+                const isActive = pathname?.startsWith(href) || false;
+                const linkClasses = `flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-navy-700 text-gold-400 font-medium'
+                    : 'text-navy-200 hover:bg-navy-700 hover:text-white'
+                } ${collapsed ? 'justify-center px-2' : ''}`;
+
+                return (
+                  <Link key={kegiatan.id} href={href} className={linkClasses} title={collapsed ? kegiatan.nama : undefined}>
+                    <span className="relative shrink-0">
+                      {isActivityAdmin ? <GraduationCap size={18} /> : <ClipboardCheck size={18} />}
+                    </span>
+                    {!collapsed && <span className="truncate text-xs">{kegiatan.nama}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Standard menu groups (filtered by role) */}
           {menuGroups.map((group) => {
             const visibleItems = group.items.filter((item) => {
               // Admin-only items (queues, WebSocket) → superadmin

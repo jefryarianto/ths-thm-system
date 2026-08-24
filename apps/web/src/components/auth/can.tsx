@@ -43,7 +43,8 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   candidates:       { ...DEFAULT_MODULE, create: 'admin_kegiatan' },
   registrations:    { ...DEFAULT_MODULE },
   trainings:        { ...DEFAULT_MODULE, view: 'anggota' },
-  graduations:      { ...DEFAULT_MODULE },
+  // Activity-scoped: admin_kegiatan can manage kegiatan they're assigned to
+  graduations:      { ...DEFAULT_MODULE, view: 'admin_kegiatan', create: 'admin_kegiatan', edit: 'admin_kegiatan', delete: 'admin_kegiatan' },
   examiners:        { ...DEFAULT_MODULE, create: 'penguji', edit: 'penguji', delete: 'admin_ranting' },
   activities:       { ...DEFAULT_MODULE, view: 'anggota' },
   dues:             { ...DEFAULT_MODULE, view: 'anggota' },
@@ -52,7 +53,8 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   approvals:        { ...DEFAULT_MODULE },
   documents:        { ...DEFAULT_MODULE, view: 'anggota' },
   letters:          { ...DEFAULT_MODULE },
-  assessments:      { ...DEFAULT_MODULE, create: 'penguji', edit: 'penguji' },
+  // Activity-scoped: penguji can manage assessments for kegiatan they're assigned to
+  assessments:      { ...DEFAULT_MODULE, view: 'penguji', create: 'penguji', edit: 'penguji' },
   notifications:    { ...DEFAULT_MODULE, export: 'admin_ranting' },
   reports:          { ...DEFAULT_MODULE, admin: 'admin_ranting' },
   'org-chart':      { view: 'anggota', admin: 'admin_ranting' },

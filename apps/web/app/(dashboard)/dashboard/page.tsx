@@ -5,7 +5,6 @@ import apiClient from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
-
   TrendingUp,
   Bell,
   Activity,
@@ -14,6 +13,10 @@ import {
   Mail,
   ExternalLink,
   AlertCircle,
+  GraduationCap,
+  ClipboardCheck,
+  Users,
+  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -40,6 +43,7 @@ import {
   formatRupiah,
   formatTime,
 } from '@/components/dashboard/constants';
+import { useAuth } from '@/hooks/use-auth';
 
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -62,11 +66,152 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
   );
 }
 
+// ─── Activity-Scoped Dashboard (admin_kegiatan & penguji) ───
+
+interface AssignedKegiatan {
+  id: string;
+  nama: string;
+  status: string;
+  tanggalMulai: string;
+  lokasi: string | null;
+  pesertaCount?: number;
+}
+
+function ActivityScopedDashboard() {
+  const { user, isActivityAdmin, isActivityPenguji } = useAuth();
+  const [kegiatan, setKegiatan] = useState<AssignedKegiatan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchKegiatan = async () => {
+      try {
+        const { data } = await apiClient.get('/graduations', { params: { limit: 50 } });
+        setKegiatan(data.data || []);
+      } catch {
+        // Ignore errors
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchKegiatan();
+  }, []);
+
+  if (loading) return <DashboardSkeleton />;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          {isActivityAdmin ? <GraduationCap size={24} className="text-blue-600" /> : <ClipboardCheck size={24} className="text-blue-600" />}
+          {isActivityAdmin ? 'Kegiatan Saya' : 'Penilaian Saya'}
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          {isActivityAdmin 
+            ? 'Daftar kegiatan yang Anda kelola' 
+            : 'Daftar kegiatan yang Anda nilai'}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Kegiatan</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{kegiatan.length}</p>
+            </div>
+            <div className="p-3 rounded-xl ring-1 ring-blue-200 bg-blue-50 dark:bg-blue-950">
+              <GraduationCap size={22} className="text-blue-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Aktif</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">{kegiatan.filter(k => k.status === 'published' || k.status === 'draft').length}</p>
+            </div>
+            <div className="p-3 rounded-xl ring-1 ring-green-200 bg-green-50 dark:bg-green-950">
+              <Activity size={22} className="text-green-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Selesai</p>
+              <p className="text-2xl font-bold text-gray-600 dark:text-gray-300 mt-1">{kegiatan.filter(k => k.status === 'closed').length}</p>
+            </div>
+            <div className="p-3 rounded-xl ring-1 ring-gray-200 bg-gray-50 dark:bg-gray-800">
+              <Calendar size={22} className="text-gray-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Kegiatan List */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+            <GraduationCap size={15} className="text-blue-500" />
+            Daftar Kegiatan
+          </h3>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {kegiatan.length > 0 ? (
+            kegiatan.map((k) => (
+              <Link
+                key={k.id}
+                href={isActivityAdmin ? `/graduations/${k.id}` : `/graduations/${k.id}/assessments`}
+                className="px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
+                    <GraduationCap size={16} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{k.nama}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      {k.lokasi || 'Lokasi tidak ditentukan'} • {new Date(k.tanggalMulai).toLocaleDateString('id-ID')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    k.status === 'published' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                    k.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                    'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                  }`}>
+                    {k.status === 'published' ? 'Aktif' : k.status === 'draft' ? 'Draft' : k.status === 'closed' ? 'Selesai' : k.status}
+                  </span>
+                  <ChevronRight size={14} className="text-gray-400" />
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="px-5 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              <GraduationCap size={20} className="mx-auto mb-1 opacity-50" />
+              <p>Belum ada kegiatan yang ditugaskan</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page Component ───
 
 export default function DashboardPage() {
+  const { isActivityScoped } = useAuth();
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Activity-scoped roles get their own dashboard
+  if (isActivityScoped) {
+    return <ActivityScopedDashboard />;
+  }
 
   const fetchDashboard = useCallback(
     () =>
