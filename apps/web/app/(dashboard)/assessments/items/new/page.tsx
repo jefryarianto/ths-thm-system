@@ -105,7 +105,7 @@ export default function NewItemPenilaianPage() {
                     <option value="">Pilih aspek...</option>
                     {aspekList.map((a) => (
                       <option key={a.id} value={a.id}>
-                        {a.kodeAspek} — {a.namaAspek}
+                        {a.kodeAspek} - {a.namaAspek}
                       </option>
                     ))}
                   </select>

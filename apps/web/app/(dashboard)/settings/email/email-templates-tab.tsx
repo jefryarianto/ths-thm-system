@@ -182,7 +182,7 @@ export default function EmailTemplatesTab() {
             Direktori Template Email
           </h2>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {total} template •{' '}
+            {total} template ?{' '}
             <span className="text-green-600 dark:text-green-400">
               {customTemplates.size} custom
             </span>
@@ -282,7 +282,7 @@ export default function EmailTemplatesTab() {
             {/* Template Info */}
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-sm">
               <p className="text-gray-600 dark:text-gray-400">
-                <strong>Trigger:</strong> {editingTemplate.label} —{' '}
+                <strong>Trigger:</strong> {editingTemplate.label} -{' '}
                 {EMAIL_TEMPLATES.flatMap((g) => g.items).find((t) => t.name === editingTemplate.name)
                   ?.trigger || ''}
               </p>
@@ -304,7 +304,7 @@ export default function EmailTemplatesTab() {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                Contoh: Selamat Datang, {'{{nama}}'} — THS-THM
+                Contoh: Selamat Datang, {'{{nama}}'} - THS-THM
               </p>
             </div>
 

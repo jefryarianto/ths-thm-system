@@ -497,7 +497,7 @@ export default function OrgStructureSettingsPage() {
                       const ran = item as unknown as Ranting;
                       const distrik = item as unknown as Distrik;
                       const orgPath = activeTab === 'ranting'
-                        ? [ran.wilayah?.distrik?.nama, ran.wilayah?.nama].filter(Boolean).join(' › ')
+                        ? [ran.wilayah?.distrik?.nama, ran.wilayah?.nama].filter(Boolean).join(' ? ')
                         : activeTab === 'wilayah'
                           ? wil.distrik?.nama || ''
                           : '';

@@ -220,7 +220,7 @@ export default function WsMonitorPage() {
                 WebSocket Server Aktif
               </span>
               <span className="hidden sm:inline text-xs text-gray-400 dark:text-gray-500">
-                — Redis adapter terpasang
+                - Redis adapter terpasang
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">

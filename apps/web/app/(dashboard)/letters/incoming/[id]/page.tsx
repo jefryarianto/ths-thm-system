@@ -65,7 +65,7 @@ export default function IncomingLetterDetailPage() {
               backHref="/letters"
               backLabel="Kembali ke Surat"
               title={letter.perihal}
-              subtitle={`${letter.nomorSurat} — ${letter.pengirim}`}
+              subtitle={`${letter.nomorSurat} - ${letter.pengirim}`}
               headerRight={
                 <div className="flex items-center gap-2">
                   <Link

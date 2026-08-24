@@ -285,8 +285,8 @@ export default function PenandatanganPage() {
         {!loading && data.length > 0 && (
           <p className="text-xs text-gray-400 dark:text-gray-500">
             {activeCount > 0
-              ? `${activeCount} penandatangan aktif — dipakai pada kartu anggota digital.`
-              : 'Belum ada penandatangan aktif — kartu akan memakai fallback default.'}
+              ? `${activeCount} penandatangan aktif - dipakai pada kartu anggota digital.`
+              : 'Belum ada penandatangan aktif - kartu akan memakai fallback default.'}
           </p>
         )}
 
@@ -297,7 +297,7 @@ export default function PenandatanganPage() {
               Penandatangan per Dokumen
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Atur 1-3 penandatangan yang tampil di tiap jenis dokumen — urutan slot = posisi tanda
+              Atur 1-3 penandatangan yang tampil di tiap jenis dokumen - urutan slot = posisi tanda
               tangan. Kosongkan semua slot untuk memakai penandatangan aktif sebagai bawaan.
             </p>
           </div>
@@ -339,7 +339,7 @@ export default function PenandatanganPage() {
                           }
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                         >
-                          <option value="">— Kosong —</option>
+                          <option value="">- Kosong -</option>
                           {data.map((s) => (
                             <option key={s.id} value={s.id}>
                               {s.nama} ({s.jabatan})

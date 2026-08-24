@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Skeleton for a single stat card — used across dashboard pages (dues, scan-stats, etc.)
+ * Skeleton for a single stat card - used across dashboard pages (dues, scan-stats, etc.)
  */
 export function StatCardSkeleton() {
   return (

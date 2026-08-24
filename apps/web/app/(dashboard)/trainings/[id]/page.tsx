@@ -154,7 +154,7 @@ export default function TrainingDetailPage() {
                           'Latihan'}
                       </h1>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {formatDate(training.hariTanggal)} — {formatTime(training.hariTanggal)}
+                        {formatDate(training.hariTanggal)} - {formatTime(training.hariTanggal)}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400">
@@ -260,7 +260,7 @@ export default function TrainingDetailPage() {
                       <InfoRow
                         icon={Calendar}
                         label="Hari & Tanggal"
-                        value={`${formatDate(training.hariTanggal)} • ${formatTime(training.hariTanggal)}`}
+                        value={`${formatDate(training.hariTanggal)} ? ${formatTime(training.hariTanggal)}`}
                       />
                       <InfoRow
                         icon={MapPin}

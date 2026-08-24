@@ -186,7 +186,7 @@ export default function VerifyDocumentPage() {
                 <div className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                   <Fingerprint size={18} className="text-emerald-600" />
                   <span className="text-xs font-medium text-emerald-700">
-                    Terverifikasi — {formatDate(new Date().toISOString())}
+                    Terverifikasi - {formatDate(new Date().toISOString())}
                   </span>
                 </div>
 
@@ -318,7 +318,7 @@ export default function VerifyDocumentPage() {
         <div className="text-center mt-6">
           <div className="inline-flex items-center gap-1.5 text-xs text-gray-400">
             <Building2 size={12} />
-            THS-THM System — Sistem Verifikasi Dokumen
+            THS-THM System - Sistem Verifikasi Dokumen
           </div>
         </div>
       </div>

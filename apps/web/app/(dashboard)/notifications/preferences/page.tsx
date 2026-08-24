@@ -113,7 +113,7 @@ export default function NotificationPreferencesPage() {
                     Pengaturan Notifikasi
                   </h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Pilih channel notifikasi per jenis — {inAppCount}/{types.length} in-app, {emailCount}/
+                    Pilih channel notifikasi per jenis - {inAppCount}/{types.length} in-app, {emailCount}/
                     {types.length} email
                   </p>
                 </div>

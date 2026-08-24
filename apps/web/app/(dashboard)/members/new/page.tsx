@@ -67,7 +67,7 @@ export default function NewMemberPage() {
     setOrgLoading(prev => ({ ...prev, wilayah: true }));
     try {
       const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-      if (seq !== orgReqSeq.current) return; // stale response — user moved on
+      if (seq !== orgReqSeq.current) return; // stale response - user moved on
       setWilayahs(r.data.data || []);
     } catch { /* ignore */ }
     if (seq === orgReqSeq.current) {
@@ -84,7 +84,7 @@ export default function NewMemberPage() {
     setOrgLoading(prev => ({ ...prev, ranting: true }));
     try {
       const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-      if (seq !== orgReqSeq.current) return; // stale response — user moved on
+      if (seq !== orgReqSeq.current) return; // stale response - user moved on
       setRantings(r.data.data || []);
     } catch { /* ignore */ }
     if (seq === orgReqSeq.current) {
@@ -105,7 +105,7 @@ export default function NewMemberPage() {
     setSaving(true);
     setError('');
     try {
-      // Only include filled fields — empty strings (e.g. email: '') fail backend
+      // Only include filled fields - empty strings (e.g. email: '') fail backend
       // validation (@IsEmail rejects '') and would break the create request.
       const payload: Record<string, unknown> = {
         namaLengkap: form.namaLengkap,
@@ -128,7 +128,7 @@ export default function NewMemberPage() {
         router.push('/members');
       }
     } catch (err: unknown) {
-      // apiClient normalizes errors to { status, message, data } — the real
+      // apiClient normalizes errors to { status, message, data } - the real
       // server message (e.g. 'Email sudah terdaftar') lives on `err.message`.
       const raw = (err as { message?: string | string[] })?.message;
       const msg = Array.isArray(raw) ? raw.join(', ') : raw;

@@ -47,7 +47,7 @@ export function useConfirm() {
   }>({ open: false, options: { message: '' }, resolve: null });
 
   /**
-   * Promise-based confirmation — mirrors the native `confirm()` API but renders
+   * Promise-based confirmation - mirrors the native `confirm()` API but renders
    * an in-app modal. Accepts a plain message string or an options object.
    *
    *   const ok = await confirm('Hapus item ini?');

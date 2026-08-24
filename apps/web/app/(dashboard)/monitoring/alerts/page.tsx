@@ -236,7 +236,7 @@ function AlertFormModal({
           {/* Duration (seconds) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Durasi (detik) — kondisi harus bertahan selama ini sebelum alert
+              Durasi (detik) - kondisi harus bertahan selama ini sebelum alert
             </label>
             <input
               type="number"
@@ -250,7 +250,7 @@ function AlertFormModal({
           {/* Cooldown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Cooldown (detik) — minimal jeda antar notifikasi
+              Cooldown (detik) - minimal jeda antar notifikasi
             </label>
             <input
               type="number"

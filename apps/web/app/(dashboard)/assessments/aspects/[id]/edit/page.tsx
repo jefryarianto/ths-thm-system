@@ -49,7 +49,7 @@ export default function EditAspectPage() {
           bobot: a.bobot,
           isActive: a.isActive,
         });
-        setAspectTitle(`${a.kodeAspek} — ${a.namaAspek}`);
+        setAspectTitle(`${a.kodeAspek} - ${a.namaAspek}`);
       } catch {
         setFetchError('Gagal memuat data aspek');
       }

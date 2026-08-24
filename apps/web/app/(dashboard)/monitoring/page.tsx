@@ -234,7 +234,7 @@ export default function MonitoringPage() {
           setUptimeHistoryData(uptimeResp.data.history);
         }
       } catch {
-        // Uptime endpoint may be auth-restricted — gracefully degrade
+        // Uptime endpoint may be auth-restricted - gracefully degrade
       }
 
       setLastUpdated(new Date());
@@ -272,7 +272,7 @@ export default function MonitoringPage() {
         });
 
         es.addEventListener('keepalive', () => {
-          // Keepalive received — connection is healthy
+          // Keepalive received - connection is healthy
           setSseConnected(true);
         });
 
@@ -297,7 +297,7 @@ export default function MonitoringPage() {
           setSseConnected(true);
         };
       } catch {
-        // SSE not available — fall back to polling
+        // SSE not available - fall back to polling
         setSseConnected(false);
       }
     };
@@ -315,7 +315,7 @@ export default function MonitoringPage() {
   // ── Fallback polling (when SSE fails) ──
   useEffect(() => {
     if (sseConnected === false) {
-      // SSE failed — use REST polling as fallback
+      // SSE failed - use REST polling as fallback
       fetchData();
       pollingIntervalRef.current = setInterval(fetchData, 15_000);
       return () => clearInterval(pollingIntervalRef.current);
@@ -397,7 +397,7 @@ export default function MonitoringPage() {
       <PageContainer>
         <PageHeader
           title="Monitoring Server"
-          subtitle="Deteksi downtime API, Database, dan Queue — real-time via SSE"
+          subtitle="Deteksi downtime API, Database, dan Queue - real-time via SSE"
           onRefresh={fetchData}
         >
           {/* SSE Connection Status */}

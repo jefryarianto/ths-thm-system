@@ -188,7 +188,7 @@ export default function EmailSettingsPage() {
               {activeTab === 'report' && <EmailReportTab />}
               {activeTab === 'suppressed' && <EmailSuppressedTab />}
         
-              {/* Footer Info — shown for non-logs tabs */}
+              {/* Footer Info - shown for non-logs tabs */}
               {activeTab !== 'logs' && (
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
                   <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
@@ -212,7 +212,7 @@ export default function EmailSettingsPage() {
                         <li>Semua pengiriman email adalah fire-and-forget</li>
                         <li>Error di-log via Logger + tabel email_logs</li>
                         <li>Internal try/catch di setiap method email</li>
-                        <li>Tidak ada queue — langsung kirim via HTTP/fetch</li>
+                        <li>Tidak ada queue - langsung kirim via HTTP/fetch</li>
                       </ul>
                     </div>
                   </div>

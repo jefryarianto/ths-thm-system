@@ -309,11 +309,11 @@ describe('useFilters', () => {
     expect(result.current.page).toBe(1);
     act(() => result.current.setPage(5));
 
-    // debouncedSearch stays empty — page should stay 5
+    // debouncedSearch stays empty - page should stay 5
     rerender({ ds: '' });
     expect(result.current.page).toBe(5);
 
-    // debouncedSearch changes — page resets to 1
+    // debouncedSearch changes - page resets to 1
     rerender({ ds: 'updated' });
     expect(result.current.page).toBe(1);
   });

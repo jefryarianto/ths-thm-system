@@ -17,7 +17,7 @@ interface StatCardProps {
     | 'cyan'
     | 'amber'
     | 'slate';
-  /** 'large' (default) or 'mini' — mini has smaller text/padding for compact layouts */
+  /** 'large' (default) or 'mini' - mini has smaller text/padding for compact layouts */
   variant?: 'large' | 'mini';
   /** Optional subtitle shown below value */
   sub?: string;

@@ -128,11 +128,11 @@ export default function ActivityDetailPage() {
   }
 
   const dateDisplay = activity.tanggalSelesai
-    ? `${formatDate(activity.tanggalMulai)} — ${formatDate(activity.tanggalSelesai)}`
+    ? `${formatDate(activity.tanggalMulai)} - ${formatDate(activity.tanggalSelesai)}`
     : formatDate(activity.tanggalMulai);
 
   const timeDisplay = activity.tanggalSelesai
-    ? `${formatTime(activity.tanggalMulai)} — ${formatTime(activity.tanggalSelesai)}`
+    ? `${formatTime(activity.tanggalMulai)} - ${formatTime(activity.tanggalSelesai)}`
     : formatTime(activity.tanggalMulai);
 
   return (
@@ -164,9 +164,9 @@ export default function ActivityDetailPage() {
                           {activity.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dateDisplay} • {timeDisplay}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dateDisplay} ? {timeDisplay}</p>
                     </div>
-                    {/* Actions — ikon saja */}
+                    {/* Actions - ikon saja */}
                     <div className="flex items-center gap-1 mt-4 sm:mt-0">
                       <Link
                         href={`/activities/${activity.id}/edit`}

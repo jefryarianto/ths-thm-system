@@ -71,7 +71,7 @@ export function useOrgFilter(): UseOrgFilterReturn {
       const res = await apiClient.get('/gamification/org-structure');
       setOrgTree(unwrap<OrgNode[]>(res) || []);
     } catch {
-      // Ignore errors — tree remains empty
+      // Ignore errors - tree remains empty
     }
     setLoading(false);
   }, []);

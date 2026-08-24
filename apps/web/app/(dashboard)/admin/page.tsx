@@ -176,7 +176,7 @@ export default function AdminDashboardPage() {
     fetchStats();
   }, [fetchStats]);
 
-  // ── Admin Quick Links — grouped by category ──
+  // ── Admin Quick Links - grouped by category ──
 
   const adminLinks: QuickLinkProps[] = [
     { label: 'Anggota', icon: Users, href: '/members', description: 'Kelola data anggota' },

@@ -96,7 +96,7 @@ function formatTimestamp(iso: string): string {
 
 /**
  * Play a short alert tone using the Web Audio API.
- * No audio files required — tones are synthesized in the browser.
+ * No audio files required - tones are synthesized in the browser.
  */
 function playAlertSound(type: 'disconnect' | 'reconnect'): void {
   try {
@@ -107,7 +107,7 @@ function playAlertSound(type: 'disconnect' | 'reconnect'): void {
     masterGain.connect(ctx.destination);
 
     if (type === 'disconnect') {
-      // Descending tone — alarm-like: 440Hz → 220Hz over 300ms
+      // Descending tone - alarm-like: 440Hz → 220Hz over 300ms
       const osc = ctx.createOscillator();
       osc.type = 'sawtooth'; // grittier sound for alerts
       osc.frequency.setValueAtTime(440, ctx.currentTime);
@@ -125,7 +125,7 @@ function playAlertSound(type: 'disconnect' | 'reconnect'): void {
       osc2.start(ctx.currentTime + 0.4);
       osc2.stop(ctx.currentTime + 0.6);
     } else {
-      // Ascending pleasant tone — 440Hz → 880Hz over 300ms
+      // Ascending pleasant tone - 440Hz → 880Hz over 300ms
       const osc = ctx.createOscillator();
       osc.type = 'triangle'; // softer, musical tone
       osc.frequency.setValueAtTime(440, ctx.currentTime);
@@ -134,7 +134,7 @@ function playAlertSound(type: 'disconnect' | 'reconnect'): void {
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.3);
 
-      // Second chord — hold at 660Hz for warmth
+      // Second chord - hold at 660Hz for warmth
       const osc2 = ctx.createOscillator();
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(660, ctx.currentTime + 0.35);
@@ -147,7 +147,7 @@ function playAlertSound(type: 'disconnect' | 'reconnect'): void {
     // Auto-close the context after the sound finishes
     setTimeout(() => ctx.close(), 1500);
   } catch {
-    // Web Audio API not available — silently skip
+    // Web Audio API not available - silently skip
   }
 }
 
@@ -233,10 +233,10 @@ export default function QueueMonitorPage() {
   const [severityFilter, setSeverityFilter] = useState('');
   const severityFilterRef = useRef('');
 
-  // Log a health status change — only on actual transitions, not every poll cycle
+  // Log a health status change - only on actual transitions, not every poll cycle
   const logHealthEvent = useCallback((health: QueueHealth) => {
     const prev = healthEventLogRef.current[0];
-    if (prev && prev.status === health.status) return; // no change — skip
+    if (prev && prev.status === health.status) return; // no change - skip
     const event = { timestamp: new Date(), status: health.status, error: health.error };
     healthEventLogRef.current = [event, ...healthEventLogRef.current].slice(0, 20);
     setHealthEventLog(healthEventLogRef.current);
@@ -306,7 +306,7 @@ export default function QueueMonitorPage() {
       setDisconnectedAlert(false);
       setSuppressedUntilReconnect(false);
 
-      // Show a green toast banner — a separate useEffect handles auto-dismiss
+      // Show a green toast banner - a separate useEffect handles auto-dismiss
       setShowReconnectToast(true);
 
       // Play a pleasant recovery sound
@@ -356,7 +356,7 @@ export default function QueueMonitorPage() {
   }, [disconnectedAlert]);
 
   const fetchStats = useCallback(async () => {
-    // Fire all four requests in parallel — total latency = slowest single request
+    // Fire all four requests in parallel - total latency = slowest single request
     const [statsResult, healthResult, uptimeResult, eventsResult] = await Promise.allSettled([
       apiClient.get('/admin/queue-stats'),
       apiClient.get('/health'),
@@ -444,7 +444,7 @@ export default function QueueMonitorPage() {
         socket.on('disconnect', handleDisconnect);
       }
     } catch {
-      // WebSocket unavailable — polling fallback below
+      // WebSocket unavailable - polling fallback below
     }
 
     // ── Polling fallback (always active) ──
@@ -640,7 +640,7 @@ export default function QueueMonitorPage() {
                             </>
                           )}
         
-                          {/* Health event timeline — last 20 status transitions */}
+                          {/* Health event timeline - last 20 status transitions */}
                           {healthEventLog.length > 1 && (
                             <>
                               <hr className="border-gray-100 dark:border-gray-700" />
@@ -697,11 +697,11 @@ export default function QueueMonitorPage() {
                     )}
                   </div>
         
-                  {/* Uptime sparkline — 24h connection history */}
+                  {/* Uptime sparkline - 24h connection history */}
                   {uptimeHistory.length > 0 && (
                     <div
                       className="flex items-center gap-2"
-                      title={`Uptime 24 jam: ${uptimePercent}% — ${uptimeHistory.filter(h => h.status === 'connected').length} dari ${uptimeHistory.length} interval 5 menit terhubung`}
+                      title={`Uptime 24 jam: ${uptimePercent}% - ${uptimeHistory.filter(h => h.status === 'connected').length} dari ${uptimeHistory.length} interval 5 menit terhubung`}
                     >
                       <div className="flex items-end gap-[1px] h-5">
                         {(() => {
@@ -714,7 +714,7 @@ export default function QueueMonitorPage() {
                             const anyConnected = slice.some((h) => h.status === 'connected');
                             const anyDisconnected = slice.some((h) => h.status === 'disconnected');
                             if (anyConnected && anyDisconnected) {
-                              // Mixed status — find max duration in the slice for severity
+                              // Mixed status - find max duration in the slice for severity
                               const maxDuration = Math.max(...slice.map((h) => h.durationMs ?? 0));
                               let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
                               if (maxDuration >= 1_800_000) severity = 'critical';
@@ -724,7 +724,7 @@ export default function QueueMonitorPage() {
                             } else if (anyConnected) {
                               bars.push({ status: 'connected' });
                             } else {
-                              // All disconnected — find max duration for severity
+                              // All disconnected - find max duration for severity
                               const maxDuration = Math.max(...slice.map((h) => h.durationMs ?? 0));
                               let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
                               if (maxDuration >= 1_800_000) severity = 'critical';
@@ -833,12 +833,12 @@ export default function QueueMonitorPage() {
                 </div>
               </div>
         
-              {/* Last 5 Outages — persistent disconnect events from the database */}
+              {/* Last 5 Outages - persistent disconnect events from the database */}
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                 {/* Severity filter buttons */}
                 <div className="px-5 py-3 flex items-center gap-1.5 flex-wrap">
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mr-3">
-                    5 Gangguan Terakhir{severityFilter ? ` — ${severityLabels[severityFilter]}` : ''}
+                    5 Gangguan Terakhir{severityFilter ? ` - ${severityLabels[severityFilter]}` : ''}
                   </h3>
                   <div className="flex items-center gap-1.5">
                     {filterOptions.map((opt) => (
@@ -905,7 +905,7 @@ export default function QueueMonitorPage() {
                             severityLabel = 'Ringan';
                             badgeClass = 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
                           } else {
-                            severityLabel = '—';
+                            severityLabel = '-';
                             badgeClass = 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500';
                           }
                           return (
@@ -924,7 +924,7 @@ export default function QueueMonitorPage() {
                                     {formatDownTime(event.durationMs)}
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-gray-400 dark:text-gray-500 italic">—</span>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500 italic">-</span>
                                 )}
                               </td>
                               <td className="px-5 py-3">
@@ -936,7 +936,7 @@ export default function QueueMonitorPage() {
                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                   {event.endTime
                                     ? formatTimestamp(event.endTime)
-                                    : '—'}
+                                    : '-'}
                                 </span>
                               </td>
                             </tr>
@@ -948,7 +948,7 @@ export default function QueueMonitorPage() {
                 </div>
               </div>
         
-              {/* Disconnect alert — shown when queue transitions from connected to disconnected */}
+              {/* Disconnect alert - shown when queue transitions from connected to disconnected */}
               {disconnectedAlert && dismissedAlertId === null && !suppressedUntilReconnect && queueHealth?.error && (
                 <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl overflow-hidden">
                   <div className="flex items-start gap-3 px-5 py-4">
@@ -959,7 +959,7 @@ export default function QueueMonitorPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-red-800 dark:text-red-300">
-                        Koneksi Antrean Terputus{downtimeStr ? ` — ${downtimeStr}` : ''}
+                        Koneksi Antrean Terputus{downtimeStr ? ` - ${downtimeStr}` : ''}
                       </p>
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1 leading-relaxed">
                         {queueHealth.error}
@@ -975,7 +975,7 @@ export default function QueueMonitorPage() {
                         <button
                           onClick={() => setSuppressedUntilReconnect(true)}
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900 px-3 py-1.5 rounded-lg transition"
-                          title="Abaikan hingga tersambung kembali — berguna saat pemeliharaan terjadwal"
+                          title="Abaikan hingga tersambung kembali - berguna saat pemeliharaan terjadwal"
                         >
                           <Clock size={12} />
                           Abaikan hingga tersambung
@@ -993,7 +993,7 @@ export default function QueueMonitorPage() {
                 </div>
               )}
         
-              {/* Reconnect toast — briefly shown when queue comes back */}
+              {/* Reconnect toast - briefly shown when queue comes back */}
               {showReconnectToast && (
                 <div            className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl overflow-hidden transition-all duration-500 animate-slide-down">
                   <div className="flex items-center gap-3 px-5 py-4">
@@ -1195,7 +1195,7 @@ export default function QueueMonitorPage() {
                     </span>
                   </div>
         
-                  {/* Riwayat Pekerjaan — last 50 jobs table */}
+                  {/* Riwayat Pekerjaan - last 50 jobs table */}
                   <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                     <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Riwayat Pekerjaan</h3>
@@ -1258,7 +1258,7 @@ export default function QueueMonitorPage() {
                                 <td className="px-5 py-3">
                                   <span className="font-mono text-xs text-gray-600 dark:text-gray-400">
                                     {job.nomorDokumen || (
-                                      <span className="text-gray-300 dark:text-gray-600 italic">—</span>
+                                      <span className="text-gray-300 dark:text-gray-600 italic">-</span>
                                     )}
                                   </span>
                                 </td>

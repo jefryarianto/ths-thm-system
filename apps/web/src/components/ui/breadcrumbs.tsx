@@ -67,7 +67,7 @@ export default function Breadcrumbs({
               )}
 
               {isLast ? (
-                // Current page — not clickable, greyed out
+                // Current page - not clickable, greyed out
                 <span className="text-gray-500 dark:text-gray-400 font-medium truncate max-w-[200px]">
                   {index === 0 ? (
                     <span className="flex items-center gap-1">

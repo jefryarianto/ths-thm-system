@@ -127,7 +127,7 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        {/* Day cells — using CalendarDay component */}
+        {/* Day cells - using CalendarDay component */}
         <div className="grid grid-cols-7">
           {calendarDays.map((day, idx) => {
             if (day === null) return <div key={`empty-${idx}`} className="min-h-[80px] sm:min-h-[100px] bg-gray-50/30 dark:bg-gray-800/10" />;

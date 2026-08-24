@@ -72,7 +72,7 @@ interface MenuGroup {
 const SIDEBAR_EXPANDED = 256;
 const SIDEBAR_COLLAPSED = 64;
 
-// Groups that stay OPEN by default on first login (no saved preference yet) —
+// Groups that stay OPEN by default on first login (no saved preference yet) -
 // the most-used sections per role. The rest are collapsed. The active page's
 // group always auto-expands anyway, and user toggles are saved to localStorage.
 const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
@@ -92,7 +92,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Utama',
     items: [
-      // Dashboard admin — anggota diarahkan ke /forum sebagai home.
+      // Dashboard admin - anggota diarahkan ke /forum sebagai home.
       // minRole 'penguji' karena role-redirect mengarahkan penguji ke /dashboard juga.
       { href: '/dashboard', label: 'Dashboard', icon: BarChart3, minRole: 'penguji' },
     ],
@@ -270,9 +270,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     status: string;
   }
   const [assignedKegiatan, setAssignedKegiatan] = useState<AssignedKegiatan[]>([]);
-  // Per-group collapse (accordion) — Set of group labels that are collapsed
+  // Per-group collapse (accordion) - Set of group labels that are collapsed
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  // Measured content heights per group — drives the smooth max-height expand/collapse transition
+  // Measured content heights per group - drives the smooth max-height expand/collapse transition
   const [groupHeights, setGroupHeights] = useState<Record<string, number>>({});
   const groupContentRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const toast = useToast();
@@ -396,9 +396,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [pathname]);
 
   // Measure each group's content height so the max-height transition animates smoothly.
-  // Items stay in the DOM — closed groups are clipped to 0 via overflow hidden.
+  // Items stay in the DOM - closed groups are clipped to 0 via overflow hidden.
   useEffect(() => {
-    if (collapsed) return; // icon mode — wrapper is unconstrained, nothing to measure
+    if (collapsed) return; // icon mode - wrapper is unconstrained, nothing to measure
     const next: Record<string, number> = {};
     for (const group of menuGroups) {
       const el = groupContentRefs.current[group.label];
@@ -453,7 +453,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         };
       }
     } catch {
-      /* fallback to polling below — only set up interval when socket fails */
+      /* fallback to polling below - only set up interval when socket fails */
     }
 
     // Only poll when socket subscription didn't succeed
@@ -463,7 +463,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, []);
 
-  // Queue Stats Polling — only superadmin sees the Antrean menu, so poll only for them
+  // Queue Stats Polling - only superadmin sees the Antrean menu, so poll only for them
   useEffect(() => {
     if (!mounted) return;
     if (!hasMinRole('superadmin')) return;
@@ -644,7 +644,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
             return (
             <div key={group.label}>
-              {/* Group header — clickable to collapse/expand (hidden in icon-only mode) */}
+              {/* Group header - clickable to collapse/expand (hidden in icon-only mode) */}
               {!collapsed && (
                 <button
                   type="button"
@@ -666,7 +666,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
               )}
 
-              {/* Group items — smooth max-height expand/collapse. The wrapper is ALWAYS mounted;
+              {/* Group items - smooth max-height expand/collapse. The wrapper is ALWAYS mounted;
                   visibility is controlled purely by maxHeight (0 when closed, measured px when open,
                   unconstrained in icon mode) so the transition can animate both ways. */}
               <div
@@ -697,7 +697,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                   const content = (
                     <>
-                      {/* Icon — wrapped for collapsed-mode dot indicators */}
+                      {/* Icon - wrapped for collapsed-mode dot indicators */}
                       <span className="relative shrink-0">
                         <Icon size={18} />
                         {collapsed && item.href === '/notifications' && unreadCount > 0 && (
@@ -709,7 +709,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         )}
                       </span>
                       {!collapsed && <span className="truncate">{item.label}</span>}
-                      {/* Badge + external indicator — only when expanded */}
+                      {/* Badge + external indicator - only when expanded */}
                       {!collapsed && (
                         <span className="ml-auto flex items-center gap-1.5">
                           {item.href === '/notifications' && unreadCount > 0 && (
@@ -801,7 +801,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </span>
               )}
             </Link>
-            {/* Profile menu — top right of the header (moved from sidebar bottom) */}
+            {/* Profile menu - top right of the header (moved from sidebar bottom) */}
             {user && (
               <div className="relative" ref={profileRef}>
                 <button

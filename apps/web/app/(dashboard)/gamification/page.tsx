@@ -97,7 +97,7 @@ export default function GamificationPage() {
                         .slice(0, 5)
                         .map(
                           (e) =>
-                            `${rankIcons[e.rank] || `#${e.rank}`} ${e.namaLengkap || 'Member'} — ${e.points.toLocaleString('id-ID')} pts`,
+                            `${rankIcons[e.rank] || `#${e.rank}`} ${e.namaLengkap || 'Member'} - ${e.points.toLocaleString('id-ID')} pts`,
                         )
                         .join(
                           '\n',

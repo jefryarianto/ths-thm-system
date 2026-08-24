@@ -38,7 +38,7 @@ const FIELD_GROUPS: TemplateGroup[] = [
     fields: [
       { key: 'docTemplate.orgNama', label: 'Nama Organisasi', placeholder: 'THS-THM System Manajemen' },
       { key: 'docTemplate.orgAlamat', label: 'Alamat / Keterangan Organisasi', placeholder: 'Kosongkan untuk tidak ditampilkan' },
-      { key: 'docTemplate.footer', label: 'Teks Kaki (footer)', placeholder: 'Dokumen ini valid dan terverifikasi…', textarea: true },
+      { key: 'docTemplate.footer', label: 'Teks Kaki (footer)', placeholder: 'Dokumen ini valid dan terverifikasi?', textarea: true },
     ],
   },
   {
@@ -167,7 +167,7 @@ export default function DocTemplateSettingsPage() {
             className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving ? 'Menyimpan…' : 'Simpan Template'}
+            {saving ? 'Menyimpan?' : 'Simpan Template'}
           </button>
         </PageHeader>
 

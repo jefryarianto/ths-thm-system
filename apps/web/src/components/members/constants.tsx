@@ -29,7 +29,7 @@ export function formatDate(dateStr: string) {
 }
 
 /**
- * Ubah teks menjadi Proper Case — huruf pertama setiap kata kapital,
+ * Ubah teks menjadi Proper Case - huruf pertama setiap kata kapital,
  * sisanya huruf kecil. Kata sambung kecil seperti "bin", "binti", "van",
  * "von", "of", "the", "dan", "di", "dari" disetel huruf kecil semua.
  */

@@ -87,7 +87,7 @@ describe('LettersPage', () => {
     expect(screen.getByText('Isi / Konten Surat')).toBeInTheDocument();
     // Should NOT have pengirim (only appears in table header if letter has pengirim)
     const pengirimElements = screen.queryAllByText('Pengirim');
-    // Modal should not contain pengirim label — check only within the modal
+    // Modal should not contain pengirim label - check only within the modal
     expect(pengirimElements.filter((el) => el.closest('.fixed')).length).toBe(0);
   });
 

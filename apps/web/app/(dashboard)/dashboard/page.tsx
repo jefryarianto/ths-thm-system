@@ -173,7 +173,7 @@ function ActivityScopedDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{k.nama}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                      {k.lokasi || 'Lokasi tidak ditentukan'} • {new Date(k.tanggalMulai).toLocaleDateString('id-ID')}
+                      {k.lokasi || 'Lokasi tidak ditentukan'} ? {new Date(k.tanggalMulai).toLocaleDateString('id-ID')}
                     </p>
                   </div>
                 </div>

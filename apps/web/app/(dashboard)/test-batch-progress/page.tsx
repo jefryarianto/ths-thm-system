@@ -505,7 +505,7 @@ export default function TestBatchProgressPage() {
               {simulatorState === 'running' && (
                 <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-400">
                   <Bug size={16} className="shrink-0" />
-                  Simulasi berjalan — progress bar akan bergerak secara real-time.
+                  Simulasi berjalan - progress bar akan bergerak secara real-time.
                   Batch dummy menggunakan data in-memory (tidak ada API call).
                 </div>
               )}
@@ -549,7 +549,7 @@ export default function TestBatchProgressPage() {
         <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5 text-sm">
           <h3 className="font-semibold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-2">
             <FlaskConical size={16} />
-            Mode Demo — Mock Data
+            Mode Demo - Mock Data
           </h3>
           <p className="text-amber-700 dark:text-amber-500 leading-relaxed">
             Halaman ini menggunakan data palsu (in-memory) untuk demonstrasi komponen.{' '}
@@ -557,11 +557,11 @@ export default function TestBatchProgressPage() {
             sesungguhnya membutuhkan endpoint API berikut:
           </p>
           <ul className="mt-2 space-y-1 text-amber-600 dark:text-amber-500 font-mono text-xs">
-            <li><code>GET    /documents/batch</code> — daftar batch (pagination)</li>
-            <li><code>POST   /documents/batch</code> — buat batch baru</li>
-            <li><code>GET    /documents/batch/:id</code> — detail batch + jobs</li>
-            <li><code>PATCH  /documents/batch/:id/cancel</code> — batalkan batch</li>
-            <li><code>POST   /documents/batch/:id/retry</code> — ulangi job gagal</li>
+            <li><code>GET    /documents/batch</code> - daftar batch (pagination)</li>
+            <li><code>POST   /documents/batch</code> - buat batch baru</li>
+            <li><code>GET    /documents/batch/:id</code> - detail batch + jobs</li>
+            <li><code>PATCH  /documents/batch/:id/cancel</code> - batalkan batch</li>
+            <li><code>POST   /documents/batch/:id/retry</code> - ulangi job gagal</li>
           </ul>
         </div>
       </div>
@@ -612,7 +612,7 @@ function MockProgressBar({
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  Mock BatchProgressCard — visual clone of the real component
+//  Mock BatchProgressCard - visual clone of the real component
 //  Uses in-memory data, not API calls
 // ═══════════════════════════════════════════════════════════════
 
@@ -658,7 +658,7 @@ function MockBatchProgressCard({
     if (processing > 0) parts.push(`${processing} diproses`);
     if (pending > 0) parts.push(`${pending} antri`);
     parts.push(`dari ${batch.total}`);
-    return parts.join(' • ');
+    return parts.join(' ? ');
   };
 
   const borderColor =
@@ -828,7 +828,7 @@ function MockBatchProgressCard({
               >
                 <span className="shrink-0">{MOCK_JOB_STATUS_ICONS[job.status]}</span>
                 <span className="font-mono text-gray-500 truncate min-w-0 flex-1">
-                  {job.nomorDokumen || '—'}
+                  {job.nomorDokumen || '-'}
                 </span>
                 <span className="text-gray-400">{job.memberId.slice(0, 8)}...</span>
                 {job.error && (
@@ -851,7 +851,7 @@ function MockBatchProgressCard({
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  Mock BatchHistoryPanel — visual clone of the real component
+//  Mock BatchHistoryPanel - visual clone of the real component
 // ═══════════════════════════════════════════════════════════════
 
 function MockBatchHistoryPanel() {

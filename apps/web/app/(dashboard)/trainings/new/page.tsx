@@ -77,7 +77,7 @@ export default function NewTrainingPage() {
           });
           setPelatihList(res.data || []);
         } catch {
-          // Leave empty — user can still submit without pelatihId (auto-assign to current user)
+          // Leave empty - user can still submit without pelatihId (auto-assign to current user)
         }
       }
       setLoadingPelatih(false);
@@ -229,7 +229,7 @@ export default function NewTrainingPage() {
                         </option>
                         {rantings.map((r) => (
                           <option key={r.id} value={r.id}>
-                            {r.nama} {r.wilayah ? `— ${r.wilayah.nama}` : ''}
+                            {r.nama} {r.wilayah ? `- ${r.wilayah.nama}` : ''}
                           </option>
                         ))}
                       </select>

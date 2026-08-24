@@ -41,7 +41,7 @@ export default function ScanChart({ data }: ScanChartProps) {
             onChange={(e) => setDateRangeStart(e.target.value)}
             className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
-          <span className="text-xs text-gray-400">–</span>
+          <span className="text-xs text-gray-400">-</span>
           <input
             name="dateRangeEnd"
             type="date"

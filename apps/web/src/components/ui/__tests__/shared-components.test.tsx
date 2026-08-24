@@ -329,7 +329,7 @@ describe('SearchBar', () => {
           onDebouncedSearch={onDebouncedSearch}
         />,
       );
-      // Initial value is 'initial' — useDebounce returns 'initial' immediately
+      // Initial value is 'initial' - useDebounce returns 'initial' immediately
       // After 300ms, the effect fires with debouncedSearch='initial'
       act(() => {
         vi.advanceTimersByTime(300);

@@ -252,7 +252,7 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-      {/* Main row — clickable to expand */}
+      {/* Main row - clickable to expand */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full text-left p-5 focus:outline-none"
@@ -301,7 +301,7 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
                   {startDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                  {endDate && ` — ${endDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}
+                  {endDate && ` - ${endDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`}
                 </span>
                 {incident.durationMs && (
                   <span className="flex items-center gap-1 font-mono text-gray-700 dark:text-gray-300">
@@ -565,7 +565,7 @@ export default function IncidentsPage() {
               <BarChart3 size={12} />
               <span>
                 Showing {incidents.length} incident{incidents.length !== 1 ? 's' : ''}
-                {severity !== 'all' ? ` (${severity})` : ''} — last {days} days
+                {severity !== 'all' ? ` (${severity})` : ''} - last {days} days
                 {withRootCause > 0 && ` · ${withRootCause} with root cause`}
               </span>
               <span className="text-gray-300 dark:text-gray-600">|</span>

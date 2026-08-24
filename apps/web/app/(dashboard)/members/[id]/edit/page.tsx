@@ -43,7 +43,7 @@ export default function EditMemberPage() {
   const [error, setError] = useState('');
   const [fetchError, setFetchError] = useState('');
 
-  // Form state — same as new member form, plus org fields
+  // Form state - same as new member form, plus org fields
   const [form, setForm] = useState({
     namaLengkap: '',
     jenisKelamin: 'L' as 'L' | 'P',
@@ -149,7 +149,7 @@ export default function EditMemberPage() {
     if (!distrikId) return;
     try {
       const { data: res } = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-      if (seq !== orgReqSeq.current) return; // stale response — user moved on
+      if (seq !== orgReqSeq.current) return; // stale response - user moved on
       setWilayahs(res.data || []);
     } catch { /* ignore */ }
   };
@@ -161,7 +161,7 @@ export default function EditMemberPage() {
     if (!wilayahId) return;
     try {
       const { data: res } = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-      if (seq !== orgReqSeq.current) return; // stale response — user moved on
+      if (seq !== orgReqSeq.current) return; // stale response - user moved on
       setRantings(res.data || []);
     } catch { /* ignore */ }
   };
@@ -202,7 +202,7 @@ export default function EditMemberPage() {
       await apiClient.patch(`/members/${id}`, payload);
       router.push(`/members/${id}`);
     } catch (err: unknown) {
-      // apiClient normalizes errors to { status, message, data } — the real
+      // apiClient normalizes errors to { status, message, data } - the real
       // server message (e.g. 'Email sudah terdaftar') lives on `err.message`.
       const raw = (err as { message?: string | string[] })?.message;
       const msg = Array.isArray(raw) ? raw.join(', ') : raw;

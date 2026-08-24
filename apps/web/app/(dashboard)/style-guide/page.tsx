@@ -142,9 +142,9 @@ export default function StyleGuidePage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white w-full">Daftar Iuran Bulanan</h3>
                 </Showcase>
                 <Showcase label="Body">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 w-full">Text body utama — Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 w-full">Text secondary — digunakan untuk caption, metadata, dan label pendukung.</p>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 w-full">Text tertiary — untuk informasi paling rendah hierarkinya.</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 w-full">Text body utama - Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 w-full">Text secondary - digunakan untuk caption, metadata, dan label pendukung.</p>
+                  <p className="text-[11px] text-gray-400 dark:text-gray-500 w-full">Text tertiary - untuk informasi paling rendah hierarkinya.</p>
                 </Showcase>
                 <Showcase label="Links">
                   <a href="#" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">Link standar</a>
@@ -501,7 +501,7 @@ export default function StyleGuidePage() {
                     <Pagination page={page} totalPages={5} total={47} onPageChange={setPage} />
                   </div>
                 </Showcase>
-                <Showcase label="Edge — Single Page">
+                <Showcase label="Edge - Single Page">
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 w-full">
                     <Pagination page={1} totalPages={1} total={3} onPageChange={() => {}} />
                   </div>
@@ -522,7 +522,7 @@ export default function StyleGuidePage() {
                   </PageHeader>
                 </Showcase>
                 <Showcase label="With Back Link">
-                  <PageHeader title="Detail Anggota" subtitle="Ahmad Fauzi — 0114-0101-001-2026" backHref="/members" backLabel="Kembali ke Anggota" />
+                  <PageHeader title="Detail Anggota" subtitle="Ahmad Fauzi - 0114-0101-001-2026" backHref="/members" backLabel="Kembali ke Anggota" />
                 </Showcase>
                 <Showcase label="With Tabs">
                   <PageHeader

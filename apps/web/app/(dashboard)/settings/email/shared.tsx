@@ -131,7 +131,7 @@ export const EMAIL_TEMPLATES = [
     ],
   },
   {
-    category: '🧑‍🏫 Penguji & Admin',
+    category: '🧑?🏫 Penguji & Admin',
     items: [
       {
         name: 'examinerWelcomeEmail',

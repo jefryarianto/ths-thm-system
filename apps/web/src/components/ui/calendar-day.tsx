@@ -36,7 +36,7 @@ export interface CalendarDayProps {
   /** Whether this day is today */
   isToday?: boolean;
 
-  /** Day of week (0=Sunday, 6=Saturday) — used for weekend coloring */
+  /** Day of week (0=Sunday, 6=Saturday) - used for weekend coloring */
   dayOfWeek?: number;
 
   /** Whether to show weekend colors (red for Sunday, blue for Saturday) */

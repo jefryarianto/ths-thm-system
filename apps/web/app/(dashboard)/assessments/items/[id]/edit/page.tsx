@@ -52,7 +52,7 @@ export default function EditItemPenilaianPage() {
           urutan: item.urutan,
           isActive: item.isActive,
         });
-        setItemTitle(`${item.kodeItem} — ${item.namaItem}`);
+        setItemTitle(`${item.kodeItem} - ${item.namaItem}`);
       } catch {
         setFetchError('Gagal memuat data item penilaian');
       }

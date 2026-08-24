@@ -99,7 +99,7 @@ export default function ScoreboardPage() {
 
   const reportData = period === 'weekly' ? weeklyReport : monthlyReport;
 
-  // Use real data from API — map to chart format
+  // Use real data from API - map to chart format
   const breakdownData = moduleBreakdown.map((m) => ({
     name: m.label,
     points: m.points,
@@ -180,7 +180,7 @@ export default function ScoreboardPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Module Breakdown — Bar Chart */}
+        {/* Module Breakdown - Bar Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <div className="mb-4 flex items-center gap-2">
             <TrendingUp size={20} className="text-blue-500" />
@@ -217,7 +217,7 @@ export default function ScoreboardPage() {
           </p>
         </div>
 
-        {/* Level Distribution — Pie Chart */}
+        {/* Level Distribution - Pie Chart */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
           <div className="mb-4 flex items-center gap-2">
             <Target size={20} className="text-purple-500" />

@@ -63,7 +63,7 @@ export function LandingPageContent() {
               <span className="text-gold-400">MARIA</span>
             </h1>
             <p className="text-lg sm:text-xl text-white/80 max-w-2xl mb-10 leading-relaxed">
-              Sistem Manajemen Organisasi THS-THM — Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
+              Sistem Manajemen Organisasi THS-THM - Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link

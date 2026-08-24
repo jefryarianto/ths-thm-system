@@ -8,7 +8,7 @@
  *   3. Fallback: capitalize the segment
  */
 
-/** Segment-level labels — maps a single path segment to its breadcrumb label */
+/** Segment-level labels - maps a single path segment to its breadcrumb label */
 export const SEGMENT_LABELS: Record<string, string> = {
   // Utama
   '': 'Dashboard',
@@ -82,7 +82,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   report: 'Laporan',
 };
 
-/** Array of breadcrumb segment arrays — defines the full path label for list pages */
+/** Array of breadcrumb segment arrays - defines the full path label for list pages */
 export interface BreadcrumbSegment {
   href: string;
   label: string;

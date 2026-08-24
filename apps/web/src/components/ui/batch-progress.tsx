@@ -59,7 +59,7 @@ function JobRow({ job }: { job: BatchJobItem }) {
     <div className="flex items-center gap-3 px-3 py-2 text-xs border-b border-gray-50 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors rounded-sm">
       <span className="shrink-0">{JOB_STATUS_ICONS[job.status]}</span>
       <span className="font-mono text-gray-500 dark:text-gray-400 truncate min-w-0 flex-1">
-        {job.nomorDokumen || '—'}
+        {job.nomorDokumen || '-'}
       </span>
       <span className="text-gray-400 dark:text-gray-500">{job.memberId.slice(0, 8)}...</span>
       {job.error && (
@@ -473,5 +473,5 @@ function computeJobSummary(jobs: BatchJobItem[]): string {
   if (pending > 0) parts.push(`${pending} antri`);
   parts.push(`dari ${total}`);
 
-  return parts.join(' • ');
+  return parts.join(' ? ');
 }

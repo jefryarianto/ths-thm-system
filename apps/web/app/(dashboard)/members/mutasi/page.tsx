@@ -96,9 +96,9 @@ export default function MutasiPage() {
   };
 
   const pathFrom = (r: MutationRequest) =>
-    [r.fromRanting?.nama, r.fromRanting?.wilayah?.nama, r.fromRanting?.wilayah?.distrik?.nama].filter(Boolean).join(' › ');
+    [r.fromRanting?.nama, r.fromRanting?.wilayah?.nama, r.fromRanting?.wilayah?.distrik?.nama].filter(Boolean).join(' ? ');
   const pathTo = (r: MutationRequest) =>
-    [r.toRanting?.nama, r.toRanting?.wilayah?.nama, r.toRanting?.wilayah?.distrik?.nama].filter(Boolean).join(' › ');
+    [r.toRanting?.nama, r.toRanting?.wilayah?.nama, r.toRanting?.wilayah?.distrik?.nama].filter(Boolean).join(' ? ');
 
   const visible = tab === 'pending' ? requests.filter((r) => r.status === 'pending') : requests;
 

@@ -64,21 +64,21 @@ interface StorySection {
 // ─── Constants ───
 
 const SECTIONS: StorySection[] = [
-  { id: 'button', title: 'Button', description: '4 variants × 3 sizes × 5 states — all combinations' },
-  { id: 'badge', title: 'Badge', description: '5 variants — default, success, warning, danger, info' },
+  { id: 'button', title: 'Button', description: '4 variants × 3 sizes × 5 states - all combinations' },
+  { id: 'badge', title: 'Badge', description: '5 variants - default, success, warning, danger, info' },
   { id: 'input', title: 'Input', description: 'All states: normal, focused, error, disabled, with icon' },
   { id: 'select', title: 'Select', description: 'Normal, error, disabled, with placeholder' },
   { id: 'data-table', title: 'DataTable', description: 'Loading, empty, 1 row, 50 rows, error recovery' },
   { id: 'pagination', title: 'Pagination', description: 'Edge cases: 1 page, 3 pages, 20 pages' },
   { id: 'avatar', title: 'UserAvatar', description: '3 sizes × with photo / initials / long name' },
   { id: 'modal', title: 'Modal', description: 'Live demo with 3 sizes + ConfirmModal variants' },
-  { id: 'toast', title: 'Toast', description: 'Success, error, info — with auto-dismiss demo' },
+  { id: 'toast', title: 'Toast', description: 'Success, error, info - with auto-dismiss demo' },
   { id: 'breadcrumbs', title: 'Breadcrumbs', description: '2-level, 3-level, 5-level with ellipsis, with suffix' },
   { id: 'search', title: 'Search & Filter', description: 'SearchBar empty/with value, FilterSelect, combined' },
   { id: 'detail', title: 'DetailRow & InfoRow', description: 'With/without value, with href, null handling' },
   { id: 'empty-state', title: 'EmptyState', description: 'With action, without action, in DataTable context' },
   { id: 'page-header', title: 'PageHeader', description: 'Default, with back link, with actions, with tabs' },
-  { id: 'skeleton', title: 'Skeleton', description: 'StatCard, Chart, Table — loading placeholders' },
+  { id: 'skeleton', title: 'Skeleton', description: 'StatCard, Chart, Table - loading placeholders' },
   { id: 'form', title: 'Form Components', description: 'FormField required/optional, ExportMenu, SummaryBar' },
 ];
 
@@ -235,7 +235,7 @@ function StorybookPageContent() {
         <div className="max-w-7xl mx-auto px-4 pt-6">
           {/* Intro */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">📚 UI Component Library — All States Matrix</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">📚 UI Component Library - All States Matrix</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-3xl">
               Setiap komponen ditampilkan dalam semua state yang mungkin: normal, loading, empty, error, disabled, 
               dan edge cases. Gunakan halaman ini untuk QA visual, regression testing, dan onboarding developer baru.
@@ -252,7 +252,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 1. BUTTON STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="button" title="📌 Button" description="Button — 4 variants × 3 sizes × 5 states = 60 live examples">
+          <SectionCard id="button" title="📌 Button" description="Button - 4 variants × 3 sizes × 5 states = 60 live examples">
             {/* Size × Variant Matrix */}
             <div className="p-5 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Size × Variant Matrix</h3>
@@ -312,7 +312,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 2. BADGE STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="badge" title="🏷️ Badge" description="Badge — 5 variants for status indicators">
+          <SectionCard id="badge" title="🏷️ Badge" description="Badge - 5 variants for status indicators">
             <StateMatrixGrid>
               {(Object.entries({
                 default: 'Default',
@@ -331,7 +331,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 3. INPUT STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="input" title="⌨️ Input" description="Input — all validation states and edge cases">
+          <SectionCard id="input" title="⌨️ Input" description="Input - all validation states and edge cases">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5">
               <div className="space-y-5">
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Basic</h3>
@@ -344,10 +344,10 @@ function StorybookPageContent() {
               <div className="space-y-5">
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Validation & Edge</h3>
                 <Input label="Error State" placeholder="Email" defaultValue="invalid-email" error="Format email tidak valid" />
-                <Input label="Error — Empty" placeholder="Nama lengkap" error="Field ini wajib diisi" />
+                <Input label="Error - Empty" placeholder="Nama lengkap" error="Field ini wajib diisi" />
                 <Input label="Long Value" placeholder="..." defaultValue="Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore" />
                 <Input label="Number Type" type="number" placeholder="0" />
-                <Input label="Password" type="password" placeholder="••••••••" defaultValue="secret123" />
+                <Input label="Password" type="password" placeholder="????????" defaultValue="secret123" />
               </div>
             </div>
           </SectionCard>
@@ -355,7 +355,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 4. SELECT STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="select" title="📋 Select" description="Select — dropdown with all states">
+          <SectionCard id="select" title="📋 Select" description="Select - dropdown with all states">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5">
               <div className="space-y-5">
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Normal</h3>
@@ -394,7 +394,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 5. DATATABLE STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="data-table" title="📊 DataTable" description="DataTable — loading / empty / 1 row / 50 rows / error / with actions + row click">
+          <SectionCard id="data-table" title="📊 DataTable" description="DataTable - loading / empty / 1 row / 50 rows / error / with actions + row click">
 
             {view === 'grid' ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-5">
@@ -455,7 +455,7 @@ function StorybookPageContent() {
                 {/* Error State */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-500" /> Error — Retry
+                    <span className="w-2 h-2 rounded-full bg-red-500" /> Error - Retry
                   </h3>
                   <div className="bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-800 p-8 text-center">
                     <AlertCircle size={36} className="mx-auto text-red-400 dark:text-red-500 mb-3" />
@@ -567,15 +567,15 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 6. PAGINATION STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="pagination" title="🔢 Pagination" description="Pagination — edge cases: hidden, few pages, many pages, first/middle/last">
+          <SectionCard id="pagination" title="🔢 Pagination" description="Pagination - edge cases: hidden, few pages, many pages, first/middle/last">
             <div className="space-y-6 p-5">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">1 Page (hidden) — totalPages &le; 1 = tidak muncul</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">1 Page (hidden) - totalPages &le; 1 = tidak muncul</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800">
                   <PaginationComponent page={1} totalPages={1} total={5} onPageChange={() => {}} />
-                  <p className="text-xs text-gray-400 mt-2 italic">(tidak ada output — component returns null)</p>
+                  <p className="text-xs text-gray-400 mt-2 italic">(tidak ada output - component returns null)</p>
                 </div>
               </div>
 
@@ -590,7 +590,7 @@ function StorybookPageContent() {
 
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">10 Pages — Start</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">10 Pages - Start</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800">
                   <PaginationComponent page={1} totalPages={10} total={95} onPageChange={() => {}} />
@@ -599,7 +599,7 @@ function StorybookPageContent() {
 
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">10 Pages — Middle (page 5)</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">10 Pages - Middle (page 5)</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800">
                   <PaginationComponent page={5} totalPages={10} total={95} onPageChange={() => {}} />
@@ -608,7 +608,7 @@ function StorybookPageContent() {
 
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">20 Pages — End (page 20)</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">20 Pages - End (page 20)</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800">
                   <PaginationComponent page={20} totalPages={20} total={500} onPageChange={() => {}} />
@@ -620,15 +620,15 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 7. USERAVATAR STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="avatar" title="👤 UserAvatar" description="UserAvatar — 3 sizes × with photo / with initials / long name / edge cases">
+          <SectionCard id="avatar" title="👤 UserAvatar" description="UserAvatar - 3 sizes × with photo / with initials / long name / edge cases">
             <StateMatrixGrid>
-              <StateCell label="sm — Initials">
+              <StateCell label="sm - Initials">
                 <UserAvatar namaLengkap="Budi Santoso" size="sm" />
               </StateCell>
-              <StateCell label="md — Initials">
+              <StateCell label="md - Initials">
                 <UserAvatar namaLengkap="Budi Santoso" size="md" />
               </StateCell>
-              <StateCell label="lg — Initials">
+              <StateCell label="lg - Initials">
                 <UserAvatar namaLengkap="Budi Santoso" size="lg" />
               </StateCell>
               <StateCell label="Long Name (sm)">
@@ -655,7 +655,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 8. MODAL STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="modal" title="🪟 Modal & ConfirmModal" description="Modal — live demo with 3 sizes. ConfirmModal — danger, warning, info variants">
+          <SectionCard id="modal" title="🪟 Modal & ConfirmModal" description="Modal - live demo with 3 sizes. ConfirmModal - danger, warning, info variants">
             <div className="p-5 space-y-6">
               {/* Modal sizes */}
               <div>
@@ -723,7 +723,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 9. TOAST STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="toast" title="🍞 Toast" description="Toast — success, error, info notifications with auto-dismiss">
+          <SectionCard id="toast" title="🍞 Toast" description="Toast - success, error, info notifications with auto-dismiss">
             <div className="p-5">
               <div className="flex flex-wrap gap-3 mb-4">
                 <Button variant="primary" size="sm" onClick={() => toast('success', 'Data berhasil disimpan!')}>
@@ -736,9 +736,9 @@ function StorybookPageContent() {
                   ℹ️ Info Toast
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => {
-                  toast('success', 'Toast 1 — Sukses!');
-                  setTimeout(() => toast('error', 'Toast 2 — Error!'), 200);
-                  setTimeout(() => toast('info', 'Toast 3 — Info!'), 400);
+                  toast('success', 'Toast 1 - Sukses!');
+                  setTimeout(() => toast('error', 'Toast 2 - Error!'), 200);
+                  setTimeout(() => toast('info', 'Toast 3 - Info!'), 400);
                 }}>
                   📚 Stacked (3x)
                 </Button>
@@ -752,7 +752,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 10. BREADCRUMBS STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="breadcrumbs" title="🔗 Breadcrumbs" description="Breadcrumbs — 2-level, 3-level, 5-level with mobile ellipsis, with suffix">
+          <SectionCard id="breadcrumbs" title="🔗 Breadcrumbs" description="Breadcrumbs - 2-level, 3-level, 5-level with mobile ellipsis, with suffix">
             <div className="space-y-4 p-5">
               {[
                 { label: '2 Levels', segments: [{ href: '/', label: 'Dashboard' }, { href: '/members', label: 'Anggota' }] },
@@ -765,7 +765,7 @@ function StorybookPageContent() {
                   { href: '#', label: 'Ranting A' },
                 ]},
                 { label: 'With Suffix (entity name)', segments: [{ href: '/', label: 'Dashboard' }, { href: '/members', label: 'Anggota' }], suffix: { href: '#', label: 'Budi Santoso' } },
-                { label: 'Deep — 7 Levels', segments: [
+                { label: 'Deep - 7 Levels', segments: [
                   { href: '/', label: 'Dashboard' },
                   { href: '/admin', label: 'Admin' },
                   { href: '/admin/users', label: 'Users' },
@@ -790,18 +790,18 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 11. SEARCH & FILTER STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="search" title="🔍 Search & Filter" description="SearchBar — empty, with value, with filters. FilterSelect — standalone state">
+          <SectionCard id="search" title="🔍 Search & Filter" description="SearchBar - empty, with value, with filters. FilterSelect - standalone state">
             <div className="space-y-5 p-5">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">SearchBar — Empty</span>
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">SearchBar - Empty</span>
                 </div>
                 <SearchBar search="" onSearchChange={() => {}} onReset={() => {}} placeholder="Cari anggota..." />
               </div>
 
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">SearchBar — With Value + Filters</span>
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">SearchBar - With Value + Filters</span>
                 </div>
                 <SearchBar search="Budi" onSearchChange={() => {}} onReset={() => {}} placeholder="Cari anggota...">
                   <FilterSelect value="" onChange={() => {}} options={[
@@ -818,7 +818,7 @@ function StorybookPageContent() {
 
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">FilterSelect — Standalone</span>
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">FilterSelect - Standalone</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800 flex flex-wrap gap-3">
                   <FilterSelect value="" onChange={() => {}} options={[
@@ -839,7 +839,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 12. DETAILROW & INFORMROW STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="detail" title="📋 DetailRow & InfoRow" description="DetailRow — with value, null/empty value, with href. InfoRow — with value, null">
+          <SectionCard id="detail" title="📋 DetailRow & InfoRow" description="DetailRow - with value, null/empty value, with href. InfoRow - with value, null">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5">
               <div className="space-y-4">
                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">DetailRow</h3>
@@ -868,7 +868,7 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 13. EMPTYSTATE STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="empty-state" title="📭 EmptyState" description="EmptyState — with action button, without action, with title">
+          <SectionCard id="empty-state" title="📭 EmptyState" description="EmptyState - with action button, without action, with title">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -900,11 +900,11 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 14. PAGEHEADER STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="page-header" title="📐 PageHeader" description="PageHeader — default, with back link, with actions, with tabs">
+          <SectionCard id="page-header" title="📐 PageHeader" description="PageHeader - default, with back link, with actions, with tabs">
             <div className="space-y-6 p-5">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Default — with Breadcrumbs</span>
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Default - with Breadcrumbs</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800">
                   <PageHeader title="Daftar Anggota" breadcrumbSuffix={{ href: '#', label: 'Anggota' }} />
@@ -950,7 +950,7 @@ function StorybookPageContent() {
               </div>
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">All Features — Breadcrumbs + Title + Subtitle + Actions + Tabs</span>
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">All Features - Breadcrumbs + Title + Subtitle + Actions + Tabs</span>
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-800">
                   <PageHeader
@@ -977,16 +977,16 @@ function StorybookPageContent() {
           {/* ════════════════════════════════════════ */}
           {/* 15. SKELETON STORIES */}
           {/* ════════════════════════════════════════ */}
-          <SectionCard id="skeleton" title="🦴 Skeleton" description="Skeleton — loading placeholders for stat cards, charts, and tables">
+          <SectionCard id="skeleton" title="🦴 Skeleton" description="Skeleton - loading placeholders for stat cards, charts, and tables">
             <div className="space-y-6 p-5">
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">StatCardSkeleton — Single</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">StatCardSkeleton - Single</h3>
                 <div className="max-w-xs">
                   <StatCardSkeleton />
                 </div>
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">StatCardGridSkeleton — 4 Grid</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">StatCardGridSkeleton - 4 Grid</h3>
                 <StatCardGridSkeleton count={4} />
               </div>
               <div>
@@ -994,13 +994,13 @@ function StorybookPageContent() {
                 <ChartSkeleton height={200} />
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">TableSkeleton — 3 Rows × 4 Columns</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">TableSkeleton - 3 Rows × 4 Columns</h3>
                 <table className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
                   <tbody><TableSkeleton rows={3} columns={4} /></tbody>
                 </table>
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">TableSkeleton — 8 Rows × 6 Columns (dense)</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">TableSkeleton - 8 Rows × 6 Columns (dense)</h3>
                 <table className="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
                   <tbody><TableSkeleton rows={8} columns={6} /></tbody>
                 </table>
@@ -1048,7 +1048,7 @@ function StorybookPageContent() {
           <div className="mt-12 p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm text-center">
             <Shield size={24} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Component Storybook — {SECTIONS.length} sections · 21 component types · Matrix grid testing
+              Component Storybook - {SECTIONS.length} sections · 21 component types · Matrix grid testing
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
               Pastikan setiap perubahan kode dicek di sini untuk regression visual sebelum deploy.

@@ -401,7 +401,7 @@ export default function ImportCandidatesPage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {result.success} berhasil, {result.errors} gagal
                         {failedRows.length > 0 && result.errors > 0 && (
-                          <span className="ml-1">— {failedRows.length} baris dapat dicoba ulang</span>
+                          <span className="ml-1">- {failedRows.length} baris dapat dicoba ulang</span>
                         )}
                       </p>
                     </div>
@@ -411,7 +411,7 @@ export default function ImportCandidatesPage() {
                   {failedRows.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
-                        Baris Gagal ({failedRows.length}) — Klik nama/email untuk edit
+                        Baris Gagal ({failedRows.length}) - Klik nama/email untuk edit
                       </h4>
                       <div className="max-h-64 overflow-y-auto border border-red-200 dark:border-red-800 rounded-xl">
                         <table className="w-full text-xs">
@@ -665,7 +665,7 @@ export default function ImportCandidatesPage() {
                                       {v ? (
                                         <span title={v}>{v}</span>
                                       ) : (
-                                        <span className="text-gray-300 dark:text-gray-600 italic">—</span>
+                                        <span className="text-gray-300 dark:text-gray-600 italic">-</span>
                                       )}
                                     </td>
                                   ))}

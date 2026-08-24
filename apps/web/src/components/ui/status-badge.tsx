@@ -49,13 +49,13 @@ export function ResponsiveTable({ children }: { children: ReactNode }) {
           {children}
         </table>
       </div>
-      {/* Mobile: card view — children should include MobileCard items */}
+      {/* Mobile: card view - children should include MobileCard items */}
     </div>
   );
 }
 
 /**
- * Card view for mobile — wraps each row's data into a vertical card.
+ * Card view for mobile - wraps each row's data into a vertical card.
  */
 export function MobileCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
@@ -66,7 +66,7 @@ export function MobileCard({ children, className = '' }: { children: ReactNode; 
 }
 
 /**
- * Card field — label + value pair for mobile cards.
+ * Card field - label + value pair for mobile cards.
  */
 export function CardField({ label, children }: { label: string; children: ReactNode }) {
   return (

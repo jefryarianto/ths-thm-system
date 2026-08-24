@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import type { Role, User } from '@/types';
 
 /**
- * Role hierarchy index — higher = more privilege.
+ * Role hierarchy index - higher = more privilege.
  * superadmin (7) > admin_distrik (6) > admin_wilayah (5) > admin_ranting (4) >
  * admin_kegiatan (3) > penguji (2) > anggota (1)
  */
@@ -73,7 +73,7 @@ export function useAuth() {
         }
       }
     } catch {
-      // Silently fail — not authenticated
+      // Silently fail - not authenticated
     }
 
     const role: Role | null = user?.role ?? null;
@@ -88,9 +88,9 @@ export function useAuth() {
       isAuthenticated: !!user,
       /** Activity-scoped roles only see kegiatan they're assigned to */
       isActivityScoped: role ? ACTIVITY_SCOPED_ROLES.includes(role) : false,
-      /** User is admin_kegiatan — manages specific kegiatan */
+      /** User is admin_kegiatan - manages specific kegiatan */
       isActivityAdmin: role === 'admin_kegiatan',
-      /** User is penguji — grades participants in specific kegiatan */
+      /** User is penguji - grades participants in specific kegiatan */
       isActivityPenguji: role === 'penguji',
       /**
        * Check if the current user has exactly one of the given roles.

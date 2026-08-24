@@ -310,10 +310,10 @@ export default function EmailVariablesTab() {
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Subject:</p>
             <code className="text-xs text-gray-800 dark:text-gray-200 font-mono break-all">
-              Selamat Datang, {'{{nama}}'} — THS-THM
+              Selamat Datang, {'{{nama}}'} - THS-THM
             </code>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              → <em>Selamat Datang, John Doe — THS-THM</em>
+              → <em>Selamat Datang, John Doe - THS-THM</em>
             </p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">

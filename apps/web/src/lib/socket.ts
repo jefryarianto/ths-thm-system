@@ -7,7 +7,7 @@ let socket: Socket | null = null;
 // Socket.io is disabled by default to avoid 404 noise from Next.js not proxying
 // WebSocket. Set NEXT_PUBLIC_ENABLE_REALTIME=true at build time to enable
 // real-time features. Next.js inlines NEXT_PUBLIC_* env vars at build time, so
-// `process` is replaced with the actual value — no runtime typeof guard needed.
+// `process` is replaced with the actual value - no runtime typeof guard needed.
 const ENABLED = process.env.NEXT_PUBLIC_ENABLE_REALTIME === 'true';
 
 const IS_DEV = typeof window !== 'undefined' &&

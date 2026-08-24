@@ -241,7 +241,7 @@ export default function LoginPage() {
       >
         <div className="overflow-hidden rounded-3xl bg-white/70 shadow-2xl shadow-blue-900/10 backdrop-blur-xl dark:bg-gray-900/70 dark:shadow-blue-900/20">
           <div className="grid min-h-[600px] lg:grid-cols-5">
-            {/* ── LEFT PANEL — Branding ── */}
+            {/* ── LEFT PANEL - Branding ── */}
             <div className="relative hidden overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
               {/* Decorative elements */}
               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
@@ -263,7 +263,7 @@ export default function LoginPage() {
                     THS-THM
                   </h1>
                   <p className="mt-2 max-w-xs text-base leading-relaxed text-gold-400/80">
-                    Sistem Manajemen Organisasi — Kelola organisasi secara digital dalam satu
+                    Sistem Manajemen Organisasi - Kelola organisasi secara digital dalam satu
                     platform terpadu.
                   </p>
                 </div>
@@ -289,7 +289,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* ── RIGHT PANEL — Login Form ── */}
+            {/* ── RIGHT PANEL - Login Form ── */}
             <div className="flex items-center justify-center p-6 sm:p-8 lg:col-span-3 lg:p-10 xl:p-14">
               <div className="w-full max-w-sm">
                 {/* Mobile Logo (visible only on small screens) */}
@@ -388,7 +388,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       icon={Lock}
                       autoComplete="current-password"
-                      placeholder="••••••••"
+                      placeholder="????????"
                     />
                     <button
                       type="button"

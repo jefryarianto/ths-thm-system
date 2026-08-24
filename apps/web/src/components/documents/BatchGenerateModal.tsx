@@ -19,7 +19,7 @@ import { BatchProgressCard } from '@/components/ui/batch-progress';
 interface BatchGenerateModalProps {
   open: boolean;
   onClose: () => void;
-  /** Called when a batch is created — passes the batchId for redirect */
+  /** Called when a batch is created - passes the batchId for redirect */
   onBatchCreated?: (batchId: string) => void;
 }
 
@@ -312,7 +312,7 @@ export default function BatchGenerateModal({
                     {estimatedTotal > 500 && (
                       <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-yellow-600 dark:text-yellow-400">
                         <AlertTriangle size={12} />
-                        Jumlah besar — proses akan berjalan di background
+                        Jumlah besar - proses akan berjalan di background
                       </div>
                     )}
                   </div>

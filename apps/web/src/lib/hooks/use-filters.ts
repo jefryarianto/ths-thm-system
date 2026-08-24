@@ -15,7 +15,7 @@ interface UseFiltersOptions {
   initialSearch?: string;
   /** Filter configurations */
   filters?: FilterConfig[];
-  /** Debounced search value — the hook will call setPage(1) when this changes */
+  /** Debounced search value - the hook will call setPage(1) when this changes */
   debouncedSearch?: string;
 }
 

@@ -37,7 +37,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // ─── NETWORK RETRY STRATEGY ───
+    // ??? NETWORK RETRY STRATEGY ???
     const isNetworkError =
       error.code === 'ECONNABORTED' ||
       error.message?.includes('Network Error') ||
@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
       return apiClient(originalRequest);
     }
 
-    // ─── TOKEN REFRESH HANDLING ───
+    // ??? TOKEN REFRESH HANDLING ???
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve) => {
@@ -87,7 +87,7 @@ apiClient.interceptors.response.use(
           window.dispatchEvent(new CustomEvent('session-expired'));
           window.dispatchEvent(new CustomEvent('session-expired-redirect'));
         }
-        // Suppress error � redirect is handled by the event listener above.
+        // Suppress error ? redirect is handled by the event listener above.
         // Return a properly-structured empty response so callers that
         // destructure .data.data or .data.meta do not crash.
         return Promise.resolve({ data: { success: false, data: null, meta: { total: 0, totalPages: 0, page: 1, limit: 10 } } } as any);
@@ -97,7 +97,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // ─── ERROR NORMALIZATION ───
+    // ??? ERROR NORMALIZATION ???
     const normalizedError = {
       status: error.response?.status ?? 0,
       message:
@@ -127,10 +127,10 @@ export const clearTokens = () => {
  * Extract a readable error message from an apiClient rejection.
  *
  * apiClient's response interceptor normalizes every rejection to
- * `{ status, message, data }` — so page-level `err.response?.data?.message`
+ * `{ status, message, data }` - so page-level `err.response?.data?.message`
  * access is dead code and always yields `undefined`. The real server message
  * (e.g. 'Email sudah terdaftar') lives on `err.message`, which NestJS
- * ValidationPipe may provide as an array of strings — joined here.
+ * ValidationPipe may provide as an array of strings - joined here.
  *
  * Returns `''` when no message is available so callers can keep the idiomatic
  * `extractErrorMessage(err) || 'Fallback text'` pattern.
@@ -144,7 +144,7 @@ export function extractErrorMessage(err: unknown, fallback?: string): string {
   return msg?.trim() ? msg : (fallback ?? '');
 }
 
-// ─── Response Helpers ───
+// ??? Response Helpers ???
 
 /** Standard API response wrapper from the backend */
 export interface ApiResponse<T> {

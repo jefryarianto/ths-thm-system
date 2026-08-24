@@ -21,15 +21,15 @@ interface PageHeaderProps {
   title: string;
   /** Optional subtitle */
   subtitle?: string;
-  /** Refresh callback — shows a Refresh button when provided */
+  /** Refresh callback - shows a Refresh button when provided */
   onRefresh?: () => void;
-  /** Back link href — when set, shows an ArrowLeft back link instead of Breadcrumbs */
+  /** Back link href - when set, shows an ArrowLeft back link instead of Breadcrumbs */
   backHref?: string;
   /** Back link label (default: 'Kembali') */
   backLabel?: string;
   /** Action buttons rendered on the right side of the header */
   children?: ReactNode;
-  /** Tab configuration — renders a tab bar below the header when set */
+  /** Tab configuration - renders a tab bar below the header when set */
   tabs?: PageTab[];
   /** Currently active tab key */
   activeTab?: string;

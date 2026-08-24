@@ -26,7 +26,7 @@ export interface ModulePermission {
 }
 
 /**
- * Default permissions — most modules require at least admin_ranting
+ * Default permissions - most modules require at least admin_ranting
  * to create/edit/delete, but view is open to everyone.
  */
 const DEFAULT_MODULE: ModulePermission = {
@@ -76,7 +76,7 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
 // ─── Can Component ───
 
 interface CanProps {
-  /** Module name key — looks up permissions from MODULE_PERMISSIONS */
+  /** Module name key - looks up permissions from MODULE_PERMISSIONS */
   module?: string;
   /** Action to check: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'admin' */
   action?: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'admin';
@@ -121,7 +121,7 @@ interface CanProps {
  *   <AssessmentsPanel />
  * </Can>
  *
- * // Negation — show only to non-members
+ * // Negation - show only to non-members
  * <Can module="examiners" action="create" negate>
  *   <ReadOnlyMessage />
  * </Can>
@@ -155,11 +155,11 @@ export function Can({ module, action = 'view', minRole, roles, negate = false, f
     if (requiredRole) {
       allowed = hasMinRole(requiredRole);
     } else {
-      // No explicit permission defined — deny by default
+      // No explicit permission defined - deny by default
       allowed = false;
     }
   } else {
-    // No conditions — allow
+    // No conditions - allow
     allowed = true;
   }
 

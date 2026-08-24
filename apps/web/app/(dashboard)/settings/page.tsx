@@ -212,7 +212,7 @@ export default function SettingsPage() {
     setSavingStamp(true);
     setStampError('');
     try {
-      // Pakai raw fetch — apiClient memaksa Content-Type: application/json
+      // Pakai raw fetch - apiClient memaksa Content-Type: application/json
       // yang akan membuat multer gagal parse multipart (pola sama dgn upload foto).
       const fd = new FormData();
       fd.append('file', stampForm.file);
@@ -253,7 +253,7 @@ export default function SettingsPage() {
     setSavingSignature(true);
     setSignatureError('');
     try {
-      // Pakai raw fetch — apiClient memaksa Content-Type: application/json
+      // Pakai raw fetch - apiClient memaksa Content-Type: application/json
       // yang akan membuat multer gagal parse multipart (pola sama dgn upload foto).
       const fd = new FormData();
       fd.append('file', signatureForm.file);

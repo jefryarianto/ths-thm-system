@@ -42,7 +42,7 @@ export default function MemberDuesPage() {
         apiClient.get('/payments/bank-info'),
       ]);
       if (duesRes.data.success) setDues(duesRes.data.data || []);
-      // bankRes.data.data adalah ARRAY rekening aktif — ambil yang pertama (satu-satunya yg aktif)
+      // bankRes.data.data adalah ARRAY rekening aktif - ambil yang pertama (satu-satunya yg aktif)
       const bankList = bankRes.data?.data;
       if (Array.isArray(bankList) && bankList.length > 0) setBankInfo(bankList[0]);
       else setBankInfo(null);

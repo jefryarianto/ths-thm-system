@@ -39,7 +39,7 @@ export default function MemberActions({
     if (!showMenu && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      // ~7 item menu × 36px — bila ruang di bawah tidak cukup (baris terakhir
+      // ~7 item menu × 36px - bila ruang di bawah tidak cukup (baris terakhir
       // halaman), buka menu ke atas agar seluruh menu tetap terlihat.
       const estimatedMenuHeight = 320;
       setMenuStyle({

@@ -173,7 +173,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 </div>
               </div>
               <p className="text-white/70 text-sm leading-relaxed">
-                Sistem Manajemen Organisasi THS-THM — Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
+                Sistem Manajemen Organisasi THS-THM - Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
               </p>
             </div>
 

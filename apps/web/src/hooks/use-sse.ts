@@ -5,7 +5,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 /**
  * Hook to consume a Server-Sent Events (SSE) stream with auto-reconnect.
  *
- * Uses the native `EventSource` API — no extra client library needed.
+ * Uses the native `EventSource` API - no extra client library needed.
  * Falls back silently if EventSource is not available (very old browsers).
  *
  * Auth errors (401/403) are detected via the `error` SSE event sent by the server
@@ -97,7 +97,7 @@ export function useSSE(
           }
           onEventRef.current?.('error', data);
         } catch {
-          // non-JSON error event — ignore
+          // non-JSON error event - ignore
         }
       });
 
@@ -123,7 +123,7 @@ export function useSSE(
             const data = JSON.parse(e.data);
             onEventRef.current?.(eventName, data);
           } catch {
-            // non-JSON event data — ignore
+            // non-JSON event data - ignore
           }
         });
       }

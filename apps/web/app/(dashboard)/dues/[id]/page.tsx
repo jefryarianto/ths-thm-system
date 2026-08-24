@@ -110,7 +110,7 @@ export default function DuesDetailPage() {
 
   return (
       <PermissionGuard module="dues" action="view">
-        <Breadcrumbs suffix={{ href: '#', label: dues?.anggota?.namaLengkap && dues?.periode ? dues.anggota.namaLengkap + ' — ' + dues.periode : 'Detail' }} />
+        <Breadcrumbs suffix={{ href: '#', label: dues?.anggota?.namaLengkap && dues?.periode ? dues.anggota.namaLengkap + ' - ' + dues.periode : 'Detail' }} />
         <div className="max-w-2xl mx-auto space-y-6">
               {/* Back */}
               <Link href="/dues" className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group">

@@ -93,7 +93,7 @@ interface DocumentItem {
   updatedAt: string;
 }
 
-/** Label tipe dokumen — sesuai enum TipeDokumen di Prisma. */
+/** Label tipe dokumen - sesuai enum TipeDokumen di Prisma. */
 const DOKUMEN_TIPE_LABEL: Record<string, string> = {
   kartu_anggota: 'Kartu Anggota (KTA)',
   sertifikat_pendadaran: 'Sertifikat Pendadaran',
@@ -139,7 +139,7 @@ interface DuesItem {
 
 // ─── Card Preview Helpers ───
 // Visual tingkat (LEVELS/getLevelVisual) dan format data (fmt) diambil dari
-// packages/card-design — sumber tunggal desain kartu (mobile/web/PDF/preview).
+// packages/card-design - sumber tunggal desain kartu (mobile/web/PDF/preview).
 function InfoPreview({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
     <div style={{ marginBottom: FRONT.info.rowMarginBottom }}>
@@ -193,7 +193,7 @@ function BackPreview({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Foto anggota — fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onError → 404). */
+/** Foto anggota - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onError → 404). */
 function MemberPhotoWeb({ src, iconSrc, crop, iconCls }: { src: string | null; iconSrc: string; crop?: { left: number; top: number; w: number; h: number }; iconCls: string }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
@@ -351,7 +351,7 @@ export default function MemberDetailPage() {
     }
   };
 
-  /** Preview HTML (2 sisi) untuk cetak — memakai logo resmi & visual strip terkini. */
+  /** Preview HTML (2 sisi) untuk cetak - memakai logo resmi & visual strip terkini. */
   const previewKTA = async (memberId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -374,7 +374,7 @@ export default function MemberDetailPage() {
       const stripHtml = Array.from({ length: lv.stripCount })
         .map(() => `<div class="rank-strip" style="background:${lv.stripColor}"></div>`)
         .join('');
-      // Foto — fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onerror → 404/korup)
+      // Foto - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onerror → 404/korup)
       const photoIconSrc = m.jenisKelamin === 'P' ? `${window.location.origin}/woman-icon.png` : `${window.location.origin}/man-icon.png`;
       const cropBig = photoCrop(FRONT.photo.big.w, FRONT.photo.big.h);
       const cropSmall = photoCrop(FRONT.photo.small.w, FRONT.photo.small.h);
@@ -569,7 +569,7 @@ export default function MemberDetailPage() {
   const orgPath =
     [member.ranting?.wilayah?.distrik?.nama, member.ranting?.wilayah?.nama, member.ranting?.nama]
       .filter(Boolean)
-      .join(' › ') || '-';
+      .join(' ? ') || '-';
 
   // ── Data turunan kartu (sesuai template desain) ──
   const levelVisual = getLevelVisual(member.tingkat, cardData?.levelVisual || null);
@@ -977,19 +977,19 @@ export default function MemberDetailPage() {
                     </h3>
                   </div>
         
-                  {/* Front Side Preview — geometri 856×540 dari packages/card-design (sumber tunggal) */}
+                  {/* Front Side Preview - geometri 856×540 dari packages/card-design (sumber tunggal) */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Depan</h4>
                     <div
                       className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border"
                       style={{ background: COLORS.front.bg, borderColor: COLORS.front.border }}
                     >
-                      {/* Dekorasi kanon — ombak + header + gradien bawah (SVG dari spec) */}
+                      {/* Dekorasi kanon - ombak + header + gradien bawah (SVG dari spec) */}
                       <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorFrontSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
                       {/* Guilloche / microprint border (dari spec) */}
                       <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('front').replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
 
-                      {/* Watermark — peta indonesia.png washout, posisi dari spec */}
+                      {/* Watermark - peta indonesia.png washout, posisi dari spec */}
                       <div
                         className="absolute pointer-events-none opacity-[0.08]"
                         style={{ left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h }}
@@ -998,7 +998,7 @@ export default function MemberDetailPage() {
                       </div>
 
                       <div className="relative z-10 h-full">
-                        {/* Header — 4 baris + logo utuh */}
+                        {/* Header - 4 baris + logo utuh */}
                         <div className="flex items-start text-white" style={{ padding: `${FRONT.header.padTop}px ${FRONT.header.padH}px`, gap: FRONT.header.gap }}>
                           <div
                             className="relative rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0"
@@ -1021,7 +1021,7 @@ export default function MemberDetailPage() {
                           </div>
                         </div>
 
-                        {/* Photo besar kiri — TANPA bingkai; fallback siluet man/woman-icon (onError) */}
+                        {/* Photo besar kiri - TANPA bingkai; fallback siluet man/woman-icon (onError) */}
                         <div className="absolute overflow-hidden" style={{ left: FRONT.photo.big.left, top: FRONT.photo.big.top, width: FRONT.photo.big.w, height: FRONT.photo.big.h }}>
                           <MemberPhotoWeb
                             src={member.fotoPath ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png` : null}
@@ -1031,7 +1031,7 @@ export default function MemberDetailPage() {
                           />
                         </div>
 
-                        {/* Photo kecil kanan atas — TANPA bingkai, sejajar label No. Anggota; rank di bawahnya */}
+                        {/* Photo kecil kanan atas - TANPA bingkai, sejajar label No. Anggota; rank di bawahnya */}
                         <div className="absolute overflow-hidden" style={{ right: FRONT.photo.small.right, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h }}>
                           <MemberPhotoWeb
                             src={member.fotoPath ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png` : null}
@@ -1041,7 +1041,7 @@ export default function MemberDetailPage() {
                           />
                         </div>
 
-                        {/* Level rank — DI BAWAH photo kecil (kanan atas); sembunyi utk 'Anggota' */}
+                        {/* Level rank - DI BAWAH photo kecil (kanan atas); sembunyi utk 'Anggota' */}
                         {levelVisual.stripCount > 0 && (
                           <div className="absolute" style={{ right: FRONT.rank.right, top: FRONT.rank.top, width: FRONT.rank.w }}>
                             <div
@@ -1062,7 +1062,7 @@ export default function MemberDetailPage() {
                           </div>
                         )}
 
-                        {/* Info — label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20 */}
+                        {/* Info - label di atas, nilai di bawah; kolom tengah (foto kiri + kanan), z-20 */}
                         <div className="absolute z-20" style={{ left: FRONT.info.left, top: FRONT.info.top, right: FRONT.info.right }}>
                           <div className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-tr from-cyan-300/10 via-white/20 to-amber-300/10" />
                           <InfoPreview label="No. Anggota" value={(member.nomorAnggota || '-').toUpperCase()} strong />
@@ -1084,7 +1084,7 @@ export default function MemberDetailPage() {
                           <InfoPreview label="Wilayah" value={(member.ranting?.wilayah?.nama || '-').toUpperCase()} />
                         </div>
 
-                        {/* Bottom — jarak bawah sama dengan jarak atas header */}
+                        {/* Bottom - jarak bawah sama dengan jarak atas header */}
                         <div className="absolute" style={{ left: FRONT.bottom.left, bottom: FRONT.bottom.bottom }}>
                           <div style={{ fontSize: FRONT.bottom.label.fontSize, fontWeight: 700, color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom }}>
                             Berlaku sampai
@@ -1094,7 +1094,7 @@ export default function MemberDetailPage() {
                           </div>
                         </div>
 
-                        {/* Signer — teks di atas, stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
+                        {/* Signer - teks di atas, stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
                         <div className="absolute text-left" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
                           <div className="absolute font-black font-['Roboto']" style={{ left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize }}>
                             KOORDINATORAT DISTRIK THS-THM
@@ -1173,7 +1173,7 @@ export default function MemberDetailPage() {
                         </div>
                       </div>
                     </div>
-                  </div>                  {/* Back Side Preview — geometri dari packages/card-design (sumber tunggal) */}
+                  </div>                  {/* Back Side Preview - geometri dari packages/card-design (sumber tunggal) */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
                     <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border" style={{ background: COLORS.back.bg, borderColor: COLORS.back.border }}>
@@ -1181,7 +1181,7 @@ export default function MemberDetailPage() {
                       <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorBackSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
                       {/* Guilloche / microprint border (dari spec) */}
                       <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('back').replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                      {/* Watermark peta PUTIH — posisi dari spec */}
+                      {/* Watermark peta PUTIH - posisi dari spec */}
                       <div
                         className="absolute pointer-events-none"
                         style={{ left: (CARD.W - BACK.watermark.w) / 2, top: (CARD.H - BACK.watermark.h) / 2, width: BACK.watermark.w, height: BACK.watermark.h, opacity: BACK.watermark.opacity }}
@@ -1211,7 +1211,7 @@ export default function MemberDetailPage() {
                             </div>
                           )}
                         </div>
-                        {/* Area teks belakang transparan — teks putih langsung di atas gradien */}
+                        {/* Area teks belakang transparan - teks putih langsung di atas gradien */}
                         <div className="absolute" style={{ left: BACK.info.left, top: BACK.info.top, right: BACK.info.right, padding: BACK.info.padding }}>
                           <p className="font-['Roboto'] text-white/95" style={{ fontSize: BACK.info.desc.fontSize, lineHeight: `${BACK.info.desc.lineHeight}px`, opacity: BACK.info.desc.opacity, marginBottom: BACK.info.desc.marginBottom }}>
                             Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.
@@ -1244,14 +1244,14 @@ export default function MemberDetailPage() {
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg"
                     >
                       <Download size={20} />
-                      Download PDF — 2 Sisi
+                      Download PDF - 2 Sisi
                     </button>
                     <button
                       onClick={() => downloadKTA(member.id, 'image')}
                       className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg"
                     >
                       <Image size={20} />
-                      Download PNG — 2 Sisi
+                      Download PNG - 2 Sisi
                     </button>
                     <button
                       onClick={() => previewKTA(member.id)}

@@ -39,7 +39,7 @@ import {
 import Modal from '@/components/ui/modal';
 import InvitationTab from './components/InvitationTab';
 
-// ─── Constants (inline — no external file dependency) ──
+// ─── Constants (inline - no external file dependency) ──
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
@@ -328,7 +328,7 @@ export default function GraduationDetailPage() {
         if (s.itemPenilaian?.aspek?.id) aspekSet.add(s.itemPenilaian.aspek.id);
       }
       // Sertifikat di-infer dari hasil lulus yang disetujui (dokumen dibuat
-      // otomatis saat validasi disetujui — idempoten, satu per calon lulus).
+      // otomatis saat validasi disetujui - idempoten, satu per calon lulus).
       const hasilRows = rRes.status === 'fulfilled' ? (rRes.value.data.data || []) : [];
       const sertifikatCount = hasilRows.filter(
         (h: HasilRecord) =>
@@ -661,7 +661,7 @@ export default function GraduationDetailPage() {
   }
 
   const dateRange = graduation.tanggalSelesai
-    ? `${formatShort(graduation.tanggalMulai)} — ${formatShort(graduation.tanggalSelesai)}`
+    ? `${formatShort(graduation.tanggalMulai)} - ${formatShort(graduation.tanggalSelesai)}`
     : formatDate(graduation.tanggalMulai);
 
   const participatingCount = participants.filter((p) => p.status === 'mengikuti_pendadaran').length;
@@ -832,7 +832,7 @@ export default function GraduationDetailPage() {
                       <Mail size={14} /> QR Absensi Pendadaran
                     </p>
                     <p className="text-xs text-gray-400 mb-3">
-                      Tampilkan QR ini — anggota memindainya lewat menu Scan QR (mode Check-in) untuk absen hadir.
+                      Tampilkan QR ini - anggota memindainya lewat menu Scan QR (mode Check-in) untuk absen hadir.
                     </p>
                     <div className="flex items-center gap-3">
                       {qrLoading ? (
@@ -1547,7 +1547,7 @@ export default function GraduationDetailPage() {
                 {results.map((r) => (
                   <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.calonAnggota?.namaLengkap || '—'}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.calonAnggota?.namaLengkap || '-'}</p>
                       <p className="text-xs text-gray-400">
                         {r.calonAnggota?.ranting?.nama || '-'} · Skor {Number(r.totalSkor)} · Rank {r.ranking ?? '-'}
                       </p>

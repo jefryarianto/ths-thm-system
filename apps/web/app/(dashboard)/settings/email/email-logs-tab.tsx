@@ -252,7 +252,7 @@ export default function EmailLogsTab() {
               onChange={(e) => setStartDate(e.target.value)}
               className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 w-32"
             />
-            <span className="text-xs text-gray-400">–</span>
+            <span className="text-xs text-gray-400">-</span>
             <input
               type="date"
               value={endDate}
@@ -464,7 +464,7 @@ export default function EmailLogsTab() {
                             Retry
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-300 dark:text-gray-600">–</span>
+                          <span className="text-xs text-gray-300 dark:text-gray-600">-</span>
                         )}
                       </td>
                     </tr>

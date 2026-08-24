@@ -33,7 +33,7 @@ interface MutationModalProps {
 }
 
 const chainText = (scope?: string) => {
-  // Informasi rantai persetujuan — ringkas untuk preview di modal
+  // Informasi rantai persetujuan - ringkas untuk preview di modal
   if (scope === 'distrik') return 'Wilayah → Distrik';
   if (scope === 'nasional') return 'Ranting Asal → Wilayah → Distrik → Ranting Tujuan → Wilayah → Distrik';
   return undefined;
@@ -131,7 +131,7 @@ export default function MutationModal({ open, onClose, onSuccess, member }: Muta
           <p className="font-medium text-gray-900 dark:text-white">{member?.namaLengkap}</p>
           <p className="text-xs text-gray-500">{member?.nomorAnggota}</p>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-            Ranting saat ini: {member?.ranting?.nama || '—'}
+            Ranting saat ini: {member?.ranting?.nama || '-'}
             {member?.ranting?.wilayah ? ` · ${member.ranting.wilayah.nama}` : ''}
             {member?.ranting?.wilayah?.distrik ? ` · ${member.ranting.wilayah.distrik.nama}` : ''}
           </p>

@@ -339,7 +339,7 @@ export default function ProfilePage() {
                   <div className="sm:col-span-2">
                     <span className="text-gray-500 dark:text-gray-400">Organisasi</span>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {[member.ranting?.wilayah?.distrik?.nama, member.ranting?.wilayah?.nama, member.ranting?.nama].filter(Boolean).join(' › ') || '-'}
+                      {[member.ranting?.wilayah?.distrik?.nama, member.ranting?.wilayah?.nama, member.ranting?.nama].filter(Boolean).join(' ? ') || '-'}
                     </p>
                   </div>
                 </div>

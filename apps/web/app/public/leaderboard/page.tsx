@@ -146,7 +146,7 @@ export default function PublicLeaderboardPage() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-xs text-gray-400">
-            THS-THM System — Poin dihitung dari latihan, iuran, dan prestasi
+            THS-THM System - Poin dihitung dari latihan, iuran, dan prestasi
           </p>
         </div>
       </div>

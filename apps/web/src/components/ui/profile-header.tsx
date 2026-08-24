@@ -32,7 +32,7 @@ export interface ProfileHeaderProps {
   gradient?: string;
   /** If true, hides the colored gradient bar entirely (content starts at the top normally) */
   hideGradient?: boolean;
-  /** Refresh callback — shows a refresh button when provided */
+  /** Refresh callback - shows a refresh button when provided */
   onRefresh?: () => void;
 }
 
@@ -70,7 +70,7 @@ export default function ProfileHeader({
         </div>
       )}
 
-      {/* Content — pulled up to overlap the gradient bar when present */}
+      {/* Content - pulled up to overlap the gradient bar when present */}
       <div className={`relative px-6 pb-6 ${hideGradient ? 'pt-6' : '-mt-12'}`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
           {/* Avatar */}
@@ -136,7 +136,7 @@ export default function ProfileHeader({
             </div>
           </div>
 
-          {/* Right side — Refresh + Action Buttons */}
+          {/* Right side - Refresh + Action Buttons */}
           {(hideGradient && onRefresh) || actions ? (
             <div className="flex items-center gap-2 mt-4 sm:mt-0 shrink-0">
               {hideGradient && onRefresh && (

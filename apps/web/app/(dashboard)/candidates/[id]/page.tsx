@@ -170,7 +170,7 @@ export default function CandidateDetailPage() {
       candidate.ranting?.nama,
     ]
       .filter(Boolean)
-      .join(' › ') || '-';
+      .join(' ? ') || '-';
   return (
       <PermissionGuard module="candidates" action="view">
         <Breadcrumbs suffix={{ href: '#', label: candidate?.namaLengkap || 'Detail' }} />
@@ -357,7 +357,7 @@ export default function CandidateDetailPage() {
                 </div>
               </div>
         
-              {/* Approve Modal — input data kelulusan pendadaran */}
+              {/* Approve Modal - input data kelulusan pendadaran */}
               <Modal
                 open={showApproveModal}
                 onClose={() => setShowApproveModal(false)}

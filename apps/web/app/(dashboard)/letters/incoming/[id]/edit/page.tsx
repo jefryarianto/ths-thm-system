@@ -112,7 +112,7 @@ export default function EditIncomingLetterPage() {
         <FormLayout
               backHref={`/letters/incoming/${id}`}
               title="Edit Surat Masuk"
-              subtitle={`${original.nomorSurat} — ${original.pengirim}`}
+              subtitle={`${original.nomorSurat} - ${original.pengirim}`}
               error={formError}
               saving={saving}
               onSubmit={handleSubmit}

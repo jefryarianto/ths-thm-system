@@ -138,7 +138,7 @@ export default function EmailSuppressedTab() {
             Daftar Supresi Email
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Alamat email yang ditekan pengirimannya — otomatis atau manual
+            Alamat email yang ditekan pengirimannya - otomatis atau manual
           </p>
         </div>
         <div className="flex items-center gap-2">

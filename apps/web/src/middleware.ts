@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
 
   // E2E test bypass: when the Playwright route interceptor injects this header,
   // skip the auth check so tests can mock auth at the API level.
-  // Only active in development/test mode — never in production.
+  // Only active in development/test mode - never in production.
   if (process.env.NODE_ENV !== 'production' && request.headers.get('x-e2e-bypass') === 'true') {
     return NextResponse.next();
   }

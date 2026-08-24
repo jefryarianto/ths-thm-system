@@ -11,7 +11,7 @@ export interface BatchProgress {
   total: number;
   completed: number;
   failed: number;
-  progress: number; // 0–100
+  progress: number; // 0-100
   status: 'pending' | 'processing' | 'completed' | 'completed_with_errors' | 'cancelled';
 }
 
@@ -98,7 +98,7 @@ export function useBatchProgress(
         if (data.batchId === batchId) {
           setProgress(data);
           if (data.status === 'completed' || data.status === 'completed_with_errors') {
-            // Final state — fetch full detail and stop polling
+            // Final state - fetch full detail and stop polling
             fetchBatch();
           }
         }
@@ -118,7 +118,7 @@ export function useBatchProgress(
         socket.off('batch:complete', handleComplete);
       };
     } catch {
-      // Socket.IO unavailable — fallback to polling
+      // Socket.IO unavailable - fallback to polling
       return undefined;
     }
   }, [batchId, fetchBatch]);
@@ -142,7 +142,7 @@ export function useBatchProgress(
     };
   }, [batchId, fetchBatch, pollingInterval]);
 
-  // ── Main effect — decide Socket.IO vs Polling ──
+  // ── Main effect - decide Socket.IO vs Polling ──
   useEffect(() => {
     if (!batchId || !enabledRef.current) return;
 
