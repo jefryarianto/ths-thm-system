@@ -220,7 +220,7 @@ export class AssessmentsService {
 
   // ── Scores ──
 
-  async getScores(query: ScoreFilterDto, scope?: UserScope) {
+  async getScores(query: ScoreFilterDto, scope?: UserScope, userId?: string, role?: string) {
     const where: Record<string, unknown> = {};
     if (query.calonAnggotaId) where.calonAnggotaId = query.calonAnggotaId;
 
@@ -234,6 +234,18 @@ export class AssessmentsService {
         );
       }
       where.kegiatanId = query.kegiatanId;
+    } else if (role === 'penguji' && userId) {
+      // Penguji can only see scores for kegiatan they're assigned to
+      const assignments = await this.prisma.penugasanPenguji.findMany({
+        where: { pengujiUserId: userId, status: 'approved' },
+        select: { kegiatanId: true },
+      });
+      const kegiatanIds = assignments.map((a) => a.kegiatanId);
+      if (kegiatanIds.length === 0) {
+        // No assigned kegiatan, return empty
+        return { data: [], meta: { total: 0, totalPages: 0, page: query.page || 1, limit: query.limit || 20 } };
+      }
+      where.kegiatanId = { in: kegiatanIds };
     } else if (scope) {
       if (scope.rantingId) {
         where.kegiatan = { scopeType: 'ranting', scopeId: scope.rantingId };

@@ -144,7 +144,7 @@ export class AssessmentsController {
   @ApiQuery({ name: 'calonAnggotaId', required: false, description: 'Filter berdasarkan calon anggota' })
   @ApiOkResponse({ description: 'Daftar nilai pendadaran' })
   getScores(@Query() q: ScoreFilterDto, @Req() req: ScopedRequest) {
-    return this.service.getScores(q, req.scope);
+    return this.service.getScores(q, req.scope, req.user?.id, req.user?.role);
   }
 
   @Post('scores')
