@@ -56,7 +56,6 @@ export default function MembersPage() {
       { key: 'distrikId', defaultValue: '' },
       { key: 'wilayahId', defaultValue: '' },
       { key: 'rantingId', defaultValue: '' },
-      { key: 'tanpaFoto', defaultValue: '' },
     ],
   });
   const debouncedSearch = useDebounce(search, 300);
@@ -74,7 +73,6 @@ export default function MembersPage() {
     if (filters.statusKeanggotaan) params.statusKeanggotaan = filters.statusKeanggotaan;
     if (filters.statusData) params.statusData = filters.statusData;
     if (filters.statusValidasi) params.statusValidasi = filters.statusValidasi;
-    if (filters.tanpaFoto) params.tanpaFoto = filters.tanpaFoto;
     return apiClient.get('/members', { params }).then((r) => r.data);
   }, [
     page,
@@ -85,7 +83,6 @@ export default function MembersPage() {
     filters.distrikId,
     filters.wilayahId,
     filters.rantingId,
-    filters.tanpaFoto,
   ]);
 
   interface OrgNode { id: string; name: string; children?: OrgNode[]; }
@@ -372,15 +369,6 @@ export default function MembersPage() {
             { value: 'rejected', label: 'Ditolak' },
           ]}
           placeholder="Semua Validasi"
-        />
-        <FilterSelect
-          value={filters.tanpaFoto}
-          onChange={(v) => setFilter('tanpaFoto', v)}
-          options={[
-            { value: 'true', label: 'Tanpa Foto' },
-            { value: 'false', label: 'Dengan Foto' },
-          ]}
-          placeholder="Semua Foto"
         />
       </SearchBar>
 
