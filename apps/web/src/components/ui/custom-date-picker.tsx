@@ -22,6 +22,20 @@ function toIso(date: Date): string {
 
 function fromIdToDate(idDate: string): Date | null {
   if (!idDate) return null;
+
+  // Handle YYYY-MM-DD (ISO) format
+  if (idDate.includes('-') && idDate.length === 10) {
+    const [y, m, d] = idDate.split('-');
+    const yyyy = Number(y);
+    const mm = Number(m);
+    const dd = Number(d);
+    if (!dd || !mm || !yyyy) return null;
+    const date = new Date(yyyy, mm - 1, dd);
+    if (date.getFullYear() !== yyyy || date.getMonth() !== mm - 1 || date.getDate() !== dd) return null;
+    return date;
+  }
+
+  // Handle DD/MM/YYYY format
   const parts = idDate.split('/');
   if (parts.length !== 3) return null;
   const [d, m, y] = parts;
