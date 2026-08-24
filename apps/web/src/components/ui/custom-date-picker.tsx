@@ -22,21 +22,29 @@ function toIso(date: Date): string {
 
 function fromIdToDate(idDate: string): Date | null {
   if (!idDate) return null;
+  const s = idDate.trim();
 
-  // Handle YYYY-MM-DD (ISO) format
-  if (idDate.includes('-') && idDate.length === 10) {
-    const [y, m, d] = idDate.split('-');
-    const yyyy = Number(y);
-    const mm = Number(m);
-    const dd = Number(d);
-    if (!dd || !mm || !yyyy) return null;
-    const date = new Date(yyyy, mm - 1, dd);
-    if (date.getFullYear() !== yyyy || date.getMonth() !== mm - 1 || date.getDate() !== dd) return null;
-    return date;
+  // Handle ISO formats: YYYY-MM-DD, YYYY-MM-DDTHH:mm:ss.sssZ, etc.
+  if (s.includes('-')) {
+    // Extract just the date part (before 'T' or the full string)
+    const datePart = s.split('T')[0];
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const yyyy = Number(parts[0]);
+      const mm = Number(parts[1]);
+      const dd = Number(parts[2]);
+      if (dd && mm && yyyy) {
+        const date = new Date(yyyy, mm - 1, dd);
+        if (date.getFullYear() === yyyy && date.getMonth() === mm - 1 && date.getDate() === dd) {
+          return date;
+        }
+      }
+    }
+    return null;
   }
 
   // Handle DD/MM/YYYY format
-  const parts = idDate.split('/');
+  const parts = s.split('/');
   if (parts.length !== 3) return null;
   const [d, m, y] = parts;
   const dd = Number(d);
@@ -65,6 +73,14 @@ export default function CustomDatePicker({ value, onChange, placeholder = 'DD/MM
     return new Date();
   });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync viewDate when value changes (e.g. after API data loads)
+  useEffect(() => {
+    if (value) {
+      const parsed = fromIdToDate(value);
+      if (parsed) setViewDate(parsed);
+    }
+  }, [value]);
 
   const selectedDate = value ? fromIdToDate(value) : null;
 
