@@ -6,31 +6,66 @@ const apiClient = axios.create({
   baseURL: '/api',
 });
 
-// --- Session expiry guard ---
-// Once the session is known to be expired, all further requests return a
-// never-resolving promise (PENDING_PROMISE) so components stay in loading
-// state instead of rendering error messages.
-//
-// The actual redirect is handled by the dashboard layout, which listens
-// for the 'session-expired' event, shows a toast, then navigates to
-// /login after a brief delay so the user can read the message.
+// ─── Session Expiry ───────────────────────────────────────────────
 let sessionExpired = false;
 
 /** A promise that never resolves - used to swallow API calls after session expiry */
 const PENDING_PROMISE = new Promise<never>(() => {});
 
+/**
+ * Called when the session is known to be expired.
+ * Shows a toast (via DOM, not React) and redirects to /login after a delay.
+ */
 function triggerSessionExpired() {
   if (sessionExpired) return;
   sessionExpired = true;
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.setItem('session-expired', 'true');
-  if (typeof window !== 'undefined') {
-    // Dispatch event — the dashboard layout listens for this, shows a toast,
-    // then navigates to /login after ~2 seconds so the user can read it.
-    window.dispatchEvent(new CustomEvent('session-expired'));
+
+  if (typeof window === 'undefined') return;
+
+  // ── Show toast via DOM (works even if React tree is in broken state) ──
+  const toast = document.createElement('div');
+  toast.id = 'session-expired-toast';
+  toast.style.cssText = [
+    'position:fixed', 'bottom:24px', 'right:24px', 'z-index:99999',
+    'display:flex', 'align-items:center', 'gap:10px',
+    'padding:12px 20px', 'border-radius:12px',
+    'border:1px solid #fecaca', 'background:#fef2f2',
+    'box-shadow:0 10px 25px rgba(0,0,0,0.15)',
+    'font-family:Inter,system-ui,sans-serif', 'font-size:14px',
+    'color:#991b1b', 'max-width:420px',
+    'animation:toast-slide-in 0.3s ease-out',
+  ].join(';');
+  toast.innerHTML = [
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">',
+    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    '<span>Sesi Anda telah berakhir. Mengalihkan ke halaman login...</span>',
+  ].join('');
+
+  // Inject animation keyframes if not already present
+  if (!document.getElementById('session-expired-styles')) {
+    const style = document.createElement('style');
+    style.id = 'session-expired-styles';
+    style.textContent = `
+      @keyframes toast-slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
   }
+
+  document.body.appendChild(toast);
+
+  // ── Redirect after 2 seconds so the user can read the message ──
+  setTimeout(() => {
+    window.location.href = '/login';
+  }, 2000);
 }
+
+// ─── Token Refresh ────────────────────────────────────────────────
 
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
@@ -44,10 +79,10 @@ function addRefreshSubscriber(cb: (token: string) => void) {
   refreshSubscribers.push(cb);
 }
 
+// ─── Interceptors ─────────────────────────────────────────────────
+
 apiClient.interceptors.request.use((config) => {
   if (sessionExpired) {
-    // Return a never-resolving promise so the component stays in loading
-    // state instead of showing an error.
     return PENDING_PROMISE;
   }
   if (typeof window !== 'undefined') {
@@ -63,8 +98,6 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (sessionExpired || axios.isCancel(error)) {
-      // Swallow the error — never-resolving promise prevents component
-      // from rendering error state while the redirect is in progress.
       return PENDING_PROMISE;
     }
 
@@ -92,22 +125,10 @@ apiClient.interceptors.response.use(
     // --- TOKEN REFRESH HANDLING ---
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Wait for the ongoing refresh to complete — never reject.
-        return new Promise((resolve) => {
-          addRefreshSubscriber((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(apiClient(originalRequest));
-          });
-          // Safety timeout: if refresh hangs, trigger expiry and keep
-          // the promise pending (never reject) so no error is shown.
-          setTimeout(() => {
-            if (!sessionExpired) {
-              triggerSessionExpired();
-            }
-            // Do NOT reject — PENDING_PROMISE keeps components in
-            // loading state while the layout handles the redirect.
-          }, 5000);
-        });
+        // Wait for the ongoing refresh — never reject, never resolve on timeout.
+        // If refresh fails, triggerSessionExpired() will fire for the first
+        // requester; this one just hangs.
+        return PENDING_PROMISE;
       }
 
       originalRequest._retry = true;

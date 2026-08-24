@@ -41,7 +41,6 @@ import {
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/use-auth';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -275,23 +274,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Measured content heights per group - drives the smooth max-height expand/collapse transition
   const [groupHeights, setGroupHeights] = useState<Record<string, number>>({});
   const groupContentRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const toast = useToast();
 
-  useEffect(() => {
-    const handleSessionExpired = () => {
-      // Show toast so the user knows what happened
-      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
-      // Redirect to login after a brief delay so the toast is visible
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-    };
-
-    window.addEventListener('session-expired', handleSessionExpired);
-    return () => {
-      window.removeEventListener('session-expired', handleSessionExpired);
-    };
-  }, [toast, router]);
+  // Session expiry is handled entirely in api-client.ts:
+  // DOM-level toast + window.location.href redirect.
+  // No event listener needed here.
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
 
