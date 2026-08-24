@@ -87,9 +87,10 @@ apiClient.interceptors.response.use(
           window.dispatchEvent(new CustomEvent('session-expired'));
           window.dispatchEvent(new CustomEvent('session-expired-redirect'));
         }
-        // Return empty response to prevent error messages on page
-        // The redirect will happen shortly via the event listener
-        return Promise.resolve({ data: { success: false, data: null } } as any);
+        // Suppress error — redirect is handled by the event listener above.
+        // Return a properly-structured empty response so callers that
+        // destructure .data.data or .data.meta do not crash.
+        return Promise.resolve({ data: { success: false, data: null, meta: { total: 0, totalPages: 0, page: 1, limit: 10 } } } as any);
       } finally {
 
         isRefreshing = false;
