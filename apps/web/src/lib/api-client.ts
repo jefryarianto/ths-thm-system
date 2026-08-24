@@ -84,10 +84,12 @@ apiClient.interceptors.response.use(
         localStorage.setItem('session-expired', 'true');
         if (typeof window !== 'undefined') {
           // Notify the layout to show toast + redirect via Next.js router
-          // (window.location.href would unmount React before the toast is visible)
           window.dispatchEvent(new CustomEvent('session-expired'));
           window.dispatchEvent(new CustomEvent('session-expired-redirect'));
         }
+        // Return empty response to prevent error messages on page
+        // The redirect will happen shortly via the event listener
+        return Promise.resolve({ data: { success: false, data: null } } as any);
       } finally {
 
         isRefreshing = false;

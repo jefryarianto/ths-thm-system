@@ -285,7 +285,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       // Wait 2s so the user can read the toast before navigating away
       setTimeout(() => {
         router.push('/login');
-      }, 2000);
+      }, 500);
     };
 
     window.addEventListener('session-expired', handleSessionExpired);
