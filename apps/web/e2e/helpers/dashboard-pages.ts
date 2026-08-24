@@ -6,6 +6,32 @@ import { Page } from '@playwright/test';
  * assessments, graduations, and settings.
  */
 export async function registerDashboardPageMocks(page: Page) {
+  // ── Admin Queue Stats (fetched by layout for superadmin) ──
+  await page.route(/\/api\/admin\/queue-stats/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          counts: { waiting: 3, active: 1 },
+        },
+      }),
+    });
+  });
+
+  // ── Graduations / My Assignments (fetched by layout for activity-scoped roles) ──
+  await page.route(/\/api\/graduations\/my/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [],
+      }),
+    });
+  });
+
   // ── Activities ──
   await page.route(/\/api\/activities(\?|$)/, async (route) => {
     await route.fulfill({
@@ -237,9 +263,10 @@ export async function registerDashboardPageMocks(page: Page) {
         data: Array.from({ length: 10 }, (_, i) => ({
           id: `claim-${i + 1}`,
           anggota: { namaLengkap: `Anggota ${i + 1}` },
-          tipeKlaim: ['medis', 'transport', 'lainnya'][i % 3],
-          jumlah: 100000 + i * 25000,
-          status: ['approved', 'pending', 'rejected'][i % 3],
+          namaLengkap: `Anggota ${i + 1}`,
+          tipe: ['keanggotaan', 'dokumen'][i % 2],
+          status: ['disetujui', 'pending', 'ditolak'][i % 3],
+          ranting: { nama: `Ranting ${i + 1}` },
           createdAt: new Date(2025, 0, i + 1).toISOString(),
         })),
         meta: { total: 20, totalPages: 2, page: 1, limit: 10 },
@@ -385,8 +412,11 @@ export async function registerDashboardPageMocks(page: Page) {
         success: true,
         data: Array.from({ length: 10 }, (_, i) => ({
           id: `graduation-${i + 1}`,
+          nama: `Pendadaran ${i + 1}`,
           namaKegiatan: `Pendadaran ${i + 1}`,
           tanggal: new Date(2025, 2, i + 1).toISOString(),
+          tanggalMulai: new Date(2025, 2, i + 1).toISOString(),
+          lokasi: `Lokasi ${i + 1}`,
           pesertaCount: 5 + i,
           status: ['scheduled', 'completed', 'cancelled'][i % 3],
         })),

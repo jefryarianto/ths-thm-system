@@ -14,13 +14,20 @@ const apiClient = axios.create({
 //   3. Users seeing error messages before the redirect
 let sessionExpired = false;
 
+/** A promise that never resolves - used to swallow API calls after session expiry */
+const PENDING_PROMISE = new Promise<never>(() => {});
+
 function triggerSessionExpired() {
   if (sessionExpired) return;
   sessionExpired = true;
   localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
   localStorage.setItem('session-expired', 'true');
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('session-expired'));
+    // Hard redirect - takes effect after current JS stack finishes.
+    // Components will stay in loading state (never-resolving promise) until
+    // the page unloads, preventing any error flash.
     window.location.href = '/login';
   }
 }
@@ -39,7 +46,10 @@ function addRefreshSubscriber(cb: (token: string) => void) {
 
 apiClient.interceptors.request.use((config) => {
   if (sessionExpired) {
-    return Promise.reject(new axios.Cancel('Session expired'));
+    // Return a never-resolving promise so the component stays in loading
+    // state instead of showing an error. The page will unload when the
+    // redirect completes.
+    return PENDING_PROMISE;
   }
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
@@ -54,7 +64,9 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (sessionExpired || axios.isCancel(error)) {
-      return Promise.reject(error);
+      // Swallow the error - never-resolving promise prevents component
+      // from rendering error state while the redirect is in progress.
+      return PENDING_PROMISE;
     }
 
     const originalRequest = error.config;
@@ -90,7 +102,8 @@ apiClient.interceptors.response.use(
             if (!sessionExpired) {
               triggerSessionExpired();
             }
-            reject(new axios.Cancel('Session expired'));
+            // Never-resolving promise - prevents component error state
+            reject(PENDING_PROMISE);
           }, 5000);
         });
       }
@@ -107,7 +120,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch {
         triggerSessionExpired();
-        return Promise.reject(new axios.Cancel('Session expired'));
+        return PENDING_PROMISE;
       } finally {
         isRefreshing = false;
       }
