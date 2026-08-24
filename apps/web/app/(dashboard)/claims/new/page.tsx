@@ -22,6 +22,8 @@ interface BuktiItem {
 export default function NewClaimPage() {
   const router = useRouter();
   const toast = useToast();
+
+  // Org structure state
   const [distriks, setDistriks] = useState<Distrik[]>([]);
   const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
   const [rantings, setRantings] = useState<Ranting[]>([]);
@@ -32,6 +34,7 @@ export default function NewClaimPage() {
   // Selected org
   const [distrikId, setDistrikId] = useState('');
   const [wilayahId, setWilayahId] = useState('');
+  const [rantingId, setRantingId] = useState('');
 
   // Form state
   const [namaLengkap, setNamaLengkap] = useState('');
@@ -41,7 +44,6 @@ export default function NewClaimPage() {
   const [alamat, setAlamat] = useState('');
   const [noHp, setNoHp] = useState('');
   const [email, setEmail] = useState('');
-  const [rantingId, setRantingId] = useState('');
   const [catatan, setCatatan] = useState('');
   const [buktiDokumen, setBuktiDokumen] = useState<BuktiItem[]>([]);
   const [saving, setSaving] = useState(false);
@@ -158,21 +160,11 @@ export default function NewClaimPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap *</label>
-                <input
-                  type="text"
-                  value={namaLengkap}
-                  onChange={(e) => setNamaLengkap(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="text" value={namaLengkap} onChange={(e) => setNamaLengkap(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin *</label>
-                <select
-                  value={jenisKelamin}
-                  onChange={(e) => setJenisKelamin(e.target.value as 'L' | 'P')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                >
+                <select value={jenisKelamin} onChange={(e) => setJenisKelamin(e.target.value as 'L' | 'P')} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                   <option value="L">Laki-laki</option>
                   <option value="P">Perempuan</option>
                 </select>
@@ -182,57 +174,32 @@ export default function NewClaimPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>
-                <input
-                  type="text"
-                  value={tempatLahir}
-                  onChange={(e) => setTempatLahir(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="text" value={tempatLahir} onChange={(e) => setTempatLahir(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Lahir</label>
-                <input
-                  type="date"
-                  value={tanggalLahir}
-                  onChange={(e) => setTanggalLahir(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="date" value={tanggalLahir} onChange={(e) => setTanggalLahir(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
-              <textarea
-                value={alamat}
-                onChange={(e) => setAlamat(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-              />
+              <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
-                <input
-                  type="tel"
-                  value={noHp}
-                  onChange={(e) => setNoHp(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="tel" value={noHp} onChange={(e) => setNoHp(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
           </div>
 
-          {/* Ranting Asal � Cascading Selectors */}
+          {/* Ranting Asal - Cascading Selectors */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Ranting Asal *</h3>
 
@@ -285,18 +252,10 @@ export default function NewClaimPage() {
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Bukti Keanggotaan</h3>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => addBukti('sertifikat')}
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-              >
+              <button type="button" onClick={() => addBukti('sertifikat')} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                 <Upload size={14} /> + Sertifikat
               </button>
-              <button
-                type="button"
-                onClick={() => addBukti('kartu_anggota')}
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-              >
+              <button type="button" onClick={() => addBukti('kartu_anggota')} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                 <Upload size={14} /> + Kartu Anggota
               </button>
             </div>
@@ -305,7 +264,7 @@ export default function NewClaimPage() {
                 {buktiDokumen.map((b, i) => (
                   <div key={i} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {b.tipe === 'sertifikat' ? '📜 Sertifikat' : '💳 Kartu Anggota'}: {b.url}
+                      {b.tipe === 'sertifikat' ? 'Sertifikat' : 'Kartu Anggota'}: {b.url}
                     </span>
                     <button type="button" onClick={() => removeBukti(i)} className="text-red-500 hover:text-red-700">
                       <X size={14} />
@@ -319,13 +278,7 @@ export default function NewClaimPage() {
           {/* Catatan */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
-            <textarea
-              value={catatan}
-              onChange={(e) => setCatatan(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-              placeholder="Catatan tambahan (opsional)"
-            />
+            <textarea value={catatan} onChange={(e) => setCatatan(e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500" placeholder="Catatan tambahan (opsional)" />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
