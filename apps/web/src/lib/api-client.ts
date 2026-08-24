@@ -79,12 +79,17 @@ apiClient.interceptors.response.use(
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-      } catch {
+        } catch {
         localStorage.removeItem('accessToken');
+        localStorage.setItem('session-expired', 'true');
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.dispatchEvent(new CustomEvent('session-expired'));
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         }
       } finally {
+
         isRefreshing = false;
       }
     }

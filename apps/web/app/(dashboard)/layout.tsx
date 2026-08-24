@@ -268,6 +268,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Measured content heights per group — drives the smooth max-height expand/collapse transition
   const [groupHeights, setGroupHeights] = useState<Record<string, number>>({});
   const groupContentRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const toast = useToast();
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+    };
+
+    window.addEventListener('session-expired', handleSessionExpired);
+    return () => window.removeEventListener('session-expired', handleSessionExpired);
+  }, [toast]);
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
 
