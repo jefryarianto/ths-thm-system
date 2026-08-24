@@ -10,11 +10,9 @@ import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
 
-interface Ranting {
-  id: string;
-  nama: string;
-  wilayah?: { nama: string; distrik?: { nama: string } };
-}
+interface Distrik { id: string; nama: string; }
+interface Wilayah { id: string; nama: string; }
+interface Ranting { id: string; nama: string; }
 
 interface BuktiItem {
   tipe: 'sertifikat' | 'kartu_anggota';
@@ -24,8 +22,16 @@ interface BuktiItem {
 export default function NewClaimPage() {
   const router = useRouter();
   const toast = useToast();
+  const [distriks, setDistriks] = useState<Distrik[]>([]);
+  const [wilayahs, setWilayahs] = useState<Wilayah[]>([]);
   const [rantings, setRantings] = useState<Ranting[]>([]);
-  const [loadingRantings, setLoadingRantings] = useState(true);
+  const [loadingDistriks, setLoadingDistriks] = useState(true);
+  const [loadingWilayahs, setLoadingWilayahs] = useState(false);
+  const [loadingRantings, setLoadingRantings] = useState(false);
+
+  // Selected org
+  const [distrikId, setDistrikId] = useState('');
+  const [wilayahId, setWilayahId] = useState('');
 
   // Form state
   const [namaLengkap, setNamaLengkap] = useState('');
@@ -40,13 +46,47 @@ export default function NewClaimPage() {
   const [buktiDokumen, setBuktiDokumen] = useState<BuktiItem[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Fetch rantings for selector
+  // Fetch distriks on mount
   useEffect(() => {
-    apiClient.get('/org-structure/rantings', { params: { limit: 500 } })
+    apiClient.get('/org-structure/distrik')
+      .then(({ data }) => setDistriks(data.data || []))
+      .catch(() => {})
+      .finally(() => setLoadingDistriks(false));
+  }, []);
+
+  // Fetch wilayahs when distrik changes
+  useEffect(() => {
+    if (!distrikId) {
+      setWilayahs([]);
+      setWilayahId('');
+      setRantings([]);
+      setRantingId('');
+      return;
+    }
+    setLoadingWilayahs(true);
+    setWilayahId('');
+    setRantings([]);
+    setRantingId('');
+    apiClient.get('/org-structure/wilayah', { params: { distrikId } })
+      .then(({ data }) => setWilayahs(data.data || []))
+      .catch(() => {})
+      .finally(() => setLoadingWilayahs(false));
+  }, [distrikId]);
+
+  // Fetch rantings when wilayah changes
+  useEffect(() => {
+    if (!wilayahId) {
+      setRantings([]);
+      setRantingId('');
+      return;
+    }
+    setLoadingRantings(true);
+    setRantingId('');
+    apiClient.get('/org-structure/ranting', { params: { wilayahId } })
       .then(({ data }) => setRantings(data.data || []))
       .catch(() => {})
       .finally(() => setLoadingRantings(false));
-  }, []);
+  }, [wilayahId]);
 
   const addBukti = (tipe: 'sertifikat' | 'kartu_anggota') => {
     const url = prompt(`Masukkan URL ${tipe === 'sertifikat' ? 'Sertifikat Pendadaran' : 'Kartu Anggota'}:`);
@@ -192,25 +232,52 @@ export default function NewClaimPage() {
             </div>
           </div>
 
-          {/* Ranting Asal */}
+          {/* Ranting Asal — Cascading Selectors */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Ranting Asal</h3>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting *</label>
-              <select
-                value={rantingId}
-                onChange={(e) => setRantingId(e.target.value)}
-                required
-                disabled={loadingRantings}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">{loadingRantings ? 'Memuat...' : 'Pilih Ranting'}</option>
-                {rantings.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.nama}{r.wilayah ? ` - ${r.wilayah.nama}` : ''}{r.wilayah?.distrik ? ` (${r.wilayah.distrik.nama})` : ''}
-                  </option>
-                ))}
-              </select>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Ranting Asal *</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Distrik */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Distrik</label>
+                <select
+                  value={distrikId}
+                  onChange={(e) => setDistrikId(e.target.value)}
+                  disabled={loadingDistriks}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">{loadingDistriks ? 'Memuat...' : 'Pilih Distrik'}</option>
+                  {distriks.map((d) => (<option key={d.id} value={d.id}>{d.nama}</option>))}
+                </select>
+              </div>
+
+              {/* Wilayah */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Wilayah</label>
+                <select
+                  value={wilayahId}
+                  onChange={(e) => setWilayahId(e.target.value)}
+                  disabled={!distrikId || loadingWilayahs}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50"
+                >
+                  <option value="">{!distrikId ? 'Pilih distrik dulu' : loadingWilayahs ? 'Memuat...' : 'Pilih Wilayah'}</option>
+                  {wilayahs.map((w) => (<option key={w.id} value={w.id}>{w.nama}</option>))}
+                </select>
+              </div>
+
+              {/* Ranting */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ranting</label>
+                <select
+                  value={rantingId}
+                  onChange={(e) => setRantingId(e.target.value)}
+                  disabled={!wilayahId || loadingRantings}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50"
+                >
+                  <option value="">{!wilayahId ? 'Pilih wilayah dulu' : loadingRantings ? 'Memuat...' : 'Pilih Ranting'}</option>
+                  {rantings.map((r) => (<option key={r.id} value={r.id}>{r.nama}</option>))}
+                </select>
+              </div>
             </div>
           </div>
 
