@@ -81,15 +81,24 @@ function addRefreshSubscriber(cb: (token: string) => void) {
 
 // ─── Interceptors ─────────────────────────────────────────────────
 
+function getAccessToken(): string | null {
+  if (typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('accessToken');
+  }
+  return null;
+}
+
 apiClient.interceptors.request.use((config) => {
   if (sessionExpired) {
     return Promise.reject(SESSION_EXPIRED_ERROR);
   }
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
