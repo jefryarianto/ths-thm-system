@@ -12,39 +12,12 @@ const SESSION_EXPIRED_ERROR = new Error('SESSION_EXPIRED');
 
 /**
  * Called when the session is known to be expired.
- * Delegates to SessionManager to clear tokens, set the flag, and notify subscribers
- * (e.g. SessionProvider will display a toast and redirect to /login).
+ * Delegates to SessionManager to clear tokens, set the flag, and notify subscribers.
+ * The SessionProvider (subscribed to SessionManager) handles showing the toast
+ * and redirecting to /login.
  */
 function triggerSessionExpired() {
   sessionManager.expire();
-}
-
-/**
- * Show a toast via DOM (works even if React tree is in a broken state).
- * Called by SessionProvider which subscribes to SessionManager changes.
- */
-function showSessionExpiredToast() {
-  if (typeof window === 'undefined') return;
-
-  if (document.getElementById('session-expired-toast')) return;
-
-  const toast = document.createElement('div');
-  toast.id = 'session-expired-toast';
-  toast.style.cssText = [
-    'position:fixed', 'bottom:24px', 'right:24px', 'z-index:99999',
-    'display:flex', 'align-items:center', 'gap:10px',
-    'padding:12px 20px', 'border-radius:12px',
-    'border:1px solid #fecaca', 'background:#fef2f2',
-    'box-shadow:0 10px 25px rgba(0,0,0,0.15)',
-    'font-family:Inter,system-ui,sans-serif', 'font-size:14px',
-    'color:#991b1b', 'max-width:420px',
-  ].join(';');
-  toast.innerHTML = [
-    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">',
-    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
-    '<span>Sesi Anda telah berakhir. Mengalihkan ke halaman login...</span>',
-  ].join('');
-  document.body.appendChild(toast);
 }
 
 // ─── Token Refresh ────────────────────────────────────────────────
@@ -162,17 +135,6 @@ export const setTokens = (accessToken: string, refreshToken: string) => {
 export const clearTokens = () => {
   sessionManager.expire();
 };
-
-// ─── Session Expiry Toast ─────────────────────────────────────────
-// Subscribe to session manager changes so the toast DOM element is shown
-// whenever the session expires, even if React is in a broken state.
-if (typeof window !== 'undefined') {
-  sessionManager.subscribe(() => {
-    if (sessionManager.isExpired) {
-      showSessionExpiredToast();
-    }
-  });
-}
 
 /**
  * Extract a readable error message from an apiClient rejection.
