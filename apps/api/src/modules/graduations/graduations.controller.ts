@@ -31,10 +31,21 @@ export class GraduationsController {
 
   // ── CRUD endpoints ──
 
+  /**
+   * Kegiatan yang ditugaskan untuk user yang login.
+   * - admin_kegiatan: kegiatan WHERE adminKegiatanId = userId
+   * - penguji: kegiatan WHERE ada PenugasanPenguji dengan pengujiUserId = userId
+   */
+  @Get('my')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Kegiatan yang ditugaskan untuk user yang login' })
+  findMyKegiatan(@Req() req: ScopedRequest) {
+    return this.service.findMyKegiatan(req.user?.id || '', req.user?.role || '');
+  }
+
   @Get()
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil semua wisuda' })
   findAll(@Query() query: GraduationFilterDto, @Req() req: ScopedRequest) {
-    return this.service.findAll(query, req.scope);
+    return this.service.findAll(query, req.scope, req.user?.id, req.user?.role);
   }
 
   @Get(':id')

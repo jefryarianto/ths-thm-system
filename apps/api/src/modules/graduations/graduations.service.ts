@@ -118,7 +118,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   //  STANDARD CRUD
   // ═══════════════════════════════════════════════════════════
 
-  async findAll(query: GraduationFilterDto, scope?: UserScope) {
+  async findAll(query: GraduationFilterDto, scope?: UserScope, userId?: string, role?: string) {
     return this.baseFindAll(
       `graduations:list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || 'all'}`,
       async () => {
@@ -126,6 +126,19 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
 
         // Apply kegiatan-based scope filter
         Object.assign(where, this.buildKegiatanScopeFilter(scope));
+
+        // Activity-scoped roles: filter by assignments
+        if (role === 'admin_kegiatan' && userId) {
+          where.adminKegiatanId = userId;
+        } else if (role === 'penguji' && userId) {
+          // Penguji can only see kegiatan they're assigned to
+          const assignments = await this.prisma.penugasanPenguji.findMany({
+            where: { pengujiUserId: userId, status: 'approved' },
+            select: { kegiatanId: true },
+          });
+          const kegiatanIds = assignments.map((a) => a.kegiatanId);
+          where.id = { in: kegiatanIds };
+        }
 
         if (query.status) where.status = query.status;
 
@@ -183,6 +196,61 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
 
   async remove(id: string, scope?: UserScope) {
     return this.baseRemove(id, scope, 'Pendadaran berhasil dihapus');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  MY KEGIATAN (activity-scoped roles)
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Fetch kegiatan assigned to the current user based on their role.
+   * - admin_kegiatan: kegiatan WHERE adminKegiatanId = userId
+   * - penguji: kegiatan WHERE ada PenugasanPenguji dengan pengujiUserId = userId
+   */
+  async findMyKegiatan(userId: string, role: string) {
+    let kegiatanIds: string[] = [];
+
+    if (role === 'admin_kegiatan') {
+      // Fetch kegiatan where adminKegiatanId = userId
+      const kegiatan = await this.prisma.kegiatan.findMany({
+        where: { adminKegiatanId: userId, tipe: 'pendadaran' },
+        select: { id: true },
+      });
+      kegiatanIds = kegiatan.map((k) => k.id);
+    } else if (role === 'penguji') {
+      // Fetch kegiatan where user is assigned as penguji
+      const assignments = await this.prisma.penugasanPenguji.findMany({
+        where: { pengujiUserId: userId, status: 'approved' },
+        select: { kegiatanId: true },
+      });
+      kegiatanIds = assignments.map((a) => a.kegiatanId);
+    }
+
+    if (kegiatanIds.length === 0) {
+      return [];
+    }
+
+    // Fetch full kegiatan details
+    const kegiatan = await this.prisma.kegiatan.findMany({
+      where: { id: { in: kegiatanIds } },
+      select: {
+        id: true,
+        nama: true,
+        lokasi: true,
+        tanggalMulai: true,
+        tanggalSelesai: true,
+        status: true,
+        tipe: true,
+        scopeType: true,
+        scopeId: true,
+        adminKegiatanId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { tanggalMulai: 'desc' },
+    });
+
+    return kegiatan;
   }
 
   // ═══════════════════════════════════════════════════════════
