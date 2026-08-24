@@ -1,11 +1,31 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import apiClient from '@/lib/api-client';
 import { Save, AlertCircle } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 import Modal from '@/components/ui/modal';
 import { toProperCase } from '@/components/members/constants';
+
+function formatDateToId(isoDate: string): string {
+  if (!isoDate) return '';
+  const [y, m, d] = isoDate.split('-');
+  if (!y || !m || !d) return isoDate;
+  return `${d}/${m}/${y}`;
+}
+
+function parseDateFromId(idDate: string): string {
+  if (!idDate) return '';
+  const parts = idDate.split('/');
+  if (parts.length === 3) {
+    const [d, m, y] = parts;
+    if (d && m && y && /^\d+$/.test(d) && /^\d+$/.test(m) && /^\d+$/.test(y)) {
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+  }
+  return idDate;
+}
 
 interface TingkatanOption {
   id: string;
@@ -199,7 +219,7 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
     setSaving(false);
   };
 
-  return (
+  return createPortal(
     <Modal open={open} onClose={onClose} title={`Edit Anggota - ${toProperCase(memberName) || 'Memuat...'}`} size="lg">
       {fetchError ? (
         <div className="flex items-center justify-center min-h-[40vh]">
@@ -254,7 +274,8 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
                 </FormField>
                 <FormField label="Tanggal Lahir">
-                  <input type="date" value={form.tanggalLahir ? form.tanggalLahir.split('T')[0] : ''} onChange={(e) => setForm({ ...form, tanggalLahir: e.target.value })}
+                  <input type="text" value={form.tanggalLahir ? formatDateToId(form.tanggalLahir) : ''} onChange={(e) => setForm({ ...form, tanggalLahir: parseDateFromId(e.target.value) })}
+                    placeholder="DD/MM/YYYY"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition" />
                 </FormField>
                 <FormField label="Tempat Dadar">
@@ -336,5 +357,6 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
         </form>
       )}
     </Modal>
+    , document.body
   );
 }
