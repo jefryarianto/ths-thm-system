@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (sessionExpired || axios.isCancel(error)) {
-      // Swallow the error - never-resolving promise prevents component
+      // Swallow the error — never-resolving promise prevents component
       // from rendering error state while the redirect is in progress.
       return PENDING_PROMISE;
     }
@@ -92,16 +92,20 @@ apiClient.interceptors.response.use(
     // --- TOKEN REFRESH HANDLING ---
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise((resolve, reject) => {
+        // Wait for the ongoing refresh to complete — never reject.
+        return new Promise((resolve) => {
           addRefreshSubscriber((token: string) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(apiClient(originalRequest));
           });
+          // Safety timeout: if refresh hangs, trigger expiry and keep
+          // the promise pending (never reject) so no error is shown.
           setTimeout(() => {
             if (!sessionExpired) {
               triggerSessionExpired();
             }
-            reject(PENDING_PROMISE);
+            // Do NOT reject — PENDING_PROMISE keeps components in
+            // loading state while the layout handles the redirect.
           }, 5000);
         });
       }

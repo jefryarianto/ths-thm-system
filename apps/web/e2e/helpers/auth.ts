@@ -65,11 +65,15 @@ export async function mockAuth(
     },
   );
 
-  // ── 2. Catch-all navigation handler (registered FIRST, acts as fallback) ──
+  // ── 2. Catch-all navigation + API fallback handler (registered FIRST, runs LAST) ──
   // IMPORTANT: In Playwright, the LAST registered route handler runs FIRST.
   // By registering the catch-all FIRST, domain-specific API mocks (registered
   // below in step 3) take precedence and intercept API calls before the catch-all.
-  // The catch-all only handles requests that don't match any API mock.
+  //
+  // Navigation requests: forwarded to the actual server with bypass header.
+  // Unmocked API requests: return an empty success response so the page
+  // doesn't show error states. Specific API mocks registered later will
+  // intercept their endpoints before this fallback.
   await page.route(`${E2E_BASE_URL}/**`, async (route) => {
     const request = route.request();
     if (request.isNavigationRequest()) {
@@ -83,7 +87,17 @@ export async function mockAuth(
         body: await response.body(),
       });
     } else {
-      await route.continue();
+      // API request not matched by any specific mock — return empty
+      // success so the page renders normally instead of showing errors.
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [],
+          meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
+        }),
+      });
     }
   });
 
