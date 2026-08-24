@@ -6,6 +6,25 @@ const apiClient = axios.create({
   baseURL: '/api',
 });
 
+// --- Session expiry guard ---
+// Once the session is known to be expired, reject all further requests
+// immediately and redirect to /login. This prevents:
+//   1. Multiple concurrent refresh attempts
+//   2. Components rendering with empty/errored data
+//   3. Users seeing error messages before the redirect
+let sessionExpired = false;
+
+function triggerSessionExpired() {
+  if (sessionExpired) return;
+  sessionExpired = true;
+  localStorage.removeItem('accessToken');
+  localStorage.setItem('session-expired', 'true');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('session-expired'));
+    window.location.href = '/login';
+  }
+}
+
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
 
@@ -19,6 +38,9 @@ function addRefreshSubscriber(cb: (token: string) => void) {
 }
 
 apiClient.interceptors.request.use((config) => {
+  if (sessionExpired) {
+    return Promise.reject(new axios.Cancel('Session expired'));
+  }
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -31,17 +53,19 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (sessionExpired || axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config;
 
     if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    // ??? NETWORK RETRY STRATEGY ???
+    // --- NETWORK RETRY STRATEGY ---
     const isNetworkError =
-      error.code === 'ECONNABORTED' ||
-      error.message?.includes('Network Error') ||
-      !error.response;
+      error.code === 'ECONNABORTED' || error.message?.includes('Network Error') || !error.response;
 
     if (isNetworkError && !originalRequest._retryCount) {
       originalRequest._retryCount = 1;
@@ -54,14 +78,20 @@ apiClient.interceptors.response.use(
       return apiClient(originalRequest);
     }
 
-    // ??? TOKEN REFRESH HANDLING ???
+    // --- TOKEN REFRESH HANDLING ---
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           addRefreshSubscriber((token: string) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(apiClient(originalRequest));
           });
+          setTimeout(() => {
+            if (!sessionExpired) {
+              triggerSessionExpired();
+            }
+            reject(new axios.Cancel('Session expired'));
+          }, 5000);
         });
       }
 
@@ -69,41 +99,25 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // refreshToken sekarang dikirim secara otomatis sebagai HttpOnly cookie
         const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
-
         const newToken = data.data.accessToken;
         localStorage.setItem('accessToken', newToken);
-
         onTokenRefreshed(newToken);
-
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-        } catch {
-        localStorage.removeItem('accessToken');
-        localStorage.setItem('session-expired', 'true');
-        if (typeof window !== 'undefined') {
-          // Notify the layout to show toast + redirect via Next.js router
-          window.dispatchEvent(new CustomEvent('session-expired'));
-          window.dispatchEvent(new CustomEvent('session-expired-redirect'));
-        }
-        // Suppress error ? redirect is handled by the event listener above.
-        // Return a properly-structured empty response so callers that
-        // destructure .data.data or .data.meta do not crash.
-        return Promise.resolve({ data: { success: false, data: null, meta: { total: 0, totalPages: 0, page: 1, limit: 10 } } } as any);
+      } catch {
+        triggerSessionExpired();
+        return Promise.reject(new axios.Cancel('Session expired'));
       } finally {
-
         isRefreshing = false;
       }
     }
 
-    // ??? ERROR NORMALIZATION ???
+    // --- ERROR NORMALIZATION ---
     const normalizedError = {
       status: error.response?.status ?? 0,
       message:
-        error.response?.data?.message ||
-        error.message ||
-        'Terjadi kesalahan pada server.',
+        error.response?.data?.message || error.message || 'Terjadi kesalahan pada server.',
       data: error.response?.data ?? null,
     };
 
@@ -114,29 +128,19 @@ apiClient.interceptors.response.use(
 export default apiClient;
 
 export const setTokens = (accessToken: string, refreshToken: string) => {
+  sessionExpired = false;
   localStorage.setItem('accessToken', accessToken);
   localStorage.setItem('refreshToken', refreshToken);
 };
 
 export const clearTokens = () => {
+  sessionExpired = true;
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
 };
 
 /**
  * Extract a readable error message from an apiClient rejection.
- *
- * apiClient's response interceptor normalizes every rejection to
- * `{ status, message, data }` - so page-level `err.response?.data?.message`
- * access is dead code and always yields `undefined`. The real server message
- * (e.g. 'Email sudah terdaftar') lives on `err.message`, which NestJS
- * ValidationPipe may provide as an array of strings - joined here.
- *
- * Returns `''` when no message is available so callers can keep the idiomatic
- * `extractErrorMessage(err) || 'Fallback text'` pattern.
- *
- * @param err      The rejected value (usually `unknown` from a catch clause)
- * @param fallback Message shown when no server message is available
  */
 export function extractErrorMessage(err: unknown, fallback?: string): string {
   const raw = (err as { message?: string | string[] } | null)?.message;
@@ -144,7 +148,7 @@ export function extractErrorMessage(err: unknown, fallback?: string): string {
   return msg?.trim() ? msg : (fallback ?? '');
 }
 
-// ??? Response Helpers ???
+// --- Response Helpers ---
 
 /** Standard API response wrapper from the backend */
 export interface ApiResponse<T> {
@@ -164,39 +168,9 @@ export interface PaginatedResponse<T> {
   };
 }
 
-/**
- * Unwrap `r.data.data` from an Axios response.
- *
- * @example
- * ```tsx
- * // Before:
- * apiClient.get('/settings').then(r => setOrg(r.data.data))
- *
- * // After:
- * apiClient.get('/settings').then(res => setOrg(unwrap(res)))
- *
- * // With useApi:
- * const { data, loading } = useApi(() => apiClient.get('/foo').then(unwrap))
- * ```
- */
 // eslint-disable-next-line no-restricted-syntax
 export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
 
-/**
- * Unwrap a paginated response.
- *
- * @example
- * ```tsx
- * // Before:
- * apiClient.get('/items').then(r => ({ data: r.data.data, meta: r.data.meta }))
- *
- * // After:
- * apiClient.get('/items').then(unwrapPaginated)
- *
- * // With usePaginatedList:
- * usePaginatedList(() => apiClient.get('/items').then(unwrapPaginated), [page])
- * ```
- */
 // eslint-disable-next-line no-restricted-syntax
 export const unwrapPaginated = <T>(response: {
   data: ApiResponse<PaginatedResponse<T>>;
