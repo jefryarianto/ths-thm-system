@@ -26,7 +26,7 @@ import {
   Award,
   AlertCircle,
   ExternalLink,
-  MoreVertical,
+  Trash2,
   BadgeCheck,
   Users,
   IdCard,
