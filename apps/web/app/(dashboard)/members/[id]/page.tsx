@@ -717,7 +717,7 @@ export default function MemberDetailPage() {
                       className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition text-gray-400 hover:text-red-500"
                       title="Hapus anggota"
                     >
-                      <MoreVertical size={16} />
+                      <Trash2 size={16} />
                     </button>
                   </>
                 }
