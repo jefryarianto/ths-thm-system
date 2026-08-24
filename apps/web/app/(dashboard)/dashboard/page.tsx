@@ -208,11 +208,6 @@ export default function DashboardPage() {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Activity-scoped roles get their own dashboard
-  if (isActivityScoped) {
-    return <ActivityScopedDashboard />;
-  }
-
   const fetchDashboard = useCallback(
     () =>
       apiClient.get('/reports/dashboard').then(({ data }) => {
@@ -230,6 +225,11 @@ export default function DashboardPage() {
     const interval = setInterval(refetch, 60000);
     return () => clearInterval(interval);
   }, [autoRefresh, refetch]);
+
+  // Activity-scoped roles get their own dashboard (AFTER all hooks)
+  if (isActivityScoped) {
+    return <ActivityScopedDashboard />;
+  }
 
   if (loading) return <DashboardSkeleton />;
   if (error) return <DashboardError message={error} onRetry={refetch} />;
