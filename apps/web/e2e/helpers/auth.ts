@@ -51,12 +51,17 @@ export async function mockAuth(
     mockDashboardPages?: boolean;
   },
 ) {
-  // ── 1. localStorage (runs before any page JS) ──
+  // ── 1. Set auth cookies + localStorage (runs before any page JS) ──
+  // Middleware reads `accessToken` from cookies, so we must set the cookie
+  // (not just localStorage) for the bypass + auth checks to pass.
   await page.addInitScript(
     (params: { accessToken: string; refreshToken: string; user: string }) => {
       localStorage.setItem('accessToken', params.accessToken);
       localStorage.setItem('refreshToken', params.refreshToken);
       localStorage.setItem('user', params.user);
+      // Set cookies so the Next.js middleware auth check passes
+      document.cookie = `accessToken=${params.accessToken}; path=/; SameSite=Lax`;
+      document.cookie = `refreshToken=${params.refreshToken}; path=/; SameSite=Lax`;
     },
     {
       accessToken: MOCK_ACCESS_TOKEN,
@@ -65,26 +70,30 @@ export async function mockAuth(
     },
   );
 
+  // ── 1b. Set cookies via Playwright's cookie store ──
+  // addInitScript runs in the browser context, but the middleware reads cookies
+  // at the server level during navigation. We need to set them via the page's
+  // cookie store before navigation so the middleware sees them.
+  const cookieDomain = new URL(E2E_BASE_URL).hostname;
+  await page.context().addCookies([
+    { name: 'accessToken', value: MOCK_ACCESS_TOKEN, domain: cookieDomain, path: '/' },
+    { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
+  ]);
+
   // ── 2. Catch-all navigation + API fallback handler (registered FIRST, runs LAST) ──
   // IMPORTANT: In Playwright, the LAST registered route handler runs FIRST.
   // By registering the catch-all FIRST, domain-specific API mocks (registered
   // below in step 3) take precedence and intercept API calls before the catch-all.
   //
-  // Navigation requests: forwarded to the actual server with bypass header.
-  // Unmocked API requests: return an empty success response so the page
-  // doesn't show error states. Specific API mocks registered later will
-  // intercept their endpoints before this fallback.
-  await page.route(`${E2E_BASE_URL}/**`, async (route) => {
-    const request = route.request();
+  // Navigation requests (HTML document loads): use route.continue() to let them
+  // pass through to the actual Next.js server. The x-e2e-bypass header is set
+  // so the middleware skips auth in non-production mode.
+  // Unmocked API (non-navigation) requests: return an empty success response
+  // so pages render normally instead of crashing on unhandled rejections.
+  await page.route(`${E2E_BASE_URL}/**`, async (route, request) => {
     if (request.isNavigationRequest()) {
-      const url = request.url();
-      const response = await page.request.get(url, {
+      await route.continue({
         headers: { 'x-e2e-bypass': 'true' },
-      });
-      await route.fulfill({
-        status: response.status(),
-        headers: response.headers(),
-        body: await response.body(),
       });
     } else {
       // API request not matched by any specific mock — return empty
