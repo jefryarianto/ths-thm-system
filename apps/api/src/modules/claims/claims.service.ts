@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -9,9 +9,12 @@ import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { claimStatusEmail } from '../../mail/email-templates';
 import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import { NraService } from '../../common/services/nra.service';
+import { normalizePhone } from '../../common/utils/phone.util';
 
 const CLAIM_INCLUDE = {
   anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
+  ranting: { select: { id: true, nama: true } },
 };
 
 @Injectable()
@@ -21,6 +24,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
     scopeHelper: ScopeHelper,
     cache: CacheService,
     private readonly mailService: MailService,
+    private readonly nraService: NraService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
   ) {
@@ -56,7 +60,15 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         const where: Record<string, unknown> = {};
         if (query.status) where.status = query.status;
         if (query.tipe) where.tipe = query.tipe;
-        Object.assign(where, this.buildIndirectScopeFilter(scope, 'anggota'));
+        // For keanggotaan claims, filter by ranting scope
+        if (scope?.rantingId) {
+          where.OR = [
+            { rantingId: scope.rantingId },
+            { anggota: this.buildIndirectScopeFilter(scope, 'anggota').anggota },
+          ];
+        } else {
+          Object.assign(where, this.buildIndirectScopeFilter(scope, 'anggota'));
+        }
         return where;
       },
       {
@@ -86,16 +98,102 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
 
   // ── Domain Methods ─────────────────────────────────────
 
-  async approve(id: string, scope?: UserScope) {
+  async approve(id: string, scope?: UserScope, userId?: string) {
     await this.verifyScope(id, scope);
     const claim = await this.prismaDelegate.findUnique({
       where: { id },
-      include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true } } },
+      include: {
+        anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, email: true, rantingId: true } },
+        ranting: { select: { id: true, nama: true } },
+      },
     });
     if (!claim) throw new NotFoundException('Klaim tidak ditemukan');
 
-    await this.prismaDelegate.update({ where: { id }, data: { status: 'disetujui' } });
-    this.sendClaimStatusEmail(claim.anggota, 'disetujui');
+    // ── Klaim keanggotaan baru: buat Anggota + User account ──
+    if (claim.tipe === 'keanggotaan') {
+      if (!claim.namaLengkap || !claim.jenisKelamin || !claim.rantingId) {
+        throw new BadRequestException('Data tidak lengkap: nama, jenis kelamin, dan ranting wajib diisi');
+      }
+
+      // Cek apakah sudah ada anggota dengan email yang sama
+      if (claim.email) {
+        const existingAnggota = await this.prisma.anggota.findFirst({
+          where: { email: claim.email, deletedAt: null },
+          select: { id: true },
+        });
+        if (existingAnggota) {
+          throw new BadRequestException('Email sudah terdaftar sebagai anggota');
+        }
+      }
+
+      // Generate NRA
+      const nomorAnggota = await this.nraService.generateMemberNumber(claim.rantingId);
+
+      // Buat Anggota baru
+      const anggota = await this.prisma.anggota.create({
+        data: {
+          namaLengkap: claim.namaLengkap,
+          jenisKelamin: claim.jenisKelamin as 'L' | 'P',
+          tempatLahir: claim.tempatLahir,
+          tanggalLahir: claim.tanggalLahir,
+          alamat: claim.alamat,
+          noHp: claim.noHp,
+          noHpNormalized: normalizePhone(claim.noHp),
+          email: claim.email,
+          rantingId: claim.rantingId,
+          nomorAnggota,
+          statusKeanggotaan: 'aktif',
+          statusData: 'complete',
+          statusValidasi: 'approved',
+        },
+      });
+
+      // Buat User account untuk login
+      if (claim.email) {
+        // Generate password sementara
+        const temporaryPassword = Math.random().toString(36).slice(-8);
+        const bcrypt = await import('bcryptjs');
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+        await this.prisma.user.create({
+          data: {
+            email: claim.email,
+            passwordHash: hashedPassword,
+            namaLengkap: claim.namaLengkap,
+            role: 'anggota',
+            isActive: true,
+            mustChangePassword: true,
+          },
+        });
+
+        this.logger.log(`User account created for ${claim.email} with temporary password`);
+      }
+
+      // Update klaim dengan anggotaId
+      await this.prismaDelegate.update({
+        where: { id },
+        data: {
+          status: 'disetujui',
+          anggotaId: anggota.id,
+          approvedBy: userId || null,
+          approvedAt: new Date(),
+        },
+      });
+
+      this.sendClaimStatusEmail({ namaLengkap: claim.namaLengkap, email: claim.email }, 'disetujui');
+    } else {
+      // ── Klaim dokumen biasa ──
+      await this.prismaDelegate.update({
+        where: { id },
+        data: {
+          status: 'disetujui',
+          approvedBy: userId || null,
+          approvedAt: new Date(),
+        },
+      });
+      this.sendClaimStatusEmail(claim.anggota, 'disetujui');
+    }
+
     this.invalidateCache();
     this.audit('CLAIM_APPROVE', 'Klaim', id);
     // void — interceptor returns { success: true }

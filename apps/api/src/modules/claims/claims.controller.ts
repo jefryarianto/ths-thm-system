@@ -44,7 +44,7 @@ export class ClaimsController {
   @Post(':id/approve')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Setujui klaim' })
   approve(@Param('id') id: string, @Req() req: ScopedRequest) {
-    return this.service.approve(id, req.scope);
+    return this.service.approve(id, req.scope, req.user?.id);
   }
 
   @Post(':id/reject')

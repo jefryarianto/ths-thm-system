@@ -22,6 +22,8 @@ interface ClaimRow {
   tipe: string;
   status: string;
   anggota?: { namaLengkap: string };
+  namaLengkap?: string;
+  ranting?: { nama: string };
   createdAt: string;
 }
 
@@ -103,9 +105,10 @@ export default function ClaimsPage() {
       <DataTable
         columns={[
           { label: 'Tipe' },
-          { label: 'Anggota', hidden: 'hidden sm:table-cell' },
+          { label: 'Pelapor', hidden: 'hidden sm:table-cell' },
+          { label: 'Ranting', hidden: 'hidden md:table-cell' },
           { label: 'Status' },
-          { label: 'Tanggal', hidden: 'hidden md:table-cell' },
+          { label: 'Tanggal', hidden: 'hidden lg:table-cell' },
           { label: 'Aksi', align: 'right' },
         ]}
         data={data}
@@ -118,7 +121,7 @@ export default function ClaimsPage() {
         totalPages={meta.totalPages}
         total={meta.total}
         onPageChange={handlePageChange}
-        colSpan={5}
+        colSpan={6}
         renderRow={(row: ClaimRow) => (
           <tr
             key={row.id}
@@ -126,11 +129,14 @@ export default function ClaimsPage() {
           >
             <td className="px-4 py-3">
               <span className="font-medium text-gray-900 dark:text-white capitalize">
-                {row.tipe}
+                {row.tipe === 'keanggotaan' ? 'Keanggotaan' : 'Dokumen'}
               </span>
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
-              {row.anggota?.namaLengkap || '-'}
+              {row.namaLengkap || row.anggota?.namaLengkap || '-'}
+            </td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+              {row.ranting?.nama || '-'}
             </td>
             <td className="px-4 py-3">
               <span

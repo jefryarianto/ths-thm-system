@@ -59,10 +59,8 @@ enum StatusCalon {
 }
 
 enum TipeKlaim {
-  sertifikat
-  piagam
-  kartu_anggota
-  dokumen_lainnya
+  keanggotaan  // Klaim keanggotaan baru (belum terdaftar)
+  dokumen      // Klaim dokumen (sudah terdaftar)
 }
 
 enum StatusKlaim {
@@ -310,6 +308,7 @@ model Ranting {
   transferFrom  TransferRequest[] @relation("TransferFrom")
   transferTo    TransferRequest[] @relation("TransferTo")
   auditLogs     AuditLog[]
+  klaims        Klaim[]
 
   @@unique([wilayahId, kodeRanting])
   @@map("ranting")
@@ -508,18 +507,35 @@ model Pendaftaran {
 // ── Claims ────────────────────────────────────────────────
 
 model Klaim {
-  id        String      @id @default(uuid())
-  anggotaId String      @map("anggota_id")
-  tipe      TipeKlaim
-  status    StatusKlaim @default(pending)
-  catatan   String?
-  version   Int         @default(0) @map("version")
-  createdAt DateTime    @default(now()) @map("created_at")
-  updatedAt DateTime    @updatedAt @map("updated_at")
+  id              String      @id @default(uuid())
+  tipe            TipeKlaim
+  status          StatusKlaim @default(pending)
+  catatan         String?
+  // ── Data diri pelapor (untuk klaim keanggotaan baru) ──
+  anggotaId       String?     @map("anggota_id")  // Opsional: ada jika klaim dokumen
+  namaLengkap     String?     @map("nama_lengkap")
+  jenisKelamin    String?     @map("jenis_kelamin")  // L atau P
+  tempatLahir     String?     @map("tempat_lahir")
+  tanggalLahir    DateTime?   @map("tanggal_lahir")
+  alamat          String?
+  noHp            String?     @map("no_hp")
+  email           String?
+  rantingId       String?     @map("ranting_id")  // Ranting asal keanggotaan
+  // ── Bukti dokumen ──
+  buktiDokumen    Json?       @map("bukti_dokumen")  // [{tipe: 'sertifikat'|'kartu_anggota', url: string}]
+  // ── Tracking ──
+  approvedBy      String?     @map("approved_by")
+  approvedAt      DateTime?   @map("approved_at")
+  // ── Metadata ──
+  version         Int         @default(0) @map("version")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
 
-  anggota Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  anggota         Anggota?    @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  ranting         Ranting?    @relation(fields: [rantingId], references: [id])
 
   @@index([anggotaId])
+  @@index([rantingId])
   @@map("klaim")
 }
 

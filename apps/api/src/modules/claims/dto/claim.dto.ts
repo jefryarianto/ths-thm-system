@@ -1,20 +1,69 @@
-import { IsString, IsOptional, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsEmail, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateClaimDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'ID anggota (opsional, ada jika klaim dokumen)' })
+  @IsOptional()
   @IsString()
-  anggotaId: string;
+  anggotaId?: string;
 
-  @ApiProperty({ enum: ['sertifikat', 'piagam', 'kartu_anggota', 'dokumen_lainnya'] })
+  @ApiProperty({ enum: ['keanggotaan', 'dokumen'], description: 'Tipe klaim' })
   @IsString()
+  @IsIn(['keanggotaan', 'dokumen'])
   tipe: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   catatan?: string;
+
+  // ── Data diri pelapor (untuk klaim keanggotaan baru) ──
+
+  @ApiPropertyOptional({ description: 'Nama lengkap pelapor' })
+  @IsOptional()
+  @IsString()
+  namaLengkap?: string;
+
+  @ApiPropertyOptional({ enum: ['L', 'P'], description: 'Jenis kelamin' })
+  @IsOptional()
+  @IsString()
+  @IsIn(['L', 'P'])
+  jenisKelamin?: string;
+
+  @ApiPropertyOptional({ description: 'Tempat lahir' })
+  @IsOptional()
+  @IsString()
+  tempatLahir?: string;
+
+  @ApiPropertyOptional({ description: 'Tanggal lahir (ISO string)' })
+  @IsOptional()
+  @IsString()
+  tanggalLahir?: string;
+
+  @ApiPropertyOptional({ description: 'Alamat lengkap' })
+  @IsOptional()
+  @IsString()
+  alamat?: string;
+
+  @ApiPropertyOptional({ description: 'Nomor HP' })
+  @IsOptional()
+  @IsString()
+  noHp?: string;
+
+  @ApiPropertyOptional({ description: 'Email' })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiPropertyOptional({ description: 'ID ranting asal keanggotaan' })
+  @IsOptional()
+  @IsString()
+  rantingId?: string;
+
+  @ApiPropertyOptional({ description: 'Bukti dokumen [{tipe: string, url: string}]' })
+  @IsOptional()
+  buktiDokumen?: Array<{ tipe: string; url: string }>;
 }
 
 export class UpdateClaimDto {
