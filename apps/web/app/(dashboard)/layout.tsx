@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/use-auth';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -92,8 +93,8 @@ const menuGroups: MenuGroup[] = [
     label: 'Utama',
     items: [
       // Dashboard admin — anggota diarahkan ke /forum sebagai home.
-      // minRole 'penguji' karena role-redirect mengarahkan penguji ke /members juga.
-      { href: '/members', label: 'Dashboard', icon: BarChart3, minRole: 'penguji' },
+      // minRole 'penguji' karena role-redirect mengarahkan penguji ke /dashboard juga.
+      { href: '/dashboard', label: 'Dashboard', icon: BarChart3, minRole: 'penguji' },
     ],
   },
   {
@@ -329,13 +330,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const toggleGroup = useCallback((label: string) => {
     setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) {
+      if (prev.has(label)) {
+        // Closing: just close this group
+        const next = new Set(prev);
         next.delete(label);
-      } else {
-        next.add(label);
+        return next;
       }
-      return next;
+      // Opening: close all others, keep only this one
+      return new Set([label]);
     });
   }, []);
 
@@ -357,9 +359,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         g.items.some((item) => pathname.startsWith(item.href)),
       );
       const next = new Set<string>();
-      if (activeGroup) {
-        next.add(activeGroup.label);
-      }
+      menuGroups.forEach(g => {
+        if (activeGroup && g.label !== activeGroup.label) {
+          next.add(g.label);
+        }
+      });
       return next;
     });
   }, [pathname]);
@@ -487,7 +491,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Brand + Toggle */}
         <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800 h-14 shrink-0">
           {collapsed ? (
-            <Link href={user ? getHomePathForRole(user.role) : '/members'} className="mx-auto">
+            <Link href={user ? getHomePathForRole(user.role) : '/dashboard'} className="mx-auto">
               <img
                 src="/logo.svg"
                 alt="THS-THM"
@@ -495,7 +499,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               />
             </Link>
           ) : (
-            <Link href={user ? getHomePathForRole(user.role) : '/members'} className="flex items-center gap-2 min-w-0">
+            <Link href={user ? getHomePathForRole(user.role) : '/dashboard'} className="flex items-center gap-2 min-w-0">
               <img
                 src="/logo.svg"
                 alt="THS-THM"
@@ -683,8 +687,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
         {/* Header */}
-        <header className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between h-14 shrink-0">
-          <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-navy-50 transition-colors text-navy-500 hover:text-navy-700" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
+          <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-navy-50 dark:hover:bg-gray-800 transition-colors text-navy-500 dark:text-gray-400 hover:text-navy-700 dark:hover:text-gray-200" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
           </h2>
@@ -721,7 +725,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">
                     {user.namaLengkap}
                   </span>
-                  <ChevronDown size={14} className="hidden md:block text-gray-400" />
+                  <ChevronDown size={14} className="hidden md:block text-gray-400 dark:text-gray-500" />
                 </button>
 
                 {profileOpen && (

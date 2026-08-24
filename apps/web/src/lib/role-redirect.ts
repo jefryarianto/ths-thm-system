@@ -18,7 +18,7 @@ export const DASHBOARD_ROLES: Role[] = [
  */
 export function getHomePathForRole(role: Role | string | null | undefined): string {
   if (role && DASHBOARD_ROLES.includes(role as Role)) {
-    return '/members';
+    return '/dashboard';
   }
   return '/forum';
 }
