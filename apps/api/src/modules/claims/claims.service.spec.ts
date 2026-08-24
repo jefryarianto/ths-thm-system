@@ -145,13 +145,14 @@ describe('ClaimsService', () => {
     it('should approve a claim and send email', async () => {
       mockPrisma.klaim.findUnique.mockResolvedValue({
         id: 'cl1',
+        tipe: 'dokumen',
         status: 'pending',
         anggota: { namaLengkap: 'Budi', email: 'budi@test.com', rantingId: 'r1' },
       });
       await service.approve('cl1');
       expect(mockPrisma.klaim.update).toHaveBeenCalledWith({
         where: { id: 'cl1' },
-        data: { status: 'disetujui' },
+        data: expect.objectContaining({ status: 'disetujui' }),
       });
       expect(mockMailService.sendMail).toHaveBeenCalledTimes(1);
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
