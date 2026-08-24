@@ -10,7 +10,7 @@ const apiClient = axios.create({
 let sessionExpired = false;
 
 /** A promise that never resolves - used to swallow API calls after session expiry */
-const PENDING_PROMISE = new Promise<never>(() => {});
+const SESSION_EXPIRED_ERROR = new Error('SESSION_EXPIRED');
 
 /**
  * Called when the session is known to be expired.
@@ -83,7 +83,7 @@ function addRefreshSubscriber(cb: (token: string) => void) {
 
 apiClient.interceptors.request.use((config) => {
   if (sessionExpired) {
-    return PENDING_PROMISE;
+    return Promise.reject(SESSION_EXPIRED_ERROR);
   }
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
@@ -98,7 +98,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (sessionExpired || axios.isCancel(error)) {
-      return PENDING_PROMISE;
+      return Promise.reject(SESSION_EXPIRED_ERROR);
     }
 
     const originalRequest = error.config;
@@ -128,7 +128,7 @@ apiClient.interceptors.response.use(
         // Wait for the ongoing refresh — never reject, never resolve on timeout.
         // If refresh fails, triggerSessionExpired() will fire for the first
         // requester; this one just hangs.
-        return PENDING_PROMISE;
+        return Promise.reject(SESSION_EXPIRED_ERROR);
       }
 
       originalRequest._retry = true;
@@ -143,7 +143,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch {
         triggerSessionExpired();
-        return PENDING_PROMISE;
+        return Promise.reject(SESSION_EXPIRED_ERROR);
       } finally {
         isRefreshing = false;
       }
