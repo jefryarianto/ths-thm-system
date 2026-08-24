@@ -698,6 +698,13 @@ export default function MemberDetailPage() {
                       </button>
                     )}
                     <button
+                      onClick={() => router.push(`/members/${member.id}/edit`)}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+                    >
+                      <Pencil size={14} />
+                      Edit
+                    </button>
+                    <button
                       onClick={handleResendCredentials}
                       disabled={actionLoading === 'resend'}
                       className="flex items-center gap-1.5 px-3 py-2 border border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"

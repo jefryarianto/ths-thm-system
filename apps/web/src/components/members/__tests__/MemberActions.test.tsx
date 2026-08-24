@@ -2,6 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MemberActions from '../MemberActions';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 /** Helper: open the kebab menu (dropdown) so menu items render in the DOM */
 function openDropdown() {
   fireEvent.click(screen.getByTitle('Menu lainnya'));

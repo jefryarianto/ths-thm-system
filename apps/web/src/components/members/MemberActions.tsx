@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CheckCircle2, Shield, UserX, Eye, MoreVertical, Edit, Trash2,
   IdCard, FileText, ArrowLeftRight, Image
 } from 'lucide-react';
+import { Can } from '@/components/auth/can';
 
 interface MemberActionsProps {
   member: {
@@ -27,6 +29,7 @@ export default function MemberActions({
   onMutate,
   onUploadPhoto,
 }: MemberActionsProps) {
+  const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +56,7 @@ export default function MemberActions({
 
   const menuItems = [
     { label: 'Lihat Detail', icon: Eye, action: () => onViewDetail(member.id) },
-    { label: 'Edit Anggota', icon: Edit, action: () => onViewDetail(member.id) },
+    { label: 'Edit Anggota', icon: Edit, action: () => router.push(`/members/${member.id}/edit`), minRole: 'admin_ranting' as const },
     { label: 'Kartu Digital (KTA)', icon: IdCard, action: () => window.open(`/members/${member.id}?tab=card`, '_blank') },
     { label: 'Dokumen', icon: FileText, action: () => onViewDetail(member.id) },
     ...(onMutate
@@ -112,19 +115,29 @@ export default function MemberActions({
               style={menuStyle}
               className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
             >
-              {menuItems.map((item, i) => (
-                <button
-                  key={i}
-                  title={item.label}
-                  onClick={() => { setShowMenu(false); item.action(); }}
-                  className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                    item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
-                  }`}
-                >
-                  <item.icon size={14} />
-                  {item.label}
-                </button>
-              ))}
+              {menuItems.map((item, i) => {
+                const ButtonContent = (
+                  <button
+                    key={i}
+                    title={item.label}
+                    onClick={() => { setShowMenu(false); item.action(); }}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                      item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <item.icon size={14} />
+                    {item.label}
+                  </button>
+                );
+
+                return item.minRole ? (
+                  <Can minRole={item.minRole} key={i} fallback={null}>
+                    {ButtonContent}
+                  </Can>
+                ) : (
+                  ButtonContent
+                );
+              })}
             </div>
           </>
         )}
