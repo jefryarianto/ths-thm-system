@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   User,
   Mail,
-  Send,
   Phone,
   MapPin,
   Calendar,
@@ -34,9 +33,9 @@ import {
   Image,
   Printer,
   Pencil,
-  Save,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
+import EditMemberModal from '@/components/members/EditMemberModal';
 import { StatusBadge,
   InfoRow,
   DetailStats,
@@ -230,28 +229,6 @@ export default function MemberDetailPage() {
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({
-    namaLengkap: '',
-    jenisKelamin: 'L' as 'L' | 'P',
-    tempatLahir: '',
-    tanggalLahir: '',
-    tempatDadar: '',
-    tahunDadar: '',
-    alamat: '',
-    noHp: '',
-    email: '',
-    tingkat: '',
-    rantingId: '',
-    distrikId: '',
-    wilayahId: '',
-  });
-  const [editLoading, setEditLoading] = useState(false);
-  const [editError, setEditError] = useState('');
-  const [editDistriks, setEditDistriks] = useState<Array<{ id: string; nama: string }>>([]);
-  const [editWilayahs, setEditWilayahs] = useState<Array<{ id: string; nama: string }>>([]);
-  const [editRantings, setEditRantings] = useState<Array<{ id: string; nama: string }>>([]);
-  const [editWilayahLoading, setEditWilayahLoading] = useState(false);
-  const [editRantingLoading, setEditRantingLoading] = useState(false);
   const [cardData, setCardData] = useState<{
     qrCode: string;
     signerName?: string;
@@ -261,7 +238,6 @@ export default function MemberDetailPage() {
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [tingkatanList, setTingkatanList] = useState<Array<{ id: string; nama: string }>>([]);
 
   const fetchMember = useCallback(async () => {
     if (!id) return;
@@ -284,10 +260,6 @@ export default function MemberDetailPage() {
   useEffect(() => {
     fetchMember();
   }, [fetchMember]);
-
-  useEffect(() => {
-    apiClient.get('/tingkatan').then((r) => setTingkatanList(r.data.data || [])).catch(() => {/* ignore */});
-  }, []);
 
   // Fetch digital card data when card tab is active
   useEffect(() => {
@@ -1413,259 +1385,12 @@ export default function MemberDetailPage() {
               )}
         
               {/* ── Edit Modal ── */}
-              <Modal
+              <EditMemberModal
                 open={showEditModal}
+                memberId={id}
                 onClose={() => setShowEditModal(false)}
-                title="Edit Anggota"
-                size="md"
-              >
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    setEditLoading(true);
-                    setEditError('');
-                    try {
-                      const payload: Record<string, unknown> = {};
-                      if (editForm.namaLengkap !== member?.namaLengkap) payload.namaLengkap = editForm.namaLengkap;
-                      if (editForm.jenisKelamin !== member?.jenisKelamin) payload.jenisKelamin = editForm.jenisKelamin;
-                      if (editForm.tempatLahir !== (member?.tempatLahir || '')) payload.tempatLahir = editForm.tempatLahir;
-                      if (editForm.tanggalLahir !== (member?.tanggalLahir || '')) payload.tanggalLahir = editForm.tanggalLahir;
-                      if (editForm.alamat !== (member?.alamat || '')) payload.alamat = editForm.alamat;
-                      if (editForm.noHp !== (member?.noHp || '')) payload.noHp = editForm.noHp;
-                      if (editForm.email !== (member?.email || '')) payload.email = editForm.email;
-                      if (editForm.tingkat !== (member?.tingkat || '')) payload.tingkat = editForm.tingkat;
-                      if (editForm.tempatDadar !== (member?.tempatDadar || '')) payload.tempatDadar = editForm.tempatDadar;
-                      if (editForm.tahunDadar !== (member?.tahunDadar || '')) payload.tahunDadar = editForm.tahunDadar;
-                      if (editForm.rantingId !== (member?.rantingId || '')) payload.rantingId = editForm.rantingId;
-        
-                      if (Object.keys(payload).length === 0) {
-                        setEditError('Tidak ada perubahan yang dilakukan');
-                        setEditLoading(false);
-                        return;
-                      }
-        
-                      await apiClient.patch(`/members/${member!.id}`, payload);
-                      setShowEditModal(false);
-                      await fetchMember();
-                    } catch (err: unknown) {
-                      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-                      setEditError(msg || 'Gagal menyimpan perubahan');
-                    } finally {
-                      setEditLoading(false);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  {editError && (
-                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2">
-                      <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-                      <p className="text-sm text-red-700 dark:text-red-400">{editError}</p>
-                    </div>
-                  )}
-        
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap</label>
-                      <input
-                        type="text"
-                        value={editForm.namaLengkap}
-                        onChange={(e) => setEditForm({ ...editForm, namaLengkap: e.target.value })}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
-                      <select
-                        value={editForm.jenisKelamin}
-                        onChange={(e) => setEditForm({ ...editForm, jenisKelamin: e.target.value as 'L' | 'P' })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="L">Laki-laki</option>
-                        <option value="P">Perempuan</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat Lahir</label>
-                      <input
-                        type="text"
-                        value={editForm.tempatLahir}
-                        onChange={(e) => setEditForm({ ...editForm, tempatLahir: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Lahir</label>
-                      <input
-                        type="date"
-                        value={editForm.tanggalLahir ? editForm.tanggalLahir.split('T')[0] : ''}
-                        onChange={(e) => setEditForm({ ...editForm, tanggalLahir: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempat - Tahun Dadar</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={editForm.tempatDadar}
-                          onChange={(e) => setEditForm({ ...editForm, tempatDadar: e.target.value })}
-                          placeholder="Tempat dadar"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                        />
-                        <input
-                          type="text"
-                          value={editForm.tahunDadar}
-                          onChange={(e) => setEditForm({ ...editForm, tahunDadar: e.target.value })}
-                          placeholder="Tahun"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
-                      <textarea
-                        value={editForm.alamat}
-                        onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })}
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
-                      <input
-                        type="text"
-                        value={editForm.noHp}
-                        onChange={(e) => setEditForm({ ...editForm, noHp: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tingkat</label>
-                      <select
-                        value={editForm.tingkat}
-                        onChange={(e) => setEditForm({ ...editForm, tingkat: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Pilih Tingkat</option>
-                        {tingkatanList.map((t) => (
-                          <option key={t.id} value={t.nama}>{t.nama}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-        
-                  {/* Organisasi - Cascading dropdowns */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Organisasi</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Distrik</label>
-                        <select
-                          value={editForm.distrikId}
-                          onChange={async (e) => {
-                            const distrikId = e.target.value;
-                            setEditForm({ ...editForm, distrikId, wilayahId: '', rantingId: '' });
-                            setEditWilayahs([]);
-                            setEditRantings([]);
-                            if (distrikId) {
-                              setEditWilayahLoading(true);
-                              try {
-                                const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-                                setEditWilayahs(wRes.data.data || []);
-                              } catch { /* ignore */ }
-                              setEditWilayahLoading(false);
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Pilih Distrik</option>
-                          {editDistriks.map((d) => (
-                            <option key={d.id} value={d.id}>{d.nama}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Wilayah</label>
-                        <select
-                          value={editForm.wilayahId}
-                          onChange={async (e) => {
-                            const wilayahId = e.target.value;
-                            setEditForm({ ...editForm, wilayahId, rantingId: '' });
-                            setEditRantings([]);
-                            if (wilayahId) {
-                              setEditRantingLoading(true);
-                              try {
-                                const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-                                setEditRantings(rRes.data.data || []);
-                              } catch { /* ignore */ }
-                              setEditRantingLoading(false);
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Pilih Wilayah</option>
-                          {editWilayahLoading ? (
-                            <option disabled>Memuat...</option>
-                          ) : (
-                            editWilayahs.map((w) => (
-                              <option key={w.id} value={w.id}>{w.nama}</option>
-                            ))
-                          )}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting</label>
-                        <select
-                          value={editForm.rantingId}
-                          onChange={(e) => setEditForm({ ...editForm, rantingId: e.target.value })}
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Pilih Ranting</option>
-                          {editRantingLoading ? (
-                            <option disabled>Memuat...</option>
-                          ) : (
-                            editRantings.map((r) => (
-                              <option key={r.id} value={r.id}>{r.nama}</option>
-                            ))
-                          )}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-        
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={editLoading}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
-                    >
-                      {editLoading ? (
-                        <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Menyimpan...</>
-                      ) : (
-                        <><Save size={16} />Simpan Perubahan</>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </Modal>
+                onSuccess={fetchMember}
+              />
         
               {/* ── Delete Modal ── */}
               <Modal
