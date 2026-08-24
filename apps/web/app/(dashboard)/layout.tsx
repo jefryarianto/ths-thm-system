@@ -227,7 +227,7 @@ function DropdownItem({
       onClick={onClick}
       className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
     >
-      <Icon size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />
+      <Icon size={16} className="shrink-0 text-gray-500 dark:text-gray-400" />
       {label}
     </Link>
   );
@@ -687,9 +687,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
-          <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-navy-50 dark:hover:bg-gray-800 transition-colors text-navy-500 dark:text-gray-400 hover:text-navy-700 dark:hover:text-gray-200" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+        <header className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between h-14 shrink-0">
+          <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-navy-50 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200" title="Kembali" aria-label="Kembali"><ArrowLeft size={20} /></button>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             {menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard'}
           </h2>
           <div className="flex items-center gap-3">
@@ -698,7 +698,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               href="/notifications"
               className="relative p-2 rounded-xl hover:bg-navy-50 transition-colors"
             >
-              <Bell size={20} className="text-gray-600 dark:text-gray-300" />
+              <Bell size={20} className="text-gray-500 dark:text-gray-300" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -722,10 +722,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     namaLengkap={user.namaLengkap}
                     size="sm"
                   />
-                  <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <span className="hidden md:inline text-sm font-medium text-gray-800 dark:text-gray-200">
                     {user.namaLengkap}
                   </span>
-                  <ChevronDown size={14} className="hidden md:block text-gray-400 dark:text-gray-500" />
+                  <ChevronDown size={14} className="hidden md:block text-gray-500 dark:text-gray-400" />
                 </button>
 
                 {profileOpen && (
