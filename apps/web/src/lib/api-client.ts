@@ -7,11 +7,13 @@ const apiClient = axios.create({
 });
 
 // --- Session expiry guard ---
-// Once the session is known to be expired, reject all further requests
-// immediately and redirect to /login. This prevents:
-//   1. Multiple concurrent refresh attempts
-//   2. Components rendering with empty/errored data
-//   3. Users seeing error messages before the redirect
+// Once the session is known to be expired, all further requests return a
+// never-resolving promise (PENDING_PROMISE) so components stay in loading
+// state instead of rendering error messages.
+//
+// The actual redirect is handled by the dashboard layout, which listens
+// for the 'session-expired' event, shows a toast, then navigates to
+// /login after a brief delay so the user can read the message.
 let sessionExpired = false;
 
 /** A promise that never resolves - used to swallow API calls after session expiry */
@@ -24,11 +26,9 @@ function triggerSessionExpired() {
   localStorage.removeItem('refreshToken');
   localStorage.setItem('session-expired', 'true');
   if (typeof window !== 'undefined') {
+    // Dispatch event — the dashboard layout listens for this, shows a toast,
+    // then navigates to /login after ~2 seconds so the user can read it.
     window.dispatchEvent(new CustomEvent('session-expired'));
-    // Hard redirect - takes effect after current JS stack finishes.
-    // Components will stay in loading state (never-resolving promise) until
-    // the page unloads, preventing any error flash.
-    window.location.href = '/login';
   }
 }
 
@@ -47,8 +47,7 @@ function addRefreshSubscriber(cb: (token: string) => void) {
 apiClient.interceptors.request.use((config) => {
   if (sessionExpired) {
     // Return a never-resolving promise so the component stays in loading
-    // state instead of showing an error. The page will unload when the
-    // redirect completes.
+    // state instead of showing an error.
     return PENDING_PROMISE;
   }
   if (typeof window !== 'undefined') {
@@ -102,7 +101,6 @@ apiClient.interceptors.response.use(
             if (!sessionExpired) {
               triggerSessionExpired();
             }
-            // Never-resolving promise - prevents component error state
             reject(PENDING_PROMISE);
           }, 5000);
         });

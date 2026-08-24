@@ -279,14 +279,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     const handleSessionExpired = () => {
+      // Show toast so the user knows what happened
       toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+      // Redirect to login after a brief delay so the toast is visible
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     };
 
     window.addEventListener('session-expired', handleSessionExpired);
     return () => {
       window.removeEventListener('session-expired', handleSessionExpired);
     };
-  }, [toast]);
+  }, [toast, router]);
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);
 
