@@ -16,6 +16,14 @@ export default defineConfig({
     trace: 'on-first-retry',
     headless: true,
   },
+  // Start the Next.js dev server automatically before tests and stop it after.
+  // This ensures tests have a running server without manual setup.
+  webServer: {
+    command: 'npx next dev -p 3002',
+    url: 'http://localhost:3002/login',
+    reuseExistingServer: true,
+    timeout: 30000,
+  },
   projects: [
     {
       name: 'chromium',

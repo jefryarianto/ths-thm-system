@@ -37,6 +37,7 @@ function OAuthCallbackHandler() {
     const refresh = searchParams.get('refresh');
 
     if (token && refresh) {
+      console.log('OAuthCallbackHandler: token and refresh found', token, refresh);
       setTokens(token, refresh);
       document.cookie = `accessToken=${token}; path=/; max-age=86400; SameSite=Lax`;
       document.cookie = `refreshToken=${refresh}; path=/; max-age=604800; SameSite=Lax`;

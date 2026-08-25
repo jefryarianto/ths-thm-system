@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockAuth } from './helpers';
+import { mockAuthWithAll } from './helpers';
 
 test.describe('OAuth Login Flow', () => {
   test('shows OAuth buttons on login page', async ({ page }) => {
@@ -38,8 +38,8 @@ test.describe('OAuth Login Flow', () => {
   });
 
   test('OAuth callback with token and refresh redirects to dashboard', async ({ page }) => {
-    await mockAuth(page);
+    await mockAuthWithAll(page);
     await page.goto('/login?token=fake_test_token&refresh=fake_test_refresh');
-    await expect(page).toHaveURL(/\/members/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
   });
 });

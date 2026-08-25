@@ -80,37 +80,7 @@ export async function mockAuth(
     { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
   ]);
 
-  // ── 2. Catch-all navigation + API fallback handler (registered FIRST, runs LAST) ──
-  // IMPORTANT: In Playwright, the LAST registered route handler runs FIRST.
-  // By registering the catch-all FIRST, domain-specific API mocks (registered
-  // below in step 3) take precedence and intercept API calls before the catch-all.
-  //
-  // Navigation requests (HTML document loads): use route.continue() to let them
-  // pass through to the actual Next.js server. The x-e2e-bypass header is set
-  // so the middleware skips auth in non-production mode.
-  // Unmocked API (non-navigation) requests: return an empty success response
-  // so pages render normally instead of crashing on unhandled rejections.
-  await page.route(`${E2E_BASE_URL}/**`, async (route, request) => {
-    if (request.isNavigationRequest()) {
-      await route.continue({
-        headers: { 'x-e2e-bypass': 'true' },
-      });
-    } else {
-      // API request not matched by any specific mock — return empty
-      // success so the page renders normally instead of showing errors.
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: [],
-          meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
-        }),
-      });
-    }
-  });
-
-  // ── 3. Auth API interceptors ──
+  // ── 2. Auth API interceptors (registered FIRST, take priority) ──
   await page.route(/\/api\/auth\/me/, async (route) => {
     await route.fulfill({
       status: 200,
@@ -149,13 +119,36 @@ export async function mockAuth(
     }
   });
 
-  // ── 4. Optional domain-specific API mocks (registered LAST, take priority) ──
+  // ── 3. Optional domain-specific API mocks ──
   if (options?.mockMembers) await registerMembersMocks(page);
   if (options?.mockTrainings) await registerTrainingsMocks(page);
   if (options?.mockGamification) await registerGamificationMocks(page);
   if (options?.mockImport) await registerImportMocks(page);
   if (options?.mockCandidates) await registerCandidatesMocks(page);
   if (options?.mockDashboardPages) await registerDashboardPageMocks(page);
+
+  // ── 4. Catch-all navigation + API fallback (registered LAST, runs last) ──
+  // Playwright evaluates route handlers in registration order. By registering
+  // this LAST, all specific API mocks above take priority.
+  await page.route(`${E2E_BASE_URL}/**`, async (route, request) => {
+    if (request.isNavigationRequest()) {
+      await route.continue({
+        headers: { 'x-e2e-bypass': 'true' },
+      });
+    } else {
+      // API request not matched by any specific mock — return empty
+      // success so the page renders normally instead of showing errors.
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [],
+          meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
+        }),
+      });
+    }
+  });
 }
 
 /** Mock login error (returns 400 to avoid axios 401 interceptor redirect) */

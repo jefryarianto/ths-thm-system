@@ -69,12 +69,9 @@ export function LandingPageContent() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="max-w-3xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold leading-[1.1] mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold mb-6 whitespace-nowrap">
               TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA
             </h1>
-            <p className="text-lg sm:text-xl text-white/80 max-w-2xl mb-10 leading-relaxed">
-              Sistem Manajemen Organisasi THS-THM - Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
-            </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/daftar"
@@ -203,28 +200,6 @@ export function LandingPageContent() {
           </div>
         </section>
       )}
-
-      {/* ── CTA Section ── */}
-      <section className="bg-gradient-to-r from-navy-800 to-navy-900 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white mb-4">
-            Bergabunglah dengan THS-THM
-          </h2>
-          <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-            Daftarkan diri anda sebagai anggota dan dapatkan akses ke seluruh fitur
-            sistem manajemen kami.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/daftar"
-              className="inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-900 px-8 py-3.5 rounded-xl text-lg font-bold hover:bg-gold-300 shadow-elegant-md transition-all duration-200"
-            >
-              Daftar Sekarang
-              <ArrowRight size={18} />
-            </Link>
-          </div>
-        </div>
-      </section>
     </PublicLayout>
   );
 }
