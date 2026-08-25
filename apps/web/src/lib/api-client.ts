@@ -87,7 +87,9 @@ apiClient.interceptors.response.use(
     }
 
     // --- TOKEN REFRESH HANDLING ---
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip refresh on login/auth endpoints since there's no valid refresh token yet
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
       // Wait for the ongoing refresh — if refresh fails, triggerSessionExpired()
       // will fire for the first requester; this one just gets rejected.

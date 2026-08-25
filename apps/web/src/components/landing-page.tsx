@@ -69,10 +69,6 @@ export function LandingPageContent() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-gold-400/10 backdrop-blur-sm text-gold-400 text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-gold-400/20">
-              <span className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
-              Organisasi Berkemajuan
-            </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold leading-[1.1] mb-6">
               TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA
             </h1>
