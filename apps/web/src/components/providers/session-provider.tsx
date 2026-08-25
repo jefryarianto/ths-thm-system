@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { sessionManager } from '@/lib/session-manager';
+import { useToast } from '@/components/ui/toast';
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [showToast, setShowToast] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const toast = useToast();
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | undefined;
@@ -17,14 +18,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         // Don't toast/redirect if already on login page
         if (pathname === '/login' || pathname === '/') return;
 
-        setShowToast(true);
+        toast('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman login...');
 
         timeoutId = setTimeout(() => {
-          setShowToast(false);
           router.push('/login');
         }, 3000);
       } else {
-        setShowToast(false);
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = undefined;
@@ -42,23 +41,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       unsubscribe();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [router, pathname]);
+  }, [router, pathname, toast]);
 
-  return (
-    <>
-      {children}
-      {showToast && (
-        <div className="fixed bottom-4 right-4 z-[9999] flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 shadow-xl">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span className="text-sm text-red-800">
-            Sesi Anda telah berakhir. Silakan login kembali...
-          </span>
-        </div>
-      )}
-    </>
-  );
+  return <>{children}</>;
 }

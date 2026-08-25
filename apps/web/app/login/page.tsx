@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import apiClient, { setTokens } from '@/lib/api-client';
 import { getHomePathForRole } from '@/lib/role-redirect';
+import { useToast } from '@/components/ui/toast';
 
 const API_URL = '';
 
@@ -164,13 +165,14 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     setMounted(true);
     // Check if we were redirected here due to session expiry
     const isExpired = localStorage.getItem('session-expired') === 'true';
     if (isExpired) {
-      setError('Sesi Anda telah berakhir. Silakan login kembali.');
+      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
       localStorage.removeItem('session-expired');
     }
     const oauthError = getOAuthErrorFromUrl();
@@ -188,7 +190,7 @@ export default function LoginPage() {
       setIdentifier(remembered);
       setRememberMe(true);
     }
-  }, []);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
