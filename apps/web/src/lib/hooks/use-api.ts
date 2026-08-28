@@ -29,6 +29,11 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList,
         setLoading(false);
       }
     } catch (err) {
+      // Suppress SESSION_EXPIRED — SessionProvider handles redirect
+      if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
+        if (mountedRef.current) setLoading(false);
+        return;
+      }
       if (mountedRef.current) {
         setData(null);
         setLoading(false);
@@ -87,7 +92,12 @@ export function usePaginatedList<T>(
         setMeta(result.meta || { total: 0, totalPages: 0 });
         setLoading(false);
       }
-    } catch {
+    } catch (err) {
+      // Suppress SESSION_EXPIRED — SessionProvider handles redirect
+      if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
+        if (mountedRef.current) setLoading(false);
+        return;
+      }
       if (mountedRef.current) {
         setData([]);
         setMeta({ total: 0, totalPages: 0 });

@@ -16,13 +16,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = sessionManager.subscribe(() => {
       if (sessionManager.isExpired) {
         // Don't toast/redirect if already on login page
-        if (pathname === '/login' || pathname === '/') return;
+        if (pathname === '/login') return;
 
         toast('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman login...');
 
         timeoutId = setTimeout(() => {
           router.push('/login');
-        }, 3000);
+        }, 1000);
       } else {
         if (timeoutId) {
           clearTimeout(timeoutId);

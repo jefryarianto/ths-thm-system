@@ -1,11 +1,13 @@
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Alert } from 'react-native';
 import { useFonts } from 'expo-font';
 import { useAuthStore, AuthState } from '../src/store/auth-store';
 import { GlobalErrorBoundary } from '../src/components/GlobalErrorBoundary';
 import { setupNotificationListeners } from '../src/lib/fcm';
 import { useNotificationDeepLink } from '../src/hooks/useNotificationDeepLink';
+import { onSessionExpired } from '../src/lib/session-expired';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
@@ -23,6 +25,18 @@ export default function RootLayout() {
 
   useEffect(() => {
     loadUser();
+  }, []);
+
+  // Listen for session expiry from api-client interceptor
+  useEffect(() => {
+    const unsubscribe = onSessionExpired(() => {
+      Alert.alert(
+        'Sesi Berakhir',
+        'Sesi Anda telah berakhir. Silakan login kembali.',
+        [{ text: 'OK', onPress: () => router.replace('/login') }],
+      );
+    });
+    return unsubscribe;
   }, []);
 
   useEffect(() => {

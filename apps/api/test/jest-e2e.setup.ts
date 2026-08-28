@@ -8,7 +8,7 @@
  */
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-e2e-jwt-secret';
 process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test-e2e-jwt-refresh-secret';
-process.env.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+process.env.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '14d';
 process.env.API_KEYS = process.env.API_KEYS || '[{"key":"test-e2e-api-key","name":"E2E Test Key"}]';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL || 'postgresql://ths_thm:test_password@localhost:5432/ths_thm_test';
