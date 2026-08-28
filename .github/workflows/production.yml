@@ -201,6 +201,10 @@ jobs:
             echo "   Running database migrations..."
             docker compose -f docker-compose.production.yml run --rm api \
               sh -c "npx prisma migrate deploy" 2>&1 || echo "   ⚠️ Migration skipped"
+            # Seed kepengurusan data (only if table is empty)
+            echo "   Seeding kepengurusan data..."
+            docker compose -f docker-compose.production.yml run --rm api \
+              sh -c "npx ts-node prisma/seed-kepengurusan.ts" 2>&1 || echo "   ⚠️ Seed skipped (data may already exist)"
 
             # Stop & remove old containers, then restart with latest config
             echo "   Restarting Docker services..."
