@@ -131,6 +131,9 @@ const menuGroups: MenuGroup[] = [
     items: [
       { href: '/org-chart', label: 'Peta Organisasi', icon: Shield, minRole: 'anggota' },
       { href: '/org-documents', label: 'Dokumen Org.', icon: FileText, minRole: 'anggota' },
+      { href: '/settings/jabatan', label: 'Jabatan', icon: Shield, minRole: 'superadmin' },
+      { href: '/settings/periode', label: 'Periode', icon: Calendar, minRole: 'superadmin' },
+      { href: '/settings/kepengurusan', label: 'Kepengurusan', icon: Users, minRole: 'superadmin' },
     ],
   },
   {
