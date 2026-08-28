@@ -32,13 +32,16 @@ const E2E_BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3002';
 /**
  * Set up auth mocking for an authenticated test.
  *
- * Strategy (in order):
- * 1. Set up localStorage via addInitScript (client-side axios checks)
- * 2. Register all API route interceptors (auth, members, trainings, gamification, etc.)
- * 3. Register catch-all navigation interceptor that fetches pages with bypass header
+ * IMPORTANT: In Playwright 1.60+, the LAST registered route handler wins
+ * when multiple handlers match the same URL. This means:
+ *   - Catch-all routes must be registered FIRST (they act as defaults)
+ *   - Specific mock routes must be registered LAST (they override catch-alls)
  *
- * IMPORTANT: API route interceptors are registered BEFORE the catch-all navigation
- * handler so they take precedence when Playwright evaluates route matches.
+ * Registration order:
+ * 1. Set up localStorage via addInitScript + cookies
+ * 2. Register catch-all interceptors (navigation bypass + API fallback)
+ * 3. Register auth API interceptors (override catch-all for auth endpoints)
+ * 4. Register domain-specific API mocks (override catch-all for specific endpoints)
  */
 export async function mockAuth(
   page: Page,
@@ -52,14 +55,11 @@ export async function mockAuth(
   },
 ) {
   // ── 1. Set auth cookies + localStorage (runs before any page JS) ──
-  // Middleware reads `accessToken` from cookies, so we must set the cookie
-  // (not just localStorage) for the bypass + auth checks to pass.
   await page.addInitScript(
     (params: { accessToken: string; refreshToken: string; user: string }) => {
       localStorage.setItem('accessToken', params.accessToken);
       localStorage.setItem('refreshToken', params.refreshToken);
       localStorage.setItem('user', params.user);
-      // Set cookies so the Next.js middleware auth check passes
       document.cookie = `accessToken=${params.accessToken}; path=/; SameSite=Lax`;
       document.cookie = `refreshToken=${params.refreshToken}; path=/; SameSite=Lax`;
     },
@@ -70,17 +70,47 @@ export async function mockAuth(
     },
   );
 
-  // ── 1b. Set cookies via Playwright's cookie store ──
-  // addInitScript runs in the browser context, but the middleware reads cookies
-  // at the server level during navigation. We need to set them via the page's
-  // cookie store before navigation so the middleware sees them.
   const cookieDomain = new URL(E2E_BASE_URL).hostname;
   await page.context().addCookies([
     { name: 'accessToken', value: MOCK_ACCESS_TOKEN, domain: cookieDomain, path: '/' },
     { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
   ]);
 
-  // ── 2. Auth API interceptors (registered FIRST, take priority) ──
+  // ── 2. Catch-all interceptors (registered FIRST — act as defaults) ──
+  // These match broad URL patterns. Specific mocks registered later
+  // will override them for matching URLs (last-registered wins).
+  //
+  // We must NOT intercept /_next/** or other asset requests — doing so
+  // would replace the actual JavaScript chunks with our JSON stub, causing
+  // "Unexpected token ':'" parse errors that prevent client-side hydration.
+
+  // Navigation catch-all: add bypass header for server-side middleware auth check
+  await page.route(`${E2E_BASE_URL}/**`, async (route, request) => {
+    if (request.isNavigationRequest()) {
+      await route.continue({
+        headers: { 'x-e2e-bypass': 'true' },
+      });
+    } else {
+      // Non-navigation, non-API request (e.g. /_next/static/chunks/*.js)
+      // — let it through so assets load correctly.
+      await route.continue();
+    }
+  });
+
+  // API catch-all: unmocked API calls get an empty success response
+  await page.route(`${E2E_BASE_URL}/api/**`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [],
+        meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
+      }),
+    });
+  });
+
+  // ── 3. Auth API interceptors (override catch-all for auth endpoints) ──
   await page.route(/\/api\/auth\/me/, async (route) => {
     await route.fulfill({
       status: 200,
@@ -119,50 +149,13 @@ export async function mockAuth(
     }
   });
 
-  // ── 3. Optional domain-specific API mocks ──
+  // ── 4. Domain-specific API mocks (registered LAST — override catch-all) ──
   if (options?.mockMembers) await registerMembersMocks(page);
   if (options?.mockTrainings) await registerTrainingsMocks(page);
   if (options?.mockGamification) await registerGamificationMocks(page);
   if (options?.mockImport) await registerImportMocks(page);
   if (options?.mockCandidates) await registerCandidatesMocks(page);
   if (options?.mockDashboardPages) await registerDashboardPageMocks(page);
-
-  // ── 4. Catch-all interceptors (registered LAST, runs last) ──
-  // Playwright evaluates route handlers in registration order. By registering
-  // this LAST, all specific API mocks above take priority.
-  //
-  // IMPORTANT: We intercept two distinct URL patterns:
-  //  a) /api/**  — unmocked API calls get an empty success response
-  //  b) navigation requests — get the x-e2e-bypass header for middleware
-  //
-  // We must NOT intercept /_next/** or other asset requests — doing so
-  // would replace the actual JavaScript chunks with our JSON stub, causing
-  // "Unexpected token ':'" parse errors that prevent client-side hydration.
-  await page.route(`${E2E_BASE_URL}/api/**`, async (route) => {
-    // API request not matched by any specific mock — return empty
-    // success so the page renders normally instead of showing errors.
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: [],
-        meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
-      }),
-    });
-  });
-
-  await page.route(`${E2E_BASE_URL}/**`, async (route, request) => {
-    if (request.isNavigationRequest()) {
-      await route.continue({
-        headers: { 'x-e2e-bypass': 'true' },
-      });
-    } else {
-      // Non-navigation, non-API request (e.g. /_next/static/chunks/*.js)
-      // — let it through so assets load correctly.
-      await route.continue();
-    }
-  });
 }
 
 /** Mock login error (returns 400 to avoid axios 401 interceptor redirect) */

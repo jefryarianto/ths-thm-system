@@ -600,7 +600,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           )}
 
           {/* Standard menu groups (filtered by role) */}
-          {menuGroups.map((group) => {
+          {mounted && menuGroups.map((group) => {
             const visibleItems = group.items.filter((item) => {
               // Admin-only items (queues, WebSocket) → superadmin
               if (item.adminOnly && mounted) {

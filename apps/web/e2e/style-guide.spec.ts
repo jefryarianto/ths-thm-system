@@ -295,8 +295,8 @@ test.describe('Style Guide — /style-guide', () => {
   test('pagination edge case — single page does not render buttons', async ({ page }) => {
     const paginationSection = page.locator('section#pagination');
 
-    // The "Edge — Single Page" showcase shows 1 page, 3 total
-    await expect(paginationSection.locator('text=Edge — Single Page').first()).toBeVisible();
+    // The "Edge - Single Page" showcase shows 1 page, 3 total
+    await expect(paginationSection.locator('text=Edge - Single Page').first()).toBeVisible();
   });
 
   // ─── Search Bar Interaction ───────────────────────
