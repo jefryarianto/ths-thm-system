@@ -21,11 +21,14 @@ class SessionManager {
     return () => this.listeners.delete(listener);
   }
 
-  expire() {
+  expire(shouldRedirect = true) {
     if (this._isExpired) return;
+    console.log('[session-manager] Session expired', { shouldRedirect });
     this._isExpired = true;
     this.clearTokens();
-    localStorage.setItem('session-expired', 'true');
+    if (shouldRedirect) {
+      localStorage.setItem('session-expired', 'true');
+    }
     this.listeners.forEach((l) => l());
   }
 

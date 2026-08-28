@@ -33,19 +33,25 @@ vi.mock('axios', () => {
     post: vi.fn(),
   };
 
+  const mockedAxios = Object.assign(vi.fn(() => mockAxiosInstance), {
+    create: vi.fn(() => mockAxiosInstance),
+    isCancel: vi.fn(() => false),
+    CancelToken: class {},
+  });
+
   return {
-    default: Object.assign(
-      vi.fn(() => mockAxiosInstance),
-      { create: vi.fn(() => mockAxiosInstance) },
-    ),
+    default: mockedAxios,
   };
 });
 
 import apiClient, { unwrap, unwrapPaginated, setTokens, clearTokens } from '@/lib/api-client';
+import { sessionManager } from '@/lib/session-manager';
 
 describe('api-client', () => {
   beforeEach(() => {
     localStorage.clear();
+    // Reset shared session state so tests are isolated (clearTokens sets isExpired).
+    sessionManager.reset();
   });
 
   afterEach(() => {

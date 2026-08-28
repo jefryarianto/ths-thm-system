@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { emitSessionExpired } from './session-expired';
+import { emitSessionExpired, resetSessionExpired } from './session-expired';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -10,16 +10,28 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// ─── Token Refresh (single-flight) ─────────────────────────────
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+type RefreshSubscriber = {
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+};
+let refreshSubscribers: RefreshSubscriber[] = [];
 
 function onTokenRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token));
+  const subs = refreshSubscribers;
   refreshSubscribers = [];
+  subs.forEach((s) => s.resolve(token));
 }
 
-function addRefreshSubscriber(cb: (token: string) => void) {
-  refreshSubscribers.push(cb);
+function onTokenRefreshFailed(err: unknown) {
+  const subs = refreshSubscribers;
+  refreshSubscribers = [];
+  subs.forEach((s) => s.reject(err));
+}
+
+function addRefreshSubscriber(resolve: (token: string) => void, reject: (err: unknown) => void) {
+  refreshSubscribers.push({ resolve, reject });
 }
 
 /** Check if access token is about to expire (< 2 minutes left) */
@@ -31,17 +43,26 @@ async function isTokenExpiringSoon(): Promise<boolean> {
     if (parts.length !== 3) return false;
     const payload = JSON.parse(atob(parts[1]));
     const expiresIn = payload.exp * 1000 - Date.now();
-    return expiresIn > 0 && expiresIn < 120_000; // less than 2 minutes
+    return expiresIn > 0 && expiresIn < 120_000;
   } catch {
     return false;
   }
 }
 
-/** Proactively refresh token before it expires */
-async function proactivelyRefresh(): Promise<string | null> {
+/**
+ * Single-flight token refresh. Bila sedang refresh berjalan, panggilan lain
+ * menunggu promise yang sama (antrean) sehingga tidak ada refresh konkuren
+ * yang memicu race condition / penolakan token di backend (dulu memicu
+ * logout massal lintas-perangkat).
+ */
+async function doRefresh(): Promise<string> {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => addRefreshSubscriber(resolve, reject));
+  }
+  isRefreshing = true;
   try {
     const refreshToken = await AsyncStorage.getItem('refreshToken');
-    if (!refreshToken) return null;
+    if (!refreshToken) throw new Error('No refresh token');
 
     const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
     const { accessToken, refreshToken: newRefresh } = res.data.data;
@@ -49,7 +70,23 @@ async function proactivelyRefresh(): Promise<string | null> {
     await AsyncStorage.setItem('accessToken', accessToken);
     await AsyncStorage.setItem('refreshToken', newRefresh);
 
+    onTokenRefreshed(accessToken);
     return accessToken;
+  } catch (err) {
+    onTokenRefreshFailed(err);
+    // Refresh gagal → sesi berakhir. Emit & bersihkan token (dijaga sekali di session-expired).
+    await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
+    emitSessionExpired();
+    throw err;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+/** Proactively refresh token before it expires (single-flight). */
+async function proactivelyRefresh(): Promise<string | null> {
+  try {
+    return await doRefresh();
   } catch {
     return null;
   }
@@ -72,14 +109,22 @@ apiClient.interceptors.request.use(async (config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: unknown) => {
+    const originalRequest = (error as { config?: any }).config;
+    if (!originalRequest) return Promise.reject(error);
+
+    const axiosError = error as {
+      code?: string;
+      message?: string;
+      response?: { status?: number };
+      config?: any;
+    };
 
     // ─── NETWORK RETRY STRATEGY ───
     const isNetworkError =
-      error.code === 'ECONNABORTED' ||
-      error.message?.includes('Network Error') ||
-      !error.response;
+      axiosError.code === 'ECONNABORTED' ||
+      axiosError.message?.includes('Network Error') ||
+      !axiosError.response;
 
     if (isNetworkError && !originalRequest._retryCount) {
       originalRequest._retryCount = 1;
@@ -93,40 +138,15 @@ apiClient.interceptors.response.use(
     }
 
     // ─── TOKEN REFRESH HANDLING ───
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          addRefreshSubscriber((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(apiClient(originalRequest));
-          });
-          // Timeout — if refresh takes too long, reject
-          setTimeout(() => reject(error), 5000);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
+    if (axiosError.response?.status === 401 && !originalRequest._retry) {
       try {
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
-
-        const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
-        const { accessToken, refreshToken: newRefresh } = res.data.data;
-
-        await AsyncStorage.setItem('accessToken', accessToken);
-        await AsyncStorage.setItem('refreshToken', newRefresh);
-
-        onTokenRefreshed(accessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        const token = await doRefresh();
+        originalRequest._retry = true;
+        originalRequest.headers.Authorization = `Bearer ${token}`;
         return apiClient(originalRequest);
       } catch {
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
-        emitSessionExpired();
-      } finally {
-        isRefreshing = false;
+        // doRefresh sudah emit session-expired & hapus token
+        return Promise.reject(error);
       }
     }
 
@@ -135,6 +155,7 @@ apiClient.interceptors.response.use(
 );
 
 export const setTokens = async (accessToken: string, refreshToken: string) => {
+  resetSessionExpired();
   await AsyncStorage.setItem('accessToken', accessToken);
   await AsyncStorage.setItem('refreshToken', refreshToken);
 };
@@ -143,7 +164,7 @@ export const clearTokens = async () => {
   await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user']);
 };
 
-// ─── Response Helpers ───
+// ─── Response Helpers ───────────────────────────────────────────
 
 export interface ApiResponse<T> {
   success: boolean;

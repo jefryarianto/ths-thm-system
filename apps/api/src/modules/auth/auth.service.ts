@@ -326,36 +326,43 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
       if (!user) throw new UnauthorizedException('Token tidak valid');
 
-      // Reuse detection: JWT valid tapi token bukan yang aktif → token lama
-      // dipakai ulang (indikasi dicuri). Revoke seluruh sesi pengguna.
-      if (user.refreshToken !== refreshToken) {
-        await this.revokeAllSessions(user.id);
-        this.logAuthAudit('REUSE_DETECTED', user.id, null, meta);
-        throw new UnauthorizedException('Token tidak valid');
+      // Cari sesi aktif berdasarkan refresh token yang disajikan. Ini adalah
+      // sumber kebenaran utama (bukan field denormalisasi di tabel users).
+      const session = await this.prisma.userSession.findUnique({
+        where: { refreshToken },
+      });
+
+      const sessionValid =
+        !!session && session.userId === user.id && !session.revokedAt;
+
+      // Dukungan sesi pra-migrasi: belum ada baris sesi tapi token cocok dengan
+      // pointer denormalisasi di tabel users → adopt menjadi sesi baru.
+      const isCurrentDenormalized = !session && user.refreshToken === refreshToken;
+
+      if (!sessionValid && !isCurrentDenormalized) {
+        // Token masih JWT valid tapi tidak cocok dengan sesi aktif.
+        // PENTING: jangan cabut seluruh sesi pengguna. Ini mencegah logout
+        // massal akibat race condition (refresh konkuren antar-tab/perangkat
+        // atau banyak request 401 bersamaan). Cukup tolak permintaan ini;
+        // klien akan memicu re-auth pada tab/perangkat terkait saja.
+        this.logAuthAudit('REFRESH_TOKEN_STALE', user.id, null, meta);
+        throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
       }
 
       const tokens = await this.generateTokens(user);
 
-      const session = await this.prisma.userSession.findUnique({
-        where: { refreshToken },
-      });
-      if (session && session.userId === user.id && !session.revokedAt) {
+      if (sessionValid) {
         // Rotasi token pada sesi yang sama
         await this.prisma.userSession.update({
-          where: { id: session.id },
+          where: { id: session!.id },
           data: {
             refreshToken: tokens.refreshToken,
             lastUsedAt: new Date(),
-            ipAddress: meta?.ip ?? session.ipAddress,
-            userAgent: meta?.userAgent ?? session.userAgent,
-            deviceName: meta?.deviceName ?? session.deviceName,
+            ipAddress: meta?.ip ?? session!.ipAddress,
+            userAgent: meta?.userAgent ?? session!.userAgent,
+            deviceName: meta?.deviceName ?? session!.deviceName,
           },
         });
-      } else if (session) {
-        // Sesi sudah direvoke / milik user lain → token disalahgunakan
-        await this.revokeAllSessions(user.id);
-        this.logAuthAudit('REUSE_DETECTED', user.id, null, meta);
-        throw new UnauthorizedException('Token tidak valid');
       } else {
         // Sesi pra-migrasi: belum ada baris sesi → adopsi jadi sesi baru
         await this.prisma.userSession.create({
@@ -375,7 +382,8 @@ export class AuthService {
       });
       this.logAuthAudit('REFRESH_TOKEN', user.id, null, meta);
       return tokens;
-    } catch {
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
       throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
     }
   }
@@ -434,17 +442,6 @@ export class AuthService {
     }
     this.logAuthAudit('SESSION_REVOKE', userId, { sessionId }, meta);
     return wasCurrent;
-  }
-
-  private async revokeAllSessions(userId: string) {
-    await this.prisma.userSession.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: null },
-    });
   }
 
   async logout(userId: string, refreshToken?: string, meta?: AuthMeta) {

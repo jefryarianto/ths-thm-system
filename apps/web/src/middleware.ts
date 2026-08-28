@@ -36,9 +36,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get('accessToken')?.value;
+  // Gunakan refreshToken (cookie httpOnly, berumur 14 hari, diset backend dengan
+  // `Secure` di production) sebagai sinyal sesi yang tahan lama. accessToken hanya
+  // berumur 15 menit — mengandalkannya untuk proteksi halaman akan memicu redirect
+  // palsu ("session expired") setelah token akses kadaluarsa padahal sesi masih valid.
+  const refreshToken = request.cookies.get('refreshToken')?.value;
+  const accessToken = request.cookies.get('accessToken')?.value;
 
-  if (!token) {
+  if (!refreshToken && !accessToken) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }

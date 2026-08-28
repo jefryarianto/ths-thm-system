@@ -39,8 +39,6 @@ function OAuthCallbackHandler() {
     if (token && refresh) {
       console.log('OAuthCallbackHandler: token and refresh found', token, refresh);
       setTokens(token, refresh);
-      document.cookie = `accessToken=${token}; path=/; max-age=86400; SameSite=Lax`;
-      document.cookie = `refreshToken=${refresh}; path=/; max-age=604800; SameSite=Lax`;
 
       apiClient
         .get('/auth/me')
@@ -173,8 +171,8 @@ export default function LoginPage() {
     // Check if we were redirected here due to session expiry
     const isExpired = localStorage.getItem('session-expired') === 'true';
     if (isExpired) {
-      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
       localStorage.removeItem('session-expired');
+      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
     }
     const oauthError = getOAuthErrorFromUrl();
     if (oauthError) setError(oauthError);
@@ -205,9 +203,6 @@ export default function LoginPage() {
       if (data.success) {
         setTokens(data.data.accessToken, data.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.data.user));
-
-        document.cookie = `accessToken=${data.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
-        document.cookie = `refreshToken=${data.data.refreshToken}; path=/; max-age=604800; SameSite=Lax`;
 
         if (rememberMe) {
           localStorage.setItem('rememberedIdentifier', identifier.trim());

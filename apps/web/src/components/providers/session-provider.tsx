@@ -14,6 +14,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     let timeoutId: NodeJS.Timeout | undefined;
 
     const unsubscribe = sessionManager.subscribe(() => {
+      console.log('[session-provider] Session state changed:', { isExpired: sessionManager.isExpired, pathname });
       if (sessionManager.isExpired) {
         // Don't toast/redirect if already on login page
         if (pathname === '/login') return;
@@ -34,7 +35,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Check for pre-existing session-expired flag on mount
     const expired = localStorage.getItem('session-expired') === 'true';
     if (expired && !sessionManager.isExpired) {
-      sessionManager.expire();
+      // Clear the flag first to avoid redirect loops on subsequent loads
+      localStorage.removeItem('session-expired');
+      sessionManager.expire(false);
     }
 
     return () => {

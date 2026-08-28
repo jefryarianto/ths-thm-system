@@ -680,23 +680,21 @@ describe('AuthService', () => {
       );
     });
 
-    it('should revoke all sessions when a stale/reused token is presented', async () => {
+    it('should reject a stale/reused token without revoking all sessions', async () => {
       mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', role: 'anggota' });
-      // user.refreshToken sudah ter-rotasi → token lama dianggap reuse
+      // user.refreshToken sudah ter-rotasi → token lama dianggap stale
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'current-rt' });
-      mockPrisma.userSession.updateMany.mockResolvedValue({ count: 1 });
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: null });
+      mockPrisma.userSession.findUnique.mockResolvedValue(undefined);
 
       await expect(service.refreshToken('old-stolen-rt')).rejects.toThrow(
         UnauthorizedException,
       );
 
-      expect(mockPrisma.userSession.updateMany).toHaveBeenCalledWith({
-        where: { userId: 'u1', revokedAt: null },
-        data: { revokedAt: expect.any(Date) },
-      });
+      // JANGAN cabut seluruh sesi — mencegah logout massal akibat race
+      // condition (refresh konkuren antar-tab/perangkat atau banyak 401 bersamaan).
+      expect(mockPrisma.userSession.updateMany).not.toHaveBeenCalled();
       expect(mockAudit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'REUSE_DETECTED', entityId: 'u1' }),
+        expect.objectContaining({ action: 'REFRESH_TOKEN_STALE', entityId: 'u1' }),
       );
     });
 
