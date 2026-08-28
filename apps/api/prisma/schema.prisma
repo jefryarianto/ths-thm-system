@@ -1363,18 +1363,22 @@ model Kepengurusan {
   distrikId  String?  @map("distrik_id")
   wilayahId  String?  @map("wilayah_id")
   rantingId  String?  @map("ranting_id")
+  parentId   String?  @map("parent_id")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   user    User    @relation(fields: [userId], references: [id])
   jabatan Jabatan @relation(fields: [jabatanId], references: [id])
   periode Periode @relation(fields: [periodeId], references: [id])
+  parent  Kepengurusan? @relation("KepengurusanHierarchy", fields: [parentId], references: [id])
+  children Kepengurusan[] @relation("KepengurusanHierarchy")
 
   nasional Nasional? @relation(fields: [nasionalId], references: [id])
   distrik  Distrik?  @relation(fields: [distrikId], references: [id], onDelete: Cascade)
   wilayah  Wilayah?  @relation(fields: [wilayahId], references: [id], onDelete: Cascade)
   ranting  Ranting?  @relation(fields: [rantingId], references: [id], onDelete: Cascade)
 
+  @@index([parentId])
   @@map("kepengurusan")
 }
 

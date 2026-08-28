@@ -25,6 +25,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
     { href: '/sejarah', label: t.nav.sejarah },
     { href: '/organisasi', label: t.nav.organisasi },
     { href: '/kepengurusan', label: t.nav.kepengurusan },
+    { href: '/struktur-organisasi', label: t.nav.strukturOrganisasi || 'Struktur Organisasi' },
     { href: '/berita', label: t.nav.berita },
     { href: '/galeri', label: t.nav.galeri },
     { href: '/donasi', label: t.nav.donasi },
