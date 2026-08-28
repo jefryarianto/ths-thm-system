@@ -393,7 +393,7 @@ jobs:
         run: pnpm --filter @ths-thm/api prisma:deploy
 
       - name: Sync schema (safety net for undocumented models)
-        run: pnpm --filter @ths-thm/api exec prisma db push
+        run: pnpm --filter @ths-thm/api exec prisma db push --accept-data-loss
 
       - name: Seed test data (optional)
         run: pnpm --filter @ths-thm/api prisma:seed
