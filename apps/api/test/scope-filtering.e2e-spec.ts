@@ -904,7 +904,7 @@ describe('Scope Filtering E2E', () => {
         prisma.klaim.create({
           data: {
             anggotaId: memberInRanting1,
-            tipe: 'sertifikat',
+            tipe: 'keanggotaan',
             status: 'pending',
             catatan: 'Claim R1',
           },
@@ -912,7 +912,7 @@ describe('Scope Filtering E2E', () => {
         prisma.klaim.create({
           data: {
             anggotaId: memberInRanting2,
-            tipe: 'piagam',
+            tipe: 'dokumen',
             status: 'pending',
             catatan: 'Claim R2',
           },

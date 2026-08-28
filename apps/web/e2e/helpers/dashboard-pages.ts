@@ -287,7 +287,7 @@ export async function registerDashboardPageMocks(page: Page) {
             namaLengkap: `Anggota ${i + 1}`,
             nomorAnggota: `THS-${String(i + 1).padStart(5, '0')}`,
           },
-          tipe: ['kartu_anggota', 'sertifikat', 'piagam', 'surat_keterangan'][i % 4],
+          tipe: ['keanggotaan', 'dokumen'][i % 2],
           status: ['ready', 'processing', 'pending'][i % 3],
           createdAt: new Date(2025, 0, i + 1).toISOString(),
         })),

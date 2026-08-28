@@ -34,10 +34,8 @@ interface ClaimDetail {
 }
 
 const CLAIM_TIPE_LABELS: Record<string, string> = {
-  sertifikat: 'Sertifikat',
-  piagam: 'Piagam',
-  kartu_anggota: 'Kartu Anggota',
-  dokumen_lainnya: 'Dokumen Lainnya',
+  keanggotaan: 'Keanggotaan',
+  dokumen: 'Dokumen',
 };
 
 const CLAIM_STATUS_STYLES: Record<string, string> = {
