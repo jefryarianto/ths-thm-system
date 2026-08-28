@@ -127,26 +127,40 @@ export async function mockAuth(
   if (options?.mockCandidates) await registerCandidatesMocks(page);
   if (options?.mockDashboardPages) await registerDashboardPageMocks(page);
 
-  // ── 4. Catch-all navigation + API fallback (registered LAST, runs last) ──
+  // ── 4. Catch-all interceptors (registered LAST, runs last) ──
   // Playwright evaluates route handlers in registration order. By registering
   // this LAST, all specific API mocks above take priority.
+  //
+  // IMPORTANT: We intercept two distinct URL patterns:
+  //  a) /api/**  — unmocked API calls get an empty success response
+  //  b) navigation requests — get the x-e2e-bypass header for middleware
+  //
+  // We must NOT intercept /_next/** or other asset requests — doing so
+  // would replace the actual JavaScript chunks with our JSON stub, causing
+  // "Unexpected token ':'" parse errors that prevent client-side hydration.
+  await page.route(`${E2E_BASE_URL}/api/**`, async (route) => {
+    // API request not matched by any specific mock — return empty
+    // success so the page renders normally instead of showing errors.
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [],
+        meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
+      }),
+    });
+  });
+
   await page.route(`${E2E_BASE_URL}/**`, async (route, request) => {
     if (request.isNavigationRequest()) {
       await route.continue({
         headers: { 'x-e2e-bypass': 'true' },
       });
     } else {
-      // API request not matched by any specific mock — return empty
-      // success so the page renders normally instead of showing errors.
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: [],
-          meta: { total: 0, totalPages: 0, page: 1, limit: 10 },
-        }),
-      });
+      // Non-navigation, non-API request (e.g. /_next/static/chunks/*.js)
+      // — let it through so assets load correctly.
+      await route.continue();
     }
   });
 }
