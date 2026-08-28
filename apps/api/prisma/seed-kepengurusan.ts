@@ -3,36 +3,72 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// ── Jabatan definitions ────────────────────────────────────
+// Setiap kepengurusan (Wilayah, Ranting):
+//   Koordinator, Wakil Koordinator, Sekretaris, Bendahara,
+//   Komisi Pengembangan Mental Spiritual, Komisi Kepelatihan,
+//   Komisi Organisasi, Komisi Pengabdian Gereja dan Masyarakat,
+//   Komisi Penelitian dan Pengembangan, Komisi Ekonomi dan Kewirasusahaan
+// Khusus Distrik: + Pastor Moderator
+const JABATAN_LIST = [
+  { nama: 'Koordinator', urutan: 1 },
+  { nama: 'Wakil Koordinator', urutan: 2 },
+  { nama: 'Sekretaris', urutan: 3 },
+  { nama: 'Bendahara', urutan: 4 },
+  { nama: 'Komisi Pengembangan Mental Spiritual', urutan: 5 },
+  { nama: 'Komisi Kepelatihan', urutan: 6 },
+  { nama: 'Komisi Organisasi', urutan: 7 },
+  { nama: 'Komisi Pengabdian Gereja dan Masyarakat', urutan: 8 },
+  { nama: 'Komisi Penelitian dan Pengembangan', urutan: 9 },
+  { nama: 'Komisi Ekonomi dan Kewirasusahaan', urutan: 10 },
+  { nama: 'Pastor Moderator', urutan: 0 }, // Khusus Distrik, urutan paling atas
+];
+
+// Sample user names for kepengurusan
+const USER_NAMES = [
+  'Fransiskus Xaverius Bharata',
+  'Yohanes Darius Palmeo',
+  'Maria Theresia Goreti Lau',
+  'Ignatiusmanuel Bataona',
+  'Paulus Helmy Tukan',
+  'Yosef Rikardus Wolor',
+  'Bernadus Geradus Soge',
+  'Cornelis Xaverius Karo',
+  'Ambrosius Yosef Medo',
+  'Theresia Dewi Anggraeni',
+  'Dominikus Sili Nongtawas',
+  'Marianus Urut Lewang',
+  'Anastasia Kursor Lakus',
+  'Filipus Lomi Blikololong',
+  'Hortensia Bala Ngongo',
+  'Ignasius Lando Wungu',
+  'Katarina Laku Dopo',
+  'Lambertus Niron Beding',
+  'Monika Lopo Pora',
+  'Nikolaus Tukung Muda',
+  'Ottilia Lena Ulu',
+];
+
 async function main() {
   console.log('=== Seeding Kepengurusan Data ===\n');
 
   // ── 1. Ensure Jabatan exist ──────────────────────────────
-  const jabatanNames = [
-    { nama: 'Ketua', urutan: 1 },
-    { nama: 'Wakil Ketua', urutan: 2 },
-    { nama: 'Sekretaris', urutan: 3 },
-    { nama: 'Bendahara', urutan: 4 },
-    { nama: 'Ketua Bidang Organisasi', urutan: 5 },
-    { nama: 'Ketua Bidang Kaderisasi', urutan: 6 },
-    { nama: 'Koordinator', urutan: 7 },
-    { nama: 'Seksi', urutan: 8 },
-    { nama: 'Anggota', urutan: 9 },
-  ];
-
+  console.log('--- Jabatan ---');
   const jabatans: Record<string, { id: string }> = {};
-  for (const j of jabatanNames) {
+  for (const j of JABATAN_LIST) {
     const existing = await prisma.jabatan.findUnique({ where: { nama: j.nama } });
     if (existing) {
       jabatans[j.nama] = existing;
-      console.log(`  Jabatan "${j.nama}" already exists`);
+      console.log(`  "${j.nama}" already exists`);
     } else {
       const created = await prisma.jabatan.create({ data: j });
       jabatans[j.nama] = created;
-      console.log(`  Jabatan "${j.nama}" created`);
+      console.log(`  "${j.nama}" created`);
     }
   }
 
   // ── 2. Ensure Periode exist ──────────────────────────────
+  console.log('\n--- Periode ---');
   let periode = await prisma.periode.findFirst({ where: { nama: '2025-2028' } });
   if (!periode) {
     periode = await prisma.periode.create({
@@ -43,12 +79,11 @@ async function main() {
         isActive: true,
       },
     });
-    console.log('  Periode "2025-2028" created');
+    console.log('  "2025-2028" created');
   } else {
-    console.log('  Periode "2025-2028" already exists');
+    console.log('  "2025-2028" already exists');
   }
 
-  // Also create old periode for history
   let oldPeriode = await prisma.periode.findFirst({ where: { nama: '2022-2025' } });
   if (!oldPeriode) {
     oldPeriode = await prisma.periode.create({
@@ -59,211 +94,288 @@ async function main() {
         isActive: false,
       },
     });
-    console.log('  Periode "2022-2025" created');
+    console.log('  "2022-2025" created');
   } else {
-    console.log('  Periode "2022-2025" already exists');
+    console.log('  "2022-2025" already exists');
   }
 
   // ── 3. Get existing org structure ────────────────────────
   const distriks = await prisma.distrik.findMany({ where: { isVisible: true } });
-  console.log(`\n  Found ${distriks.length} distrik(s)`);
+  console.log(`\n--- Org Structure ---`);
+  console.log(`  Found ${distriks.length} distrik(s)`);
 
   if (distriks.length === 0) {
     console.log('  No distrik found. Skipping kepengurusan seed.');
     return;
   }
 
-  const distrik = distriks[0]; // Use first distrik
-  console.log(`  Using distrik: ${distrik.nama} (${distrik.id})`);
+  const distrik = distriks[0];
+  console.log(`  Using distrik: ${distrik.nama}`);
 
   const wilayahs = await prisma.wilayah.findMany({
     where: { distrikId: distrik.id, isVisible: true },
   });
-  console.log(`  Found ${wilayahs.length} wilayah(s) in ${distrik.nama}`);
+  console.log(`  Found ${wilayahs.length} wilayah(s)`);
 
-  // ── 4. Create sample users for kepengurusan ──────────────
+  // ── 4. Create sample users ───────────────────────────────
+  console.log('\n--- Users ---');
   const passwordHash = await bcrypt.hash('password123', 12);
-
-  const sampleUsers = [
-    { nama: 'Fransiskus Xaverius Bharata', email: 'fransiskus.bharata@test.ths-thm.org' },
-    { nama: 'Yohanes Darius Palmeo', email: 'yohanes.palmeo@test.ths-thm.org' },
-    { nama: 'Maria Theresia Goreti Lau', email: 'maria.lau@test.ths-thm.org' },
-    { nama: 'Ignatiusmanuel Bataona', email: 'ignatius.bataona@test.ths-thm.org' },
-    { nama: 'Paulus Helmy Tukan', email: 'paulus.tukan@test.ths-thm.org' },
-    { nama: 'Yosef Rikardus Wolor', email: 'yosef.wolor@test.ths-thm.org' },
-    { nama: 'Bernadus Geradus Soge', email: 'bernadus.soge@test.ths-thm.org' },
-    { nama: 'Cornelis Xaverius Karo', email: 'cornelis.karo@test.ths-thm.org' },
-    { nama: 'Ambrosius Yosef Medo', email: 'ambrosius.medo@test.ths-thm.org' },
-    { nama: 'Theresia Dewi Anggraeni', email: 'theresia.anggraeni@test.ths-thm.org' },
-    { nama: 'Dominikus Sili Nongtawas', email: 'dominikus.nongtawas@test.ths-thm.org' },
-    { nama: 'Marianus Urut Lewang', email: 'marianus.lewang@test.ths-thm.org' },
-  ];
-
   const users: { id: string; namaLengkap: string }[] = [];
-  for (const u of sampleUsers) {
-    let user = await prisma.user.findUnique({ where: { email: u.email } });
+
+  for (let i = 0; i < USER_NAMES.length; i++) {
+    const email = `pengurus${i + 1}@test.ths-thm.org`;
+    let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email: u.email,
+          email,
           passwordHash,
-          namaLengkap: u.nama,
+          namaLengkap: USER_NAMES[i],
           role: 'anggota',
           isActive: true,
         },
       });
-      console.log(`  User "${u.nama}" created`);
+      console.log(`  Created: ${USER_NAMES[i]}`);
     } else {
-      console.log(`  User "${u.nama}" already exists`);
+      console.log(`  Exists:  ${USER_NAMES[i]}`);
     }
     users.push({ id: user.id, namaLengkap: user.namaLengkap });
   }
 
-  // ── 5. Create Kepengurusan — Distrik level ───────────────
-  console.log('\n--- Creating Kepengurusan Distrik ---');
-  const distrikKepengurusan = [
-    { userIdx: 0, jabatan: 'Ketua', parentId: null as string | null },
-    { userIdx: 1, jabatan: 'Wakil Ketua', parentId: '_ketua_distrik' },
-    { userIdx: 2, jabatan: 'Sekretaris', parentId: '_ketua_distrik' },
-    { userIdx: 3, jabatan: 'Bendahara', parentId: '_ketua_distrik' },
-    { userIdx: 4, jabatan: 'Ketua Bidang Organisasi', parentId: '_ketua_distrik' },
-    { userIdx: 5, jabatan: 'Ketua Bidang Kaderisasi', parentId: '_ketua_distrik' },
-  ];
+  // ── Helper: create kepengurusan if not exists ────────────
+  async function createKepengurusan(opts: {
+    userIdx: number;
+    jabatan: string;
+    periodeId: string;
+    distrikId?: string;
+    wilayahId?: string;
+    rantingId?: string;
+    parentId?: string | null;
+  }): Promise<string | null> {
+    const userId = users[opts.userIdx % users.length].id;
 
-  const distrikIds: Record<string, string> = {};
-
-  for (const k of distrikKepengurusan) {
     // Check if already exists
-    const existing = await prisma.kepengurusan.findFirst({
-      where: {
-        userId: users[k.userIdx].id,
-        periodeId: periode.id,
-        distrikId: distrik.id,
-      },
-    });
+    const where: Record<string, unknown> = {
+      userId,
+      periodeId: opts.periodeId,
+    };
+    if (opts.distrikId) where.distrikId = opts.distrikId;
+    if (opts.wilayahId) where.wilayahId = opts.wilayahId;
+    if (opts.rantingId) where.rantingId = opts.rantingId;
 
+    const existing = await prisma.kepengurusan.findFirst({ where });
     if (existing) {
-      console.log(`  ${k.jabatan} already exists, skipping`);
-      distrikIds[k.jabatan] = existing.id;
-      continue;
+      console.log(`    ${opts.jabatan}: already exists, skipping`);
+      return existing.id;
     }
-
-    const parentId = k.parentId ? distrikIds[k.parentId] || null : null;
 
     const created = await prisma.kepengurusan.create({
       data: {
-        userId: users[k.userIdx].id,
-        jabatanId: jabatans[k.jabatan].id,
-        periodeId: periode.id,
-        distrikId: distrik.id,
-        parentId,
+        userId,
+        jabatanId: jabatans[opts.jabatan].id,
+        periodeId: opts.periodeId,
+        distrikId: opts.distrikId,
+        wilayahId: opts.wilayahId,
+        rantingId: opts.rantingId,
+        parentId: opts.parentId,
       },
     });
 
-    distrikIds[k.jabatan] = created.id;
-    console.log(`  ${k.jabatan}: ${users[k.userIdx].namaLengkap}`);
+    console.log(`    ${opts.jabatan}: ${users[opts.userIdx % users.length].namaLengkap}`);
+    return created.id;
   }
 
-  // ── 6. Create Kepengurusan — Wilayah level (per wilayah) ─
-  console.log('\n--- Creating Kepengurusan Wilayah ---');
+  // ── 5. Create Kepengurusan Distrik ───────────────────────
+  console.log(`\n--- Kepengurusan Distrik: ${distrik.nama} ---`);
+  let userOffset = 0;
+
+  // Pastor Moderator (khusus Distrik, urutan paling atas, root)
+  const pastorId = await createKepengurusan({
+    userIdx: userOffset++,
+    jabatan: 'Pastor Moderator',
+    periodeId: periode.id,
+    distrikId: distrik.id,
+    parentId: null,
+  });
+
+  // Koordinator (bawahan Pastor Moderator)
+  const koordDistrikId = await createKepengurusan({
+    userIdx: userOffset++,
+    jabatan: 'Koordinator',
+    periodeId: periode.id,
+    distrikId: distrik.id,
+    parentId: pastorId,
+  });
+
+  // Wakil Koordinator
+  await createKepengurusan({
+    userIdx: userOffset++,
+    jabatan: 'Wakil Koordinator',
+    periodeId: periode.id,
+    distrikId: distrik.id,
+    parentId: koordDistrikId,
+  });
+
+  // Sekretaris
+  await createKepengurusan({
+    userIdx: userOffset++,
+    jabatan: 'Sekretaris',
+    periodeId: periode.id,
+    distrikId: distrik.id,
+    parentId: koordDistrikId,
+  });
+
+  // Bendahara
+  await createKepengurusan({
+    userIdx: userOffset++,
+    jabatan: 'Bendahara',
+    periodeId: periode.id,
+    distrikId: distrik.id,
+    parentId: koordDistrikId,
+  });
+
+  // Komisi-komisi
+  const komisiDistrik = [
+    'Komisi Pengembangan Mental Spiritual',
+    'Komisi Kepelatihan',
+    'Komisi Organisasi',
+    'Komisi Pengabdian Gereja dan Masyarakat',
+    'Komisi Penelitian dan Pengembangan',
+    'Komisi Ekonomi dan Kewirasusahaan',
+  ];
+
+  for (const komisi of komisiDistrik) {
+    await createKepengurusan({
+      userIdx: userOffset++,
+      jabatan: komisi,
+      periodeId: periode.id,
+      distrikId: distrik.id,
+      parentId: koordDistrikId,
+    });
+  }
+
+  // ── 6. Create Kepengurusan Wilayah ───────────────────────
   for (let wi = 0; wi < Math.min(wilayahs.length, 3); wi++) {
     const wilayah = wilayahs[wi];
-    console.log(`\n  Wilayah: ${wilayah.nama}`);
+    console.log(`\n--- Kepengurusan Wilayah: ${wilayah.nama} ---`);
 
-    const wilayahKepengurusan = [
-      { userIdx: 6 + wi * 2, jabatan: 'Ketua', parentId: null as string | null },
-      { userIdx: 7 + wi * 2, jabatan: 'Sekretaris', parentId: '_ketua_wilayah' },
-      { userIdx: 0, jabatan: 'Bendahara', parentId: '_ketua_wilayah' },
-    ];
+    // Koordinator (root, no parent)
+    const koordWilayahId = await createKepengurusan({
+      userIdx: userOffset++,
+      jabatan: 'Koordinator',
+      periodeId: periode.id,
+      wilayahId: wilayah.id,
+      parentId: null,
+    });
 
-    const wilayahIds: Record<string, string> = {};
+    // Wakil Koordinator
+    await createKepengurusan({
+      userIdx: userOffset++,
+      jabatan: 'Wakil Koordinator',
+      periodeId: periode.id,
+      wilayahId: wilayah.id,
+      parentId: koordWilayahId,
+    });
 
-    for (const k of wilayahKepengurusan) {
-      const userIdx = k.userIdx % users.length;
-      const existing = await prisma.kepengurusan.findFirst({
-        where: {
-          userId: users[userIdx].id,
-          periodeId: periode.id,
-          wilayahId: wilayah.id,
-        },
+    // Sekretaris
+    await createKepengurusan({
+      userIdx: userOffset++,
+      jabatan: 'Sekretaris',
+      periodeId: periode.id,
+      wilayahId: wilayah.id,
+      parentId: koordWilayahId,
+    });
+
+    // Bendahara
+    await createKepengurusan({
+      userIdx: userOffset++,
+      jabatan: 'Bendahara',
+      periodeId: periode.id,
+      wilayahId: wilayah.id,
+      parentId: koordWilayahId,
+    });
+
+    // Komisi-komisi
+    for (const komisi of komisiDistrik) {
+      await createKepengurusan({
+        userIdx: userOffset++,
+        jabatan: komisi,
+        periodeId: periode.id,
+        wilayahId: wilayah.id,
+        parentId: koordWilayahId,
       });
-
-      if (existing) {
-        console.log(`    ${k.jabatan} already exists, skipping`);
-        wilayahIds[k.jabatan] = existing.id;
-        continue;
-      }
-
-      const parentId = k.parentId ? wilayahIds[k.parentId] || null : null;
-
-      const created = await prisma.kepengurusan.create({
-        data: {
-          userId: users[userIdx].id,
-          jabatanId: jabatans[k.jabatan].id,
-          periodeId: periode.id,
-          wilayahId: wilayah.id,
-          parentId,
-        },
-      });
-
-      wilayahIds[k.jabatan] = created.id;
-      console.log(`    ${k.jabatan}: ${users[userIdx].namaLengkap}`);
     }
 
-    // ── 7. Create Kepengurusan — Ranting level (first ranting per wilayah) ─
+    // ── 7. Create Kepengurusan Ranting ─────────────────────
     const rantings = await prisma.ranting.findMany({
       where: { wilayahId: wilayah.id, isVisible: true },
       take: 2,
     });
 
-    for (const ranting of rantings) {
-      console.log(`\n    Ranting: ${ranting.nama}`);
+    for (let ri = 0; ri < rantings.length; ri++) {
+      const ranting = rantings[ri];
+      console.log(`\n  --- Kepengurusan Ranting: ${ranting.nama} ---`);
 
-      const rantingKepengurusan = [
-        { userIdx: (wi * 3 + rantings.indexOf(ranting)) % users.length, jabatan: 'Ketua', parentId: null as string | null },
-        { userIdx: (wi * 3 + rantings.indexOf(ranting) + 1) % users.length, jabatan: 'Sekretaris', parentId: '_ketua_ranting' },
-        { userIdx: (wi * 3 + rantings.indexOf(ranting) + 2) % users.length, jabatan: 'Bendahara', parentId: '_ketua_ranting' },
-      ];
+      // Koordinator (root)
+      const koordRantingId = await createKepengurusan({
+        userIdx: userOffset++,
+        jabatan: 'Koordinator',
+        periodeId: periode.id,
+        rantingId: ranting.id,
+        parentId: null,
+      });
 
-      const rantingIds: Record<string, string> = {};
+      // Wakil Koordinator
+      await createKepengurusan({
+        userIdx: userOffset++,
+        jabatan: 'Wakil Koordinator',
+        periodeId: periode.id,
+        rantingId: ranting.id,
+        parentId: koordRantingId,
+      });
 
-      for (const k of rantingKepengurusan) {
-        const userIdx = k.userIdx % users.length;
-        const existing = await prisma.kepengurusan.findFirst({
-          where: {
-            userId: users[userIdx].id,
-            periodeId: periode.id,
-            rantingId: ranting.id,
-          },
+      // Sekretaris
+      await createKepengurusan({
+        userIdx: userOffset++,
+        jabatan: 'Sekretaris',
+        periodeId: periode.id,
+        rantingId: ranting.id,
+        parentId: koordRantingId,
+      });
+
+      // Bendahara
+      await createKepengurusan({
+        userIdx: userOffset++,
+        jabatan: 'Bendahara',
+        periodeId: periode.id,
+        rantingId: ranting.id,
+        parentId: koordRantingId,
+      });
+
+      // Komisi-komisi
+      for (const komisi of komisiDistrik) {
+        await createKepengurusan({
+          userIdx: userOffset++,
+          jabatan: komisi,
+          periodeId: periode.id,
+          rantingId: ranting.id,
+          parentId: koordRantingId,
         });
-
-        if (existing) {
-          console.log(`      ${k.jabatan} already exists, skipping`);
-          rantingIds[k.jabatan] = existing.id;
-          continue;
-        }
-
-        const parentId = k.parentId ? rantingIds[k.parentId] || null : null;
-
-        const created = await prisma.kepengurusan.create({
-          data: {
-            userId: users[userIdx].id,
-            jabatanId: jabatans[k.jabatan].id,
-            periodeId: periode.id,
-            rantingId: ranting.id,
-            parentId,
-          },
-        });
-
-        rantingIds[k.jabatan] = created.id;
-        console.log(`      ${k.jabatan}: ${users[userIdx].namaLengkap}`);
       }
     }
   }
 
   // ── Summary ──────────────────────────────────────────────
   const total = await prisma.kepengurusan.count();
-  console.log(`\n=== Seeding Complete! Total kepengurusan: ${total} ===`);
+  const distrikCount = await prisma.kepengurusan.count({ where: { distrikId: distrik.id } });
+  const wilayahCount = await prisma.kepengurusan.count({ where: { distrikId: null, wilayahId: { not: null } } });
+  const rantingCount = await prisma.kepengurusan.count({ where: { rantingId: { not: null } } });
+
+  console.log(`\n=== Seeding Complete! ===`);
+  console.log(`  Total kepengurusan: ${total}`);
+  console.log(`  Distrik: ${distrikCount}`);
+  console.log(`  Wilayah: ${wilayahCount}`);
+  console.log(`  Ranting: ${rantingCount}`);
 }
 
 main()
