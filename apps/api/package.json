@@ -18,6 +18,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "seed:kepengurusan": "ts-node prisma/seed-kepengurusan.ts",
     "db:seed": "prisma db seed",
     "swagger:export": "ts-node scripts/generate-swagger.ts",
     "generate:client": "npx openapi-typescript ./swagger.json --output ../web/src/types/api.d.ts",
