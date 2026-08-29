@@ -5,6 +5,7 @@ import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { logError } from '@/lib/error-logger';
 
 interface GambarGaleri {
   id: string;
@@ -27,7 +28,7 @@ export default function GaleriPage() {
         const json = await res.json();
         setData(json.data || []);
       } catch (error) {
-        console.error('Error fetching galeri:', error);
+        logError(error, { module: 'Galeri', action: 'fetch' });
       } finally {
         setLoading(false);
       }

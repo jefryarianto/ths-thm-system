@@ -7,6 +7,7 @@ import apiClient, { unwrap } from '@/lib/api-client';
 import { Save, AlertCircle, Settings } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
+import { logError } from '@/lib/error-logger';
 
 
 export default function GamificationSettingsPage() {
@@ -26,7 +27,7 @@ export default function GamificationSettingsPage() {
       const res = await apiClient.get('/gamification/admin/config');
       setConfig(unwrap(res) || {});
     } catch (err) {
-      console.error('Failed to fetch gamification config:', err);
+      logError(err, { module: 'Gamification', action: 'fetch-config' });
       setError('Gagal memuat konfigurasi');
     } finally {
       setLoading(false);
@@ -42,7 +43,7 @@ export default function GamificationSettingsPage() {
       setSuccess('Konfigurasi berhasil disimpan');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      console.error('Failed to save config:', err);
+      logError(err, { module: 'Gamification', action: 'save-config' });
       setError('Gagal menyimpan konfigurasi');
     } finally {
       setSaving(false);

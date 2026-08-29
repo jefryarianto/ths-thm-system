@@ -26,12 +26,12 @@ services:
         reservations:
           memory: 256M
 
-  redis:
+  valkey:
     image: valkey/valkey:7-alpine
-    container_name: ths-thm-redis
+    container_name: ths-thm-valkey
     restart: unless-stopped
     volumes:
-      - redis_data:/data
+      - valkey_data:/data
     healthcheck:
       test: ['CMD', 'valkey-cli', 'ping']
       interval: 5s
@@ -61,7 +61,7 @@ services:
     environment:
       UPLOAD_DIR: /app/storage/uploads
       DATABASE_URL: postgresql://ths_thm:${DB_PASSWORD}@postgres:5432/ths_thm_db
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://valkey:6379
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_EXPIRES_IN: 15m
@@ -88,6 +88,8 @@ services:
       SENTRY_PROJECT: ${SENTRY_PROJECT}
     depends_on:
       postgres:
+        condition: service_healthy
+      valkey:
         condition: service_healthy
     networks:
       - ths-thm-network
@@ -143,7 +145,7 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
+  valkey_data:
 
 networks:
   ths-thm-network:

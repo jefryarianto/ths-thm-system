@@ -8,6 +8,7 @@ import DataTable from '@/components/ui/data-table';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { Zap, AlertCircle, Gift, Users } from 'lucide-react';
+import { logError } from '@/lib/error-logger';
 import {
 
   BarChart,
@@ -64,7 +65,7 @@ export default function GamificationAdminPage() {
       setDistribution(unwrap(distRes) || []);
       setRedemptions(unwrap(redeemRes) || []);
     } catch (err) {
-      console.error('Failed to fetch gamification admin data:', err);
+      logError(err, { module: 'Gamification', action: 'fetch-admin-data' });
       setError('Gagal memuat data admin gamifikasi');
     } finally {
       setLoading(false);

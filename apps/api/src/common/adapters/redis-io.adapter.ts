@@ -47,27 +47,27 @@ export class RedisIoAdapter extends IoAdapter {
       this.subClient = this.pubClient.duplicate();
 
       this.pubClient.on('error', (err) => {
-        this.logger.warn(`Redis adapter (pub) error: ${err.message}`);
+        this.logger.warn(`Valkey adapter (pub) error: ${err.message}`);
       });
 
       this.subClient.on('error', (err) => {
-        this.logger.warn(`Redis adapter (sub) error: ${err.message}`);
+        this.logger.warn(`Valkey adapter (sub) error: ${err.message}`);
       });
 
       // Both clients must be connected before creating the adapter
       Promise.all([this.pubClient.connect(), this.subClient.connect()])
         .then(() => {
           server.adapter(createAdapter(this.pubClient!, this.subClient!));
-          this.logger.log('🔌 Socket.IO Redis adapter attached');
+          this.logger.log('🔌 Socket.IO Valkey adapter attached');
         })
         .catch((err: Error) => {
           this.logger.warn(
-            `Socket.IO Redis adapter connect failed (${err.message}) — using in-memory adapter`,
+            `Socket.IO Valkey adapter connect failed (${err.message}) — using in-memory adapter`,
           );
         });
     } catch (err) {
       this.logger.warn(
-        `Socket.IO Redis adapter init error (${(err as Error).message}) — using in-memory adapter`,
+        `Socket.IO Valkey adapter init error (${(err as Error).message}) — using in-memory adapter`,
       );
     }
 

@@ -8,6 +8,7 @@ import apiClient, { unwrap } from '@/lib/api-client';
 import DataTable from '@/components/ui/data-table';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useToast } from '@/components/ui/toast';
+import { logError } from '@/lib/error-logger';
 import {
 
   Gift,
@@ -77,7 +78,7 @@ export default function RewardsPage() {
       const [rewardsRes] = await Promise.all([apiClient.get('/gamification/rewards')]);
       setRewards(unwrap(rewardsRes));
     } catch (err) {
-      console.error('Failed to fetch rewards:', err);
+      logError(err, { module: 'Gamification', action: 'fetch-rewards' });
       setError('Gagal memuat data reward');
     } finally {
       setLoading(false);

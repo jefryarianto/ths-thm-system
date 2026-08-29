@@ -34,7 +34,7 @@ const baseEnvSchema = z.object({
   THROTTLE_TTL: z.coerce.number().int().positive().default(60),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(100),
 
-  // Redis
+  // Valkey (Redis-compatible)
   REDIS_URL: z.string().url().optional().or(z.literal('')),
   REDIS_HOST: z.string().optional(),
   REDIS_PORT: z.coerce.number().int().positive().optional(),
@@ -99,11 +99,11 @@ const envSchema = baseEnvSchema.superRefine((data, ctx) => {
     }
   }
 
-  // Validate Redis URL if provided
+  // Validate Valkey/Redis URL if provided
   if (data.REDIS_URL && !data.REDIS_URL.startsWith('redis://') && !data.REDIS_URL.startsWith('rediss://')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'REDIS_URL must start with redis:// or rediss://',
+      message: 'REDIS_URL must start with redis:// or rediss:// (Valkey is Redis-compatible)',
       path: ['REDIS_URL'],
     });
   }

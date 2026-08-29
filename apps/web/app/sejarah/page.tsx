@@ -5,6 +5,7 @@ import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { BookOpen, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { logError } from '@/lib/error-logger';
 
 export default function SejarahPage() {
   const { t } = useI18n();
@@ -19,7 +20,7 @@ export default function SejarahPage() {
         const json = await res.json();
         setData(json.data || null);
       } catch (error) {
-        console.error('Error fetching sejarah:', error);
+        logError(error, { module: 'Sejarah', action: 'fetch' });
       } finally {
         setLoading(false);
       }

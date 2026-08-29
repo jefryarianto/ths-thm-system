@@ -2,6 +2,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import apiClient from './api-client';
+import { logError, logWarning } from './error-logger';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,7 +14,7 @@ Notifications.setNotificationHandler({
 
 export async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
-    console.warn('FCM: Push notifications require a physical device');
+    logWarning('Push notifications require a physical device', { module: 'FCM', action: 'register' });
     return null;
   }
 
@@ -27,7 +28,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== 'granted') {
-    console.warn('FCM: Permission not granted');
+    logWarning('Permission not granted', { module: 'FCM', action: 'register' });
     return null;
   }
 
@@ -42,9 +43,9 @@ export async function registerForPushNotifications(): Promise<string | null> {
       token: pushToken,
       platform,
     });
-    console.log('FCM: Token registered successfully');
+    logWarning('Token registered successfully', { module: 'FCM', action: 'register' });
   } catch (error) {
-    console.error('FCM: Failed to register token', error);
+    logError(error, { module: 'FCM', action: 'register' });
   }
 
   // Android-specific: create notification channel

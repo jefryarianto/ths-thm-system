@@ -5,6 +5,7 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useEffect, useState, useCallback } from 'react';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { logError } from '@/lib/error-logger';
 import {
 
   BarChart,
@@ -88,7 +89,7 @@ export default function ScoreboardPage() {
       setMonthlyReport(unwrap(monthlyRes) || []);
       setModuleBreakdown(unwrap(breakdownRes) || []);
     } catch (err) {
-      console.error('Failed to fetch scoreboard data:', err);
+      logError(err, { module: 'Gamification', action: 'fetch-scoreboard' });
     }
     setLoading(false);
   }, []);

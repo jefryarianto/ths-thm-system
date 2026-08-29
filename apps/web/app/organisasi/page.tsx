@@ -5,6 +5,7 @@ import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { ChevronRight, Building2 } from 'lucide-react';
 import Link from 'next/link';
+import { logError } from '@/lib/error-logger';
 
 interface Organisasi {
   struktur: Array<{
@@ -27,7 +28,7 @@ export default function OrganisasiPage() {
         const json = await res.json();
         setData(json.data || null);
       } catch (error) {
-        console.error('Error fetching organisasi:', error);
+        logError(error, { module: 'Organisasi', action: 'fetch' });
       } finally {
         setLoading(false);
       }

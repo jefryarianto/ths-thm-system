@@ -1,5 +1,7 @@
 'use client';
 
+import { logError } from '@/lib/error-logger';
+
 export default function Error({
   error,
   reset,
@@ -8,7 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   // Log error for debugging
-  console.error(error);
+  logError(error, { module: 'ErrorBoundary', action: 'page-error' });
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
       <div className="text-center px-6">

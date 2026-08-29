@@ -191,26 +191,26 @@ export class CacheService implements OnModuleDestroy {
 
       this.redisClient.on('connect', () => {
         this.redisConnected = true;
-        this.logger.log('Redis cache connected');
+        this.logger.log('Valkey cache connected');
       });
 
       this.redisClient.on('close', () => {
         this.redisConnected = false;
-        this.logger.warn('Redis cache connection closed — falling back to in-memory');
+        this.logger.warn('Valkey cache connection closed — falling back to in-memory');
       });
 
       this.redisClient.on('error', (err) => {
         this.redisConnected = false;
-        this.logger.warn(`Redis cache error: ${err.message}`);
+        this.logger.warn(`Valkey cache error: ${err.message}`);
       });
 
       this.redisClient.connect().catch((err: Error) => {
         this.redisConnected = false;
-        this.logger.warn(`Redis connect failed (${err.message}) — using in-memory cache`);
+        this.logger.warn(`Valkey connect failed (${err.message}) — using in-memory cache`);
       });
     } catch (err) {
       this.redisConnected = false;
-      this.logger.warn(`Redis init error (${(err as Error).message}) — using in-memory cache`);
+      this.logger.warn(`Valkey init error (${(err as Error).message}) — using in-memory cache`);
     }
   }
 
@@ -222,7 +222,7 @@ export class CacheService implements OnModuleDestroy {
     this.redisClient!
       .set(this.prefixedKey(key), JSON.stringify(value), 'PX', ttlMs)
       .catch((err: Error) => {
-        this.logger.warn(`Redis set error: ${err.message}`);
+        this.logger.warn(`Valkey set error: ${err.message}`);
       });
   }
 
@@ -230,14 +230,14 @@ export class CacheService implements OnModuleDestroy {
     this.redisClient!
       .del(this.prefixedKey(key))
       .catch((err: Error) => {
-        this.logger.warn(`Redis del error: ${err.message}`);
+        this.logger.warn(`Valkey del error: ${err.message}`);
       });
   }
 
   private invalidatePrefixInRedis(prefix: string): void {
     const pattern = `${this.prefixedKey(prefix)}*`;
     this.scanAndDelete(pattern).catch((err: Error) => {
-      this.logger.warn(`Redis invalidatePrefix error: ${err.message}`);
+      this.logger.warn(`Valkey invalidatePrefix error: ${err.message}`);
     });
   }
 

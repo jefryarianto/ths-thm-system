@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ShieldAlert, RefreshCw } from 'lucide-react';
+import { logError } from '@/lib/error-logger';
 
 export default function AuditLogsError({
   error,
@@ -14,7 +15,7 @@ export default function AuditLogsError({
 
   // Log the full error for debugging
   useEffect(() => {
-    console.error('[AuditLogs Error Boundary]', error);
+    logError(error, { module: 'AuditLogs', action: 'error-boundary' });
   }, [error]);
 
   return (

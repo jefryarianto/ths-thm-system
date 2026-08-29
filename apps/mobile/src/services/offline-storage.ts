@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import { logError } from '../lib/error-logger';
 
 export interface PendingMutation {
   id: string;
@@ -70,7 +71,7 @@ class OfflineStorageService {
         this.mutations = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load offline mutations:', error);
+      logError(error, { module: 'OfflineStorage', action: 'load-mutations' });
     }
   }
 
@@ -78,7 +79,7 @@ class OfflineStorageService {
     try {
       await AsyncStorage.setItem(this.config.storageKey, JSON.stringify(this.mutations));
     } catch (error) {
-      console.error('Failed to save offline mutations:', error);
+      logError(error, { module: 'OfflineStorage', action: 'save-mutations' });
     }
   }
 
@@ -150,7 +151,7 @@ class OfflineStorageService {
     try {
       await this.syncCallback();
     } catch (error) {
-      console.error('Sync failed:', error);
+      logError(error, { module: 'OfflineStorage', action: 'sync' });
     }
   }
 
@@ -184,7 +185,7 @@ export async function setStoredData<T>(key: string, value: T): Promise<void> {
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error(`Failed to store data for key ${key}:`, error);
+    logError(error, { module: 'OfflineStorage', action: `store-${key}` });
   }
 }
 
@@ -192,7 +193,7 @@ export async function removeStoredData(key: string): Promise<void> {
   try {
     await AsyncStorage.removeItem(key);
   } catch (error) {
-    console.error(`Failed to remove data for key ${key}:`, error);
+    logError(error, { module: 'OfflineStorage', action: `remove-${key}` });
   }
 }
 
@@ -200,6 +201,6 @@ export async function clearAllStorage(): Promise<void> {
   try {
     await AsyncStorage.clear();
   } catch (error) {
-    console.error('Failed to clear all storage:', error);
+    logError(error, { module: 'OfflineStorage', action: 'clear-all' });
   }
 }

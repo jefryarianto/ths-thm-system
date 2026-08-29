@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { logError } from '../lib/error-logger';
 
 interface State {
   hasError: boolean;
@@ -19,7 +20,7 @@ export class GlobalErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    console.error('GlobalErrorBoundary caught error:', error, errorInfo);
+    logError(error, { module: 'GlobalErrorBoundary', action: 'component-catch' });
   }
 
   handleReset = () => {

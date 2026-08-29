@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { Calendar, ArrowRight, TrendingUp, Clock } from 'lucide-react';
+import { logError } from '@/lib/error-logger';
 
 interface Berita {
   id: string;
@@ -28,7 +29,7 @@ export default function BeritaPage() {
         const json = await res.json();
         setData(json.data || []);
       } catch (error) {
-        console.error('Error fetching berita:', error);
+        logError(error, { module: 'Berita', action: 'fetch' });
       } finally {
         setLoading(false);
       }

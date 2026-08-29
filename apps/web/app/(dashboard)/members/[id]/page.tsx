@@ -47,6 +47,7 @@ import { StatusBadge,
   toProperCase,
 } from '@/components/members/constants';
 import { useToast } from '@/components/ui/toast';
+import { logError } from '@/lib/error-logger';
 
 // ─── Types ───
 
@@ -346,7 +347,7 @@ export default function MemberDetailPage() {
       window.URL.revokeObjectURL(url);
       toast('success', format === 'pdf' ? 'PDF KTA berhasil diunduh' : 'PNG KTA berhasil diunduh');
     } catch (err) {
-      console.error('KTA download error:', err);
+      logError(err, { module: 'Members', action: 'download-kta' });
       toast('error', 'Gagal mengunduh KTA. Silakan coba lagi.');
     }
   };
@@ -477,7 +478,7 @@ export default function MemberDetailPage() {
 </body></html>`);
       win.document.close();
     } catch (err) {
-      console.error('KTA error:', err);
+      logError(err, { module: 'Members', action: 'preview-kta' });
        toast('error', 'Gagal memuat KTA. Silakan coba lagi.');
     }
   };

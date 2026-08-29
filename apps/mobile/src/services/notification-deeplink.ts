@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { Href } from 'expo-router';
+import { logWarning, logInfo } from '../lib/error-logger';
 
 export type NotificationType = 
   | 'status_klaim'
@@ -47,17 +48,17 @@ export function handleNotificationNavigation(response: Notifications.Notificatio
   const data = response.notification?.request?.content?.data as NotificationDeepLinkData | undefined;
   
   if (!data) {
-    console.warn('Notification deep link: No data found');
+    logWarning('No data found', { module: 'NotificationDeepLink', action: 'handle' });
     return;
   }
 
   const route = mapNotificationToRoute(data);
   
   if (route) {
-    console.log('Navigating to:', route);
+    logInfo(`Navigating to: ${route}`, { module: 'NotificationDeepLink', action: 'navigate' });
     router.push(route as Href<string>);
   } else {
-    console.warn('Notification deep link: Unknown notification type', data);
+    logWarning(`Unknown notification type: ${JSON.stringify(data)}`, { module: 'NotificationDeepLink', action: 'unknown-type' });
     router.push('/notifications' as Href<string>);
   }
 }
@@ -73,7 +74,7 @@ export function handleInitialNotification(response: Notifications.NotificationRe
 
 export function setupNotificationDeepLinkHandlers(): (() => void) {
   const receivedListener = Notifications.addNotificationReceivedListener((notification) => {
-    console.log('Notification received:', notification.request.content.data);
+    logInfo('Notification received', { module: 'NotificationDeepLink', action: 'received' });
   });
 
   const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {

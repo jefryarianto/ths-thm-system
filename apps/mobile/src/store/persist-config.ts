@@ -1,6 +1,7 @@
 import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StateCreator } from 'zustand';
+import { logError } from '../lib/error-logger';
 
 const asyncStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
@@ -14,14 +15,14 @@ const asyncStorage: StateStorage = {
     try {
       await AsyncStorage.setItem(name, value);
     } catch (error) {
-      console.error(`Failed to set item ${name}:`, error);
+      logError(error, { module: 'PersistConfig', action: `set-${name}` });
     }
   },
   removeItem: async (name: string): Promise<void> => {
     try {
       await AsyncStorage.removeItem(name);
     } catch (error) {
-      console.error(`Failed to remove item ${name}:`, error);
+      logError(error, { module: 'PersistConfig', action: `remove-${name}` });
     }
   },
 };

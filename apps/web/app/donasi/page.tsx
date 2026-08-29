@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PublicLayout } from '@/components';
 import { useI18n } from '@/i18n/context';
 import { ChevronRight, Heart } from 'lucide-react';
+import { logError } from '@/lib/error-logger';
 
 interface BankInfo {
   id: string;
@@ -46,7 +47,7 @@ export default function DonasiPage() {
           setProgramDonasi(donasiJson.data || []);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        logError(error, { module: 'Donasi', action: 'fetch' });
       } finally {
         setLoading(false);
       }
