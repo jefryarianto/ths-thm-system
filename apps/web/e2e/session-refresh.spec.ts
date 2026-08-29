@@ -86,8 +86,14 @@ test.describe('Session token refresh', () => {
     // User must stay on the dashboard (no spurious redirect to /login).
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
 
-    // The single-flight queue must have triggered EXACTLY one refresh call,
-    // regardless of how many concurrent 401s the dashboard fired.
+    // Server production jauh lebih cepat daripada dev — assertion URL di atas
+    // lolos sebelum XHR 401→refresh (mock berlatensi 150ms) sempat terjadi.
+    // Tunggu hingga refresh muncul, beri jeda agar refresh ganda (bila race)
+    // sempat terlihat, lalu pastikan TEPAT SATU panggilan (single-flight).
+    await expect
+      .poll(() => refreshCalls.count, { timeout: 15000 })
+      .toBeGreaterThan(0);
+    await page.waitForTimeout(750);
     expect(refreshCalls.count).toBe(1);
   });
 

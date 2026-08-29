@@ -904,7 +904,7 @@ export class AuthService {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: this.envConfig.nodeEnv === 'production',
+      secure: this.resolveCookieSecure(),
       maxAge: maxAge, // Use maxAge for cookie expiry
       sameSite: 'lax',
       path: '/',
@@ -914,11 +914,26 @@ export class AuthService {
   clearRefreshTokenCookie(res: Response) {
     res.cookie('refreshToken', '', {
       httpOnly: true,
-      secure: this.envConfig.nodeEnv === 'production',
+      secure: this.resolveCookieSecure(),
       maxAge: 0, // Expire immediately
       sameSite: 'lax',
       path: '/',
     });
+  }
+
+  /**
+   * Secure cookie HANYA bila aplikasi memang disajikan via HTTPS.
+   *
+   * Jika hanya mengandalkan NODE_ENV, deployment production yang diakses
+   * via HTTP (IP LAN/internal) kehilangan cookie refresh — browser menolak
+   * Secure cookie pada HTTP non-localhost — sehingga user ter-logout setiap
+   * kali idle melewati umur access token (15 menit) karena refresh selalu
+   * gagal. FRONTEND_URL (https://...) adalah sinyal yang lebih akurat;
+   * COOKIE_SECURE=true tersedia sebagai override manual.
+   */
+  private resolveCookieSecure(): boolean {
+    if (process.env.COOKIE_SECURE === 'true') return true;
+    return !!this.envConfig.frontendUrl?.startsWith('https');
   }
 
   async findOrCreateOAuthUser(profile: OAuthUserProfile) {

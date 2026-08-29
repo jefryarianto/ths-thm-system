@@ -16,8 +16,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = sessionManager.subscribe(() => {
       console.log('[session-provider] Session state changed:', { isExpired: sessionManager.isExpired, pathname });
       if (sessionManager.isExpired) {
-        // Don't toast/redirect if already on login page
-        if (pathname === '/login') return;
+        // Sudah di halaman login: bersihkan state expired segera agar login
+        // berikutnya tidak diblokir flag usang (tanpa toast/redirect).
+        if (pathname === '/login') {
+          sessionManager.reset();
+          return;
+        }
 
         toast('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman login...');
 

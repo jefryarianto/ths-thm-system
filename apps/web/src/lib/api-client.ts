@@ -162,6 +162,94 @@ function waitForCrossTabRefresh(): Promise<string | null> {
   });
 }
 
+// ─── Single-Flight Token Refresh ──────────────────────────────────
+// Memanggil /auth/refresh tepat SATU kali per tab (request lain yang kena
+// 401 bersamaan mengantre hasilnya), dengan koordinasi antar-tab via
+// localStorage lock + BroadcastChannel.
+//
+// SEMANTIK KEGAGALAN (penting untuk skenario idle/laptop sleep):
+// - 401/403 dari server → refresh token benar-benar invalid/expired →
+//   sesi tamat: bersihkan state + tandai expired + tolak SESSION_EXPIRED.
+// - Network error / 5xx / timeout → GANGGUAN SEKALI: token JANGAN dihapus
+//   dan sesi TIDAK dianggap berakhir; lempar error asli agar pemanggil
+//   bisa mencoba lagi (tanpa toast/logout palsu).
+async function performTokenRefresh(): Promise<string> {
+  if (isRefreshing) {
+    // Refresh lain sedang berjalan di tab ini → antre dan tunggu hasilnya.
+    return new Promise((resolve, reject) => {
+      addRefreshSubscriber(resolve, reject);
+    });
+  }
+
+  // Tab lain mungkin sedang me-refresh → tunggu token barunya supaya tidak
+  // memicu race condition antar-tab (yang dulu berujung logout di salah
+  // satu tab).
+  if (isAnotherTabRefreshing()) {
+    const token = await waitForCrossTabRefresh();
+    if (token) return token;
+    // null (timeout/kegagalan tab lain) → lanjut refresh sendiri sebagai fallback.
+  }
+
+  isRefreshing = true;
+  try {
+    // Coba klaim lock antar-tab. Bila kalah (tab lain sudah/sementara
+    // me-refresh), tunggu token barunya alih-alih me-refresh sendiri.
+    if (!claimRefreshLock()) {
+      const token = await waitForCrossTabRefresh();
+      if (token) return token;
+      // Lock sudah lewat/stale → refresh sendiri sebagai fallback.
+    }
+
+    try {
+      const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
+      const newToken = data.data.accessToken;
+      localStorage.setItem('accessToken', newToken);
+      // Also set in cookie for consistency with login flow
+      if (typeof document !== 'undefined') {
+        document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+      }
+      onTokenRefreshed(newToken);
+      // Kabarkan tab lain agar bisa pakai token yang sama.
+      refreshChannel?.postMessage({ type: 'REFRESH_SUCCESS', token: newToken });
+      // Refresh sukses → flag expired (bila ada) sudah tidak relevan lagi.
+      if (sessionManager.isExpired) {
+        sessionManager.reset();
+      }
+      return newToken;
+    } catch (err) {
+      onTokenRefreshFailed(err);
+      // Kabarkan tab lain bahwa refresh gagal.
+      refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
+      const status = (err as { response?: { status?: number } } | null)?.response?.status;
+      if (status === 401 || status === 403) {
+        // Server secara eksplisit menolak refresh token → sesi berakhir.
+        triggerSessionExpired();
+        throw SESSION_EXPIRED_ERROR;
+      }
+      // Transient (network/5xx): pertahankan sesi, lempar error asli.
+      throw err;
+    }
+  } finally {
+    isRefreshing = false;
+    clearRefreshLock();
+  }
+}
+
+/**
+ * Normalize an axios error into the flat error shape used across the app.
+ */
+function normalizeAxiosError(err: unknown): { status: number; message: string; data: unknown } {
+  const e = err as
+    | { response?: { status?: number; data?: { message?: string } }; message?: string }
+    | null;
+  return {
+    status: e?.response?.status ?? 0,
+    message:
+      e?.response?.data?.message || e?.message || 'Terjadi kesalahan pada server.',
+    data: e?.response?.data ?? null,
+  };
+}
+
 // ─── Interceptors ─────────────────────────────────────────────────
 
 function getAccessToken(): string | null {
@@ -171,10 +259,53 @@ function getAccessToken(): string | null {
   return null;
 }
 
-apiClient.interceptors.request.use((config) => {
-  if (sessionManager.isExpired) {
-    return Promise.reject(SESSION_EXPIRED_ERROR);
+// Endpoint auth selalu lolos dari blokir sesi-expired. Tanpa ini, login
+// setelah sesi kedaluwarsa akan deadlock: flag `isExpired` menolak request
+// login itu sendiri sehingga user terjebak sampai reload manual (F5).
+const AUTH_ENDPOINT_PATTERNS = [
+  '/auth/login',
+  '/auth/refresh',
+  '/auth/register',
+  '/auth/logout',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/verify',
+  '/auth/oauth',
+];
+
+function isAuthEndpoint(url?: string): boolean {
+  return !!url && AUTH_ENDPOINT_PATTERNS.some((pattern) => url.includes(pattern));
+}
+
+apiClient.interceptors.request.use(async (config) => {
+  // Auth endpoints must always pass through — even when the session is
+  // flagged expired — otherwise re-login deadlocks until a manual reload.
+  if (isAuthEndpoint(config.url)) {
+    return config;
   }
+
+  if (sessionManager.isExpired) {
+    // SELF-HEALING: flag expired bisa jadi usang (tertulis setelah gangguan
+    // network sesaat, atau terbawa lintas navigasi SPA). Cookie refresh 14
+    // hari sering masih valid → coba SATU re-auth senyap sebelum menyerah.
+    // performTokenRefresh() single-flight, jadi request concurrent berbagi
+    // satu panggilan refresh.
+    try {
+      const token = await performTokenRefresh();
+      config.headers.Authorization = `Bearer ${token}`;
+    } catch (err) {
+      if (err === SESSION_EXPIRED_ERROR) {
+        return Promise.reject(SESSION_EXPIRED_ERROR);
+      }
+      // Kegagalan transient: sesi masih hidup, tapi request ini tetap tidak
+      // bisa jalan tanpa token → lempar error ternormalisasi (bukan
+      // SESSION_EXPIRED yang dibungkam UI) agar halaman menampilkan state
+      // error yang bisa dicoba ulang.
+      throw normalizeAxiosError(err);
+    }
+    return config;
+  }
+
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -211,88 +342,42 @@ apiClient.interceptors.response.use(
     }
 
     // --- TOKEN REFRESH HANDLING ---
-    // Skip refresh on login/auth endpoints since there's no valid refresh token yet
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-      if (isRefreshing) {
-        // Tab ini sedang me-refresh → antrekan request yang sama.
-        return new Promise((resolve, reject) => {
-          addRefreshSubscriber(
-            (token: string) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              resolve(apiClient(originalRequest));
-            },
-            (err: any) => {
-              reject(err);
-            }
-          );
-        });
-      }
-
-      // Tab lain mungkin sedang me-refresh → tunggu token barunya supaya tidak
-      // memicu race condition antar-tab (yang dulu berujung logout di salah satu tab).
-      if (isAnotherTabRefreshing()) {
-        const token = await waitForCrossTabRefresh();
-        if (token) {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return apiClient(originalRequest);
-        }
-        // Token null (timeout/kegagalan tab lain) → lanjut refresh sendiri sebagai fallback.
-      }
-
+    // Skip refresh on auth endpoints since there's no valid refresh token yet
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint(originalRequest.url)) {
       originalRequest._retry = true;
-      isRefreshing = true;
-
-      // Coba klaim lock antar-tab. Bila kalah (tab lain sudah/sementara me-refresh),
-      // tunggu token barunya alih-alih me-refresh sendiri (menghindari race).
-      if (!claimRefreshLock()) {
-        const token = await waitForCrossTabRefresh();
-        if (token) {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return apiClient(originalRequest);
-        }
-        // Lock sudah lewat/cleared → lanjut refresh sendiri sebagai fallback.
-      }
-
       try {
-        const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
-        const newToken = data.data.accessToken;
-        localStorage.setItem('accessToken', newToken);
-        // Also set in cookie for consistency with login flow
-        if (typeof document !== 'undefined') {
-          document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
-        }
-        onTokenRefreshed(newToken);
-        // Kabarkan tab lain agar bisa pakai token yang sama.
-        refreshChannel?.postMessage({ type: 'REFRESH_SUCCESS', token: newToken });
+        const newToken = await performTokenRefresh();
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-      } catch (err) {
-        console.error('[api-client] Token refresh failed:', err);
-        triggerSessionExpired();
-        onTokenRefreshFailed(SESSION_EXPIRED_ERROR);
-        // Kabarkan tab lain bahwa refresh gagal.
-        refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
-        return Promise.reject(SESSION_EXPIRED_ERROR);
-      } finally {
-        isRefreshing = false;
-        clearRefreshLock();
+      } catch (refreshErr) {
+        if (refreshErr === SESSION_EXPIRED_ERROR) {
+          // Refresh token genuinely invalid/expired — the session is over.
+          // SessionProvider shows the toast and redirects to /login.
+          return Promise.reject(refreshErr);
+        }
+        // TRANSIENT failure (network/5xx): tokens are intact and the session
+        // is still alive. Surface a normalized, retryable error instead of
+        // silently logging the user out.
+        return Promise.reject(normalizeAxiosError(refreshErr));
       }
     }
 
     // --- ERROR NORMALIZATION ---
-    const normalizedError = {
-      status: error.response?.status ?? 0,
-      message:
-        error.response?.data?.message || error.message || 'Terjadi kesalahan pada server.',
-      data: error.response?.data ?? null,
-    };
-
-    return Promise.reject(normalizedError);
+    return Promise.reject(normalizeAxiosError(error));
   },
 );
 
 export default apiClient;
+
+/**
+ * Ensure a fresh access token, performing a single-flight refresh when
+ * needed. Used by the SSE hook before reconnecting after an auth failure.
+ * Resolves with a valid access token; rejects with SESSION_EXPIRED_ERROR
+ * when the session is genuinely over, or the raw error when transient.
+ */
+export async function ensureFreshToken(): Promise<string> {
+  return performTokenRefresh();
+}
 
 export const setTokens = (accessToken: string, refreshToken: string) => {
   sessionManager.reset();

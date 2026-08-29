@@ -151,14 +151,15 @@ export default function AuditLogsPage() {
   }, []);
 
   // ── SSE real-time listener (no polling, no WebSocket needed) ──
-  const sseToken =
-    (typeof window !== 'undefined'
-      ? localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      : '') || '';
-
+  // Token di-resolve ulang pada setiap (re)connect via getToken sehingga
+  // koneksi yang hidup kembali setelah idle memakai access token terbaru
+  // (bukan snapshot token saat halaman dimuat).
   const { connected: sseConnected } = useSSE('/api/audit-logs/stream', {
-    token: sseToken,
-    enabled: !!sseToken,
+    getToken: () =>
+      (typeof window !== 'undefined'
+        ? localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+        : '') || '',
+    enabled: true,
     maxRetries: 10,
     onEvent: (event, raw) => {
       if (event === 'audit:new') {
