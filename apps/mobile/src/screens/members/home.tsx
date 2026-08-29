@@ -7,6 +7,7 @@ import { useMemberProfile } from '../../hooks/use-member-profile';
 import { useRole } from '../../hooks/use-role';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import { useAuthStore } from '../../store/auth-store';
 import apiClient, { unwrap } from '../../lib/api-client';
 
@@ -117,7 +118,7 @@ export default function HomeScreen() {
             onPress={() => router.push(item.route as any)}
           >
             <View style={styles.iconChip}>
-              <Ionicons name={item.icon as any} size={24} color="#2563eb" />
+              <Ionicons name={safeIconName(item.icon)} size={24} color="#2563eb" />
             </View>
             <Text style={styles.cardLabel}>{item.label}</Text>
           </TouchableOpacity>

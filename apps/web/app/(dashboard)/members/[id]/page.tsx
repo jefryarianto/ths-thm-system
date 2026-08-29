@@ -397,10 +397,10 @@ export default function MemberDetailPage() {
       win.document.write(`<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>KTA - ${toProperCase(m.namaLengkap)}</title>
 <style>
-  @font-face { font-family: 'OCR A Extended'; src: url('${window.location.origin}/fonts/OCR A Extended.ttf') format('truetype'); }
-  @font-face { font-family: 'Open Sans'; src: url('${window.location.origin}/fonts/OpenSans-Bold.ttf') format('truetype'); font-weight: 700; }
-  @font-face { font-family: 'Roboto'; src: url('${window.location.origin}/fonts/Roboto-Regular.ttf') format('truetype'); font-weight: 400; }
-  @font-face { font-family: 'Roboto'; src: url('${window.location.origin}/fonts/Roboto-Bold.ttf') format('truetype'); font-weight: 700; }
+  @font-face { font-family: 'OCR A Extended'; src: url('${window.location.origin}/fonts/ocr-a-extended.ttf') format('truetype'); }
+  @font-face { font-family: 'Open Sans'; src: url('${window.location.origin}/fonts/open-sans-bold.ttf') format('truetype'); font-weight: 700; }
+  @font-face { font-family: 'Roboto'; src: url('${window.location.origin}/fonts/roboto-regular.ttf') format('truetype'); font-weight: 400; }
+  @font-face { font-family: 'Roboto'; src: url('${window.location.origin}/fonts/roboto-bold.ttf') format('truetype'); font-weight: 700; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Roboto', Arial, sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
   @media print { body { padding: 0; } .page-break { page-break-after: always; } }

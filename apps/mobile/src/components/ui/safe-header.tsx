@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 
 interface SafeHeaderProps {
   title: string;
@@ -32,7 +33,7 @@ export function SafeHeader({ title, subtitle, showBack = false, rightAction }: S
         </View>
         {rightAction && (
           <TouchableOpacity onPress={rightAction.onPress} style={styles.actionBtn}>
-            <Ionicons name={rightAction.icon as any} size={22} color="#fff" />
+            <Ionicons name={safeIconName(rightAction.icon)} size={22} color="#fff" />
             {rightAction.badge !== undefined && rightAction.badge > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{rightAction.badge > 99 ? '99+' : rightAction.badge}</Text>

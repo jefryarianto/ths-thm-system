@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import {
   useActivities,
   STATUS_STYLES,
@@ -93,7 +94,7 @@ export default function ActivitiesScreen() {
                   {item.nama}
                 </Text>
                 <View style={styles.metaRow}>
-                  <Ionicons name={icon as any} size={13} color="#6b7280" />
+                  <Ionicons name={safeIconName(icon)} size={13} color="#6b7280" />
                   <Text style={styles.metaText}>{item.tipe}</Text>
                   {item.lokasi && (
                     <>

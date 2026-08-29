@@ -14,13 +14,17 @@ export default function RootLayout() {
 
   useNotificationDeepLink();
 
-  // Muat font kartu: OCR A Extended (data No. Anggota), Open Sans (header), Roboto (label & teks lain)
-  // Kunci useFonts harus sama persis dgn nama family internal TTF ("OCR A Extended", "Open Sans", "Roboto")
-  const [fontsLoaded] = useFonts({
-    'OCR A Extended': require('../assets/fonts/OCR A Extended.ttf'),
-    'OpenSans-Bold': require('../assets/fonts/OpenSans-Bold.ttf'),
-    'Roboto-Regular': require('../assets/fonts/Roboto-Regular.ttf'),
-    'Roboto-Bold': require('../assets/fonts/Roboto-Bold.ttf'),
+  // Muat font kartu: OCR A Extended (data No. Anggota), Open Sans (header), Roboto (label & teks lain).
+  // Kunci useFonts harus sama persis dgn nama family internal TTF ("OCR A Extended", "Open Sans", "Roboto").
+  // Ionicons di-PRELOAD di sini (dengan alias 'ionicons' + 'Ionicons' untuk pencocokan Android/web) supaya
+  // ikon tab bar & tombol tidak dirender kosong/kotak gara-gara lazy-load @expo/vector-icons.
+  const [fontsLoaded, fontError] = useFonts({
+    'OCR A Extended': require('../assets/fonts/ocr-a-extended.ttf'),
+    'OpenSans-Bold': require('../assets/fonts/open-sans-bold.ttf'),
+    'Roboto-Regular': require('../assets/fonts/roboto-regular.ttf'),
+    'Roboto-Bold': require('../assets/fonts/roboto-bold.ttf'),
+    'Ionicons': require('../assets/fonts/Ionicons.ttf'),
+    'ionicons': require('../assets/fonts/Ionicons.ttf'),
   });
 
   useEffect(() => {
@@ -54,10 +58,14 @@ export default function RootLayout() {
     return cleanup;
   }, []);
 
-  // Tunggu font siap sebelum merender navigasi agar font OCR A Extended
-  // langsung tersedia (Expo Go tidak otomatis memuat dari plugin app.json)
-  if (!fontsLoaded) {
+  // Tunggu font siap sebelum merender navigasi agar font kartu langsung tersedia.
+  // Jika ada ERROR (font korup/hilang), JANGAN blokir app — biarkan font sistem sebagai
+  // fallback supaya UI tetap terlihat (tidak blank screen permanen).
+  if (!fontsLoaded && !fontError) {
     return null;
+  }
+  if (__DEV__ && fontError) {
+    console.warn('[fonts] Sebagian font gagal dimuat, memakai font sistem sebagai fallback:', fontError);
   }
 
   return (

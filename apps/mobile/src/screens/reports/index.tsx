@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { safeIconName } from '../../lib/icons';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
@@ -104,7 +105,7 @@ export default function ReportsScreen() {
         <View style={styles.cardGrid}>
           {statCards.map((card, idx) => (
             <View key={idx} style={[styles.statCard, { backgroundColor: card.bg }]}>
-              <Ionicons name={card.icon as any} size={24} color={card.color} />
+              <Ionicons name={safeIconName(card.icon)} size={24} color={card.color} />
               <Text style={[styles.statValue, { color: card.color }]}>{card.value}</Text>
               <Text style={styles.statLabel}>{card.label}</Text>
             </View>
@@ -122,7 +123,7 @@ export default function ReportsScreen() {
                   key={idx}
                   style={[styles.alertCard, { backgroundColor: card.bg }]}
                 >
-                  <Ionicons name={card.icon as any} size={22} color={card.color} />
+                  <Ionicons name={safeIconName(card.icon)} size={22} color={card.color} />
                   <View style={styles.alertBody}>
                     <Text style={styles.alertValue}>{card.value}</Text>
                     <Text style={styles.alertLabel}>{card.label}</Text>

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, ScreenShell, TabBar } from '../../components/ui/shared';
@@ -141,7 +142,7 @@ export default function ActivityDetailScreen() {
         <View style={styles.section}>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Ionicons name={icon as any} size={20} color="#2563eb" />
+              <Ionicons name={safeIconName(icon)} size={20} color="#2563eb" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tipe Kegiatan</Text>
                 <Text style={styles.infoValue}>{activity.tipe}</Text>

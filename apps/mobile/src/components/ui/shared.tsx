@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface BackButtonProps {
@@ -143,7 +144,7 @@ export interface InfoRowProps {
 export function SectionTitle({ icon, text }: { icon: string; text: string }) {
   return (
     <Text style={referenceStyles.sectionTitle}>
-      <Ionicons name={icon as any} size={16} color="#2563eb" /> {text}
+      <Ionicons name={safeIconName(icon)} size={16} color="#2563eb" /> {text}
     </Text>
   );
 }
@@ -151,7 +152,7 @@ export function SectionTitle({ icon, text }: { icon: string; text: string }) {
 export function InfoRow({ icon, label, value }: InfoRowProps) {
   return (
     <View style={referenceStyles.infoRow}>
-      <Ionicons name={icon as any} size={15} color="#9ca3af" />
+      <Ionicons name={safeIconName(icon)} size={15} color="#9ca3af" />
       <View style={{ flex: 1 }}>
         <Text style={referenceStyles.infoLabel}>{label}</Text>
         <Text style={referenceStyles.infoValue}>{value}</Text>
@@ -205,7 +206,7 @@ export function StatusCard({
     return (
       <View style={referenceStyles.statusCardCentered}>
         <View style={[referenceStyles.statusIconBoxCentered, { backgroundColor: bg }]}>
-          <Ionicons name={icon as any} size={32} color={color} />
+          <Ionicons name={safeIconName(icon)} size={32} color={color} />
         </View>
         {subtitle && <Text style={referenceStyles.statusSubtitle}>{subtitle}</Text>}
         <Text style={referenceStyles.statusTitleCentered}>{title}</Text>
@@ -220,7 +221,7 @@ export function StatusCard({
     <View style={[referenceStyles.statusHeader, { borderLeftColor: color, borderLeftWidth: 4 }]}>
       <View style={referenceStyles.statusRow}>
         <View style={[referenceStyles.statusIconBox, { backgroundColor: bg }]}>
-          <Ionicons name={icon as any} size={28} color={color} />
+          <Ionicons name={safeIconName(icon)} size={28} color={color} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={referenceStyles.statusTitle}>{title}</Text>
@@ -435,7 +436,7 @@ export function TabBar({ tabs, activeKey, onChange }: TabBarProps) {
           onPress={() => onChange(tab.key)}
         >
           <Ionicons
-            name={tab.icon as any}
+            name={safeIconName(tab.icon)}
             size={14}
             color={activeKey === tab.key ? '#fff' : '#6b7280'}
           />

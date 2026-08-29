@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { safeIconName } from '../../lib/icons';
 import { useOrgDocuments, TIPE_OPTIONS } from '../../hooks/use-org-documents';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
@@ -75,7 +76,7 @@ export default function OrgDocumentsScreen() {
               onPress={() => item.fileUrl && handleDownload(item.fileUrl, item.nama)}
             >
               <View style={styles.iconBox}>
-                <Ionicons name={icon as any} size={22} color="#2563eb" />
+                <Ionicons name={safeIconName(icon)} size={22} color="#2563eb" />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.name} numberOfLines={2}>

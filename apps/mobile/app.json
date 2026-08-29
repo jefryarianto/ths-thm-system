@@ -30,10 +30,11 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/OCR A Extended.ttf",
-            "./assets/fonts/OpenSans-Bold.ttf",
-            "./assets/fonts/Roboto-Regular.ttf",
-            "./assets/fonts/Roboto-Bold.ttf"
+            "./assets/fonts/ocr-a-extended.ttf",
+            "./assets/fonts/open-sans-bold.ttf",
+            "./assets/fonts/roboto-regular.ttf",
+            "./assets/fonts/roboto-bold.ttf",
+            "./assets/fonts/Ionicons.ttf"
           ]
         }
       ]

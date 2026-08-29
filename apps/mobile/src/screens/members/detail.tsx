@@ -13,6 +13,7 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { ProfileCard, ScreenShell } from '../../components/ui/shared';
 
@@ -419,7 +420,7 @@ export default function MemberDetailScreen() {
         <View style={styles.docSummaryRow}>
           {summary.map((s) => (
             <View key={s.tipe} style={styles.docSummaryCard}>
-              <Ionicons name={(TIPE_ICONS[s.tipe] || 'document-text') as any} size={16} color="#2563eb" />
+              <Ionicons name={safeIconName(TIPE_ICONS[s.tipe] || 'document-text')} size={16} color="#2563eb" />
               <Text style={styles.docSummaryLabel} numberOfLines={1}>
                 {DOKUMEN_TIPE_LABEL[s.tipe] || s.tipe}
               </Text>
@@ -443,7 +444,7 @@ export default function MemberDetailScreen() {
               <View style={styles.docCard}>
                 <View style={styles.docCardTop}>
                   <Ionicons
-                    name={(TIPE_ICONS[item.tipe] || 'document-text') as any}
+                    name={safeIconName(TIPE_ICONS[item.tipe] || 'document-text')}
                     size={22}
                     color="#2563eb"
                     style={{ marginRight: 10 }}
@@ -549,7 +550,7 @@ export default function MemberDetailScreen() {
             onPress={() => setActiveTab(tab.key)}
           >
             <Ionicons
-              name={tab.icon as any}
+              name={safeIconName(tab.icon)}
               size={16}
               color={activeTab === tab.key ? '#2563eb' : '#6b7280'}
             />

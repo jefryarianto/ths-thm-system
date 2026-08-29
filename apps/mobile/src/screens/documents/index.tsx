@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import {
   useDocuments,
   TIPE_LABELS,
@@ -91,7 +92,7 @@ export default function DocumentsScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.iconCircle}>
-                <Ionicons name={iconName as any} size={22} color="#2563eb" />
+                <Ionicons name={safeIconName(iconName)} size={22} color="#2563eb" />
               </View>
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>{tipeLabel}</Text>

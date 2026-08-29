@@ -2,12 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Font web: self-host (tidak tergantung Google Fonts) ── */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-var.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('/fonts/playfair-display-var.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── OCR Font ── */
 @font-face {
   font-family: 'OCR A Extended';
-  src: url('/fonts/OCR A Extended.ttf') format('truetype');
+  src: url('/fonts/ocr-a-extended.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+}
+
+/* ── Roboto & Open Sans (untuk kartu anggota) ── */
+@font-face {
+  font-family: 'Open Sans';
+  src: url('/fonts/open-sans-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('/fonts/roboto-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('/fonts/roboto-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 @layer base {

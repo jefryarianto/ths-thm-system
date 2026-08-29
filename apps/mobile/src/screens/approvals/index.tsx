@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import {
   usePendingApprovals,
   approveApproval,
@@ -174,7 +175,7 @@ function ApprovalCard({
     <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={onPress}>
       <View style={styles.cardHeader}>
         <View style={[styles.typeIcon, { backgroundColor: st.bg }]}>
-          <Ionicons name={iconName as any} size={18} color={st.color} />
+          <Ionicons name={safeIconName(iconName)} size={18} color={st.color} />
         </View>
         <View style={styles.cardTitleArea}>
           <Text style={styles.cardTitle} numberOfLines={1}>

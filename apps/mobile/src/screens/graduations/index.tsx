@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import { useGraduations, STATUS_STYLES, FILTERS } from '../../hooks/use-graduations';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
@@ -90,7 +91,7 @@ export default function GraduationsScreen() {
                 )}
               </View>
               <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
-                <Ionicons name={ss.icon as any} size={12} color={ss.color} />
+                <Ionicons name={safeIconName(ss.icon)} size={12} color={ss.color} />
                 <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
               </View>
             </TouchableOpacity>

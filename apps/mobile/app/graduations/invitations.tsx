@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, router } from 'expo-router';
+import { safeIconName } from '../../src/lib/icons';
 import apiClient, { unwrap } from '../../src/lib/api-client';
 import { LoadingView } from '../../src/components/ui/shared';
 
@@ -158,7 +159,7 @@ export default function InvitationsScreen() {
                   ) : null}
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
-                  <Ionicons name={ss.icon as any} size={11} color={ss.color} />
+                  <Ionicons name={safeIconName(ss.icon)} size={11} color={ss.color} />
                   <Text style={[styles.statusText, { color: ss.color }]}>{ss.label}</Text>
                 </View>
               </View>

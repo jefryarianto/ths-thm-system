@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { safeIconName } from '../../lib/icons';
 import {
   useApprovalDetail,
   approveApproval,
@@ -196,7 +197,7 @@ export default function ApprovalDetailScreen() {
                   activeOpacity={0.7}
                   onPress={() => router.push(refRoute as any)}
                 >
-                  <Ionicons name={refRoute.icon as any} size={18} color="#2563eb" />
+                  <Ionicons name={safeIconName(refRoute.icon)} size={18} color="#2563eb" />
                   <Text style={styles.referenceBtnText}>{refRoute.label}</Text>
                   <Ionicons name="chevron-forward" size={18} color="#93c5fd" />
                 </TouchableOpacity>
@@ -231,7 +232,7 @@ export default function ApprovalDetailScreen() {
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={icon as any} size={15} color="#9ca3af" />
+      <Ionicons name={safeIconName(icon)} size={15} color="#9ca3af" />
       <View style={{ flex: 1 }}>
         <Text style={styles.infoLabel}>{label}</Text>
         <Text style={styles.infoValue}>{value}</Text>
