@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
@@ -86,8 +86,10 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
       await apiClient.post(`/content/berita/${id}/image`, formData);
       toast('success', 'Gambar berhasil diupload');
       fetchData();
-    } catch {
-      toast('error', 'Gagal mengupload gambar');
+    } catch (err) {
+      // Tampilkan pesan spesifik dari server (role, format file, ukuran)
+      // agar penyebab kegagalan upload tidak tersembunyi.
+      toast('error', extractErrorMessage(err, 'Gagal mengupload gambar'));
     } finally {
       setUploading(false);
     }
@@ -128,7 +130,7 @@ export default function EditBeritaPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <PermissionGuard module="settings" action="edit">
+    <PermissionGuard module="berita" action="edit">
       <PageContainer>
         <PageHeader title="Edit Berita" onRefresh={fetchData}>
           <button

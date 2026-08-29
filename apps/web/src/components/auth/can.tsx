@@ -63,6 +63,9 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   chat:             { ...DEFAULT_MODULE, view: 'anggota' },
   forum:            { ...DEFAULT_MODULE, view: 'anggota', admin: 'admin_distrik' },
   'scan-stats':     { ...DEFAULT_MODULE, admin: 'admin_ranting' },
+  // Konten publik nasional — sejajar dengan role API content/berita
+  // (superadmin, admin_distrik, admin_wilayah).
+  berita:           { view: 'admin_wilayah', create: 'admin_wilayah', edit: 'admin_wilayah', delete: 'admin_wilayah' },
   users:            { view: 'admin_ranting', create: 'superadmin', edit: 'superadmin', delete: 'superadmin' },
   settings:         { view: 'admin_ranting', create: 'admin_ranting', edit: 'admin_ranting', delete: 'admin_ranting' },
   auditLogs:        { view: 'superadmin', admin: 'superadmin' },

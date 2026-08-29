@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
@@ -50,15 +50,15 @@ export default function NewBeritaPage() {
       });
       toast('success', 'Berita berhasil dibuat');
       router.push('/content/berita');
-    } catch {
-      toast('error', 'Gagal membuat berita');
+    } catch (err) {
+      toast('error', extractErrorMessage(err, 'Gagal membuat berita'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <PermissionGuard module="settings" action="edit">
+    <PermissionGuard module="berita" action="edit">
       <PageContainer>
         <PageHeader title="Tambah Berita Baru">
           <button

@@ -48,7 +48,7 @@ export class ContentController {
   }
 
   @Post('berita')
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Tambah berita baru',
   })
@@ -67,7 +67,7 @@ export class ContentController {
   }
 
   @Patch('berita/:id')
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Perbarui berita',
   })
@@ -87,7 +87,7 @@ export class ContentController {
   }
 
   @Delete('berita/:id')
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Hapus berita',
   })
@@ -96,7 +96,7 @@ export class ContentController {
   }
 
   @Post('berita/:id/image')
-  @CrudAuth('superadmin', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     scope: 'national',
     summary: 'Upload gambar berita',
   })

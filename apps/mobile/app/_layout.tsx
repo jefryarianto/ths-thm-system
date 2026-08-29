@@ -21,8 +21,8 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     'OCR A Extended': require('../assets/fonts/ocr-a-extended.ttf'),
     'OpenSans-Bold': require('../assets/fonts/open-sans-bold.ttf'),
-    'Roboto-Regular': require('../assets/fonts/roboto-regular.ttf'),
-    'Roboto-Bold': require('../assets/fonts/roboto-bold.ttf'),
+    'Roboto-Regular': require('../assets/fonts/Roboto-Regular.ttf'),
+    'Roboto-Bold': require('../assets/fonts/Roboto-Bold.ttf'),
     'Ionicons': require('../assets/fonts/Ionicons.ttf'),
     'ionicons': require('../assets/fonts/Ionicons.ttf'),
   });

@@ -76,7 +76,7 @@ export default function BeritaListPage() {
     });
 
   return (
-    <PermissionGuard module="settings" action="edit">
+    <PermissionGuard module="berita" action="view">
       <PageContainer>
         <PageHeader title="Berita & Artikel" onRefresh={fetchData}>
           <button
