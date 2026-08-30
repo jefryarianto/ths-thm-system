@@ -190,8 +190,20 @@ jobs:
             fi
 
             # Pull latest images (build happens in CI — zero CPU on VPS)
+            # Pull each image individually with retries to avoid partial pulls
             echo "   Pulling images..."
-            docker compose -f docker-compose.production.yml pull --quiet 2>&1 | tail -5
+            for svc in api web; do
+              for attempt in 1 2 3; do
+                if docker compose -f docker-compose.production.yml pull --quiet "$svc" 2>&1; then
+                  echo "   ✅ $svc image pulled"
+                  break
+                fi
+                echo "   ⚠️ Pull $svc attempt $attempt failed, retrying in 10s..."
+                sleep 10
+              done
+            done
+            # Pull valkey and nginx (non-critical)
+            docker compose -f docker-compose.production.yml pull --quiet valkey nginx 2>&1 || true
 
             # Resolve any stuck migrations from previous failed deploys
             docker compose -f docker-compose.production.yml run --rm api \
@@ -209,7 +221,7 @@ jobs:
             # Stop & remove old containers, then restart with latest config
             echo "   Restarting Docker services..."
             docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
-            docker compose -f docker-compose.production.yml up -d --remove-orphans
+            docker compose -f docker-compose.production.yml up -d --remove-orphans --force-recreate
 
             # Wait for health check (via docker compose exec — api port is internal, not exposed on host)
             echo "   Waiting for API health check..."
