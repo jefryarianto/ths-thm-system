@@ -528,6 +528,131 @@ export class NotificationsService {
     }
   }
 
+  /**
+   * Send a test push notification to a specific user (or all users).
+   * Returns delivery results with success/failure counts.
+   */
+  async sendTestPush(dto: {
+    title: string;
+    body: string;
+    userId?: string;
+  }): Promise<{
+    totalTokens: number;
+    successCount: number;
+    failureCount: number;
+    errors: string[];
+  }> {
+    const result = { totalTokens: 0, successCount: 0, failureCount: 0, errors: [] as string[] };
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const admin = require('firebase-admin');
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FCM_PROJECT_ID,
+            privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\\\n/g, '\n'),
+            clientEmail: process.env.FCM_CLIENT_EMAIL,
+          }),
+        });
+      }
+
+      // Get tokens — specific user or all active tokens
+      const where: Record<string, unknown> = { isActive: true };
+      if (dto.userId) {
+        where.userId = dto.userId;
+      }
+
+      const tokens = await this.prisma.deviceToken.findMany({ where });
+      result.totalTokens = tokens.length;
+
+      if (tokens.length === 0) {
+        result.errors.push('No active device tokens found');
+        return result;
+      }
+
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+        const batch = tokens.slice(i, i + BATCH_SIZE);
+        const message = {
+          tokens: batch.map((t) => t.token),
+          notification: { title: dto.title, body: dto.body },
+          data: { click_action: 'FLUTTER_NOTIFICATION_CLICK', type: 'test' },
+        };
+
+        const response = await admin.messaging().sendEachForMulticast(message);
+        result.successCount += response.successCount;
+        result.failureCount += response.failureCount;
+
+        // Deactivate invalid tokens
+        if (response.failureCount > 0) {
+          response.responses.forEach(
+            (resp: { success: boolean; error?: { code?: string } }, idx: number) => {
+              if (!resp.success) {
+                const errCode = resp.error?.code || 'unknown';
+                result.errors.push(`Token ${batch[idx].id.slice(0, 8)}...: ${errCode}`);
+                if (errCode === 'messaging/registration-token-not-registered') {
+                  this.prisma.deviceToken
+                    .updateMany({ where: { token: batch[idx].token }, data: { isActive: false } })
+                    .catch(() => {});
+                }
+              }
+            },
+          );
+        }
+      }
+
+      this.logger.log(`Test push: ${result.successCount}/${result.totalTokens} success`);
+    } catch (error) {
+      result.errors.push((error as Error).message);
+      this.logger.warn('Test push failed:', (error as Error).message);
+    }
+
+    return result;
+  }
+
+  /**
+   * Get all registered FCM device tokens with user info.
+   */
+  async getFcmTokens(): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    tokens: Array<{
+      id: string;
+      token: string;
+      platform: string;
+      isActive: boolean;
+      createdAt: Date;
+      user: { id: string; namaLengkap: string; email: string | null };
+    }>;
+  }> {
+    const tokens = await this.prisma.deviceToken.findMany({
+      include: {
+        user: {
+          select: { id: true, namaLengkap: true, email: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const active = tokens.filter((t) => t.isActive).length;
+
+    return {
+      total: tokens.length,
+      active,
+      inactive: tokens.length - active,
+      tokens: tokens.map((t) => ({
+        id: t.id,
+        token: t.token.slice(0, 20) + '...',
+        platform: t.platform,
+        isActive: t.isActive,
+        createdAt: t.createdAt,
+        user: t.user,
+      })),
+    };
+  }
+
   private async pushFCM(userId: string, title: string, body: string) {
     await this.pushBroadcast(title, body, [userId]);
   }

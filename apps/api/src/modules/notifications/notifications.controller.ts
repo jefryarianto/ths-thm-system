@@ -192,6 +192,22 @@ export class NotificationsController {
   cleanupStaleIncomplete() {
     return this.service.cleanupStaleIncompleteNotifications();
   }
+  @Get('fcm-tokens')
+  @ApiOperation({ summary: 'Daftar semua token FCM yang terdaftar' })
+  @Roles('superadmin')
+  getFcmTokens() {
+    return this.service.getFcmTokens();
+  }
+
+  @Post('test-push')
+  @ApiOperation({ summary: 'Kirim push notification test' })
+  @Roles('superadmin')
+  sendTestPush(
+    @Body() dto: { title: string; body: string; userId?: string },
+  ) {
+    return this.service.sendTestPush(dto);
+  }
+
   @Post('fcm-token')
   @ApiOperation({ summary: 'Daftarkan token FCM' })
   @Roles(

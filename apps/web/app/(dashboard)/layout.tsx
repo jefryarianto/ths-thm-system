@@ -38,6 +38,7 @@ import {
   BookOpen,
   ArrowLeftRight,
   ArrowLeft,
+  Smartphone,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -200,6 +201,7 @@ const menuGroups: MenuGroup[] = [
         icon: Activity,
         adminOnly: true,
       },
+      { href: '/settings/fcm-test', label: 'FCM Push Test', icon: Smartphone, minRole: 'superadmin' },
       {
         href: '/ws-monitor',
         label: 'WebSocket',
