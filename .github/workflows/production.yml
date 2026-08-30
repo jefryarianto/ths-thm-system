@@ -154,8 +154,8 @@ jobs:
           echo "   Saving Docker images for transfer..."
           docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
           docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
-          docker save ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} | gzip > /tmp/docker-images.tar.gz
-          ls -lh /tmp/docker-images.tar.gz
+          docker save ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} | gzip > docker-images.tar.gz
+          ls -lh docker-images.tar.gz
           echo "   ✅ Images saved"
 
       - name: Transfer images to VPS
@@ -165,7 +165,7 @@ jobs:
           username: ${{ secrets.VPS_SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          source: /tmp/docker-images.tar.gz
+          source: docker-images.tar.gz
           target: /tmp/docker-images.tar.gz
           overwrite: true
 
