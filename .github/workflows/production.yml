@@ -235,38 +235,44 @@ jobs:
             echo "   Disk after deploy:"
             df -h / | tail -1
 
-            # ── Setup automated database backup (idempotent) ──
-            echo "   Setting up automated database backup..."
-            # Install backup scripts if not present
-            if [ ! -f /opt/ths-thm/scripts/backup-database.sh ]; then
-              curl -sf -o /tmp/backup-database.sh "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/backup-database.sh" && \
-                mkdir -p /opt/ths-thm/scripts && \
-                mv /tmp/backup-database.sh /opt/ths-thm/scripts/backup-database.sh && \
-                chmod +x /opt/ths-thm/scripts/backup-database.sh || \
-                echo "   ⚠️ Failed to download backup script"
-            fi
-            # Install systemd timer (idempotent — only if not already active)
-            if ! systemctl is-active --quiet ths-thm-backup.timer 2>/dev/null; then
-              curl -sf -o /tmp/ths-thm-backup.service "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.service" && \
-                curl -sf -o /tmp/ths-thm-backup.timer "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.timer" && \
-                sudo cp /tmp/ths-thm-backup.service /etc/systemd/system/ && \
-                sudo cp /tmp/ths-thm-backup.timer /etc/systemd/system/ && \
-                sudo systemctl daemon-reload && \
-                sudo systemctl enable ths-thm-backup.timer && \
-                sudo systemctl start ths-thm-backup.timer && \
-                echo "   ✅ Backup timer installed and started (daily at 02:00)" || \
-                echo "   ⚠️ Failed to install backup timer"
-            else
-              echo "   ✅ Backup timer already active"
-            fi
-            # Ensure backup directory exists
-            sudo mkdir -p /opt/backups/ths-thm/production
-            sudo chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || true
-            # Run initial backup if directory is empty
-            if [ ! -f /opt/backups/ths-thm/production/*.sql.gz ] 2>/dev/null; then
-              echo "   Running initial database backup..."
-              /opt/ths-thm/scripts/backup-database.sh 2>&1 | tail -5 || echo "   ⚠️ Initial backup skipped"
-            fi
+            # ── Setup automated database backup (best-effort, non-blocking) ──
+            # This section is wrapped in a subshell so sudo failures don't abort deploy.
+            (
+              echo "   Setting up automated database backup..."
+              # Install backup scripts if not present
+              if [ ! -f /opt/ths-thm/scripts/backup-database.sh ]; then
+                curl -sf -o /tmp/backup-database.sh "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/backup-database.sh" 2>/dev/null && \
+                  mkdir -p /opt/ths-thm/scripts && \
+                  mv /tmp/backup-database.sh /opt/ths-thm/scripts/backup-database.sh && \
+                  chmod +x /opt/ths-thm/scripts/backup-database.sh || \
+                  echo "   ⚠️ Failed to download backup script"
+              fi
+              # Install systemd timer (idempotent — only if not already active)
+              # Uses sudo — may fail if deploy user lacks passwordless sudo.
+              if ! systemctl is-active --quiet ths-thm-backup.timer 2>/dev/null; then
+                curl -sf -o /tmp/ths-thm-backup.service "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.service" 2>/dev/null && \
+                  curl -sf -o /tmp/ths-thm-backup.timer "https://raw.githubusercontent.com/jefryarianto/ths-thm-system/master/scripts/systemd/ths-thm-backup.timer" 2>/dev/null && \
+                  sudo -n cp /tmp/ths-thm-backup.service /etc/systemd/system/ && \
+                  sudo -n cp /tmp/ths-thm-backup.timer /etc/systemd/system/ && \
+                  sudo -n systemctl daemon-reload && \
+                  sudo -n systemctl enable ths-thm-backup.timer && \
+                  sudo -n systemctl start ths-thm-backup.timer && \
+                  echo "   ✅ Backup timer installed and started (daily at 02:00)" || \
+                  echo "   ⚠️ Backup timer setup skipped (sudo unavailable — run manually on VPS)"
+              else
+                echo "   ✅ Backup timer already active"
+              fi
+              # Ensure backup directory exists
+              mkdir -p /opt/backups/ths-thm/production 2>/dev/null || \
+                sudo -n mkdir -p /opt/backups/ths-thm/production 2>/dev/null || true
+              chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || \
+                sudo -n chown ths-thm:ths-thm /opt/backups/ths-thm/production 2>/dev/null || true
+              # Run initial backup if directory is empty
+              if [ ! -f /opt/backups/ths-thm/production/*.sql.gz ] 2>/dev/null; then
+                echo "   Running initial database backup..."
+                /opt/ths-thm/scripts/backup-database.sh 2>&1 | tail -5 || echo "   ⚠️ Initial backup skipped"
+              fi
+            ) || echo "   ⚠️ Backup setup skipped (non-critical)"
 
             echo "✅ Deployment complete!"
             echo "   URL: https://ths-thm.cloud"
