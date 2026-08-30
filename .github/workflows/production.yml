@@ -149,25 +149,34 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Save Docker images for VPS transfer
+      - name: Setup SSH key
         run: |
-          echo "   Saving Docker images for transfer..."
-          docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
-          docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
-          docker save ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} | gzip > docker-images.tar.gz
-          ls -lh docker-images.tar.gz
-          echo "   ✅ Images saved"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.VPS_SSH_PORT || '22' }} ${{ secrets.VPS_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Transfer images to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_SSH_HOST }}
-          username: ${{ secrets.VPS_SSH_USERNAME }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          source: docker-images.tar.gz
-          target: /tmp/docker-images.tar.gz
-          overwrite: true
+      - name: Pre-deploy: cleanup old images on VPS (before streaming new ones)
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+            ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
+            'echo "   Disk before cleanup:" && df -h / | tail -1 && \
+             docker image prune -af 2>/dev/null || true && \
+             docker builder prune -af 2>/dev/null || true && \
+             docker container prune -f 2>/dev/null || true && \
+             echo "   Disk after cleanup:" && df -h / | tail -1'
+
+      - name: Stream Docker images to VPS (bypasses GHCR auth)
+        run: |
+          echo "   Streaming Docker images to VPS via SSH pipe..."
+          docker save \
+            ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} \
+            ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} \
+            | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+            ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
+            docker load
+          echo "   ✅ Images streamed and loaded on VPS"
+          rm -f ~/.ssh/deploy_key
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -192,36 +201,15 @@ jobs:
 
             # Export image tag so docker-compose picks it up
             export IMAGE_TAG=${IMAGE_TAG:-latest}
+            # Prevent docker compose from pulling from remote registries.
+            # Images are pre-loaded via SSH pipe — no GHCR auth needed on VPS.
+            export COMPOSE_PULL_POLICY=never
 
-            # Auto-cleanup Docker resources before pulling (prevents "no space left on device")
-            # Aggressive: remove ALL unused images regardless of age. The old `--filter "until=24h"`
-            # skipped freshly-pulled layers, letting the 40GB disk fill to 97%.
-            echo "   Disk before cleanup:"
-            df -h / | tail -1
-            echo "   Cleaning up old Docker resources..."
-            docker image prune -af 2>/dev/null || true
-            docker builder prune -af 2>/dev/null || true
-            docker container prune -f 2>/dev/null || true
-            echo "   Disk after cleanup:"
-            df -h / | tail -1
-
-            # Guard: fail fast if disk is still critically low (avoids confusing mid-pull failure)
-            avail_kb=$(df -k / | tail -1 | awk '{print $4}')
-            if [ -n "$avail_kb" ] && [ "$avail_kb" -lt 2097152 ]; then
-              echo "   ❌ Disk space still below 2GB after cleanup — aborting deploy"
-              exit 1
-            fi
-
-            # Load Docker images from CI-transferred tarball
-            if [ -f /tmp/docker-images.tar.gz ]; then
-              echo "   Loading Docker images from tarball..."
-              gunzip -c /tmp/docker-images.tar.gz | docker load && \
-                echo "   ✅ Docker images loaded" || \
-                echo "   ⚠️ Failed to load images from tarball"
-              rm -f /tmp/docker-images.tar.gz
-            else
-              echo "   ⚠️ No image tarball found — images may be stale"
-            fi
+            # Images are already streamed and loaded by CI before this SSH step.
+            # Verify images exist locally.
+            docker image inspect ghcr.io/jefryarianto/ths-thm-system/api:${IMAGE_TAG} > /dev/null 2>&1 && \
+              echo "   ✅ Docker images verified locally" || \
+              echo "   ⚠️ Docker images not found locally — deploy may fail"
 
             # Resolve any stuck migrations from previous failed deploys
             docker compose -f docker-compose.production.yml run --rm api \
