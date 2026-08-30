@@ -141,6 +141,9 @@ jobs:
     name: Deploy to VPS (ths-thm.cloud)
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     # Deploy script on the VPS (docker prune + pull + migrate + restart + health check)
     # can exceed 10 min on slow connections — give it headroom.
     timeout-minutes: 25
@@ -153,7 +156,10 @@ jobs:
           username: ${{ secrets.VPS_SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          envs: IMAGE_TAG
+          envs: IMAGE_TAG, GHCR_USER, GHCR_TOKEN
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           command_timeout: 30m
           script: |
             set -e
@@ -187,6 +193,15 @@ jobs:
             if [ -n "$avail_kb" ] && [ "$avail_kb" -lt 2097152 ]; then
               echo "   ❌ Disk space still below 2GB after cleanup — aborting deploy"
               exit 1
+            fi
+
+            # Login to GHCR (required for private images)
+            if [ -n "${GHCR_TOKEN:-}" ]; then
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin 2>/dev/null && \
+                echo "   ✅ GHCR authenticated" || \
+                echo "   ⚠️ GHCR login failed"
+            else
+              echo "   ⚠️ No GHCR credentials — images may fail to pull"
             fi
 
             # Pull latest images (build happens in CI — zero CPU on VPS)
