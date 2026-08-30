@@ -149,6 +149,26 @@ jobs:
     timeout-minutes: 25
 
     steps:
+      - name: Save Docker images for VPS transfer
+        run: |
+          echo "   Saving Docker images for transfer..."
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
+          docker save ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} | gzip > /tmp/docker-images.tar.gz
+          ls -lh /tmp/docker-images.tar.gz
+          echo "   ✅ Images saved"
+
+      - name: Transfer images to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          source: /tmp/docker-images.tar.gz
+          target: /tmp/docker-images.tar.gz
+          overwrite: true
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -156,10 +176,7 @@ jobs:
           username: ${{ secrets.VPS_SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
-          envs: IMAGE_TAG, GHCR_USER, GHCR_TOKEN
-        env:
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          envs: IMAGE_TAG
           command_timeout: 30m
           script: |
             set -e
@@ -195,13 +212,15 @@ jobs:
               exit 1
             fi
 
-            # Login to GHCR (required for private images)
-            if [ -n "${GHCR_TOKEN:-}" ]; then
-              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin && \
-                echo "   ✅ GHCR authenticated" || \
-                echo "   ⚠️ GHCR login failed"
+            # Load Docker images from CI-transferred tarball
+            if [ -f /tmp/docker-images.tar.gz ]; then
+              echo "   Loading Docker images from tarball..."
+              gunzip -c /tmp/docker-images.tar.gz | docker load && \
+                echo "   ✅ Docker images loaded" || \
+                echo "   ⚠️ Failed to load images from tarball"
+              rm -f /tmp/docker-images.tar.gz
             else
-              echo "   ⚠️ No GHCR credentials — images may fail to pull"
+              echo "   ⚠️ No image tarball found — images may be stale"
             fi
 
             # Resolve any stuck migrations from previous failed deploys
