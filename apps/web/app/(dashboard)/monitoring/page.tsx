@@ -28,10 +28,13 @@ interface HealthData {
   timestamp: string;
   uptime: number;
   database: { status: string; pool: { active: number; idle: number; total: number } };
+  redis: { status: string; latencyMs: number | null };
+  disk: { free: string; total: string; used: string; usagePercent: number };
   memory: { heapUsed: string; heapTotal: string };
   environment: string;
   version: string;
   cache: { entries: number; maxEntries: number };
+  auditLog: { totalEntries: number; recentViolations: number; latency: { p50: number; p95: number; p99: number; avg: number; count: number } };
   queue: {
     type: string;
     status: string;
@@ -348,7 +351,7 @@ export default function MonitoringPage() {
       detail: `Uptime ${formatUptime(health.uptime)} · ${health.environment}`,
     },
     {
-      label: 'Database',
+      label: 'Database (PostgreSQL)',
       icon: Database,
       status: toStatus(health.database?.status),
       detail: health.database?.status === 'connected'
@@ -356,8 +359,16 @@ export default function MonitoringPage() {
         : 'Tidak terhubung',
     },
     {
-      label: 'Queue / Redis',
+      label: 'Valkey (Cache)',
       icon: Wifi,
+      status: toStatus(health.redis?.status),
+      detail: health.redis?.status === 'connected'
+        ? `Connected · ${health.redis.latencyMs ?? '-'}ms latency · Cache: ${health.cache?.entries || 0}/${health.cache?.maxEntries || 1000} entries`
+        : 'Tidak terhubung (in-memory fallback)',
+    },
+    {
+      label: 'Queue (Document)',
+      icon: Activity,
       status: toStatus(health.queue?.status),
       detail: health.queue?.status === 'connected'
         ? `${health.queue.type} · ${health.queue.workerStatus} · ${health.queue.latencyMs ?? '-'}ms`
@@ -368,6 +379,14 @@ export default function MonitoringPage() {
       icon: MemoryStick,
       status: toStatus(health.memory?.heapUsed ? 'connected' : null),
       detail: `${health.memory?.heapUsed || '-'} used / ${health.memory?.heapTotal || '-'} total`,
+    },
+    {
+      label: 'Disk Space',
+      icon: Server,
+      status: health.disk?.usagePercent > 90 ? 'down' : health.disk?.usagePercent > 75 ? 'degraded' : 'healthy',
+      detail: health.disk
+        ? `${health.disk.used} used / ${health.disk.total} total (${health.disk.usagePercent}%) — ${health.disk.free} free`
+        : 'Data tidak tersedia',
     },
   ] : [];
 
@@ -466,23 +485,45 @@ export default function MonitoringPage() {
         </div>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           {checks.map((check, i) => (
             <StatusCard key={i} {...check}>
-              {check.label === 'Queue / Redis' && health?.queue?.counts && (
+              {check.label === 'Queue (Document)' && health?.queue?.counts && (
                 <QueueStatsTable counts={health.queue.counts} />
               )}
-              {check.label === 'Queue / Redis' && health?.queue?.recentErrors && health.queue.recentErrors.length > 0 && (
+              {check.label === 'Queue (Document)' && health?.queue?.recentErrors && health.queue.recentErrors.length > 0 && (
                 <ErrorList errors={health.queue.recentErrors} />
               )}
             </StatusCard>
           ))}
         </div>
 
+        {/* Error Rates & Audit Log */}
+        {health?.auditLog && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Total Audit Entries</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.totalEntries.toLocaleString()}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Recent Violations</p>
+              <p className={`text-2xl font-bold ${health.auditLog.recentViolations > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>{health.auditLog.recentViolations}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">API Latency P95</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.latency.p95 > 0 ? `${health.auditLog.latency.p95}ms` : '-'}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">API Latency P99</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.latency.p99 > 0 ? `${health.auditLog.latency.p99}ms` : '-'}</p>
+            </div>
+          </div>
+        )}
+
         {/* Bottom Row: Uptime Sparkline + System Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Uptime History */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BarChart3 size={16} className="text-gray-500 dark:text-gray-400" />
