@@ -166,12 +166,13 @@ jobs:
              docker builder prune -af 2>/dev/null || true && \
              docker container prune -f 2>/dev/null || true && \
              echo "   Disk after cleanup:" && df -h / | tail -1'
-          # Pipe GHCR token to VPS docker login (token never in command string)
-          gh auth token | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+          # Pipe GHCR token to VPS docker login (token never in command string).
+          # PENTING: pakai github.token langsung — `gh auth token` tanpa env
+          # GH_TOKEN selalu gagal di runner, sehingga login kosong dan pull
+          # berikutnya selalu "error from registry: denied".
+          printf '%s' "${{ secrets.GITHUB_TOKEN }}" | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
             ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
-            'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin' \
-            && echo '   ✅ GHCR login successful on VPS' \
-            || echo '   ⚠️ GHCR login failed on VPS'
+            'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin'
           rm -f ~/.ssh/deploy_key
 
       - name: Deploy via SSH
@@ -198,10 +199,12 @@ jobs:
             # Export image tag so docker-compose picks it up
             export IMAGE_TAG=${IMAGE_TAG:-latest}
 
-            # Pull images from GHCR (authenticated via token from previous step)
+            # Pull images from GHCR (authenticated via token from previous step).
+            # FATAL sengaja: bila pull gagal, deploy berhenti di sini —
+            # jangan lanjut migrasi/restart dengan image lama lalu gagal
+            # samar di health check.
             echo "   Pulling Docker images from GHCR..."
-            docker compose -f docker-compose.production.yml pull --quiet api web 2>&1 || \
-              echo "   ⚠️ Some images could not be pulled"
+            docker compose -f docker-compose.production.yml pull --quiet api web
 
             # Resolve any stuck migrations from previous failed deploys
             docker compose -f docker-compose.production.yml run --rm api \
