@@ -197,28 +197,12 @@ jobs:
 
             # Login to GHCR (required for private images)
             if [ -n "${GHCR_TOKEN:-}" ]; then
-              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin 2>/dev/null && \
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin && \
                 echo "   ✅ GHCR authenticated" || \
                 echo "   ⚠️ GHCR login failed"
             else
               echo "   ⚠️ No GHCR credentials — images may fail to pull"
             fi
-
-            # Pull latest images (build happens in CI — zero CPU on VPS)
-            # Pull each image individually with retries to avoid partial pulls
-            echo "   Pulling images..."
-            for svc in api web; do
-              for attempt in 1 2 3; do
-                if docker compose -f docker-compose.production.yml pull --quiet "$svc" 2>&1; then
-                  echo "   ✅ $svc image pulled"
-                  break
-                fi
-                echo "   ⚠️ Pull $svc attempt $attempt failed, retrying in 10s..."
-                sleep 10
-              done
-            done
-            # Pull valkey and nginx (non-critical)
-            docker compose -f docker-compose.production.yml pull --quiet valkey nginx 2>&1 || true
 
             # Resolve any stuck migrations from previous failed deploys
             docker compose -f docker-compose.production.yml run --rm api \
