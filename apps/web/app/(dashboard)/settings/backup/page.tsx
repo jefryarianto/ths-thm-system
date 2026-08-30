@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Shield,
+  TrendingUp,
 } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -23,6 +24,13 @@ interface BackupFile {
   name: string;
   sizeBytes: number;
   createdAt: string;
+}
+
+interface DiskInfo {
+  free: string;
+  total: string;
+  used: string;
+  usagePercent: number;
 }
 
 function formatSize(bytes: number): string {
@@ -45,6 +53,7 @@ export default function BackupPage() {
   const toast = useToast();
   const { confirm } = useConfirm();
   const [backups, setBackups] = useState<BackupFile[]>([]);
+  const [diskInfo, setDiskInfo] = useState<DiskInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -52,8 +61,12 @@ export default function BackupPage() {
   const fetchBackups = async () => {
     setLoading(true);
     try {
-      const { data: res } = await apiClient.get('/admin/db-backup');
-      setBackups(res.data || []);
+      const [backupsRes, healthRes] = await Promise.all([
+        apiClient.get('/admin/db-backup'),
+        apiClient.get('/health'),
+      ]);
+      setBackups(backupsRes.data?.data || backupsRes.data || []);
+      setDiskInfo(healthRes.data?.data?.disk || null);
     } catch {
       // ignore
     }
@@ -185,6 +198,56 @@ export default function BackupPage() {
           </div>
         </div>
       </div>
+
+      {/* Disk Usage Alert */}
+      {diskInfo && diskInfo.usagePercent >= 80 && (
+        <div className={`rounded-xl border p-5 mb-6 ${
+          diskInfo.usagePercent >= 90
+            ? 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+            : 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
+        }`}>
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={20} className={
+              diskInfo.usagePercent >= 90 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'
+            } />
+            <div>
+              <p className={`text-sm font-semibold ${
+                diskInfo.usagePercent >= 90 ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
+              }`}>
+                {diskInfo.usagePercent >= 90 ? '🔴 Disk Space Critical' : '🟡 Disk Space Warning'}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                Disk usage at {diskInfo.usagePercent}% ({diskInfo.used} used / {diskInfo.total} total — {diskInfo.free} free)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Disk Usage Bar */}
+      {diskInfo && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <HardDrive size={16} className="text-gray-500" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Disk Usage</h3>
+          </div>
+          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-4 mb-2">
+            <div
+              className={`h-4 rounded-full transition-all duration-500 ${
+                diskInfo.usagePercent >= 90 ? 'bg-red-500' :
+                diskInfo.usagePercent >= 80 ? 'bg-yellow-500' :
+                diskInfo.usagePercent >= 60 ? 'bg-blue-500' : 'bg-green-500'
+              }`}
+              style={{ width: `${diskInfo.usagePercent}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+            <span>{diskInfo.used} used</span>
+            <span>{diskInfo.free} free</span>
+            <span>{diskInfo.usagePercent}% of {diskInfo.total}</span>
+          </div>
+        </div>
+      )}
 
       {/* Action Bar */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6">
