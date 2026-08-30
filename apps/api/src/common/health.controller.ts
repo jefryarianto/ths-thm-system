@@ -405,6 +405,7 @@ export class HealthController implements OnApplicationBootstrap {
     const cacheStats = this.cache.getStats();
     const auditStats = this.auditLogStore.getStats();
     const apiKeys = this.apiKeyStore.getAll();
+    const backupStatus = this.getBackupStatus();
 
     return {
       success: true,
@@ -439,6 +440,7 @@ export class HealthController implements OnApplicationBootstrap {
         apiKeys: {
           active: apiKeys.length,
         },
+        backup: backupStatus,
         queue: await this.getQueueHealth() as any,
       },
     };
@@ -588,6 +590,77 @@ export class HealthController implements OnApplicationBootstrap {
    *
    * When the in-process adapter is active, reports a simpler status.
    */
+
+  /**
+   * Read backup status from the mounted backup directory.
+   * The backup script writes .info.json files alongside each .sql.gz file.
+   * We read the most recent one to report backup freshness.
+   */
+  private getBackupStatus(): {
+    available: boolean;
+    lastBackup: string | null;
+    lastBackupSize: string | null;
+    lastBackupAge: string | null;
+    backupCount: number;
+    status: 'ok' | 'stale' | 'missing';
+  } {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+
+      const backupDir = '/app/backups/production';
+      if (!fs.existsSync(backupDir)) {
+        return { available: false, lastBackup: null, lastBackupSize: null, lastBackupAge: null, backupCount: 0, status: 'missing' };
+      }
+
+      // Read all .info.json files
+      const files = fs.readdirSync(backupDir)
+        .filter((f: string) => f.endsWith('.info.json'))
+        .sort()
+        .reverse(); // newest first
+
+      if (files.length === 0) {
+        return { available: true, lastBackup: null, lastBackupSize: null, lastBackupAge: null, backupCount: 0, status: 'missing' };
+      }
+
+      // Read the most recent backup info
+      const latestFile = path.join(backupDir, files[0]);
+      const info = JSON.parse(fs.readFileSync(latestFile, 'utf-8'));
+
+      const lastBackupTime = new Date(info.timestamp);
+      const ageMs = Date.now() - lastBackupTime.getTime();
+      const ageHours = Math.floor(ageMs / (1000 * 60 * 60));
+      const ageDays = Math.floor(ageHours / 24);
+
+      let ageStr: string;
+      if (ageDays > 0) ageStr = `${ageDays}d ${ageHours % 24}h ago`;
+      else if (ageHours > 0) ageStr = `${ageHours}h ago`;
+      else ageStr = `${Math.floor(ageMs / (1000 * 60))}m ago`;
+
+      // Determine freshness status: ok if < 48h, stale if > 48h
+      const status: 'ok' | 'stale' | 'missing' = ageHours < 48 ? 'ok' : 'stale';
+
+      // Format size
+      const sizeBytes = info.size_bytes || 0;
+      let sizeStr: string;
+      if (sizeBytes > 1024 * 1024 * 1024) sizeStr = `${(sizeBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+      else if (sizeBytes > 1024 * 1024) sizeStr = `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+      else if (sizeBytes > 1024) sizeStr = `${(sizeBytes / 1024).toFixed(1)} KB`;
+      else sizeStr = `${sizeBytes} B`;
+
+      return {
+        available: true,
+        lastBackup: info.timestamp,
+        lastBackupSize: sizeStr,
+        lastBackupAge: ageStr,
+        backupCount: files.length,
+        status,
+      };
+    } catch {
+      return { available: false, lastBackup: null, lastBackupSize: null, lastBackupAge: null, backupCount: 0, status: 'missing' };
+    }
+  }
+
   private async getQueueHealth(): Promise<QueueHealthDetail> {
     const queue = QueueDashboardModule.getDocumentQueue();
 

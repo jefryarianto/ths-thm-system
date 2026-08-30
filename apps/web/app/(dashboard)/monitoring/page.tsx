@@ -35,6 +35,7 @@ interface HealthData {
   version: string;
   cache: { entries: number; maxEntries: number };
   auditLog: { totalEntries: number; recentViolations: number; latency: { p50: number; p95: number; p99: number; avg: number; count: number } };
+  backup: { available: boolean; lastBackup: string | null; lastBackupSize: string | null; lastBackupAge: string | null; backupCount: number; status: 'ok' | 'stale' | 'missing' } | null;
   queue: {
     type: string;
     status: string;
@@ -516,6 +517,67 @@ export default function MonitoringPage() {
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
               <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">API Latency P99</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{health.auditLog.latency.p99 > 0 ? `${health.auditLog.latency.p99}ms` : '-'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Backup Status */}
+        {health?.backup && (
+          <div className={`rounded-xl border p-5 mb-6 ${
+            health.backup.status === 'ok'
+              ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
+              : health.backup.status === 'stale'
+                ? 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
+                : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+          }`}>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-lg ${
+                  health.backup.status === 'ok' ? 'bg-green-100 dark:bg-green-900' :
+                  health.backup.status === 'stale' ? 'bg-yellow-100 dark:bg-yellow-900' : 'bg-red-100 dark:bg-red-900'
+                }`}>
+                  <Database size={20} className={
+                    health.backup.status === 'ok' ? 'text-green-700 dark:text-green-400' :
+                    health.backup.status === 'stale' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'
+                  } />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Database Backup</p>
+                  <p className={`text-xs mt-0.5 font-medium ${
+                    health.backup.status === 'ok' ? 'text-green-700 dark:text-green-400' :
+                    health.backup.status === 'stale' ? 'text-yellow-700 dark:text-yellow-400' : 'text-red-700 dark:text-red-400'
+                  }`}>
+                    {health.backup.status === 'ok' ? '✅ Backup fresh' :
+                     health.backup.status === 'stale' ? '⚠️ Backup older than 48h' : '❌ No backups found'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-6 text-sm">
+                {health.backup.lastBackupAge && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Age</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{health.backup.lastBackupAge}</p>
+                  </div>
+                )}
+                {health.backup.lastBackupSize && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Size</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{health.backup.lastBackupSize}</p>
+                  </div>
+                )}
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{health.backup.backupCount}</p>
+                </div>
+                {health.backup.lastBackup && (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Last Backup</p>
+                    <p className="font-semibold text-gray-900 dark:text-white text-xs">
+                      {new Date(health.backup.lastBackup).toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
