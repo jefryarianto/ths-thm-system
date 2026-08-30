@@ -236,7 +236,7 @@ jobs:
             # Stop & remove old containers, then restart with latest config
             echo "   Restarting Docker services..."
             docker compose -f docker-compose.production.yml down --remove-orphans 2>/dev/null || true
-            docker compose -f docker-compose.production.yml up -d --remove-orphans --force-recreate
+            docker compose -f docker-compose.production.yml up -d --remove-orphans --pull always --force-recreate
 
             # Wait for health check (via docker compose exec — api port is internal, not exposed on host)
             echo "   Waiting for API health check..."
