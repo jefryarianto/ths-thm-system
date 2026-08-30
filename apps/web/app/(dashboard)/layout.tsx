@@ -39,6 +39,7 @@ import {
   ArrowLeftRight,
   ArrowLeft,
   Smartphone,
+  Database,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -202,6 +203,7 @@ const menuGroups: MenuGroup[] = [
         adminOnly: true,
       },
       { href: '/settings/fcm-test', label: 'FCM Push Test', icon: Smartphone, minRole: 'superadmin' },
+      { href: '/settings/backup', label: 'Database Backup', icon: Database, minRole: 'superadmin' },
       {
         href: '/ws-monitor',
         label: 'WebSocket',
