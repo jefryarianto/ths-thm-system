@@ -156,8 +156,9 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.VPS_SSH_PORT || '22' }} ${{ secrets.VPS_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Pre-deploy cleanup old images on VPS
+      - name: Pass GHCR token to VPS and cleanup old images
         run: |
+          # Cleanup old images on VPS
           ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
             ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
             'echo "   Disk before cleanup:" && df -h / | tail -1 && \
@@ -165,20 +166,12 @@ jobs:
              docker builder prune -af 2>/dev/null || true && \
              docker container prune -f 2>/dev/null || true && \
              echo "   Disk after cleanup:" && df -h / | tail -1'
-
-      - name: Stream Docker images to VPS (bypasses GHCR auth)
-        run: |
-          echo "   Pulling images from GHCR on CI (CI has auth)..."
-          docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
-          docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
-          echo "   Streaming images to VPS via SSH pipe..."
-          docker save \
-            ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} \
-            ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} \
-            | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+          # Pipe GHCR token to VPS docker login (token never in command string)
+          gh auth token | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
             ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
-            docker load
-          echo "   ✅ Images streamed and loaded on VPS"
+            'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin' \
+            && echo '   ✅ GHCR login successful on VPS' \
+            || echo '   ⚠️ GHCR login failed on VPS'
           rm -f ~/.ssh/deploy_key
 
       - name: Deploy via SSH
@@ -204,15 +197,11 @@ jobs:
 
             # Export image tag so docker-compose picks it up
             export IMAGE_TAG=${IMAGE_TAG:-latest}
-            # Prevent docker compose from pulling from remote registries.
-            # Images are pre-loaded via SSH pipe — no GHCR auth needed on VPS.
-            export COMPOSE_PULL_POLICY=never
 
-            # Images are already streamed and loaded by CI before this SSH step.
-            # Verify images exist locally.
-            docker image inspect ghcr.io/jefryarianto/ths-thm-system/api:${IMAGE_TAG} > /dev/null 2>&1 && \
-              echo "   ✅ Docker images verified locally" || \
-              echo "   ⚠️ Docker images not found locally — deploy may fail"
+            # Pull images from GHCR (authenticated via token from previous step)
+            echo "   Pulling Docker images from GHCR..."
+            docker compose -f docker-compose.production.yml pull --quiet api web 2>&1 || \
+              echo "   ⚠️ Some images could not be pulled"
 
             # Resolve any stuck migrations from previous failed deploys
             docker compose -f docker-compose.production.yml run --rm api \
