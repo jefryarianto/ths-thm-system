@@ -168,7 +168,10 @@ jobs:
 
       - name: Stream Docker images to VPS (bypasses GHCR auth)
         run: |
-          echo "   Streaming Docker images to VPS via SSH pipe..."
+          echo "   Pulling images from GHCR on CI (CI has auth)..."
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
+          echo "   Streaming images to VPS via SSH pipe..."
           docker save \
             ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }} \
             ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }} \
