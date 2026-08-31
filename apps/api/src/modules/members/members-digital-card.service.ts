@@ -5,6 +5,7 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { TingkatanService } from '../tingkatan/tingkatan.service';
 import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.helper';
+import { CacheService } from '../../common/services/cache.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,6 +18,7 @@ export class MembersDigitalCardService {
     private readonly scopeHelper: ScopeHelper,
     private readonly penandatanganService: PenandatanganService,
     private readonly tingkatanService: TingkatanService,
+    private readonly cache: CacheService,
   ) {}
 
   /**
@@ -107,12 +109,20 @@ export class MembersDigitalCardService {
     });
   }
 
-  /** Template kartu aktif (desain upload global) — null = desain bawaan. */
+    /** Template kartu aktif (desain upload global) — null = desain bawaan. Cache 5 menit. */
   private async resolveActiveTemplate() {
+    const cacheKey = 'digital-card:template:active';
+    const cached = this.cache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached === null ? null : cached;
+    }
     try {
       const template = await this.prisma.cardTemplate.findFirst({ where: { isActive: true } });
-      if (!template) return null;
-      return {
+      if (!template) {
+        this.cache.set(cacheKey, null, 300_000);
+        return null;
+      }
+      const result = {
         id: template.id,
         name: template.name,
         label: template.label,
@@ -120,6 +130,8 @@ export class MembersDigitalCardService {
         backImage: template.backImage,
         overlayConfig: template.overlayConfig,
       };
+      this.cache.set(cacheKey, result, 300_000);
+      return result;
     } catch {
       return null;
     }

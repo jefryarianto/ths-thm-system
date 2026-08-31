@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { validateImageUploadSecurity } from '../../common/utils/image-upload.util';
+import { CacheService } from '../../common/services/cache.service';
 import { existsSync, unlinkSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 
@@ -23,7 +24,7 @@ const ALLOWED_OVERLAY_KEYS = new Set([
 export class CardTemplatesService {
   private readonly logger = new Logger(CardTemplatesService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly cache: CacheService) {}
 
   // ── Read ──────────────────────────────────────────────────────────────
 
@@ -89,7 +90,12 @@ export class CardTemplatesService {
       this.unlinkQuietly(existing.backImage);
     }
     if (Object.keys(data).length === 0) throw new BadRequestException('Tidak ada perubahan yang dikirim');
-    return this.prisma.cardTemplate.update({ where: { id }, data });
+    const updated = await this.prisma.cardTemplate.update({ where: { id }, data });
+    // If the updated template was the active one, invalidate cache.
+    if (existing.isActive) {
+      this.cache.invalidatePrefix('digital-card:template');
+    }
+    return updated;
   }
 
   /** Set satu-satunya template aktif (atomik). */
@@ -99,12 +105,15 @@ export class CardTemplatesService {
       this.prisma.cardTemplate.updateMany({ data: { isActive: false } }),
       this.prisma.cardTemplate.update({ where: { id }, data: { isActive: true } }),
     ]);
+    // Invalidate cached active template so renderer picks up the new design.
+    this.cache.invalidatePrefix('digital-card:template');
     return this.findOne(id);
   }
 
   async remove(id: string) {
     const existing = await this.findOne(id);
     if (existing.isActive) {
+      // Active template can't be removed, so no cache invalidation needed.
       throw new BadRequestException('Template aktif tidak dapat dihapus. Aktifkan template lain terlebih dahulu.');
     }
     this.unlinkQuietly(existing.frontImage);

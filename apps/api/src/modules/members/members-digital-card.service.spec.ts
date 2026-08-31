@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { TingkatanService } from '../tingkatan/tingkatan.service';
+import { CacheService } from '../../common/services/cache.service';
 
 // Mock QRCode — hindari generate PNG asli saat test
 jest.mock('qrcode', () => ({
@@ -81,6 +82,12 @@ describe('MembersDigitalCardService', () => {
     getAllLevelVisuals: jest.fn().mockResolvedValue({}),
   };
 
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    invalidatePrefix: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -89,6 +96,7 @@ describe('MembersDigitalCardService', () => {
         { provide: ScopeHelper, useValue: mockScopeHelper },
         { provide: PenandatanganService, useValue: mockPenandatanganService },
         { provide: TingkatanService, useValue: mockTingkatanService },
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 

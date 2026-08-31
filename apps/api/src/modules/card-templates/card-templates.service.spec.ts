@@ -3,6 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CardTemplatesService } from './card-templates.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { validateImageUploadSecurity } from '../../common/utils/image-upload.util';
+import { CacheService } from '../../common/services/cache.service';
 
 // Mock validasi keamanan gambar (biarkan lolos, diuji terpisah di util spec)
 jest.mock('../../common/utils/image-upload.util', () => ({
@@ -39,6 +40,12 @@ describe('CardTemplatesService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockCacheService = {
+    get: jest.fn(),
+    set: jest.fn(),
+    invalidatePrefix: jest.fn(),
+  };
+
   const mockFile = (name: string): Express.Multer.File =>
     ({
       filename: name,
@@ -49,7 +56,11 @@ describe('CardTemplatesService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CardTemplatesService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        CardTemplatesService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: CacheService, useValue: mockCacheService },
+      ],
     }).compile();
     service = module.get<CardTemplatesService>(CardTemplatesService);
     jest.clearAllMocks();
