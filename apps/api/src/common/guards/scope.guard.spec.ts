@@ -5,6 +5,11 @@ describe('ScopeGuard', () => {
   let guard: ScopeGuard;
   let reflector: { getAllAndOverride: jest.Mock };
   let mockAuditService: { logScopeViolation: jest.Mock };
+  let mockPrismaService: {
+    user: { findUnique: jest.Mock };
+    ranting: { findUnique: jest.Mock };
+    wilayah: { findUnique: jest.Mock };
+  };
 
   const mockRequest = (user: { id: string; email?: string; role: string; rantingId?: string }) => ({
     user,
@@ -26,20 +31,25 @@ describe('ScopeGuard', () => {
   beforeEach(() => {
     reflector = { getAllAndOverride: jest.fn() } as never;
     mockAuditService = { logScopeViolation: jest.fn() };
-    guard = new ScopeGuard(reflector as never, mockAuditService as never);
+    mockPrismaService = {
+      user: { findUnique: jest.fn() },
+      ranting: { findUnique: jest.fn() },
+      wilayah: { findUnique: jest.fn() },
+    };
+    guard = new ScopeGuard(reflector as never, mockAuditService as never, mockPrismaService as never);
   });
 
-  it('should be defined', () => {
+  it('should be defined', async () => {
     expect(guard).toBeDefined();
   });
 
   describe('No @RequireScope decorator', () => {
-    it('should allow access when no scope is required', () => {
+    it('should allow access when no scope is required', async () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
       const req = mockRequest({ id: 'u1', role: 'anggota' });
       const ctx = mockExecutionContext(req);
 
-      expect(guard.canActivate(ctx)).toBe(true);
+      expect(await guard.canActivate(ctx)).toBe(true);
     });
   });
 
@@ -52,20 +62,20 @@ describe('ScopeGuard', () => {
         );
     });
 
-    it('should allow access to branch-level endpoints', () => {
+    it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'superadmin' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
       expect(req.scope).toEqual({});
     });
 
-    it('should allow access to district-level endpoints', () => {
+    it('should allow access to district-level endpoints', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('district' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', role: 'superadmin' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
     });
   });
 
@@ -78,30 +88,30 @@ describe('ScopeGuard', () => {
         );
     });
 
-    it('should allow access to branch-level endpoints', () => {
+    it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'admin_distrik', rantingId: 'r1' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
       expect(req.scope).toEqual({ rantingId: 'r1' });
     });
 
-    it('should allow access to district-level endpoints', () => {
+    it('should allow access to district-level endpoints', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('district' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', role: 'admin_distrik', rantingId: 'r1' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
     });
 
-    it('should deny access to national-level endpoints and log violation', () => {
+    it('should deny access to national-level endpoints and log violation', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('national' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'distrik@test.com', role: 'admin_distrik' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(false);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
       expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'u1',
@@ -122,20 +132,20 @@ describe('ScopeGuard', () => {
         );
     });
 
-    it('should allow access to branch-level endpoints', () => {
+    it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'admin_wilayah', rantingId: 'r1' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
       expect(req.scope).toEqual({ rantingId: 'r1' });
     });
 
-    it('should deny access to district-level endpoints and log violation', () => {
+    it('should deny access to district-level endpoints and log violation', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('district' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'wilayah@test.com', role: 'admin_wilayah' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(false);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
       expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'u1',
@@ -155,20 +165,20 @@ describe('ScopeGuard', () => {
         );
     });
 
-    it('should allow access to branch-level endpoints', () => {
+    it('should allow access to branch-level endpoints', async () => {
       const req = mockRequest({ id: 'u1', role: 'admin_ranting', rantingId: 'r1' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
       expect(req.scope).toEqual({ rantingId: 'r1' });
     });
 
-    it('should deny access to region-level endpoints and log violation', () => {
+    it('should deny access to region-level endpoints and log violation', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('region' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'ranting@test.com', role: 'admin_ranting' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(false);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
       expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'u1',
@@ -180,25 +190,25 @@ describe('ScopeGuard', () => {
   });
 
   describe('anggota (self scope)', () => {
-    it('should allow access to self-level endpoints', () => {
+    it('should allow access to self-level endpoints', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('self' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', role: 'anggota', rantingId: 'r1' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(true);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(true);
       expect(req.scope).toEqual({ rantingId: 'r1' });
     });
 
-    it('should deny access to branch-level endpoints and log violation', () => {
+    it('should deny access to branch-level endpoints and log violation', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'anggota@test.com', role: 'anggota' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(false);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
       expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'u1',
@@ -208,14 +218,14 @@ describe('ScopeGuard', () => {
       );
     });
 
-    it('should deny access to district-level endpoints and log violation', () => {
+    it('should deny access to district-level endpoints and log violation', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('district' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', email: 'anggota@test.com', role: 'anggota' });
-      expect(guard.canActivate(mockExecutionContext(req))).toBe(false);
+      expect(await guard.canActivate(mockExecutionContext(req))).toBe(false);
       expect(mockAuditService.logScopeViolation).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'u1',
@@ -227,7 +237,7 @@ describe('ScopeGuard', () => {
   });
 
   describe('No user on request', () => {
-    it('should deny access when user is not authenticated', () => {
+    it('should deny access when user is not authenticated', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
@@ -240,30 +250,30 @@ describe('ScopeGuard', () => {
         url: '/api/test',
         ip: '127.0.0.1',
       };
-      expect(guard.canActivate(mockExecutionContext(req as never))).toBe(false);
+      expect(await guard.canActivate(mockExecutionContext(req as never))).toBe(false);
     });
   });
 
   describe('Scope resolution', () => {
-    it('should set empty scope for superadmin (no rantingId)', () => {
+    it('should set empty scope for superadmin (no rantingId)', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', role: 'superadmin' });
-      guard.canActivate(mockExecutionContext(req));
+      await guard.canActivate(mockExecutionContext(req));
       expect(req.scope).toEqual({});
     });
 
-    it('should set rantingId in scope for admin_ranting', () => {
+    it('should set rantingId in scope for admin_ranting', async () => {
       jest
         .spyOn(reflector, 'getAllAndOverride')
         .mockImplementation((key: string) =>
           key === SCOPE_KEY ? ('branch' as ScopeLevel) : undefined,
         );
       const req = mockRequest({ id: 'u1', role: 'admin_ranting', rantingId: 'r123' });
-      guard.canActivate(mockExecutionContext(req));
+      await guard.canActivate(mockExecutionContext(req));
       expect(req.scope).toEqual({ rantingId: 'r123' });
     });
   });
