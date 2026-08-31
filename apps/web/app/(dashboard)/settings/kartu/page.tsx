@@ -305,7 +305,6 @@ export default function KartuSettingsPage() {
                 <div className="grid grid-cols-2 gap-1 p-2 bg-gray-50 dark:bg-gray-900">
                   <div className="aspect-[856/540] rounded overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
                     {t.frontImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={`/api/uploads/${encodeURIComponent(t.frontImage)}`}
                         alt="Depan"
@@ -317,7 +316,6 @@ export default function KartuSettingsPage() {
                   </div>
                   <div className="aspect-[856/540] rounded overflow-hidden border border-gray-200 dark:border-gray-700 bg-white">
                     {t.backImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={`/api/uploads/${encodeURIComponent(t.backImage)}`}
                         alt="Belakang"
