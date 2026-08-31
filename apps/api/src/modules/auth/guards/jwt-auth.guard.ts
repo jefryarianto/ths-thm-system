@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
+import { Injectable, ExecutionContext, CanActivate, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../../../common/decorators/roles.decorator';
@@ -22,10 +22,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest<TUser = { id?: string }>(err: unknown, user: TUser) {
     if (err) throw err;
-    if (user && (user as { id?: string }).id) {
-      const ctx = requestContextStore.getStore();
-      if (ctx) ctx.userId = (user as unknown as { id: string }).id;
+    if (!user || !(user as { id?: string }).id) {
+      throw new UnauthorizedException('Sesi tidak valid');
     }
+    const ctx = requestContextStore.getStore();
+    if (ctx) ctx.userId = (user as unknown as { id: string }).id;
     return user;
   }
 }
