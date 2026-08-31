@@ -62,7 +62,7 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: React.DependencyList,
         retryCountRef.current = 0;
       }
     } catch (err) {
-      // Suppress SESSION_EXPIRED — SessionProvider handles redirect
+      // Suppress SESSION_EXPIRED -- SessionProvider handles redirect
       if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
         if (mountedRef.current) setLoading(false);
         return;
@@ -161,7 +161,7 @@ export function usePaginatedList<T>(
         retryCountRef.current = 0;
       }
     } catch (err) {
-      // Suppress SESSION_EXPIRED — SessionProvider handles redirect
+      // Suppress SESSION_EXPIRED -- SessionProvider handles redirect
       if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
         if (mountedRef.current) setLoading(false);
         return;
