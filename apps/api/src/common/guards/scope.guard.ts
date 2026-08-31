@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { SCOPE_KEY, ScopeLevel } from '../decorators/scope.decorator';
 import { ScopedRequest } from '../interfaces/user-scope.interface';
 import { AuditService } from '../services/audit.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Role → minimum scope level mapping.
@@ -40,9 +41,10 @@ export class ScopeGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly auditService: AuditService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredScope = this.reflector.getAllAndOverride<ScopeLevel>(SCOPE_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -75,9 +77,26 @@ export class ScopeGuard implements CanActivate {
       return false;
     }
 
-    // Attach scope info from user's rantingId for services to use
+    // Attach scope info from user's rantingId for services to use.
+    // For admin_distrik and above, resolve the full hierarchy
+    // (ranting → wilayah → distrik) so services can scope by district.
     if (user.role === 'superadmin') {
       request.scope = {};
+    } else if (user.rantingId && ['admin_distrik', 'admin_wilayah'].includes(user.role)) {
+      // Resolve ranting → wilayah → distrik chain for district-level roles
+      const ranting = await this.prisma.ranting.findUnique({
+        where: { id: user.rantingId },
+        include: { wilayah: { include: { distrik: true } } },
+      });
+      if (ranting) {
+        request.scope = {
+          rantingId: user.rantingId,
+          wilayahId: ranting.wilayahId,
+          distrikId: ranting.wilayah?.distrikId,
+        };
+      } else {
+        request.scope = { rantingId: user.rantingId };
+      }
     } else if (user.rantingId) {
       request.scope = { rantingId: user.rantingId };
     } else {

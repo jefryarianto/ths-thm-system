@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { KepengurusanService } from './kepengurusan.service';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Kepengurusan')
 @Controller('kepengurusan')
@@ -10,7 +11,7 @@ export class KepengurusanController {
   constructor(private readonly service: KepengurusanService) {}
 
   @Get()
-  @CrudAuth('superadmin', { summary: 'Daftar kepengurusan (filter by level, unit, periode)' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Daftar kepengurusan (filter by level, unit, periode)' })
   @ApiQuery({ name: 'level', required: false })
   @ApiQuery({ name: 'unitId', required: false })
   @ApiQuery({ name: 'periodeId', required: false })
@@ -18,18 +19,20 @@ export class KepengurusanController {
     @Query('level') level?: string,
     @Query('unitId') unitId?: string,
     @Query('periodeId') periodeId?: string,
+    @Req() req?: ScopedRequest,
   ) {
-    return this.service.findAll({ level, unitId, periodeId });
+    const scope = req?.scope;
+    return this.service.findAll({ level, unitId, periodeId, scope });
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', { summary: 'Detail kepengurusan' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Detail kepengurusan' })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @CrudAuth('superadmin', { summary: 'Tambah kepengurusan baru' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tambah kepengurusan baru' })
   create(@Body() body: {
     userId: string;
     jabatanId: string;
@@ -39,12 +42,12 @@ export class KepengurusanController {
     wilayahId?: string;
     rantingId?: string;
     parentId?: string;
-  }) {
-    return this.service.create(body);
+  }, @Req() req?: ScopedRequest) {
+    return this.service.create(body, req?.scope);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', { summary: 'Update kepengurusan' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Update kepengurusan' })
   update(@Param('id') id: string, @Body() body: {
     userId?: string;
     jabatanId?: string;
@@ -54,8 +57,34 @@ export class KepengurusanController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', { summary: 'Hapus kepengurusan' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus kepengurusan' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Get('export')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Export kepengurusan ke CSV' })
+  @ApiQuery({ name: 'level', required: false })
+  @ApiQuery({ name: 'unitId', required: false })
+  @ApiQuery({ name: 'periodeId', required: false })
+  exportCsv(
+    @Query('level') level?: string,
+    @Query('unitId') unitId?: string,
+    @Query('periodeId') periodeId?: string,
+    @Req() req?: ScopedRequest,
+  ) {
+    return this.service.exportCsv({ level, unitId, periodeId, scope: req?.scope });
+  }
+
+  @Post('import')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Import kepengurusan dari CSV' })
+  importCsv(@Body() body: { rows: Array<Record<string, string>> }, @Req() req?: ScopedRequest) {
+    return this.service.importCsv(body.rows, req?.scope);
+  }
+
+  @Patch(':id/reparent')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Pindahkan parent kepengurusan (drag-drop)' })
+  reparent(@Param('id') id: string, @Body() body: { parentId: string | null }) {
+    return this.service.reparent(id, body.parentId);
   }
 }
