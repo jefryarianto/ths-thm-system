@@ -302,7 +302,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Change password */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+      <div id="change-password" className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
           <KeyRound size={18} className="text-blue-500" />
           Ubah Password

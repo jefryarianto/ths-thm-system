@@ -133,7 +133,7 @@ const menuGroups: MenuGroup[] = [
     label: 'Organisasi',
     items: [
       { href: '/org-chart', label: 'Peta Organisasi', icon: Shield, minRole: 'anggota' },
-      { href: '/org-documents', label: 'Dokumen Org.', icon: FileText, minRole: 'anggota' },
+      { href: '/org-documents', label: 'Dokumen Organisasi', icon: FileText, minRole: 'anggota' },
       { href: '/settings/jabatan', label: 'Jabatan', icon: Shield, minRole: 'superadmin' },
       { href: '/settings/periode', label: 'Periode', icon: Calendar, minRole: 'superadmin' },
       { href: '/settings/kepengurusan', label: 'Kepengurusan', icon: Users, minRole: 'admin_distrik' },
@@ -157,11 +157,11 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Gamifikasi',
     items: [
-      { href: '/gamification', label: 'Dasbor', icon: Trophy, minRole: 'admin_kegiatan' },
+      { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_kegiatan' },
       { href: '/gamification/admin', label: 'Admin', icon: Shield, minRole: 'admin_kegiatan' },
       { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'anggota' },
-      { href: '/gamification/report', label: 'Laporan', icon: BarChart3, minRole: 'admin_ranting' },
-      { href: '/gamification/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
+      { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/gamification/settings', label: 'Pengaturan Gamifikasi', icon: Settings, minRole: 'admin_ranting' },
     ],
   },
   {
@@ -175,7 +175,7 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Laporan & Analitik',
     items: [
-      { href: '/reports', label: 'Laporan', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/reports', label: 'Laporan Umum', icon: BarChart3, minRole: 'admin_ranting' },
       { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3, minRole: 'admin_ranting' },
     ],
   },
@@ -184,7 +184,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { href: '/content/berita', label: 'Berita', icon: BookOpen, minRole: 'superadmin' },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
-      { href: '/content/organisasi', label: 'Struktur Org.', icon: Globe, minRole: 'superadmin' },
+      { href: '/content/organisasi', label: 'Konten Web Organisasi', icon: Globe, minRole: 'superadmin' },
     ],
   },
   {
@@ -836,7 +836,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <DropdownItem
                       icon={Lock}
                       label="Ubah Password"
-                      href="/profile"
+                      href="/profile#change-password"
                       onClick={() => setProfileOpen(false)}
                     />
                     <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
