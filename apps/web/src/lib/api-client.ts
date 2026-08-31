@@ -10,6 +10,23 @@ const apiClient = axios.create({
 // ─── Session Expiry ───────────────────────────────────────────────
 const SESSION_EXPIRED_ERROR = new Error('SESSION_EXPIRED');
 
+// Retry helper for transient network failures
+async function retryTransient<T>(fn: () => Promise<T>, maxRetries = 2, delayMs = 1000): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, delayMs * (attempt + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
+
 /**
  * Called when the session is known to be expired.
  * Delegates to SessionManager to clear tokens, set the flag, and notify subscribers.
@@ -200,35 +217,47 @@ async function performTokenRefresh(): Promise<string> {
       // Lock sudah lewat/stale → refresh sendiri sebagai fallback.
     }
 
-    try {
-      const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
-      const newToken = data.data.accessToken;
-      localStorage.setItem('accessToken', newToken);
-      // Also set in cookie for consistency with login flow
-      if (typeof document !== 'undefined') {
-        document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+    // Retry transient failures up to 2 times with backoff before giving up
+    const MAX_REFRESH_RETRIES = 2;
+    let lastRefreshErr: unknown;
+    for (let attempt = 0; attempt <= MAX_REFRESH_RETRIES; attempt++) {
+      try {
+        const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
+        const newToken = data.data.accessToken;
+        localStorage.setItem('accessToken', newToken);
+        if (typeof document !== 'undefined') {
+          document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+        }
+        onTokenRefreshed(newToken);
+        refreshChannel?.postMessage({ type: 'REFRESH_SUCCESS', token: newToken });
+        if (sessionManager.isExpired) {
+          sessionManager.reset();
+        }
+        return newToken;
+      } catch (err) {
+        lastRefreshErr = err;
+        const status = (err as { response?: { status?: number } } | null)?.response?.status;
+        // 401/403 = permanent: token truly expired, no point retrying
+        if (status === 401 || status === 403) {
+          onTokenRefreshFailed(err);
+          refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
+          triggerSessionExpired();
+          throw SESSION_EXPIRED_ERROR;
+        }
+        // Transient: retry with backoff (but not on last attempt)
+        if (attempt < MAX_REFRESH_RETRIES) {
+          const delay = 1000 * Math.pow(2, attempt);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        // All retries exhausted: transient failure, session preserved
+        onTokenRefreshFailed(err);
+        refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
+        throw err;
       }
-      onTokenRefreshed(newToken);
-      // Kabarkan tab lain agar bisa pakai token yang sama.
-      refreshChannel?.postMessage({ type: 'REFRESH_SUCCESS', token: newToken });
-      // Refresh sukses → flag expired (bila ada) sudah tidak relevan lagi.
-      if (sessionManager.isExpired) {
-        sessionManager.reset();
-      }
-      return newToken;
-    } catch (err) {
-      onTokenRefreshFailed(err);
-      // Kabarkan tab lain bahwa refresh gagal.
-      refreshChannel?.postMessage({ type: 'REFRESH_FAILED' });
-      const status = (err as { response?: { status?: number } } | null)?.response?.status;
-      if (status === 401 || status === 403) {
-        // Server secara eksplisit menolak refresh token → sesi berakhir.
-        triggerSessionExpired();
-        throw SESSION_EXPIRED_ERROR;
-      }
-      // Transient (network/5xx): pertahankan sesi, lempar error asli.
-      throw err;
     }
+    // Should not reach here, but safety net
+    throw lastRefreshErr;
   } finally {
     isRefreshing = false;
     clearRefreshLock();
