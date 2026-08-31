@@ -217,6 +217,8 @@ async function performTokenRefresh(): Promise<string> {
         if (sessionManager.isExpired) {
           sessionManager.reset();
         }
+        // Schedule expiry warning for the new token
+        sessionManager.scheduleExpiryWarning(newToken);
         return newToken;
       } catch (err) {
         lastRefreshErr = err;
@@ -400,7 +402,18 @@ export const setTokens = (accessToken: string, refreshToken: string) => {
   if (typeof document !== 'undefined') {
     document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
   }
+  // Schedule warning toast ~5 min before token expires
+  sessionManager.scheduleExpiryWarning(accessToken);
 };
+
+/**
+ * Proactively refresh the access token before it expires.
+ * Called by the SessionProvider when the user clicks "Perpanjang Sesi".
+ * Returns the new token on success, or throws on failure.
+ */
+export async function proactivelyRefresh(): Promise<string> {
+  return performTokenRefresh();
+}
 
 export const clearTokens = () => {
   sessionManager.expire(true);

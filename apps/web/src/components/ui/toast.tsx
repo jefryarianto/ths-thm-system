@@ -1,20 +1,27 @@
 'use client';
 
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
-import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 // ─── Types ───
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
 
 interface Toast {
   id: string;
   type: ToastType;
   message: string;
+  duration?: number; // ms, default 5000
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
-  toast: (type: ToastType, message: string) => void;
+  toast: (type: ToastType, message: string, options?: { duration?: number; action?: ToastAction }) => void;
 }
 
 // ─── Context ───
@@ -31,22 +38,26 @@ const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle size={18} className="text-green-500" />,
   error: <AlertCircle size={18} className="text-red-500" />,
   info: <Info size={18} className="text-blue-500" />,
+  warning: <AlertTriangle size={18} className="text-amber-500" />,
 };
 
 const TOAST_COLORS: Record<ToastType, string> = {
   success: 'border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800',
   error: 'border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800',
   info: 'border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800',
+  warning: 'border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800',
 };
 
 // ─── Toast Item ───
 
 function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
-  // Auto-dismiss after 5 seconds
+  const duration = t.duration ?? 5000;
+
   useEffect(() => {
-    const timer = setTimeout(() => onDismiss(t.id), 5000);
+    if (duration <= 0) return; // duration <= 0 means don't auto-dismiss
+    const timer = setTimeout(() => onDismiss(t.id), duration);
     return () => clearTimeout(timer);
-  }, [t.id, onDismiss]);
+  }, [t.id, onDismiss, duration]);
 
   return (
     <div
@@ -54,6 +65,17 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
     >
       <span className="mt-0.5 shrink-0">{TOAST_ICONS[t.type]}</span>
       <p className="text-sm text-gray-800 dark:text-gray-200 flex-1">{t.message}</p>
+      {t.action && (
+        <button
+          onClick={() => {
+            t.action!.onClick();
+            onDismiss(t.id);
+          }}
+          className="shrink-0 text-sm font-medium px-3 py-1 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 transition-colors"
+        >
+          {t.action.label}
+        </button>
+      )}
       <button
         onClick={() => onDismiss(t.id)}
         className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
@@ -69,10 +91,13 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((type: ToastType, message: string) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    setToasts((prev) => [...prev, { id, type, message }]);
-  }, []);
+  const addToast = useCallback(
+    (type: ToastType, message: string, options?: { duration?: number; action?: ToastAction }) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      setToasts((prev) => [...prev, { id, type, message, duration: options?.duration, action: options?.action }]);
+    },
+    [],
+  );
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
