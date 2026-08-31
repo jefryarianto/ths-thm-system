@@ -269,6 +269,12 @@ model Distrik {
   unitLatihans  UnitLatihan[]
   kepengurusans Kepengurusan[]
 
+  // ── Scope distrik untuk penandatangan / ttd / stempel kartu & dokumen ──
+  penandatangans        Penandatangan[]
+  tandaTangans          TandaTangan[]
+  stempels              Stempel[]
+  dokumenPenandatangans DokumenPenandatangan[]
+
   @@map("distrik")
 }
 
@@ -909,11 +915,15 @@ model TandaTangan {
   jabatan   String
   imagePath String   @map("image_path")
   isActive  Boolean  @default(true) @map("is_active")
+  /// Cakupan distrik (NULL = global/nasional). Ttd distrik diprioritaskan di atas global.
+  distrikId String?  @map("distrik_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  distrik Distrik? @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
+  @@index([distrikId, isActive])
   @@map("tanda_tangan")
 }
 
@@ -922,9 +932,14 @@ model Stempel {
   nama      String
   imagePath String   @map("image_path")
   isActive  Boolean  @default(true) @map("is_active")
+  /// Cakupan distrik (NULL = global/nasional). Stempel distrik diprioritaskan di atas global.
+  distrikId String?  @map("distrik_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  distrik Distrik? @relation(fields: [distrikId], references: [id], onDelete: Cascade)
+
+  @@index([distrikId, isActive])
   @@map("stempel")
 }
 
@@ -1928,28 +1943,61 @@ model Penandatangan {
   nama      String
   jabatan   String
   isActive  Boolean  @default(false) @map("is_active")
+  /// Cakupan distrik (NULL = global/nasional). Penandatangan distrik diprioritaskan
+  /// di atas global saat resolve kartu/dokumen anggota. Satu aktif per scope —
+  /// dijaga index unik parsial per-scope (COALESCE(distrik_id,'GLOBAL')) di migration SQL.
+  distrikId String?  @map("distrik_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   dokumenPenandatangans DokumenPenandatangan[]
+  distrik               Distrik?               @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
   @@index([isActive])
+  @@index([distrikId, isActive])
   @@map("penandatangans")
 }
 
 /// Penugasan penandatangan per tipe dokumen (1-3 orang, diurutkan via `urutan`).
+/// Scope distrik (distrikId NULL = global): bila distrik punya set sendiri untuk
+/// suatu tipe dokumen, set itu menggantikan PENUH set global (semantik
+/// all-or-nothing per scope — index unik per-scope di migration SQL).
 model DokumenPenandatangan {
   id              String   @id @default(uuid())
   dokumenType     String   @map("dokumen_type")
   penandatanganId String   @map("penandatangan_id")
+  distrikId       String?  @map("distrik_id")
   urutan          Int
   createdAt       DateTime @default(now()) @map("created_at")
 
   penandatangan Penandatangan @relation(fields: [penandatanganId], references: [id], onDelete: Cascade)
+  distrik       Distrik?      @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
-  @@unique([dokumenType, urutan])
   @@index([dokumenType])
+  @@index([dokumenType, distrikId])
   @@map("dokumen_penandatangans")
+}
+
+// ── Template Kartu Anggota (desain upload, global) ───────────────────────
+
+/// Template desain kartu anggota (sisi depan + belakang) hasil upload admin.
+/// `overlayConfig` = posisi & style elemen data (foto, nama, NRA, tingkat, QR,
+/// ttd/stempel) + toggle guilloche/watermark — diff atas spec bawaan
+/// `packages/card-design`. Satu template aktif untuk seluruh organisasi (global);
+/// bila tidak ada, renderer memakai desain bawaan.
+model CardTemplate {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  label         String
+  frontImage    String?  @map("front_image")
+  backImage     String?  @map("back_image")
+  overlayConfig Json     @map("overlay_config")
+  isActive      Boolean  @default(false) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("card_templates")
 }
 
 // ── Tingkatan (pengaturan strip pada kartu anggota) ─────────────────────

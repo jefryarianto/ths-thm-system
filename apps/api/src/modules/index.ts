@@ -42,3 +42,4 @@ export { KepengurusanModule } from './kepengurusan/kepengurusan.module';
 export { ContentModule } from './content/content.module';
 export { MutationsModule } from './mutations/mutations.module';
 export { MailModule } from '../mail/mail.module';
+export { CardTemplatesModule } from './card-templates/card-templates.module';

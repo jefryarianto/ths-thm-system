@@ -501,7 +501,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: BACK.footer.urlValue.marginTop,
   },
+  // Latar desain upload (template kartu aktif) — full-bleed di atas kanvas 856×540
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
 });
+
+/** Konfigurasi template kartu aktif yang mempengaruhi rendering PDF. */
+interface CardTemplatePdfConfig {
+  frontImage?: string | null;
+  backImage?: string | null;
+  guilloche?: { enabledFront?: boolean; enabledBack?: boolean; strokeFront?: string; strokeBack?: string };
+  watermark?: { enabledFront?: boolean; enabledBack?: boolean };
+}
 
 interface MemberCardPdfProps {
   member: {
@@ -527,9 +543,14 @@ interface MemberCardPdfProps {
     signers?: Array<{ signerName?: string; signerTitle?: string }>;
     signerName?: string;
     signerTitle?: string;
+    /** Template kartu aktif (desain upload global) — bila ada, latar = gambar upload. */
+    template?: CardTemplatePdfConfig | null;
   };
   /** Data URL foto anggota (base64) — opsional, fallback ke placeholder "FOTO". */
   photoDataUrl?: string | null;
+  /** Data URL latar desain upload sisi depan/belakang (di-resolve service). */
+  frontImageDataUrl?: string | null;
+  backImageDataUrl?: string | null;
   /** Data URL tanda tangan & stempel (cap) yang di-upload — opsional, fallback teks "ttd"/"STEMPEL". */
   signatureDataUrl?: string | null;
   stampDataUrl?: string | null;
@@ -600,19 +621,31 @@ function buildFrontSide(props: MemberCardPdfProps) {
     h(View, { key: i, style: [styles.levelStrip, { backgroundColor: lv.color }] }),
   );
 
+  const template = cardConfig.template || null;
   return [
-    h(View, { key: 'bg1', style: styles.bgCircle1 }),
-    h(View, { key: 'bg2', style: styles.bgCircle2 }),
-    h(View, { key: 'top', style: styles.topBar }),
-    h(View, { key: 'bottom', style: styles.bottomBar }),
+    // Latar: gambar desain upload (template aktif) ATAU dekorasi bawaan
+    ...(props.frontImageDataUrl
+      ? [h(Image, { key: 'bgImg', src: props.frontImageDataUrl, style: styles.bgImage })]
+      : [
+          h(View, { key: 'bg1', style: styles.bgCircle1 }),
+          h(View, { key: 'bg2', style: styles.bgCircle2 }),
+          h(View, { key: 'top', style: styles.topBar }),
+          h(View, { key: 'bottom', style: styles.bottomBar }),
+        ]),
     // Guilloche / microprint border (lapis garis tipis anti-fotokopi)
-    guillocheBorder('rgba(29,78,216,0.4)'),
+    ...(template?.guilloche?.enabledFront === false
+      ? []
+      : [guillocheBorder(template?.guilloche?.strokeFront || 'rgba(29,78,216,0.4)')]),
     // Watermark — peta Indonesia
-    h(
-      View,
-      { key: 'wm', style: styles.watermark },
-      h(Image, { src: MAP_INDONESIA_DATA_URL, style: styles.watermarkLogo }),
-    ),
+    ...(template?.watermark?.enabledFront === false
+      ? []
+      : [
+          h(
+            View,
+            { key: 'wm', style: styles.watermark },
+            h(Image, { src: MAP_INDONESIA_DATA_URL, style: styles.watermarkLogo }),
+          ),
+        ]),
     // Header — 4 baris + logo
     h(
       View,
@@ -791,13 +824,24 @@ function buildBackSide(props: MemberCardPdfProps) {
     year: 'numeric',
   });
 
+  const template = cardConfig.template || null;
   return [
-    guillocheBorder('rgba(191,219,254,0.4)'),
-    h(
-      View,
-      { key: 'wm', style: styles.backWatermarkLogo },
-      h(Image, { src: MAP_INDONESIA_LIGHT_DATA_URL, style: styles.backWatermarkImg }),
-    ),
+    // Latar: gambar desain upload (template aktif) — bila ada
+    ...(props.backImageDataUrl ? [h(Image, { key: 'bgImgB', src: props.backImageDataUrl, style: styles.bgImage })] : []),
+    // Guilloche / microprint border
+    ...(template?.guilloche?.enabledBack === false
+      ? []
+      : [guillocheBorder(template?.guilloche?.strokeBack || 'rgba(191,219,254,0.4)')]),
+    // Watermark peta PUTIH
+    ...(template?.watermark?.enabledBack === false
+      ? []
+      : [
+          h(
+            View,
+            { key: 'wm', style: styles.backWatermarkLogo },
+            h(Image, { src: MAP_INDONESIA_LIGHT_DATA_URL, style: styles.backWatermarkImg }),
+          ),
+        ]),
     h(Text, { key: 'title', style: styles.backTitle }, 'VERIFIKASI KARTU ANGGOTA'),
     h(Text, { key: 'sub', style: styles.backSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),
     // QR Code

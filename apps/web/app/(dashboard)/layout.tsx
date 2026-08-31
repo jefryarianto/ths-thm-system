@@ -40,6 +40,7 @@ import {
   ArrowLeft,
   Smartphone,
   Database,
+  IdCard,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -196,6 +197,7 @@ const menuGroups: MenuGroup[] = [
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
       { href: '/settings/penandatangan', label: 'Penandatangan', icon: PenLine, minRole: 'admin_distrik' },
+      { href: '/settings/kartu', label: 'Template Kartu', icon: IdCard, minRole: 'admin_distrik' },
       { href: '/settings/dokumen', label: 'Template Dokumen', icon: FileText, minRole: 'admin_distrik' },
       {
         href: '/admin/queues',

@@ -358,8 +358,8 @@ async function composePasfoto(
   const outW = Math.max(1, Math.round(subW * scale));
   const outH = Math.max(1, Math.round(subH * scale));
 
-  const scaled = await sharp(sub, { raw: { width: subW, height: subH, channels: 4 } })
-    .resize(outW, outH, { fit: 'fill' })
+    const scaled = await sharp(sub, { raw: { width: subW, height: subH, channels: 4 } })
+    .resize(outW, outH, { fit: 'cover', position: 'centre' })
     .png()
     .toBuffer();
 

@@ -127,7 +127,7 @@ describe('MembersDigitalCardService', () => {
     it('should include signer dari tabel penandatangan (multi-signer)', async () => {
       const result = await service.getDigitalCard('m-lrt-1');
 
-      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith('kartu_anggota');
+      expect(mockPenandatanganService.resolveSigners).toHaveBeenCalledWith('kartu_anggota', 'd-lrt');
       expect(result.data.card.signers).toEqual(mockSigners);
       // Backward-compat: signer pertama di signerName/signerTitle
       expect(result.data.card.signerName).toBe('Yoseph Pehan Betan');

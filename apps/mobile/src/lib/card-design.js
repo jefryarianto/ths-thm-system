@@ -191,8 +191,8 @@ function decorBackSvg() {
 }
 
 /** SVG guilloche border — warna stroke mengikuti sisi (front/back). */
-function guillocheSvg(side) {
-  const stroke = side === 'back' ? COLORS.guillocheBack : COLORS.guillocheFront;
+function guillocheSvg(side, strokeColor) {
+  const stroke = strokeColor || (side === 'back' ? COLORS.guillocheBack : COLORS.guillocheFront);
   const rects = DECOR.guilloche.rects
     .map(
       (r) =>
@@ -396,6 +396,59 @@ function cameraOverlayCss() {
 `;
 }
 
+/**
+ * Resolve spec runtime kartu dari template aktif (dari DB / card-templates API).
+ * Template null/kosong → spec bawaan utuh (backward compatible — semua renderer
+ * tetap tampil persis seperti sebelumnya).
+ *
+ * Yang bisa diganti oleh template (overlayConfig di DB):
+ * - Latar sisi depan/belakang: gambar upload (frontImage/backImage) menggantikan
+ *   dekorasi SVG bawaan (ombak/gradien) — guilloche & watermark jadi layer opsional.
+ * - Toggle + warna stroke guilloche dan opacity watermark.
+ * - Warna teks per elemen data (nama, nomorAnggota, ttl, ranting, wilayah, tingkat, ttd).
+ *
+ * Geometri layout (posisi elemen) TIDAK diubah oleh template — renderer tetap
+ * memakai FRONT/BACK kanon agar mobile/web/PDF tidak melenceng satu sama lain.
+ */
+function resolveCardSpec(activeTemplate) {
+  const overlay = (activeTemplate && activeTemplate.overlayConfig) || {};
+  const g = overlay.guilloche || {};
+  const wm = overlay.watermark || {};
+
+  const textColors = {};
+  for (const key of ['nama', 'nomorAnggota', 'ttl', 'ranting', 'wilayah', 'tingkat', 'ttd']) {
+    const el = overlay[key];
+    if (el && typeof el.color === 'string' && el.color) textColors[key] = el.color;
+  }
+
+  return {
+    /** Template sumber (null = desain bawaan). */
+    template: activeTemplate
+      ? {
+          id: activeTemplate.id || null,
+          name: activeTemplate.name || null,
+          label: activeTemplate.label || null,
+          frontImage: activeTemplate.frontImage || null,
+          backImage: activeTemplate.backImage || null,
+        }
+      : null,
+    hasFrontImage: Boolean(activeTemplate && activeTemplate.frontImage),
+    hasBackImage: Boolean(activeTemplate && activeTemplate.backImage),
+    guilloche: {
+      front: g.enabledFront !== false,
+      back: g.enabledBack !== false,
+      strokeFront: typeof g.strokeFront === 'string' && g.strokeFront ? g.strokeFront : COLORS.guillocheFront,
+      strokeBack: typeof g.strokeBack === 'string' && g.strokeBack ? g.strokeBack : COLORS.guillocheBack,
+    },
+    watermark: {
+      front: wm.enabledFront !== false,
+      back: wm.enabledBack !== false,
+      opacity: typeof wm.opacity === 'number' ? wm.opacity : null,
+    },
+    textColors,
+  };
+}
+
 module.exports = {
   CARD,
   CAMERA,
@@ -414,4 +467,5 @@ module.exports = {
   guillocheSvg,
   cardCss,
   cameraOverlayCss,
+  resolveCardSpec,
 };

@@ -190,3 +190,51 @@ export interface Candidate {
   createdAt: string;
   updatedAt: string;
 }
+
+// ── Kartu Anggota: template & overlay ──────────────────────────────────────
+
+/** Elemen overlay data di atas latar template kartu (koordinat kartu 856×540). */
+export interface CardOverlayElement {
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  fontSize?: number;
+  color?: string;
+  align?: 'left' | 'center' | 'right';
+  visible?: boolean;
+}
+
+/** Konfigurasi overlay template kartu — diff atas spec bawaan packages/card-design. */
+export interface CardTemplateOverlayConfig {
+  guilloche?: {
+    enabledFront?: boolean;
+    enabledBack?: boolean;
+    strokeFront?: string;
+    strokeBack?: string;
+    opacity?: number;
+  };
+  watermark?: { enabledFront?: boolean; enabledBack?: boolean; opacity?: number };
+  photo?: CardOverlayElement;
+  nama?: CardOverlayElement;
+  nomorAnggota?: CardOverlayElement;
+  ttl?: CardOverlayElement;
+  ranting?: CardOverlayElement;
+  wilayah?: CardOverlayElement;
+  tingkat?: CardOverlayElement;
+  qr?: CardOverlayElement;
+  ttd?: CardOverlayElement;
+  [key: string]: unknown;
+}
+
+export interface CardTemplateDto {
+  id: string;
+  name: string;
+  label: string;
+  frontImage: string | null;
+  backImage: string | null;
+  overlayConfig: CardTemplateOverlayConfig;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

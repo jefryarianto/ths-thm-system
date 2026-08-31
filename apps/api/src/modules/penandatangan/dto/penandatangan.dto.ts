@@ -12,6 +12,11 @@ export class CreatePenandatanganDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Cakupan distrik (NULL/absen = global). Non-superadmin dipaksa ke distriknya. */
+  @IsOptional()
+  @IsString()
+  distrikId?: string | null;
 }
 
 export class UpdatePenandatanganDto {
@@ -26,4 +31,14 @@ export class UpdatePenandatanganDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  distrikId?: string | null;
+}
+
+/** Informasi scope pemanggil untuk penegakan hak akses per-distrik di service. */
+export interface DistrikScopeInfo {
+  role?: string;
+  distrikId?: string;
 }

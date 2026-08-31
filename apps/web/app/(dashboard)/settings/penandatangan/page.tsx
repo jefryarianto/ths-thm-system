@@ -3,36 +3,51 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { Plus, PenLine, Edit3, Trash2, CheckCircle, XCircle, Eye, RefreshCw, Save, IdCard, AlertCircle } from 'lucide-react';
+import { Plus, PenLine, Edit3, Trash2, CheckCircle, XCircle, Eye, RefreshCw, Save, IdCard, AlertCircle, Globe } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import SummaryBar from '@/components/ui/summary-bar';
 import Modal from '@/components/ui/modal';
 import FormField from '@/components/ui/form-field';
 import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface PenandatanganRow {
   id: string;
   nama: string;
   jabatan: string;
   isActive: boolean;
+  distrikId?: string | null;
+  distrik?: { id: string; nama: string } | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface DistrictOption {
+  id: string;
+  nama: string;
+  kodeDistrik?: string;
 }
 
 export default function PenandatanganPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
+  const { role } = useAuth();
   const [data, setData] = useState<PenandatanganRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Cakupan: '' = Global (Nasional), selain itu id distrik
+  const [districts, setDistricts] = useState<DistrictOption[]>([]);
+  const [scope, setScope] = useState('');
+  const isSuperadmin = role === 'superadmin';
 
   // Modal state (create / edit)
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<PenandatanganRow | null>(null);
-  const [form, setForm] = useState({ nama: '', jabatan: '', isActive: false });
+  const [form, setForm] = useState({ nama: '', jabatan: '', isActive: false, distrikId: '' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -58,9 +73,21 @@ export default function PenandatanganPage() {
     setLoading(false);
   }, []);
 
+  const fetchDistricts = useCallback(async () => {
+    try {
+      const { data: res } = await apiClient.get('/org-structure/distrik', { params: { limit: 200 } });
+      const list = (res.data ?? res ?? []) as DistrictOption[];
+      setDistricts(list);
+    } catch {
+      // silent
+    }
+  }, []);
+
   const fetchDocAssignments = useCallback(async () => {
     try {
-      const { data: res } = await apiClient.get('/penandatangan/dokumen');
+      const { data: res } = await apiClient.get('/penandatangan/dokumen', {
+        params: scope ? { distrikId: scope } : {},
+      });
       const list = (res.data || []) as {
         type: string;
         label: string;
@@ -79,27 +106,75 @@ export default function PenandatanganPage() {
     } catch {
       // silent
     }
-  }, []);
+  }, [scope]);
 
-  useEffect(() => {
-    fetchData();
-    fetchDocAssignments();
-  }, [fetchData, fetchDocAssignments]);
+  // Inisialisasi scope otomatis berdasarkan peran
+useEffect(() => {
+  if (isSuperadmin) {
+    // Superadmin dapat memilih scope; biarkan kosong (Global) secara default
+    if (scope === '') return;
+  } else {
+    // Admin distrik: scope otomatis ditentukan dari session
+    // Ini akan diatur oleh parent component atau context
+  }
+}, [isSuperadmin, scope]);
+
+useEffect(() => {
+  fetchData();
+  fetchDistricts();
+}, [fetchData, fetchDistricts]);
+
+useEffect(() => {
+  fetchDocAssignments();
+}, [fetchDocAssignments]);
 
   const activeCount = data.filter((s) => s.isActive).length;
+
+  /** Penandatengan yang boleh dipilih pada scope aktif (dropdown per dokumen). */
+  const scopedData = scope
+    ? data.filter((s) => (s.distrikId ?? null) === scope)
+    : data.filter((s) => !s.distrikId);
+
+  const scopeLabel = scope
+    ? districts.find((d) => d.id === scope)?.nama || 'Distrik'
+    : 'Global (Nasional)';
+
+  // Reset docSlots ketika scope berubah untuk mencegah data stale
+  const prevScopeRef = useRef(scope);
+  useEffect(() => {
+    if (prevScopeRef.current !== scope) {
+      // Filter docSlots yang tidak valid untuk scope baru
+      setDocSlots((prev) => {
+        const validIds = new Set(scopedData.map((s) => s.id));
+        const filtered: Record<string, string[]> = {};
+        Object.keys(prev).forEach((type) => {
+          const validSlots = (prev[type] || [])
+            .filter((id) => id !== '' && validIds.has(id))
+            .slice(0, 3); // maks 3 slot
+          // Pastikan array selalu panjang 3
+          while (validSlots.length < 3) {
+            validSlots.push('');
+          }
+          filtered[type] = validSlots;
+        });
+        return filtered;
+      });
+      prevScopeRef.current = scope;
+    }
+  }, [scope, scopedData]);
 
   // ─── Modal helpers ───
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ nama: '', jabatan: '', isActive: data.length === 0 });
+    setForm({ nama: '', jabatan: '', isActive: data.length === 0, distrikId: isSuperadmin ? scope : '' });
     setFormError('');
     setShowModal(true);
   };
 
   const openEdit = (row: PenandatanganRow) => {
     setEditing(row);
-    setForm({ nama: row.nama, jabatan: row.jabatan, isActive: row.isActive });
+    setForm({ nama: row.nama, jabatan: row.jabatan, isActive: row.isActive, distrikId: row.distrikId || '' });
     setFormError('');
     setShowModal(true);
   };
@@ -112,7 +187,14 @@ export default function PenandatanganPage() {
     setSaving(true);
     setFormError('');
     try {
-      const payload = { nama: form.nama.trim(), jabatan: form.jabatan.trim(), isActive: form.isActive };
+      const payload = {
+        nama: form.nama.trim(),
+        jabatan: form.jabatan.trim(),
+        isActive: form.isActive,
+        // Untuk admin distrik: backend akan menentukan distrik otomatis dari session
+        // Hanya superadmin yang dapat memilih scope global vs distrik melalui form
+        distrikId: isSuperadmin ? (form.distrikId || null) : null,
+      };
       if (editing) {
         await apiClient.patch(`/penandatangan/${editing.id}`, payload);
         toast('success', 'Penandatangan diperbarui');
@@ -157,8 +239,11 @@ export default function PenandatanganPage() {
     const ids = (docSlots[type] || []).filter(Boolean);
     setSavingDoc(type);
     try {
-      await apiClient.put(`/penandatangan/dokumen/${type}`, { penandatanganIds: ids });
-      toast('success', 'Penandatangan dokumen disimpan');
+      await apiClient.put(`/penandatangan/dokumen/${type}`, {
+        penandatanganIds: ids,
+        distrikId: scope || null,
+      });
+      toast('success', `Penandatangan dokumen disimpan (${scopeLabel})`);
       fetchDocAssignments();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -223,6 +308,7 @@ export default function PenandatanganPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Jabatan</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Cakupan</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
@@ -248,6 +334,17 @@ export default function PenandatanganPage() {
                           <XCircle size={12} /> Nonaktif
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell text-center">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                          row.distrikId
+                            ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {row.distrikId ? row.distrik?.nama || 'Distrik' : <><Globe size={10} /> Global</>}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -290,11 +387,49 @@ export default function PenandatanganPage() {
           </p>
         )}
 
+        {/* ─── Scope Distrik ─── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="flex items-start gap-2.5">
+            <Globe size={16} className="shrink-0 mt-0.5 text-indigo-500" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Cakupan Penandatangan</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Atur penandatangan per <strong>distrik</strong> (setiap distrik bisa punya penandatangan &
+                tanda tangan sendiri) atau <strong>global</strong>. Bila satu distrik tidak diatur, kartunya
+                otomatis memakai penandatangan global.
+              </p>
+            </div>
+          </div>
+          {isSuperadmin ? (
+            <div className="mt-4 max-w-md">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Sedang mengelola penandatangan untuk:
+              </label>
+              <select
+                value={scope}
+                onChange={(e) => setScope(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Global (Nasional)</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              Anda mengelola penandatangan untuk distrik Anda sendiri (ditentukan otomatis oleh sistem).
+            </p>
+          )}
+        </div>
+
         {/* ─── Penandatangan per Dokumen (1-3) ─── */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Penandatangan per Dokumen
+              Penandatangan per Dokumen — {scopeLabel}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Atur 1-3 penandatangan yang tampil di tiap jenis dokumen - urutan slot = posisi tanda
@@ -340,7 +475,7 @@ export default function PenandatanganPage() {
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">- Kosong -</option>
-                          {data.map((s) => (
+                          {scopedData.map((s) => (
                             <option key={s.id} value={s.id}>
                               {s.nama} ({s.jabatan})
                             </option>
@@ -384,6 +519,29 @@ export default function PenandatanganPage() {
                 placeholder="Contoh: Koordinator Distrik"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
+            </FormField>
+            <FormField label="Cakupan">
+              {isSuperadmin ? (
+                <select
+                  value={form.distrikId}
+                  onChange={(e) => setForm((p) => ({ ...p, distrikId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">Global (Nasional)</option>
+                  {districts.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nama}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400">
+                  Distrik Anda (ditentukan otomatis)
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                Penandatangan global dipakai sebagai <em>fallback</em> bila distrik belum punya penandatangan aktif.
+              </p>
             </FormField>
             <FormField label="Status">
               <label className="flex items-center gap-2 text-sm">

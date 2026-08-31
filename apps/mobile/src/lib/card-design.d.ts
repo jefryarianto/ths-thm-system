@@ -232,4 +232,22 @@ declare function photoCrop(boxW: number, boxH: number): {
   top: number;
 };
 
-export { CARD, FONTS, COLORS, FRONT, BACK, DECOR, CAMERA, getLevelVisual, photoCrop };
+/** Spesifikasi runtime kartu hasil merge template aktif (resolveCardSpec). */
+export interface CardTemplateRuntime {
+  template: {
+    id: string | null;
+    name: string | null;
+    label: string | null;
+    frontImage: string | null;
+    backImage: string | null;
+  } | null;
+  hasFrontImage: boolean;
+  hasBackImage: boolean;
+  guilloche: { front: boolean; back: boolean; strokeFront: string; strokeBack: string };
+  watermark: { front: boolean; back: boolean; opacity: number | null };
+  textColors: Record<string, string>;
+}
+
+declare function resolveCardSpec(activeTemplate: unknown): CardTemplateRuntime;
+
+export { CARD, FONTS, COLORS, FRONT, BACK, DECOR, CAMERA, getLevelVisual, photoCrop, resolveCardSpec };

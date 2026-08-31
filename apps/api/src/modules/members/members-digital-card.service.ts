@@ -71,12 +71,15 @@ export class MembersDigitalCardService {
     return this.penandatanganService.resolveActive();
   }
 
-  /** Resolve gambar tanda tangan & stempel aktif (dari tabel settings). */
-  private async resolveSignatureStamp() {
+  /**
+   * Resolve gambar tanda tangan & stempel untuk distrik anggota:
+   * prioritas yang aktif di distrik anggota, fallback ke yang global.
+   */
+  private async resolveSignatureStamp(distrikId?: string) {
     try {
       const [signature, stamp] = await Promise.all([
-        this.prisma.tandaTangan.findFirst({ where: { isActive: true }, orderBy: { updatedAt: 'desc' } }),
-        this.prisma.stempel.findFirst({ where: { isActive: true }, orderBy: { updatedAt: 'desc' } }),
+        this.findActiveScoped('tandaTangan', distrikId),
+        this.findActiveScoped('stempel', distrikId),
       ]);
       return {
         signatureImage: signature?.imagePath || null,
@@ -87,10 +90,46 @@ export class MembersDigitalCardService {
     }
   }
 
+  /** findFirst aktif untuk model tandaTangan/stempel: distrik dulu, lalu global. */
+  private async findActiveScoped(model: 'tandaTangan' | 'stempel', distrikId?: string) {
+    if (distrikId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const scoped = await (this.prisma as any)[model].findFirst({
+        where: { isActive: true, distrikId },
+        orderBy: { updatedAt: 'desc' },
+      });
+      if (scoped) return scoped;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (this.prisma as any)[model].findFirst({
+      where: { isActive: true, distrikId: null },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
+  /** Template kartu aktif (desain upload global) — null = desain bawaan. */
+  private async resolveActiveTemplate() {
+    try {
+      const template = await this.prisma.cardTemplate.findFirst({ where: { isActive: true } });
+      if (!template) return null;
+      return {
+        id: template.id,
+        name: template.name,
+        label: template.label,
+        frontImage: template.frontImage,
+        backImage: template.backImage,
+        overlayConfig: template.overlayConfig,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
-    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
+    const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
-    const { signatureImage, stampImage } = await this.resolveSignatureStamp();
+    const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
+    const template = await this.resolveActiveTemplate();
 
     return {
       success: true,
@@ -101,6 +140,8 @@ export class MembersDigitalCardService {
         levelVisual,
         signatureImage,
         stampImage,
+        /** Desain kartu aktif (null = pakai desain bawaan packages/card-design). */
+        template,
       },
     };
   }
@@ -109,7 +150,8 @@ export class MembersDigitalCardService {
     // PNG 2 sisi: render halaman gabungan (depan+belakang) lalu konversi ke PNG
     const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
-    const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl }, { combined: true });
+    const template = await this.resolveActiveTemplate();
+    const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template }, { combined: true });
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
     return pdfToPng(pdfBuffer);
   }
@@ -129,6 +171,11 @@ export class MembersDigitalCardService {
       verificationUrl: string;
       levelVisual: any;
       qrDataUrl: string;
+      template?: {
+        frontImage?: string | null;
+        backImage?: string | null;
+        overlayConfig?: unknown;
+      } | null;
     },
     opts?: { combined?: boolean },
   ): Promise<Buffer> {
@@ -161,11 +208,15 @@ export class MembersDigitalCardService {
             signers: data.card.signers,
             signerName: data.card.signerName,
             signerTitle: data.card.signerTitle,
+            template: data.template || null,
           },
           photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true),
           signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage),
           stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage),
           levelVisual: data.levelVisual,
+          // Latar desain upload dari template kartu aktif (bila ada)
+          frontImageDataUrl: await this.resolvePhotoDataUrl(data.template?.frontImage || null),
+          backImageDataUrl: await this.resolvePhotoDataUrl(data.template?.backImage || null),
         },
         opts,
       );
@@ -180,7 +231,8 @@ export class MembersDigitalCardService {
   async getDigitalCardPdf(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
     const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
-    return this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl });
+    const template = await this.resolveActiveTemplate();
+    return this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template });
   }
 
   private async prepareDigitalCardData(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
@@ -247,7 +299,11 @@ export class MembersDigitalCardService {
       alamatDistrik: member.ranting?.wilayah?.distrik?.alamat,
     };
 
-    const signers = await this.penandatanganService.resolveSigners('kartu_anggota');
+    // Distrik anggota → scope resolusi penandatangan/ttd/stempel
+    const distrikId = member.ranting?.wilayah?.distrik?.id || undefined;
+
+    const signers = await this.penandatanganService.resolveSigners('kartu_anggota', distrikId);
+    const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
     const card = {
       id: existingCard.id,
       nomorDokumen: existingCard.nomorDokumen,
@@ -257,10 +313,13 @@ export class MembersDigitalCardService {
       signers,
       signerName: signers[0]?.signerName,
       signerTitle: signers[0]?.signerTitle,
+      // Gambar ttd/stempel sesuai distrik anggota (dipakai juga renderer PDF)
+      signatureImage,
+      stampImage,
     };
 
     const levelVisual = await this.tingkatanService.resolveLevelVisual(member.tingkat);
 
-    return { card, memberData, verificationUrl: card.verificationUrl, levelVisual };
+    return { card, memberData, verificationUrl: card.verificationUrl, levelVisual, distrikId };
   }
 }

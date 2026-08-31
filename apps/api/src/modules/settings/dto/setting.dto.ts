@@ -69,6 +69,12 @@ export class CreateSignatureDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Cakupan distrik (NULL/absen = global). Non-superadmin dipaksa ke distriknya. */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  distrikId?: string | null;
 }
 
 export class CreateStampDto {
@@ -84,4 +90,10 @@ export class CreateStampDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Cakupan distrik (NULL/absen = global). Non-superadmin dipaksa ke distriknya. */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  distrikId?: string | null;
 }

@@ -28,7 +28,7 @@ import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 
 // ─── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ───
-import { CARD, COLORS, FRONT, BACK, DECOR, FONTS, getLevelVisual, photoCrop } from '../../lib/card-design';
+import { CARD, COLORS, FRONT, BACK, DECOR, FONTS, getLevelVisual, photoCrop, resolveCardSpec } from '../../lib/card-design';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -226,6 +226,15 @@ interface CardData {
   /** Gambar tanda tangan & stempel asli (dari pengaturan) — URL path /api/uploads/... */
   signatureImage?: string | null;
   stampImage?: string | null;
+  /** Template kartu aktif dari API (desain upload global) — null/undefined = desain bawaan. */
+  template?: {
+    id?: string | null;
+    name?: string | null;
+    label?: string | null;
+    frontImage?: string | null;
+    backImage?: string | null;
+    overlayConfig?: Record<string, unknown>;
+  } | null;
 }
 
 // Tingkat → visual balok — diambil dari spec (packages/card-design) via getLevelVisual
@@ -323,28 +332,43 @@ function MemberPhoto({
 function MemberCardFront({ member, cardData, validUntilText }: { member: MemberInfo | null; cardData: CardData | null; validUntilText: string }) {
   const lv = getLevelVisual(member?.tingkat, cardData?.levelVisual || null);
   const distrik = member?.ranting?.wilayah?.distrik?.nama || 'THS-THM';
+  // Spec runtime dari template aktif — tanpa template → desain bawaan utuh
+  const spec = resolveCardSpec(cardData?.template ?? undefined);
 
   return (
     <CardShell>
-      <View style={styles.bgCircle1} />
-      <View style={styles.bgCircle2} />
+      {spec.hasFrontImage ? (
+        /* Template upload: gambar desain depan sebagai latar penuh (menggantikan dekorasi bawaan) */
+        <Image
+          source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(spec.template!.frontImage!)}` }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      ) : (
+        <>
+          <View style={styles.bgCircle1} />
+          <View style={styles.bgCircle2} />
 
-      {/* Latar abstrak — gradien & lengkung, bukan blok warna */}
-      <WavyBackground />
+          {/* Latar abstrak — gradien & lengkung, bukan blok warna */}
+          <WavyBackground />
 
-      {/* Header abstrak — gradien biru 45° untuk kontras teks putih */}
-      <AbstractHeader />
+          {/* Header abstrak — gradien biru 45° untuk kontras teks putih */}
+          <AbstractHeader />
 
-      {/* Gradien biru bawah — sudut 45° (terang, teks hitam tetap terbaca) */}
-      <BottomGradient />
+          {/* Gradien biru bawah — sudut 45° (terang, teks hitam tetap terbaca) */}
+          <BottomGradient />
+        </>
+      )}
 
-      {/* Guilloche / microprint border */}
-      <GuillocheBorder patternId="g-front" strokeColor="rgba(29,78,216,0.3)" />
+      {/* Guilloche / microprint border — warna & on/off dari template */}
+      {spec.guilloche.front && <GuillocheBorder patternId="g-front" strokeColor={spec.guilloche.strokeFront} />}
 
       {/* Watermark — peta indonesia.png washout di tengah (tidak mengganggu foto kanan atas) */}
-      <View style={styles.watermarkWrap} pointerEvents="none">
-        <IndonesiaMapWatermark color="#1d4ed8" opacity={0.35} size={{ width: 600, height: 207 }} />
-      </View>
+      {spec.watermark.front && (
+        <View style={styles.watermarkWrap} pointerEvents="none">
+          <IndonesiaMapWatermark color="#1d4ed8" opacity={0.35} size={{ width: 600, height: 207 }} />
+        </View>
+      )}
 
       <View style={styles.content}>
         {/* Header — 4 baris + logo */}
@@ -486,18 +510,32 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
 // ─── Sisi Belakang ───
 
 function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { member: MemberInfo | null; cardData: CardData | null; ttl: string; dadar: string; validUntilText: string }) {
+  // Spec runtime dari template aktif — tanpa template → desain bawaan utuh
+  const spec = resolveCardSpec(cardData?.template ?? undefined);
+
   return (
     <CardShell dark>
-      {/* Latar abstrak gradien — bukan blok warna solid */}
-      <BackGradient />
+      {spec.hasBackImage ? (
+        /* Template upload: gambar desain belakang sebagai latar penuh */
+        <Image
+          source={{ uri: `${API_URL}/api/uploads/${encodeURIComponent(spec.template!.backImage!)}` }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      ) : (
+        /* Latar abstrak gradien — bukan blok warna solid */
+        <BackGradient />
+      )}
 
-      {/* Guilloche / microprint border */}
-      <GuillocheBorder patternId="g-back" strokeColor="rgba(191,219,254,0.4)" />
+      {/* Guilloche / microprint border — warna & on/off dari template */}
+      {spec.guilloche.back && <GuillocheBorder patternId="g-back" strokeColor={spec.guilloche.strokeBack} />}
 
       {/* Watermark — siluet peta titik halftone PUTIH di tengah */}
-      <View style={styles.backWatermarkWrap} pointerEvents="none">
-        <IndonesiaMapWatermark color="#ffffff" opacity={0.5} size={{ width: 480, height: 166 }} />
-      </View>
+      {spec.watermark.back && (
+        <View style={styles.backWatermarkWrap} pointerEvents="none">
+          <IndonesiaMapWatermark color="#ffffff" opacity={0.5} size={{ width: 480, height: 166 }} />
+        </View>
+      )}
 
       <View style={styles.content}>
         {/* Title */}
@@ -624,6 +662,14 @@ export default function DigitalCardScreen() {
             levelVisual?: { stripCount: number; color: string; label?: string } | null;
             signatureImage?: string | null;
             stampImage?: string | null;
+            template?: {
+              id?: string | null;
+              name?: string | null;
+              label?: string | null;
+              frontImage?: string | null;
+              backImage?: string | null;
+              overlayConfig?: Record<string, unknown>;
+            } | null;
             card?: { signerName?: string; signerTitle?: string; signers?: { signerName?: string; signerTitle?: string }[] };
           }>(res);
           setCardData({
@@ -634,6 +680,7 @@ export default function DigitalCardScreen() {
             levelVisual: data.levelVisual || null,
             signatureImage: data.signatureImage || null,
             stampImage: data.stampImage || null,
+            template: data.template || null,
           });
         } catch {
           // QR/signer gagal dimuat — kartu tetap tampil (fallback nama default)

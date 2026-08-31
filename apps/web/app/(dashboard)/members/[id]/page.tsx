@@ -1,7 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import { CARD, COLORS, FRONT, BACK, getLevelVisual, photoCrop, fmt, decorFrontSvg, decorBackSvg, guillocheSvg, cardCss } from '@/lib/card-design';
+import { CARD, COLORS, FRONT, BACK, getLevelVisual, photoCrop, fmt, decorFrontSvg, decorBackSvg, guillocheSvg, cardCss, resolveCardSpec } from '@/lib/card-design';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -237,6 +237,7 @@ export default function MemberDetailPage() {
     signatureImage?: string | null;
     stampImage?: string | null;
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
+    template?: { frontImage?: string | null; backImage?: string | null; overlayConfig?: Record<string, unknown> } | null;
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
 
@@ -280,6 +281,7 @@ export default function MemberDetailPage() {
               signatureImage: data.data.signatureImage || null,
               stampImage: data.data.stampImage || null,
               levelVisual: data.data.levelVisual || null,
+              template: data.data.template || null,
             });
           }
         })
@@ -287,6 +289,9 @@ export default function MemberDetailPage() {
         .finally(() => setCardLoading(false));
     }
   }, [activeTab, member, cardData]);
+
+  // Spec runtime kartu dari template aktif (null = desain bawaan packages/card-design)
+  const cardSpec = resolveCardSpec(cardData?.template ?? undefined);
 
   const handleAction = async (action: string) => {
     if (!member) return;
@@ -985,18 +990,31 @@ export default function MemberDetailPage() {
                       className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border"
                       style={{ background: COLORS.front.bg, borderColor: COLORS.front.border }}
                     >
-                      {/* Dekorasi kanon - ombak + header + gradien bawah (SVG dari spec) */}
-                      <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorFrontSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                      {/* Guilloche / microprint border (dari spec) */}
-                      <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('front').replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                      {cardSpec.hasFrontImage ? (
+                        /* Template aktif: gambar desain depan sebagai latar (menggantikan dekorasi bawaan) */
+                        <img
+                          src={`/api/uploads/${encodeURIComponent(cardSpec.template!.frontImage!)}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        /* Dekorasi kanon - ombak + header + gradien bawah (SVG dari spec) */
+                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorFrontSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                      )}
+                      {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
+                      {cardSpec.guilloche.front && (
+                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('front', cardSpec.guilloche.strokeFront).replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                      )}
 
                       {/* Watermark - peta indonesia.png washout, posisi dari spec */}
-                      <div
-                        className="absolute pointer-events-none opacity-[0.08]"
-                        style={{ left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h }}
-                      >
-                        <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain" />
-                      </div>
+                      {cardSpec.watermark.front && (
+                        <div
+                          className="absolute pointer-events-none opacity-[0.08]"
+                          style={{ left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h }}
+                        >
+                          <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain" />
+                        </div>
+                      )}
 
                       <div className="relative z-10 h-full">
                         {/* Header - 4 baris + logo utuh */}
@@ -1178,17 +1196,30 @@ export default function MemberDetailPage() {
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
                     <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border" style={{ background: COLORS.back.bg, borderColor: COLORS.back.border }}>
-                      {/* Gradien + ombak (SVG kanon dari spec) */}
-                      <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorBackSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
-                      {/* Guilloche / microprint border (dari spec) */}
-                      <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('back').replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                      {cardSpec.hasBackImage ? (
+                        /* Template aktif: gambar desain belakang sebagai latar */
+                        <img
+                          src={`/api/uploads/${encodeURIComponent(cardSpec.template!.backImage!)}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        /* Gradien + ombak (SVG kanon dari spec) */
+                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorBackSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                      )}
+                      {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
+                      {cardSpec.guilloche.back && (
+                        <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('back', cardSpec.guilloche.strokeBack).replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                      )}
                       {/* Watermark peta PUTIH - posisi dari spec */}
-                      <div
-                        className="absolute pointer-events-none"
-                        style={{ left: (CARD.W - BACK.watermark.w) / 2, top: (CARD.H - BACK.watermark.h) / 2, width: BACK.watermark.w, height: BACK.watermark.h, opacity: BACK.watermark.opacity }}
-                      >
-                        <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain invert" />
-                      </div>
+                      {cardSpec.watermark.back && (
+                        <div
+                          className="absolute pointer-events-none"
+                          style={{ left: (CARD.W - BACK.watermark.w) / 2, top: (CARD.H - BACK.watermark.h) / 2, width: BACK.watermark.w, height: BACK.watermark.h, opacity: BACK.watermark.opacity }}
+                        >
+                          <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain invert" />
+                        </div>
+                      )}
                       <div className="relative z-10 h-full">
                         <div className="absolute left-0 right-0 text-center" style={{ top: BACK.title.top }}>
                           <div className="font-black text-white" style={{ fontSize: BACK.title.fontSize, letterSpacing: BACK.title.letterSpacing }}>

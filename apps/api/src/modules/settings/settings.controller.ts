@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Req,
   Res,
   UseInterceptors,
   UploadedFile,
@@ -30,6 +31,8 @@ import {
   buildImageUploadOptions,
   validateImageMagicBytes,
 } from '../../common/utils/image-upload.util';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+import { resolveWriteDistrikId, resolveReadDistrikId } from '../../common/utils/distrik-scope';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -98,9 +101,9 @@ export class SettingsController {
   }
 
   @Get('stamp')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil stempel aktif' })
-  async getStamp() {
-    return this.settingsService.getStamp();
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil stempel aktif (distrik → global)' })
+  async getStamp(@Req() req: ScopedRequest, @Query('distrikId') distrikId?: string) {
+    return this.settingsService.getStamp(resolveReadDistrikId(req, distrikId) ?? undefined);
   }
 
   @Post('signatures')
@@ -109,8 +112,9 @@ export class SettingsController {
   @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('signature')))
   async uploadSignature(
     @UploadedFile() file: Express.Multer.File | undefined,
-    @Body() body: { nama?: string; jabatan?: string },
+    @Body() body: { nama?: string; jabatan?: string; distrikId?: string | null },
     @CurrentUser() user: { id: string; namaLengkap?: string },
+    @Req() req: ScopedRequest,
   ) {
     if (!file) {
       throw new BadRequestException('File tanda tangan harus diupload');
@@ -130,6 +134,7 @@ export class SettingsController {
     dto.jabatan = body.jabatan?.trim() || 'Pejabat Distrik';
     dto.imagePath = file.filename;
     dto.isActive = true;
+    dto.distrikId = resolveWriteDistrikId(req, body.distrikId ?? null);
     return this.settingsService.uploadSignature(dto);
   }
 
@@ -139,7 +144,8 @@ export class SettingsController {
   @UseInterceptors(FileInterceptor('file', buildImageUploadOptions('stamp')))
   async uploadStamp(
     @UploadedFile() file: Express.Multer.File | undefined,
-    @Body() body: { nama?: string },
+    @Body() body: { nama?: string; distrikId?: string | null },
+    @Req() req: ScopedRequest,
   ) {
     if (!file) {
       throw new BadRequestException('File stempel harus diupload');
@@ -157,6 +163,7 @@ export class SettingsController {
     dto.nama = body.nama?.trim() || 'Stempel Distrik';
     dto.imagePath = file.filename;
     dto.isActive = true;
+    dto.distrikId = resolveWriteDistrikId(req, body.distrikId ?? null);
     return this.settingsService.uploadStamp(dto);
   }
 

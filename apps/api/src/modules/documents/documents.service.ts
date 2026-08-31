@@ -154,7 +154,8 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
-      const signers = await this.penandatanganService.resolveSigners(dto.type);
+      const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
+      const signers = await this.penandatanganService.resolveSigners(dto.type, distrikId);
       const PdfDoc = buildPdfDocument({
         type: dto.type,
         nomorDokumen,
@@ -503,9 +504,10 @@ export class DocumentsService {
       const { buildCertificatePdf } = require('./pdf-templates/certificate');
 
       const signer = await this.resolveSigner();
-      const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran');
+      const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
+      const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran', distrikId);
       const signers = hasMapping
-        ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran')
+        ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran', distrikId)
         : [
             {
               signerName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
@@ -573,9 +575,10 @@ export class DocumentsService {
     const { buildCertificatePdf } = require('./pdf-templates/certificate');
 
     const signer = await this.resolveSigner();
-    const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran');
+    const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
+    const hasMapping = await this.penandatanganService.hasDocSigners('sertifikat_pendadaran', distrikId);
     const signers = hasMapping
-      ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran')
+      ? await this.penandatanganService.resolveSigners('sertifikat_pendadaran', distrikId)
       : [
           {
             signerName: dto.pastorName || process.env.PASTOR_NAME || 'Pastor Moderator',
@@ -652,9 +655,10 @@ export class DocumentsService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ReactPDF = require('@react-pdf/renderer');
 
+      const distrikId = member?.ranting?.wilayah?.distrik?.id || undefined;
       const signers = dto.signerName
         ? [{ signerName: dto.signerName, signerTitle: dto.signerTitle || '' }]
-        : await this.penandatanganService.resolveSigners('piagam_prestasi');
+        : await this.penandatanganService.resolveSigners('piagam_prestasi', distrikId);
       const PdfDoc = buildPdfDocument({
         type: 'piagam_prestasi',
         nomorDokumen,

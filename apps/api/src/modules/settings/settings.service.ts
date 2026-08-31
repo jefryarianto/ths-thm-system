@@ -114,22 +114,25 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   // ── Signatures & Stamps ───────────────────────────
 
   async uploadSignature(dto: CreateSignatureDto) {
-    // Hanya satu tanda tangan aktif; nonaktifkan yang lama (atomik).
+    // Hanya satu tanda tangan aktif PER SCOPE; nonaktifkan yang lama (atomik).
     return this.prisma.$transaction(async (tx) => {
       if (dto.isActive) {
         await tx.tandaTangan.updateMany({
-          where: { isActive: true },
+          where: { isActive: true, distrikId: dto.distrikId ?? null },
           data: { isActive: false },
         });
       }
-      return tx.tandaTangan.create({ data: dto });
+      return tx.tandaTangan.create({ data: { ...dto, distrikId: dto.distrikId ?? null } });
     });
   }
 
   async getSignatures() {
     return this.prisma.tandaTangan.findMany({
       orderBy: [{ isActive: 'desc' }, { createdAt: 'desc' }],
-      include: { user: { select: { namaLengkap: true } } },
+      include: {
+        user: { select: { namaLengkap: true } },
+        distrik: { select: { id: true, nama: true } },
+      },
     });
   }
 
@@ -138,20 +141,31 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   }
 
   async uploadStamp(dto: CreateStampDto) {
-    // Hanya satu stempel aktif — nonaktifkan yang lama saat upload baru (atomik).
+    // Hanya satu stempel aktif PER SCOPE — nonaktifkan yang lama saat upload baru (atomik).
     return this.prisma.$transaction(async (tx) => {
       if (dto.isActive) {
         await tx.stempel.updateMany({
-          where: { isActive: true },
+          where: { isActive: true, distrikId: dto.distrikId ?? null },
           data: { isActive: false },
         });
       }
-      return tx.stempel.create({ data: dto });
+      return tx.stempel.create({ data: { ...dto, distrikId: dto.distrikId ?? null } });
     });
   }
 
-  async getStamp() {
-    return this.prisma.stempel.findFirst({ where: { isActive: true } });
+  /** Stempel aktif: distrik dulu, fallback global. */
+  async getStamp(distrikId?: string) {
+    if (distrikId) {
+      const scoped = await this.prisma.stempel.findFirst({
+        where: { isActive: true, distrikId },
+        orderBy: { updatedAt: 'desc' },
+      });
+      if (scoped) return scoped;
+    }
+    return this.prisma.stempel.findFirst({
+      where: { isActive: true, distrikId: null },
+      orderBy: { updatedAt: 'desc' },
+    });
   }
 
   // ── Sejarah (public content) ──────────────────────
