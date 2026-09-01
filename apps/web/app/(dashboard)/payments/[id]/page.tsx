@@ -10,9 +10,10 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
 
   ArrowLeft, CreditCard, CheckCircle, Clock, XCircle, User, Building2,
-  AlertCircle, RefreshCw, Download, FileText, Ban,
+  AlertCircle, RefreshCw, Download, FileText, Ban, Eye,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import BuktiPreviewModal from '@/components/bukti-preview-modal';
 
 interface PaymentDetail {
   id: string;
@@ -60,6 +61,7 @@ export default function PaymentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showBuktiModal, setShowBuktiModal] = useState(false);
 
   const fetchPayment = useCallback(async () => {
     if (!id) return;
@@ -280,14 +282,22 @@ export default function PaymentDetailPage() {
               <FileText size={18} className="text-blue-500" />
               Bukti Pembayaran
             </h3>
-            <a
-              href={payment.buktiBayarPath}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
-            >
-              <Download size={14} /> Lihat File
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowBuktiModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
+              >
+                <Eye size={14} /> Lihat Bukti
+              </button>
+              <a
+                href={payment.buktiBayarPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+              >
+                <Download size={14} /> Unduh
+              </a>
+            </div>
           </div>
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-800/50 p-4">
             <p className="text-xs font-mono text-gray-500 dark:text-gray-400 break-all">{payment.buktiBayarPath}</p>
@@ -295,6 +305,12 @@ export default function PaymentDetailPage() {
         </div>
       )}
       {confirmModal}
+      <BuktiPreviewModal
+        open={showBuktiModal}
+        onClose={() => setShowBuktiModal(false)}
+        buktiPath={payment?.buktiBayarPath || ''}
+        anggotaName={payment?.anggota?.namaLengkap}
+      />
     </div>
   );
 }

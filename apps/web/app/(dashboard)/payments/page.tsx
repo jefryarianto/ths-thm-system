@@ -6,7 +6,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2, Settings, ExternalLink } from 'lucide-react';
+import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2, Settings, Eye } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { CanAdmin } from '@/components/auth/can';
 import PageHeader from '@/components/ui/page-header';
@@ -15,6 +15,7 @@ import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 import { useToast } from '@/components/ui/toast';
 import Link from 'next/link';
+import BuktiPreviewModal from '@/components/bukti-preview-modal';
 
 
 interface DuesRecord {
@@ -51,6 +52,7 @@ export default function PaymentsPage() {
     totalDues: 0,
   });
   const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
+  const [buktiPreview, setBuktiPreview] = useState<{ path: string; name: string } | null>(null);
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -315,16 +317,17 @@ export default function PaymentsPage() {
                   </button>
                 )}
                 {due.buktiBayarPath && (
-                  <a
-                    href={due.buktiBayarPath}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setBuktiPreview({
+                      path: due.buktiBayarPath!,
+                      name: due.anggota?.namaLengkap || '',
+                    })}
                     className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
                     title="Lihat bukti pembayaran"
                   >
-                    <ExternalLink size={12} />
+                    <Eye size={12} />
                     Bukti
-                  </a>
+                  </button>
                 )}
               </div>
             </td>
@@ -332,6 +335,12 @@ export default function PaymentsPage() {
         )}
       />
       {confirmModal}
+      <BuktiPreviewModal
+        open={!!buktiPreview}
+        onClose={() => setBuktiPreview(null)}
+        buktiPath={buktiPreview?.path || ''}
+        anggotaName={buktiPreview?.name}
+      />
     </PageContainer>
     </PermissionGuard>
   );
