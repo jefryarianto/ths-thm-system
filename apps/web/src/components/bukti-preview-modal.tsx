@@ -2,7 +2,17 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Modal from '@/components/ui/modal';
-import { Download, ZoomIn, ZoomOut, RotateCcw, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+} from 'lucide-react';
 
 export interface BuktiImage {
   path: string;
@@ -42,7 +52,39 @@ export default function BuktiPreviewModal({
   const [rotation, setRotation] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  // --- Fullscreen API ---
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    try {
+      if (isFullscreen) {
+        await document.exitFullscreen();
+      } else if (containerRef.current.requestFullscreen) {
+        await containerRef.current.requestFullscreen();
+      }
+    } catch {
+      // Fullscreen not supported or denied — silently ignore
+    }
+  }, [isFullscreen]);
+
+  // Sync fullscreen state with browser events
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Exit fullscreen when modal closes
+  useEffect(() => {
+    if (!open && isFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, [open, isFullscreen]);
 
   // Sync initialIndex from props when modal opens
   useEffect(() => {
@@ -65,7 +107,6 @@ export default function BuktiPreviewModal({
       setZoom(1);
       setRotation(0);
       setPan({ x: 0, y: 0 });
-      // Small delay so slide animation can play
       requestAnimationFrame(() => {
         setCurrentIndex(idx);
         setTimeout(() => setSlideDir(null), 200);
@@ -109,14 +150,23 @@ export default function BuktiPreviewModal({
 
   // --- Keyboard navigation ---
   useEffect(() => {
-    if (!open || !hasMultiple) return;
+    if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') goPrev();
-      else if (e.key === 'ArrowRight') goNext();
+      if (hasMultiple) {
+        if (e.key === 'ArrowLeft') goPrev();
+        else if (e.key === 'ArrowRight') goNext();
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+      if (e.key === 'Escape' && isFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, hasMultiple, goPrev, goNext]);
+  }, [open, hasMultiple, goPrev, goNext, toggleFullscreen, isFullscreen]);
 
   // --- Touch gesture refs ---
   const touchRef = useRef({
@@ -147,7 +197,6 @@ export default function BuktiPreviewModal({
         t.initialZoom = zoom;
         e.preventDefault();
       } else if (e.touches.length === 1) {
-        // Double-tap check
         const now = Date.now();
         if (now - t.lastTap < 300) {
           setZoom((prev) => (prev >= 1.9 ? 1 : 2));
@@ -157,7 +206,6 @@ export default function BuktiPreviewModal({
         t.lastTap = now;
 
         if (zoom > 1) {
-          // Pan mode
           t.startX = e.touches[0].clientX;
           t.startY = e.touches[0].clientY;
           t.panX = pan.x;
@@ -165,7 +213,6 @@ export default function BuktiPreviewModal({
           t.isDragging = true;
           t.isSwiping = false;
         } else if (hasMultiple) {
-          // Swipe mode (only at 1x zoom)
           t.swipeStartX = e.touches[0].clientX;
           t.swipeDelta = 0;
           t.isSwiping = true;
@@ -188,7 +235,6 @@ export default function BuktiPreviewModal({
         setZoom(newZoom);
       } else if (e.touches.length === 1) {
         if (t.isDragging && zoom > 1) {
-          // Pan move
           const dx = e.touches[0].clientX - t.startX;
           const dy = e.touches[0].clientY - t.startY;
           const maxPan = (zoom - 1) * 200;
@@ -197,7 +243,6 @@ export default function BuktiPreviewModal({
             y: Math.min(Math.max(t.panY + dy, -maxPan), maxPan),
           });
         } else if (t.isSwiping && zoom <= 1) {
-          // Swipe tracking
           t.swipeDelta = e.touches[0].clientX - t.swipeStartX;
           e.preventDefault();
         }
@@ -208,7 +253,7 @@ export default function BuktiPreviewModal({
 
   const handleTouchEnd = useCallback(() => {
     const t = touchRef.current;
-    const threshold = 60; // px required to trigger swipe
+    const threshold = 60;
 
     if (t.isSwiping && Math.abs(t.swipeDelta) > threshold && zoom <= 1) {
       if (t.swipeDelta > 0 && currentIndex > 0) {
@@ -222,6 +267,117 @@ export default function BuktiPreviewModal({
     t.isSwiping = false;
     t.swipeDelta = 0;
   }, [zoom, currentIndex, allImages.length, goPrev, goNext]);
+
+  // When in fullscreen, render a dedicated full-screen overlay instead of the modal
+  if (isFullscreen) {
+    return (
+      <div
+        ref={containerRef}
+        className="fixed inset-0 z-[9999] bg-black flex flex-col"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: 'none' }}
+      >
+        {/* Fullscreen toolbar */}
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-black/80 backdrop-blur-sm z-10">
+          <div className="flex items-center gap-1">
+            {hasMultiple && (
+              <button
+                onClick={goPrev}
+                disabled={currentIndex === 0}
+                className="p-2 text-white/70 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                title="Sebelumnya"
+              >
+                <ChevronLeft size={20} />
+              </button>
+            )}
+            <button
+              onClick={handleZoomOut}
+              className="p-2 text-white/70 hover:text-white transition"
+              title="Zoom out"
+            >
+              <ZoomOut size={18} />
+            </button>
+            <span className="text-sm font-medium text-white/60 min-w-[3.5rem] text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={handleZoomIn}
+              className="p-2 text-white/70 hover:text-white transition"
+              title="Zoom in"
+            >
+              <ZoomIn size={18} />
+            </button>
+            <button
+              onClick={handleRotate}
+              className="p-2 text-white/70 hover:text-white transition"
+              title="Rotate"
+            >
+              <RotateCcw size={18} />
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-2 py-1 text-xs text-white/60 hover:text-white transition"
+            >
+              Reset
+            </button>
+            {hasMultiple && (
+              <button
+                onClick={goNext}
+                disabled={currentIndex === allImages.length - 1}
+                className="p-2 text-white/70 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                title="Berikutnya"
+              >
+                <ChevronRight size={20} />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {hasMultiple && (
+              <span className="text-xs text-white/50">
+                {currentIndex + 1} / {allImages.length}
+              </span>
+            )}
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 text-white/70 hover:text-white transition"
+              title="Keluar fullscreen (F)"
+            >
+              <Minimize2 size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Fullscreen image */}
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          {currentImage && (
+            <img
+              src={currentImage.path}
+              alt={`Bukti pembayaran${currentImage.name ? ` ${currentImage.name}` : ''}`}
+              className="max-w-none transition-transform duration-200 ease-out pointer-events-none"
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                transformOrigin: 'center center',
+                maxHeight: '100vh',
+                maxWidth: '100vw',
+              }}
+            />
+          )}
+        </div>
+
+        {/* Fullscreen bottom info */}
+        <div className="flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm z-10">
+          <p className="text-xs text-white/50 font-mono truncate max-w-[60%]">
+            {currentImage?.path}
+          </p>
+          {currentImage?.name && (
+            <p className="text-xs text-white/60 font-medium">{currentImage.name}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Modal
@@ -238,7 +394,6 @@ export default function BuktiPreviewModal({
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1">
-            {/* Prev button */}
             {hasMultiple && (
               <button
                 onClick={goPrev}
@@ -282,7 +437,6 @@ export default function BuktiPreviewModal({
               Reset
             </button>
 
-            {/* Next button */}
             {hasMultiple && (
               <button
                 onClick={goNext}
@@ -295,6 +449,13 @@ export default function BuktiPreviewModal({
             )}
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={toggleFullscreen}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900 transition"
+              title="Fullscreen (F)"
+            >
+              <Maximize2 size={12} /> Layar Penuh
+            </button>
             <button
               onClick={handleDownload}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition"
@@ -341,6 +502,7 @@ export default function BuktiPreviewModal({
 
         {/* Image Container with touch gestures */}
         <div
+          ref={containerRef}
           className="relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 min-h-[300px] max-h-[60vh] flex items-center justify-center select-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -396,6 +558,8 @@ export default function BuktiPreviewModal({
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2 text-[10px] text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm px-2 py-1 rounded">
               <span>← →</span>
               <span>Navigate</span>
+              <span className="ml-1">F</span>
+              <span>Fullscreen</span>
             </div>
           )}
         </div>
