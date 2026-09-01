@@ -6,6 +6,7 @@ import { sessionManager } from '@/lib/session-manager';
 import { useToast } from '@/components/ui/toast';
 import { SessionWarningToast } from '@/components/session-warning-toast';
 import { useActivityTracker } from '@/hooks/use-activity-tracker';
+import { playSessionWarningAlert, playSessionExpiredAlert } from '@/lib/notification-alert';
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -28,6 +29,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           sessionManager.reset();
           return;
         }
+        playSessionExpiredAlert();
         toastRef.current('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman login...');
         timeoutId = setTimeout(() => {
           routerRef.current.push('/login');
@@ -50,6 +52,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribeExpiring = sessionManager.subscribeExpiringSoon((secondsRemaining: number) => {
       if (sessionManager.isExpired) return;
+      playSessionWarningAlert();
       const warningToastId = `warning-expiry`;
       toastRef.current('warning', 'Sesi Anda akan segera berakhir.', {
         id: warningToastId,

@@ -11,6 +11,7 @@ import { useNotificationDeepLink } from '../src/hooks/useNotificationDeepLink';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onSessionExpired, onExpiringSoon, scheduleExpiryWarning } from '../src/lib/session-expired';
 import { useActivityTracker } from '../src/hooks/use-activity-tracker';
+import { playSessionWarningAlert, playSessionExpiredAlert, preloadAlertSound } from '../src/lib/notification-alert';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
@@ -45,10 +46,16 @@ export default function RootLayout() {
     loadUser();
   }, []);
 
+  // Preload notification sound on mount
+  useEffect(() => {
+    preloadAlertSound();
+  }, []);
+
   // Listen for session expiry from api-client interceptor
   useEffect(() => {
     const unsubscribe = onSessionExpired(() => {
       setExpiryWarningVisible(false);
+      playSessionExpiredAlert();
       Alert.alert(
         'Sesi Berakhir',
         'Sesi Anda telah berakhir. Silakan login kembali.',
@@ -63,6 +70,7 @@ export default function RootLayout() {
     const unsubscribe = onExpiringSoon((secondsRemaining: number) => {
       setExpirySeconds(secondsRemaining);
       setExpiryWarningVisible(true);
+      playSessionWarningAlert();
     });
     return unsubscribe;
   }, []);
