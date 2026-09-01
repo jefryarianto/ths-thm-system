@@ -4,12 +4,14 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import bcrypt from 'bcryptjs';
 import { Optional } from '@nestjs/common';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
 @Injectable()
 export class KepengurusanService {
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly notificationsService?: NotificationsService,
+    @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
 
   /** Notify all superadmins about a pending kepengurusan change */
@@ -56,6 +58,16 @@ export class KepengurusanService {
     } catch {
       // Fire-and-forget
     }
+  }
+
+  /** Write audit log entry */
+  private audit(action: string, entityId: string | null, details?: Record<string, unknown>) {
+    this.persistentAudit?.log({
+      action,
+      entity: 'Kepengurusan',
+      entityId,
+      details,
+    }).catch(() => {});
   }
 
   /** Helper to resolve or auto-create a user account from an anggotaId */
@@ -297,6 +309,7 @@ export class KepengurusanService {
     // Notify superadmins about new pending entry
     const createUnitName = result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
     this.notifySuperadmins('create', result.jabatan.nama + ' (' + result.user.namaLengkap + ')', createUnitName);
+    this.audit('KEPENGURUSAN_CREATE', result.id, { userId: result.userId, jabatan: result.jabatan.nama, unit: createUnitName });
 
     return result;
   }
@@ -351,6 +364,7 @@ export class KepengurusanService {
     // Notify superadmins about updated entry
     const updateUnitName = result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
     this.notifySuperadmins('update', result.jabatan.nama + ' (' + result.user.namaLengkap + ')', updateUnitName);
+    this.audit('KEPENGURUSAN_UPDATE', result.id, { userId: result.userId, jabatan: result.jabatan.nama, unit: updateUnitName });
 
     return result;
   }
@@ -375,6 +389,7 @@ export class KepengurusanService {
     // Notify superadmins about deletion request
     const delUnitName = item.ranting?.nama || item.wilayah?.nama || item.distrik?.nama || 'organisasi';
     this.notifySuperadmins('delete', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')', delUnitName);
+    this.audit('KEPENGURUSAN_DELETE_REQUEST', item.id, { userId: item.userId, jabatan: item.jabatan?.nama, unit: delUnitName });
 
     return delResult;
   }
@@ -412,6 +427,7 @@ export class KepengurusanService {
 
     // Notify the requester about approval
     this.notifyRequester(item.userId, 'approved', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')');
+    this.audit('KEPENGURUSAN_APPROVE', item.id, { userId: item.userId, approvedBy, jabatan: item.jabatan?.nama });
 
     return approveResult;
   }
@@ -456,6 +472,7 @@ export class KepengurusanService {
 
     // Notify the requester about rejection
     this.notifyRequester(item.userId, 'rejected', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')', reason);
+    this.audit('KEPENGURUSAN_REJECT', item.id, { userId: item.userId, jabatan: item.jabatan?.nama, reason });
 
     return rejectResult;
   }
@@ -467,6 +484,7 @@ export class KepengurusanService {
       const result = await this.approve(id, approvedBy);
       results.push(result);
     }
+    this.audit('KEPENGURUSAN_BULK_APPROVE', null, { ids, approvedBy, count: results.length });
     return { approved: results.length };
   }
 
@@ -477,6 +495,7 @@ export class KepengurusanService {
       const result = await this.reject(id, reason);
       results.push(result);
     }
+    this.audit('KEPENGURUSAN_BULK_REJECT', null, { ids, reason, count: results.length });
     return { rejected: results.length };
   }
 
