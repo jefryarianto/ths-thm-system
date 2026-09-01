@@ -282,11 +282,19 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         const lunasBulanIni = iuranBulanIni.filter((i: any) => i.status === 'lunas').length;
         const belumBayarBulanIni = anggotaAktif - iuranBulanIni.length;
 
+        // Hitung jumlah transaksi per status
+        const [paidCountResult, pendingCountResult] = await Promise.all([
+          (this.prisma as any).iuran.count({ where: { status: 'lunas' } }),
+          (this.prisma as any).iuran.count({ where: { status: { in: ['menunggak', 'belum_dibayar', 'menunggu_verifikasi'] } } }),
+        ]);
+
         return {
           totalIuran: Number(totalIuranAll._sum.jumlah || 0),
           totalTransaksi: totalAllTransaksi,
           totalLunas: Number(totalLunas._sum.jumlah || 0),
           totalMenunggak: Number(totalMenunggak._sum.jumlah || 0),
+          paidCount: paidCountResult,
+          pendingCount: pendingCountResult,
           iuranBulanIni: iuranBulanIniTotal,
           lunasBulanIni,
           belumBayarBulanIni,

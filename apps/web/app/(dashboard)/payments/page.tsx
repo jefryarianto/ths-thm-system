@@ -6,7 +6,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2, Settings } from 'lucide-react';
+import { CreditCard, CheckCircle, Clock, ArrowUpRight, Building2, XCircle, Trash2, Settings, ExternalLink } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { CanAdmin } from '@/components/auth/can';
 import PageHeader from '@/components/ui/page-header';
@@ -70,7 +70,12 @@ export default function PaymentsPage() {
       apiClient.get('/payments/bank-info'),
     ]);
     const { success, data: statsData } = statsRes.data;
-    if (success) setStats(statsData);
+    if (success) setStats({
+      totalCollected: statsData.totalIuran || 0,
+      pendingCount: statsData.pendingCount || 0,
+      paidCount: statsData.paidCount || 0,
+      totalDues: statsData.totalTransaksi || 0,
+    });
     // bankRes.data.data adalah ARRAY rekening aktif - ambil yang pertama (satu-satunya yg aktif)
     const bankList = bankRes.data?.data;
     if (Array.isArray(bankList) && bankList.length > 0) setBankInfo(bankList[0]);
@@ -104,7 +109,7 @@ export default function PaymentsPage() {
   };
 
   const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+    return `Rp ${amount.toLocaleString('id-ID')}`;
   };
 
   return (
@@ -137,7 +142,7 @@ export default function PaymentsPage() {
             iconColor: 'text-yellow-600 dark:text-yellow-400',
           },
           {
-            label: 'Total Iuran',
+            label: 'Total Transaksi',
             value: stats.totalDues,
             icon: ArrowUpRight,
             bg: 'bg-purple-100 dark:bg-purple-950',
@@ -310,14 +315,16 @@ export default function PaymentsPage() {
                   </button>
                 )}
                 {due.buktiBayarPath && (
-                  <span
-                    className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]"
-                    title={due.buktiBayarPath}
+                  <a
+                    href={due.buktiBayarPath}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                    title="Lihat bukti pembayaran"
                   >
-                    {due.buktiBayarPath.length > 30
-                      ? due.buktiBayarPath.substring(0, 30) + '...'
-                      : due.buktiBayarPath}
-                  </span>
+                    <ExternalLink size={12} />
+                    Bukti
+                  </a>
                 )}
               </div>
             </td>
