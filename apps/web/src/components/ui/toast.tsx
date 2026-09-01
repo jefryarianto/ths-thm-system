@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext, type ReactNode } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 // ─── Types ───
@@ -103,14 +103,26 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Dedup: track recent toast messages to prevent spam
+  const recentMessages = useRef(new Map<string, number>());
 
   const addToast = useCallback(
     (type: ToastType, message: string, options?: ToastOptions): string => {
       const id = options?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      setToasts((prev) => [
-        ...prev,
-        { id, type, message, content: options?.content, duration: options?.duration, action: options?.action },
-      ]);
+      
+      // Dedup: skip if same message was shown within last 3 seconds
+      const dedupKey = options?.id ? `id:${options.id}` : `${type}:${message}`;
+      const lastShown = recentMessages.current.get(dedupKey);
+      if (lastShown && Date.now() - lastShown < 3000) {
+        return id; // silently skip duplicate
+      }
+      recentMessages.current.set(dedupKey, Date.now());
+      
+      // Limit max visible toasts to 3
+      setToasts((prev) => {
+        const next = [...prev, { id, type, message, content: options?.content, duration: options?.duration, action: options?.action }];
+        return next.length > 3 ? next.slice(-3) : next;
+      });
       return id;
     },
     [],
@@ -126,7 +138,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
       {/* Toast Container */}
       {toasts.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col gap-2 max-w-sm w-full px-4">
           {toasts.map((t) => (
             <ToastItem key={t.id} toast={t} onDismiss={dismissToast} />
           ))}
@@ -137,11 +149,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <style jsx global>{`
         @keyframes toast-slide-in {
           from {
-            transform: translateX(100%);
+            transform: translateY(-20px) scale(0.95);
             opacity: 0;
           }
           to {
-            transform: translateX(0);
+            transform: translateY(0) scale(1);
             opacity: 1;
           }
         }
