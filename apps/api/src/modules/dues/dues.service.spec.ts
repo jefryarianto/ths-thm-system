@@ -167,8 +167,9 @@ describe('DuesService', () => {
     it('should return dashboard statistics', async () => {
       mockPrisma.iuran.aggregate
         .mockResolvedValueOnce({ _sum: { jumlah: 5000000 }, _count: 50 })
-        .mockResolvedValueOnce({ _sum: { jumlah: 3000000 } })
-        .mockResolvedValueOnce({ _sum: { jumlah: 2000000 } });
+        .mockResolvedValueOnce({ _sum: { jumlah: 5000000 }, _count: 50 })
+        .mockResolvedValueOnce({ _sum: { jumlah: 2000000 }, _count: 15 });
+      mockPrisma.iuran.count.mockResolvedValue(65);
       mockPrisma.iuran.findMany.mockResolvedValue([
         { jumlah: 100000, status: 'lunas' },
         { jumlah: 50000, status: 'lunas' },

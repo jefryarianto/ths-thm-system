@@ -29,7 +29,7 @@ describe('DuesStatCards', () => {
     expect(screen.getByText('Total Iuran Terkumpul')).toBeInTheDocument();
     expect(screen.getByText('Iuran Bulan Ini')).toBeInTheDocument();
     expect(screen.getByText('Total Menunggak')).toBeInTheDocument();
-    expect(screen.getByText('Total Lunas')).toBeInTheDocument();
+    expect(screen.getByText('Total Transaksi')).toBeInTheDocument();
   });
 
   it('renders formatted values', () => {

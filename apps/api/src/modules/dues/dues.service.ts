@@ -245,16 +245,25 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         const currentYear = now.getFullYear();
         const periode = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
 
-        const [totalIuran, totalLunas, totalMenunggak, iuranBulanIni, anggotaAktif] =
+        const [totalIuranAll, totalLunas, totalMenunggak, iuranBulanIni, anggotaAktif] =
           await Promise.all([
-            (this.prisma as any).iuran.aggregate({ _sum: { jumlah: true }, _count: true }),
+            // Total Iuran Terkumpul = hanya iuran yang sudah lunas
             (this.prisma as any).iuran.aggregate({
               _sum: { jumlah: true },
+              _count: true,
               where: { status: 'lunas' },
             }),
+            // Total Lunas = jumlah transaksi yang lunas
             (this.prisma as any).iuran.aggregate({
               _sum: { jumlah: true },
-              where: { status: 'menunggak' },
+              _count: true,
+              where: { status: 'lunas' },
+            }),
+            // Total Menunggak = menunggak + belum_dibayar (semua yang belum lunas)
+            (this.prisma as any).iuran.aggregate({
+              _sum: { jumlah: true },
+              _count: true,
+              where: { status: { in: ['menunggak', 'belum_dibayar'] } },
             }),
             (this.prisma as any).iuran.findMany({
               where: { periode },
@@ -262,6 +271,9 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
             }),
             (this.prisma as any).anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
           ]);
+
+        // Hitung total semua transaksi (tanpa filter status)
+        const totalAllTransaksi = await (this.prisma as any).iuran.count();
 
         const iuranBulanIniTotal = iuranBulanIni.reduce(
           (sum: number, i: any) => sum + Number(i.jumlah),
@@ -271,8 +283,8 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         const belumBayarBulanIni = anggotaAktif - iuranBulanIni.length;
 
         return {
-          totalIuran: Number(totalIuran._sum.jumlah || 0),
-          totalTransaksi: totalIuran._count,
+          totalIuran: Number(totalIuranAll._sum.jumlah || 0),
+          totalTransaksi: totalAllTransaksi,
           totalLunas: Number(totalLunas._sum.jumlah || 0),
           totalMenunggak: Number(totalMenunggak._sum.jumlah || 0),
           iuranBulanIni: iuranBulanIniTotal,

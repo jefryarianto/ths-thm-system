@@ -1,6 +1,6 @@
 'use client';
 
-import { Wallet, CheckCircle2, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Wallet, Receipt, AlertTriangle, TrendingUp } from 'lucide-react';
 
 interface DuesStats {
   totalIuran: number;
@@ -26,11 +26,11 @@ const cards = [
     format: true,
   },
   {
-    key: 'totalLunas',
-    label: 'Total Lunas',
-    icon: CheckCircle2,
+    key: 'totalTransaksi',
+    label: 'Total Transaksi',
+    icon: Receipt,
     color: 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400',
-    format: true,
+    format: false,
   },
   {
     key: 'totalMenunggak',
