@@ -1379,10 +1379,14 @@ model Kepengurusan {
   wilayahId  String?   @map("wilayah_id")
   rantingId  String?   @map("ranting_id")
   parentId   String?   @map("parent_id")
-  startDate  DateTime? @map("start_date")
-  endDate    DateTime? @map("end_date")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  status          String    @default("approved") @map("status")
+  approvedBy      String?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at")
+  rejectionReason String?   @map("rejection_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   user    User    @relation(fields: [userId], references: [id])
   jabatan Jabatan @relation(fields: [jabatanId], references: [id])
@@ -1396,6 +1400,7 @@ model Kepengurusan {
   ranting  Ranting?  @relation(fields: [rantingId], references: [id], onDelete: Cascade)
 
   @@index([parentId])
+  @@index([status])
   @@map("kepengurusan")
 }
 
@@ -1865,8 +1870,12 @@ model QueueUptimeEvent {
   durationMs Int?      @map("duration_ms")
   notes      String? // Root cause / notes from admin
   component  String?   @default("queue") // 'queue' | 'api' | 'database' | 'other'
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  status          String    @default("approved") @map("status")
+  approvedBy      String?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at")
+  rejectionReason String?   @map("rejection_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@index([startTime(sort: Desc)])
   @@map("queue_uptime_events")

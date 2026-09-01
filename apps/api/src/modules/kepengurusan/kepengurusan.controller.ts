@@ -19,10 +19,11 @@ export class KepengurusanController {
     @Query('level') level?: string,
     @Query('unitId') unitId?: string,
     @Query('periodeId') periodeId?: string,
+    @Query('status') status?: string,
     @Req() req?: ScopedRequest,
   ) {
     const scope = req?.scope;
-    return this.service.findAll({ level, unitId, periodeId, scope });
+    return this.service.findAll({ level, unitId, periodeId, status, scope });
   }
 
   @Get(':id')
@@ -63,7 +64,7 @@ export class KepengurusanController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus kepengurusan' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus kepengurusan (memerlukan persetujuan)' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
@@ -92,5 +93,31 @@ export class KepengurusanController {
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Pindahkan parent kepengurusan (drag-drop)' })
   reparent(@Param('id') id: string, @Body() body: { parentId: string | null }) {
     return this.service.reparent(id, body.parentId);
+  }
+
+  // ── Approval workflow ──
+
+  @Get('pending')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Daftar kepengurusan menunggu persetujuan' })
+  findPending(@Req() req?: ScopedRequest) {
+    return this.service.findAll({ status: 'pending', scope: req?.scope });
+  }
+
+  @Patch(':id/approve')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Setujui perubahan kepengurusan' })
+  approve(@Param('id') id: string, @Req() req?: ScopedRequest) {
+    return this.service.approve(id, req?.user?.id || 'system');
+  }
+
+  @Patch(':id/reject')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tolak perubahan kepengurusan' })
+  reject(@Param('id') id: string, @Body() body: { reason?: string }) {
+    return this.service.reject(id, body.reason || '');
+  }
+
+  @Post('bulk-approve')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Setujui beberapa perubahan sekaligus' })
+  bulkApprove(@Body() body: { ids: string[] }, @Req() req?: ScopedRequest) {
+    return this.service.bulkApprove(body.ids || [], req?.user?.id || 'system');
   }
 }

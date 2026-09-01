@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import apiClient from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, Users, Search, Download, Upload, Calendar, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Users, Search, Download, Upload, Calendar, ArrowUpDown, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import Modal from '@/components/ui/modal';
@@ -29,6 +29,10 @@ interface Kepengurusan {
   ranting: { id: string; nama: string } | null;
   parent: { id: string; user: { namaLengkap: string }; jabatan: { nama: string } } | null;
   children: { id: string; user: { namaLengkap: string }; jabatan: { nama: string } }[];
+  status?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
 }
 
 type Level = 'nasional' | 'distrik' | 'wilayah' | 'ranting';
@@ -72,6 +76,9 @@ export default function KepengurusanPage() {
 
   // Import state
   const [importing, setImporting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [pendingCount, setPendingCount] = useState(0);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   // Load dropdowns
   useEffect(() => {
@@ -97,6 +104,12 @@ export default function KepengurusanPage() {
   }, [wilayahId]);
 
   // Fetch kepengurusan data
+  useEffect(() => {
+    apiClient.get('/kepengurusan', { params: { status: 'pending' } })
+      .then(({ data: res }) => { setPendingCount((res.data || []).length); })
+      .catch(() => {});
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -105,11 +118,12 @@ export default function KepengurusanPage() {
       const unitId = level === 'ranting' ? rantingId : level === 'wilayah' ? wilayahId : level === 'distrik' ? distrikId : undefined;
       if (unitId) params.unitId = unitId;
       if (periodeId) params.periodeId = periodeId;
+      if (statusFilter !== 'all') params.status = statusFilter;
       const { data: res } = await apiClient.get('/kepengurusan', { params });
       setData(res.data || []);
     } catch { /* ignore */ }
     setLoading(false);
-  }, [level, distrikId, wilayahId, rantingId, periodeId]);
+  }, [level, distrikId, wilayahId, rantingId, periodeId, statusFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -163,10 +177,10 @@ export default function KepengurusanPage() {
           startDate: form.startDate || null,
           endDate: form.endDate || null,
         });
-        toast('success', 'Kepengurusan berhasil diupdate');
+        toast('success', 'Kepengurusan dikirim untuk persetujuan');
       } else {
         await apiClient.post('/kepengurusan', payload);
-        toast('success', 'Kepengurusan berhasil ditambahkan');
+        toast('success', 'Kepengurusan dikirim untuk persetujuan');
       }
       setShowModal(false);
       setEditData(null);
@@ -182,11 +196,38 @@ export default function KepengurusanPage() {
     if (!ok) return;
     try {
       await apiClient.delete(`/kepengurusan/${item.id}`);
-      toast('success', 'Berhasil dihapus');
+      toast('success', 'Penghapusan menunggu persetujuan');
       fetchData();
     } catch (e: any) {
       toast('error', e?.response?.data?.message || 'Gagal menghapus');
     }
+  };
+
+  const handleApprove = async (id: string) => {
+    setApprovingId(id);
+    try {
+      await apiClient.patch(`/kepengurusan/${id}/approve`);
+      toast('success', 'Berhasil disetujui');
+      fetchData();
+      setPendingCount((c) => Math.max(0, c - 1));
+    } catch (e: any) {
+      toast('error', e?.response?.data?.message || 'Gagal menyetujui');
+    }
+    setApprovingId(null);
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Alasan penolakan (opsional):');
+    setApprovingId(id);
+    try {
+      await apiClient.patch(`/kepengurusan/${id}/reject`, { reason: reason || '' });
+      toast('success', 'Berhasil ditolak');
+      fetchData();
+      setPendingCount((c) => Math.max(0, c - 1));
+    } catch (e: any) {
+      toast('error', e?.response?.data?.message || 'Gagal menolak');
+    }
+    setApprovingId(null);
   };
 
   // Export CSV
@@ -197,6 +238,7 @@ export default function KepengurusanPage() {
       const unitId = level === 'ranting' ? rantingId : level === 'wilayah' ? wilayahId : level === 'distrik' ? distrikId : undefined;
       if (unitId) params.unitId = unitId;
       if (periodeId) params.periodeId = periodeId;
+      if (statusFilter !== 'all') params.status = statusFilter;
       const { data: res } = await apiClient.get('/kepengurusan/export', { params });
       const { headers, rows } = res.data || res;
       const csv = [headers.join(','), ...rows.map((r: Record<string, string>) => headers.map((h: string) => `"${(r[h.toLowerCase()] || '').replace(/"/g, '""')}"`).join(','))].join('\n');
@@ -296,6 +338,17 @@ export default function KepengurusanPage() {
               {periodes.map((p) => <option key={p.id} value={p.id}>{p.nama} {p.isActive ? '(Aktif)' : ''}</option>)}
             </select>
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              <option value="all">Semua</option>
+              <option value="approved">Disetujui</option>
+              <option value="pending">Menunggu</option>
+              <option value="rejected">Ditolak</option>
+              <option value="pending_deletion">Hapus Dijadwalkan</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -314,6 +367,12 @@ export default function KepengurusanPage() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">
           <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
         </button>
+        {pendingCount > 0 && statusFilter === 'all' && (
+          <button onClick={() => setStatusFilter('pending')}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium">
+            <AlertCircle size={16} /> {pendingCount} Menunggu Persetujuan
+          </button>
+        )}
         <button onClick={() => { setEditData(null); setForm(INITIAL_FORM); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
           <Plus size={16} /> Tambah
@@ -367,17 +426,31 @@ export default function KepengurusanPage() {
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{getUnitName(item)}</td>
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.periode.nama}</td>
                     <td className="px-4 py-3">
-                      {isExpired(item) ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                          Selesai
-                        </span>
+                      {item.status === 'pending' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">Menunggu</span>
+                      ) : item.status === 'rejected' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Ditolak</span>
+                      ) : item.status === 'pending_deletion' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">Hapus Dijadwalkan</span>
+                      ) : isExpired(item) ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">Selesai</span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                          Aktif
-                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Aktif</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
+                      {(item.status === 'pending' || item.status === 'pending_deletion') && (
+                        <>
+                          <button onClick={() => handleApprove(item.id)} disabled={approvingId === item.id}
+                            className="text-green-600 hover:text-green-800 dark:text-green-400 disabled:opacity-50" title="Setujui">
+                            <CheckCircle size={14} />
+                          </button>
+                          <button onClick={() => handleReject(item.id)} disabled={approvingId === item.id}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 disabled:opacity-50" title="Tolak">
+                            <XCircle size={14} />
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => {
                         setEditData(item);
                         setForm({

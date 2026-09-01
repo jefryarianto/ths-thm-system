@@ -79,6 +79,7 @@ export class KepengurusanService {
     level?: string;
     unitId?: string;
     periodeId?: string;
+    status?: string;
     scope?: UserScope;
   }) {
     const where: Record<string, unknown> = {};
@@ -95,6 +96,17 @@ export class KepengurusanService {
 
     if (filters?.periodeId) {
       where.periodeId = filters.periodeId;
+    }
+
+    // Status filter: default to 'approved' for non-superadmin, 'pending' for approval queue
+    if (filters?.status) {
+      where.status = filters.status;
+    } else if (!filters?.scope?.distrikId && !filters?.scope?.wilayahId && !filters?.scope?.rantingId) {
+      // Superadmin sees all by default
+    } else {
+      // Non-superadmin: only show approved + their own pending
+      where.OR = where.OR || [];
+      (where.OR as unknown[]).push({ status: 'approved' });
     }
 
     // Apply scope filter for admin_distrik
@@ -219,6 +231,7 @@ export class KepengurusanService {
         parentId: data.parentId || null,
         startDate: data.startDate ? new Date(data.startDate) : null,
         endDate: data.endDate ? new Date(data.endDate) : null,
+        status: 'pending',
       },
       include: {
         user: { select: { namaLengkap: true } },
@@ -260,6 +273,10 @@ export class KepengurusanService {
         parentId: data.parentId === undefined ? undefined : data.parentId,
         startDate: data.startDate === undefined ? undefined : data.startDate ? new Date(data.startDate) : null,
         endDate: data.endDate === undefined ? undefined : data.endDate ? new Date(data.endDate) : null,
+        status: 'pending',
+        approvedBy: null,
+        approvedAt: null,
+        rejectionReason: null,
       },
       include: {
         user: { select: { namaLengkap: true } },
@@ -269,14 +286,91 @@ export class KepengurusanService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, approvedBy?: string) {
+    const item = await this.findOne(id);
     // Check if has children
     const children = await this.prisma.kepengurusan.count({ where: { parentId: id } });
     if (children > 0) {
       throw new BadRequestException('Tidak bisa menghapus: masih ada bawahan yang terkait');
     }
-    return this.prisma.kepengurusan.delete({ where: { id } });
+    // Soft-delete: mark as deleted, requires approval
+    return this.prisma.kepengurusan.update({
+      where: { id },
+      data: {
+        status: 'pending_deletion',
+        approvedBy: null,
+        approvedAt: null,
+      },
+    });
+  }
+
+  /** Approve a pending kepengurusan change */
+  async approve(id: string, approvedBy: string) {
+    const item = await this.prisma.kepengurusan.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Kepengurusan tidak ditemukan');
+
+    if (item.status === 'pending_deletion') {
+      // Actually delete
+      await this.prisma.kepengurusan.delete({ where: { id } });
+      return { deleted: true };
+    }
+
+    return this.prisma.kepengurusan.update({
+      where: { id },
+      data: {
+        status: 'approved',
+        approvedBy,
+        approvedAt: new Date(),
+        rejectionReason: null,
+      },
+      include: {
+        user: { select: { namaLengkap: true } },
+        jabatan: { select: { nama: true } },
+      },
+    });
+  }
+
+  /** Reject a pending kepengurusan change */
+  async reject(id: string, reason: string) {
+    const item = await this.prisma.kepengurusan.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Kepengurusan tidak ditemukan');
+
+    if (item.status === 'pending_deletion') {
+      // Cancel deletion: restore to approved
+      return this.prisma.kepengurusan.update({
+        where: { id },
+        data: {
+          status: 'approved',
+          rejectionReason: null,
+        },
+        include: {
+          user: { select: { namaLengkap: true } },
+          jabatan: { select: { nama: true } },
+        },
+      });
+    }
+
+    return this.prisma.kepengurusan.update({
+      where: { id },
+      data: {
+        status: 'rejected',
+        rejectionReason: reason,
+      },
+      include: {
+        user: { select: { namaLengkap: true } },
+        jabatan: { select: { nama: true } },
+      },
+    });
+  }
+
+  /** Bulk approve all pending items */
+  async bulkApprove(ids: string[], approvedBy: string) {
+    const results = [];
+    for (const id of ids) {
+      const result = await this.approve(id, approvedBy);
+      results.push(result);
+    }
+    return { approved: results.length };
   }
 
   /** Reparent a kepengurusan node (for drag-drop) */
@@ -425,6 +519,7 @@ export class KepengurusanService {
             distrikId: distrikId || null,
             wilayahId: wilayahId || null,
             rantingId: rantingId || null,
+            status: 'pending',
           },
         });
         results.created++;

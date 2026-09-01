@@ -182,6 +182,9 @@ export class PublicService {
       where.rantingId = unitId;
     }
 
+    // Only show approved kepengurusan on public pages
+    where.status = 'approved';
+
     // Filter by period if provided, otherwise use active period
     if (periodeId) {
       where.periodeId = periodeId;
@@ -280,6 +283,7 @@ export class PublicService {
 
     const results = await this.prisma.kepengurusan.findMany({
       where: {
+        status: 'approved',
         OR: [
           {
             user: { namaLengkap: { contains: search, mode: 'insensitive' } },
