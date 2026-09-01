@@ -87,7 +87,7 @@ function roleBadge(role: string) {
 
 export default function SessionsPage() {
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, confirmModal } = useConfirm();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -373,6 +373,7 @@ export default function SessionsPage() {
           </div>
         </div>
       )}
+      {confirmModal}
     </PageContainer>
   );
 }

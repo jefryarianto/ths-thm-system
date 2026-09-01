@@ -51,7 +51,7 @@ function formatAge(dateStr: string): string {
 
 export default function BackupPage() {
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, confirmModal } = useConfirm();
   const [backups, setBackups] = useState<BackupFile[]>([]);
   const [diskInfo, setDiskInfo] = useState<DiskInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -370,6 +370,7 @@ export default function BackupPage() {
           </div>
         )}
       </div>
+      {confirmModal}
     </PageContainer>
   );
 }

@@ -20,7 +20,7 @@ interface Periode {
 
 export default function PeriodePage() {
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, confirmModal } = useConfirm();
   const [data, setData] = useState<Periode[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -160,6 +160,7 @@ export default function PeriodePage() {
           </div>
         </div>
       </Modal>
+      {confirmModal}
     </PageContainer>
   );
 }

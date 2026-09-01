@@ -19,7 +19,7 @@ interface Jabatan {
 
 export default function JabatanPage() {
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, confirmModal } = useConfirm();
   const [data, setData] = useState<Jabatan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -141,6 +141,7 @@ export default function JabatanPage() {
           </div>
         </div>
       </Modal>
+      {confirmModal}
     </PageContainer>
   );
 }

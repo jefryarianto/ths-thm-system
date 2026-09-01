@@ -34,7 +34,7 @@ type Level = 'nasional' | 'distrik' | 'wilayah' | 'ranting';
 
 export default function KepengurusanPage() {
   const toast = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, confirmModal } = useConfirm();
   const [data, setData] = useState<Kepengurusan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -451,6 +451,7 @@ export default function KepengurusanPage() {
           </div>
         </div>
       </Modal>
+      {confirmModal}
     </PageContainer>
   );
 }
