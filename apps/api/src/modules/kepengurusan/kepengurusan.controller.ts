@@ -34,7 +34,8 @@ export class KepengurusanController {
   @Post()
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tambah kepengurusan baru' })
   create(@Body() body: {
-    userId: string;
+    userId?: string;
+    anggotaId?: string;
     jabatanId: string;
     periodeId: string;
     nasionalId?: string;
@@ -42,6 +43,8 @@ export class KepengurusanController {
     wilayahId?: string;
     rantingId?: string;
     parentId?: string;
+    startDate?: string;
+    endDate?: string;
   }, @Req() req?: ScopedRequest) {
     return this.service.create(body, req?.scope);
   }
@@ -50,8 +53,11 @@ export class KepengurusanController {
   @CrudAuth('superadmin', 'admin_distrik', { summary: 'Update kepengurusan' })
   update(@Param('id') id: string, @Body() body: {
     userId?: string;
+    anggotaId?: string;
     jabatanId?: string;
     parentId?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
   }) {
     return this.service.update(id, body);
   }

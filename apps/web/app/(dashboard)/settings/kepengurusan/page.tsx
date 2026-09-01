@@ -6,6 +6,7 @@ import { Plus, Edit3, Trash2, RefreshCw, Users, Search, Download, Upload, Calend
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import Modal from '@/components/ui/modal';
+import MemberSearchPicker from '@/components/members/MemberSearchPicker';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
@@ -55,13 +56,19 @@ export default function KepengurusanPage() {
   const [rantings, setRantings] = useState<{ id: string; nama: string }[]>([]);
   const [periodes, setPeriodes] = useState<{ id: string; nama: string; isActive: boolean }[]>([]);
   const [jabatans, setJabatans] = useState<{ id: string; nama: string; urutan: number }[]>([]);
-  const [users, setUsers] = useState<{ id: string; namaLengkap: string }[]>([]);
 
   // Form state
-  const [form, setForm] = useState({
-    userId: '', jabatanId: '', periodeId: '', parentId: '',
-    startDate: '', endDate: '',
-  });
+  const INITIAL_FORM = {
+    userId: '',
+    anggotaId: '',
+    selectedMemberName: '',
+    jabatanId: '',
+    periodeId: '',
+    parentId: '',
+    startDate: '',
+    endDate: '',
+  };
+  const [form, setForm] = useState(INITIAL_FORM);
 
   // Import state
   const [importing, setImporting] = useState(false);
@@ -88,13 +95,6 @@ export default function KepengurusanPage() {
     if (!wilayahId) { setRantings([]); return; }
     apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`).then(({ data }) => setRantings(data.data || [])).catch(() => {});
   }, [wilayahId]);
-
-  // Load users when modal opens
-  useEffect(() => {
-    if (showModal) {
-      apiClient.get('/users?limit=200').then(({ data }) => setUsers(data.data || [])).catch(() => {});
-    }
-  }, [showModal]);
 
   // Fetch kepengurusan data
   const fetchData = useCallback(async () => {
@@ -135,17 +135,18 @@ export default function KepengurusanPage() {
   });
 
   const handleSave = async () => {
-    if (!form.userId) return toast('error', 'Pilih user');
+    if (!form.userId && !form.anggotaId) return toast('error', 'Pilih pengurus / anggota');
     if (!form.jabatanId) return toast('error', 'Pilih jabatan');
     if (!form.periodeId && !periodeId) return toast('error', 'Pilih periode');
 
     try {
       const unitId = level === 'ranting' ? rantingId : level === 'wilayah' ? wilayahId : distrikId;
       const payload: Record<string, string | null> = {
-        userId: form.userId,
+        userId: form.userId || null,
+        anggotaId: form.anggotaId || null,
         jabatanId: form.jabatanId,
         periodeId: form.periodeId || periodeId,
-        parentId: form.parentId,
+        parentId: form.parentId || null,
         startDate: form.startDate || null,
         endDate: form.endDate || null,
       };
@@ -155,9 +156,12 @@ export default function KepengurusanPage() {
 
       if (editData) {
         await apiClient.patch(`/kepengurusan/${editData.id}`, {
-          userId: form.userId, jabatanId: form.jabatanId,
+          userId: form.userId || undefined,
+          anggotaId: form.anggotaId || undefined,
+          jabatanId: form.jabatanId,
           parentId: form.parentId || null,
-          startDate: form.startDate || null, endDate: form.endDate || null,
+          startDate: form.startDate || null,
+          endDate: form.endDate || null,
         });
         toast('success', 'Kepengurusan berhasil diupdate');
       } else {
@@ -166,7 +170,7 @@ export default function KepengurusanPage() {
       }
       setShowModal(false);
       setEditData(null);
-      setForm({ userId: '', jabatanId: '', periodeId: '', parentId: '', startDate: '', endDate: '' });
+      setForm(INITIAL_FORM);
       fetchData();
     } catch (e: any) {
       toast('error', e?.response?.data?.message || 'Gagal menyimpan');
@@ -310,7 +314,7 @@ export default function KepengurusanPage() {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">
           <Upload size={16} /> {importing ? 'Importing...' : 'Import'}
         </button>
-        <button onClick={() => { setEditData(null); setForm({ userId: '', jabatanId: '', periodeId: '', parentId: '', startDate: '', endDate: '' }); setShowModal(true); }}
+        <button onClick={() => { setEditData(null); setForm(INITIAL_FORM); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
           <Plus size={16} /> Tambah
         </button>
@@ -377,7 +381,11 @@ export default function KepengurusanPage() {
                       <button onClick={() => {
                         setEditData(item);
                         setForm({
-                          userId: item.userId, jabatanId: item.jabatanId, periodeId: item.periodeId,
+                          userId: item.userId,
+                          anggotaId: '',
+                          selectedMemberName: item.user.namaLengkap,
+                          jabatanId: item.jabatanId,
+                          periodeId: item.periodeId,
                           parentId: item.parentId || '',
                           startDate: item.startDate ? item.startDate.split('T')[0] : '',
                           endDate: item.endDate ? item.endDate.split('T')[0] : '',
@@ -402,12 +410,36 @@ export default function KepengurusanPage() {
       <Modal open={showModal} onClose={() => { setShowModal(false); setEditData(null); }} title={editData ? 'Edit Kepengurusan' : 'Tambah Kepengurusan'}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User</label>
-            <select value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-              <option value="">Pilih User</option>
-              {users.map((u) => <option key={u.id} value={u.id}>{u.namaLengkap}</option>)}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Pilih Anggota / Pengurus <span className="text-red-500">*</span>
+            </label>
+            {editData && !form.anggotaId ? (
+              <div className="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {form.selectedMemberName || 'Pengurus Terpilih'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, userId: '', selectedMemberName: '' })}
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  Ganti Anggota
+                </button>
+              </div>
+            ) : (
+              <MemberSearchPicker
+                value={form.anggotaId}
+                onChange={(member) => {
+                  setForm({
+                    ...form,
+                    anggotaId: member ? member.id : '',
+                    userId: member ? member.id : '',
+                    selectedMemberName: member ? member.namaLengkap : '',
+                  });
+                }}
+                placeholder="Cari nama anggota, NRA, atau email..."
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jabatan</label>

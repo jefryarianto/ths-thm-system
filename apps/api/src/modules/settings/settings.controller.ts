@@ -195,6 +195,22 @@ export class SettingsController {
     return this.settingsService.updateOrganisasi(body);
   }
 
+  @Get('organisasi/kepengurusan-preview')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Pratinjau data kepengurusan nasional aktif untuk sinkronisasi' })
+  async getKepengurusanPreview() {
+    return this.settingsService.getKepengurusanPreview();
+  }
+
+  @Post('organisasi/sync')
+  @CrudAuth('superadmin', { scope: 'national', summary: 'Sinkronkan kepengurusan nasional ke struktur organisasi publik' })
+  async syncFromKepengurusan(@Body() body: { mode?: 'replace' | 'append' }) {
+    const mode = body.mode || 'replace';
+    if (mode !== 'replace' && mode !== 'append') {
+      return { success: false, message: 'Mode harus "replace" atau "append"' };
+    }
+    return this.settingsService.syncFromKepengurusan(mode);
+  }
+
   @Get('branding/colors')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil warna branding' })
   async getBrandingColors() {

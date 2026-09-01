@@ -1,10 +1,48 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
+import bcrypt from 'bcryptjs';
 
 @Injectable()
 export class KepengurusanService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Helper to resolve or auto-create a user account from an anggotaId */
+  private async resolveUserFromMember(anggotaId: string): Promise<string> {
+    const member = await this.prisma.anggota.findUnique({ where: { id: anggotaId } });
+    if (!member) throw new BadRequestException('Anggota tidak ditemukan');
+
+    let user = null;
+    if (member.email) {
+      user = await this.prisma.user.findUnique({ where: { email: member.email } });
+    }
+    if (!user && member.noHp) {
+      user = await this.prisma.user.findFirst({ where: { phone: member.noHp } });
+    }
+    if (!user) {
+      const syntheticEmail = `${member.id}@noemail.ths-thm.org`;
+      user = await this.prisma.user.findUnique({ where: { email: syntheticEmail } });
+    }
+
+    if (!user) {
+      const email = member.email || (member.noHp ? `${member.noHp}@noemail.ths-thm.org` : `${member.id}@noemail.ths-thm.org`);
+      const passwordHash = await bcrypt.hash('thsthm123456', 12);
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          namaLengkap: member.namaLengkap,
+          role: 'anggota',
+          rantingId: member.rantingId,
+          isActive: true,
+          phone: member.noHp || null,
+          mustChangePassword: true,
+        },
+      });
+    }
+
+    return user.id;
+  }
 
   /** Build scope-aware where clause for admin_distrik scoping */
   private buildScopeFilter(scope?: UserScope): Record<string, unknown> {
@@ -112,7 +150,8 @@ export class KepengurusanService {
   }
 
   async create(data: {
-    userId: string;
+    userId?: string;
+    anggotaId?: string;
     jabatanId: string;
     periodeId: string;
     nasionalId?: string;
@@ -123,8 +162,17 @@ export class KepengurusanService {
     startDate?: string;
     endDate?: string;
   }, scope?: UserScope) {
+    let resolvedUserId = data.userId;
+    if (data.anggotaId) {
+      resolvedUserId = await this.resolveUserFromMember(data.anggotaId);
+    }
+
+    if (!resolvedUserId) {
+      throw new BadRequestException('User atau Anggota harus dipilih');
+    }
+
     // Validate user exists
-    const user = await this.prisma.user.findUnique({ where: { id: data.userId } });
+    const user = await this.prisma.user.findUnique({ where: { id: resolvedUserId } });
     if (!user) throw new BadRequestException('User tidak ditemukan');
 
     // Validate jabatan exists
@@ -147,7 +195,7 @@ export class KepengurusanService {
 
     // Check duplicate: same user + same unit + same period
     const existingWhere: Record<string, unknown> = {
-      userId: data.userId,
+      userId: resolvedUserId,
       periodeId: data.periodeId,
     };
     if (data.distrikId) existingWhere.distrikId = data.distrikId;
@@ -161,7 +209,7 @@ export class KepengurusanService {
 
     return this.prisma.kepengurusan.create({
       data: {
-        userId: data.userId,
+        userId: resolvedUserId,
         jabatanId: data.jabatanId,
         periodeId: data.periodeId,
         nasionalId: data.nasionalId,
@@ -182,6 +230,7 @@ export class KepengurusanService {
 
   async update(id: string, data: {
     userId?: string;
+    anggotaId?: string;
     jabatanId?: string;
     parentId?: string | null;
     startDate?: string | null;
@@ -189,8 +238,13 @@ export class KepengurusanService {
   }) {
     await this.findOne(id);
 
-    if (data.userId) {
-      const user = await this.prisma.user.findUnique({ where: { id: data.userId } });
+    let resolvedUserId = data.userId;
+    if (data.anggotaId) {
+      resolvedUserId = await this.resolveUserFromMember(data.anggotaId);
+    }
+
+    if (resolvedUserId) {
+      const user = await this.prisma.user.findUnique({ where: { id: resolvedUserId } });
       if (!user) throw new BadRequestException('User tidak ditemukan');
     }
     if (data.jabatanId) {
@@ -201,7 +255,7 @@ export class KepengurusanService {
     return this.prisma.kepengurusan.update({
       where: { id },
       data: {
-        ...(data.userId && { userId: data.userId }),
+        ...(resolvedUserId && { userId: resolvedUserId }),
         ...(data.jabatanId && { jabatanId: data.jabatanId }),
         parentId: data.parentId === undefined ? undefined : data.parentId,
         startDate: data.startDate === undefined ? undefined : data.startDate ? new Date(data.startDate) : null,

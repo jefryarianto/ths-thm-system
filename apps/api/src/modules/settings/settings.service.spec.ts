@@ -43,6 +43,14 @@ describe('SettingsService', () => {
       updateMany: jest.fn(),
       findFirst: jest.fn(),
     },
+    kepengurusan: {
+      findMany: jest.fn(),
+    },
+    organisasi: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
   };
 
   const mockCache = {
@@ -196,6 +204,110 @@ describe('SettingsService', () => {
 
       const result = await service.getStamp();
       expect(result).toBeNull();
+    });
+  });
+
+  describe('getOrganisasi', () => {
+    it('should create a default organisasi record when none exists', async () => {
+      mockPrisma.organisasi.findFirst.mockResolvedValue(null);
+      mockPrisma.organisasi.create.mockResolvedValue({ id: '1', struktur: [], isVisible: true });
+
+      const result = await service.getOrganisasi();
+      expect(mockPrisma.organisasi.create).toHaveBeenCalled();
+      expect(result.struktur).toEqual([]);
+    });
+  });
+
+  describe('getKepengurusanPreview', () => {
+    it('should fetch active national kepengurusan and map to organisasi items', async () => {
+      mockPrisma.kepengurusan.findMany.mockResolvedValue([
+        {
+          id: 'k1',
+          user: { namaLengkap: 'Budi' },
+          jabatan: { nama: 'Ketua Umum', urutan: 1 },
+          periode: { nama: '2026-2028' },
+        },
+        {
+          id: 'k2',
+          user: { namaLengkap: 'Sari' },
+          jabatan: { nama: 'Sekretaris', urutan: 2 },
+          periode: { nama: '2026-2028' },
+        },
+      ]);
+
+      const result = await service.getKepengurusanPreview();
+
+      expect(mockPrisma.kepengurusan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            nasionalId: { not: null },
+            distrikId: null,
+            wilayahId: null,
+            rantingId: null,
+            periode: { isActive: true },
+          }),
+        }),
+      );
+      expect(result).toEqual([
+        { jabatan: 'Ketua Umum', nama: 'Budi', deskripsi: 'Periode 2026-2028' },
+        { jabatan: 'Sekretaris', nama: 'Sari', deskripsi: 'Periode 2026-2028' },
+      ]);
+    });
+
+    it('should return empty array when no active national kepengurusan', async () => {
+      mockPrisma.kepengurusan.findMany.mockResolvedValue([]);
+      const result = await service.getKepengurusanPreview();
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('syncFromKepengurusan', () => {
+    const previewItems = [
+      { jabatan: 'Ketua Umum', nama: 'Budi', deskripsi: 'Periode 2026-2028' },
+    ];
+
+    beforeEach(() => {
+      jest.spyOn(service, 'getKepengurusanPreview').mockResolvedValue(previewItems);
+    });
+
+    it('should return failure when no kepengurusan data', async () => {
+      jest.spyOn(service, 'getKepengurusanPreview').mockResolvedValue([]);
+      const result = await service.syncFromKepengurusan('replace');
+      expect(result.success).toBe(false);
+      expect(result.count).toBe(0);
+    });
+
+    it('should replace struktur when mode is replace', async () => {
+      mockPrisma.organisasi.findFirst.mockResolvedValue({ id: '1', struktur: [], isVisible: true });
+      mockPrisma.organisasi.update.mockResolvedValue({ id: '1', struktur: previewItems, isVisible: true });
+
+      const result = await service.syncFromKepengurusan('replace');
+      expect(result.success).toBe(true);
+      expect(result.struktur).toEqual(previewItems);
+      expect(mockPrisma.organisasi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ struktur: previewItems }),
+        }),
+      );
+    });
+
+    it('should append unique items and deduplicate when mode is append', async () => {
+      mockPrisma.organisasi.findFirst.mockResolvedValue({
+        id: '1',
+        struktur: [{ jabatan: 'Ketua Umum', nama: 'Budi', deskripsi: 'lama' }],
+        isVisible: true,
+      });
+      mockPrisma.organisasi.update.mockResolvedValue({
+        id: '1',
+        struktur: [{ jabatan: 'Ketua Umum', nama: 'Budi', deskripsi: 'lama' }],
+        isVisible: true,
+      });
+
+      const result = await service.syncFromKepengurusan('append');
+      expect(result.success).toBe(true);
+      // Duplicate entry (same jabatan+nama) is not re-added
+      expect(result.struktur).toHaveLength(1);
+      expect(result.struktur[0].deskripsi).toBe('lama');
     });
   });
 });
