@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Patch, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Query, Req, UseGuards, Res, Inject, UnauthorizedException, UseInterceptors, UploadedFile, Delete, Param } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -139,6 +139,56 @@ export class AuthController {
       this.authService.clearRefreshTokenCookie(res);
     }
     return { success: true, message: 'Sesi dicabut' };
+  }
+
+  // ── Admin Session Management ────────────────────────────────
+
+  @Get('admin/sessions')
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Daftar semua sesi aktif (admin)' })
+  adminListSessions(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.authService.adminListAllSessions({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 50,
+      search,
+      userId,
+    });
+  }
+
+  @Get('admin/sessions/stats')
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Statistik sesi aktif (admin)' })
+  adminSessionStats() {
+    return this.authService.adminGetSessionStats();
+  }
+
+  @Delete('admin/sessions/:id')
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cabut sesi pengguna tertentu (admin force-logout)' })
+  adminRevokeSession(@Param('id') sessionId: string, @Req() req: Request) {
+    return this.authService.adminRevokeSession(sessionId, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+  }
+
+  @Post('admin/sessions/revoke-all/:userId')
+  @Roles('superadmin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cabut semua sesi pengguna (admin force-logout all)' })
+  adminRevokeAllUserSessions(@Param('userId') userId: string, @Req() req: Request) {
+    return this.authService.adminRevokeAllUserSessions(userId, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
   }
 
   @Post('admin/unlock')

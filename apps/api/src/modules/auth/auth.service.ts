@@ -458,6 +458,199 @@ export class AuthService {
     this.logAuthAudit('LOGOUT', userId, null, meta);
   }
 
+  // ── Admin Session Management ──────────────────────────────────
+
+  /**
+   * List ALL active sessions across all users (admin only).
+   * Joins with User to show user name, email, role.
+   */
+  async adminListAllSessions(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    userId?: string;
+  }) {
+    const page = params?.page ?? 1;
+    const limit = Math.min(params?.limit ?? 50, 100);
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {
+      revokedAt: null,
+    };
+
+    if (params?.userId) {
+      where.userId = params.userId;
+    }
+
+    if (params?.search) {
+      where.user = {
+        OR: [
+          { namaLengkap: { contains: params.search, mode: 'insensitive' } },
+          { email: { contains: params.search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const [sessions, total] = await Promise.all([
+      this.prisma.userSession.findMany({
+        where,
+        orderBy: { lastUsedAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          deviceName: true,
+          ipAddress: true,
+          userAgent: true,
+          lastUsedAt: true,
+          createdAt: true,
+          refreshToken: true,
+          user: {
+            select: {
+              id: true,
+              namaLengkap: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+      }),
+      this.prisma.userSession.count({ where }),
+    ]);
+
+    return {
+      data: sessions.map((s) => ({
+        id: s.id,
+        deviceName: s.deviceName,
+        ipAddress: s.ipAddress,
+        userAgent: s.userAgent,
+        lastUsedAt: s.lastUsedAt,
+        createdAt: s.createdAt,
+        user: s.user,
+      })),
+      meta: {
+        total,
+        totalPages: Math.ceil(total / limit),
+        page,
+        limit,
+      },
+    };
+  }
+
+  /**
+   * Get session statistics (admin only).
+   */
+  async adminGetSessionStats() {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const [totalActive, activeLastHour, activeLastDay, uniqueUsers, deviceBreakdown] =
+      await Promise.all([
+        this.prisma.userSession.count({ where: { revokedAt: null } }),
+        this.prisma.userSession.count({
+          where: { revokedAt: null, lastUsedAt: { gte: oneHourAgo } },
+        }),
+        this.prisma.userSession.count({
+          where: { revokedAt: null, lastUsedAt: { gte: oneDayAgo } },
+        }),
+        this.prisma.userSession.findMany({
+          where: { revokedAt: null },
+          distinct: ['userId'],
+          select: { userId: true },
+        }),
+        this.prisma.userSession.findMany({
+          where: { revokedAt: null },
+          select: { userAgent: true, deviceName: true },
+        }),
+      ]);
+
+    // Parse device types from user agent
+    const devices: Record<string, number> = {};
+    for (const s of deviceBreakdown) {
+      let deviceType = s.deviceName || 'Unknown';
+      if (!s.deviceName && s.userAgent) {
+        const ua = s.userAgent.toLowerCase();
+        if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+          deviceType = 'Mobile';
+        } else if (ua.includes('electron')) {
+          deviceType = 'Desktop App';
+        } else {
+          deviceType = 'Web Browser';
+        }
+      }
+      devices[deviceType] = (devices[deviceType] || 0) + 1;
+    }
+
+    return {
+      totalActive,
+      activeLastHour,
+      activeLastDay,
+      uniqueUsers: uniqueUsers.length,
+      devices,
+    };
+  }
+
+  /**
+   * Force-revoke a specific session by ID (admin only, no ownership check).
+   */
+  async adminRevokeSession(sessionId: string, meta?: AuthMeta) {
+    const session = await this.prisma.userSession.findUnique({
+      where: { id: sessionId },
+    });
+    if (!session) throw new NotFoundException('Sesi tidak ditemukan');
+    if (session.revokedAt) return { success: true, message: 'Sesi sudah dicabut' };
+
+    await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    });
+
+    // If this was the user's current session, clear their refresh token
+    const user = await this.prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { refreshToken: true },
+    });
+    if (user?.refreshToken === session.refreshToken) {
+      await this.prisma.user.update({
+        where: { id: session.userId },
+        data: { refreshToken: null },
+      });
+    }
+
+    this.logAuthAudit('ADMIN_SESSION_REVOKE', session.userId, {
+      sessionId,
+      adminAction: true,
+    }, meta);
+
+    return { success: true, message: 'Sesi dicabut' };
+  }
+
+  /**
+   * Revoke ALL active sessions for a specific user (admin force-logout).
+   */
+  async adminRevokeAllUserSessions(userId: string, meta?: AuthMeta) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Pengguna tidak ditemukan');
+
+    const result = await this.prisma.userSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
+    });
+
+    this.logAuthAudit('ADMIN_SESSION_REVOKE_ALL', userId, {
+      sessionsRevoked: result.count,
+      adminAction: true,
+    }, meta);
+
+    return { success: true, message: `${result.count} sesi dicabut`, count: result.count };
+  }
+
   private async createSession(userId: string, refreshToken: string, meta?: AuthMeta) {
     try {
       await this.prisma.userSession.create({

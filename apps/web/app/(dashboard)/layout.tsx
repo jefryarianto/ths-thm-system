@@ -206,6 +206,7 @@ const menuGroups: MenuGroup[] = [
         adminOnly: true,
       },
       { href: '/settings/fcm-test', label: 'FCM Push Test', icon: Smartphone, minRole: 'superadmin' },
+      { href: '/settings/sessions', label: 'Manajemen Sesi', icon: Shield, minRole: 'superadmin' },
       { href: '/settings/backup', label: 'Database Backup', icon: Database, minRole: 'superadmin' },
       {
         href: '/ws-monitor',
