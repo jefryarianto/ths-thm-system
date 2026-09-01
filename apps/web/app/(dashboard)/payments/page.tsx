@@ -15,7 +15,7 @@ import DataTable from '@/components/ui/data-table';
 import SearchBar from '@/components/ui/search-bar';
 import { useToast } from '@/components/ui/toast';
 import Link from 'next/link';
-import BuktiPreviewModal from '@/components/bukti-preview-modal';
+import BuktiPreviewModal, { type BuktiImage } from '@/components/bukti-preview-modal';
 
 
 interface DuesRecord {
@@ -52,7 +52,7 @@ export default function PaymentsPage() {
     totalDues: 0,
   });
   const [bankInfo, setBankInfo] = useState<BankInfo | null>(null);
-  const [buktiPreview, setBuktiPreview] = useState<{ path: string; name: string } | null>(null);
+  const [buktiPreview, setBuktiPreview] = useState<{ index: number } | null>(null);
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -318,10 +318,17 @@ export default function PaymentsPage() {
                 )}
                 {due.buktiBayarPath && (
                   <button
-                    onClick={() => setBuktiPreview({
-                      path: due.buktiBayarPath!,
-                      name: due.anggota?.namaLengkap || '',
-                    })}
+                    onClick={() => {
+                      // Build gallery of all bukti on this page
+                      const buktiImages: BuktiImage[] = (dues || [])
+                        .filter((d) => d.buktiBayarPath)
+                        .map((d) => ({
+                          path: d.buktiBayarPath!,
+                          name: d.anggota?.namaLengkap || '',
+                        }));
+                      const idx = buktiImages.findIndex((b) => b.path === due.buktiBayarPath);
+                      setBuktiPreview({ index: idx >= 0 ? idx : 0 });
+                    }}
                     className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
                     title="Lihat bukti pembayaran"
                   >
@@ -338,8 +345,15 @@ export default function PaymentsPage() {
       <BuktiPreviewModal
         open={!!buktiPreview}
         onClose={() => setBuktiPreview(null)}
-        buktiPath={buktiPreview?.path || ''}
-        anggotaName={buktiPreview?.name}
+        images={
+          (dues || [])
+            .filter((d) => d.buktiBayarPath)
+            .map((d) => ({
+              path: d.buktiBayarPath!,
+              name: d.anggota?.namaLengkap || '',
+            }))
+        }
+        initialIndex={buktiPreview?.index ?? 0}
       />
     </PageContainer>
     </PermissionGuard>
