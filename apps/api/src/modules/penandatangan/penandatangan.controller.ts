@@ -16,8 +16,11 @@ export class PenandatanganController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', {
     summary: 'Daftar penandatangan (termasuk cakupan distrik masing-masing)',
   })
-  findAll() {
-    return this.service.findAll();
+  findAll(@Req() req: ScopedRequest) {
+    return this.service.findAll({
+      role: req?.user?.role,
+      distrikId: req?.scope?.distrikId,
+    });
   }
 
   @Get('active')

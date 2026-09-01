@@ -10,6 +10,7 @@ describe('PenandatanganService (scope distrik)', () => {
     findFirst: jest.fn(),
     findUnique: jest.fn(),
     count: jest.fn(),
+    create: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),
     delete: jest.fn(),
@@ -67,15 +68,12 @@ describe('PenandatanganService (scope distrik)', () => {
     });
   });
 
-  describe('create/update (satu aktif per scope)', () => {
-    it('create aktif hanya menonaktifkan penandatangan dalam scope yang sama', async () => {
-      mockPrisma.$transaction.mockImplementation(async (cb: (tx: any) => any) =>
-        cb({ penandatangan: { updateMany: m.updateMany, create: m.update } }),
-      );
-      m.update.mockImplementation(async (args: any) => ({ id: 'p1', ...args.data }));
+  describe('create/update (multi-active per scope)', () => {
+    it('create creates penandatangan without deactivating others', async () => {
+      m.create.mockImplementation(async (args: any) => ({ id: 'p1', ...args.data }));
       await service.create({ nama: 'Baru Distrik', jabatan: 'Koor', isActive: true, distrikId: 'd-lrt' });
-      expect(m.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { isActive: true, distrikId: 'd-lrt' } }),
+      expect(m.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ nama: 'Baru Distrik' }) }),
       );
     });
 
@@ -88,9 +86,6 @@ describe('PenandatanganService (scope distrik)', () => {
 
     it('admin_distrik boleh mengubah penandatangan distriknya sendiri', async () => {
       m.findUnique.mockResolvedValue({ id: 'p-l', distrikId: 'd-lrt' });
-      mockPrisma.$transaction.mockImplementation(async (cb: (tx: any) => any) =>
-        cb({ penandatangan: { updateMany: m.updateMany, update: m.update } }),
-      );
       m.update.mockResolvedValue({ id: 'p-l', nama: 'X' });
       const result = await service.update('p-l', { nama: 'X' }, { role: 'admin_distrik', distrikId: 'd-lrt' });
       expect(result.id).toBe('p-l');

@@ -42,6 +42,7 @@ export default function PenandatanganPage() {
   // Cakupan: '' = Global (Nasional), selain itu id distrik
   const [districts, setDistricts] = useState<DistrictOption[]>([]);
   const [scope, setScope] = useState('');
+  const [scopeName, setScopeName] = useState('');
   const isSuperadmin = role === 'superadmin';
 
   // Modal state (create / edit)
@@ -108,21 +109,29 @@ export default function PenandatanganPage() {
     }
   }, [scope]);
 
-  // Inisialisasi scope otomatis berdasarkan peran
-useEffect(() => {
-  if (isSuperadmin) {
-    // Superadmin dapat memilih scope; biarkan kosong (Global) secara default
-    if (scope === '') return;
-  } else {
-    // Admin distrik: scope otomatis ditentukan dari session
-    // Ini akan diatur oleh parent component atau context
-  }
-}, [isSuperadmin, scope]);
+  // Fetch user scope on mount (auto-set for admin_distrik)
+  useEffect(() => {
+    if (!isSuperadmin && role) {
+      apiClient.get('/auth/scope').then(({ data: res }) => {
+        if (res?.distrikId) {
+          setScope(res.distrikId);
+          // Find the distrik name
+          apiClient.get('/org-structure/distrik', { params: { limit: 200 } }).then(({ data: dRes }) => {
+            const list = (dRes.data ?? dRes ?? []) as DistrictOption[];
+            setDistricts(list);
+            const match = list.find((d) => d.id === res.distrikId);
+            setScopeName(match?.nama || 'Distrik');
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    } else {
+      fetchDistricts();
+    }
+  }, [isSuperadmin, role, fetchDistricts]);
 
-useEffect(() => {
-  fetchData();
-  fetchDistricts();
-}, [fetchData, fetchDistricts]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
 useEffect(() => {
   fetchDocAssignments();
@@ -136,7 +145,7 @@ useEffect(() => {
     : data.filter((s) => !s.distrikId);
 
   const scopeLabel = scope
-    ? districts.find((d) => d.id === scope)?.nama || 'Distrik'
+    ? (isSuperadmin ? districts.find((d) => d.id === scope)?.nama || 'Distrik' : scopeName || 'Distrik')
     : 'Global (Nasional)';
 
   // Reset docSlots ketika scope berubah untuk mencegah data stale
@@ -277,6 +286,8 @@ useEffect(() => {
           <IdCard size={16} className="shrink-0 mt-0.5" />
           <p>
             Penandatangan dengan status <strong>Aktif</strong> dipakai sebagai bawaan pada dokumen.
+            Anda boleh mengaktifkan <strong>lebih dari satu</strong> penandatangan per distrik
+            (misal: Koordinator Distrik + Pastor Moderator).
             Di bagian <strong>Penandatangan per Dokumen</strong> (bawah), Anda bisa mengatur 1-3
             penandatangan khusus untuk tiap jenis dokumen (mis. moderator + koordinator distrik pada
             KTA, atau koordinator distrik + ketua panitia pada piagam).
@@ -419,9 +430,14 @@ useEffect(() => {
               </select>
             </div>
           ) : (
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-              Anda mengelola penandatangan untuk distrik Anda sendiri (ditentukan otomatis oleh sistem).
-            </p>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                {scopeLabel}
+              </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                (ditentukan otomatis oleh sistem)
+              </span>
+            </div>
           )}
         </div>
 
@@ -556,9 +572,9 @@ useEffect(() => {
                 </span>
               </label>
               {form.isActive && (
-                <p className="flex items-center gap-1.5 mt-2 text-xs text-amber-600 dark:text-amber-400">
+                <p className="flex items-center gap-1.5 mt-2 text-xs text-blue-600 dark:text-blue-400">
                   <AlertCircle size={13} />
-                  Penandatangan aktif lainnya akan dinonaktifkan otomatis.
+                  Lebih dari satu penandatangan boleh aktif bersamaan dalam satu distrik.
                 </p>
               )}
             </FormField>

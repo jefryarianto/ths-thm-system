@@ -128,8 +128,17 @@ export class PenandatanganService {
     }
   }
 
-  async findAll() {
+  /**
+   * Daftar penandatangan yang terlihat oleh role tertentu.
+   * admin_distrik hanya melihat penandatangan distriknya + global.
+   * superadmin melihat semua.
+   */
+  async findAll(scope?: { role?: string; distrikId?: string | null }) {
+    const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.penandatangan.findMany({
+      where: isScoped
+        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
+        : undefined,
       orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
       include: { distrik: { select: { id: true, nama: true } } },
     });
@@ -178,22 +187,13 @@ export class PenandatanganService {
 
   async create(dto: CreatePenandatanganDto) {
     const scopeKey = dto.distrikId ?? null;
-    return this.prisma.$transaction(async (tx) => {
-      if (dto.isActive) {
-        // Pastikan hanya satu penandatangan aktif dalam scope ini
-        await tx.penandatangan.updateMany({
-          where: { isActive: true, distrikId: scopeKey },
-          data: { isActive: false },
-        });
-      }
-      return tx.penandatangan.create({
-        data: {
-          nama: dto.nama,
-          jabatan: dto.jabatan,
-          isActive: dto.isActive ?? false,
-          distrikId: scopeKey,
-        },
-      });
+    return this.prisma.penandatangan.create({
+      data: {
+        nama: dto.nama,
+        jabatan: dto.jabatan,
+        isActive: dto.isActive ?? false,
+        distrikId: scopeKey,
+      },
     });
   }
 
@@ -206,35 +206,23 @@ export class PenandatanganService {
       throw new ForbiddenException('Anda hanya dapat mengubah penandatangan distrik Anda sendiri');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      if (dto.isActive) {
-        // Satu aktif per scope — target = scope baru bila berpindah, selain itu scope lama
-        const targetScope = dto.distrikId !== undefined ? (dto.distrikId ?? null) : (existing.distrikId ?? null);
-        await tx.penandatangan.updateMany({
-          where: { id: { not: id }, isActive: true, distrikId: targetScope },
-          data: { isActive: false },
-        });
-      }
-
-      return tx.penandatangan.update({
-        where: { id },
-        data: {
-          ...(dto.nama !== undefined && { nama: dto.nama }),
-          ...(dto.jabatan !== undefined && { jabatan: dto.jabatan }),
-          ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-          ...(dto.distrikId !== undefined && { distrikId: dto.distrikId ?? null }),
-        },
-      });
+    return this.prisma.penandatangan.update({
+      where: { id },
+      data: {
+        ...(dto.nama !== undefined && { nama: dto.nama }),
+        ...(dto.jabatan !== undefined && { jabatan: dto.jabatan }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        ...(dto.distrikId !== undefined && { distrikId: dto.distrikId ?? null }),
+      },
     });
   }
 
   async remove(id: string) {
     const existing = await this.prisma.penandatangan.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Penandatangan tidak ditemukan');
-    if (existing.isActive) {
-      throw new BadRequestException('Penandatangan aktif tidak dapat dihapus. Nonaktifkan dulu atau pilih penandatangan aktif lainnya.');
-    }
 
+    // Hapus juga penugasan dokumen yang terkait
+    await this.prisma.dokumenPenandatangan.deleteMany({ where: { penandatanganId: id } });
     await this.prisma.penandatangan.delete({ where: { id } });
     return { deleted: true };
   }

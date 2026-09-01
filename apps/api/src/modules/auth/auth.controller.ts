@@ -23,6 +23,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Request, Response } from 'express';
 import { env } from '../../config/env.validation';
 import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 function parseCookie(cookieHeader: string, name: string): string | undefined {
   const cookies = cookieHeader.split(';').map((c) => c.trim().split('='));
@@ -207,6 +208,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Ambil profil pengguna' })
   getProfile(@CurrentUser() user: { id: string }) {
     return this.authService.getProfile(user.id);
+  }
+
+  @Get('scope')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Ambil scope pengguna (distrik, wilayah, ranting)' })
+  async getScope(@Req() req: ScopedRequest) {
+    return {
+      role: req?.user?.role,
+      distrikId: req?.scope?.distrikId || null,
+      wilayahId: req?.scope?.wilayahId || null,
+      rantingId: req?.scope?.rantingId || null,
+    };
   }
 
   @Patch('me')
