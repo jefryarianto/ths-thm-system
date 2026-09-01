@@ -19,6 +19,7 @@ interface Toast {
   content?: ReactNode; // Override message with dynamic React node
   duration?: number; // ms, default 5000; 0 = don't auto-dismiss
   action?: ToastAction;
+  dismissing?: boolean;
 }
 
 interface ToastOptions {
@@ -46,55 +47,144 @@ export const useDismissToast = () => useContext(ToastContext).dismissToast;
 // ─── Icons ───
 
 const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle size={18} className="text-green-500" />,
-  error: <AlertCircle size={18} className="text-red-500" />,
-  info: <Info size={18} className="text-blue-500" />,
-  warning: <AlertTriangle size={18} className="text-amber-500" />,
+  success: <CheckCircle size={20} className="text-emerald-500 dark:text-emerald-400" />,
+  error: <AlertCircle size={20} className="text-red-500 dark:text-red-400" />,
+  info: <Info size={20} className="text-blue-500 dark:text-blue-400" />,
+  warning: <AlertTriangle size={20} className="text-amber-500 dark:text-amber-400" />,
 };
 
-const TOAST_COLORS: Record<ToastType, string> = {
-  success: 'border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800',
-  error: 'border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800',
-  info: 'border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800',
-  warning: 'border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800',
+const TOAST_STYLES: Record<ToastType, string> = {
+  success:
+    'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/80',
+  error:
+    'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/80',
+  info:
+    'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/80',
+  warning:
+    'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/80',
+};
+
+const TOAST_ICON_BG: Record<ToastType, string> = {
+  success: 'bg-emerald-100 dark:bg-emerald-900/60',
+  error: 'bg-red-100 dark:bg-red-900/60',
+  info: 'bg-blue-100 dark:bg-blue-900/60',
+  warning: 'bg-amber-100 dark:bg-amber-900/60',
+};
+
+const TOAST_PROGRESS: Record<ToastType, string> = {
+  success: 'bg-emerald-500 dark:bg-emerald-400',
+  error: 'bg-red-500 dark:bg-red-400',
+  info: 'bg-blue-500 dark:bg-blue-400',
+  warning: 'bg-amber-500 dark:bg-amber-400',
 };
 
 // ─── Toast Item ───
 
 function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
   const duration = t.duration ?? 5000;
+  const [progress, setProgress] = useState(100);
+  const [dismissing, setDismissing] = useState(false);
+  const startRef = useRef(Date.now());
+  const pausedRef = useRef(false);
+  const pausedAtRef = useRef(0);
+  const remainingRef = useRef(duration);
 
+  // Auto-dismiss with progress
   useEffect(() => {
     if (duration <= 0) return; // duration <= 0 means don't auto-dismiss
-    const timer = setTimeout(() => onDismiss(t.id), duration);
-    return () => clearTimeout(timer);
+
+    const tick = () => {
+      if (pausedRef.current) return;
+      const elapsed = Date.now() - startRef.current;
+      const pct = Math.max(0, 100 - (elapsed / duration) * 100);
+      setProgress(pct);
+
+      if (pct <= 0) {
+        handleDismiss();
+      }
+    };
+
+    const interval = setInterval(tick, 50);
+    return () => clearInterval(interval);
   }, [t.id, onDismiss, duration]);
+
+  const handleDismiss = useCallback(() => {
+    setDismissing(true);
+    setTimeout(() => onDismiss(t.id), 250); // wait for exit animation
+  }, [onDismiss, t.id]);
+
+  const handleMouseEnter = () => {
+    pausedRef.current = true;
+    pausedAtRef.current = Date.now();
+  };
+
+  const handleMouseLeave = () => {
+    // Extend duration by the time we were paused
+    const pausedFor = Date.now() - pausedAtRef.current;
+    startRef.current += pausedFor;
+    pausedRef.current = false;
+  };
 
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-3 rounded-lg border shadow-lg ${TOAST_COLORS[t.type]} animate-slide-in`}
+      className={`
+        relative overflow-hidden rounded-xl border shadow-lg
+        backdrop-blur-sm
+        ${TOAST_STYLES[t.type]}
+        ${dismissing ? 'animate-toast-exit' : 'animate-toast-enter'}
+      `}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      <span className="mt-0.5 shrink-0">{TOAST_ICONS[t.type]}</span>
-      <div className="text-sm text-gray-800 dark:text-gray-200 flex-1">
-        {t.content ?? t.message}
-      </div>
-      {t.action && (
+      <div className="flex items-start gap-3 px-4 py-3.5">
+        {/* Icon with bg circle */}
+        <div className={`shrink-0 p-1.5 rounded-full ${TOAST_ICON_BG[t.type]}`}>
+          {TOAST_ICONS[t.type]}
+        </div>
+
+        {/* Message */}
+        <div className="text-sm font-medium text-gray-800 dark:text-gray-100 flex-1 pt-0.5 leading-relaxed">
+          {t.content ?? t.message}
+        </div>
+
+        {/* Action button */}
+        {t.action && (
+          <button
+            onClick={() => {
+              t.action!.onClick();
+              handleDismiss();
+            }}
+            className="shrink-0 text-sm font-semibold px-3 py-1.5 rounded-lg
+              bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
+              hover:bg-gray-50 dark:hover:bg-gray-700
+              text-gray-800 dark:text-gray-200
+              transition-all duration-150 active:scale-95"
+          >
+            {t.action.label}
+          </button>
+        )}
+
+        {/* Close button */}
         <button
-          onClick={() => {
-            t.action!.onClick();
-            onDismiss(t.id);
-          }}
-          className="shrink-0 text-sm font-medium px-3 py-1 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 transition-colors"
+          onClick={handleDismiss}
+          className="shrink-0 p-1 rounded-lg text-gray-400 dark:text-gray-500
+            hover:text-gray-600 dark:hover:text-gray-300
+            hover:bg-gray-200/50 dark:hover:bg-gray-700/50
+            transition-all duration-150"
         >
-          {t.action.label}
+          <X size={14} />
         </button>
+      </div>
+
+      {/* Progress bar */}
+      {duration > 0 && (
+        <div className="h-0.5 w-full bg-gray-200/50 dark:bg-gray-700/50">
+          <div
+            className={`h-full transition-all duration-75 ease-linear ${TOAST_PROGRESS[t.type]}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       )}
-      <button
-        onClick={() => onDismiss(t.id)}
-        className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
-      >
-        <X size={14} />
-      </button>
     </div>
   );
 }
@@ -109,7 +199,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const addToast = useCallback(
     (type: ToastType, message: string, options?: ToastOptions): string => {
       const id = options?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      
+
       // Dedup: skip if same message was shown within last 3 seconds
       const dedupKey = options?.id ? `id:${options.id}` : `${type}:${message}`;
       const lastShown = recentMessages.current.get(dedupKey);
@@ -117,10 +207,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         return id; // silently skip duplicate
       }
       recentMessages.current.set(dedupKey, Date.now());
-      
+
       // Limit max visible toasts to 3
       setToasts((prev) => {
-        const next = [...prev, { id, type, message, content: options?.content, duration: options?.duration, action: options?.action }];
+        const next = [
+          ...prev,
+          {
+            id,
+            type,
+            message,
+            content: options?.content,
+            duration: options?.duration,
+            action: options?.action,
+          },
+        ];
         return next.length > 3 ? next.slice(-3) : next;
       });
       return id;
@@ -136,29 +236,47 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast: addToast, dismissToast }}>
       {children}
 
-      {/* Toast Container */}
+      {/* Toast Container — center of screen */}
       {toasts.length > 0 && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col gap-2 max-w-sm w-full px-4">
-          {toasts.map((t) => (
-            <ToastItem key={t.id} toast={t} onDismiss={dismissToast} />
-          ))}
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col gap-3 max-w-sm w-full px-4 pointer-events-auto">
+            {toasts.map((t) => (
+              <ToastItem key={t.id} toast={t} onDismiss={dismissToast} />
+            ))}
+          </div>
         </div>
       )}
 
       {/* Toast animation styles */}
       <style jsx global>{`
-        @keyframes toast-slide-in {
+        @keyframes toast-enter {
           from {
-            transform: translateY(-20px) scale(0.95);
+            transform: translateY(-12px) scale(0.96);
             opacity: 0;
+            filter: blur(4px);
           }
           to {
             transform: translateY(0) scale(1);
             opacity: 1;
+            filter: blur(0);
           }
         }
-        .animate-slide-in {
-          animation: toast-slide-in 0.3s ease-out;
+        @keyframes toast-exit {
+          from {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+          to {
+            transform: translateY(-8px) scale(0.96);
+            opacity: 0;
+            filter: blur(4px);
+          }
+        }
+        .animate-toast-enter {
+          animation: toast-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-toast-exit {
+          animation: toast-exit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
         }
       `}</style>
     </ToastContext.Provider>
