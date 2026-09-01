@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, Optional, Logger } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../common/services/cache.service';
 import { MailService } from '../../mail/mail.service';
-import { generalNotificationEmail, escapeHtml } from '../../mail/email-templates';
+import { generalNotificationEmail, dataIncompleteEmail } from '../../mail/email-templates';
 import { EventsGateway } from './events.gateway';
 import {
   SendNotificationDto,
@@ -111,6 +111,7 @@ export class NotificationsService {
           judul: dto.judul,
           isi: dto.isi,
           tipe: tipe as never,
+          data: dto.data ? (dto.data as never) : undefined,
         })),
       });
     }
@@ -406,11 +407,7 @@ export class NotificationsService {
     const results = await Promise.allSettled(
       membersWithEmail.map(async (member) => {
         const missingFields = (member.missingFields as string[]) || ['data diri'];
-        const tpl = {
-          subject: 'Data Anggota Belum Lengkap — THS-THM',
-          html: `<h2>Halo ${escapeHtml(member.namaLengkap)},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${escapeHtml(f.replace(/_/g, ' '))}</li>`).join('')}</ul><p>Silakan login ke sistem untuk melengkapi data.</p>`,
-          text: `Halo ${member.namaLengkap},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke sistem untuk melengkapi data.`,
-        };
+        const tpl = dataIncompleteEmail(member.namaLengkap, missingFields);
         await this.mailService.sendMail({
           to: member.email,
           ...tpl,

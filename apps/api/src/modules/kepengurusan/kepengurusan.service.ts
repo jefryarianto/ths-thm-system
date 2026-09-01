@@ -2,10 +2,61 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import bcrypt from 'bcryptjs';
+import { Optional } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class KepengurusanService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly notificationsService?: NotificationsService,
+  ) {}
+
+  /** Notify all superadmins about a pending kepengurusan change */
+  private async notifySuperadmins(
+    action: string,
+    jabatanUnit: string,
+    unitName: string,
+  ) {
+    if (!this.notificationsService) return;
+    try {
+      const actionLabel =
+        action === "create" ? "Pengajuan baru" : action === "update" ? "Perubahan" : "Pengajuan penghapusan";
+      await this.notificationsService.sendToRole({
+        role: "superadmin",
+        tipe: "approval_request",
+        judul: actionLabel + " Kepengurusan",
+        isi: actionLabel + ": " + jabatanUnit + " di " + unitName + " menunggu persetujuan Anda.",
+        data: { action, kepengurusan: jabatanUnit },
+      });
+    } catch {
+      // Fire-and-forget
+    }
+  }
+
+  /** Notify the requester about approval/rejection */
+  private async notifyRequester(
+    userId: string,
+    status: string,
+    jabatanUnit: string,
+    reason?: string,
+  ) {
+    if (!this.notificationsService) return;
+    try {
+      const statusLabel = status === "approved" ? "Disetujui" : "Ditolak";
+      const message =
+        status === "rejected" && reason
+          ? "Kepengurusan " + jabatanUnit + " " + statusLabel + ". Alasan: " + reason
+          : "Kepengurusan " + jabatanUnit + " telah " + statusLabel + ".";
+      await this.notificationsService.send(userId, {
+        tipe: "approval_request",
+        judul: "Kepengurusan " + statusLabel,
+        isi: message,
+      });
+    } catch {
+      // Fire-and-forget
+    }
+  }
 
   /** Helper to resolve or auto-create a user account from an anggotaId */
   private async resolveUserFromMember(anggotaId: string): Promise<string> {
@@ -219,7 +270,7 @@ export class KepengurusanService {
       throw new BadRequestException('User ini sudah menjabat di unit dan periode yang sama');
     }
 
-    return this.prisma.kepengurusan.create({
+    const result = await this.prisma.kepengurusan.create({
       data: {
         userId: resolvedUserId,
         jabatanId: data.jabatanId,
@@ -237,8 +288,17 @@ export class KepengurusanService {
         user: { select: { namaLengkap: true } },
         jabatan: { select: { nama: true } },
         periode: { select: { nama: true } },
+        distrik: { select: { nama: true } },
+        wilayah: { select: { nama: true } },
+        ranting: { select: { nama: true } },
       },
     });
+
+    // Notify superadmins about new pending entry
+    const createUnitName = result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
+    this.notifySuperadmins('create', result.jabatan.nama + ' (' + result.user.namaLengkap + ')', createUnitName);
+
+    return result;
   }
 
   async update(id: string, data: {
@@ -265,7 +325,7 @@ export class KepengurusanService {
       if (!jabatan) throw new BadRequestException('Jabatan tidak ditemukan');
     }
 
-    return this.prisma.kepengurusan.update({
+    const result = await this.prisma.kepengurusan.update({
       where: { id },
       data: {
         ...(resolvedUserId && { userId: resolvedUserId }),
@@ -282,8 +342,17 @@ export class KepengurusanService {
         user: { select: { namaLengkap: true } },
         jabatan: { select: { nama: true } },
         periode: { select: { nama: true } },
+        distrik: { select: { nama: true } },
+        wilayah: { select: { nama: true } },
+        ranting: { select: { nama: true } },
       },
     });
+
+    // Notify superadmins about updated entry
+    const updateUnitName = result.ranting?.nama || result.wilayah?.nama || result.distrik?.nama || 'organisasi';
+    this.notifySuperadmins('update', result.jabatan.nama + ' (' + result.user.namaLengkap + ')', updateUnitName);
+
+    return result;
   }
 
   async remove(id: string, approvedBy?: string) {
@@ -294,7 +363,7 @@ export class KepengurusanService {
       throw new BadRequestException('Tidak bisa menghapus: masih ada bawahan yang terkait');
     }
     // Soft-delete: mark as deleted, requires approval
-    return this.prisma.kepengurusan.update({
+    const delResult = await this.prisma.kepengurusan.update({
       where: { id },
       data: {
         status: 'pending_deletion',
@@ -302,11 +371,23 @@ export class KepengurusanService {
         approvedAt: null,
       },
     });
+
+    // Notify superadmins about deletion request
+    const delUnitName = item.ranting?.nama || item.wilayah?.nama || item.distrik?.nama || 'organisasi';
+    this.notifySuperadmins('delete', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')', delUnitName);
+
+    return delResult;
   }
 
   /** Approve a pending kepengurusan change */
   async approve(id: string, approvedBy: string) {
-    const item = await this.prisma.kepengurusan.findUnique({ where: { id } });
+    const item = await this.prisma.kepengurusan.findUnique({
+      where: { id },
+      include: {
+        user: { select: { namaLengkap: true } },
+        jabatan: { select: { nama: true } },
+      },
+    });
     if (!item) throw new NotFoundException('Kepengurusan tidak ditemukan');
 
     if (item.status === 'pending_deletion') {
@@ -315,7 +396,7 @@ export class KepengurusanService {
       return { deleted: true };
     }
 
-    return this.prisma.kepengurusan.update({
+    const approveResult = await this.prisma.kepengurusan.update({
       where: { id },
       data: {
         status: 'approved',
@@ -328,11 +409,22 @@ export class KepengurusanService {
         jabatan: { select: { nama: true } },
       },
     });
+
+    // Notify the requester about approval
+    this.notifyRequester(item.userId, 'approved', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')');
+
+    return approveResult;
   }
 
   /** Reject a pending kepengurusan change */
   async reject(id: string, reason: string) {
-    const item = await this.prisma.kepengurusan.findUnique({ where: { id } });
+    const item = await this.prisma.kepengurusan.findUnique({
+      where: { id },
+      include: {
+        user: { select: { namaLengkap: true } },
+        jabatan: { select: { nama: true } },
+      },
+    });
     if (!item) throw new NotFoundException('Kepengurusan tidak ditemukan');
 
     if (item.status === 'pending_deletion') {
@@ -350,7 +442,7 @@ export class KepengurusanService {
       });
     }
 
-    return this.prisma.kepengurusan.update({
+    const rejectResult = await this.prisma.kepengurusan.update({
       where: { id },
       data: {
         status: 'rejected',
@@ -361,6 +453,11 @@ export class KepengurusanService {
         jabatan: { select: { nama: true } },
       },
     });
+
+    // Notify the requester about rejection
+    this.notifyRequester(item.userId, 'rejected', (item.jabatan?.nama || '') + ' (' + (item.user?.namaLengkap || '') + ')', reason);
+
+    return rejectResult;
   }
 
   /** Bulk approve all pending items */

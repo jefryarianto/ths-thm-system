@@ -62,6 +62,10 @@ export class BroadcastNotificationDto {
   @IsOptional()
   @IsString()
   tipe?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  data?: Record<string, unknown>;
 }
 
 export class SendToRoleDto {
@@ -102,6 +106,10 @@ export class SendToRoleDto {
   @IsOptional()
   @IsString()
   tipe?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  data?: Record<string, unknown>;
 }
 
 export class NotificationFilterDto {

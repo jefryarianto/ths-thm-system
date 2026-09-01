@@ -122,6 +122,9 @@ describe('KepengurusanService', () => {
         userId: 'user-new',
         jabatanId: 'jab-1',
         periodeId: 'per-1',
+        user: { namaLengkap: 'New Member' },
+        jabatan: { nama: 'Ketua' },
+        periode: { nama: '2025-2027' },
       });
 
       const result = await service.create({
