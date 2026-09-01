@@ -1,13 +1,15 @@
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useFonts } from 'expo-font';
 import { useAuthStore, AuthState } from '../src/store/auth-store';
 import { GlobalErrorBoundary } from '../src/components/GlobalErrorBoundary';
+import { SessionExpiryWarning } from '../src/components/SessionExpiryWarning';
 import { setupNotificationListeners } from '../src/lib/fcm';
 import { useNotificationDeepLink } from '../src/hooks/useNotificationDeepLink';
-import { onSessionExpired } from '../src/lib/session-expired';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { onSessionExpired, onExpiringSoon, scheduleExpiryWarning } from '../src/lib/session-expired';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
@@ -27,6 +29,14 @@ export default function RootLayout() {
     'ionicons': require('../assets/fonts/Ionicons.ttf'),
   });
 
+  // ─── Session Expiry Warning State ─────────────────────────
+  const [expiryWarningVisible, setExpiryWarningVisible] = useState(false);
+  const [expirySeconds, setExpirySeconds] = useState(300);
+
+  const handleExpiryWarningDismiss = useCallback(() => {
+    setExpiryWarningVisible(false);
+  }, []);
+
   useEffect(() => {
     loadUser();
   }, []);
@@ -34,6 +44,7 @@ export default function RootLayout() {
   // Listen for session expiry from api-client interceptor
   useEffect(() => {
     const unsubscribe = onSessionExpired(() => {
+      setExpiryWarningVisible(false);
       Alert.alert(
         'Sesi Berakhir',
         'Sesi Anda telah berakhir. Silakan login kembali.',
@@ -41,6 +52,22 @@ export default function RootLayout() {
       );
     });
     return unsubscribe;
+  }, []);
+
+  // Listen for expiring-soon warnings
+  useEffect(() => {
+    const unsubscribe = onExpiringSoon((secondsRemaining: number) => {
+      setExpirySeconds(secondsRemaining);
+      setExpiryWarningVisible(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Schedule initial warning if token is already set on mount
+  useEffect(() => {
+    AsyncStorage.getItem('accessToken').then((token) => {
+      if (token) scheduleExpiryWarning(token);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -72,6 +99,11 @@ export default function RootLayout() {
     <GlobalErrorBoundary>
       <>
         <StatusBar style="light" />
+        <SessionExpiryWarning
+          visible={expiryWarningVisible}
+          expiresInSeconds={expirySeconds}
+          onDismiss={handleExpiryWarningDismiss}
+        />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="login" />

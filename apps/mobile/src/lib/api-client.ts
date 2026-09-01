@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { emitSessionExpired, resetSessionExpired } from './session-expired';
+import { emitSessionExpired, resetSessionExpired, scheduleExpiryWarning, cancelExpiryWarning } from './session-expired';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -71,6 +71,7 @@ async function doRefresh(): Promise<string> {
     await AsyncStorage.setItem('refreshToken', newRefresh);
 
     onTokenRefreshed(accessToken);
+    scheduleExpiryWarning(accessToken);
     return accessToken;
   } catch (err) {
     onTokenRefreshFailed(err);
@@ -83,8 +84,11 @@ async function doRefresh(): Promise<string> {
   }
 }
 
-/** Proactively refresh token before it expires (single-flight). */
-async function proactivelyRefresh(): Promise<string | null> {
+/**
+ * Proactively refresh token before it expires (single-flight).
+ * Exported for use by the SessionExpiryWarning component.
+ */
+export async function proactivelyRefresh(): Promise<string | null> {
   try {
     return await doRefresh();
   } catch {
@@ -97,6 +101,7 @@ apiClient.interceptors.request.use(async (config) => {
   if (await isTokenExpiringSoon()) {
     const newToken = await proactivelyRefresh();
     if (newToken) {
+      scheduleExpiryWarning(newToken);
       config.headers.Authorization = `Bearer ${newToken}`;
       return config;
     }
@@ -156,8 +161,10 @@ apiClient.interceptors.response.use(
 
 export const setTokens = async (accessToken: string, refreshToken: string) => {
   resetSessionExpired();
+  cancelExpiryWarning();
   await AsyncStorage.setItem('accessToken', accessToken);
   await AsyncStorage.setItem('refreshToken', refreshToken);
+  scheduleExpiryWarning(accessToken);
 };
 
 export const clearTokens = async () => {
