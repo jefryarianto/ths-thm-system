@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { sessionManager } from '@/lib/session-manager';
 import { useToast } from '@/components/ui/toast';
 import { SessionWarningToast } from '@/components/session-warning-toast';
+import { useActivityTracker } from '@/hooks/use-activity-tracker';
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -71,6 +72,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [router, pathname, toast]);
+
+  // Track user activity and auto-refresh token before expiry
+  useActivityTracker();
 
   return <>{children}</>;
 }

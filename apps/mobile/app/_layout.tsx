@@ -10,6 +10,7 @@ import { setupNotificationListeners } from '../src/lib/fcm';
 import { useNotificationDeepLink } from '../src/hooks/useNotificationDeepLink';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onSessionExpired, onExpiringSoon, scheduleExpiryWarning } from '../src/lib/session-expired';
+import { useActivityTracker } from '../src/hooks/use-activity-tracker';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
@@ -36,6 +37,9 @@ export default function RootLayout() {
   const handleExpiryWarningDismiss = useCallback(() => {
     setExpiryWarningVisible(false);
   }, []);
+
+  // Track user activity (app foreground) and auto-refresh token before expiry
+  useActivityTracker();
 
   useEffect(() => {
     loadUser();
