@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { sessionManager } from '@/lib/session-manager';
-import { proactivelyRefresh } from '@/lib/api-client';
 import { useToast } from '@/components/ui/toast';
+import { SessionWarningToast } from '@/components/session-warning-toast';
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -42,26 +42,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const unsubscribeExpiring = sessionManager.subscribeExpiringSoon((secondsRemaining: number) => {
       if (sessionManager.isExpired) return;
 
-      const minutes = Math.floor(secondsRemaining / 60);
-      const seconds = secondsRemaining % 60;
-      const timeStr = minutes > 0 ? `${minutes} menit ${seconds} detik` : `${seconds} detik`;
-
-      toast('warning', `Sesi Anda akan berakhir dalam ${timeStr}. Klik "Perpanjang Sesi" untuk tetap masuk.`, {
-        duration: 30_000, // 30 seconds — long enough for user to decide
-        action: {
-          label: 'Perpanjang Sesi',
-          onClick: async () => {
-            try {
-              const newToken = await proactivelyRefresh();
-              // Schedule next warning for the refreshed token
-              sessionManager.scheduleExpiryWarning(newToken);
-              toast('success', 'Sesi berhasil diperpanjang.');
-            } catch {
-              // Refresh failed — session will be handled by the expired listener
-              toast('error', 'Gagal memperpanjang sesi. Anda akan dialihkan ke halaman login.');
-            }
-          },
-        },
+      // Pre-generate ID so the countdown component can dismiss itself
+      const warningToastId = `warning-${Date.now()}`;
+      toast('warning', 'Sesi Anda akan segera berakhir.', {
+        id: warningToastId,
+        duration: 0, // don't auto-dismiss — countdown handles its own lifecycle
+        content: <SessionWarningToast expiresInSeconds={secondsRemaining} toastId={warningToastId} />,
       });
     });
 

@@ -16,21 +16,32 @@ interface Toast {
   id: string;
   type: ToastType;
   message: string;
-  duration?: number; // ms, default 5000
+  content?: ReactNode; // Override message with dynamic React node
+  duration?: number; // ms, default 5000; 0 = don't auto-dismiss
   action?: ToastAction;
 }
 
+interface ToastOptions {
+  id?: string; // Pre-set ID (useful when content needs the toast ID)
+  duration?: number;
+  action?: ToastAction;
+  content?: ReactNode;
+}
+
 interface ToastContextValue {
-  toast: (type: ToastType, message: string, options?: { duration?: number; action?: ToastAction }) => void;
+  toast: (type: ToastType, message: string, options?: ToastOptions) => string;
+  dismissToast: (id: string) => void;
 }
 
 // ─── Context ───
 
 const ToastContext = createContext<ToastContextValue>({
-  toast: () => {},
+  toast: () => '',
+  dismissToast: () => {},
 });
 
 export const useToast = () => useContext(ToastContext).toast;
+export const useDismissToast = () => useContext(ToastContext).dismissToast;
 
 // ─── Icons ───
 
@@ -64,7 +75,9 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
       className={`flex items-start gap-3 px-4 py-3 rounded-lg border shadow-lg ${TOAST_COLORS[t.type]} animate-slide-in`}
     >
       <span className="mt-0.5 shrink-0">{TOAST_ICONS[t.type]}</span>
-      <p className="text-sm text-gray-800 dark:text-gray-200 flex-1">{t.message}</p>
+      <div className="text-sm text-gray-800 dark:text-gray-200 flex-1">
+        {t.content ?? t.message}
+      </div>
       {t.action && (
         <button
           onClick={() => {
@@ -92,9 +105,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback(
-    (type: ToastType, message: string, options?: { duration?: number; action?: ToastAction }) => {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      setToasts((prev) => [...prev, { id, type, message, duration: options?.duration, action: options?.action }]);
+    (type: ToastType, message: string, options?: ToastOptions): string => {
+      const id = options?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type, message, content: options?.content, duration: options?.duration, action: options?.action },
+      ]);
+      return id;
     },
     [],
   );
@@ -104,7 +121,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toast: addToast }}>
+    <ToastContext.Provider value={{ toast: addToast, dismissToast }}>
       {children}
 
       {/* Toast Container */}
