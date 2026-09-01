@@ -6,6 +6,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
+import { monitoringAlertEmail } from '../../mail/email-templates';
 import { CreateMonitoringAlertDto, UpdateMonitoringAlertDto } from './dto/monitoring-alert.dto';
 
 interface HealthSnapshot {
@@ -258,12 +259,12 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
     const emails = recipients.split(',').map((e) => e.trim()).filter(Boolean);
     for (const email of emails) {
       try {
+        const tpl = monitoringAlertEmail(alertName, message);
         await this.mailService.sendMail({
           to: email,
-          subject: `🚨 Monitoring Alert: ${alertName}`,
-          text: message,
-          html: message.replace(/\n/g, '<br/>'),
-          metadata: { module: 'monitoring' },
+          subject: tpl.subject,
+          html: tpl.html,
+          metadata: { module: 'monitoring', template: 'monitoringAlertEmail' },
         });
       } catch (err) {
         this.logger.warn(`Email alert to ${email} failed: ${(err as Error).message}`);

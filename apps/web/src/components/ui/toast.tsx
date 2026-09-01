@@ -200,16 +200,58 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (type: ToastType, message: string, options?: ToastOptions): string => {
       const id = options?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-      // Dedup: skip if same message was shown within last 3 seconds
-      const dedupKey = options?.id ? `id:${options.id}` : `${type}:${message}`;
+      // Dedup: skip if same message was shown within last 2.5 seconds (unless explicit custom id is given)
+      const dedupKey = options?.id ? `id:${options.id}` : `${type}:${message.trim()}`;
+      const now = Date.now();
       const lastShown = recentMessages.current.get(dedupKey);
-      if (lastShown && Date.now() - lastShown < 3000) {
+
+      // Clean up old deduplication cache entries periodically
+      if (recentMessages.current.size > 50) {
+        for (const [k, timestamp] of recentMessages.current.entries()) {
+          if (now - timestamp > 10000) {
+            recentMessages.current.delete(k);
+          }
+        }
+      }
+
+      if (!options?.id && lastShown && now - lastShown < 2500) {
         return id; // silently skip duplicate
       }
-      recentMessages.current.set(dedupKey, Date.now());
+      recentMessages.current.set(dedupKey, now);
 
-      // Limit max visible toasts to 3
       setToasts((prev) => {
+        // If an explicit ID was provided and it already exists, replace/update in place
+        if (options?.id) {
+          const existingIdx = prev.findIndex((t) => t.id === options.id);
+          if (existingIdx !== -1) {
+            const updated = [...prev];
+            updated[existingIdx] = {
+              id: options.id,
+              type,
+              message,
+              content: options?.content,
+              duration: options?.duration,
+              action: options?.action,
+            };
+            return updated;
+          }
+        }
+
+        // If identical type & message is currently active, replace it to prevent visual duplication
+        const duplicateIdx = prev.findIndex((t) => t.type === type && t.message === message);
+        if (duplicateIdx !== -1 && !options?.id) {
+          const updated = [...prev];
+          updated[duplicateIdx] = {
+            id,
+            type,
+            message,
+            content: options?.content,
+            duration: options?.duration,
+            action: options?.action,
+          };
+          return updated;
+        }
+
         const next = [
           ...prev,
           {

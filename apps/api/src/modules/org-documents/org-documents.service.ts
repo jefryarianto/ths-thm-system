@@ -5,6 +5,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
+import { orgDocumentNotificationEmail } from '../../mail/email-templates';
 import {
   CreateOrgDocumentDto,
   UpdateOrgDocumentDto,
@@ -127,22 +128,11 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
 
       for (const admin of admins) {
         if (!admin.email) continue;
+        const tpl = orgDocumentNotificationEmail(admin.namaLengkap, judul);
         await this.mailService.sendMail({
           to: admin.email,
-          subject: `Dokumen Organisasi Baru — ${judul}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #1a56db;">📁 Dokumen Organisasi Baru</h2>
-              <p>Halo <strong>${admin.namaLengkap}</strong>,</p>
-              <p>Dokumen organisasi baru telah diupload:</p>
-              <p style="font-size: 16px; font-weight: bold; margin: 16px 0;">${judul}</p>
-              <p>Silakan login ke aplikasi untuk melihat dan mengelola dokumen.</p>
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-              <p style="color: #6b7280; font-size: 12px;">
-                THS-THM System &mdash; Notifikasi dokumen organisasi
-              </p>
-            </div>
-          `,
+          subject: tpl.subject,
+          html: tpl.html,
           metadata: { module: 'org-documents', template: 'orgDocumentNotificationEmail' },
         });
       }

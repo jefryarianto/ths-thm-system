@@ -10,21 +10,28 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import { safeIconName } from '../../lib/icons';
 
 export default function ForceChangePasswordScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const minLengthOk = newPassword.length >= 6;
+  const passwordsMatch = newPassword.length > 0 && newPassword === confirmPassword;
 
   const handleSubmit = async () => {
     if (!newPassword || !confirmPassword) {
       Alert.alert('Error', 'Semua kolom harus diisi');
       return;
     }
-    if (newPassword.length < 6) {
+    if (!minLengthOk) {
       Alert.alert('Error', 'Password minimal 6 karakter');
       return;
     }
@@ -80,22 +87,72 @@ export default function ForceChangePasswordScreen() {
 
       <View style={styles.form}>
         <Text style={styles.label}>Password Baru</Text>
-        <TextInput
-          style={styles.input}
-          value={newPassword}
-          onChangeText={setNewPassword}
-          placeholder="Minimal 6 karakter"
-          secureTextEntry
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholder="Minimal 6 karakter"
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            style={styles.eyeBtn}
+            onPress={() => setShowPassword((v) => !v)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={safeIconName(showPassword ? 'eye-off-outline' : 'eye-outline')}
+              size={20}
+              color="#6b7280"
+            />
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Konfirmasi Password</Text>
-        <TextInput
-          style={styles.input}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Ketik ulang password baru"
-          secureTextEntry
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder="Ketik ulang password baru"
+            secureTextEntry={!showConfirm}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            style={styles.eyeBtn}
+            onPress={() => setShowConfirm((v) => !v)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={safeIconName(showConfirm ? 'eye-off-outline' : 'eye-outline')}
+              size={20}
+              color="#6b7280"
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.requirements}>
+          <Text style={styles.requirementsTitle}>Password harus:</Text>
+          <View style={styles.requirementRow}>
+            <Ionicons
+              name={safeIconName(minLengthOk ? 'checkmark-circle' : 'ellipse-outline')}
+              size={18}
+              color={minLengthOk ? '#16a34a' : '#9ca3af'}
+            />
+            <Text style={styles.requirementText}>Minimal 6 karakter</Text>
+          </View>
+          <View style={styles.requirementRow}>
+            <Ionicons
+              name={safeIconName(passwordsMatch ? 'checkmark-circle' : 'ellipse-outline')}
+              size={18}
+              color={passwordsMatch ? '#16a34a' : '#9ca3af'}
+            />
+            <Text style={styles.requirementText}>Konfirmasi password cocok</Text>
+          </View>
+        </View>
 
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -143,15 +200,39 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  inputWrapper: { position: 'relative', marginBottom: 12 },
   input: {
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,
     padding: 12,
+    paddingRight: 44,
     fontSize: 16,
     backgroundColor: '#f9fafb',
-    marginBottom: 12,
   },
+  eyeBtn: {
+    position: 'absolute',
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  requirements: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 4,
+  },
+  requirementsTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1d4ed8',
+    marginBottom: 6,
+  },
+  requirementRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  requirementText: { fontSize: 13, color: '#1e40af' },
   button: {
     backgroundColor: '#2563eb',
     borderRadius: 8,

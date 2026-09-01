@@ -1,6 +1,6 @@
 # THS-THM System Manajemen
 
-Monorepo untuk Sistem Manajemen THS-THM (Taman Harapan Siswa / Taman Harapan Murid).
+Monorepo untuk Sistem Manajemen THS-THM (Tunggal Hati Seminari - Tunggal Hati Maria).
 
 ## Struktur Monorepo
 

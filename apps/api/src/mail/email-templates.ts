@@ -9,7 +9,7 @@ export { escapeHtml }; // re-export for services that import escapeHtml from ema
 const FOOTER = `
   <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
   <p style="color: #6b7280; font-size: 12px;">
-    THS-THM System &mdash; Taman Harapan Siswa / Taman Harapan Murid
+    THS-THM System &mdash; Tunggal Hati Seminari - Tunggal Hati Maria
   </p>
 `;
 
@@ -449,6 +449,112 @@ export function userWelcomeEmail(
         Link ini akan membawa Anda ke halaman reset password. Masukkan email Anda untuk menerima link reset password.
       </p>
       <p>Silakan login melalui aplikasi web untuk mengelola sistem setelah password berhasil dibuat.</p>
+    `),
+  };
+}
+
+// ─── Kredensial / Credentials ───
+
+export function credentialEmail(nama: string, username: string, password: string) {
+  return {
+    subject: 'Kredensial Login THS-THM',
+    html: wrap(`
+      <h2 style="color: #1a56db;">🔐 Kredensial Login Anda</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Akun Anda telah dibuat/diatur ulang di sistem <strong>THS-THM</strong>.</p>
+      <p>Silakan login dengan kredensial berikut:</p>
+      <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0; border: 1px solid #e5e7eb;">
+        <p style="margin: 4px 0; font-size: 14px;"><strong>Username:</strong> ${escapeHtml(username)}</p>
+        <p style="margin: 4px 0; font-size: 14px;"><strong>Password:</strong> <code style="background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${escapeHtml(password)}</code></p>
+      </div>
+      <p style="color: #dc2626; font-size: 13px;">⚠️ Setelah login, Anda akan diminta mengubah password.</p>
+    `),
+  };
+}
+
+// ─── Data Incomplete / Incomplete Data ───
+
+export function dataIncompleteEmail(nama: string, missingFields: string[]) {
+  const fieldList = missingFields
+    .map((f: string) => `<li>${escapeHtml(f.replace(/_/g, ' '))}</li>`)
+    .join('');
+  return {
+    subject: 'Data Anggota Belum Lengkap — THS-THM',
+    html: wrap(`
+      <h2 style="color: #d97706;">📋 Data Belum Lengkap</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p>
+      <ul style="line-height: 1.8; color: #374151;">${fieldList}</ul>
+      <p>Silakan login ke aplikasi untuk melengkapi data Anda.</p>
+    `),
+  };
+}
+
+// ─── Notifikasi Dokumen Organisasi / Org Document Notification ───
+
+export function orgDocumentNotificationEmail(nama: string, judul: string) {
+  return {
+    subject: `Dokumen Organisasi Baru — ${escapeHtml(judul)}`,
+    html: wrap(`
+      <h2 style="color: #1a56db;">📁 Dokumen Organisasi Baru</h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Dokumen organisasi baru telah diupload:</p>
+      <p style="font-size: 16px; font-weight: bold; margin: 16px 0; color: #1e40af;">${escapeHtml(judul)}</p>
+      <p>Silakan login ke aplikasi untuk melihat dan mengelola dokumen.</p>
+    `),
+  };
+}
+
+// ─── Notifikasi Batch Selesai / Batch Completion ───
+
+export function batchCompletionEmail(
+  nama: string,
+  typeLabel: string,
+  success: number,
+  failed: number,
+) {
+  const hasFailure = failed > 0;
+  return {
+    subject: hasFailure
+      ? `⚠️ Generate ${escapeHtml(typeLabel)} Selesai — ${success} Berhasil, ${failed} Gagal`
+      : `✅ Generate ${escapeHtml(typeLabel)} Selesai — ${success} Dokumen Berhasil`,
+    html: wrap(`
+      <h2 style="color: ${hasFailure ? '#ca8a04' : '#16a34a'};">
+        ${hasFailure ? '⚠️' : '✅'} Generate Dokumen Selesai
+      </h2>
+      <p>Halo <strong>${escapeHtml(nama)}</strong>,</p>
+      <p>Batch generate <strong>${escapeHtml(typeLabel)}</strong> telah selesai diproses.</p>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold;">Total</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${success + failed}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; color: #16a34a;">Berhasil</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${success}</td>
+        </tr>
+        ${hasFailure ? `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; color: #dc2626;">Gagal</td>
+          <td style="padding: 8px; border: 1px solid #e5e7eb;">${failed}</td>
+        </tr>` : ''}
+      </table>
+      <p>Silakan login ke aplikasi untuk melihat detail dan mengunduh dokumen.</p>
+    `),
+  };
+}
+
+// ─── Monitoring Alert ───
+
+export function monitoringAlertEmail(alertName: string, message: string) {
+  return {
+    subject: `🚨 Monitoring Alert: ${alertName}`,
+    html: wrap(`
+      <h2 style="color: #dc2626;">🚨 Monitoring Alert</h2>
+      <h3 style="color: #374151; margin-top: 8px;">${escapeHtml(alertName)}</h3>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="color: #374151; margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</p>
+      </div>
     `),
   };
 }

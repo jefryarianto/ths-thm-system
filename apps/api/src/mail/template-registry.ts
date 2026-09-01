@@ -20,6 +20,11 @@ import {
   userWelcomeEmail,
   badgeEarnedEmail,
   levelUpEmail,
+  credentialEmail,
+  dataIncompleteEmail,
+  orgDocumentNotificationEmail,
+  batchCompletionEmail,
+  monitoringAlertEmail,
 } from './email-templates';
 
 export interface TemplateVariable {
@@ -312,6 +317,71 @@ export const EMAIL_TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
         o?.newLevel ?? 'Menengah',
         Number(o?.points) || 1200,
       ),
+  },
+  credentialEmail: {
+    name: 'credentialEmail',
+    label: 'Kredensial Login',
+    variables: [
+      { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap anggota' },
+      { name: 'username', sample: 'budi@example.com', description: 'Username / email login' },
+      { name: 'password', sample: 'thsthm123456', description: 'Password default' },
+    ],
+    renderDefault: (o) =>
+      credentialEmail(
+        o?.nama ?? 'Budi Santoso',
+        o?.username ?? 'budi@example.com',
+        o?.password ?? 'thsthm123456',
+      ),
+  },
+  dataIncompleteEmail: {
+    name: 'dataIncompleteEmail',
+    label: 'Data Belum Lengkap',
+    variables: [
+      { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap anggota' },
+      { name: 'missingFields', sample: 'alamat,no_hp', description: 'Daftar field yang kurang (pisah koma)' },
+    ],
+    renderDefault: (o) =>
+      dataIncompleteEmail(
+        o?.nama ?? 'Budi Santoso',
+        (o?.missingFields ?? 'alamat,no_hp').split(','),
+      ),
+  },
+  orgDocumentNotificationEmail: {
+    name: 'orgDocumentNotificationEmail',
+    label: 'Dokumen Organisasi Baru',
+    variables: [
+      { name: 'nama', sample: 'Budi Santoso', description: 'Nama admin penerima' },
+      { name: 'judul', sample: 'SK Pendirian', description: 'Judul dokumen' },
+    ],
+    renderDefault: (o) =>
+      orgDocumentNotificationEmail(o?.nama ?? 'Budi Santoso', o?.judul ?? 'SK Pendirian'),
+  },
+  batchCompletionEmail: {
+    name: 'batchCompletionEmail',
+    label: 'Batch Generate Selesai',
+    variables: [
+      { name: 'nama', sample: 'Budi Santoso', description: 'Nama lengkap pengguna' },
+      { name: 'typeLabel', sample: 'Kartu Anggota', description: 'Jenis dokumen' },
+      { name: 'success', sample: '50', description: 'Jumlah berhasil' },
+      { name: 'failed', sample: '2', description: 'Jumlah gagal' },
+    ],
+    renderDefault: (o) =>
+      batchCompletionEmail(
+        o?.nama ?? 'Budi Santoso',
+        o?.typeLabel ?? 'Kartu Anggota',
+        Number(o?.success) || 50,
+        Number(o?.failed) || 2,
+      ),
+  },
+  monitoringAlertEmail: {
+    name: 'monitoringAlertEmail',
+    label: 'Monitoring Alert',
+    variables: [
+      { name: 'alertName', sample: 'CPU High Usage', description: 'Nama alert' },
+      { name: 'message', sample: 'CPU usage > 90%', description: 'Pesan alert' },
+    ],
+    renderDefault: (o) =>
+      monitoringAlertEmail(o?.alertName ?? 'CPU High Usage', o?.message ?? 'CPU usage > 90%'),
   },
 };
 

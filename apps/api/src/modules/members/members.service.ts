@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, Optional, OnModuleInit } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import * as crypto from 'crypto';
-import { welcomeMemberEmail, escapeHtml } from '../../mail/email-templates';
+import { welcomeMemberEmail, credentialEmail, dataIncompleteEmail, escapeHtml } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -550,14 +550,12 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
     // Kirim email credential — hanya untuk anggota ber-email asli
     if (member.email) {
+      const username = member.email;
+      const tpl = credentialEmail(member.namaLengkap, username, DEFAULT_PASSWORD);
       this.memberMailService.sendToMember(
         member.id,
-        () => ({
-          subject: 'Kredensial Login THS-THM',
-          html: `<h2>Halo ${escapeHtml(member.namaLengkap)},</h2><p>Akun Anda telah diatur ulang di sistem THS-THM.</p><p>Silakan login dengan:</p><ul><li><strong>Email:</strong> ${escapeHtml(member.email)}</li><li><strong>Password:</strong> ${DEFAULT_PASSWORD}</li></ul><p>Setelah login, Anda akan diminta mengubah password.</p>`,
-          text: `Halo ${member.namaLengkap},\n\nAkun Anda telah diatur ulang di sistem THS-THM.\n\nSilakan login dengan:\nEmail: ${member.email}\nPassword: ${DEFAULT_PASSWORD}\n\nSetelah login, Anda akan diminta mengubah password.`,
-        }),
-        { template: 'welcomeAccountEmail', email: member.email },
+        () => tpl,
+        { template: 'credentialEmail', email: member.email },
         'members',
       );
     }
@@ -859,14 +857,11 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
       // Kirim email credential — hanya jika anggota punya email asli
       if (anggotaId && !isSynthetic) {
+        const tpl = credentialEmail(namaLengkap, email, DEFAULT_PASSWORD);
         this.memberMailService.sendToMember(
           anggotaId,
-          () => ({
-            subject: 'Akun THS-THM Telah Dibuat',
-            html: `<h2>Halo ${escapeHtml(namaLengkap)},</h2><p>Akun Anda telah dibuat di sistem THS-THM.</p><p>Silakan login dengan:</p><ul><li><strong>Email:</strong> ${escapeHtml(email)}</li><li><strong>Password:</strong> ${DEFAULT_PASSWORD}</li></ul><p>Setelah login, Anda akan diminta mengubah password.</p>`,
-            text: `Halo ${namaLengkap},\n\nAkun Anda telah dibuat di sistem THS-THM.\n\nSilakan login dengan:\nEmail: ${email}\nPassword: ${DEFAULT_PASSWORD}\n\nSetelah login, Anda akan diminta mengubah password.`,
-          }),
-          { template: 'welcomeAccountEmail', email },
+          () => tpl,
+          { template: 'credentialEmail', email },
           'members',
         );
       }
@@ -887,13 +882,10 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   ): Promise<void> {
     // Send email notification
     if (email) {
+      const tpl = dataIncompleteEmail(namaLengkap, missingFields);
       this.memberMailService.sendToMember(
         anggotaId,
-        (nama: string) => ({
-          subject: 'Data Anggota Belum Lengkap — THS-THM',
-          html: `<h2>Halo ${escapeHtml(nama)},</h2><p>Data keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut:</p><ul>${missingFields.map((f: string) => `<li>${escapeHtml(f.replace(/_/g, ' '))}</li>`).join('')}</ul><p>Silakan login ke aplikasi mobile untuk melengkapi data.</p>`,
-          text: `Halo ${nama},\n\nData keanggotaan Anda masih belum lengkap. Harap lengkapi data berikut: ${missingFields.join(', ')}\n\nSilakan login ke aplikasi mobile untuk melengkapi data.`,
-        }),
+        () => tpl,
         { template: 'dataIncompleteEmail', email },
         'members',
       );

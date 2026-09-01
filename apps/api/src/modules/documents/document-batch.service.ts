@@ -10,7 +10,7 @@ import { InProcessQueueAdapter } from '../../common/queue/in-process-queue.adapt
 import { BullMQQueueAdapter } from '../../common/queue/bullmq-queue.adapter';
 import { EventsGateway } from '../notifications/events.gateway';
 import { MailService } from '../../mail/mail.service';
-import { escapeHtml } from '../../mail/email-templates';
+import { batchCompletionEmail } from '../../mail/email-templates';
 
 export interface BatchProgress {
   batchId: string;
@@ -583,39 +583,12 @@ export class DocumentBatchService implements OnApplicationShutdown {
 
       if (!user?.email) return;
 
-      const subject =
-        failed > 0
-          ? `⚠️ Generate ${typeLabel} Selesai — ${success} Berhasil, ${failed} Gagal`
-          : `✅ Generate ${typeLabel} Selesai — ${success} Dokumen Berhasil`;
-
-      const html = `
-        <h2 style="color: ${failed > 0 ? '#ca8a04' : '#16a34a'};">
-          ${failed > 0 ? '⚠️' : '✅'} Generate Dokumen Selesai
-        </h2>
-        <p>Halo <strong>${escapeHtml(user.namaLengkap)}</strong>,</p>
-        <p>Batch generate <strong>${escapeHtml(typeLabel)}</strong> telah selesai diproses.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-          <tr>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold;">Total</td>
-            <td style="padding: 8px; border: 1px solid #e5e7eb;">${success + failed}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; color: #16a34a;">Berhasil</td>
-            <td style="padding: 8px; border: 1px solid #e5e7eb;">${success}</td>
-          </tr>
-          ${failed > 0 ? `
-          <tr>
-            <td style="padding: 8px; border: 1px solid #e5e7eb; font-weight: bold; color: #dc2626;">Gagal</td>
-            <td style="padding: 8px; border: 1px solid #e5e7eb;">${failed}</td>
-          </tr>` : ''}
-        </table>
-        <p>Silakan login ke aplikasi untuk melihat detail dan mengunduh dokumen.</p>
-      `;
+      const tpl = batchCompletionEmail(user.namaLengkap, typeLabel, success, failed);
 
       await this.mailService.sendMail({
         to: user.email,
-        subject,
-        html,
+        subject: tpl.subject,
+        html: tpl.html,
         metadata: {
           module: 'documents',
           template: 'batchCompletionEmail',
