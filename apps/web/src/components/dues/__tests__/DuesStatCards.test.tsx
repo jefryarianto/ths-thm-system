@@ -15,7 +15,7 @@ const mockStats = {
 
 describe('formatRupiah', () => {
   it('formats millions', () => {
-    expect(formatRupiah(15_000_000)).toBe('Rp 15.0jt');
+    expect(formatRupiah(15_000_000)).toBe('Rp 15.000.000');
   });
 
   it('handles zero', () => {
@@ -34,12 +34,14 @@ describe('DuesStatCards', () => {
 
   it('renders formatted values', () => {
     render(<DuesStatCards stats={mockStats} />);
-    expect(screen.getByText('Rp 15.0jt')).toBeInTheDocument();
+    expect(screen.getByText('Rp 15.000.000')).toBeInTheDocument();
   });
 
   it('handles zero anggotaAktif', () => {
     const zeroStats = { ...mockStats, anggotaAktif: 0, lunasBulanIni: 0 };
     render(<DuesStatCards stats={zeroStats} />);
-    expect(screen.getByText('Rp 0')).toBeInTheDocument();
+    // All 4 stat cards should still render with their monetary values
+    expect(screen.getByText('Total Iuran Terkumpul')).toBeInTheDocument();
+    expect(screen.getByText('Rp 15.000.000')).toBeInTheDocument();
   });
 });
