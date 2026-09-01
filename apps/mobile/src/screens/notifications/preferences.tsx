@@ -14,6 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
+import { getNotificationSoundEnabled, setNotificationSoundEnabled } from '../../lib/notification-alert';
 
 interface NotificationType {
   key: string;
@@ -43,6 +44,17 @@ export default function NotificationPreferencesScreen() {
   const [types, setTypes] = useState<NotificationType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    getNotificationSoundEnabled().then(setSoundEnabled);
+  }, []);
+
+  const handleToggleSound = async () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    await setNotificationSoundEnabled(newVal);
+  };
 
   useEffect(() => {
     (async () => {
@@ -134,7 +146,34 @@ export default function NotificationPreferencesScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Channel Notifikasi</Text>
+        {/* Sound Preference */}
+        <Text style={styles.sectionTitle}>Suara Notifikasi</Text>
+        <View style={styles.prefCard}>
+          <View style={[styles.prefIcon, !soundEnabled && styles.prefIconDisabled]}>
+            <Ionicons
+              name={soundEnabled ? 'volume-high' : 'volume-mute'}
+              size={22}
+              color={soundEnabled ? '#d97706' : '#9ca3af'}
+            />
+          </View>
+          <View style={styles.prefInfo}>
+            <Text style={[styles.prefLabel, !soundEnabled && styles.prefLabelDisabled]}>
+              Suara Peringatan
+            </Text>
+            <Text style={styles.prefDesc}>
+              {soundEnabled ? 'Suara aktif saat peringatan sesi' : 'Hanya notifikasi visual'}
+            </Text>
+          </View>
+          <Switch
+            value={soundEnabled}
+            onValueChange={handleToggleSound}
+            trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
+            thumbColor={soundEnabled ? '#d97706' : '#9ca3af'}
+            style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
+          />
+        </View>
+
+        <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Channel Notifikasi</Text>
         {types.length > 0 ? (
           types.map((type) => {
             const iconName = TYPE_ICONS[type.key] || 'notifications';

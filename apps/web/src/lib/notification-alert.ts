@@ -2,9 +2,36 @@
  * Subtle notification alert for session expiry warnings on web.
  * Uses Web Audio API to generate a soft two-tone chime.
  * Falls back gracefully if AudioContext is not available.
+ *
+ * Sound can be toggled via getNotificationSoundEnabled/setNotificationSoundEnabled.
  */
 
+const SOUND_PREF_KEY = 'notification-sound-enabled';
+
 let audioCtx: AudioContext | null = null;
+
+// ─── Sound Preference ──────────────────────────────────────
+
+export function getNotificationSoundEnabled(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const val = localStorage.getItem(SOUND_PREF_KEY);
+    return val !== 'false'; // default: enabled
+  } catch {
+    return true;
+  }
+}
+
+export function setNotificationSoundEnabled(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SOUND_PREF_KEY, String(enabled));
+  } catch {
+    // Ignore
+  }
+}
+
+// ─── Audio Context ─────────────────────────────────────────
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -22,16 +49,20 @@ function getAudioContext(): AudioContext | null {
   }
 }
 
+// ─── Alert Sounds ──────────────────────────────────────────
+
 /**
  * Play a soft two-tone chime: two sine wave notes, gentle fade-in/out.
  * Think: a subtle "ding-ding" — noticeable but not jarring.
+ * Respects the notification sound preference.
  */
 export function playSessionWarningAlert(): void {
+  if (!getNotificationSoundEnabled()) return;
+
   const ctx = getAudioContext();
   if (!ctx) return;
 
   const now = ctx.currentTime;
-  const duration = 0.6; // total duration
 
   // Two-tone chime: C5 (523Hz) then E5 (659Hz)
   const frequencies = [523, 659];
@@ -72,6 +103,8 @@ export function playSessionWarningAlert(): void {
  * Play a stronger three-tone alert for session expired.
  */
 export function playSessionExpiredAlert(): void {
+  if (!getNotificationSoundEnabled()) return;
+
   const ctx = getAudioContext();
   if (!ctx) return;
 

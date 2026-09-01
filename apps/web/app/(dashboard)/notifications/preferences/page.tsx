@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
-import { Bell, Settings, ArrowLeft, Save, Check, Mail, Smartphone } from 'lucide-react';
+import { Bell, Settings, ArrowLeft, Save, Check, Mail, Smartphone, Volume2, VolumeX } from 'lucide-react';
+import { getNotificationSoundEnabled, setNotificationSoundEnabled } from '@/lib/notification-alert';
 import Link from 'next/link';
 
 interface NotifType {
@@ -31,6 +32,18 @@ export default function NotificationPreferencesPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Load sound preference on mount
+  useEffect(() => {
+    setSoundEnabled(getNotificationSoundEnabled());
+  }, []);
+
+  const handleToggleSound = () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    setNotificationSoundEnabled(newVal);
+  };
 
   const fetchPreferences = useCallback(async () => {
     setLoading(true);
@@ -187,6 +200,44 @@ export default function NotificationPreferencesPage() {
                 </div>
               )}
         
+              {/* Sound preference */}
+              {!loading && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-lg ${soundEnabled ? 'bg-amber-50 dark:bg-amber-950' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                        {soundEnabled ? (
+                          <Volume2 size={18} className="text-amber-600 dark:text-amber-400" />
+                        ) : (
+                          <VolumeX size={18} className="text-gray-400 dark:text-gray-500" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Suara Notifikasi</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {soundEnabled ? 'Suara aktif saat peringatan sesi' : 'Suara nonaktif — hanya notifikasi visual'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleToggleSound}
+                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 ${
+                        soundEnabled ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-600'
+                      }`}
+                      role="switch"
+                      aria-checked={soundEnabled}
+                      aria-label="Toggle notification sound"
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          soundEnabled ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Preference toggles */}
               {!loading && (
                 <div className="space-y-3">
