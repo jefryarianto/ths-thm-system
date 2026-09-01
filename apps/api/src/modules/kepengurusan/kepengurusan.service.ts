@@ -470,6 +470,16 @@ export class KepengurusanService {
     return { approved: results.length };
   }
 
+  /** Bulk reject all pending items */
+  async bulkReject(ids: string[], reason: string) {
+    const results = [];
+    for (const id of ids) {
+      const result = await this.reject(id, reason);
+      results.push(result);
+    }
+    return { rejected: results.length };
+  }
+
   /** Reparent a kepengurusan node (for drag-drop) */
   async reparent(id: string, parentId: string | null) {
     const item = await this.findOne(id);

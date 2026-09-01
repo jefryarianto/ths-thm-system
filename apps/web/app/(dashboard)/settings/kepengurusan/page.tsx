@@ -79,6 +79,8 @@ export default function KepengurusanPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [pendingCount, setPendingCount] = useState(0);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   // Load dropdowns
   useEffect(() => {
@@ -228,6 +230,58 @@ export default function KepengurusanPage() {
       toast('error', e?.response?.data?.message || 'Gagal menolak');
     }
     setApprovingId(null);
+  };
+
+  // Bulk approve
+  const handleBulkApprove = async () => {
+    if (selectedIds.size === 0) return;
+    const ok = await confirm({ title: 'Setujui ' + selectedIds.size + ' item?', message: 'Semua item yang dipilih akan disetujui.' });
+    if (!ok) return;
+    setBulkApproving(true);
+    try {
+      await apiClient.post('/kepengurusan/bulk-approve', { ids: Array.from(selectedIds) });
+      toast('success', selectedIds.size + ' item berhasil disetujui');
+      setSelectedIds(new Set());
+      fetchData();
+    } catch (e: any) {
+      toast('error', e?.response?.data?.message || 'Gagal menyetujui');
+    }
+    setBulkApproving(false);
+  };
+
+  // Bulk reject
+  const handleBulkReject = async () => {
+    if (selectedIds.size === 0) return;
+    const reason = prompt('Alasan penolakan (opsional):');
+    setBulkApproving(true);
+    try {
+      await apiClient.post('/kepengurusan/bulk-reject', { ids: Array.from(selectedIds), reason: reason || '' });
+      toast('success', selectedIds.size + ' item berhasil ditolak');
+      setSelectedIds(new Set());
+      fetchData();
+    } catch (e: any) {
+      toast('error', e?.response?.data?.message || 'Gagal menolak');
+    }
+    setBulkApproving(false);
+  };
+
+  // Toggle selection
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const pendingItems = filteredData.filter((item) => item.status === 'pending' || item.status === 'pending_deletion');
+    if (selectedIds.size === pendingItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingItems.map((item) => item.id)));
+    }
   };
 
   // Export CSV
@@ -382,6 +436,27 @@ export default function KepengurusanPage() {
         </button>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 mb-6 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+            {selectedIds.size} item dipilih
+          </span>
+          <button onClick={handleBulkApprove} disabled={bulkApproving}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+            <CheckCircle size={16} /> {bulkApproving ? 'Memproses...' : 'Setujui Semua'}
+          </button>
+          <button onClick={handleBulkReject} disabled={bulkApproving}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+            <XCircle size={16} /> {bulkApproving ? 'Memproses...' : 'Tolak Semua'}
+          </button>
+          <button onClick={() => setSelectedIds(new Set())}
+            className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+            Batal Pilihan
+          </button>
+        </div>
+      )}
+
       {/* Data Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         {loading ? (
@@ -393,6 +468,14 @@ export default function KepengurusanPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 w-10">
+                    <input
+                      type="checkbox"
+                      checked={filteredData.filter((i) => i.status === 'pending' || i.status === 'pending_deletion').length > 0 && selectedIds.size === filteredData.filter((i) => i.status === 'pending' || i.status === 'pending_deletion').length}
+                      onChange={toggleSelectAll}
+                      className="rounded border-gray-300 dark:border-gray-600 text-indigo-600"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Nama</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Jabatan</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Level</th>
@@ -405,6 +488,16 @@ export default function KepengurusanPage() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredData.map((item) => (
                   <tr key={item.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${isExpired(item) ? 'opacity-60' : ''}`}>
+                    <td className="px-4 py-3 w-10">
+                      {(item.status === 'pending' || item.status === 'pending_deletion') && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          className="rounded border-gray-300 dark:border-gray-600 text-indigo-600"
+                        />
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 dark:text-gray-100">{item.user.namaLengkap}</div>
                       {item.parent && (

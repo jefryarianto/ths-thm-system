@@ -120,4 +120,10 @@ export class KepengurusanController {
   bulkApprove(@Body() body: { ids: string[] }, @Req() req?: ScopedRequest) {
     return this.service.bulkApprove(body.ids || [], req?.user?.id || 'system');
   }
+
+  @Post('bulk-reject')
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tolak beberapa perubahan sekaligus' })
+  bulkReject(@Body() body: { ids: string[]; reason?: string }) {
+    return this.service.bulkReject(body.ids || [], body.reason || '');
+  }
 }
