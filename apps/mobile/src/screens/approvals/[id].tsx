@@ -117,13 +117,13 @@ export default function ApprovalDetailScreen() {
           <Text style={styles.idText}>ID: {approval.id}</Text>
           <Text style={styles.metaInfo}>
             Diajukan: {new Date(approval.createdAt).toLocaleDateString('id-ID', {
-              day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+              day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
             })}
           </Text>
           {approval.completedAt && (
             <Text style={styles.metaInfo}>
               Selesai: {new Date(approval.completedAt).toLocaleDateString('id-ID', {
-                day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
               })}
             </Text>
           )}
@@ -268,7 +268,7 @@ function LevelCard({ level, index, isLast }: { level: ApprovalLevel; index: numb
         {level.decidedAt && (
           <Text style={styles.levelDate}>
             {new Date(level.decidedAt).toLocaleDateString('id-ID', {
-              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+              day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit'
             })}
           </Text>
         )}

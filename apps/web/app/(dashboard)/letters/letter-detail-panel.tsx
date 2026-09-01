@@ -98,7 +98,7 @@ export default function LetterDetailPanel({
             value={
               detailData.tanggalSurat
                 ? new Date(detailData.tanggalSurat).toLocaleDateString('id-ID', {
-                    day: 'numeric',
+                    day: '2-digit',
                     month: 'long',
                     year: 'numeric',
                   })
@@ -109,7 +109,7 @@ export default function LetterDetailPanel({
             <DetailRow
               label="Tanggal Terima"
               value={new Date(detailData.tanggalTerima).toLocaleDateString('id-ID', {
-                day: 'numeric',
+                day: '2-digit',
                 month: 'long',
                 year: 'numeric',
               })}
@@ -153,11 +153,11 @@ export default function LetterDetailPanel({
 
           <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              Dibuat: {new Date(detailData.createdAt).toLocaleString('id-ID')}
+              Dibuat: {new Date(detailData.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
             {detailData.updatedAt && (
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Diperbarui: {new Date(detailData.updatedAt).toLocaleString('id-ID')}
+                Diperbarui: {new Date(detailData.updatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </p>
             )}
           </div>

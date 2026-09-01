@@ -260,18 +260,18 @@ export class ReportsService {
     }
 
     const bulanNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
       'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
 
     return Object.entries(monthMap).map(([key, val]) => {

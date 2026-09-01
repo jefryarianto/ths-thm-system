@@ -296,7 +296,7 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
               <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
                 <span className="flex items-center gap-1">
                   <Calendar size={11} />
-                  {startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {startDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock size={11} />
@@ -356,11 +356,11 @@ function IncidentRow({ incident, maxDuration, onNotesSaved }: {
             </div>
             <div>
               <span className="text-gray-400 dark:text-gray-500">Started</span>
-              <p className="text-gray-700 dark:text-gray-300">{startDate.toLocaleString('id-ID')}</p>
+              <p className="text-gray-700 dark:text-gray-300">{startDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
             </div>
             <div>
               <span className="text-gray-400 dark:text-gray-500">Resolved</span>
-              <p className="text-gray-700 dark:text-gray-300">{endDate ? endDate.toLocaleString('id-ID') : 'Not yet'}</p>
+              <p className="text-gray-700 dark:text-gray-300">{endDate ? endDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not yet'}</p>
             </div>
           </div>
         </div>

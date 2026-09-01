@@ -229,7 +229,7 @@ export default function InvitationTab({
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {inv.konfirmasiAt
-                        ? `${new Date(inv.konfirmasiAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}${inv.konfirmasiOleh ? ` · ${inv.konfirmasiOleh}` : ''}`
+                        ? `${new Date(inv.konfirmasiAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long' })}${inv.konfirmasiOleh ? ` · ${inv.konfirmasiOleh}` : ''}`
                         : '-'}
                     </td>
                     <td className="px-4 py-3 text-right">

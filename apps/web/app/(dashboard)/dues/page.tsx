@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import { formatDate, formatPeriode, formatRupiah } from '@/lib/format';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import DataTable from '@/components/ui/data-table';
@@ -62,17 +63,6 @@ const statusColors: Record<string, string> = {
   belum_dibayar: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   menunggu_verifikasi: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
 };
-
-// ─── Helpers ───
-
-function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString('id-ID')}`;
-}
-
-function formatShortDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 
 // ─── Page ───
 
@@ -157,8 +147,8 @@ export default function DuesPage() {
             label: 'Anggota',
             render: (d: DuesRow) => <span className="font-medium">{d.anggota?.namaLengkap || '-'}</span>,
           },
-          { key: 'periode', label: 'Periode' },
-          { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(Number(d.jumlah)) },
+          { key: 'periode', label: 'Periode', render: (d: DuesRow) => formatPeriode(d.periode) },
+          { key: 'jumlah', label: 'Jumlah', render: (d: DuesRow) => formatRupiah(d.jumlah) },
           {
             key: 'status',
             label: 'Status',
@@ -170,7 +160,7 @@ export default function DuesPage() {
               </span>
             ),
           },
-          { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => formatShortDate(d.createdAt) },
+          { key: 'createdAt', label: 'Tanggal', render: (d: DuesRow) => formatDate(d.createdAt) },
           {
             key: 'actions',
             label: 'Aksi',

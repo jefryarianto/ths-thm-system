@@ -67,7 +67,7 @@ export default function MembersReportPage() {
     const header = ['NRA', 'Nama', 'Jenis Kelamin', 'TTL', 'Tempat-Tahun Dadar', 'Ranting', 'Tingkat', 'Status', 'Email', 'No. HP'];
     const rows = members.map(m => [
       m.nomorAnggota, m.namaLengkap, m.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan',
-      [m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID') : ''].filter(Boolean).join(', '),
+      [m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : ''].filter(Boolean).join(', '),
       [m.tempatDadar, m.tahunDadar].filter(Boolean).join(' - '),
       m.ranting?.nama || '-', m.tingkat || '-', m.statusKeanggotaan, m.email || '', m.noHp || '',
     ]);
@@ -163,7 +163,7 @@ export default function MembersReportPage() {
                             <td className="px-4 py-2 font-mono text-xs">{m.nomorAnggota}</td>
                             <td className="px-4 py-2 font-medium">{m.namaLengkap}</td>
                             <td className="px-4 py-2 text-xs text-gray-500 hidden md:table-cell">
-                              {[m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID') : null].filter(Boolean).join(', ') || '-'}
+                              {[m.tempatLahir, m.tanggalLahir ? new Date(m.tanggalLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : null].filter(Boolean).join(', ') || '-'}
                             </td>
                             <td className="px-4 py-2 text-xs text-gray-500 hidden lg:table-cell">
                               {[m.tempatDadar, m.tahunDadar].filter(Boolean).join(' - ') || '-'}

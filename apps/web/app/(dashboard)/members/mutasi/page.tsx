@@ -173,7 +173,7 @@ export default function MutasiPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase tracking-wide text-gray-400">
-                      Diajukan {new Date(r.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      Diajukan {new Date(r.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </p>
                     {r.canApprove && r.status === 'pending' && (
                       <div className="mt-2 flex gap-2 justify-end">

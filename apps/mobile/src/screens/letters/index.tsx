@@ -100,8 +100,8 @@ export default function LettersScreen() {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
+      day: '2-digit',
+      month: 'long',
       year: 'numeric',
     });
   };

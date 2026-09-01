@@ -191,7 +191,7 @@ export default function NotificationsPage() {
         JSON.stringify(n.isi || ''),
         n.tipe,
         n.isRead ? 'Ya' : 'Tidak',
-        new Date(n.createdAt).toLocaleDateString('id-ID'),
+        new Date(n.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
       ]);
       const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
 
@@ -414,8 +414,8 @@ export default function NotificationsPage() {
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(n.createdAt).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
+                            day: '2-digit',
+                            month: 'long',
                             year: 'numeric',
                           })}
                         </span>

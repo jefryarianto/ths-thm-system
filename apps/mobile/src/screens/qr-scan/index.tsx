@@ -238,7 +238,7 @@ export default function QRScanScreen() {
       success,
       type: 'check_in' as const,
       message: success ? 'Check-in Berhasil ✓' : data.message || 'Check-in Gagal',
-      detail: `${kegiatan.nama}\nLokasi: ${kegiatan.lokasi || '-'}\nWaktu: ${new Date(kegiatan.tanggalMulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}`,
+      detail: `${kegiatan.nama}\nLokasi: ${kegiatan.lokasi || '-'}\nWaktu: ${new Date(kegiatan.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long' })}`,
     };
     setScanResult(result);
     saveHistory({
@@ -547,7 +547,7 @@ export default function QRScanScreen() {
                   <Text style={styles.historyResult}>{item.result}</Text>
                   {item.detail && <Text style={styles.historyDetail} numberOfLines={1}>{item.detail}</Text>}
                   <Text style={styles.historyTime}>
-                    {new Date(item.timestamp).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(item.timestamp).toLocaleString('id-ID', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
               </View>

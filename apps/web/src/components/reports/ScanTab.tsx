@@ -88,7 +88,7 @@ export default function ScanTab({ scanStats, loading }: ScanTabProps) {
                 tickLine={false}
                 tickFormatter={(v) => {
                   const d = new Date(v + 'T00:00:00');
-                  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long' });
                 }}
               />
               <YAxis
@@ -103,7 +103,7 @@ export default function ScanTab({ scanStats, loading }: ScanTabProps) {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric',
+                    day: '2-digit',
                   })
                 }
               />
@@ -138,8 +138,8 @@ export default function ScanTab({ scanStats, loading }: ScanTabProps) {
                   </span>
                   <span className="text-xs text-gray-400">
                     {new Date(a.tanggal).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
+                      day: '2-digit',
+                      month: 'long',
                     })}
                   </span>
                 </div>

@@ -71,13 +71,13 @@ const UJIAN_STATUS_LABELS: Record<string, string> = {
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('id-ID', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
   });
 }
 
 function formatShort(d: string) {
   return new Date(d).toLocaleDateString('id-ID', {
-    year: 'numeric', month: 'short', day: 'numeric',
+    year: 'numeric', month: 'long', day: '2-digit',
   });
 }
 

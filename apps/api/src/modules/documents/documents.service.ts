@@ -527,7 +527,7 @@ export class DocumentsService {
         predicate: dto.predicate,
         status: 'Lulus',
         issuedDate: new Date().toLocaleDateString('id-ID', {
-          day: 'numeric',
+          day: '2-digit',
           month: 'long',
           year: 'numeric',
         }),
@@ -598,7 +598,7 @@ export class DocumentsService {
       predicate: dto.predicate,
       status: 'Lulus',
       issuedDate: new Date().toLocaleDateString('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric',
+        day: '2-digit', month: 'long', year: 'numeric',
       }),
       signers,
       aspects: dto.aspects,

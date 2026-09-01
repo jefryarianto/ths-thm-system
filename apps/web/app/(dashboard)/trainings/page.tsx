@@ -124,7 +124,7 @@ export default function TrainingsPage() {
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-gray-400" />
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {new Date(row.hariTanggal).toLocaleDateString('id-ID')}
+                  {new Date(row.hariTanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </span>
               </div>
             </td>

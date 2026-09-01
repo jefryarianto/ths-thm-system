@@ -116,8 +116,8 @@ export default function GamificationProfilePage() {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
+      day: '2-digit',
+      month: 'long',
       hour: '2-digit',
       minute: '2-digit',
     });

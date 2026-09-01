@@ -48,8 +48,8 @@ const columns = [
       const date = l.tanggalSurat || l.tanggalTerima || l.tanggalKirim;
       return date
         ? new Date(date).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
+            day: '2-digit',
+            month: 'long',
             year: 'numeric',
           })
         : '-';

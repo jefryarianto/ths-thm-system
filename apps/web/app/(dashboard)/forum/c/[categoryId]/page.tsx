@@ -144,7 +144,7 @@ export default function CategoryThreadsPage() {
                           <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                             <span>{t.author.namaLengkap}</span>
                             <span>·</span>
-                            <span>{new Date(t.createdAt).toLocaleDateString('id-ID')}</span>
+                            <span>{new Date(t.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                             <span>·</span>
                             <span className="flex items-center gap-1">
                               <MessageSquare size={10} /> {t._count.posts} balasan

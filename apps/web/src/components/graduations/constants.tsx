@@ -19,7 +19,7 @@ export const STATUS_LABELS: Record<string, string> = {
 export function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('id-ID', {
     weekday: 'long',
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
@@ -27,8 +27,8 @@ export function formatDate(dateStr: string) {
 
 export function formatShort(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
   });
 }

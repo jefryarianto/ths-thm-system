@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
+import { formatDate, formatRupiah } from '@/lib/format';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
@@ -108,10 +109,6 @@ export default function PaymentsPage() {
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
-  };
-
-  const formatRupiah = (amount: number) => {
-    return `Rp ${amount.toLocaleString('id-ID')}`;
   };
 
   return (
@@ -281,7 +278,7 @@ export default function PaymentsPage() {
               )}
             </td>
             <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
-              {due.tanggalBayar ? new Date(due.tanggalBayar).toLocaleDateString('id-ID') : '-'}
+              {due.tanggalBayar ? formatDate(due.tanggalBayar) : '-'}
             </td>
             <td className="px-4 py-3">
               <div className="flex items-center gap-2">

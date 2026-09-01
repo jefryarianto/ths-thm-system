@@ -439,7 +439,7 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
             value={[
               member?.tempatLahir || '-',
               member?.tanggalLahir
-                ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
                 : '-',
             ]
               .filter(Boolean)
@@ -787,9 +787,9 @@ export default function DigitalCardScreen() {
 
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
-  const validUntilText = validUntil.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const validUntilText = validUntil.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  const ttl = [member?.tempatLahir, member?.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : null]
+  const ttl = [member?.tempatLahir, member?.tanggalLahir ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : null]
     .filter(Boolean)
     .join(', ') || '-';
   const dadar = [member?.tempatDadar, member?.tahunDadar].filter(Boolean).join(', ') || '-';

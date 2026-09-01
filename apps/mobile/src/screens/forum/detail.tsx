@@ -102,7 +102,7 @@ export default function ForumThreadDetailScreen() {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
+      day: '2-digit',
       month: 'long',
       year: 'numeric',
       hour: '2-digit',
@@ -227,8 +227,8 @@ export default function ForumThreadDetailScreen() {
                 <Text style={styles.postAuthorName}>{post.author?.namaLengkap}</Text>
                 <Text style={styles.postDate}>
                   {new Date(post.createdAt).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
+                    day: '2-digit',
+                    month: 'long',
                     hour: '2-digit',
                     minute: '2-digit',
                   })}

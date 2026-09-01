@@ -40,7 +40,7 @@ const formatTanggalDisplay = (iso: string): string => {
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
   if (!y || !m || !d) return iso;
   return new Date(y, m - 1, d).toLocaleDateString('id-ID', {
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });

@@ -33,7 +33,7 @@ export const STATUS_ICONS: Record<string, any> = {
 
 export function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });

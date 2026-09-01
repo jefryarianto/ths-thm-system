@@ -299,7 +299,7 @@ export default function FcmTestPage() {
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right text-xs text-gray-500">
-                      {new Date(t.createdAt).toLocaleDateString('id-ID')}
+                      {new Date(t.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </td>
                   </tr>
                 ))}

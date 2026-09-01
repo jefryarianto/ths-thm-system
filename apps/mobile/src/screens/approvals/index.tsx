@@ -183,8 +183,8 @@ function ApprovalCard({
           </Text>
           <Text style={styles.cardDate}>
             {new Date(item.createdAt).toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'short',
+              day: '2-digit',
+              month: 'long',
               year: 'numeric',
             })}
           </Text>

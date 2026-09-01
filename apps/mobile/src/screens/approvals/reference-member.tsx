@@ -82,7 +82,7 @@ export default function ReferenceMemberScreen() {
 // ─── Helpers ────────────────────────────────────────────────
 
 function fmtDate(s: string) {
-  return new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 // ─── Styles ─────────────────────────────────────────────────

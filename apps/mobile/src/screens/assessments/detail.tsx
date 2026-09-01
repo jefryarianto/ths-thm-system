@@ -135,7 +135,7 @@ export default function AssessmentDetailScreen() {
                     ) : null}
                     {score.tanggal ? (
                       <Text style={styles.scoreDate}>
-                        {new Date(score.tanggal).toLocaleDateString('id-ID')}
+                        {new Date(score.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                       </Text>
                     ) : null}
                   </View>

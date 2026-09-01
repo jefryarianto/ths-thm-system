@@ -291,8 +291,8 @@ export function statusBadge(status: string) {
 export function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
@@ -307,7 +307,7 @@ export function formatDateShort(dateStr: string) {
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}j`;
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long' });
 }
 
 export function EngagementCard({

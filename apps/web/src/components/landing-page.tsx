@@ -35,7 +35,7 @@ export function LandingPageContent() {
 
   const formatTanggal = (tanggal: string) =>
     new Date(tanggal).toLocaleDateString('id-ID', {
-      day: 'numeric',
+      day: '2-digit',
       month: 'long',
       year: 'numeric',
     });

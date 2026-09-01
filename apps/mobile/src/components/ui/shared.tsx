@@ -164,10 +164,10 @@ export function InfoRow({ icon, label, value }: InfoRowProps) {
 // ─── Helpers (used by StatusCard) ────────────────────────────────
 
 function fmtDate(s: string) {
-  return new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 function fmtDateTime(s: string) {
-  return new Date(s).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 // ─── StatusCard (for reference detail status headers) ─────────────

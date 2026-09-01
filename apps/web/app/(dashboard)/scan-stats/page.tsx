@@ -64,7 +64,7 @@ export default function ScanStatsPage() {
         `"${(a.kegiatan || '').replace(/"/g, '""')}"`,
         a.hadir ? 'Hadir' : 'Absen',
         `"${(a.catatan || '-').replace(/"/g, '""')}"`,
-        new Date(a.tanggal).toLocaleString('id-ID'),
+        new Date(a.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       ]);
       const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

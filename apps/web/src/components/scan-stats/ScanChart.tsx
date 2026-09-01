@@ -67,7 +67,7 @@ export default function ScanChart({ data }: ScanChartProps) {
             <Tooltip
               labelFormatter={(v: string) =>
                 new Date(v).toLocaleDateString('id-ID', {
-                  day: 'numeric',
+                  day: '2-digit',
                   month: 'long',
                   year: 'numeric',
                 })

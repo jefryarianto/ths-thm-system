@@ -62,8 +62,8 @@ export default function PeriodsPage() {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
+      day: '2-digit',
+      month: 'long',
       year: 'numeric',
     });
   };

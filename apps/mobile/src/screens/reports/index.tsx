@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { safeIconName } from '../../lib/icons';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { formatRupiah } from '../../lib/format';
 import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
@@ -66,7 +67,7 @@ export default function ReportsScreen() {
     {
       icon: 'cash',
       label: 'Total Iuran',
-      value: `Rp ${Number(stats.totalDuesCollected).toLocaleString('id-ID')}`,
+      value: formatRupiah(stats.totalDuesCollected),
       color: '#d97706',
       bg: '#fef3c7',
     },
@@ -169,7 +170,7 @@ export default function ReportsScreen() {
                   <View style={styles.duesBarBg}>
                     <View style={[styles.duesBar, { width: `${(m.jumlah / maxJumlah) * 100}%` }]} />
                   </View>
-                  <Text style={styles.duesAmount}>Rp {m.jumlah.toLocaleString('id-ID')}</Text>
+                  <Text style={styles.duesAmount}>{formatRupiah(m.jumlah)}</Text>
                 </View>
               );
             })}

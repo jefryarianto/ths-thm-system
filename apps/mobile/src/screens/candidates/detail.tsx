@@ -189,7 +189,7 @@ export default function CandidateDetailScreen() {
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tanggal Lahir</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(candidate.tanggalLahir).toLocaleDateString('id-ID')}
+                  {new Date(candidate.tanggalLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </Text>
               </View>
             </View>
@@ -218,7 +218,7 @@ export default function CandidateDetailScreen() {
               <Text style={styles.infoLabel}>Diusulkan Tanggal</Text>
               <Text style={styles.infoValue}>
                 {new Date(candidate.createdAt).toLocaleDateString('id-ID', {
-                  day: 'numeric',
+                  day: '2-digit',
                   month: 'long',
                   year: 'numeric',
                 })}

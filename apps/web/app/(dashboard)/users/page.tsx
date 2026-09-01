@@ -169,7 +169,7 @@ export default function UsersPage() {
       hidden: 'hidden md:table-cell',
       render: (user: User) => (
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {new Date(user.createdAt).toLocaleDateString('id-ID')}
+          {new Date(user.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
         </span>
       ),
     },

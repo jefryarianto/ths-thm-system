@@ -106,7 +106,7 @@ export default function ActivityDetailScreen() {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('id-ID', {
       weekday: 'long',
-      day: 'numeric',
+      day: '2-digit',
       month: 'long',
       year: 'numeric',
     });

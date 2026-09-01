@@ -1288,7 +1288,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
+      day: '2-digit',
     });
     const lokasi = grad.lokasi || 'lokasi pendadaran';
     const judul = '📩 Undangan Pendadaran';
@@ -1443,7 +1443,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric',
+            day: '2-digit',
           })
         : '-';
       const tpl = await this.mailService.renderWithOverride(

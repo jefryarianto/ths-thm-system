@@ -135,8 +135,8 @@ export default function RecentAbsensiTable({
                   </td>
                   <td className="px-5 py-3 text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                     {new Date(a.tanggal).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
+                      day: '2-digit',
+                      month: 'long',
                       hour: '2-digit',
                       minute: '2-digit',
                     })}

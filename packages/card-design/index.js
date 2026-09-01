@@ -286,7 +286,7 @@ const fmt = {
   },
   dateId(d) {
     const date = d instanceof Date ? d : new Date(d);
-    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
   },
   validUntilDate(base = new Date()) {
     const d = new Date(base);

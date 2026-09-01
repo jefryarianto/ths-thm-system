@@ -85,7 +85,7 @@ export default function GraduationsScreen() {
                   <View style={styles.metaRow}>
                     <Ionicons name="time" size={13} color="#9ca3af" />
                     <Text style={styles.metaText}>
-                      Selesai: {new Date(item.tanggalSelesai).toLocaleDateString('id-ID')}
+                      Selesai: {new Date(item.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </Text>
                   </View>
                 )}

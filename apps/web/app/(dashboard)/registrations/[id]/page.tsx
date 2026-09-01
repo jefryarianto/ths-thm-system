@@ -77,7 +77,7 @@ export default function RegistrationDetailPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><span className="text-gray-500">Jenis Kelamin</span><p className="font-medium">{reg.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</p></div>
                   <div><span className="text-gray-500">Tempat Lahir</span><p className="font-medium">{reg.tempatLahir || '-'}</p></div>
-                  <div><span className="text-gray-500">Tanggal Lahir</span><p className="font-medium">{reg.tanggalLahir ? new Date(reg.tanggalLahir).toLocaleDateString('id-ID') : '-'}</p></div>
+                  <div><span className="text-gray-500">Tanggal Lahir</span><p className="font-medium">{reg.tanggalLahir ? new Date(reg.tanggalLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}</p></div>
                   <div><span className="text-gray-500">Email</span><p className="font-medium">{reg.email || '-'}</p></div>
                   <div><span className="text-gray-500">No. HP</span><p className="font-medium">{reg.noHp || '-'}</p></div>
                   <div className="col-span-2"><span className="text-gray-500">Alamat</span><p className="font-medium">{reg.alamat || '-'}</p></div>

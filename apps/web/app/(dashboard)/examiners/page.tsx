@@ -75,7 +75,7 @@ export default function ExaminersPage() {
             data={examiners.map((ex: Examiner) => ({
               Nama: ex.namaLengkap,
               Email: ex.email,
-              Terdaftar: new Date(ex.createdAt).toLocaleDateString('id-ID'),
+              Terdaftar: new Date(ex.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
             }))}
             headers={['Nama', 'Email', 'Terdaftar']}
             filename="penguji-export"
@@ -138,7 +138,7 @@ export default function ExaminersPage() {
               {ex.email}
             </td>
             <td className="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">
-              {new Date(ex.createdAt).toLocaleDateString('id-ID')}
+              {new Date(ex.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
             </td>
             <td className="px-4 py-3 text-right">
               <div className="flex items-center justify-end gap-1">

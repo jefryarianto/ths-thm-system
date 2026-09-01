@@ -396,7 +396,7 @@ export default function ManageRewardsPage() {
                       label: 'Tanggal',
                       render: (r: Redemption) => (
                         <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(r.createdAt).toLocaleDateString('id-ID')}
+                          {new Date(r.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                         </span>
                       ),
                       align: 'right',

@@ -60,7 +60,7 @@ export default function PointsReportPage() {
     const headers = ['Rank,Nama,Poin,Level,Event,Last Active'];
     const rows = report.map(
       (r) =>
-        `${r.rank},"${r.namaLengkap}",${r.points},${r.level},${r.events},${new Date(r.lastActive).toLocaleDateString('id-ID')}`,
+        `${r.rank},"${r.namaLengkap}",${r.points},${r.level},${r.events},${new Date(r.lastActive).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`,
     );
     const csv = [...headers, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

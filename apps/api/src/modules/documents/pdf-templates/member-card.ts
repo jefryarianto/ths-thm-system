@@ -599,7 +599,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
   const { member, cardConfig } = props;
   const tanggalLahirStr = member.tanggalLahir
     ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', {
-        day: 'numeric',
+        day: '2-digit',
         month: 'long',
         year: 'numeric',
       })
@@ -611,7 +611,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
   const validUntilStr = validUntil.toLocaleDateString('id-ID', {
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
@@ -809,7 +809,7 @@ function buildBackSide(props: MemberCardPdfProps) {
   const { member, cardConfig } = props;
   const tanggalLahirStr = member.tanggalLahir
     ? new Date(member.tanggalLahir).toLocaleDateString('id-ID', {
-        day: 'numeric',
+        day: '2-digit',
         month: 'long',
         year: 'numeric',
       })
@@ -819,7 +819,7 @@ function buildBackSide(props: MemberCardPdfProps) {
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 5);
   const validUntilStr = validUntil.toLocaleDateString('id-ID', {
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });

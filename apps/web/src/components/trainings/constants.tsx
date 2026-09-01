@@ -24,7 +24,7 @@ export function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   return d.toLocaleDateString('id-ID', {
     weekday: 'long',
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });

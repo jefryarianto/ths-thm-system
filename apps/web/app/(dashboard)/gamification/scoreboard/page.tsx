@@ -357,8 +357,8 @@ export default function ScoreboardPage() {
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {e.lastActive
                     ? new Date(e.lastActive).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
+                        day: '2-digit',
+                        month: 'long',
                       })
                     : '-'}
                 </span>

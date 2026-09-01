@@ -98,7 +98,7 @@ export default function DocumentsScreen() {
                 <Text style={styles.cardTitle}>{tipeLabel}</Text>
                 <Text style={styles.cardMember}>{item.anggota?.namaLengkap || '-'}</Text>
                 <Text style={styles.cardDate}>
-                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}
+                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
                 </Text>
               </View>
               <View style={styles.cardRight}>

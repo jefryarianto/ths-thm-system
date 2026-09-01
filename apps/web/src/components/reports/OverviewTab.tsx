@@ -1,5 +1,6 @@
 'use client';
 
+import { formatRupiah } from '@/lib/format';
 import Link from 'next/link';
 import {
   Users,
@@ -50,10 +51,6 @@ interface DashboardData {
     totalSkipped: number;
     totalSuppressed: number;
   } | null;
-}
-
-function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
 interface OverviewTabProps {

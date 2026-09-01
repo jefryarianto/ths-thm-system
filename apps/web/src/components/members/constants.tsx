@@ -1,5 +1,6 @@
 import { Calendar, FileText, CreditCard, Users } from 'lucide-react';
 import DetailRow from '@/components/ui/detail-row';
+import { formatRupiah } from '@/lib/format';
 
 export const STATUS_BADGES: Record<string, string> = {
   aktif: 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400',
@@ -25,7 +26,7 @@ export const STATUS_LABELS: Record<string, Record<string, string>> = {
 
 export function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 /**
@@ -127,9 +128,7 @@ export const DOCUMENT_TYPES: Record<string, string> = {
 
 export const TINGKAT_OPTIONS = ['Anggota', 'Pratama', 'Tamtama', 'Muda', 'Madya', 'Utama'] as const;
 
-export function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString('id-ID')}`;
-}
+export { formatRupiah };
 
 // ─── Info Row ───
 

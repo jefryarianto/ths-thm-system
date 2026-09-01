@@ -148,7 +148,7 @@ export default function RegistrationsPage() {
               <StatusBadge status={row.status} />
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden xl:table-cell">
-              {row.createdAt ? new Date(row.createdAt).toLocaleDateString('id-ID') : '-'}
+              {row.createdAt ? new Date(row.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}
             </td>
             <td className="px-4 py-3 text-right">
               <div className="flex items-center justify-end gap-1">

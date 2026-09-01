@@ -294,7 +294,7 @@ export class CronTasksService {
       });
 
       const dateStr = training.hariTanggal.toLocaleDateString('id-ID', {
-        weekday: 'long', day: 'numeric', month: 'long',
+        weekday: 'long', day: '2-digit', month: 'long',
       });
       const lokasi = training.lokasi || training.ranting?.nama || 'lokasi biasa';
       const materi = training.jenisMateri ? ` (${training.jenisMateri})` : '';

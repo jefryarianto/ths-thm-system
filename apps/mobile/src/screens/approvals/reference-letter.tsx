@@ -106,7 +106,7 @@ export default function ReferenceLetterScreen() {
 
 function fmtFullDate(s: string) {
   return new Date(s).toLocaleDateString('id-ID', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
 }
 

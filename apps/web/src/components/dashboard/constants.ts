@@ -124,9 +124,7 @@ export interface DashboardData {
   } | null;
 }
 
-export function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString('id-ID')}`;
-}
+export { formatRupiah } from '@/lib/format';
 
 export function formatTime(dateStr: string) {
   const d = new Date(dateStr);

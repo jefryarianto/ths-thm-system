@@ -508,7 +508,7 @@ export default function MonitoringAlertsPage() {
                       ))}
                       {alert.lastTriggeredAt && (
                         <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">
-                          Terakhir triggered: {new Date(alert.lastTriggeredAt).toLocaleString('id-ID')}
+                          Terakhir triggered: {new Date(alert.lastTriggeredAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
                     </div>

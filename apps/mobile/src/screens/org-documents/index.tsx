@@ -87,8 +87,8 @@ export default function OrgDocumentsScreen() {
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.metaText}>
                     {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
+                      day: '2-digit',
+                      month: 'long',
                       year: 'numeric',
                     })}
                   </Text>

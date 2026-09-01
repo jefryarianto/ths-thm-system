@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import { formatRupiah } from '@/lib/format';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
 
@@ -40,9 +41,6 @@ interface PaymentDetail {
   } | null;
   periode: string;
 }
-
-const formatRupiah = (amount: number) =>
-  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   lunas: { label: 'Lunas', color: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 border-green-200 dark:border-green-800', icon: <CheckCircle size={14} /> },
@@ -346,7 +344,7 @@ function TimelineItem({ icon: Icon, title, date, subtitle, status }: {
       </div>
       <div className="pb-4">
         <p className="text-sm font-medium text-gray-900 dark:text-white">{title}</p>
-        {date && <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
+        {date && <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
         {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
       </div>
     </div>

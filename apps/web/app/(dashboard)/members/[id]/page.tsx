@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import { formatPeriode } from '@/lib/format';
 import ProfileHeader from '@/components/ui/profile-header';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
@@ -1380,7 +1381,7 @@ export default function MemberDetailPage() {
                                 className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition"
                               >
                                 <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                                  {dues.periode}
+                                  {formatPeriode(dues.periode)}
                                 </td>
                                 <td className="px-5 py-3 font-mono text-sm text-gray-700 dark:text-gray-300">
                                   {formatRupiah(Number(dues.jumlah))}

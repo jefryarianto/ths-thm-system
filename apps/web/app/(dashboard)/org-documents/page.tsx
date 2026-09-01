@@ -137,7 +137,7 @@ export default function OrgDocumentsPage() {
                       {row.uploader?.namaLengkap || '-'}
                     </td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
-                      {new Date(row.createdAt).toLocaleDateString('id-ID')}
+                      {new Date(row.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">

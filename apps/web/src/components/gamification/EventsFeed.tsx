@@ -20,7 +20,7 @@ function getTimeAgo(dateStr: string) {
   if (hours < 24) return `${hours}j lalu`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}h lalu`;
-  return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long' });
 }
 
 interface EventsFeedProps {

@@ -92,7 +92,7 @@ export default function ApprovalsPage() {
                     </span>
                     <span className="text-xs text-gray-400">
                       Diajukan: {new Date(req.createdAt).toLocaleDateString('id-ID', {
-                        day: 'numeric',
+                        day: '2-digit',
                         month: 'long',
                         year: 'numeric',
                       })}

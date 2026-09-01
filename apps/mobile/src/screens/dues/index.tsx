@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Ima
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient, { unwrap, toAbsoluteUrl } from '../../lib/api-client';
+import { formatDate, formatPeriode, formatRupiah } from '../../lib/format';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, StatusBadge, FilterChips, ErrorView } from '../../components/ui/shared';
@@ -121,7 +122,7 @@ export default function DuesScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={styles.totalLabel}>Total Pembayaran</Text>
-          <Text style={styles.totalAmount}>Rp {total.toLocaleString('id-ID')}</Text>
+          <Text style={styles.totalAmount}>{formatRupiah(total)}</Text>
           <Text style={styles.countLabel}>{dues.length} transaksi</Text>
         </View>
       </View>
@@ -195,16 +196,16 @@ export default function DuesScreen() {
                 onPress={() => router.push(`/dues/${item.id}` as any)}
               >
                 <View style={styles.cardLeft}>
-                  <Text style={styles.periode}>{item.periode}</Text>
+                  <Text style={styles.periode}>{formatPeriode(item.periode)}</Text>
                   <Text style={styles.tanggal}>
                     {item.tanggalBayar
-                      ? new Date(item.tanggalBayar).toLocaleDateString('id-ID')
+                      ? formatDate(item.tanggalBayar)
                       : '-'}
                   </Text>
                 </View>
                 <View style={styles.cardRight}>
                   <Text style={styles.jumlah}>
-                    Rp {Number(item.jumlah).toLocaleString('id-ID')}
+                    {formatRupiah(item.jumlah)}
                   </Text>
                   <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
                 </View>

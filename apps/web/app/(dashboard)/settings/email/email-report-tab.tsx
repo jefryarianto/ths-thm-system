@@ -154,7 +154,7 @@ export default function EmailReportTab() {
                     axisLine={{ stroke: '#e5e7eb' }}
                     tickFormatter={(val) => {
                       const d = new Date(val + 'T00:00:00');
-                      return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
+                      return d.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit' });
                     }}
                   />
                   <YAxis
@@ -178,7 +178,7 @@ export default function EmailReportTab() {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
-                        day: 'numeric',
+                        day: '2-digit',
                       });
                     }}
                     contentStyle={{
@@ -399,7 +399,7 @@ export default function EmailReportTab() {
                           const d = new Date(val + 'T00:00:00');
                           return d.toLocaleDateString('id-ID', {
                             weekday: 'short',
-                            day: 'numeric',
+                            day: '2-digit',
                           });
                         }}
                       />
@@ -425,7 +425,7 @@ export default function EmailReportTab() {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
-                            day: 'numeric',
+                            day: '2-digit',
                           });
                         }}
                         contentStyle={{

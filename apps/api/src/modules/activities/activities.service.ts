@@ -295,7 +295,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
+      day: '2-digit',
     });
     await this.memberMailService.sendToMemberWithArgs(
       anggotaId,

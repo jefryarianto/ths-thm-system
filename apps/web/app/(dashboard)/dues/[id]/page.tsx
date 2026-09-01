@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import { formatPeriode } from '@/lib/format';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
 
@@ -110,7 +111,7 @@ export default function DuesDetailPage() {
 
   return (
       <PermissionGuard module="dues" action="view">
-        <Breadcrumbs suffix={{ href: '#', label: dues?.anggota?.namaLengkap && dues?.periode ? dues.anggota.namaLengkap + ' - ' + dues.periode : 'Detail' }} />
+        <Breadcrumbs suffix={{ href: '#', label: dues?.anggota?.namaLengkap && dues?.periode ? `${dues.anggota.namaLengkap} - ${formatPeriode(dues.periode)}` : 'Detail' }} />
         <div className="max-w-2xl mx-auto space-y-6">
               {/* Back */}
               <Link href="/dues" className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group">
@@ -133,7 +134,7 @@ export default function DuesDetailPage() {
                     <div className="flex-1 mt-2 sm:mt-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                          Iuran {dues.periode}
+                          Iuran {formatPeriode(dues.periode)}
                         </h1>
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${DUES_STATUS_STYLES[dues.status] || ''}`}>
                           {FLAT_STATUS_LABELS[dues.status] || dues.status}
@@ -156,7 +157,7 @@ export default function DuesDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Periode</p>
-                      <p className="text-base font-bold text-gray-900 dark:text-white">{dues.periode}</p>
+                      <p className="text-base font-bold text-gray-900 dark:text-white">{formatPeriode(dues.periode)}</p>
                     </div>
                   </div>
                 </div>

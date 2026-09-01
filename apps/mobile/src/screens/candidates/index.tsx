@@ -69,8 +69,8 @@ export default function CandidatesScreen() {
                 )}
                 <Text style={styles.date}>
                   {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
+                    day: '2-digit',
+                    month: 'long',
                     year: 'numeric',
                   })}
                 </Text>

@@ -116,7 +116,7 @@ export default function PeriodePage() {
                     )}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {new Date(item.tglMulai).toLocaleDateString('id-ID')} — {new Date(item.tglSelesai).toLocaleDateString('id-ID')}
+                    {new Date(item.tglMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} — {new Date(item.tglSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                     <span className="ml-2">• {item._count.pengurus} pengurus</span>
                   </div>
                 </div>

@@ -394,7 +394,7 @@ export default function AdminDashboardPage() {
           {lastUpdated && (
             <div className="flex items-center gap-1.5">
               <Clock size={12} />
-              <span>Data diperbarui: {lastUpdated.toLocaleString('id-ID')}</span>
+              <span>Data diperbarui: {lastUpdated.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           )}
         </div>

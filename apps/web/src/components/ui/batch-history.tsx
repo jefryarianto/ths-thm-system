@@ -61,8 +61,8 @@ function formatRelativeTime(dateStr: string): string {
   if (days < 7) return `${days}h lalu`;
 
   return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: 'long',
   });
 }
 

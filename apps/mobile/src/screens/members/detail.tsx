@@ -15,6 +15,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { formatRupiah } from '../../lib/format';
 import { ProfileCard, ScreenShell } from '../../components/ui/shared';
 
 interface MemberDetail {
@@ -259,7 +260,7 @@ export default function MemberDetailScreen() {
                   {months[item.bulan - 1]} {item.tahun}
                 </Text>
                 <Text style={styles.listCardMeta}>
-                  Rp {item.jumlah?.toLocaleString('id-ID')}
+                  {item.jumlah != null ? formatRupiah(item.jumlah) : ''}
                   {item.tag ? ` · ${item.tag}` : ''}
                 </Text>
               </View>
@@ -313,8 +314,8 @@ export default function MemberDetailScreen() {
                 <Text style={styles.listCardTitle}>{item.nama}</Text>
                 <Text style={styles.listCardMeta}>
                   {new Date(item.tanggal).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
+                    day: '2-digit',
+                    month: 'long',
                     year: 'numeric',
                   })}
                 </Text>
@@ -463,8 +464,8 @@ export default function MemberDetailScreen() {
                   <Text style={styles.docMetaText}>
                     Dibuat:{' '}
                     {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
+                      day: '2-digit',
+                      month: 'long',
                       year: 'numeric',
                     })}
                   </Text>
@@ -472,8 +473,8 @@ export default function MemberDetailScreen() {
                     <Text style={styles.docMetaText}>
                       · Diperbarui:{' '}
                       {new Date(item.updatedAt).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
+                        day: '2-digit',
+                        month: 'long',
                         year: 'numeric',
                       })}
                     </Text>

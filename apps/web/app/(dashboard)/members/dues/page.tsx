@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Upload, Building2, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import apiClient from '@/lib/api-client';
+import { formatDate, formatPeriode } from '@/lib/format';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import { useToast } from '@/components/ui/toast';
@@ -90,8 +91,8 @@ export default function MemberDuesPage() {
     setUploadingId(null);
   };
 
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+  const formatRupiah = (amount: number | string) => {
+    return `Rp ${Number(amount).toLocaleString('id-ID')}`;
   };
 
   const canPay = (status: string) => status !== 'lunas' && status !== 'menunggu_verifikasi';
@@ -157,14 +158,14 @@ export default function MemberDuesPage() {
               <div key={due.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Periode: {due.periode}</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Periode: {formatPeriode(due.periode)}</div>
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatRupiah(due.jumlah)}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {statusBadge(due.status)}
                     {due.tanggalBayar && (
                       <span className="text-xs text-gray-500">
-                        Dibayar: {new Date(due.tanggalBayar).toLocaleDateString('id-ID')}
+                        Dibayar: {formatDate(due.tanggalBayar)}
                       </span>
                     )}
                   </div>

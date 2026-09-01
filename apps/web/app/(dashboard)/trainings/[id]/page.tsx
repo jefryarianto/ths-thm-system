@@ -448,7 +448,7 @@ export default function TrainingDetailPage() {
                                 {evalItem.catatan || '-'}
                               </td>
                               <td className="px-5 py-3 hidden sm:table-cell text-xs text-gray-400">
-                                {new Date(evalItem.createdAt).toLocaleDateString('id-ID')}
+                                {new Date(evalItem.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                               </td>
                             </tr>
                           ))}

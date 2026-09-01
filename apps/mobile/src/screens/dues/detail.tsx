@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap, toAbsoluteUrl } from '../../lib/api-client';
+import { formatDate, formatPeriode, formatRupiah } from '../../lib/format';
 import { LoadingView, StatusBadge } from '../../components/ui/shared';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
@@ -159,14 +160,14 @@ export default function DuesDetailScreen() {
             <Ionicons name="calendar" size={18} color="#2563eb" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Periode</Text>
-              <Text style={styles.infoValue}>{dues.periode}</Text>
+              <Text style={styles.infoValue}>{formatPeriode(dues.periode)}</Text>
             </View>
           </View>
           <View style={styles.infoRow}>
             <Ionicons name="cash" size={18} color="#2563eb" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Jumlah</Text>
-              <Text style={styles.infoValue}>Rp {Number(dues.jumlah).toLocaleString('id-ID')}</Text>
+              <Text style={styles.infoValue}>{formatRupiah(dues.jumlah)}</Text>
             </View>
           </View>
           {dues.tanggalJatuhTempo && (
@@ -175,7 +176,7 @@ export default function DuesDetailScreen() {
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Jatuh Tempo</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(dues.tanggalJatuhTempo).toLocaleDateString('id-ID')}
+                  {formatDate(dues.tanggalJatuhTempo)}
                 </Text>
               </View>
             </View>
@@ -186,7 +187,7 @@ export default function DuesDetailScreen() {
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tanggal Bayar</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(dues.tanggalBayar).toLocaleDateString('id-ID')}
+                  {formatDate(dues.tanggalBayar)}
                 </Text>
               </View>
             </View>

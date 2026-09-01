@@ -147,7 +147,7 @@ export default function InvitationsScreen() {
                   <Text style={styles.date}>
                     {d.toLocaleDateString('id-ID', {
                       weekday: 'long',
-                      day: 'numeric',
+                      day: '2-digit',
                       month: 'long',
                       year: 'numeric',
                     })}

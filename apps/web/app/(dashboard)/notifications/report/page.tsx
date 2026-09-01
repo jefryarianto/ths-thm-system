@@ -134,7 +134,7 @@ export default function NotificationReportPage() {
         JSON.stringify(n.isi || ''),
         n.tipe,
         n.isRead ? 'Ya' : 'Tidak',
-        new Date(n.createdAt).toLocaleDateString('id-ID'),
+        new Date(n.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
       ]);
       const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
 

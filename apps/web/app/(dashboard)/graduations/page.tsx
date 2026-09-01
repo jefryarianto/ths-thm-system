@@ -122,9 +122,9 @@ export default function GraduationsPage() {
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell whitespace-nowrap">
               <div className="flex items-center gap-1">
                 <Calendar size={12} className="text-gray-400" />
-                {new Date(row.tanggalMulai).toLocaleDateString('id-ID')}
+                {new Date(row.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                 {row.tanggalSelesai &&
-                  ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
+                  ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`}
               </div>
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">

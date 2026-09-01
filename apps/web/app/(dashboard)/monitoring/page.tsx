@@ -573,7 +573,7 @@ export default function MonitoringPage() {
                   <div className="text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Last Backup</p>
                     <p className="font-semibold text-gray-900 dark:text-white text-xs">
-                      {new Date(health.backup.lastBackup).toLocaleString('id-ID')}
+                      {new Date(health.backup.lastBackup).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 )}
@@ -622,7 +622,7 @@ export default function MonitoringPage() {
               <div>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Terakhir Update</p>
                 <p className="text-sm text-gray-800 dark:text-gray-200">
-                  {lastUpdated ? lastUpdated.toLocaleString('id-ID') : '-'}
+                  {lastUpdated ? lastUpdated.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
                 </p>
               </div>
             </div>

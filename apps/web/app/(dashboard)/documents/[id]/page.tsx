@@ -54,8 +54,8 @@ const DOKUMEN_STATUS_META: Record<string, { label: string; className: string }> 
 function formatDateTime(dateStr?: string) {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
   });
 }

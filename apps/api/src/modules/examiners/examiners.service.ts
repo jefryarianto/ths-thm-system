@@ -279,7 +279,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
           weekday: 'long',
           year: 'numeric',
           month: 'long',
-          day: 'numeric',
+          day: '2-digit',
         })
       : 'Akan ditentukan';
 

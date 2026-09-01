@@ -25,7 +25,7 @@ export function formatTime(dateStr: string) {
   if (hours < 24) return `${hours} jam lalu`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} hari lalu`;
-  return new Date(dateStr).toLocaleDateString('id-ID');
+  return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 export const TYPE_ICONS: Record<string, string> = {

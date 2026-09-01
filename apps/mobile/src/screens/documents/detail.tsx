@@ -87,7 +87,7 @@ export default function DocumentDetailScreen() {
           <InfoRow icon="document-text" label="Tipe" value={TIPE_LABELS[document.tipe] || document.tipe} />
           <InfoRow icon="document" label="Nomor Dokumen" value={document.nomorDokumen} />
           {document.anggota && <InfoRow icon="person" label="Anggota" value={document.anggota.namaLengkap} />}
-          <InfoRow icon="calendar" label="Tanggal Generate" value={new Date(document.createdAt).toLocaleDateString('id-ID')} />
+          <InfoRow icon="calendar" label="Tanggal Generate" value={new Date(document.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} />
           <View style={styles.statusRow}>
             <Ionicons name="flag" size={15} color="#9ca3af" />
             <View style={{ flex: 1 }}>

@@ -1,5 +1,7 @@
 'use client';
 
+import { formatRupiah } from '@/lib/format';
+
 interface DuesStats {
   totalIuran: number;
   totalTransaksi: number;
@@ -15,10 +17,6 @@ interface MonthlyTrend {
   bulan: string;
   jumlah: number;
   transaksi: number;
-}
-
-function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
 export default function DuesCharts({
@@ -101,7 +99,7 @@ export default function DuesCharts({
                     title={`${t.bulan}: ${formatRupiah(t.jumlah)}`}
                   />
                   <span className="text-[10px] text-gray-400 truncate w-full text-center">
-                    {t.bulan.slice(0, 3)}
+                    {t.bulan}
                   </span>
                 </div>
               );

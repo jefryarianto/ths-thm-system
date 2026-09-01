@@ -222,9 +222,9 @@ export default function ApprovalDetailPage() {
             <InfoRow icon={FileText} label="Tipe" value={requestTypeLabels[approval.requestType] || approval.requestType} />
             <InfoRow icon={User} label="Item ID" value={approval.itemId} />
             <InfoRow icon={Send} label="Diajukan Oleh" value={approval.submittedBy || '-'} />
-            <InfoRow icon={Clock} label="Tanggal" value={new Date(approval.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
+            <InfoRow icon={Clock} label="Tanggal" value={new Date(approval.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
             {approval.completedAt && (
-              <InfoRow icon={Clock} label="Selesai" value={new Date(approval.completedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
+              <InfoRow icon={Clock} label="Selesai" value={new Date(approval.completedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
             )}
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function ApprovalDetailPage() {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-inherit opacity-70">
                     <span>Role: {level.approvalLevel.roleName}</span>
-                    {level.decidedAt && <span>· {new Date(level.decidedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>}
+                    {level.decidedAt && <span>· {new Date(level.decidedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>}
                   </div>
                   {level.note && (
                     <p className="mt-1 text-xs italic text-inherit opacity-60">Catatan: {level.note}</p>

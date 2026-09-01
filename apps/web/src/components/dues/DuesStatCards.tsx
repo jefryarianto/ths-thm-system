@@ -1,6 +1,9 @@
 'use client';
 
 import { Wallet, Receipt, AlertTriangle, TrendingUp } from 'lucide-react';
+import { formatRupiah } from '@/lib/format';
+
+export { formatRupiah };
 
 interface DuesStats {
   totalIuran: number;
@@ -11,10 +14,6 @@ interface DuesStats {
   lunasBulanIni: number;
   belumBayarBulanIni: number;
   anggotaAktif: number;
-}
-
-export function formatRupiah(value: number) {
-  return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
 const cards = [

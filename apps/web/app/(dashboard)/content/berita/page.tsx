@@ -70,7 +70,7 @@ export default function BeritaListPage() {
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString('id-ID', {
-      day: 'numeric',
+      day: '2-digit',
       month: 'long',
       year: 'numeric',
     });

@@ -72,8 +72,8 @@ const METHODS = [
 function formatTimestamp(ts: string) {
   const d = new Date(ts);
   return d.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
+    day: '2-digit',
+    month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',

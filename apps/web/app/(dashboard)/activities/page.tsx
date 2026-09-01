@@ -75,7 +75,7 @@ export default function ActivitiesPage() {
             data={data.map((a: ActivityRow) => ({
               'Nama Kegiatan': a.nama,
               Tipe: a.tipe,
-              Tanggal: new Date(a.tanggalMulai).toLocaleDateString('id-ID'),
+              Tanggal: new Date(a.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
               Lokasi: a.lokasi || '-',
               Peserta: a.pesertaCount ?? 0,
               Status: a.status,
@@ -153,9 +153,9 @@ export default function ActivitiesPage() {
               </span>
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden md:table-cell whitespace-nowrap">
-              {new Date(row.tanggalMulai).toLocaleDateString('id-ID')}
+              {new Date(row.tanggalMulai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
               {row.tanggalSelesai &&
-                ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID')}`}
+                ` - ${new Date(row.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`}
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden lg:table-cell">
               <div className="flex items-center gap-1">

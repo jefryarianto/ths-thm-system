@@ -113,8 +113,8 @@ export default function MembersTab({
                   </td>
                   <td className="px-5 py-3 hidden md:table-cell text-gray-500 text-xs">
                     {new Date(m.createdAt).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
+                      day: '2-digit',
+                      month: 'long',
                       year: 'numeric',
                     })}
                   </td>

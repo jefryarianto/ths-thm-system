@@ -325,7 +325,7 @@ export default function BackupPage() {
                         {formatSize(backup.sizeBytes)}
                       </td>
                       <td className="py-2.5 px-3 text-right text-xs text-gray-600 dark:text-gray-400">
-                        {new Date(backup.createdAt).toLocaleString('id-ID')}
+                        {new Date(backup.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="py-2.5 px-3 text-right text-xs text-gray-600 dark:text-gray-400">
                         {formatAge(backup.createdAt)}
