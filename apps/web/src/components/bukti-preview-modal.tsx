@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Modal from '@/components/ui/modal';
 import { Download, ZoomIn, ZoomOut, RotateCcw, ExternalLink } from 'lucide-react';
 
@@ -19,13 +19,28 @@ export default function BuktiPreviewModal({
 }: BuktiPreviewModalProps) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // --- Touch gesture refs (not triggering re-renders) ---
+  const touchRef = useRef({
+    initialDist: 0,
+    initialZoom: 1,
+    lastTap: 0,
+    startX: 0,
+    startY: 0,
+    panX: 0,
+    panY: 0,
+    isDragging: false,
+  });
+
+  // --- Button handlers ---
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.5));
   const handleReset = () => {
     setZoom(1);
     setRotation(0);
+    setPan({ x: 0, y: 0 });
   };
   const handleRotate = () => setRotation((prev) => (prev + 90) % 360);
 
@@ -43,8 +58,76 @@ export default function BuktiPreviewModal({
   const handleClose = () => {
     setZoom(1);
     setRotation(0);
+    setPan({ x: 0, y: 0 });
     onClose();
   };
+
+  // --- Touch handlers ---
+  const getDistance = (t1: { clientX: number; clientY: number }, t2: { clientX: number; clientY: number }) =>
+    Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const t = touchRef.current;
+
+      if (e.touches.length === 2) {
+        // Pinch start
+        t.initialDist = getDistance(e.touches[0], e.touches[1]);
+        t.initialZoom = zoom;
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        // Check for double-tap (within 300ms)
+        const now = Date.now();
+        if (now - t.lastTap < 300) {
+          // Double-tap: toggle between 1x and 2x
+          setZoom((prev) => (prev >= 1.9 ? 1 : 2));
+          t.lastTap = 0;
+          return;
+        }
+        t.lastTap = now;
+
+        // Single-finger pan (only when zoomed in)
+        if (zoom > 1) {
+          t.startX = e.touches[0].clientX;
+          t.startY = e.touches[0].clientY;
+          t.panX = pan.x;
+          t.panY = pan.y;
+          t.isDragging = true;
+        }
+      }
+    },
+    [zoom, pan]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const t = touchRef.current;
+
+      if (e.touches.length === 2) {
+        // Pinch move
+        e.preventDefault();
+        const dist = getDistance(e.touches[0], e.touches[1]);
+        const scale = dist / t.initialDist;
+        const newZoom = Math.min(Math.max(t.initialZoom * scale, 0.5), 3);
+        setZoom(newZoom);
+      } else if (e.touches.length === 1 && t.isDragging && zoom > 1) {
+        // Pan move
+        const dx = e.touches[0].clientX - t.startX;
+        const dy = e.touches[0].clientY - t.startY;
+        // Clamp pan so image doesn't leave viewport
+        const maxPan = (zoom - 1) * 200;
+        setPan({
+          x: Math.min(Math.max(t.panX + dx, -maxPan), maxPan),
+          y: Math.min(Math.max(t.panY + dy, -maxPan), maxPan),
+        });
+      }
+    },
+    [zoom]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    touchRef.current.isDragging = false;
+  }, []);
 
   return (
     <Modal
@@ -107,15 +190,28 @@ export default function BuktiPreviewModal({
           </div>
         </div>
 
-        {/* Image Container */}
-        <div className="relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-auto border border-gray-200 dark:border-gray-700 min-h-[300px] max-h-[60vh] flex items-center justify-center">
+        {/* Mobile touch hint */}
+        <div className="sm:hidden flex items-center justify-center gap-4 text-[10px] text-gray-400 dark:text-gray-500">
+          <span>👆 Press 2 fingers to zoom</span>
+          <span>👆👆 Double tap to toggle zoom</span>
+          <span>✋ Drag to pan</span>
+        </div>
+
+        {/* Image Container with touch gestures */}
+        <div
+          className="relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 min-h-[300px] max-h-[60vh] flex items-center justify-center select-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'none' }}
+        >
           <img
             ref={imgRef}
             src={buktiPath}
             alt={`Bukti pembayaran${anggotaName ? ` ${anggotaName}` : ''}`}
-            className="max-w-none transition-transform duration-200 ease-out"
+            className="max-w-none transition-transform duration-200 ease-out pointer-events-none"
             style={{
-              transform: `scale(${zoom}) rotate(${rotation}deg)`,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
               transformOrigin: 'center center',
             }}
             onError={(e) => {
