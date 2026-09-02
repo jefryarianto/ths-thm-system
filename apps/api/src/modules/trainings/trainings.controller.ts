@@ -8,6 +8,7 @@ import {
   RecordAttendanceDto,
   CreateEvaluationDto,
   UpdateEvaluationDto,
+  CreateMateriDto,
   ImportAttendanceDto,
 } from './dto/training.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
@@ -93,5 +94,34 @@ export class TrainingsController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus evaluasi pelatihan' })
   removeEvaluation(@Param('id') id: string, @Param('eid') eid: string) {
     return this.service.removeEvaluation(id, eid);
+  }
+
+  @Get(':id/materi')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Ambil materi pelatihan' })
+  getMateri(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getMateri(id, req.scope);
+  }
+
+  @Post(':id/materi')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah materi pelatihan' })
+  addMateri(@Param('id') id: string, @Body() dto: CreateMateriDto, @Req() req: ScopedRequest) {
+    return this.service.addMateri(id, dto, req.scope);
+  }
+
+  @Patch(':id/materi/:mid')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Perbarui materi pelatihan' })
+  updateMateri(
+    @Param('id') id: string,
+    @Param('mid') mid: string,
+    @Body() dto: CreateMateriDto,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.updateMateri(id, mid, dto, req.scope);
+  }
+
+  @Delete(':id/materi/:mid')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus materi pelatihan' })
+  removeMateri(@Param('id') id: string, @Param('mid') mid: string, @Req() req: ScopedRequest) {
+    return this.service.removeMateri(id, mid, req.scope);
   }
 }

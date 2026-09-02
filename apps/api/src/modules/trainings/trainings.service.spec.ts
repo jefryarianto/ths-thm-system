@@ -33,6 +33,12 @@ describe('TrainingsService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
+    materiLatihan: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
     anggota: {
       findUnique: jest.fn(),
     },
@@ -203,6 +209,62 @@ describe('TrainingsService', () => {
     it('should delete an evaluation', async () => {
       mockPrisma.evaluasiLatihan.delete.mockResolvedValue({});
       const result = await service.removeEvaluation('t1', 'e1');
+    });
+  });
+
+  describe('materi', () => {
+    it('getMateri should return materials for a training', async () => {
+      mockPrisma.materiLatihan.findMany.mockResolvedValue([
+        { id: 'm1', kategori: 'pencak_silat', detail: 'Jurus 1-3' },
+      ]);
+      const result = await service.getMateri('t1');
+      expect(result).toHaveLength(1);
+      expect(mockPrisma.materiLatihan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { latihanId: 't1' } }),
+      );
+    });
+
+    it('addMateri should create a material', async () => {
+      mockPrisma.latihan.findUnique.mockResolvedValue({ id: 't1' });
+      mockPrisma.materiLatihan.create.mockResolvedValue({
+        id: 'm1',
+        latihanId: 't1',
+        kategori: 'organisasi',
+        detail: 'Struktur organisasi',
+      });
+      const result = await service.addMateri('t1', {
+        kategori: 'organisasi',
+        detail: 'Struktur organisasi',
+      });
+      expect(result.kategori).toBe('organisasi');
+    });
+
+    it('addMateri should throw NotFoundException when training missing', async () => {
+      mockPrisma.latihan.findUnique.mockResolvedValue(null);
+      await expect(
+        service.addMateri('missing', { kategori: 'pencak_silat', detail: 'x' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('updateMateri should update a material', async () => {
+      mockPrisma.materiLatihan.update.mockResolvedValue({
+        id: 'm1',
+        kategori: 'rekreasi',
+        detail: 'Games edukasi',
+      });
+      const result = await service.updateMateri('t1', 'm1', {
+        kategori: 'rekreasi',
+        detail: 'Games edukasi',
+      });
+      expect(result.detail).toBe('Games edukasi');
+    });
+
+    it('removeMateri should delete a material', async () => {
+      mockPrisma.materiLatihan.delete.mockResolvedValue({});
+      const result = await service.removeMateri('t1', 'm1');
+      expect(mockPrisma.materiLatihan.delete).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+      });
     });
   });
 });

@@ -165,6 +165,13 @@ enum TipeNotifikasi {
   umum
 }
 
+enum KategoriMateri {
+  pencak_silat
+  organisasi
+  mental_spiritual
+  rekreasi
+}
+
 // ── Public Content ────────────────────────────────────────
 
 model Berita {
@@ -629,9 +636,24 @@ model Latihan {
   absensi  AbsensiLatihan[]
   evaluasi EvaluasiLatihan[]
   checkIns CheckIn[]
+  materi   MateriLatihan[]
 
   @@index([rantingId])
   @@map("latihan")
+}
+
+model MateriLatihan {
+  id        String         @id @default(uuid())
+  latihanId String         @map("latihan_id")
+  kategori  KategoriMateri
+  detail    String
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  latihan   Latihan        @relation(fields: [latihanId], references: [id], onDelete: Cascade)
+
+  @@index([latihanId])
+  @@map("materi_latihan")
 }
 
 model AbsensiLatihan {

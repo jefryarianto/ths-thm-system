@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { KategoriMateri } from '@prisma/client';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
@@ -14,6 +15,7 @@ import {
   RecordAttendanceDto,
   CreateEvaluationDto,
   UpdateEvaluationDto,
+  CreateMateriDto,
 } from './dto/training.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { MemberMailService } from '../../common/services/member-mail.service';
@@ -61,7 +63,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     const pelatihId = userId || dto.pelatihId;
     if (!pelatihId) throw new BadRequestException('pelatihId diperlukan');
 
-    return {
+    const data: Record<string, unknown> = {
       rantingId,
       kegiatanId: dto.kegiatanId,
       pelatihId,
@@ -71,6 +73,18 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
       hasilLatihanGlobal: dto.hasilLatihanGlobal,
       rekomendasiLatihanBerikutnya: dto.rekomendasiBerikutnya,
     };
+
+    // Multi-select materi — create child records together with the training.
+    if (dto.materi && dto.materi.length > 0) {
+      data.materi = {
+        create: dto.materi.map((m) => ({
+          kategori: m.kategori as KategoriMateri,
+          detail: m.detail,
+        })),
+      };
+    }
+
+    return data;
   }
 
   /**
@@ -87,6 +101,18 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
     if (dto.rekomendasiBerikutnya !== undefined) data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
     if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);
+
+    // Replaces the full materi list — delete existing children, then create the new set.
+    if (dto.materi !== undefined) {
+      data.materi = {
+        deleteMany: {},
+        create: dto.materi.map((m) => ({
+          kategori: m.kategori as KategoriMateri,
+          detail: m.detail,
+        })),
+      };
+    }
+
     return data;
   }
 
@@ -111,6 +137,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
         include: {
           ranting: true,
           pelatih: { select: { id: true, namaLengkap: true } },
+          materi: true,
         },
       },
       30,
@@ -121,6 +148,7 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     return this.baseFindOne(id, scope, {
       ranting: true,
       pelatih: { select: { id: true, namaLengkap: true } },
+      materi: true,
       absensi: {
         include: { anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } } },
       },
@@ -273,6 +301,65 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
 
   async removeEvaluation(trainingId: string, evaluationId: string) {
     await this.prisma.evaluasiLatihan.delete({ where: { id: evaluationId } });
+    this.invalidateCache();
+    // void — interceptor returns { success: true }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  MATERI — multi-select materials (Pencak Silat, Organisasi,
+  //  Mental Spiritual, Rekreasi) with free-form detail text.
+  // ═══════════════════════════════════════════════════════════
+
+  async getMateri(trainingId: string, scope?: UserScope) {
+    await this.verifyScope(trainingId, scope);
+    return this.prisma.materiLatihan.findMany({
+      where: { latihanId: trainingId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async addMateri(
+    trainingId: string,
+    dto: CreateMateriDto,
+    scope?: UserScope,
+  ) {
+    await this.verifyScope(trainingId, scope);
+    const latihan = await this.prisma.latihan.findUnique({ where: { id: trainingId } });
+    if (!latihan) throw new NotFoundException('Latihan tidak ditemukan');
+
+    const materi = await this.prisma.materiLatihan.create({
+      data: {
+        latihanId: trainingId,
+        kategori: dto.kategori as KategoriMateri,
+        detail: dto.detail,
+      },
+    });
+    this.invalidateCache();
+    return materi;
+  }
+
+  async updateMateri(
+    trainingId: string,
+    materiId: string,
+    dto: CreateMateriDto,
+    scope?: UserScope,
+  ) {
+    await this.verifyScope(trainingId, scope);
+    const data: Record<string, unknown> = {};
+    if (dto.kategori) data.kategori = dto.kategori as KategoriMateri;
+    if (dto.detail !== undefined) data.detail = dto.detail;
+
+    const materi = await this.prisma.materiLatihan.update({
+      where: { id: materiId },
+      data,
+    });
+    this.invalidateCache();
+    return materi;
+  }
+
+  async removeMateri(trainingId: string, materiId: string, scope?: UserScope) {
+    await this.verifyScope(trainingId, scope);
+    await this.prisma.materiLatihan.delete({ where: { id: materiId } });
     this.invalidateCache();
     // void — interceptor returns { success: true }
   }

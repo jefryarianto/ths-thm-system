@@ -7,9 +7,22 @@ import {
   IsNumber,
   IsDateString,
   IsArray,
+  IsIn,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+
+export class CreateMateriDto {
+  @ApiProperty()
+  @IsString()
+  @IsIn(['pencak_silat', 'organisasi', 'mental_spiritual', 'rekreasi'])
+  kategori: string;
+
+  @ApiProperty()
+  @IsString()
+  detail: string;
+}
 
 export class CreateTrainingDto {
   @ApiPropertyOptional()
@@ -35,9 +48,17 @@ export class CreateTrainingDto {
   @IsString()
   lokasi: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  jenisMateri: string;
+  jenisMateri?: string; // Kept for backward compatibility if needed, or deprecate
+
+  @ApiPropertyOptional({ type: [CreateMateriDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMateriDto)
+  materi?: CreateMateriDto[];
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -60,6 +81,13 @@ export class UpdateTrainingDto {
   @IsOptional()
   @IsString()
   jenisMateri?: string;
+
+  @ApiPropertyOptional({ type: [CreateMateriDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMateriDto)
+  materi?: CreateMateriDto[];
 
   @ApiPropertyOptional()
   @IsOptional()
