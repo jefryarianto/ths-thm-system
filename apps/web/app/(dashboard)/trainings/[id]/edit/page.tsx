@@ -7,9 +7,15 @@ import { useParams, useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
-import { MATERI_OPTIONS } from '@/components/trainings/constants';
+import MateriMultiSelect, { MateriItem } from '@/components/trainings/materi-select';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+
+interface MateriLatihan {
+  id: string;
+  kategori: string;
+  detail: string;
+}
 
 interface TrainingDetail {
   id: string;
@@ -21,6 +27,7 @@ interface TrainingDetail {
   rantingId: string;
   pelatihId: string | null;
   ranting?: { id: string; nama: string };
+  materi?: MateriLatihan[];
 }
 
 export default function EditTrainingPage() {
@@ -35,7 +42,7 @@ export default function EditTrainingPage() {
 
   const [hariTanggal, setHariTanggal] = useState('');
   const [lokasi, setLokasi] = useState('');
-  const [jenisMateri, setJenisMateri] = useState('');
+  const [materi, setMateri] = useState<MateriItem[]>([]);
 
   // ── Load training data ────────────────────────────
   useEffect(() => {
@@ -51,7 +58,10 @@ export default function EditTrainingPage() {
         const pad = (n: number) => String(n).padStart(2, '0');
         setHariTanggal(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
         setLokasi(t.lokasi || '');
-        setJenisMateri(t.jenisMateri || '');
+        // Load existing materi from API
+        if (t.materi && t.materi.length > 0) {
+          setMateri(t.materi.map((m) => ({ kategori: m.kategori, detail: m.detail || '' })));
+        }
       } catch {
         setFetchError('Gagal memuat data latihan');
       }
@@ -63,14 +73,14 @@ export default function EditTrainingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hariTanggal) { setError('Tanggal & waktu harus diisi'); return; }
-    if (!jenisMateri) { setError('Jenis materi harus dipilih'); return; }
+    if (materi.length === 0) { setError('Pilih minimal satu materi latihan'); return; }
 
     setSaving(true);
     setError('');
     try {
       const body: Record<string, unknown> = {
         hariTanggal: new Date(hariTanggal).toISOString(),
-        jenisMateri,
+        materi,
       };
       if (lokasi) body.lokasi = lokasi;
 
@@ -165,18 +175,11 @@ export default function EditTrainingPage() {
                     </FormField>
                   </div>
         
-                  <FormField label="Jenis Materi" required>
-                    <select
-                      value={jenisMateri}
-                      onChange={(e) => setJenisMateri(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
-                    >
-                      <option value="">Pilih materi...</option>
-                      {MATERI_OPTIONS.filter((o) => o.value).map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                  <FormField label="Materi Latihan" required>
+                    <MateriMultiSelect
+                      value={materi}
+                      onChange={setMateri}
+                    />
                   </FormField>
                 </div>
         

@@ -34,8 +34,15 @@ import {
   InfoRow,
   DetailSkeleton,
 } from '@/components/trainings/constants';
+import { KATEGORI_MATERI_OPTIONS } from '@/components/trainings/materi-select';
 
 // ─── Types ───
+
+interface MateriLatihan {
+  id: string;
+  kategori: string;
+  detail: string;
+}
 
 interface TrainingDetail {
   id: string;
@@ -44,7 +51,7 @@ interface TrainingDetail {
   jenisMateri: string | null;
   hasilLatihanGlobal: string | null;
   rekomendasiLatihanBerikutnya: string | null;
-  materi: string | null;
+  materi?: MateriLatihan[];
   rantingId: string;
   pelatihId: string | null;
   ranting?: { id: string; nama: string; kodeRanting: string; lokasiLatihan: string | null };
@@ -128,7 +135,7 @@ export default function TrainingDetailPage() {
 
   return (
       <PermissionGuard module="trainings" action="view">
-        <Breadcrumbs suffix={{ href: '#', label: training ? (MATERI_LABELS[training.jenisMateri || ''] || training.jenisMateri || training.materi || 'Detail') : 'Detail' }} />
+        <Breadcrumbs suffix={{ href: '#', label: training ? (MATERI_LABELS[training.jenisMateri || ''] || training.jenisMateri || (training.materi && training.materi.length > 0 ? training.materi.map((m) => MATERI_LABELS[m.kategori] || m.kategori).join(', ') : null) || 'Detail') : 'Detail' }} />
         <div className="space-y-6">
               {/* Back */}
               <Link
@@ -150,7 +157,9 @@ export default function TrainingDetailPage() {
                       <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                         {MATERI_LABELS[training.jenisMateri || ''] ||
                           training.jenisMateri ||
-                          training.materi ||
+                          (training.materi && training.materi.length > 0
+                            ? training.materi.map((m) => MATERI_LABELS[m.kategori] || m.kategori).join(', ')
+                            : null) ||
                           'Latihan'}
                       </h1>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -270,12 +279,36 @@ export default function TrainingDetailPage() {
                       <InfoRow
                         icon={BookOpen}
                         label="Jenis Materi"
-                        value={
-                          MATERI_LABELS[training.jenisMateri || ''] ||
-                          training.jenisMateri ||
-                          training.materi
-                        }
+                        value={MATERI_LABELS[training.jenisMateri || ''] || training.jenisMateri || null}
                       />
+                      {training.materi && training.materi.length > 0 && (
+                        <div className="pt-2">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                            Materi Latihan
+                          </p>
+                          <div className="space-y-2">
+                            {training.materi.map((m) => {
+                              const kategoriInfo = KATEGORI_MATERI_OPTIONS.find((o) => o.value === m.kategori);
+                              return (
+                                <div
+                                  key={m.id}
+                                  className="bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700"
+                                >
+                                  <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <span>{kategoriInfo?.icon}</span>
+                                    <span>{MATERI_LABELS[m.kategori] || m.kategori}</span>
+                                  </div>
+                                  {m.detail && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 pl-5">
+                                      {m.detail}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                       <InfoRow icon={User} label="Pelatih" value={training.pelatih?.namaLengkap || null} />
                       <InfoRow icon={Users} label="Ranting" value={training.ranting?.nama || null} />
                     </div>

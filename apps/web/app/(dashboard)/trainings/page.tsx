@@ -16,9 +16,15 @@ import DataTable from '@/components/ui/data-table';
 import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
-import { MATERI_OPTIONS } from '@/components/trainings/constants';
+import { MATERI_OPTIONS, MATERI_LABELS } from '@/components/trainings/constants';
 import { useToast } from '@/components/ui/toast';
 
+
+interface MateriLatihan {
+  id: string;
+  kategori: string;
+  detail: string;
+}
 
 interface TrainingRow {
   id: string;
@@ -27,7 +33,7 @@ interface TrainingRow {
   jenisMateri?: string;
   lokasi?: string;
   pelatih?: { namaLengkap: string };
-  materi?: string;
+  materi?: MateriLatihan[];
 }
 
 export default function TrainingsPage() {
@@ -134,10 +140,25 @@ export default function TrainingsPage() {
               </span>
             </td>
             <td className="px-4 py-3">
-              <div className="flex items-center gap-1.5">
-                <BookOpen size={14} className="text-gray-400" />
-                <span className="text-gray-900 dark:text-white">
-                  {row.jenisMateri || row.materi || '-'}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <BookOpen size={14} className="text-gray-400 shrink-0" />
+                <span className="text-gray-900 dark:text-white text-sm">
+                  {row.materi && row.materi.length > 0 ? (
+                    <span className="flex flex-wrap gap-1">
+                      {row.materi.map((m) => (
+                        <span
+                          key={m.id}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400"
+                        >
+                          {MATERI_LABELS[m.kategori] || m.kategori}
+                        </span>
+                      ))}
+                    </span>
+                  ) : row.jenisMateri ? (
+                    MATERI_LABELS[row.jenisMateri] || row.jenisMateri
+                  ) : (
+                    '-'
+                  )}
                 </span>
               </div>
             </td>

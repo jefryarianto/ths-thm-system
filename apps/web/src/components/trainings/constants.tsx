@@ -3,6 +3,10 @@ import DetailRow from '@/components/ui/detail-row';
 
 export const MATERI_OPTIONS = [
   { value: '', label: 'Semua Materi' },
+  { value: 'pencak_silat', label: 'Pencak Silat' },
+  { value: 'organisasi', label: 'Organisasi' },
+  { value: 'mental_spiritual', label: 'Mental Spiritual' },
+  { value: 'rekreasi', label: 'Rekreasi' },
   { value: 'teknik_dasar', label: 'Teknik Dasar' },
   { value: 'kata', label: 'Kata' },
   { value: 'kumite', label: 'Kumite' },
@@ -12,6 +16,10 @@ export const MATERI_OPTIONS = [
 ];
 
 export const MATERI_LABELS: Record<string, string> = {
+  pencak_silat: 'Pencak Silat',
+  organisasi: 'Organisasi',
+  mental_spiritual: 'Mental Spiritual',
+  rekreasi: 'Rekreasi',
   teknik_dasar: 'Teknik Dasar',
   kata: 'Kata',
   kumite: 'Kumite',

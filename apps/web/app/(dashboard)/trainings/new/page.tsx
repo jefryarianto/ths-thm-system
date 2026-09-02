@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
-import { MATERI_OPTIONS } from '@/components/trainings/constants';
+import MateriMultiSelect, { MateriItem } from '@/components/trainings/materi-select';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 
@@ -31,7 +31,7 @@ export default function NewTrainingPage() {
   // Form state
   const [hariTanggal, setHariTanggal] = useState('');
   const [lokasi, setLokasi] = useState('');
-  const [jenisMateri, setJenisMateri] = useState('');
+  const [materi, setMateri] = useState<MateriItem[]>([]);
 
   // Async data
   const [rantings, setRantings] = useState<Ranting[]>([]);
@@ -92,8 +92,8 @@ export default function NewTrainingPage() {
       setError('Tanggal & waktu harus diisi');
       return;
     }
-    if (!jenisMateri) {
-      setError('Jenis materi harus dipilih');
+    if (materi.length === 0) {
+      setError('Pilih minimal satu materi latihan');
       return;
     }
 
@@ -103,8 +103,8 @@ export default function NewTrainingPage() {
     try {
       const body: Record<string, unknown> = {
         hariTanggal: new Date(hariTanggal).toISOString(),
-        jenisMateri,
         lokasi,
+        materi,
       };
 
       // Only send rantingId if selected (otherwise auto-assigned from scope)
@@ -200,23 +200,16 @@ export default function NewTrainingPage() {
                   </div>
         
                   {/* Row 2: Materi & Ranting */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField label="Jenis Materi" required>
-                      <select
-                        value={jenisMateri}
-                        onChange={(e) => setJenisMateri(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                      >
-                        <option value="">Pilih materi...</option>
-                        {MATERI_OPTIONS.filter((o) => o.value).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
+                  <div>
+                    <FormField label="Materi Latihan" required>
+                      <MateriMultiSelect
+                        value={materi}
+                        onChange={setMateri}
+                      />
                     </FormField>
-        
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Ranting">
                       <select
                         value={selectedRantingId}
