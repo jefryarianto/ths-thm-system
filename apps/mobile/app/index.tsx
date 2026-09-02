@@ -55,6 +55,7 @@ function SplashScreen() {
         <Text style={splashStyles.title}>THS-THM</Text>
         <Text style={splashStyles.subtitle}>Tunggal Hati Seminari - Tunggal Hati Maria</Text>
         <Text style={splashStyles.tagline}>Organisasi Pencak Silat Pendidikan</Text>
+        <Text style={splashStyles.version}>v1.0.1</Text>
       </Animated.View>
     </View>
   );
@@ -87,6 +88,12 @@ const splashStyles = StyleSheet.create({
     fontWeight: '600',
     color: '#bfdbfe',
     marginBottom: 4,
+  },
+  version: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 24,
+    fontWeight: '400',
   },
   tagline: {
     fontSize: 12,
