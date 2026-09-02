@@ -10,7 +10,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "version:bump": "node ../../scripts/bump-runtime-version.js",
+    "version:bump:minor": "node ../../scripts/bump-runtime-version.js minor",
+    "version:bump:major": "node ../../scripts/bump-runtime-version.js major"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
@@ -57,17 +60,17 @@
     "socket.io-client": "^4.8.3",
     "zustand": "^4.5.0"
   },
-   "devDependencies": {
-     "@babel/core": "^7.24.0",
-     "@expo/metro-config": "^0.18.0",
-     "@testing-library/react-native": "^12.4.3",
-     "@types/react": "~18.2.79",
-     "eas-cli": "^14.0.0",
-     "eslint": "^8.57.1",
-     "eslint-plugin-react-hooks": "^4.6.0",
-     "jest-environment-jsdom": "^30.4.1",
-     "react-test-renderer": "18.2.0",
-     "tailwindcss": "3.3.2",
-     "typescript": "~5.3.3"
-   }
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@expo/metro-config": "^0.18.0",
+    "@testing-library/react-native": "^12.4.3",
+    "@types/react": "~18.2.79",
+    "eas-cli": "^14.0.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jest-environment-jsdom": "^30.4.1",
+    "react-test-renderer": "18.2.0",
+    "tailwindcss": "3.3.2",
+    "typescript": "~5.3.3"
+  }
 }

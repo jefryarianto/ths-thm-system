@@ -39,6 +39,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Detect native changes and bump runtimeVersion
+        run: |
+          # Check if any native files changed in this push
+          NATIVE_PATTERNS=(
+            "apps/mobile/android/**"
+            "apps/mobile/ios/**"
+            "apps/mobile/app.json"
+            "apps/mobile/plugins/**"
+            "apps/mobile/app.config.*"
+          )
+
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || echo "")
+          NATIVE_CHANGED=false
+
+          for pattern in "${NATIVE_PATTERNS[@]}"; do
+            if echo "$CHANGED_FILES" | grep -q "^$pattern$"; then
+              NATIVE_CHANGED=true
+              echo "Native change detected: $pattern"
+            fi
+          done
+
+          if [ "$NATIVE_CHANGED" = true ]; then
+            echo "Bumping runtimeVersion for native changes..."
+            node scripts/bump-runtime-version.js
+          else
+            echo "No native changes detected, keeping current runtimeVersion."
+          fi
+
       - name: Build Android APK with EAS (local)
         run: |
           cd apps/mobile
