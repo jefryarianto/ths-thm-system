@@ -1373,9 +1373,28 @@ model Periode {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  pengurus Kepengurusan[]
+  pengurus   Kepengurusan[]
+  aktifUnits PeriodeAktif[]
 
   @@map("periode")
+}
+
+// Menentukan periode aktif per unit (nasional/distrik/wilayah/ranting).
+// Satu unit hanya boleh punya SATU periode aktif (unique level+unitId),
+// tetapi unit yang berbeda boleh aktif bersamaan (mis. Nasional 2026-2029
+// DAN Distrik 2025-2028).
+model PeriodeAktif {
+  id        String   @id @default(uuid())
+  periodeId String   @map("periode_id")
+  level     String // 'nasional' | 'distrik' | 'wilayah' | 'ranting'
+  unitId    String   @map("unit_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  periode Periode @relation(fields: [periodeId], references: [id], onDelete: Cascade)
+
+  @@unique([level, unitId])
+  @@index([periodeId])
+  @@map("periode_aktif")
 }
 
 model Jabatan {

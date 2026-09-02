@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { PeriodeService } from './periode.service';
+import { PeriodeService, PeriodeLevel } from './periode.service';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 
 @ApiTags('Periode')
@@ -37,5 +37,29 @@ export class PeriodeController {
   @CrudAuth('superadmin', { summary: 'Hapus periode' })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Post(':id/activate-unit')
+  @CrudAuth('superadmin', { summary: 'Tetapkan periode aktif untuk unit spesifik' })
+  activateUnit(
+    @Param('id') id: string,
+    @Body() body: { level: PeriodeLevel; unitId: string },
+  ) {
+    if (!body.level) {
+      throw new BadRequestException('level wajib diisi');
+    }
+    return this.service.activateUnit(id, body.level, body.unitId || undefined);
+  }
+
+  @Delete('active-unit/:level/:unitId')
+  @CrudAuth('superadmin', { summary: 'Hapus periode aktif untuk unit' })
+  deactivateUnit(@Param('level') level: PeriodeLevel, @Param('unitId') unitId: string) {
+    return this.service.deactivateUnit(level, unitId);
+  }
+
+  @Get(':id/active-units')
+  @CrudAuth('superadmin', { summary: 'Daftar unit yang memakai periode ini' })
+  findUnitsByPeriode(@Param('id') id: string) {
+    return this.service.findUnitsByPeriode(id);
   }
 }

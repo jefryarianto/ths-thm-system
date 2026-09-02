@@ -17,6 +17,12 @@ import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 export class OrgStructureController {
   constructor(private readonly service: OrgStructureService) {}
 
+  @Get('nasional')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar nasional' })
+  getAllNasional() {
+    return this.service.getAllNasional();
+  }
+
   @Get('distrik')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar semua distrik' })
   getAllDistrik() {

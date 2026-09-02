@@ -1,11 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PeriodeService } from '../periode/periode.service';
 
 type Level = 'nasional' | 'distrik' | 'wilayah' | 'ranting';
 
 @Injectable()
 export class PublicService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly periodeService: PeriodeService,
+  ) {}
 
   // ── Existing methods ──────────────────────────────────
 
@@ -77,9 +81,24 @@ export class PublicService {
   }
 
   async getKepengurusan() {
+    // Kumpulkan periode aktif: semua relasi PeriodeAktif (per-unit) + periode isActive global.
+    const paRows = await this.prisma.periodeAktif.findMany({
+      select: { periodeId: true },
+      distinct: ['periodeId'],
+    });
+    const globalActive = await this.prisma.periode.findFirst({
+      where: { isActive: true },
+      select: { id: true },
+    });
+
+    const aktifPeriodeIds = new Set<string>([
+      ...paRows.map((p) => p.periodeId),
+      ...(globalActive ? [globalActive.id] : []),
+    ]);
+
     return this.prisma.kepengurusan.findMany({
       where: {
-        periode: { isActive: true },
+        periodeId: { in: [...aktifPeriodeIds] },
       },
       include: {
         user: { select: { namaLengkap: true } },
@@ -158,11 +177,19 @@ export class PublicService {
 
     if (periodeIds.length === 0) return [];
 
-    return this.prisma.periode.findMany({
+    const periodes = await this.prisma.periode.findMany({
       where: { id: { in: periodeIds.map((p) => p.periodeId) } },
       select: { id: true, nama: true, tglMulai: true, tglSelesai: true, isActive: true },
       orderBy: { tglMulai: 'desc' },
     });
+
+    // Tandai periode aktif khusus untuk unit ini (bukan global).
+    const aktifUnitId = await this.periodeService.getActivePeriodeIdForUnit(level, unitId ?? null);
+
+    return periodes.map((p) => ({
+      ...p,
+      isActive: p.isActive || (aktifUnitId != null && p.id === aktifUnitId),
+    }));
   }
 
   async getKepengurusanFiltered(level: Level, unitId?: string, periodeId?: string) {
@@ -185,11 +212,17 @@ export class PublicService {
     // Only show approved kepengurusan on public pages
     where.status = 'approved';
 
-    // Filter by period if provided, otherwise use active period
+    // Filter by period if provided, otherwise resolve active period for this unit
     if (periodeId) {
       where.periodeId = periodeId;
     } else {
-      where.periode = { isActive: true };
+      const resolvedId = await this.periodeService.getActivePeriodeIdForUnit(level, unitId ?? null);
+      if (resolvedId) {
+        where.periodeId = resolvedId;
+      } else {
+        // Tidak ada periode aktif → tidak ada data yang cocok
+        where.periodeId = '__none__';
+      }
     }
 
     const kepengurusans = await this.prisma.kepengurusan.findMany({
@@ -252,7 +285,14 @@ export class PublicService {
       });
     }
 
-    const activePeriode = kepengurusans[0]?.periode;
+    // Period yang sedang ditampilkan: selalu tandai isActive=true bila periode ini
+    // sedang menjadi periode aktif unit bersangkutan (bisa dari PeriodeAktif per-unit
+    // maupun dari periode global isActive).
+    let activePeriode = kepengurusans[0]?.periode ?? null;
+    if (activePeriode && !periodeId) {
+      const resolvedId = await this.periodeService.getActivePeriodeIdForUnit(level, unitId ?? null);
+      activePeriode = { ...activePeriode, isActive: resolvedId === activePeriode.id };
+    }
 
     return {
       unitInfo,

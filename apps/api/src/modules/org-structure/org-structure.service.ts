@@ -24,6 +24,15 @@ export class OrgStructureService {
     private readonly cache: CacheService,
   ) {}
 
+  // ─── NASIONAL ───
+
+  async getAllNasional() {
+    return await this.prisma.nasional.findMany({
+      orderBy: { nama: 'asc' },
+      select: { id: true, nama: true, kode: true },
+    });
+  }
+
   // ─── DISTRIK ───
 
   async getAllDistrik() {
