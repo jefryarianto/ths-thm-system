@@ -960,11 +960,12 @@ export class AuthService {
     );
 
     const resetUrl = `${env.frontendUrl}/reset-password?token=${resetToken}`;
+    const mobileDeepLink = `ths-thm://reset-password?token=${resetToken}`;
 
     const tpl = await this.mailService.renderWithOverride(
       'resetPasswordEmail',
-      () => resetPasswordEmail(user.namaLengkap, resetUrl),
-      { nama: user.namaLengkap, resetUrl },
+      () => resetPasswordEmail(user.namaLengkap, resetUrl, mobileDeepLink),
+      { nama: user.namaLengkap, resetUrl, mobileDeepLink },
     );
     await this.mailService.sendMail({
       to: user.email,

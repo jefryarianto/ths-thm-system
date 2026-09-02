@@ -112,7 +112,7 @@ export function candidateRejectedEmail(nama: string, reason?: string) {
 
 // ─── Reset Password ───
 
-export function resetPasswordEmail(nama: string, resetUrl: string) {
+export function resetPasswordEmail(nama: string, resetUrl: string, mobileDeepLink?: string) {
   return {
     subject: 'Reset Password — THS-THM System',
     html: wrap(`
@@ -125,6 +125,13 @@ export function resetPasswordEmail(nama: string, resetUrl: string) {
           Reset Password
         </a>
       </div>
+      ${mobileDeepLink ? `
+      <p style="text-align: center; margin: 10px 0;">
+        <a href="${escapeHtml(mobileDeepLink)}" style="background-color: #16a34a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">
+          Buka di Aplikasi Mobile
+        </a>
+      </p>
+      ` : ''}
       <p>Atau copy link berikut ke browser:</p>
       <p style="color: #6b7280; font-size: 14px;">${escapeHtml(resetUrl)}</p>
       <p style="color: #6b7280; font-size: 12px;">

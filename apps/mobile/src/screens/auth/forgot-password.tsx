@@ -25,7 +25,7 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      await apiClient.post('/auth/forgot-password', { email: email.trim() });
+      await apiClient.post('/auth/forgot', { email: email.trim() });
       setSent(true);
     } catch (error: any) {
       const msg = error?.response?.data?.message || 'Gagal mengirim email. Coba lagi nanti.';

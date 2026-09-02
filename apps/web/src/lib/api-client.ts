@@ -282,8 +282,8 @@ const AUTH_ENDPOINT_PATTERNS = [
   '/auth/refresh',
   '/auth/register',
   '/auth/logout',
-  '/auth/forgot-password',
-  '/auth/reset-password',
+  '/auth/forgot',
+  '/auth/reset',
   '/auth/verify',
   '/auth/oauth',
 ];
