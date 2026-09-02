@@ -88,6 +88,8 @@ export class AssessmentsService {
       const aspekName = row.aspek?.trim();
       if (aspekName) {
         lastAspek = aspekName;
+      } else if (!lastAspek) {
+        lastAspek = 'Aspek Umum';
       }
       const itemName = row.item?.trim();
       if (!lastAspek || !itemName) continue; // baris sampah / kosong
