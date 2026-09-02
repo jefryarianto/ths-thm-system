@@ -89,3 +89,14 @@ jobs:
           name: android-apk
           path: apps/mobile/apk-output/*.apk
           retention-days: 30
+
+      - name: Publish OTA Update (EAS Update)
+        if: success()
+        run: |
+          cd apps/mobile
+          npx eas update             --platform android             --channel production             --message "OTA update from CI build ${{ github.run_number }}"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_API_URL: https://ths-thm.cloud
+          EXPO_NO_DOCTOR: 1
+          CI: 1

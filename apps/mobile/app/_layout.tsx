@@ -12,6 +12,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onSessionExpired, onExpiringSoon, scheduleExpiryWarning } from '../src/lib/session-expired';
 import { useActivityTracker } from '../src/hooks/use-activity-tracker';
 import { playSessionWarningAlert, playSessionExpiredAlert, preloadAlertSound } from '../src/lib/notification-alert';
+import { useOTAUpdate } from '../src/hooks/use-ota-update';
+import { OTAUpdatePrompt } from '../src/components/OTAUpdatePrompt';
 
 export default function RootLayout() {
   const loadUser = useAuthStore((s: AuthState) => s.loadUser);
@@ -41,6 +43,16 @@ export default function RootLayout() {
 
   // Track user activity (app foreground) and auto-refresh token before expiry
   useActivityTracker();
+
+  // OTA Update
+  const {
+    isDownloading: otaDownloading,
+    availableVersion: otaVersion,
+    error: otaError,
+    showUpdatePrompt: otaShowPrompt,
+    applyUpdate: otaApplyUpdate,
+    dismissUpdate: otaDismissUpdate,
+  } = useOTAUpdate();
 
   useEffect(() => {
     loadUser();
@@ -115,6 +127,14 @@ export default function RootLayout() {
           visible={expiryWarningVisible}
           expiresInSeconds={expirySeconds}
           onDismiss={handleExpiryWarningDismiss}
+        />
+        <OTAUpdatePrompt
+          visible={otaShowPrompt}
+          isDownloading={otaDownloading}
+          availableVersion={otaVersion}
+          error={otaError}
+          onUpdate={otaApplyUpdate}
+          onDismiss={otaDismissUpdate}
         />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
