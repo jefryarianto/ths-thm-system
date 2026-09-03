@@ -21,12 +21,18 @@ export default function GraduationDetailScreen() {
   const [graduation, setGraduation] = useState<Graduation | null>(null);
   const [participants, setParticipants] = useState<GraduationParticipant[]>([]);
   const [evaluations, setEvaluations] = useState<GraduationEvaluation[]>([]);
-  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'evaluations' | 'validasi'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'ujian' | 'evaluations' | 'penguji' | 'validasi'>('info');
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<GraduationResult[]>([]);
   const [validating, setValidating] = useState(false);
   const [genDocsLoading, setGenDocsLoading] = useState(false);
   const [genDocsResult, setGenDocsResult] = useState<{ generated: number; total: number; errors: string[] } | null>(null);
+  // Ujian Praktek state
+  const [ujianList, setUjianList] = useState<any[]>([]);
+  const [ujianLoading, setUjianLoading] = useState(false);
+  // Penguji state
+  const [examiners, setExaminers] = useState<any[]>([]);
+  const [examinersLoading, setExaminersLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -48,6 +54,33 @@ export default function GraduationDetailScreen() {
       setLoading(false);
     })();
   }, [id]);
+
+
+  // Fetch ujian list when tab is ujian
+  useEffect(() => {
+    if (activeTab !== 'ujian' || !id) return;
+    (async () => {
+      setUjianLoading(true);
+      try {
+        const res = await apiClient.get(`/graduations/${id}/ujian-praktek`);
+        setUjianList(res.data?.data || []);
+      } catch { /* ignore */ }
+      setUjianLoading(false);
+    })();
+  }, [activeTab, id]);
+
+  // Fetch examiners when tab is penguji
+  useEffect(() => {
+    if (activeTab !== 'penguji' || !id) return;
+    (async () => {
+      setExaminersLoading(true);
+      try {
+        const res = await apiClient.get(`/graduations/${id}/examiners`);
+        setExaminers(res.data?.data || []);
+      } catch { /* ignore */ }
+      setExaminersLoading(false);
+    })();
+  }, [activeTab, id]);
 
   if (loading) return <LoadingView message="Memuat detail pendadaran..." />;
   if (!graduation)
@@ -83,12 +116,21 @@ export default function GraduationDetailScreen() {
     return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
-  const canValidate = isAdmin || role === 'admin_kegiatan';
+  const canValidate = role === 'superadmin' || role === 'admin_distrik';
   const pendingValidasi = results.filter((r) => r.statusValidasi === 'pending').length;
+  const isDistrikLevel = role === 'superadmin' || role === 'admin_distrik';
+  const isKegiatanLevel = role === 'admin_kegiatan' || isDistrikLevel;
+  const pendingExaminers = examiners.filter((e: any) => e.status === 'pending').length;
   const tabs = [
     { key: 'info', label: 'Info', icon: 'information-circle' as const },
     { key: 'participants', label: `Peserta (${participants.length})`, icon: 'people' as const },
+    ...(isKegiatanLevel
+      ? [{ key: 'ujian', label: `Ujian (${ujianList.length})`, icon: 'clipboard' as const }]
+      : []),
     { key: 'evaluations', label: `Nilai (${evaluations.length})`, icon: 'school' as const },
+    ...(isDistrikLevel
+      ? [{ key: 'penguji', label: `Penguji (${pendingExaminers})`, icon: 'shield-checkmark' as const }]
+      : []),
     ...(canValidate
       ? [{ key: 'validasi', label: `Validasi (${pendingValidasi})`, icon: 'checkmark-circle' as const }]
       : []),
@@ -133,6 +175,25 @@ export default function GraduationDetailScreen() {
       /* ignore */
     }
     setGenDocsLoading(false);
+  const handleReviewExaminer = async (penugasanId: string, approved: boolean) => {
+    Alert.alert(
+      approved ? 'Setujui Penguji' : 'Tolak Penguji',
+      approved ? 'Setujui pengajuan penguji ini?' : 'Tolak pengajuan penguji ini?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: approved ? 'Setujui' : 'Tolak',
+          style: approved ? 'default' : 'destructive',
+          onPress: async () => {
+            try {
+              await apiClient.post(`/graduations/${id}/examiners/${penugasanId}/review`, { approved });
+              const res = await apiClient.get(`/graduations/${id}/examiners`);
+              setExaminers(res.data?.data || []);
+            } catch { /* ignore */ }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -308,6 +369,92 @@ export default function GraduationDetailScreen() {
             ))
           ) : (
             <Text style={styles.emptyText}>Belum ada nilai</Text>
+          )}
+        </View>
+      )}
+
+      {activeTab === 'ujian' && isKegiatanLevel && (
+        <View style={styles.section}>
+          {ujianLoading ? (
+            <LoadingView message="Memuat ujian..." />
+          ) : ujianList.length > 0 ? (
+            ujianList.map((ujian: any) => (
+              <View key={ujian.id} style={styles.ujianCard}>
+                <View style={styles.ujianHeader}>
+                  <Ionicons name="document-text" size={18} color="#2563eb" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.ujianName}>{ujian.nama}</Text>
+                    <Text style={styles.ujianMeta}>
+                      {ujian.items?.length || 0} item · {ujian.penilais?.length || 0} penilai
+                    </Text>
+                  </View>
+                </View>
+                {ujian.items && ujian.items.length > 0 && (
+                  <View style={styles.ujianItems}>
+                    {ujian.items.map((item: any) => (
+                      <View key={item.id} style={styles.ujianItem}>
+                        <Text style={styles.ujianItemName}>{item.itemPenilaian?.namaItem || '-'}</Text>
+                        <Text style={styles.ujianItemAspek}>{item.itemPenilaian?.aspek?.namaAspek || ''} · Max {Number(item.itemPenilaian?.skorMaksimal || 0)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Belum ada ujian praktek</Text>
+          )}
+        </View>
+      )}
+
+      {activeTab === 'penguji' && isDistrikLevel && (
+        <View style={styles.section}>
+          {examinersLoading ? (
+            <LoadingView message="Memuat penguji..." />
+          ) : examiners.length > 0 ? (
+            examiners.map((ex: any) => (
+              <View key={ex.id} style={styles.examinerCard}>
+                <View style={styles.examinerLeft}>
+                  <View style={styles.examinerAvatar}>
+                    <Text style={styles.examinerAvatarText}>{ex.pengujiUser?.namaLengkap?.charAt(0) || '?'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.examinerName}>{ex.pengujiUser?.namaLengkap || 'Unknown'}</Text>
+                    <Text style={styles.examinerMeta}>{ex.pengujiUser?.email || ''}</Text>
+                    {ex.catatan && <Text style={styles.examinerNote}>{ex.catatan}</Text>}
+                  </View>
+                </View>
+                <View style={[
+                  styles.examinerStatusBadge,
+                  { backgroundColor: ex.status === 'approved' ? '#ecfdf5' : ex.status === 'rejected' ? '#fef2f2' : '#fffbeb' }
+                ]}>
+                  <Text style={[
+                    styles.examinerStatusText,
+                    { color: ex.status === 'approved' ? '#16a34a' : ex.status === 'rejected' ? '#dc2626' : '#d97706' }
+                  ]}>
+                    {ex.status === 'approved' ? 'Disetujui' : ex.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                  </Text>
+                </View>
+                {ex.status === 'pending' && isDistrikLevel && (
+                  <View style={styles.examinerActions}>
+                    <TouchableOpacity
+                      style={[styles.examinerActionBtn, styles.approveBtn]}
+                      onPress={() => handleReviewExaminer(ex.id, true)}
+                    >
+                      <Text style={styles.approveText}>Setujui</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.examinerActionBtn, styles.rejectBtn]}
+                      onPress={() => handleReviewExaminer(ex.id, false)}
+                    >
+                      <Text style={styles.rejectText}>Tolak</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Belum ada pengajuan penguji</Text>
           )}
         </View>
       )}
@@ -532,6 +679,51 @@ const styles = StyleSheet.create({
   evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
 
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+  // Ujian Praktek
+  ujianCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  ujianHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  ujianName: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  ujianMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  ujianItems: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  ujianItem: { paddingVertical: 6 },
+  ujianItemName: { fontSize: 13, fontWeight: '500', color: '#374151' },
+  ujianItemAspek: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+
+  // Penguji
+  examinerCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 10,
+  },
+  examinerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  examinerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  examinerAvatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  examinerName: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  examinerMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  examinerNote: { fontSize: 11, color: '#9ca3af', marginTop: 4, fontStyle: 'italic' },
+  examinerStatusBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
+  examinerStatusText: { fontSize: 11, fontWeight: '600' },
+  examinerActions: { flexDirection: 'row', gap: 8 },
+  examinerActionBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+
 
   // Input Nilai Button
   inputNilaiBtn: {
