@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
@@ -33,6 +33,11 @@ export default function GraduationDetailScreen() {
   // Penguji state
   const [examiners, setExaminers] = useState<any[]>([]);
   const [examinersLoading, setExaminersLoading] = useState(false);
+  const [showCreateUjian, setShowCreateUjian] = useState(false);
+  const [createUjianForm, setCreateUjianForm] = useState({ nama: '', deskripsi: '', durasiMenit: '' });
+  const [expandedUjian, setExpandedUjian] = useState<string | null>(null);
+  const [availableItems, setAvailableItems] = useState<any[]>([]);
+  const [availableExaminers, setAvailableExaminers] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -194,6 +199,93 @@ export default function GraduationDetailScreen() {
         },
       ],
     );
+  };
+
+  // ─── Ujian CRUD ─────────────────────────────────────
+  const fetchUjianList = async () => {
+    setUjianLoading(true);
+    try {
+      const res = await apiClient.get(`/graduations/${id}/ujian-praktek`);
+      setUjianList(res.data?.data || []);
+    } catch { /* ignore */ }
+    setUjianLoading(false);
+  };
+
+  const fetchAvailableItems = async () => {
+    try {
+      const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-items`);
+      setAvailableItems(res.data?.data || []);
+    } catch { /* ignore */ }
+  };
+
+  const fetchAvailableExaminers = async () => {
+    try {
+      const res = await apiClient.get(`/graduations/${id}/ujian-praktek/available-examiners`);
+      setAvailableExaminers(res.data?.data?.allPenguji || []);
+    } catch { /* ignore */ }
+  };
+
+  const handleCreateUjian = async () => {
+    if (!createUjianForm.nama.trim()) {
+      Alert.alert('Error', 'Nama ujian harus diisi');
+      return;
+    }
+    try {
+      await apiClient.post(`/graduations/${id}/ujian-praktek`, {
+        nama: createUjianForm.nama,
+        deskripsi: createUjianForm.deskripsi || undefined,
+        durasiMenit: createUjianForm.durasiMenit ? Number(createUjianForm.durasiMenit) : undefined,
+      });
+      setCreateUjianForm({ nama: '', deskripsi: '', durasiMenit: '' });
+      setShowCreateUjian(false);
+      fetchUjianList();
+    } catch {
+      Alert.alert('Error', 'Gagal membuat ujian');
+    }
+  };
+
+  const handleDeleteUjian = (ujianId: string, nama: string) => {
+    Alert.alert('Hapus Ujian', `Hapus ujian "${nama}"?`, [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiClient.delete(`/graduations/${id}/ujian-praktek/${ujianId}`);
+            fetchUjianList();
+          } catch { /* ignore */ }
+        },
+      },
+    ]);
+  };
+
+  const handleAssignItem = async (ujianId: string, itemPenilaianId: string) => {
+    try {
+      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/items`, { itemPenilaianId });
+      fetchUjianList();
+    } catch { /* ignore */ }
+  };
+
+  const handleRemoveItem = async (ujianId: string, itemPenilaianId: string) => {
+    try {
+      await apiClient.delete(`/graduations/${id}/ujian-praktek/${ujianId}/items/${itemPenilaianId}`);
+      fetchUjianList();
+    } catch { /* ignore */ }
+  };
+
+  const handleAssignExaminer = async (ujianId: string, pengujiUserId: string) => {
+    try {
+      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/examiners`, { pengujiUserId });
+      fetchUjianList();
+    } catch { /* ignore */ }
+  };
+
+  const handleRemoveExaminer = async (ujianId: string, pengujiUserId: string) => {
+    try {
+      await apiClient.delete(`/graduations/${id}/ujian-praktek/${ujianId}/examiners`, { data: { pengujiUserId } });
+      fetchUjianList();
+    } catch { /* ignore */ }
   };
 
   return (
@@ -375,32 +467,165 @@ export default function GraduationDetailScreen() {
 
       {activeTab === 'ujian' && isKegiatanLevel && (
         <View style={styles.section}>
+          {/* Create Ujian Button */}
+          <TouchableOpacity
+            style={styles.createBtn}
+            activeOpacity={0.7}
+            onPress={() => {
+              setShowCreateUjian(!showCreateUjian);
+              if (!showCreateUjian) {
+                fetchAvailableItems();
+                fetchAvailableExaminers();
+              }
+            }}
+          >
+            <Ionicons name={showCreateUjian ? 'close' : 'add-circle'} size={20} color="#fff" />
+            <Text style={styles.createBtnText}>{showCreateUjian ? 'Batal' : 'Buat Ujian Baru'}</Text>
+          </TouchableOpacity>
+
+          {/* Create Ujian Form */}
+          {showCreateUjian && (
+            <View style={styles.createForm}>
+              <Text style={styles.formLabel}>Nama Ujian *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Contoh: Ujian Praktek Pendadaran"
+                value={createUjianForm.nama}
+                onChangeText={(t) => setCreateUjianForm({ ...createUjianForm, nama: t })}
+              />
+              <Text style={styles.formLabel}>Deskripsi</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Deskripsi singkat (opsional)"
+                value={createUjianForm.deskripsi}
+                onChangeText={(t) => setCreateUjianForm({ ...createUjianForm, deskripsi: t })}
+              />
+              <Text style={styles.formLabel}>Durasi (menit)</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Contoh: 60"
+                keyboardType="numeric"
+                value={createUjianForm.durasiMenit}
+                onChangeText={(t) => setCreateUjianForm({ ...createUjianForm, durasiMenit: t })}
+              />
+              <TouchableOpacity style={styles.submitBtn} onPress={handleCreateUjian}>
+                <Text style={styles.submitBtnText}>Simpan Ujian</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Ujian List */}
           {ujianLoading ? (
             <LoadingView message="Memuat ujian..." />
           ) : ujianList.length > 0 ? (
-            ujianList.map((ujian: any) => (
-              <View key={ujian.id} style={styles.ujianCard}>
-                <View style={styles.ujianHeader}>
-                  <Ionicons name="document-text" size={18} color="#2563eb" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.ujianName}>{ujian.nama}</Text>
-                    <Text style={styles.ujianMeta}>
-                      {ujian.items?.length || 0} item � {ujian.penilais?.length || 0} penilai
-                    </Text>
-                  </View>
-                </View>
-                {ujian.items && ujian.items.length > 0 && (
-                  <View style={styles.ujianItems}>
-                    {ujian.items.map((item: any) => (
-                      <View key={item.id} style={styles.ujianItem}>
-                        <Text style={styles.ujianItemName}>{item.itemPenilaian?.namaItem || '-'}</Text>
-                        <Text style={styles.ujianItemAspek}>{item.itemPenilaian?.aspek?.namaAspek || ''} � Max {Number(item.itemPenilaian?.skorMaksimal || 0)}</Text>
+            ujianList.map((ujian: any) => {
+              const isExpanded = expandedUjian === ujian.id;
+              const assignedItemIds = new Set((ujian.items || []).map((i: any) => i.itemPenilaian?.id));
+              const assignedExaminerIds = new Set((ujian.penilais || []).map((p: any) => p.pengujiUser?.id));
+              return (
+                <View key={ujian.id} style={styles.ujianCard}>
+                  <TouchableOpacity
+                    style={styles.ujianHeader}
+                    onPress={() => setExpandedUjian(isExpanded ? null : ujian.id)}
+                  >
+                    <Ionicons name="document-text" size={18} color="#2563eb" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.ujianName}>{ujian.nama}</Text>
+                      <Text style={styles.ujianMeta}>
+                        {ujian.items?.length || 0} item | {ujian.penilais?.length || 0} penilai
+                        {ujian.durasiMenit ? ` | ${ujian.durasiMenit} menit` : ''}
+                      </Text>
+                    </View>
+                    <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color="#9ca3af" />
+                  </TouchableOpacity>
+
+                  {isExpanded && (
+                    <View style={styles.ujianExpanded}>
+                      {/* Items section */}
+                      <View style={styles.ujianSection}>
+                        <Text style={styles.ujianSectionTitle}>Item Penilaian</Text>
+                        {ujian.items && ujian.items.length > 0 ? (
+                          ujian.items.map((item: any) => (
+                            <View key={item.id} style={styles.ujianItemRow}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.ujianItemName}>{item.itemPenilaian?.namaItem || '-'}</Text>
+                                <Text style={styles.ujianItemAspek}>{item.itemPenilaian?.aspek?.namaAspek || ''} | Max {Number(item.itemPenilaian?.skorMaksimal || 0)}</Text>
+                              </View>
+                              <TouchableOpacity onPress={() => handleRemoveItem(ujian.id, item.itemPenilaian?.id)}>
+                                <Ionicons name="close-circle" size={18} color="#dc2626" />
+                              </TouchableOpacity>
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={styles.emptyTextSmall}>Belum ada item</Text>
+                        )}
+                        {/* Add Item */}
+                        {availableItems.filter((ai: any) => !assignedItemIds.has(ai.id)).length > 0 && (
+                          <View style={styles.addSection}>
+                            <Text style={styles.addSectionLabel}>Tambah Item:</Text>
+                            {availableItems.filter((ai: any) => !assignedItemIds.has(ai.id)).map((item: any) => (
+                              <TouchableOpacity
+                                key={item.id}
+                                style={styles.addItemBtn}
+                                onPress={() => handleAssignItem(ujian.id, item.id)}
+                              >
+                                <Ionicons name="add-circle" size={16} color="#2563eb" />
+                                <Text style={styles.addItemText}>{item.namaItem} ({item.aspek?.namaAspek || ''})</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        )}
                       </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ))
+
+                      {/* Penilai section */}
+                      <View style={styles.ujianSection}>
+                        <Text style={styles.ujianSectionTitle}>Penilai</Text>
+                        {ujian.penilais && ujian.penilais.length > 0 ? (
+                          ujian.penilais.map((p: any) => (
+                            <View key={p.id} style={styles.ujianItemRow}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.ujianItemName}>{p.pengujiUser?.namaLengkap || '-'}</Text>
+                                <Text style={styles.ujianItemAspek}>{p.pengujiUser?.email || ''}</Text>
+                              </View>
+                              <TouchableOpacity onPress={() => handleRemoveExaminer(ujian.id, p.pengujiUser?.id)}>
+                                <Ionicons name="close-circle" size={18} color="#dc2626" />
+                              </TouchableOpacity>
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={styles.emptyTextSmall}>Belum ada penilai</Text>
+                        )}
+                        {/* Add Examiner */}
+                        {availableExaminers.filter((ae: any) => !assignedExaminerIds.has(ae.id)).length > 0 && (
+                          <View style={styles.addSection}>
+                            <Text style={styles.addSectionLabel}>Tambah Penilai:</Text>
+                            {availableExaminers.filter((ae: any) => !assignedExaminerIds.has(ae.id)).map((ex: any) => (
+                              <TouchableOpacity
+                                key={ex.id}
+                                style={styles.addItemBtn}
+                                onPress={() => handleAssignExaminer(ujian.id, ex.id)}
+                              >
+                                <Ionicons name="add-circle" size={16} color="#2563eb" />
+                                <Text style={styles.addItemText}>{ex.namaLengkap} ({ex.email || ''})</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Delete button */}
+                      <TouchableOpacity
+                        style={styles.deleteUjianBtn}
+                        onPress={() => handleDeleteUjian(ujian.id, ujian.nama)}
+                      >
+                        <Ionicons name="trash" size={16} color="#dc2626" />
+                        <Text style={styles.deleteUjianText}>Hapus Ujian</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              );
+            })
           ) : (
             <Text style={styles.emptyText}>Belum ada ujian praktek</Text>
           )}
@@ -679,6 +904,88 @@ const styles = StyleSheet.create({
   evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
 
   emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+
+  // Ujian CRUD
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    gap: 8,
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  createBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  createForm: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  formLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 4, marginTop: 8 },
+  formInput: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 12,
+    fontSize: 14,
+    color: '#111827',
+  },
+  submitBtn: {
+    backgroundColor: '#059669',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  submitBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  ujianExpanded: { paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  ujianSection: { marginTop: 12 },
+  ujianSectionTitle: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  ujianItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  emptyTextSmall: { fontSize: 12, color: '#9ca3af', textAlign: 'center', paddingVertical: 12 },
+  addSection: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  addSectionLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  addItemBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#eff6ff',
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  addItemText: { fontSize: 12, color: '#2563eb', fontWeight: '500' },
+  deleteUjianBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: '#fef2f2',
+    borderRadius: 10,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  deleteUjianText: { fontSize: 12, fontWeight: '600', color: '#dc2626' },
   // Ujian Praktek
   ujianCard: {
     backgroundColor: '#fff',
