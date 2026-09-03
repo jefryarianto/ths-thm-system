@@ -29,6 +29,7 @@ import {
 } from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { normalizePhone } from '../../common/utils/phone.util';
+import bcrypt from 'bcryptjs';
 
 /** Shape expected by DocumentsService.generateCertificate (#aspects). */
 interface AspectScore {
@@ -945,6 +946,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       throw new BadRequestException('Pendadaran dibatalkan. Tidak dapat menyetujui nilai.');
     }
 
+    // 1. Approve all pending scores
     const result = await this.prisma.nilaiPendadaran.updateMany({
       where: { kegiatanId: graduationId, statusValidasi: 'pending' },
       data: {
@@ -953,8 +955,90 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
         divalidasiAt: new Date(),
       },
     });
+
+    // 2. Auto-compute results: totalSkor, ranking, statusKelulusan, isTopTen
+    await this.autoComputeAndSaveResults(graduationId);
+
     this.invalidateCache();
     return { approved: result.count };
+  }
+
+  /**
+   * Step 12: System auto-validates after admin_distrik approves scores.
+   * Computes totalSkor, ranking, statusKelulusan, isTopTen (top 10).
+   * Creates HasilPendadaran records for all candidates with approved scores.
+   */
+  private async autoComputeAndSaveResults(graduationId: string) {
+    // Get all approved scores grouped by candidate
+    const nilai = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId: graduationId, statusValidasi: 'approved' },
+      select: {
+        calonAnggotaId: true,
+        skor: true,
+        itemPenilaian: { select: { skorMaksimal: true } },
+      },
+    });
+    if (nilai.length === 0) return;
+
+    // Compute totalSkor and totalMax per candidate
+    const scoreMap = new Map<string, number>();
+    const maxMap = new Map<string, number>();
+    for (const n of nilai) {
+      scoreMap.set(n.calonAnggotaId, (scoreMap.get(n.calonAnggotaId) ?? 0) + Number(n.skor));
+      maxMap.set(
+        n.calonAnggotaId,
+        (maxMap.get(n.calonAnggotaId) ?? 0) + Number(n.itemPenilaian?.skorMaksimal ?? 100),
+      );
+    }
+
+    // Compute ranking and kelulusan
+    const totals: Array<{ calonAnggotaId: string; totalSkor: number; ranking: number; lulus: boolean }> = [];
+    for (const [calonAnggotaId, totalSkor] of scoreMap.entries()) {
+      const max = maxMap.get(calonAnggotaId) ?? 0;
+      const pct = max > 0 ? (totalSkor / max) * 100 : 0;
+      totals.push({ calonAnggotaId, totalSkor, ranking: 0, lulus: pct >= 60 });
+    }
+
+    // Rank: highest score = #1
+    totals.sort((a, b) => b.totalSkor - a.totalSkor);
+    totals.forEach((t, i) => (t.ranking = i + 1));
+
+    // Top 10
+    const topTenIds = new Set(totals.slice(0, 10).map((t) => t.calonAnggotaId));
+
+    // Upsert HasilPendadaran for each candidate
+    for (const t of totals) {
+      await this.prisma.hasilPendadaran.upsert({
+        where: {
+          kegiatanId_calonAnggotaId: {
+            kegiatanId: graduationId,
+            calonAnggotaId: t.calonAnggotaId,
+          },
+        },
+        update: {
+          totalSkor: t.totalSkor,
+          ranking: t.ranking,
+          statusKelulusan: t.lulus ? 'lulus' : 'gagal',
+          isTopTen: topTenIds.has(t.calonAnggotaId),
+          statusValidasi: 'approved',
+        },
+        create: {
+          kegiatanId: graduationId,
+          calonAnggotaId: t.calonAnggotaId,
+          totalSkor: t.totalSkor,
+          ranking: t.ranking,
+          statusKelulusan: t.lulus ? 'lulus' : 'gagal',
+          isTopTen: topTenIds.has(t.calonAnggotaId),
+          statusValidasi: 'approved',
+        },
+      });
+
+      // Update candidate status
+      await this.prisma.calonAnggota.update({
+        where: { id: t.calonAnggotaId },
+        data: { status: t.lulus ? 'lulus' : 'gagal' },
+      });
+    }
   }
 
   /**

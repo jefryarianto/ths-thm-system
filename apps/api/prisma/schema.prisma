@@ -821,6 +821,7 @@ model HasilPendadaran {
   calonAnggotaId  String          @map("calon_anggota_id")
   totalSkor       Decimal         @map("total_skor") @db.Decimal(5, 2)
   ranking         Int?
+  isTopTen        Boolean         @default(false) @map("is_top_ten")
   statusKelulusan StatusKelulusan @map("status_kelulusan")
   statusValidasi  StatusValidasi  @default(pending) @map("status_validasi")
   divalidasiOleh  String?         @map("divalidasi_oleh")
@@ -832,7 +833,7 @@ model HasilPendadaran {
   calonAnggota   CalonAnggota @relation(fields: [calonAnggotaId], references: [id], onDelete: Cascade)
   divalidasiUser User?        @relation("HasilPendadaranValidasi", fields: [divalidasiOleh], references: [id])
 
-  @@index([kegiatanId, calonAnggotaId])
+  @@unique([kegiatanId, calonAnggotaId])
   @@map("hasil_pendadaran")
 }
 

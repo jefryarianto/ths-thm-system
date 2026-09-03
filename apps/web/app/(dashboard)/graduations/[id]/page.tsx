@@ -162,6 +162,7 @@ interface HasilRecord {
   calonAnggotaId: string;
   totalSkor: number;
   ranking: number | null;
+  isTopTen: boolean;
   statusKelulusan: 'lulus' | 'gagal';
   statusValidasi: 'pending' | 'approved' | 'rejected';
   divalidasiAt: string | null;
@@ -1389,14 +1390,14 @@ export default function GraduationDetailPage() {
             )}
 
             {/* Actions: Setujui Nilai + Ajukan ke Distrik */}
-            {isAdminKegiatanLevel && examiners.some((e) => e.status === 'approved') && (
+            {isDistrikLevel && examiners.some((e) => e.status === 'approved') && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
                   <Award size={16} className="text-emerald-500" />
                   Alur Penilaian
                 </h4>
                 <p className="text-xs text-gray-400 mb-4">
-                  Setelah seluruh penguji selesai menilai di sesi ujian praktek: setujui nilai, lalu ajukan ke admin distrik.
+                  Setelah seluruh penguji selesai menilai: admin distrik menyetujui nilai. Sistem akan otomatis menghitung peringkat dan menentukan kelulusan.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <button

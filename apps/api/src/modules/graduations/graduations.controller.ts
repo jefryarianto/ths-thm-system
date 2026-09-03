@@ -186,7 +186,7 @@ export class GraduationsController {
   }
 
   @Post(':id/scores/approve')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Admin kegiatan menyetujui seluruh nilai penguji' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Admin distrik menyetujui seluruh nilai penguji' })
   approveScores(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.approveScores(id, req.user?.id, req.scope);
   }
