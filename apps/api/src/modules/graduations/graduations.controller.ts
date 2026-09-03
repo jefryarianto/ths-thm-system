@@ -150,6 +150,14 @@ export class GraduationsController {
     return this.service.getEvaluations(id, req.scope);
   }
 
+  // ── Score Progress ──
+
+  @Get(':id/score-progress')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Progress pengisian nilai penguji secara real-time' })
+  getScoreProgress(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getScoreProgress(id, req.scope);
+  }
+
   // ── Workflow pendadaran: pengajuan & persetujuan penguji, nilai, dan pengajuan ke distrik ──
 
   @Get(':id/examiners')

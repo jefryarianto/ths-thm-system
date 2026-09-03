@@ -38,6 +38,8 @@ export default function GraduationDetailScreen() {
   const [expandedUjian, setExpandedUjian] = useState<string | null>(null);
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [availableExaminers, setAvailableExaminers] = useState<any[]>([]);
+  // Score progress state
+  const [scoreProgress, setScoreProgress] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -72,6 +74,7 @@ export default function GraduationDetailScreen() {
       } catch { /* ignore */ }
       setUjianLoading(false);
     })();
+    fetchScoreProgress();
   }, [activeTab, id]);
 
   // Fetch examiners when tab is penguji
@@ -202,6 +205,13 @@ export default function GraduationDetailScreen() {
   };
 
   // ─── Ujian CRUD ─────────────────────────────────────
+  const fetchScoreProgress = async () => {
+    try {
+      const res = await apiClient.get(`/graduations/${id}/score-progress`);
+      setScoreProgress(res.data?.data || null);
+    } catch { /* ignore */ }
+  };
+
   const fetchUjianList = async () => {
     setUjianLoading(true);
     try {
@@ -467,6 +477,60 @@ export default function GraduationDetailScreen() {
 
       {activeTab === 'ujian' && isKegiatanLevel && (
         <View style={styles.section}>
+          {/* Score Progress Indicator */}
+          {scoreProgress && (
+            <View style={styles.progressCard}>
+              <View style={styles.progressHeader}>
+                <Ionicons name="analytics" size={18} color="#2563eb" />
+                <Text style={styles.progressTitle}>Progress Pengisian Nilai</Text>
+                <Text style={styles.progressCount}>
+                  {scoreProgress.totalEntered}/{scoreProgress.totalExpectedScores}
+                </Text>
+              </View>
+              {/* Progress bar */}
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${Math.min(scoreProgress.percentage, 100)}%`,
+                      backgroundColor: scoreProgress.percentage === 100 ? '#10b981' : scoreProgress.percentage >= 50 ? '#2563eb' : '#f59e0b',
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.progressFooter}>
+                <Text style={styles.progressFooterText}>
+                  {scoreProgress.totalParticipants} peserta × {scoreProgress.totalItems} item
+                </Text>
+                <Text style={styles.progressPercent}>{scoreProgress.percentage}%</Text>
+              </View>
+              {/* Per-penguji breakdown */}
+              {scoreProgress.perPenguji && scoreProgress.perPenguji.length > 0 && (
+                <View style={styles.pengujiBreakdown}>
+                  <Text style={styles.pengujiBreakdownTitle}>Per Penguji:</Text>
+                  {scoreProgress.perPenguji.map((p: any) => (
+                    <View key={p.id} style={styles.pengujiRow}>
+                      <Text style={styles.pengujiName} numberOfLines={1}>{p.nama}</Text>
+                      <View style={styles.progressBarBgSmall}>
+                        <View
+                          style={[
+                            styles.progressBarFillSmall,
+                            {
+                              width: `${Math.min(p.percentage, 100)}%`,
+                              backgroundColor: p.percentage === 100 ? '#10b981' : p.percentage >= 50 ? '#2563eb' : '#f59e0b',
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.pengujiPercent}>{p.percentage}%</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Create Ujian Button */}
           <TouchableOpacity
             style={styles.createBtn}
@@ -960,6 +1024,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   emptyTextSmall: { fontSize: 12, color: '#9ca3af', textAlign: 'center', paddingVertical: 12 },
+  // Score Progress
+  progressCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  progressHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  progressTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: '#111827' },
+  progressCount: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
+  progressBarBg: { height: 8, backgroundColor: '#f3f4f6', borderRadius: 4, marginBottom: 6 },
+  progressBarFill: { height: 8, borderRadius: 4 },
+  progressFooter: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  progressFooterText: { fontSize: 11, color: '#9ca3af' },
+  progressPercent: { fontSize: 12, fontWeight: '700', color: '#374151' },
+  pengujiBreakdown: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  pengujiBreakdownTitle: { fontSize: 12, fontWeight: '600', color: '#6b7280', marginBottom: 6 },
+  pengujiRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  pengujiName: { width: 80, fontSize: 11, color: '#374151' },
+  progressBarBgSmall: { flex: 1, height: 4, backgroundColor: '#f3f4f6', borderRadius: 2 },
+  progressBarFillSmall: { height: 4, borderRadius: 2 },
+  pengujiPercent: { width: 35, fontSize: 10, color: '#6b7280', textAlign: 'right' },
   addSection: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
   addSectionLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6 },
   addItemBtn: {

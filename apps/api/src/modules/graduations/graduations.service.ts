@@ -1489,6 +1489,95 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   // ═══════════════════════════════════════════════════════════
+  //  SCORE PROGRESS — real-time progress of penguji scoring
+  // ═══════════════════════════════════════════════════════════
+
+  async getScoreProgress(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // 1. Total peserta (calon anggota) — unique calonAnggota from nilaiPendadaran + undangan
+    const scoredParticipants = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      select: { calonAnggotaId: true },
+      distinct: ['calonAnggotaId'],
+    });
+    const invitedParticipants = await this.prisma.undanganPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      select: { anggotaId: true },
+    });
+    const participantIds = new Set([
+      ...scoredParticipants.map((p) => p.calonAnggotaId),
+      ...invitedParticipants.map((p) => p.anggotaId),
+    ]);
+    const totalParticipants = participantIds.size || 1; // avoid division by zero
+
+    // 2. Total items across all ujian
+    const ujianList = await this.prisma.ujianPraktek.findMany({
+      where: { kegiatanId: graduationId },
+      select: { id: true, items: { select: { id: true } } },
+    });
+    const totalItemsPerUjian = ujianList.map((u) => ({ id: u.id, itemCount: u.items.length }));
+    const totalExpectedScores = totalParticipants * totalItemsPerUjian.reduce((s, u) => s + u.itemCount, 0);
+
+    // 3. Actual scores entered
+    const scores = await this.prisma.nilaiPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      select: {
+        pengujiUserId: true,
+        calonAnggotaId: true,
+        ujianPraktekId: true,
+        penguji: { select: { id: true, namaLengkap: true } },
+      },
+    });
+    const totalEntered = scores.length;
+
+    // 4. Per-penguji progress
+    const pengujiMap = new Map<string, { id: string; nama: string; entered: number; expected: number }>();
+    // Initialize all approved penguji with 0
+    const approvedExaminers = await this.prisma.penugasanPenguji.findMany({
+      where: { kegiatanId: graduationId, status: 'approved' },
+      select: { pengujiUser: { select: { id: true, namaLengkap: true } } },
+    });
+    for (const ex of approvedExaminers) {
+      pengujiMap.set(ex.pengujiUser.id, {
+        id: ex.pengujiUser.id,
+        nama: ex.pengujiUser.namaLengkap,
+        entered: 0,
+        expected: totalParticipants * totalItemsPerUjian.reduce((s, u) => s + u.itemCount, 0),
+      });
+    }
+    // Count entered scores per penguji
+    for (const s of scores) {
+      const entry = pengujiMap.get(s.pengujiUserId);
+      if (entry) {
+        entry.entered += 1;
+      } else {
+        // Penguji not in approved list but has scores (edge case)
+        pengujiMap.set(s.pengujiUserId, {
+          id: s.penguji.id,
+          nama: s.penguji.namaLengkap,
+          entered: 1,
+          expected: totalParticipants * totalItemsPerUjian.reduce((sum, u) => sum + u.itemCount, 0),
+        });
+      }
+    }
+
+    const perPenguji = Array.from(pengujiMap.values()).map((p) => ({
+      ...p,
+      percentage: p.expected > 0 ? Math.round((p.entered / p.expected) * 100) : 0,
+    }));
+
+    return {
+      totalParticipants,
+      totalItems: totalItemsPerUjian.reduce((s, u) => s + u.itemCount, 0),
+      totalExpectedScores,
+      totalEntered,
+      percentage: totalExpectedScores > 0 ? Math.round((totalEntered / totalExpectedScores) * 100) : 0,
+      perPenguji,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
   //  EVALUATIONS (Nilai evaluasi pendadaran — didokumentasikan di API.md)
   // ═══════════════════════════════════════════════════════════
 

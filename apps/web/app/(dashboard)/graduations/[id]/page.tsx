@@ -232,6 +232,15 @@ export default function GraduationDetailPage() {
 
   // Scoring state
   const [scores, setScores] = useState<NilaiRecord[]>([]);
+  // Score progress state
+  const [scoreProgress, setScoreProgress] = useState<{
+    totalParticipants: number;
+    totalItems: number;
+    totalExpectedScores: number;
+    totalEntered: number;
+    percentage: number;
+    perPenguji: Array<{ id: string; nama: string; entered: number; expected: number; percentage: number }>;
+  } | null>(null);
   const [scoreInput, setScoreInput] = useState<Record<string, Record<string, number>>>({});
   const [savingScores, setSavingScores] = useState(false);
 
@@ -365,6 +374,14 @@ export default function GraduationDetailPage() {
     }
   }, [id]);
 
+  const fetchScoreProgress = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await apiClient.get(`/graduations/${id}/score-progress`);
+      setScoreProgress(res.data?.data || null);
+    } catch { /* ignore */ }
+  }, [id]);
+
   const fetchUjianList = useCallback(async () => {
     if (!id) return;
     setUjianLoading(true);
@@ -415,11 +432,12 @@ export default function GraduationDetailPage() {
       fetchUjianList();
       fetchAvailableItems();
       fetchAvailableExaminers();
+      fetchScoreProgress();
     }
     if (activeSubTab === 'validasi') {
       fetchResults();
     }
-  }, [activeSubTab, fetchUjianList, fetchAvailableItems, fetchAvailableExaminers, fetchResults]);
+  }, [activeSubTab, fetchUjianList, fetchAvailableItems, fetchAvailableExaminers, fetchResults, fetchScoreProgress]);
 
   const handleProposeExaminer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -962,6 +980,56 @@ export default function GraduationDetailPage() {
         {/* ─── TAB: Ujian Praktek ──────────────────────────────── */}
         {activeSubTab === 'ujian-praktek' && (
           <div className="space-y-6">
+            {/* Score Progress Indicator */}
+            {scoreProgress && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <ClipboardList size={16} className="text-blue-500" />
+                    Progress Pengisian Nilai
+                  </h4>
+                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                    {scoreProgress.totalEntered}/{scoreProgress.totalExpectedScores} nilai
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 mb-3">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      scoreProgress.percentage === 100 ? 'bg-emerald-500' : scoreProgress.percentage >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                    }`}
+                    style={{ width: `${Math.min(scoreProgress.percentage, 100)}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  <span>{scoreProgress.totalParticipants} peserta × {scoreProgress.totalItems} item</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{scoreProgress.percentage}%</span>
+                </div>
+                {/* Per-penguji breakdown */}
+                {scoreProgress.perPenguji.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Per Penguji:</p>
+                    {scoreProgress.perPenguji.map((p) => (
+                      <div key={p.id} className="flex items-center gap-3">
+                        <div className="w-24 text-xs text-gray-700 dark:text-gray-300 truncate" title={p.nama}>{p.nama}</div>
+                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-500 ${
+                              p.percentage === 100 ? 'bg-emerald-500' : p.percentage >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                            }`}
+                            style={{ width: `${Math.min(p.percentage, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 w-20 text-right">
+                          {p.entered}/{p.expected} ({p.percentage}%)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Toolbar */}
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
