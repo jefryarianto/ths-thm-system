@@ -110,6 +110,7 @@ describe('GraduationsService', () => {
 
   const mockNotificationsService = {
     send: jest.fn().mockResolvedValue(undefined),
+    sendToRole: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockDocumentsService = {
@@ -571,7 +572,9 @@ describe('GraduationsService', () => {
         kegiatanId: 'g1',
         pengujiUserId: 'u1',
         status: 'pending',
+        pengujiUser: { id: 'u1', namaLengkap: 'Test Penguji', email: 'p@test.com' },
       });
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({ nama: 'Pendadaran Test' });
 
       const result = await service.proposeExaminer('g1', { pengujiUserId: 'u1' });
       expect(result.status).toBe('pending');
@@ -607,7 +610,9 @@ describe('GraduationsService', () => {
         kegiatanId: 'g1',
         pengujiUserId: 'u1',
         status: 'pending',
+        pengujiUser: { id: 'u1', namaLengkap: 'Test Penguji', email: 'hadir@test.com' },
       });
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({ nama: 'Pendadaran Test' });
 
       const result = await service.proposeExaminer('g1', { pengujiUserId: 'u1' });
       expect(result.status).toBe('pending');

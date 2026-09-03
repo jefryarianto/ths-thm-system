@@ -895,6 +895,18 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
     });
     this.invalidateCache();
+
+    // Notify all admin_distrik that a new penguji proposal needs review
+    this.notificationsService
+      .sendToRole({
+        role: 'admin_distrik',
+        judul: 'Pengajuan Penguji Baru',
+        isi: `${assignment.pengujiUser.namaLengkap} diajukan sebagai penguji untuk pendadaran "${grad.nama}". Menunggu persetujuan Anda.`,
+        tipe: 'approval_request',
+        data: { kegiatanId: graduationId, penugasanId: assignment.id },
+      })
+      .catch(() => {});
+
     return assignment;
   }
 
@@ -932,6 +944,33 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
     });
     this.invalidateCache();
+
+    // Notify the penguji about the decision
+    const grad2 = await this.prisma.kegiatan.findUnique({
+      where: { id: graduationId },
+      select: { nama: true },
+    });
+    const gradName = grad2?.nama || 'Pendadaran';
+    if (dto.approved) {
+      this.notificationsService
+        .send(updated.pengujiUserId, {
+          judul: 'Anda Ditugaskan sebagai Penguji',
+          isi: `Anda telah disetujui sebagai penguji untuk pendadaran "${gradName}". Silakan buka menu Pendadaran untuk mulai menilai.`,
+          tipe: 'approval_request',
+          data: { kegiatanId: graduationId, penugasanId: updated.id },
+        })
+        .catch(() => {});
+    } else {
+      this.notificationsService
+        .send(updated.pengujiUserId, {
+          judul: 'Pengajuan Penguji Ditolak',
+          isi: `Pengajuan Anda sebagai penguji untuk pendadaran "${gradName}" ditolak.${dto.catatan ? ` Alasan: ${dto.catatan}` : ''}`,
+          tipe: 'approval_request',
+          data: { kegiatanId: graduationId, penugasanId: updated.id },
+        })
+        .catch(() => {});
+    }
+
     return updated;
   }
 
