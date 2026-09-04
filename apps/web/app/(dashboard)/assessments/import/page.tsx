@@ -27,6 +27,7 @@ interface PreviewRow {
 interface ImportResult {
   importedAspects: number;
   importedItems: number;
+  updatedItems: number;
   total: number;
 }
 
@@ -53,8 +54,8 @@ export default function ImportAssessmentsPage() {
         return;
       }
 
-      // Parse header
-      const headers = lines[0].trim().toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+      // Parse header (strip BOM UTF-8 bila ada dari ekspor Excel)
+      const headers = lines[0].trim().replace(/^\uFEFF/, '').toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
       const colIndices: Record<string, number> = {};
       headers.forEach((h, i) => {
         const cleaned = h.replace(/[^a-z_]/g, '');
@@ -62,7 +63,16 @@ export default function ImportAssessmentsPage() {
         else if (cleaned === 'aspek' || cleaned === 'aspe') colIndices.aspek = i;
         else if (cleaned === 'item' || cleaned === 'items') colIndices.item = i;
         else if (cleaned === 'deskripsi' || cleaned === 'deskri') colIndices.deskripsi = i;
-        else if (cleaned === 'skor_max' || cleaned === 'skormax' || cleaned === 'skor maksimal' || cleaned === 'nilai_max') colIndices.skorMax = i;
+        // Dukung variasi umum: SKOR_MAX, SCORE_MAX, SKORMAKSIMAL, NILAI_MAX
+        else if (
+          cleaned === 'skor_max' ||
+          cleaned === 'score_max' ||
+          cleaned === 'skormax' ||
+          cleaned === 'scoremax' ||
+          cleaned === 'skormaksimal' ||
+          cleaned === 'nilai_max'
+        )
+          colIndices.skorMax = i;
       });
 
       if (colIndices.aspek === undefined || colIndices.item === undefined) {
@@ -201,7 +211,8 @@ export default function ImportAssessmentsPage() {
                 <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">Import Berhasil!</p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                   {result.importedAspects} aspek dan {result.importedItems} item penilaian berhasil diimport
-                  (total {result.total} baris)
+                  {result.updatedItems ? `, ${result.updatedItems} item diperbarui` : ''}
+                  {' '}(total {result.total} baris)
                 </p>
                 <button
                   onClick={() => router.push('/assessments')}
