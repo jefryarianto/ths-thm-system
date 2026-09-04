@@ -52,6 +52,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { getHomePathForRole } from '@/lib/role-redirect';
 import type { Role } from '@/types';
 import AdminKegiatanWelcome from '@/components/welcome/admin-kegiatan-guide';
+import PengujiWelcome from '@/components/welcome/penguji-guide';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -548,6 +549,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-[#F8F9FA] dark:bg-gray-950">
       <AdminKegiatanWelcome />
+      <PengujiWelcome />
       {/* Sidebar */}
       <aside
         className="bg-navy-800 border-r border-navy-700 flex flex-col transition-all duration-300 ease-in-out"
