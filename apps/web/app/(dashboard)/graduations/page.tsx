@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useToast } from '@/components/ui/toast';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -54,6 +55,7 @@ export default function GraduationsPage() {
     return apiClient.get('/graduations', { params }).then((r) => r.data);
   }, [page, debouncedSearch, filters.status]);
 
+  const toast = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nama: string) => {
@@ -62,8 +64,9 @@ export default function GraduationsPage() {
     try {
       await apiClient.delete('/graduations/' + id);
       refetch();
+      toast('success', 'Pendadaran berhasil dihapus');
     } catch {
-      alert('Gagal menghapus pendadaran');
+      toast('error', 'Gagal menghapus pendadaran');
     }
     setDeletingId(null);
   };
