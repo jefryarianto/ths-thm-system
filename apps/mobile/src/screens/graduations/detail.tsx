@@ -183,6 +183,8 @@ export default function GraduationDetailScreen() {
       /* ignore */
     }
     setGenDocsLoading(false);
+  };
+
   const handleReviewExaminer = async (penugasanId: string, approved: boolean) => {
     Alert.alert(
       approved ? 'Setujui Penguji' : 'Tolak Penguji',
