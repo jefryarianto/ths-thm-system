@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers, Upload, ImagePlus } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers, Upload, ImagePlus, User, Lock, Bell, Settings as SettingsIcon, Mail, Smartphone, Database, FileText, Users } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import Card from '@/components/cards/card';
@@ -46,6 +46,18 @@ interface Stamp {
   imagePath?: string | null;
 }
 
+
+function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-2 mt-2 first:mt-0">
+      {icon}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
 export default function SettingsPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
@@ -302,7 +314,8 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* Navigasi Cepat */}
+      {/* == Organisasi == */}
+      <SectionHeader icon={<Building2 size={20} className="text-blue-600 dark:text-blue-400" />} title="Organisasi" subtitle="Struktur organisasi, periode, dan pengaturan distrik" />
       <Link
         href="/settings/org-structure"
         className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition group"
@@ -382,6 +395,9 @@ export default function SettingsPage() {
         </div>
         <ArrowRight size={18} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition" />
       </Link>
+
+      {/* == Sistem == */}
+      <SectionHeader icon={<SettingsIcon size={20} className="text-purple-600 dark:text-purple-400" />} title="Sistem" subtitle="Pengaturan teknis, email, keamanan, dan cadangan data" />
 
       <Link
         href="/audit-logs"
