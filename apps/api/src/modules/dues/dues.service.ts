@@ -220,9 +220,10 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return dues;
   }
 
-  async getArrears() {
+  async getArrears(scope?: UserScope) {
+    const scopeFilter = scope ? this.buildIndirectScopeFilter(scope, 'anggota') : {};
     const arrears = await (this.prisma as any).iuran.findMany({
-      where: { status: 'menunggak' },
+      where: { status: 'menunggak', ...scopeFilter },
       include: {
         anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } },
       },
@@ -305,18 +306,22 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     );
   }
 
-  async getReport() {
+  async getReport(scope?: UserScope) {
+    const scopeFilter = scope ? this.buildIndirectScopeFilter(scope, 'anggota') : {};
     const stats = await (this.prisma as any).iuran.groupBy({
       by: ['status'],
       _count: true,
       _sum: { jumlah: true },
+      where: scopeFilter,
     });
 
     return stats;
   }
 
-  async exportReport() {
+  async exportReport(scope?: UserScope) {
+    const scopeFilter = scope ? this.buildIndirectScopeFilter(scope, 'anggota') : {};
     const dues = await (this.prisma as any).iuran.findMany({
+      where: scopeFilter,
       include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
       take: 10_000,
     });

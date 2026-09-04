@@ -47,7 +47,7 @@ export class PenandatanganController {
   // ── Penugasan per tipe dokumen (1-3 penandatangan, per scope distrik) ──
 
   @Get('dokumen')
-  @CrudAuth('superadmin', 'admin_distrik', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     summary: 'Penugasan penandatangan per tipe dokumen pada scope (query: distrikId, default global)',
   })
   getDocSigners(@Req() req: ScopedRequest, @Query('distrikId') distrikId?: string) {
@@ -55,7 +55,7 @@ export class PenandatanganController {
   }
 
   @Put('dokumen/:type')
-  @CrudAuth('superadmin', 'admin_distrik', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     summary: 'Set penandatangan untuk satu tipe dokumen pada scope (1-3 orang)',
   })
   @ApiBody({ description: '{ penandatanganIds: string[], distrikId?: string } — urutan = posisi tanda tangan' })

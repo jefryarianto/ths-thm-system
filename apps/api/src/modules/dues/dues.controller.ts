@@ -55,20 +55,20 @@ export class DuesController {
 
   @Get('arrears')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'district', summary: 'Daftar iuran menunggak' })
-  getArrears() {
-    return this.service.getArrears();
+  getArrears(@Req() req: ScopedRequest) {
+    return this.service.getArrears(req.scope);
   }
 
   @Get('report')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'district', summary: 'Laporan iuran' })
-  getReport() {
-    return this.service.getReport();
+  getReport(@Req() req: ScopedRequest) {
+    return this.service.getReport(req.scope);
   }
 
   @Get('report/export')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Export laporan iuran' })
-  exportReport() {
-    return this.service.exportReport();
+  exportReport(@Req() req: ScopedRequest) {
+    return this.service.exportReport(req.scope);
   }
 
   @Post('import')
