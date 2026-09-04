@@ -162,13 +162,25 @@ export default function GraduationsPage() {
               </span>
             </td>
             <td className="px-4 py-3 text-right">
-              <button
-                onClick={() => router.push(`/graduations/${row.id}`)}
-                className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-                title="Detail"
-              >
-                <Eye size={15} />
-              </button>
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={() => router.push(`/graduations/${row.id}`)}
+                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                  title="Detail"
+                >
+                  <Eye size={15} />
+                </button>
+                {row.status === 'draft' && (
+                  <button
+                    onClick={() => handleDelete(row.id, row.nama)}
+                    disabled={deletingId === row.id}
+                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors disabled:opacity-50"
+                    title="Hapus"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
+              </div>
             </td>
           </tr>
         )}
