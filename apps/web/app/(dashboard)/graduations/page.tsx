@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, GraduationCap, Eye, MapPin, Users, Calendar } from 'lucide-react';
+import { Plus, GraduationCap, Eye, MapPin, Users, Calendar, Trash2 } from 'lucide-react';
 import ExportMenu from '@/components/ui/export-menu';
 import { CanCreate, CanExport } from '@/components/auth/can';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -52,6 +53,20 @@ export default function GraduationsPage() {
     if (filters.status) params.status = filters.status;
     return apiClient.get('/graduations', { params }).then((r) => r.data);
   }, [page, debouncedSearch, filters.status]);
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string, nama: string) => {
+    if (!confirm('Yakin ingin menghapus pendadaran "' + nama + '"?')) return;
+    setDeletingId(id);
+    try {
+      await apiClient.delete('/graduations/' + id);
+      refetch();
+    } catch {
+      alert('Gagal menghapus pendadaran');
+    }
+    setDeletingId(null);
+  };
 
   const handlePageChange = (p: number) => {
     if (p >= 1 && p <= meta.totalPages) setPage(p);
