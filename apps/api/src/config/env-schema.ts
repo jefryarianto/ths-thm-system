@@ -23,7 +23,7 @@ const baseEnvSchema = z.object({
   // JWT
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
-  JWT_EXPIRES_IN: durationSchema.default('15m'),
+  JWT_EXPIRES_IN: durationSchema.default('5m'),
   JWT_REFRESH_EXPIRES_IN: durationSchema.default('14d'),
 
   // Upload

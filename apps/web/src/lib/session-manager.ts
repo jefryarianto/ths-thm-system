@@ -18,6 +18,9 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+// Web session inactivity timeout: 5 minutes
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+
 class SessionManager {
   private static instance: SessionManager;
   private listeners: Set<() => void> = new Set();
@@ -25,6 +28,8 @@ class SessionManager {
   private _isExpired = false;
   private _expiryWarningTimer: ReturnType<typeof setTimeout> | undefined;
   private _expiryWarningFired = false;
+  private _inactivityTimer: ReturnType<typeof setTimeout> | undefined;
+  private _lastActivityAt = Date.now();
 
   private constructor() {}
 
@@ -114,6 +119,46 @@ class SessionManager {
     this.expiringSoonListeners.forEach((l) => l(secondsRemaining));
   }
 
+  // ─── Inactivity Timeout ─────────────────────────────────────
+
+  /** Track user activity to reset the inactivity timer */
+  trackActivity() {
+    this._lastActivityAt = Date.now();
+    this.resetInactivityTimer();
+  }
+
+  /** Reset the inactivity timer */
+  private resetInactivityTimer() {
+    if (this._inactivityTimer) {
+      clearTimeout(this._inactivityTimer);
+    }
+    this._inactivityTimer = setTimeout(() => {
+      if (!this._isExpired) {
+        console.log('[session-manager] Inactivity timeout reached, expiring session');
+        this.expire(true);
+      }
+    }, INACTIVITY_TIMEOUT_MS);
+  }
+
+  /** Start tracking activity (called after login) */
+  startInactivityTracking() {
+    this._lastActivityAt = Date.now();
+    this.resetInactivityTimer();
+
+    // Listen for user activity
+    const events = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    const handler = () => this.trackActivity();
+    events.forEach(event => window.addEventListener(event, handler, { passive: true }));
+  }
+
+  /** Stop tracking activity (called on logout) */
+  stopInactivityTracking() {
+    if (this._inactivityTimer) {
+      clearTimeout(this._inactivityTimer);
+      this._inactivityTimer = undefined;
+    }
+  }
+
   // ─── Expire / Reset ──────────────────────────────────────────
 
   expire(shouldRedirect = true) {
@@ -141,6 +186,7 @@ class SessionManager {
     this._isExpired = false;
     this._expiryWarningFired = false;
     this.cancelExpiryWarning();
+    this.stopInactivityTracking();
     this.clearTokens();
     localStorage.removeItem('session-expired');
     localStorage.removeItem('user');

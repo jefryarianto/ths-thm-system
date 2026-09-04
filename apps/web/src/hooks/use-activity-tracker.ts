@@ -5,7 +5,7 @@ import { proactivelyRefresh } from '@/lib/api-client';
 import { sessionManager } from '@/lib/session-manager';
 
 // Refresh token if less than this many seconds remain
-const REFRESH_THRESHOLD_SECONDS = 600; // 10 minutes
+const REFRESH_THRESHOLD_SECONDS = 120; // 2 minutes (refresh before 5-min inactivity timeout)
 
 // Throttle: minimum ms between activity-triggered refresh attempts
 const REFRESH_COOLDOWN_MS = 60_000; // 1 minute

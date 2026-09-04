@@ -526,6 +526,35 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     fetchAssignedKegiatan();
   }, [mounted, isActivityScoped, isActivityAdmin, isActivityPenguji]);
 
+  // Start inactivity timeout tracking (5 min web session)
+  useEffect(() => {
+    if (user) {
+      sessionManager.startInactivityTracking();
+      return () => sessionManager.stopInactivityTracking();
+    }
+  }, [user]);
+
+  // Resolve scope name for badge
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const role = user.role;
+    if (role === 'superadmin' || !user.rantingId) return;
+    
+    apiClient.get(`/org-structure/ranting/${user.rantingId}`).then(({ data }) => {
+      const ranting = data.data || data;
+      if (role === 'admin_distrik') {
+        setScopeName(ranting?.wilayah?.distrik?.nama || null);
+        setScopeLevel('Distrik');
+      } else if (role === 'admin_wilayah') {
+        setScopeName(ranting?.wilayah?.nama || null);
+        setScopeLevel('Wilayah');
+      } else if (role === 'admin_ranting') {
+        setScopeName(ranting?.nama || null);
+        setScopeLevel('Ranting');
+      }
+    }).catch(() => {});
+  }, [user, isAdmin]);
+
   // Click outside to close profile dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
