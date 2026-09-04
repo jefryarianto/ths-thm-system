@@ -42,6 +42,7 @@ import {
   Smartphone,
   Database,
   IdCard,
+  MapPin,
 } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -272,6 +273,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { user, isAdmin, isSystemAdmin, hasMinRole, isActivityScoped, isActivityAdmin, isActivityPenguji } = useAuth();
+  
+  // Scope badge state
+  const [scopeName, setScopeName] = useState<string | null>(null);
+  const [scopeLevel, setScopeLevel] = useState<string | null>(null);
   const [queueStats, setQueueStats] = useState<{ waiting: number; active: number } | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -773,6 +778,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
+        {/* Scope indicator badge */}
+        {!collapsed && scopeName && scopeLevel && (
+          <div className="px-3 pb-3 pt-1 border-t border-navy-700">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-navy-700/50 text-xs">
+              <MapPin size={14} className="text-gold-400 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-navy-300 font-medium truncate">{scopeName}</div>
+                <div className="text-navy-400 text-[10px]">{scopeLevel}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </aside>
 
