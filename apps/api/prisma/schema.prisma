@@ -2078,3 +2078,15 @@ model FeatureFlag {
 
   @@map("feature_flags")
 }
+
+model RoleMenuPermission {
+  id        String   @id @default(uuid())
+  role      String
+  menuKey   String   @map("menu_key")
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([role, menuKey])
+  @@map("role_menu_permissions")
+}
