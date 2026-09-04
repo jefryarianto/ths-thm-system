@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/components/ui/toast';
+import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -56,15 +57,22 @@ export default function GraduationsPage() {
   }, [page, debouncedSearch, filters.status]);
 
   const toast = useToast();
+  const { confirm, confirmModal } = useConfirm();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nama: string) => {
-    if (!confirm('Yakin ingin menghapus pendadaran "' + nama + '"?')) return;
+    const ok = await confirm({ title: 'Hapus Pendadaran', message: 'Yakin ingin menghapus "' + nama + '"? Data tidak dapat dikembalikan.', confirmLabel: 'Hapus', variant: 'danger' });
+    if (!ok) return;
     setDeletingId(id);
     try {
-      await apiClient.delete('/graduations/' + id);
+      const res = await apiClient.delete('/graduations/' + id);
+      const data = res.data?.data;
+      if (data?.deleted === false) {
+        toast('info', 'Pendadaran dibatalkan (masih memiliki data terkait)');
+      } else {
+        toast('success', 'Pendadaran berhasil dihapus');
+      }
       refetch();
-      toast('success', 'Pendadaran berhasil dihapus');
     } catch {
       toast('error', 'Gagal menghapus pendadaran');
     }
@@ -189,6 +197,7 @@ export default function GraduationsPage() {
         )}
       />
     </PageContainer>
+    {confirmModal}
     </PermissionGuard>
   );
 }

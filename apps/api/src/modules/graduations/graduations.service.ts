@@ -12,7 +12,7 @@ import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { MailService } from '../../mail/mail.service';
-import { graduationResultEmail, graduationRegisteredEmail } from '../../mail/email-templates';
+import { graduationResultEmail, graduationRegisteredEmail, credentialEmail } from '../../mail/email-templates';
 import * as QRCode from 'qrcode';
 import { DocumentsService } from '../documents/documents.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -30,6 +30,16 @@ import {
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { normalizePhone } from '../../common/utils/phone.util';
 import bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+
+/**
+ * Password awal akun admin kegiatan yang dibuat otomatis dari anggota.
+ * Sama pola dengan akun anggota di MembersService: dari env `DEFAULT_PASSWORD`,
+ * fallback produksi ke nilai legacy, fallback dev/test ke acak sekali-jalan.
+ */
+const DEFAULT_PASSWORD =
+  process.env.DEFAULT_PASSWORD ||
+  (process.env.NODE_ENV === 'production' ? 'thsthm123456' : crypto.randomBytes(6).toString('hex'));
 
 /** Shape expected by DocumentsService.generateCertificate (#aspects). */
 interface AspectScore {
@@ -59,6 +69,9 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     }, persistentAudit);
   }
 
+  /** User admin kegiatan yang dijadwalkan auto-downgrade setelah update/hapus berhasil. */
+  private pendingDowngradeUsers: string[] = [];
+
   // ═══════════════════════════════════════════════════════════
   //  HOOKS
   // ═══════════════════════════════════════════════════════════
@@ -84,6 +97,14 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const resolvedScopeId =
       dto.scopeId || scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'national';
 
+    // Admin kegiatan dapat dikirim sebagai User.id (backward compatible) ATAU
+    // Anggota.id — bila anggota, sistem otomatis membuat/ mengaktifkan akun
+    // role admin_kegiatan untuknya (wajib dalam distrik pendadaran).
+    const distrikId = await this.resolveDistrikId(resolvedScopeType, resolvedScopeId);
+    const adminKegiatanId = dto.adminKegiatanId
+      ? await this.resolveAdminKegiatanUser(dto.adminKegiatanId, distrikId)
+      : null;
+
     return {
       nama: dto.nama,
       lokasi: dto.lokasi,
@@ -93,7 +114,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       scopeType: resolvedScopeType,
       scopeId: resolvedScopeId,
       createdBy: userId || 'system',
-      adminKegiatanId: dto.adminKegiatanId || null,
+      adminKegiatanId,
       tipe: 'pendadaran',
       status: 'draft',
     };
@@ -101,9 +122,12 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
 
   /**
    * Before update: sparse field mapping with date conversion.
+   * Admin kegiatan juga dapat diubah — input Anggota.id di-resolve ke User.id.
+   * Sekaligus mencatat admin kegiatan lama & status penutupan untuk
+   * auto-downgrade role admin_kegiatan bila tak lagi punya kegiatan terbuka.
    */
   protected async beforeUpdate(
-    _id: string,
+    id: string,
     dto: UpdateGraduationDto,
   ): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
@@ -112,7 +136,355 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     if (dto.tanggalMulai !== undefined) data.tanggalMulai = new Date(dto.tanggalMulai);
     if (dto.tanggalSelesai !== undefined) data.tanggalSelesai = new Date(dto.tanggalSelesai);
     if (dto.status !== undefined) data.status = dto.status;
+
+    // Snapshot admin & status saat ini — dipakai untuk auto-downgrade setelah update.
+    const kegiatan = await this.prisma.kegiatan.findUnique({
+      where: { id },
+      select: { adminKegiatanId: true, status: true, scopeType: true, scopeId: true },
+    });
+    const oldAdmin = kegiatan?.adminKegiatanId || null;
+    const closing = dto.status === 'closed' || dto.status === 'cancelled';
+
+    if (dto.adminKegiatanId !== undefined) {
+      if (dto.adminKegiatanId) {
+        // Validasi distrik berdasarkan scope pendadaran itu sendiri.
+        const distrikId = kegiatan
+          ? await this.resolveDistrikId(kegiatan.scopeType, kegiatan.scopeId)
+          : undefined;
+        data.adminKegiatanId = await this.resolveAdminKegiatanUser(dto.adminKegiatanId, distrikId);
+      } else {
+        // null / '' → lepas penugasan admin kegiatan
+        data.adminKegiatanId = null;
+      }
+    }
+
+    // Jadwalkan auto-downgrade bila admin kegiatan tak lagi punya kegiatan terbuka:
+    // - kegiatan ditutup/dibatalkan, ATAU
+    // - admin kegiatan lama diganti/dilepas (dto.adminKegiatanId dikirim, apapun nilainya).
+    const adminTouched = dto.adminKegiatanId !== undefined;
+    const newAdmin = adminTouched ? (data.adminKegiatanId as string | null) : oldAdmin;
+    if (oldAdmin) {
+      if (closing || newAdmin === null || newAdmin !== oldAdmin) {
+        this.pendingDowngradeUsers.push(oldAdmin);
+      }
+    }
+
     return data;
+  }
+
+  /**
+   * After update: proses auto-downgrade admin kegiatan yang dijadwalkan
+   * di beforeUpdate (dilepas/diganti/status ditutup-dibatalkan).
+   */
+  protected async afterUpdate(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _result: any,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _dto: UpdateGraduationDto,
+  ): Promise<void> {
+    const users = this.pendingDowngradeUsers;
+    this.pendingDowngradeUsers = [];
+    for (const uid of users) {
+      await this.downgradeAdminKegiatanIfNeeded(uid);
+    }
+  }
+
+  /** Sebelum remove: catat admin kegiatan pendadaran untuk auto-downgrade. */
+  protected async beforeRemove(id: string): Promise<void> {
+    const kegiatan = await this.prisma.kegiatan.findUnique({
+      where: { id },
+      select: { adminKegiatanId: true },
+    });
+    if (kegiatan?.adminKegiatanId) {
+      this.pendingDowngradeUsers.push(kegiatan.adminKegiatanId);
+    }
+  }
+
+  /** Setelah remove berhasil: jalankan auto-downgrade admin kegiatan. */
+  protected async afterRemove(_id: string): Promise<void> {
+    const users = this.pendingDowngradeUsers;
+    this.pendingDowngradeUsers = [];
+    for (const uid of users) {
+      await this.downgradeAdminKegiatanIfNeeded(uid);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  ADMIN KEGIATAN — DIPILIH DARI ANGGOTA DISTRIK
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Opsi admin kegiatan untuk dropdown "Pilih Anggota Distrik" (pendadaran).
+   * Hanya superadmin & admin_distrik. Admin distrik otomatis dibatasi ke
+   * distriknya sendiri; superadmin dapat menyaring via scopeType/scopeId
+   * pendadaran (ranting/wilayah/distrik) atau melihat semua anggota aktif.
+   */
+  async getAdminKegiatanOptions(
+    params: { search?: string; scopeType?: string; scopeId?: string },
+    scope?: UserScope,
+  ) {
+    let distrikId: string | null | undefined = scope?.distrikId;
+    if (params.scopeType && params.scopeId) {
+      distrikId = (await this.resolveDistrikId(params.scopeType, params.scopeId)) ?? undefined;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = { deletedAt: null, statusKeanggotaan: 'aktif' };
+    if (distrikId) {
+      where.ranting = { wilayah: { distrikId } };
+    }
+    if (params.search && params.search.trim().length >= 2) {
+      where.OR = [
+        { namaLengkap: { contains: params.search.trim(), mode: 'insensitive' } },
+        { nomorAnggota: { contains: params.search.trim(), mode: 'insensitive' } },
+        { email: { contains: params.search.trim(), mode: 'insensitive' } },
+      ];
+    }
+
+    const members = await this.prisma.anggota.findMany({
+      where,
+      select: {
+        id: true,
+        namaLengkap: true,
+        nomorAnggota: true,
+        email: true,
+        noHp: true,
+        noHpNormalized: true,
+        rantingId: true,
+        ranting: { select: { nama: true } },
+      },
+      take: 100,
+      orderBy: { namaLengkap: 'asc' },
+    });
+
+    // Petakan akun User yang sudah ada (via email / phone) untuk tiap anggota.
+    const emails = members.map((m) => m.email).filter((e): e is string => !!e);
+    const phones = [
+      ...new Set(
+        members
+          .map((m) => [m.noHp, m.noHpNormalized])
+          .flat()
+          .filter((p): p is string => !!p),
+      ),
+    ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const accountsByKey = new Map<string, { id: string; role: string }>();
+    if (emails.length > 0) {
+      const users = await this.prisma.user.findMany({
+        where: { email: { in: emails } },
+        select: { id: true, email: true, role: true },
+      });
+      for (const u of users) {
+        accountsByKey.set(`email:${u.email.toLowerCase()}`, { id: u.id, role: u.role });
+      }
+    }
+    const phoneAccounts = new Map<string, { id: string; role: string }>();
+    if (phones.length > 0) {
+      const users = await this.prisma.user.findMany({
+        where: { phone: { in: phones } },
+        select: { id: true, phone: true, role: true },
+      });
+      for (const u of users) {
+        if (u.phone) phoneAccounts.set(`phone:${u.phone}`, { id: u.id, role: u.role });
+      }
+    }
+
+    return members.map((m) => {
+      const account =
+        (m.email && accountsByKey.get(`email:${m.email.toLowerCase()}`)) ||
+        (m.noHp && phoneAccounts.get(`phone:${m.noHp}`)) ||
+        (m.noHpNormalized && phoneAccounts.get(`phone:${m.noHpNormalized}`)) ||
+        null;
+      return {
+        anggotaId: m.id,
+        namaLengkap: m.namaLengkap,
+        nomorAnggota: m.nomorAnggota,
+        email: m.email,
+        noHp: m.noHp,
+        rantingId: m.rantingId,
+        ranting: m.ranting?.nama || null,
+        // userId null → akun akan dibuat otomatis saat anggota dipilih.
+        userId: account?.id || null,
+        accountRole: account?.role || null,
+      };
+    });
+  }
+
+  /**
+   * Resolve ID distrik dari scopeType/scopeId kegiatan
+   * (ranting → wilayah → distrik). Kembali null untuk scope nasional/unknown.
+   */
+  private async resolveDistrikId(
+    scopeType?: string | null,
+    scopeId?: string | null,
+  ): Promise<string | null> {
+    if (!scopeType || !scopeId || scopeType === 'nasional') return null;
+    if (scopeType === 'distrik') return scopeId;
+    if (scopeType === 'wilayah') {
+      const wilayah = await this.prisma.wilayah.findUnique({
+        where: { id: scopeId },
+        select: { distrikId: true },
+      });
+      return wilayah?.distrikId || null;
+    }
+    if (scopeType === 'ranting') {
+      const ranting = await this.prisma.ranting.findUnique({
+        where: { id: scopeId },
+        include: { wilayah: { select: { distrikId: true } } },
+      });
+      return ranting?.wilayah?.distrikId || null;
+    }
+    return null;
+  }
+
+  /**
+   * Pastikan `adminKegiatanId` merujuk ke User yang valid:
+   * - Input User.id → dipakai langsung (backward compatible, aktifkan bila perlu).
+   * - Input Anggota.id → validasi anggota aktif & dalam distrik target, lalu
+   *   cari akun User (email/phone). Belum ada & ada email/HP → buat akun baru
+   *   role admin_kegiatan; sudah ada → aktifkan & promosi role bila masih `anggota`.
+   */
+  private async resolveAdminKegiatanUser(
+    adminKegiatanId: string,
+    distrikId?: string | null,
+  ): Promise<string> {
+    // 1. Langsung user id (backward compatible)
+    const existingUser = await this.prisma.user.findUnique({ where: { id: adminKegiatanId } });
+    if (existingUser) {
+      if (!existingUser.isActive) {
+        await this.prisma.user.update({
+          where: { id: existingUser.id },
+          data: { isActive: true },
+        });
+      }
+      return existingUser.id;
+    }
+
+    // 2. Anggota id → resolve akun / auto-create
+    const anggota = await this.prisma.anggota.findUnique({
+      where: { id: adminKegiatanId },
+      select: {
+        id: true,
+        namaLengkap: true,
+        email: true,
+        noHp: true,
+        noHpNormalized: true,
+        rantingId: true,
+        statusKeanggotaan: true,
+        deletedAt: true,
+        ranting: { select: { wilayah: { select: { distrikId: true } } } },
+      },
+    });
+    if (!anggota || anggota.deletedAt) {
+      throw new NotFoundException('Anggota tidak ditemukan');
+    }
+    if (anggota.statusKeanggotaan !== 'aktif') {
+      throw new BadRequestException(
+        'Anggota tidak berstatus aktif dan tidak dapat ditunjuk sebagai admin kegiatan',
+      );
+    }
+    if (distrikId && anggota.ranting?.wilayah?.distrikId !== distrikId) {
+      throw new BadRequestException('Anggota berada di luar distrik pendadaran ini');
+    }
+
+    const phone = anggota.noHp || anggota.noHpNormalized || undefined;
+    const phoneCandidates = [
+      ...new Set([anggota.noHp, anggota.noHpNormalized].filter((p): p is string => !!p)),
+    ];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let user: any = anggota.email
+      ? await this.prisma.user.findFirst({
+          where: { email: { equals: anggota.email, mode: 'insensitive' } },
+        })
+      : null;
+    if (!user && phoneCandidates.length > 0) {
+      user = await this.prisma.user.findFirst({
+        where: { phone: { in: phoneCandidates } },
+      });
+    }
+
+    if (user) {
+      // Akun sudah ada — aktifkan; promosi ke admin_kegiatan hanya bila masih
+      // anggota biasa (role lain seperti admin/penguji tidak didowngrade).
+      const data: { role?: 'admin_kegiatan'; isActive: boolean } = { isActive: true };
+      if (user.role === 'anggota') data.role = 'admin_kegiatan';
+      await this.prisma.user.update({ where: { id: user.id }, data });
+      return user.id;
+    }
+
+    // 3. Belum ada akun → buat baru (perlu email/HP untuk kredensial login)
+    const email = anggota.email || (phone ? `${normalizePhone(phone)}@noemail.ths-thm.org` : null);
+    if (!email) {
+      throw new BadRequestException(
+        'Anggota tidak memiliki email/HP sehingga akun login admin kegiatan tidak dapat dibuat',
+      );
+    }
+    const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+    const created = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        namaLengkap: anggota.namaLengkap,
+        role: 'admin_kegiatan',
+        rantingId: anggota.rantingId,
+        isActive: true,
+        phone: phone ? normalizePhone(phone) : null,
+        mustChangePassword: true,
+      },
+    });
+
+    const isSynthetic = email.endsWith('@noemail.ths-thm.org');
+    if (anggota.email && !isSynthetic) {
+      const tpl = credentialEmail(anggota.namaLengkap, anggota.email, DEFAULT_PASSWORD);
+      this.memberMailService.sendToMember(
+        anggota.id,
+        () => tpl,
+        { template: 'credentialEmail', email: anggota.email },
+        'graduations',
+      );
+    }
+    this.logger.log(`Auto-created admin_kegiatan account for anggota ${anggota.id} (${email})`);
+    return created.id;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  AUTO-DOWNGRADE ADMIN KEGIATAN
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Downgrade otomatis role `admin_kegiatan` → `anggota` bila user tersebut
+   * tidak lagi menjadi admin kegiatan di kegiatan (pendadaran) yang terbuka.
+   * Dipanggil setelah: admin kegiatan dilepas/diganti, kegiatan ditutup /
+   * dibatalkan, atau kegiatan dihapus.
+   */
+  private async downgradeAdminKegiatanIfNeeded(userId?: string | null): Promise<void> {
+    if (!userId) return;
+    try {
+      const openCount = await this.prisma.kegiatan.count({
+        where: { adminKegiatanId: userId, status: { notIn: ['closed', 'cancelled'] } },
+      });
+      if (openCount > 0) return;
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true },
+      });
+      if (!user) return;
+      if (user.role === 'admin_kegiatan') {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { role: 'anggota' },
+        });
+        this.logger.log(
+          `Auto-downgraded admin_kegiatan ${user.id} → anggota (tidak ada kegiatan terbuka)`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to auto-downgrade admin_kegiatan ${userId}: ${(error as Error).message}`,
+      );
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -154,7 +526,11 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   async findOne(id: string, scope?: UserScope) {
-    return this.baseFindOne(id, scope);
+    return this.baseFindOne(
+      id,
+      scope,
+      { adminKegiatan: { select: { id: true, namaLengkap: true, email: true } } },
+    );
   }
 
   async create(dto: CreateGraduationDto, scope?: UserScope, userId?: string) {
@@ -181,16 +557,32 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const dependent = results + scores + exams;
 
     if (dependent > 0) {
+      // If already cancelled, force delete by removing dependent data first
+      if (grad.status === 'cancelled') {
+        await this.prisma.nilaiPendadaran.deleteMany({ where: { kegiatanId: grad.id } });
+        await this.prisma.hasilPendadaran.deleteMany({ where: { kegiatanId: grad.id } });
+        await this.prisma.ujianPraktek.deleteMany({ where: { kegiatanId: grad.id } });
+        await this.prisma.kegiatanPeserta.deleteMany({ where: { kegiatanId: grad.id } });
+        await this.prisma.undanganPendadaran.deleteMany({ where: { kegiatanId: grad.id } });
+        await this.prisma.penugasanPenguji.deleteMany({ where: { kegiatanId: grad.id } });
+        await this.prisma.kegiatan.delete({ where: { id: grad.id } });
+        this.invalidateCache();
+        return { deleted: true };
+      }
+      // Not yet cancelled — soft delete
       await this.prisma.kegiatan.update({
         where: { id: grad.id },
         data: { status: 'cancelled' },
       });
       this.invalidateCache();
+      await this.downgradeAdminKegiatanIfNeeded(grad.adminKegiatanId);
       return { deleted: false, status: 'cancelled', reason: 'Memiliki data terkait (hasil/nilai/ujian)' };
     }
 
     await this.prisma.kegiatan.delete({ where: { id: grad.id } });
     this.invalidateCache();
+    // Admin kegiatan kehilangan satu kegiatan — cek auto-downgrade.
+    await this.downgradeAdminKegiatanIfNeeded(grad.adminKegiatanId);
     return { deleted: true };
   }
 
