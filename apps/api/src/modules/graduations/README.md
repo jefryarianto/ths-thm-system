@@ -7,6 +7,7 @@ Manajemen pendadaran (wisuda/kelulusan) anggota THS-THM. Meliputi registrasi pen
 | Method | Path                                     | Deskripsi                       |
 | ------ | ---------------------------------------- | ------------------------------- |
 | GET    | /api/graduations                         | List & filter pendadaran        |
+| GET    | /api/graduations/admin-kegiatan-options  | Opsi admin kegiatan (anggota aktif distrik) — superadmin/admin_distrik |
 | GET    | /api/graduations/:id                     | Detail pendadaran               |
 | POST   | /api/graduations                         | Buat pendadaran baru            |
 | PATCH  | /api/graduations/:id                     | Update pendadaran               |

@@ -1,6 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
+import { useAuth } from '@/hooks/use-auth';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,8 +11,23 @@ import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 
+interface AdminKegiatanOption {
+  anggotaId: string;
+  namaLengkap: string;
+  nomorAnggota: string | null;
+  email: string | null;
+  noHp: string | null;
+  rantingId: string | null;
+  ranting: string | null;
+  userId: string | null;
+  accountRole: string | null;
+}
+
 export default function NewGraduationPage() {
   const router = useRouter();
+  const { role } = useAuth();
+  const isDistrikLevel = role === 'superadmin' || role === 'admin_distrik';
+
   const [form, setForm] = useState({
     nama: '',
     lokasi: '',
@@ -23,14 +39,23 @@ export default function NewGraduationPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [adminUsers, setAdminUsers] = useState<Array<{ id: string; namaLengkap: string; email: string }>>([]);
+  // Opsi admin kegiatan diambil dari anggota aktif distrik (bukan daftar user).
+  const [adminKegiatanOptions, setAdminKegiatanOptions] = useState<AdminKegiatanOption[]>([]);
+  const [adminKegiatanSearch, setAdminKegiatanSearch] = useState('');
 
   useEffect(() => {
-    // Fetch users with admin_kegiatan role for the dropdown
-    apiClient.get('/users', { params: { role: 'admin_kegiatan', limit: 50 } })
-      .then((res) => setAdminUsers(res.data?.data || []))
-      .catch(() => {});
-  }, []);
+    // Hanya superadmin & admin_distrik yang dapat menunjuk admin kegiatan.
+    if (!isDistrikLevel) return;
+    const params: Record<string, string> = {};
+    if (adminKegiatanSearch.trim().length >= 2) params.search = adminKegiatanSearch.trim();
+    if (form.scopeType && form.scopeId) {
+      params.scopeType = form.scopeType;
+      params.scopeId = form.scopeId;
+    }
+    apiClient.get('/graduations/admin-kegiatan-options', { params })
+      .then((res) => setAdminKegiatanOptions(res.data?.data || []))
+      .catch(() => setAdminKegiatanOptions([]));
+  }, [isDistrikLevel, form.scopeType, form.scopeId, adminKegiatanSearch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,30 +188,61 @@ export default function NewGraduationPage() {
                     </div>
                   </div>
 
-                  {/* Admin Kegiatan */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1">
-                      <Users size={12} />
-                      Tunjuk admin kegiatan untuk mengelola pendadaran ini
-                    </p>
-                    <FormField label="Admin Kegiatan (opsional)">
-                      <select
-                        value={form.adminKegiatanId}
-                        onChange={(e) => setForm({ ...form, adminKegiatanId: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
-                      >
-                        <option value="">Pilih admin kegiatan...</option>
-                        {adminUsers.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.namaLengkap} ({u.email})
-                          </option>
-                        ))}
-                        {adminUsers.length === 0 && (
-                          <option value="" disabled>Tidak ada user dengan role admin_kegiatan</option>
-                        )}
-                      </select>
-                    </FormField>
-                  </div>
+                  {/* Admin Kegiatan — dipilih dari anggota aktif distrik (hanya superadmin/admin_distrik) */}
+                  {isDistrikLevel && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-3">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <Users size={12} />
+                        Tunjuk admin kegiatan dari anggota aktif di distrik pendadaran ini. Akun login
+                        admin kegiatan dibuat/diaktifkan otomatis.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField label="Admin Kegiatan (opsional)">
+                          <select
+                            value={form.adminKegiatanId}
+                            onChange={(e) => setForm({ ...form, adminKegiatanId: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                          >
+                            <option value="">Pilih anggota...</option>
+                            {adminKegiatanOptions.map((o) => {
+                              const canUse = !!o.userId || !!o.email || !!o.noHp;
+                              const accountHint = o.userId
+                                ? o.accountRole === 'admin_kegiatan'
+                                  ? 'akun aktif'
+                                  : o.accountRole === 'anggota'
+                                    ? 'akun akan diaktifkan'
+                                    : `akun: ${o.accountRole}`
+                                : 'akun dibuat otomatis';
+                              return (
+                                <option key={o.anggotaId} value={o.anggotaId} disabled={!canUse}>
+                                  {o.namaLengkap} — {o.nomorAnggota || 'tanpa NRA'} ({o.ranting || 'tanpa ranting'}) · {accountHint}
+                                </option>
+                              );
+                            })}
+                            {adminKegiatanOptions.length === 0 && (
+                              <option value="" disabled>Tidak ada anggota aktif di distrik ini</option>
+                            )}
+                          </select>
+                        </FormField>
+                        <FormField label="Cari anggota">
+                          <input
+                            type="text"
+                            value={adminKegiatanSearch}
+                            onChange={(e) => setAdminKegiatanSearch(e.target.value)}
+                            placeholder="Nama / nomor anggota / email"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+                          />
+                        </FormField>
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        {form.scopeType && form.scopeId
+                          ? 'Daftar dibatasi ke anggota dalam distrik dari scope yang dipilih.'
+                          : role === 'admin_distrik'
+                            ? 'Daftar dibatasi ke anggota di distrik akun Anda.'
+                            : 'Kosongkan scope untuk melihat semua anggota aktif (maks. 100).'}
+                      </p>
+                    </div>
+                  )}
                 </div>
         
                 {/* Actions */}

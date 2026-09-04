@@ -109,6 +109,7 @@ interface GraduationDetail {
   scopeType: string;
   scopeId: string | null;
   adminKegiatanId?: string | null;
+  adminKegiatan?: { id: string; namaLengkap: string; email: string } | null;
   pengajuanNilaiAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -194,6 +195,18 @@ interface ExaminerOption {
   sumber?: 'manajemen_penguji' | 'daftar_hadir';
 }
 
+interface AdminKegiatanOption {
+  anggotaId: string;
+  namaLengkap: string;
+  nomorAnggota: string | null;
+  email: string | null;
+  noHp: string | null;
+  rantingId: string | null;
+  ranting: string | null;
+  userId: string | null;
+  accountRole: string | null;
+}
+
 interface Completeness {
   calonAnggota: number;
   adminKegiatan: boolean;
@@ -267,6 +280,12 @@ export default function GraduationDetailPage() {
   const [approveScoresLoading, setApproveScoresLoading] = useState(false);
   const [submitResultsLoading, setSubmitResultsLoading] = useState(false);
   const [workflowMsg, setWorkflowMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Picker admin kegiatan (hanya superadmin / admin_distrik)
+  const [showAdminKegiatanPicker, setShowAdminKegiatanPicker] = useState(false);
+  const [adminKegiatanOptions, setAdminKegiatanOptions] = useState<AdminKegiatanOption[]>([]);
+  const [adminKegiatanSearch, setAdminKegiatanSearch] = useState('');
+  const [savingAdminKegiatan, setSavingAdminKegiatan] = useState(false);
 
   // Completeness (5 komponen pendadaran)
   const [completeness, setCompleteness] = useState<Completeness | null>(null);
@@ -353,6 +372,45 @@ export default function GraduationDetailPage() {
       });
     } catch { /* ignore */ }
   }, [id, graduation?.adminKegiatanId]);
+
+  const fetchAdminKegiatanOptions = useCallback(async () => {
+    if (!id) return;
+    try {
+      const params: Record<string, string> = {};
+      const g = graduation;
+      if (g?.scopeType && g?.scopeId) {
+        params.scopeType = g.scopeType;
+        params.scopeId = g.scopeId;
+      }
+      if (adminKegiatanSearch.trim().length >= 2) params.search = adminKegiatanSearch.trim();
+      const res = await apiClient.get('/graduations/admin-kegiatan-options', { params });
+      setAdminKegiatanOptions(res.data?.data || []);
+    } catch { /* ignore */ }
+  }, [id, graduation, adminKegiatanSearch]);
+
+  // Muat ulang opsi setiap kali modal dibuka / pencarian berubah
+  useEffect(() => {
+    if (showAdminKegiatanPicker) fetchAdminKegiatanOptions();
+  }, [showAdminKegiatanPicker, fetchAdminKegiatanOptions]);
+
+  const handleAssignAdminKegiatan = async (anggotaId: string) => {
+    if (!id) return;
+    setSavingAdminKegiatan(true);
+    setWorkflowMsg(null);
+    try {
+      // '' → null (lepas penugasan); anggotaId → di-resolve backend ke akun login.
+      await apiClient.patch(`/graduations/${id}`, { adminKegiatanId: anggotaId || null });
+      setShowAdminKegiatanPicker(false);
+      setAdminKegiatanSearch('');
+      await fetchData();
+      await fetchCompleteness();
+      setWorkflowMsg({ ok: true, text: 'Admin kegiatan berhasil diperbarui' });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal memperbarui admin kegiatan' });
+    }
+    setSavingAdminKegiatan(false);
+  };
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -773,6 +831,25 @@ export default function GraduationDetailPage() {
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{dateRange}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{graduation.lokasi || 'Lokasi belum ditentukan'}</p>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                    graduation.adminKegiatan
+                      ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                      : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                  }`}>
+                    {graduation.adminKegiatan
+                      ? `Admin Kegiatan: ${graduation.adminKegiatan.namaLengkap}`
+                      : 'Admin Kegiatan belum ditunjuk'}
+                  </span>
+                  {isDistrikLevel && (
+                    <button
+                      onClick={() => { setShowAdminKegiatanPicker(true); setAdminKegiatanSearch(''); }}
+                      className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
+                    >
+                      {graduation.adminKegiatan ? 'Ganti' : 'Tunjuk'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <button onClick={fetchData} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400" title="Refresh">
@@ -1567,6 +1644,69 @@ export default function GraduationDetailPage() {
               </form>
             </Modal>
           </div>
+        )}
+
+        {/* ─── MODAL: Tunjuk/Ganti Admin Kegiatan ───────────────── */}
+        {showAdminKegiatanPicker && (
+          <Modal open={showAdminKegiatanPicker} onClose={() => setShowAdminKegiatanPicker(false)} title="Tunjuk Admin Kegiatan" size="md">
+            <div className="space-y-4">
+              <p className="text-xs text-gray-400">
+                Pilih anggota aktif di distrik pendadaran ini. Akun login admin kegiatan dibuat/diaktifkan otomatis.
+              </p>
+              <input
+                type="text"
+                value={adminKegiatanSearch}
+                onChange={(e) => setAdminKegiatanSearch(e.target.value)}
+                placeholder="Cari nama / nomor anggota / email..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition"
+              />
+              <div className="max-h-72 overflow-y-auto space-y-2">
+                {adminKegiatanOptions.map((o) => {
+                  const canUse = !!o.userId || !!o.email || !!o.noHp;
+                  return (
+                    <button
+                      key={o.anggotaId}
+                      disabled={!canUse || savingAdminKegiatan}
+                      onClick={() => handleAssignAdminKegiatan(o.anggotaId)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{o.namaLengkap}</p>
+                      <p className="text-xs text-gray-400">
+                        {o.nomorAnggota || 'tanpa NRA'} · {o.ranting || 'tanpa ranting'}
+                        {o.userId
+                          ? o.accountRole === 'admin_kegiatan'
+                            ? ' · akun aktif'
+                            : o.accountRole === 'anggota'
+                              ? ' · akun akan diaktifkan'
+                              : ` · akun: ${o.accountRole}`
+                          : ' · akun dibuat otomatis'}
+                      </p>
+                    </button>
+                  );
+                })}
+                {adminKegiatanOptions.length === 0 && (
+                  <p className="text-center text-sm text-gray-400 py-6">Tidak ada anggota ditemukan</p>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button
+                  onClick={() => { setShowAdminKegiatanPicker(false); setAdminKegiatanSearch(''); }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  Batal
+                </button>
+                {graduation?.adminKegiatan && (
+                  <button
+                    onClick={() => handleAssignAdminKegiatan('')}
+                    disabled={savingAdminKegiatan}
+                    className="px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition"
+                  >
+                    {savingAdminKegiatan ? 'Menyimpan...' : 'Lepas Admin Kegiatan'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </Modal>
         )}
 
         {/* ─── TAB: Undangan ────────────────────────────────────── */}

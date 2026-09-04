@@ -156,10 +156,51 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.VPS_SSH_PORT || '22' }} ${{ secrets.VPS_SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
+      - name: Check VPS SSH connectivity
+        run: |
+          HOST="${{ secrets.VPS_SSH_HOST }}"
+          PORT="${{ secrets.VPS_SSH_PORT || '22' }}"
+          USER="${{ secrets.VPS_SSH_USERNAME }}"
+          if [ -z "$HOST" ]; then
+            echo "   ❌ FAILURE: 'VPS_SSH_HOST' GitHub secret is empty."
+            echo "   Set it in repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "   Pre-flight: SSH auth test to ${USER}@${HOST}:${PORT} ..."
+          ok=0
+          last_err=""
+          for attempt in 1 2 3; do
+            set +e
+            out=$(ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key -p "$PORT" "$USER@$HOST" 'echo _OK_' 2>&1)
+            rc=$?
+            set -e
+            if [ $rc -eq 0 ] && [ "$out" = "_OK_" ]; then ok=1; break; fi
+            last_err="$out"
+            echo "   ⚠️ Attempt ${attempt}/3: ${last_err} | retrying in 10s..."
+            sleep 10
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "   ❌ FAILURE: cannot SSH to ${USER}@${HOST}:${PORT}."
+            echo "   ${last_err}"
+            echo ""
+            echo "   Most likely causes:"
+            echo "   1. VPS is powered off / crashed — check your cloud provider dashboard (restart may be needed)."
+            echo "   2. VPS IP changed — expected 202.10.34.209; run 'ping 202.10.34.209' from a reachable machine."
+            echo "   3. Firewall/security-group blocking port ${PORT} — allow inbound SSH (UFW + cloud SG)."
+            echo "   4. sshd not running — run 'sudo systemctl status ssh' on the VPS (via console/VNC)."
+            echo "   5. 'Permission denied (publickey)' means wrong/expired 'VPS_SSH_PRIVATE_KEY' or user; verify it is in ~/.ssh/authorized_keys on the VPS."
+            echo "   6. Stale 'VPS_SSH_HOST'/'VPS_SSH_PORT'/'VPS_SSH_USERNAME' secrets — verify in repo Settings > Secrets."
+            exit 1
+          fi
+          echo "   ✅ SSH connected to ${USER}@${HOST}:${PORT} — ready to deploy."
+
       - name: Pass GHCR token to VPS and cleanup old images
         run: |
+          # SSH hardening: faster fail on dead hosts, retry transient blips,
+          # keep long-running commands alive.
+          SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -o ConnectionAttempts=2 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o BatchMode=yes)
           # Cleanup old images on VPS
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+          ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
             ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
             'echo "   Disk before cleanup:" && df -h / | tail -1 && \
              docker image prune -af 2>/dev/null || true && \
@@ -170,7 +211,7 @@ jobs:
           # PENTING: pakai github.token langsung — `gh auth token` tanpa env
           # GH_TOKEN selalu gagal di runner, sehingga login kosong dan pull
           # berikutnya selalu "error from registry: denied".
-          printf '%s' "${{ secrets.GITHUB_TOKEN }}" | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
+          printf '%s' "${{ secrets.GITHUB_TOKEN }}" | ssh "${SSH_OPTS[@]}" -i ~/.ssh/deploy_key -p ${{ secrets.VPS_SSH_PORT || '22' }} \
             ${{ secrets.VPS_SSH_USERNAME }}@${{ secrets.VPS_SSH_HOST }} \
             'cat | docker login ghcr.io -u ${{ github.actor }} --password-stdin'
           rm -f ~/.ssh/deploy_key

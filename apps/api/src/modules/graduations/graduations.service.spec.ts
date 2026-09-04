@@ -50,6 +50,15 @@ describe('GraduationsService', () => {
     user: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    wilayah: {
+      findUnique: jest.fn(),
+    },
+    ranting: {
+      findUnique: jest.fn(),
     },
     undanganPendadaran: {
       findMany: jest.fn(),
@@ -994,6 +1003,239 @@ describe('GraduationsService', () => {
       expect(result.summary).toEqual({
         c1: { nama: 'Budi', skor: 150, items: 2 },
       });
+    });
+  });
+
+  describe('getAdminKegiatanOptions', () => {
+    it('membatasi ke distrik admin & memetakan akun user yang sudah ada (via email)', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([
+        {
+          id: 'a1',
+          namaLengkap: 'Anggota A',
+          nomorAnggota: 'THS-001',
+          email: 'a@test.com',
+          noHp: null,
+          noHpNormalized: null,
+          rantingId: 'r1',
+          ranting: { nama: 'Ranting 1' },
+        },
+      ]);
+      mockPrisma.user.findMany.mockResolvedValue([{ id: 'u1', email: 'a@test.com', role: 'anggota' }]);
+
+      const result = await service.getAdminKegiatanOptions(
+        {},
+        { rantingId: 'r1', wilayahId: 'w1', distrikId: 'd1' },
+      );
+
+      expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ ranting: { wilayah: { distrikId: 'd1' } } }),
+        }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].anggotaId).toBe('a1');
+      expect(result[0].userId).toBe('u1');
+      expect(result[0].accountRole).toBe('anggota');
+    });
+
+    it('meneruskan search ke query anggota', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockPrisma.user.findMany.mockResolvedValue([]);
+
+      await service.getAdminKegiatanOptions({ search: 'bud' });
+
+      expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({ namaLengkap: expect.any(Object) }),
+            ]),
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('beforeCreate — resolve admin kegiatan dari anggota', () => {
+    beforeEach(() => {
+      mockPrisma.user.findUnique.mockReset();
+      mockPrisma.user.findFirst.mockReset();
+      mockPrisma.user.create.mockReset();
+      mockPrisma.user.update.mockReset();
+      mockPrisma.anggota.findUnique.mockReset();
+      mockPrisma.ranting.findUnique.mockReset();
+    });
+
+    it('membuat akun admin_kegiatan baru utk anggota tanpa akun', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'a1',
+        namaLengkap: 'Anggota A',
+        email: 'a@example.com',
+        noHp: null,
+        noHpNormalized: null,
+        rantingId: 'r1',
+        statusKeanggotaan: 'aktif',
+        deletedAt: null,
+        ranting: { wilayah: { distrikId: 'd1' } },
+      });
+      mockPrisma.ranting.findUnique.mockResolvedValue({ id: 'r1', wilayah: { distrikId: 'd1' } });
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: 'new-admin' });
+
+      const data = await service.beforeCreate(
+        {
+          nama: 'Pendadaran 1',
+          tanggalMulai: '2026-08-15',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+          adminKegiatanId: 'a1',
+        } as any,
+        {},
+        'u0',
+      );
+
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ role: 'admin_kegiatan', email: 'a@example.com' }),
+        }),
+      );
+      expect(data.adminKegiatanId).toBe('new-admin');
+    });
+
+    it('menolak anggota dari distrik berbeda', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'a1',
+        namaLengkap: 'Anggota A',
+        email: 'a@example.com',
+        noHp: null,
+        noHpNormalized: null,
+        rantingId: 'r1',
+        statusKeanggotaan: 'aktif',
+        deletedAt: null,
+        ranting: { wilayah: { distrikId: 'd-lain' } },
+      });
+      mockPrisma.ranting.findUnique.mockResolvedValue({ id: 'r1', wilayah: { distrikId: 'd1' } });
+
+      await expect(
+        service.beforeCreate(
+          {
+            nama: 'Pendadaran 1',
+            tanggalMulai: '2026-08-15',
+            scopeType: 'ranting',
+            scopeId: 'r1',
+            adminKegiatanId: 'a1',
+          } as any,
+          {},
+          'u0',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('mempromosi akun anggota existing menjadi admin_kegiatan', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'a1',
+        namaLengkap: 'Anggota A',
+        email: 'a@example.com',
+        noHp: null,
+        noHpNormalized: null,
+        rantingId: 'r1',
+        statusKeanggotaan: 'aktif',
+        deletedAt: null,
+        ranting: { wilayah: { distrikId: 'd1' } },
+      });
+      mockPrisma.ranting.findUnique.mockResolvedValue({ id: 'r1', wilayah: { distrikId: 'd1' } });
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'u1', role: 'anggota' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
+
+      const data = await service.beforeCreate(
+        {
+          nama: 'Pendadaran 1',
+          tanggalMulai: '2026-08-15',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+          adminKegiatanId: 'a1',
+        } as any,
+        {},
+        'u0',
+      );
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ role: 'admin_kegiatan', isActive: true }),
+        }),
+      );
+      expect(data.adminKegiatanId).toBe('u1');
+    });
+  });
+
+  describe('auto-downgrade admin kegiatan', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset();
+      mockPrisma.kegiatan.count.mockReset();
+      mockPrisma.user.findUnique.mockReset();
+      mockPrisma.user.update.mockReset();
+    });
+
+    it('menurunkan role admin_kegiatan → anggota saat kegiatan ditutup & tak ada kegiatan terbuka lain', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        id: 'g1',
+        adminKegiatanId: 'u1',
+        status: 'published',
+        scopeType: 'ranting',
+        scopeId: 'r1',
+      });
+      mockPrisma.kegiatan.count.mockResolvedValue(0);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'anggota' });
+
+      await service.beforeUpdate('g1', { status: 'closed' } as any);
+
+      // Jalankan hook afterUpdate (dipanggil otomatis oleh baseUpdate)
+      await (service as any).afterUpdate({}, { status: 'closed' });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'u1' }, data: { role: 'anggota' } }),
+      );
+    });
+
+    it('TIDAK menurunkan role bila masih ada kegiatan terbuka lain', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        id: 'g1',
+        adminKegiatanId: 'u1',
+        status: 'published',
+        scopeType: 'ranting',
+        scopeId: 'r1',
+      });
+      mockPrisma.kegiatan.count.mockResolvedValue(1); // masih ada kegiatan terbuka lain
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
+
+      await service.beforeUpdate('g1', { status: 'closed' } as any);
+      await (service as any).afterUpdate({}, { status: 'closed' });
+
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('menurunkan role saat admin kegiatan dilepas dari satu-satunya pendadaran', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({
+        id: 'g1',
+        adminKegiatanId: 'u1',
+        status: 'published',
+        scopeType: 'ranting',
+        scopeId: 'r1',
+      });
+      mockPrisma.kegiatan.count.mockResolvedValue(0);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'anggota' });
+
+      await service.beforeUpdate('g1', { adminKegiatanId: null } as any);
+      await (service as any).afterUpdate({}, { adminKegiatanId: null });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'u1' }, data: { role: 'anggota' } }),
+      );
     });
   });
 });

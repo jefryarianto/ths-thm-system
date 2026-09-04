@@ -283,6 +283,32 @@ docker system prune -af
 docker volume prune -f
 ```
 
+### SSH connection timed out / VPS unreachable from GitHub Actions
+```bash
+# Run these FROM YOUR MACHINE — the GitHub runner shares NO network path with the VPS:
+ping 202.10.34.209
+nc -zv 202.10.34.209 22          # 22 = default; change if VPS_SSH_PORT is custom
+ssh -i ~/.ssh/ths-thm-deploy -p 22 ths-thm@202.10.34.209 echo OK
+```
+If any of these time out, the VPS is unreachable at the network layer. The workflow error
+`ssh: connect to host ... port ...: Connection timed out` confirms this. Verify in order:
+
+1. **VPS powered off / crashed / rebooted by provider** — start or hard-reboot it in your
+   cloud provider dashboard. This is the most common cause.
+2. **VPS IP changed** — the documented IP is `202.10.34.209`. If your provider reassigned
+   it, update the GitHub secret `VPS_SSH_HOST`.
+3. **Firewall / security group** — only ports 22/80/443 are allowed (UFW). A removed or
+   reordered rule, or fail2ban banning the GitHub runner range, drops the SYN silently.
+   Re-allow SSH: `sudo ufw allow 22` (and the cloud security group inbound rule).
+4. **sshd not running** — via the provider console/VNC (SSH is down): `sudo systemctl
+   status ssh`, then `sudo systemctl restart ssh`.
+5. **Stale GitHub secrets** — verify `VPS_SSH_HOST`, `VPS_SSH_PORT`, `VPS_SSH_USERNAME`,
+   and `VPS_SSH_PRIVATE_KEY` under repo Settings → Secrets and variables → Actions.
+
+> Tip: the workflow now starts with a **Check VPS SSH connectivity** gate that fails fast
+> with this checklist if the host is unreachable, so a down VPS surfaces immediately
+> instead of as a raw `Connection timed out` deep in the deploy steps.
+
 ---
 
 ## 📊 Arsitektur Deployment

@@ -48,6 +48,25 @@ export class GraduationsController {
     return this.service.findAll(query, req.scope, req.user?.id, req.user?.role);
   }
 
+  /**
+   * Opsi admin kegiatan untuk dropdown "Pilih Admin Kegiatan" pada pendadaran.
+   * Dibatasi untuk superadmin & admin_distrik — dipilih dari daftar ANGGOTA
+   * aktif dalam distrik (bukan daftar user). Admin distrik otomatis dibatasi
+   * ke distriknya sendiri; superadmin bisa menyaring via scopeType/scopeId.
+   */
+  @Get('admin-kegiatan-options')
+  @CrudAuth('superadmin', 'admin_distrik', {
+    summary: 'Opsi admin kegiatan — dipilih admin distrik/superadmin dari anggota aktif dalam distrik',
+  })
+  getAdminKegiatanOptions(
+    @Req() req: ScopedRequest,
+    @Query('search') search?: string,
+    @Query('scopeType') scopeType?: string,
+    @Query('scopeId') scopeId?: string,
+  ) {
+    return this.service.getAdminKegiatanOptions({ search, scopeType, scopeId }, req.scope);
+  }
+
   @Get(':id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ambil detail wisuda' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
