@@ -194,6 +194,14 @@ export class UpdateGraduationDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'User ID atau Anggota ID yang ditunjuk sebagai admin kegiatan. Bila diisi Anggota ID, akun login dibuat/diaktifkan otomatis. Kirim null/kosong untuk melepas penugasan.',
+  })
+  @IsOptional()
+  @IsString()
+  adminKegiatanId?: string | null;
 }
 
 export class GraduateDto {
