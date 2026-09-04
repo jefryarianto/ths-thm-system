@@ -173,7 +173,7 @@ export default function GraduationsPage() {
                 >
                   <Eye size={15} />
                 </button>
-                {row.status === 'draft' && (
+                {['draft', 'cancelled'].includes(row.status) && (
                   <button
                     onClick={() => handleDelete(row.id, row.nama)}
                     disabled={deletingId === row.id}
