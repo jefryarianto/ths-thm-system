@@ -102,7 +102,6 @@ function FloatingInput({
   onChange,
   icon: Icon,
   autoComplete,
-  placeholder,
 }: {
   id: string;
   label: string;
@@ -111,19 +110,18 @@ function FloatingInput({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon: React.ElementType;
   autoComplete: string;
-  placeholder: string;
 }) {
   const [focused, setFocused] = useState(false);
   const hasValue = value.length > 0;
   const isFloating = focused || hasValue;
 
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+    <div className="relative group">
+      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 z-10">
         <Icon
           size={18}
           className={`transition-colors duration-200 ${
-            isFloating ? 'text-navy-500' : 'text-gray-400'
+            isFloating ? 'text-navy-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'
           }`}
         />
       </div>
@@ -137,15 +135,15 @@ function FloatingInput({
         onBlur={() => setFocused(false)}
         required
         autoComplete={autoComplete}
-        placeholder={placeholder}
-        className="peer block w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 pb-2.5 pl-12 pt-7 text-sm text-gray-900 backdrop-blur-sm transition-all duration-200 focus:border-[#1B3A5C] focus:outline-none focus:ring-0 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-100 dark:focus:border-blue-400"
+        placeholder=" "
+        className="peer block w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 pb-2.5 pl-12 pt-7 text-sm text-gray-900 backdrop-blur-sm transition-all duration-200 focus:border-navy-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-100 dark:focus:border-blue-400"
       />
       <label
         htmlFor={id}
-        className={`pointer-events-none absolute left-12 transition-all duration-200 ${
+        className={`pointer-events-none absolute left-12 transition-all duration-200 z-10 ${
           isFloating
-            ? 'top-2 text-[11px] font-medium text-[#1B3A5C]'
-            : 'top-1/2 -translate-y-1/2 text-sm text-gray-400'
+            ? 'top-2 text-[11px] font-semibold text-navy-600 dark:text-blue-400'
+            : 'top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400'
         }`}
       >
         {label}
@@ -242,7 +240,7 @@ export default function LoginPage() {
           mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
         }`}
       >
-        <div className="overflow-hidden rounded-3xl bg-white/70 shadow-2xl shadow-blue-900/10 backdrop-blur-xl dark:bg-gray-900/70 dark:shadow-blue-900/20">
+        <div className="overflow-hidden rounded-3xl bg-white/80 shadow-2xl shadow-blue-900/10 backdrop-blur-2xl border border-white/20 dark:bg-gray-900/80 dark:shadow-blue-900/20 dark:border-white/10">
           <div className="grid min-h-[600px] lg:grid-cols-5">
             {/* ── LEFT PANEL - Branding ── */}
             <div className="relative hidden overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10 xl:p-14">
@@ -378,7 +376,6 @@ export default function LoginPage() {
                     onChange={(e) => setIdentifier(e.target.value)}
                     icon={Mail}
                     autoComplete="username"
-                    placeholder="email@ths-thm.org atau 08xxx"
                   />
 
                   {/* Password */}
@@ -391,7 +388,6 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       icon={Lock}
                       autoComplete="current-password"
-                      placeholder="????????"
                     />
                     <button
                       type="button"
