@@ -31,19 +31,47 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
   /** Include item child relations by default (hanya item aktif). */
   protected readonly DEFAULT_INCLUDE = { itemPenilaian: { where: { isActive: true } } };
 
+  /**
+   * List aspek penilaian.
+   * - Tanpa `kegiatanId` → template global (kegiatanId null).
+   * - Dengan `kegiatanId` → set milik pendadaran tsb; bila pendadaran belum
+   *   punya aspek sendiri (legacy), otomatis fallback ke template.
+   * - `includeInactive=true` (admin web) → sertakan yang disembunyikan.
+   * Alur scoring tidak mengirim includeInactive → hanya melihat aspek aktif.
+   */
   async findAll(query?: AssessmentFilterDto) {
     const limit = query?.limit || 10;
     const page = query?.page || 1;
-    // Hanya tampilkan aspek AKTIF — yang di-soft-disable (isActive:false)
-    // tidak muncul di list, sehingga tombol hapus terlihat bekerja.
-    const where: Record<string, unknown> = { isActive: true };
-    if (query?.search) {
-      where.namaAspek = { contains: query.search, mode: 'insensitive' as const };
+    const includeInactive = query?.includeInactive === true;
+    const kegiatanId = query?.kegiatanId || null;
+
+    const buildWhere = (scopeKegiatanId: string | null): Record<string, unknown> => {
+      const where: Record<string, unknown> = { kegiatanId: scopeKegiatanId };
+      if (!includeInactive) where.isActive = true;
+      if (query?.search) {
+        where.namaAspek = { contains: query.search, mode: 'insensitive' as const };
+      }
+      return where;
+    };
+
+    let effectiveKegiatanId: string | null = kegiatanId;
+    if (kegiatanId) {
+      // Fallback: pendadaran tanpa set sendiri (belum clone / legacy) → template
+      const owned = await this.prisma.aspekPenilaian.count({ where: { kegiatanId } });
+      if (owned === 0) effectiveKegiatanId = null;
     }
+
+    // Cache key menyertakan scope & includeInactive agar tidak saling menimpa
     return this.baseFindAll(
-      `aspects:all:${limit}:${page}`,
-      () => where,
-      { page, limit, include: this.DEFAULT_INCLUDE },
+      `aspects:all:${limit}:${page}:${effectiveKegiatanId ?? 'template'}:${includeInactive ? 'all' : 'active'}`,
+      () => buildWhere(effectiveKegiatanId),
+      {
+        page,
+        limit,
+        include: includeInactive
+          ? { itemPenilaian: { orderBy: { urutan: 'asc' as const } } }
+          : this.DEFAULT_INCLUDE,
+      },
     );
   }
 
@@ -71,5 +99,16 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
     });
     this.invalidateCache();
     return { message: 'Aspek penilaian dinonaktifkan' };
+  }
+
+  /** Aktifkan kembali aspek yang disembunyikan (soft-disable). */
+  async restore(id: string) {
+    await this.verifyScope(id, undefined);
+    const data = await this.prismaDelegate.update({
+      where: { id },
+      data: { isActive: true },
+    });
+    this.invalidateCache();
+    return data;
   }
 }

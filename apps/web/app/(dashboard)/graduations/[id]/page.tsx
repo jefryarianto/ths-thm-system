@@ -122,6 +122,9 @@ interface Participant {
   noHp: string | null;
   email: string | null;
   status: string;
+  sumberPeserta?: string;
+  diusulkanOleh?: string;
+  terdaftarAt?: string;
   ranting?: { id: string; nama: string };
 }
 
@@ -292,6 +295,29 @@ export default function GraduationDetailPage() {
 
   // QR Absensi
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  // ─── Participants: 3 jalur (manual / tarik dari daftar / import CSV-Excel) ───
+  const [showAddParticipant, setShowAddParticipant] = useState(false);
+  const [addParticipantForm, setAddParticipantForm] = useState<{
+    namaLengkap: string; rantingId: string; jenisKelamin: string; noHp: string; email: string; alamat: string;
+  }>({ namaLengkap: '', rantingId: '', jenisKelamin: '', noHp: '', email: '', alamat: '' });
+  const [addParticipantSaving, setAddParticipantSaving] = useState(false);
+
+  const [showEligiblePicker, setShowEligiblePicker] = useState(false);
+  const [eligibleCandidates, setEligibleCandidates] = useState<Array<{ id: string; namaLengkap: string; ranting?: { nama: string } }>>([]);
+  const [eligibleLoading, setEligibleLoading] = useState(false);
+  const [selectedEligible, setSelectedEligible] = useState<Set<string>>(new Set());
+  const [eligibleSaving, setEligibleSaving] = useState(false);
+
+  const [showImportParticipants, setShowImportParticipants] = useState(false);
+  const [importPreview, setImportPreview] = useState<Array<Record<string, unknown>>>([]);
+  const [importFileName, setImportFileName] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; linked: number; created: number; errors: string[] } | null>(null);
+
+  // Ranting options for manual form
+  const [rantingOptions, setRantingOptions] = useState<Array<{ id: string; nama: string }>>([]);
+
   const [qrLoading, setQrLoading] = useState(false);
 
   const fetchQr = useCallback(async () => {
@@ -386,7 +412,128 @@ export default function GraduationDetailPage() {
       const res = await apiClient.get('/graduations/admin-kegiatan-options', { params });
       setAdminKegiatanOptions(res.data?.data || []);
     } catch { /* ignore */ }
-  }, [id, graduation, adminKegiatanSearch]);
+  }, [graduation, adminKegiatanSearch]);
+
+  // ── Participants: fetch eligible, ranting options, handle add/select/import ──
+
+  const fetchEligibleCandidates = useCallback(async () => {
+    if (!id) return;
+    setEligibleLoading(true);
+    try {
+      const res = await apiClient.get(`/graduations/${id}/participants/eligible`);
+      setEligibleCandidates(res.data?.data || []);
+    } catch { /* ignore */ }
+    setEligibleLoading(false);
+  }, [id]);
+
+  const fetchRantingOptions = useCallback(async () => {
+    try {
+      const params: Record<string, string> = {};
+      const g = graduation;
+      if (g?.scopeType === 'ranting' && g?.scopeId) {
+        params.scopeType = 'ranting';
+        params.scopeId = g.scopeId;
+      }
+      const res = await apiClient.get('/org-structure/ranting', { params: params as Record<string, never> });
+      setRantingOptions(res.data?.data || []);
+    } catch { /* ignore */ }
+  }, [graduation]);
+
+  const handleAddParticipant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !addParticipantForm.namaLengkap || !addParticipantForm.rantingId) return;
+    setAddParticipantSaving(true);
+    setWorkflowMsg(null);
+    try {
+      await apiClient.post(`/graduations/${id}/participants`, addParticipantForm);
+      setShowAddParticipant(false);
+      setAddParticipantForm({ namaLengkap: '', rantingId: '', jenisKelamin: '', noHp: '', email: '', alamat: '' });
+      setWorkflowMsg({ ok: true, text: 'Peserta berhasil ditambahkan' });
+      await fetchData();
+      await fetchCompleteness();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal menambahkan peserta' });
+    }
+    setAddParticipantSaving(false);
+  };
+
+  const handleSelectEligible = async () => {
+    if (!id || selectedEligible.size === 0) return;
+    setEligibleSaving(true);
+    setWorkflowMsg(null);
+    let success = 0;
+    const errors: string[] = [];
+    for (const candidateId of selectedEligible) {
+      try {
+        await apiClient.post(`/graduations/${id}/register`, { candidateId });
+        success++;
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        errors.push(msg || `Gagal daftarkan ${candidateId}`);
+      }
+    }
+    setEligibleSaving(false);
+    if (success > 0) {
+      setWorkflowMsg({ ok: true, text: `${success} peserta berhasil ditarik` });
+      setShowEligiblePicker(false);
+      setSelectedEligible(new Set());
+      await fetchData();
+      await fetchCompleteness();
+    }
+    if (errors.length > 0 && success === 0) {
+      setWorkflowMsg({ ok: false, text: `Gagal: ${errors[0]}` });
+    }
+  };
+
+  const parseImportFile = async (file: File) => {
+    const fileName = file.name.toLowerCase();
+    let rows: Array<Record<string, unknown>> = [];
+    if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+      const text = await file.text();
+      const Papa = (await import('papaparse')).default;
+      const result = Papa.parse<Record<string, unknown>>(text, { header: true, skipEmptyLines: true });
+      rows = result.data;
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      const XLSX = await import('xlsx');
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
+    }
+    setImportPreview(rows);
+    setImportFileName(file.name);
+  };
+
+  const handleImportParticipants = async () => {
+    if (!id || importPreview.length === 0) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await apiClient.post(`/graduations/${id}/participants/import`, { data: importPreview });
+      setImportResult(res.data?.data || { imported: 0, linked: 0, created: 0, errors: [] });
+      await fetchData();
+      await fetchCompleteness();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setImportResult({ imported: 0, linked: 0, created: 0, errors: [msg || 'Gagal mengimpor'] });
+    }
+    setImporting(false);
+  };
+
+  // Open pickers & load options on demand
+  useEffect(() => {
+    if (showEligiblePicker) {
+      fetchEligibleCandidates();
+      setSelectedEligible(new Set());
+    }
+  }, [showEligiblePicker, fetchEligibleCandidates]);
+
+  useEffect(() => {
+    if (showAddParticipant) {
+      fetchRantingOptions();
+    }
+  }, [showAddParticipant, fetchRantingOptions]);
 
   // Muat ulang opsi setiap kali modal dibuka / pencarian berubah
   useEffect(() => {
@@ -1013,44 +1160,85 @@ export default function GraduationDetailPage() {
 
         {/* ─── TAB: Participants ─────────────────────────────── */}
         {activeSubTab === 'participants' && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Users size={18} className="text-emerald-500" />
-                Daftar Peserta ({participants.length})
-              </h3>
-              {graduation.status === 'published' && (
-                <button onClick={() => setShowGraduateModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">
-                  <Award size={14} /> Input Hasil
-                </button>
-              )}
+          <div className="space-y-4">
+            {/* Toolbar with 3 jalur tambah peserta */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Users size={18} className="text-emerald-500" />
+                    Daftar Peserta ({participants.length})
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">Tambah peserta manual, tarik dari daftar calon, atau impor file</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => { setShowAddParticipant(true); setAddParticipantForm({ namaLengkap: '', rantingId: '', jenisKelamin: '', noHp: '', email: '', alamat: '' }); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">
+                    <Plus size={14} /> Tambah Manual
+                  </button>
+                  <button onClick={() => setShowEligiblePicker(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">
+                    <UserCheck size={14} /> Tarik dari Daftar
+                  </button>
+                  <button onClick={() => { setShowImportParticipants(true); setImportPreview([]); setImportResult(null); setImportFileName(''); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <FileEdit size={14} /> Import CSV/Excel
+                  </button>
+                  {graduation.status === 'published' && (
+                    <button onClick={() => setShowGraduateModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition">
+                      <Award size={14} /> Input Hasil
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            {participants.length > 0 ? (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {participants.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                        p.status === 'lulus' ? 'bg-emerald-500' : p.status === 'gagal' ? 'bg-red-500' : p.status === 'mengikuti_pendadaran' ? 'bg-blue-500' : 'bg-gray-400'
-                      }`}>
-                        {p.namaLengkap.charAt(0)}
+
+            {/* Participants list */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              {participants.length > 0 ? (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {participants.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                          p.status === 'lulus' ? 'bg-emerald-500' : p.status === 'gagal' ? 'bg-red-500' : p.status === 'mengikuti_pendadaran' ? 'bg-blue-500' : 'bg-gray-400'
+                        }`}>
+                          {p.namaLengkap.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.namaLengkap}</p>
+                          <p className="text-xs text-gray-400">{p.ranting?.nama || '-'}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.namaLengkap}</p>
-                        <p className="text-xs text-gray-400">{p.ranting?.nama || '-'}</p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {p.sumberPeserta && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            {p.sumberPeserta === 'manual' ? 'Manual' : p.sumberPeserta === 'import' ? 'Impor' : p.sumberPeserta === 'daftar_calon' ? 'Daftar Calon' : p.sumberPeserta}
+                          </span>
+                        )}
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          p.status === 'lulus' ? 'bg-emerald-100 text-emerald-700' : p.status === 'gagal' ? 'bg-red-100 text-red-700' : p.status === 'mengikuti_pendadaran' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {p.status === 'mengikuti_pendadaran' ? 'Peserta' : p.status === 'lulus' ? 'Lulus' : p.status === 'gagal' ? 'Gagal' : p.status}
+                        </span>
+                        <button onClick={async () => {
+                          if (!confirm('Batalkan pendaftaran peserta ini?')) return;
+                          try {
+                            await apiClient.post(`/graduations/${id}/unregister`, { candidateId: p.id });
+                            await fetchData();
+                            await fetchCompleteness();
+                          } catch { /* ignore */ }
+                        }} className="p-1 text-red-400 hover:text-red-600 transition" title="Batalkan pendaftaran">
+                          <XCircle size={14} />
+                        </button>
                       </div>
                     </div>
-                    <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                      p.status === 'lulus' ? 'bg-emerald-100 text-emerald-700' : p.status === 'gagal' ? 'bg-red-100 text-red-700' : p.status === 'mengikuti_pendadaran' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {p.status === 'mengikuti_pendadaran' ? 'Peserta' : p.status === 'lulus' ? 'Lulus' : p.status === 'gagal' ? 'Gagal' : p.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8"><Users size={32} className="mx-auto text-gray-300 mb-2" /><p className="text-sm text-gray-400">Belum ada peserta</p></div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8"><Users size={32} className="mx-auto text-gray-300 mb-2" /><p className="text-sm text-gray-400">Belum ada peserta</p></div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1852,6 +2040,174 @@ export default function GraduationDetailPage() {
                 className={`px-4 py-2 text-white rounded-lg text-sm font-medium transition disabled:opacity-50 ${validateModal?.approved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>
                 {validating ? 'Menyimpan...' : 'Konfirmasi'}
               </button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* ─── Modal: Tambah Manual ─── */}
+        <Modal open={showAddParticipant} onClose={() => setShowAddParticipant(false)} title="Tambah Peserta Manual" size="md">
+          <form onSubmit={handleAddParticipant} className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Buat calon anggota baru langsung dari pendadaran ini</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Lengkap *</label>
+              <input type="text" value={addParticipantForm.namaLengkap} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, namaLengkap: e.target.value })} required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ranting *</label>
+              <select value={addParticipantForm.rantingId} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, rantingId: e.target.value })} required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500">
+                <option value="">Pilih ranting...</option>
+                {rantingOptions.map((r) => <option key={r.id} value={r.id}>{r.nama}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
+                <select value={addParticipantForm.jenisKelamin} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, jenisKelamin: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500">
+                  <option value="">Pilih...</option>
+                  <option value="L">Laki-laki</option>
+                  <option value="P">Perempuan</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
+                <input type="text" value={addParticipantForm.noHp} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, noHp: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <input type="email" value={addParticipantForm.email} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
+              <textarea value={addParticipantForm.alamat} onChange={(e) => setAddParticipantForm({ ...addParticipantForm, alamat: e.target.value })} rows={2}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <button type="button" onClick={() => setShowAddParticipant(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
+              <button type="submit" disabled={addParticipantSaving}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50">
+                {addParticipantSaving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* ─── Modal: Tarik dari Daftar Calon ─── */}
+        <Modal open={showEligiblePicker} onClose={() => setShowEligiblePicker(false)} title="Tarik dari Daftar Calon" size="lg">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Pilih calon anggota yang sudah terdaftar di sistem untuk ditarik ke pendadaran ini</p>
+            {eligibleLoading ? (
+              <div className="text-center py-8 text-sm text-gray-400">Memuat daftar calon...</div>
+            ) : eligibleCandidates.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-400">Tidak ada calon eligible tersedia</div>
+            ) : (
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {eligibleCandidates.map((c) => (
+                  <label key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer">
+                    <input type="checkbox" checked={selectedEligible.has(c.id)} onChange={(e) => {
+                      setSelectedEligible((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(c.id); else next.delete(c.id);
+                        return next;
+                      });
+                    }} className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{c.namaLengkap}</p>
+                      <p className="text-xs text-gray-400">{c.ranting?.nama || '-'}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-xs text-gray-400">{selectedEligible.size} dipilih</span>
+              <div className="flex gap-2">
+                <button onClick={() => setShowEligiblePicker(false)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
+                <button onClick={handleSelectEligible} disabled={eligibleSaving || selectedEligible.size === 0}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
+                  {eligibleSaving ? 'Menyimpan...' : `Tarik ${selectedEligible.size} Peserta`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+
+        {/* ─── Modal: Import CSV/Excel ─── */}
+        <Modal open={showImportParticipants} onClose={() => setShowImportParticipants(false)} title="Import Peserta dari File" size="lg">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Unggah file CSV atau Excel. Kolom: <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">nama_lengkap</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">ranting_id</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">jenis_kelamin</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">no_hp</code>, <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">email</code>. Atau kolom <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">candidateId</code> untuk tarik calon existing.
+            </p>
+            {!importResult && (
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center">
+                <input type="file" accept=".csv,.xlsx,.xls,.txt" id="import-file" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) parseImportFile(f); }} />
+                <label htmlFor="import-file" className="cursor-pointer">
+                  <FileEdit size={32} className="mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{importFileName || 'Klik untuk pilih file'}</p>
+                  <p className="text-xs text-gray-400 mt-1">Format: CSV, Excel (.xlsx), atau TXT</p>
+                </label>
+              </div>
+            )}
+            {importPreview.length > 0 && !importResult && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Preview ({importPreview.length} baris):</p>
+                <div className="max-h-48 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                      <tr>
+                        <th className="px-2 py-1 text-left text-gray-500">Nama</th>
+                        <th className="px-2 py-1 text-left text-gray-500">Ranting ID</th>
+                        <th className="px-2 py-1 text-left text-gray-500">Kelamin</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {importPreview.slice(0, 20).map((row, i) => (
+                        <tr key={i} className="text-gray-700 dark:text-gray-300">
+                          <td className="px-2 py-1">{String(row.nama_lengkap || row.nama || row.name || '')}</td>
+                          <td className="px-2 py-1">{String(row.ranting_id || row.rantingId || '')}</td>
+                          <td className="px-2 py-1">{String(row.jenis_kelamin || '')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            {importResult && (
+              <div className="space-y-2">
+                <div className="px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">
+                  Berhasil: {importResult.imported} peserta ({importResult.linked} ditautkan, {importResult.created} dibuat)
+                </div>
+                {importResult.errors.length > 0 && (
+                  <div className="px-4 py-3 rounded-xl bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300 max-h-32 overflow-y-auto">
+                    <p className="font-medium">Errors ({importResult.errors.length}):</p>
+                    {importResult.errors.slice(0, 10).map((err, i) => <p key={i} className="text-xs mt-0.5">{err}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              {!importResult ? (
+                <>
+                  <button onClick={() => { setShowImportParticipants(false); setImportPreview([]); setImportFileName(''); }}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Batal</button>
+                  <button onClick={handleImportParticipants} disabled={importing || importPreview.length === 0}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50">
+                    {importing ? 'Mengimpor...' : `Impor ${importPreview.length} Baris`}
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => { setShowImportParticipants(false); setImportPreview([]); setImportResult(null); setImportFileName(''); }}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Selesai</button>
+              )}
             </div>
           </div>
         </Modal>

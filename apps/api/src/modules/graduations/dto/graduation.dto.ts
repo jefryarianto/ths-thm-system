@@ -79,12 +79,60 @@ export class RegisterParticipantDto {
   candidateId: string;
 }
 
+/**
+ * Tambah peserta manual: calon anggota BARU dibuat langsung dari konteks
+ * pendadaran (tanpa harus lewat modul Candidates), lalu otomatis menjadi peserta.
+ */
+export class CreateParticipantDto {
+  @ApiProperty()
+  @IsString()
+  namaLengkap: string;
+
+  @ApiProperty()
+  @IsString()
+  rantingId: string;
+
+  @ApiPropertyOptional({ enum: ['L', 'P'] })
+  @IsOptional()
+  @IsString()
+  jenisKelamin?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  noHp?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  alamat?: string;
+}
+
+/**
+ * Import peserta pendadaran — dua pola baris:
+ * - `candidateId`/`id` terisi → tautkan calon yang SUDAH terdaftar di sistem.
+ * - Data lengkap (nama_lengkap + ranting_id, ...) → buat calon BARU hasil
+ *   parse file Excel/CSV di sisi klien, dengan dedupe email/nama.
+ */
 export class ImportParticipantsDto {
   @ApiProperty({ type: [Object] })
   @IsArray()
   data: Array<{
     candidateId?: string;
     id?: string;
+    nama_lengkap?: string;
+    nama?: string;
+    name?: string;
+    ranting_id?: string;
+    rantingId?: string;
+    jenis_kelamin?: string;
+    no_hp?: string;
+    email?: string;
   }>;
 }
 

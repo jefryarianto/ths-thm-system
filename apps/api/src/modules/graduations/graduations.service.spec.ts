@@ -10,6 +10,7 @@ import { MemberMailService } from '../../common/services/member-mail.service';
 import { DocumentsService } from '../documents/documents.service';
 import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AssessmentsService } from '../assessments/assessments.service';
 
 describe('GraduationsService', () => {
   let service: GraduationsService;
@@ -26,6 +27,12 @@ describe('GraduationsService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+    },
+    pesertaPendadaran: {
+      findMany: jest.fn().mockResolvedValue([]),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      deleteMany: jest.fn(),
     },
     hasilPendadaran: {
       create: jest.fn(),
@@ -130,6 +137,12 @@ describe('GraduationsService', () => {
     generateMemberNumber: jest.fn().mockResolvedValue('NRA-0001'),
   };
 
+  const mockAssessmentsService = {
+    cloneTemplateForKegiatan: jest
+      .fn()
+      .mockResolvedValue({ clonedAspects: 0, clonedItems: 0, skipped: true }),
+  };
+
   const mockCache = {
     getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
     invalidatePrefix: jest.fn(),
@@ -147,6 +160,7 @@ describe('GraduationsService', () => {
         { provide: DocumentsService, useValue: mockDocumentsService },
         { provide: NraService, useValue: mockNraService },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: AssessmentsService, useValue: mockAssessmentsService },
       ],
     }).compile();
 
@@ -195,8 +209,17 @@ describe('GraduationsService', () => {
   describe('getParticipants', () => {
     it('should return participants', async () => {
       mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
-      mockPrisma.calonAnggota.findMany.mockResolvedValue([
-        { id: 'c1', status: 'mengikuti_pendadaran' },
+      mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([
+        {
+          sumber: 'manual',
+          diusulkanOleh: 'u1',
+          createdAt: new Date(),
+          calonAnggota: {
+            id: 'c1',
+            status: 'mengikuti_pendadaran',
+            ranting: { nama: 'Ranting 1' },
+          },
+        },
       ]);
       const result = await service.getParticipants('g1');
       expect(result).toHaveLength(1);

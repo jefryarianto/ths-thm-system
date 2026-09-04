@@ -16,6 +16,7 @@ import { Type } from 'class-transformer';
 // ─── Create Ujian Praktek ─────────────────────────────
 
 export class CreateUjianPraktekDto {
+
   @ApiProperty()
   @IsString()
   nama: string;
@@ -140,4 +141,14 @@ export class BulkScoreDto {
   @ValidateNested({ each: true })
   @Type(() => ScoreCandidateDto)
   scores: ScoreCandidateDto[];
+}
+
+/** Mulai sesi ujian peserta — durasi opsional (default: durasi ujian / 30 menit). */
+export class StartSesiDto {
+  @ApiPropertyOptional({ description: 'Durasi standar menit (default durasi ujian atau 30)' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  durasiStandarMenit?: number;
 }

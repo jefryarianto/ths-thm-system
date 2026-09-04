@@ -17,10 +17,15 @@ import {
   useGraduationParticipants,
   submitScores,
   getUjianPraktekId,
+  fetchSesiList,
+  startSesi,
+  extendSesi,
+  finishSesi,
   ScoringAspect,
   ScoringParticipant,
   ScoreEntry,
   ScoreResult,
+  SesiUjian,
 } from '../../hooks/use-scoring';
 import { LoadingView, ErrorView, SearchBar } from '../../components/ui/shared';
 
@@ -47,8 +52,108 @@ export default function InputScoreScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // API hooks
-  const { data: aspects, loading: loadingAspects, error: aspectsError, refetch: refetchAspects } = useAssessmentItems();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { data: aspects, loading: loadingAspects, error: aspectsError, refetch: refetchAspects } = useAssessmentItems(graduationId as string);
   const { data: participants, loading: loadingParticipants, error: participantsError, refetch: refetchParticipants } = useGraduationParticipants(graduationId);
+
+  // ─── Sesi ujian (timer server-side; waktu hanya pedoman) ───
+  const [sesi, setSesi] = useState<SesiUjian | null>(null);
+  const [sesiBusy, setSesiBusy] = useState(false);
+  const [nowMs, setNowMs] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const loadSesiForParticipant = useCallback(
+    async (participantId: string) => {
+      if (!ujianPraktekId) {
+        setSesi(null);
+        return;
+      }
+      const list = await fetchSesiList(graduationId, ujianPraktekId);
+      setSesi(list.find((s) => s.calonAnggotaId === participantId) ?? null);
+    },
+    [graduationId, ujianPraktekId],
+  );
+
+  const handleStartSesi = useCallback(async () => {
+    if (!selectedParticipant || !ujianPraktekId) return;
+    setSesiBusy(true);
+    try {
+      const s = await startSesi(graduationId, ujianPraktekId, selectedParticipant.id);
+      setSesi(s);
+    } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      Alert.alert('Gagal', msg || 'Gagal memulai sesi ujian.');
+    } finally {
+      setSesiBusy(false);
+    }
+  }, [graduationId, ujianPraktekId, selectedParticipant]);
+
+  const handleExtendSesi = useCallback(async () => {
+    if (!selectedParticipant || !ujianPraktekId || !sesi) return;
+    Alert.alert('Tambah Waktu', 'Tambahkan +10 menit untuk peserta ini? (hanya sekali)', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Ya, +10 Menit',
+        onPress: async () => {
+          setSesiBusy(true);
+          try {
+            const s = await extendSesi(graduationId, ujianPraktekId, selectedParticipant.id);
+            setSesi(s);
+          } catch (err) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            Alert.alert('Gagal', msg || 'Gagal menambah waktu.');
+          } finally {
+            setSesiBusy(false);
+          }
+        },
+      },
+    ]);
+  }, [graduationId, ujianPraktekId, selectedParticipant, sesi]);
+
+  const handleFinishSesi = useCallback(async () => {
+    if (!selectedParticipant || !ujianPraktekId || !sesi) return;
+    Alert.alert('Akhiri Sesi', 'Akhiri sesi ujian untuk peserta ini?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Akhiri',
+        style: 'destructive',
+        onPress: async () => {
+          setSesiBusy(true);
+          try {
+            const s = await finishSesi(graduationId, ujianPraktekId, selectedParticipant.id);
+            setSesi(s);
+          } catch (err) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            Alert.alert('Gagal', msg || 'Gagal mengakhiri sesi.');
+          } finally {
+            setSesiBusy(false);
+          }
+        },
+      },
+    ]);
+  }, [graduationId, ujianPraktekId, selectedParticipant, sesi]);
+
+  // Sisa waktu dihitung lokal dari batasAt server (tick tiap detik)
+  const sisaDetik = useMemo(() => {
+    if (!sesi?.batasAt || sesi.status === 'selesai') return null;
+    return Math.floor((new Date(sesi.batasAt).getTime() - nowMs) / 1000);
+  }, [sesi, nowMs]);
+
+  const waktuHabis = sisaDetik !== null && sisaDetik <= 0;
+
+  const timerLabel = useMemo(() => {
+    if (!sesi || sesi.status === 'belum_mulai') return null;
+    if (sesi.status === 'selesai') return 'Sesi Selesai';
+    if (sisaDetik === null) return null;
+    if (sisaDetik <= 0) return 'Waktu Habis';
+    const m = Math.floor(sisaDetik / 60);
+    const s = sisaDetik % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }, [sesi, sisaDetik]);
 
   // Resolve ujian-praktek ID on mount
   useEffect(() => {
@@ -98,8 +203,10 @@ export default function InputScoreScreen() {
     setSelectedParticipant(p);
     setCurrentScores({});
     setCurrentNotes({});
+    setSesi(null);
     setFormState('input_scores');
-  }, []);
+    void loadSesiForParticipant(p.id);
+  }, [loadSesiForParticipant]);
 
   // Back to participant list
   const handleBackToList = useCallback(() => {
@@ -309,6 +416,53 @@ export default function InputScoreScreen() {
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+          {/* Timer Sesi Ujian — waktu hanya pedoman */}
+          <View style={styles.timerCard}>
+            {sesi && sesi.status !== 'belum_mulai' ? (
+              <>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.timerLabel}>Sisa Waktu Ujian</Text>
+                  <Text style={[styles.timerValue, waktuHabis && styles.timerHabis]}>
+                    {timerLabel}
+                  </Text>
+                  {waktuHabis && (
+                    <Text style={styles.timerNote}>
+                      Waktu hanya pedoman — nilai tetap bisa diinput.
+                    </Text>
+                  )}
+                </View>
+                {sesi.status !== 'selesai' && (
+                  <View style={{ gap: 8 }}>
+                    <TouchableOpacity
+                      style={[styles.timerBtn, sesi.tambahanMenit >= 10 && styles.timerBtnDisabled]}
+                      disabled={sesiBusy || sesi.tambahanMenit >= 10}
+                      onPress={handleExtendSesi}
+                    >
+                      <Ionicons name="add-circle-outline" size={15} color="#fff" />
+                      <Text style={styles.timerBtnText}>+10 Mnt</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.timerBtnFinish} disabled={sesiBusy} onPress={handleFinishSesi}>
+                      <Text style={styles.timerBtnFinishText}>Akhiri</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
+            ) : (
+              <>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.timerLabel}>Sesi Ujian</Text>
+                  <Text style={styles.timerNote}>
+                    Durasi 30 menit per peserta (waktu hanya pedoman).
+                  </Text>
+                </View>
+                <TouchableOpacity style={styles.timerBtn} disabled={sesiBusy} onPress={handleStartSesi}>
+                  <Ionicons name="play" size={15} color="#fff" />
+                  <Text style={styles.timerBtnText}>Mulai</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+
           {/* Progress Summary */}
           <View style={styles.progressCard}>
             <View style={styles.progressRow}>
@@ -618,6 +772,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   noItemsText: { fontSize: 12, color: '#9ca3af', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
+
+  // Timer Sesi Ujian
+  timerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    padding: 14,
+    marginBottom: 12,
+    gap: 10,
+  },
+  timerLabel: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
+  timerValue: { fontSize: 28, fontWeight: '800', color: '#111827', fontVariant: ['tabular-nums'] },
+  timerHabis: { color: '#dc2626', fontSize: 20 },
+  timerNote: { fontSize: 11, color: '#9ca3af', fontStyle: 'italic', marginTop: 2 },
+  timerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  timerBtnDisabled: { backgroundColor: '#93c5fd' },
+  timerBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  timerBtnFinish: {
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  timerBtnFinishText: { color: '#dc2626', fontSize: 12, fontWeight: '700' },
 
   // Submit Bar
   submitBar: {

@@ -115,25 +115,43 @@ export class AssessmentsController {
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Import aspek & item penilaian dari list JSON' })
   @ApiBody({ description: 'Array data import (NO, ASPEK, ITEM, DESKRIPSI, SKOR_MAX)' })
   @ApiCreatedResponse({ description: 'Data import diproses' })
-  importFromList(@Body() body: { data: ImportRow[] }) {
+  importFromList(@Body() body: { data: ImportRow[]; kegiatanId?: string }) {
     if (!body.data || !Array.isArray(body.data)) {
       throw new BadRequestException('Data harus berupa array');
     }
-    return this.service.importFromList(body.data);
+    // kegiatanId opsional → bila diisi, aspek/item dibuat milik pendadaran tsb
+    return this.service.importFromList(body.data, body.kegiatanId);
   }
 
   @Post('upload-csv')
   @ApiConsumes('multipart/form-data')
+  @ApiQuery({ name: 'kegiatanId', required: false, description: 'Bila diisi, import menjadi milik pendadaran (bukan template global)' })
   @ApiBody({ description: 'File CSV untuk import aspek & item penilaian' })
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Upload file CSV untuk import aspek & item penilaian' })
   @UseInterceptors(FileInterceptor('file'))
   @ApiCreatedResponse({ description: 'Data CSV diproses dan diimport' })
-  async uploadCsv(@UploadedFile() file: any) {
+  async uploadCsv(@UploadedFile() file: any, @Query('kegiatanId') kegiatanId?: string) {
     if (!file) {
       throw new BadRequestException('File CSV harus diupload');
     }
     const csvText = file.buffer.toString('utf-8');
-    return this.service.importFromCsvText(csvText);
+    return this.service.importFromCsvText(csvText, kegiatanId);
+  }
+
+  // ── Restore (tampilkan kembali aspek/item yang disembunyikan) ──
+
+  @Post('aspects/:id/restore')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Aktifkan kembali aspek yang disembunyikan' })
+  @ApiOkResponse({ description: 'Aspek penilaian diaktifkan kembali' })
+  restoreAspect(@Param('id') id: string) {
+    return this.aspectService.restore(id);
+  }
+
+  @Post('items/:id/restore')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Aktifkan kembali item yang disembunyikan' })
+  @ApiOkResponse({ description: 'Item penilaian diaktifkan kembali' })
+  restoreItem(@Param('id') id: string) {
+    return this.service.restoreItem(id);
   }
 
   // ── Scores ────────────────────────────────────────────

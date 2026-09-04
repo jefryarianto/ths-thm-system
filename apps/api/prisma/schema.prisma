@@ -493,6 +493,8 @@ model CalonAnggota {
   usulOlehUser     User              @relation("CalonAnggotaUsul", fields: [usulOlehUserId], references: [id])
   nilaiPendadarans NilaiPendadaran[]
   hasilPendadarans HasilPendadaran[]
+  pesertaPendadarans PesertaPendadaran[]
+  sesiUjianPesertas  SesiUjianPeserta[]
 
   @@map("calon_anggota")
 }
@@ -585,6 +587,8 @@ model Kegiatan {
   hasilPendadarans  HasilPendadaran[]
   checkIns          CheckIn[]
   undangans         UndanganPendadaran[]
+  aspekPenilaians   AspekPenilaian[]     @relation("AspekPenilaianKegiatan")
+  pesertaPendadarans PesertaPendadaran[]
 
   @@map("kegiatan")
 }
@@ -743,8 +747,16 @@ model AspekPenilaian {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // kegiatanId = null → aspek TEMPLATE global (dipakai semua pendadaran).
+  // kegiatanId terisi → milik pendadaran tertentu (hasil clone / kustom),
+  // bebas diedit/disembunyikan tanpa memengaruhi pendadaran lain.
+  // Kode aspek hasil clone diberi suffix unik (kode tetap unik global).
+  kegiatanId String? @map("kegiatan_id")
+
+  kegiatan      Kegiatan?       @relation("AspekPenilaianKegiatan", fields: [kegiatanId], references: [id], onDelete: Cascade)
   itemPenilaian ItemPenilaian[]
 
+  @@index([kegiatanId])
   @@index([kodeAspek])
   @@map("aspek_penilaian")
 }
@@ -769,7 +781,7 @@ model PenugasanPenguji {
 model ItemPenilaian {
   id           String   @id @default(uuid())
   aspekId      String   @map("aspek_id")
-  kodeItem     String   @unique @map("kode_item")
+  kodeItem     String   @map("kode_item")
   namaItem     String   @map("nama_item")
   skorMaksimal Decimal  @default(100) @map("skor_maksimal") @db.Decimal(65, 30)
   bobot        Decimal  @default(1) @db.Decimal(65, 30)
@@ -782,6 +794,9 @@ model ItemPenilaian {
   nilaiPendadarans  NilaiPendadaran[]
   ujianPraktekItems UjianPraktekItem[]
 
+  // Unik per aspek (bukan global) — pendadaran berbeda boleh punya kode item sama
+  // karena aspek milik pendadaran berbeda. Scoping pendadaran diambil lewat aspek.
+  @@unique([aspekId, kodeItem], map: "item_penilaian_aspek_kode_item_key")
   @@index([kodeItem])
   @@map("item_penilaian")
 }
@@ -857,10 +872,11 @@ model UjianPraktek {
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
 
-  kegiatan   Kegiatan              @relation(fields: [kegiatanId], references: [id])
-  penilais   UjianPraktekPenilai[]
-  items      UjianPraktekItem[]
-  penilaians NilaiPendadaran[]
+  kegiatan      Kegiatan              @relation(fields: [kegiatanId], references: [id])
+  penilais      UjianPraktekPenilai[]
+  items         UjianPraktekItem[]
+  penilaians    NilaiPendadaran[]
+  sesiPesertas  SesiUjianPeserta[]
 
   @@index([kegiatanId])
   @@map("ujian_praktek")
@@ -893,6 +909,65 @@ model UjianPraktekItem {
   @@unique([ujianPraktekId, itemPenilaianId])
   @@index([ujianPraktekId])
   @@map("ujian_praktek_item")
+}
+
+// ── Peserta & Sesi Ujian Pendadaran ────────────────────────
+
+// Sumber pendaftaran peserta pendadaran:
+// manual (form admin), import (Excel/CSV), daftar_calon (dipilih dari calon terdaftar)
+enum SumberPeserta {
+  manual
+  import
+  daftar_calon
+}
+
+// Keikutsertaan calon anggota dalam sebuah pendadaran.
+// Sumber kebenaran peserta per-kegiatan (menggantikan flag global status saja).
+model PesertaPendadaran {
+  id             String        @id @default(uuid())
+  kegiatanId     String        @map("kegiatan_id")
+  calonAnggotaId String        @map("calon_anggota_id")
+  sumber         SumberPeserta @default(manual)
+  diusulkanOleh  String?       @map("diusulkan_oleh")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  kegiatan     Kegiatan     @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  calonAnggota CalonAnggota @relation(fields: [calonAnggotaId], references: [id], onDelete: Cascade)
+
+  @@unique([kegiatanId, calonAnggotaId])
+  @@index([calonAnggotaId])
+  @@map("peserta_pendadaran")
+}
+
+enum StatusSesiUjian {
+  belum_mulai
+  berlangsung
+  selesai
+}
+
+// Sesi ujian praktek per peserta — ATURAN 1 SESI dijaga unique constraint.
+// Timer otoritatif dari server: sisa = mulaiAt + (durasiStandar + tambahan) - now.
+// Waktu hanya pedoman: input nilai TIDAK diblokir setelah waktu habis.
+model SesiUjianPeserta {
+  id                 String          @id @default(uuid())
+  ujianPraktekId     String          @map("ujian_praktek_id")
+  calonAnggotaId     String          @map("calon_anggota_id")
+  durasiStandarMenit Int             @default(30) @map("durasi_standar_menit")
+  tambahanMenit      Int             @default(0) @map("tambahan_menit")
+  mulaiAt            DateTime?       @map("mulai_at")
+  selesaiAt          DateTime?       @map("selesai_at")
+  status             StatusSesiUjian @default(belum_mulai)
+  diperpanjangOleh   String?         @map("diperpanjang_oleh")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  ujianPraktek UjianPraktek @relation(fields: [ujianPraktekId], references: [id], onDelete: Cascade)
+  calonAnggota CalonAnggota @relation(fields: [calonAnggotaId], references: [id], onDelete: Cascade)
+
+  @@unique([ujianPraktekId, calonAnggotaId])
+  @@index([calonAnggotaId])
+  @@map("sesi_ujian_peserta")
 }
 
 // ── Documents ─────────────────────────────────────────────

@@ -205,4 +205,20 @@ export class AssessmentFilterDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  // Filter aspek/item milik pendadaran tertentu. Tanpa parameter → hanya
+  // template global (kegiatanId null). Bila pendadaran belum punya set sendiri,
+  // otomatis fallback ke template (backward compatible).
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  kegiatanId?: string;
+
+  // Sertakan aspek/item yang disembunyikan (isActive=false) — khusus admin web.
+  // Alur scoring (mobile/penguji) TIDAK mengirim ini → hanya melihat yang aktif.
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  includeInactive?: boolean;
 }

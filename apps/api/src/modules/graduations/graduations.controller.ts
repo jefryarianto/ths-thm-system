@@ -9,13 +9,14 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { GraduationsService } from './graduations.service';
 import {
   CreateGraduationDto,
   UpdateGraduationDto,
   GraduationFilterDto,
   RegisterParticipantDto,
+  CreateParticipantDto,
   GraduateDto,
   ValidateResultDto,
   GenerateDocsDto,
@@ -94,9 +95,22 @@ export class GraduationsController {
   // ── Participant endpoints ──
 
   @Post(':id/register')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftarkan peserta wisuda' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftarkan peserta wisuda (dari calon yang sudah terdaftar)' })
   register(@Param('id') id: string, @Body() dto: RegisterParticipantDto, @Req() req: ScopedRequest) {
-    return this.service.registerParticipant(id, dto, req.scope);
+    return this.service.registerParticipant(id, dto, req.scope, req.user?.id);
+  }
+
+  @Post(':id/participants')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah peserta manual (calon baru langsung dari pendadaran)' })
+  @ApiBody({ type: CreateParticipantDto, description: 'Data calon anggota baru' })
+  createParticipant(@Param('id') id: string, @Body() dto: CreateParticipantDto, @Req() req: ScopedRequest) {
+    return this.service.createParticipant(id, dto, req.scope, req.user?.id);
+  }
+
+  @Get(':id/participants/eligible')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Daftar calon yang bisa ditarik ke pendadaran ini (belum terdaftar)' })
+  getEligibleParticipants(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getEligibleParticipants(id, req.scope);
   }
 
   @Post(':id/unregister')
@@ -112,13 +126,26 @@ export class GraduationsController {
   }
 
   @Post(':id/participants/import')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor peserta wisuda' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor peserta wisuda (candidateId = tarik existing; baris data lengkap = buat calon baru)' })
   importParticipants(
     @Param('id') id: string,
-    @Body() importDto: { data: Array<{ candidateId?: string; id?: string }> },
+    @Body() importDto: {
+      data: Array<{
+        candidateId?: string;
+        id?: string;
+        nama_lengkap?: string;
+        nama?: string;
+        name?: string;
+        ranting_id?: string;
+        rantingId?: string;
+        jenis_kelamin?: string;
+        no_hp?: string;
+        email?: string;
+      }>;
+    },
     @Req() req: ScopedRequest,
   ) {
-    return this.service.importParticipants(id, importDto.data, req.scope);
+    return this.service.importParticipants(id, importDto.data, req.scope, req.user?.id);
   }
 
   // ── Graduate & Documents ──

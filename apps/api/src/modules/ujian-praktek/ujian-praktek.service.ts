@@ -243,13 +243,22 @@ export class UjianPraktekService {
 
   // ─── Available Assessment Items ──────────────────────────
 
-  async getAvailableItems() {
-    const data = await this.prisma.itemPenilaian.findMany({
-      where: { isActive: true },
+  /**
+   * Item penilaian yang bisa dipakai ujian dalam pendadaran ini:
+   * utamakan set milik pendadaran (hasil clone template); bila pendadaran
+   * belum punya set sendiri (legacy), fallback ke template global.
+   * Hanya aspek & item AKTIF — item yang disembunyikan tidak ditawarkan.
+   */
+  async getAvailableItems(kegiatanId: string) {
+    const owned = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId, isActive: true },
+    });
+    const scopeKegiatanId = owned > 0 ? kegiatanId : null;
+    return this.prisma.itemPenilaian.findMany({
+      where: { isActive: true, aspek: { kegiatanId: scopeKegiatanId, isActive: true } },
       include: { aspek: true },
       orderBy: [{ aspek: { namaAspek: 'asc' } }, { urutan: 'asc' }],
     });
-    return data;
   }
 
   async getAvailableExaminers(kegiatanId: string) {
@@ -280,5 +289,127 @@ export class UjianPraktekService {
       assignedToKegiatan: assigned.map((a) => a.pengujiUser),
       allPenguji: Array.from(merged.values()),
     };
+  }
+
+  // ─── Sesi Ujian per Peserta (timer otoritatif dari server) ──
+  // Aturan: 1 peserta = 1 sesi (dijaga unique constraint). Default 30 menit,
+  // penguji bisa menambah +10 menit SEKALI. Waktu hanya pedoman — input nilai
+  // TIDAK diblokir setelah waktu habis.
+
+  private async getUjianOrThrow(id: string) {
+    const ujian = await this.prisma.ujianPraktek.findUnique({ where: { id } });
+    if (!ujian) throw new NotFoundException('Ujian praktek tidak ditemukan');
+    return ujian;
+  }
+
+  /** Hitung metadata timer dari timestamp server (sisaDetik bisa negatif). */
+  private withTimer<T extends { mulaiAt: Date | null; selesaiAt: Date | null; durasiStandarMenit: number; tambahanMenit: number }>(
+    sesi: T,
+  ) {
+    const durasiTotalMenit = sesi.durasiStandarMenit + sesi.tambahanMenit;
+    const batasAt =
+      sesi.mulaiAt ? new Date(sesi.mulaiAt.getTime() + durasiTotalMenit * 60_000) : null;
+    const sisaDetik =
+      sesi.mulaiAt && !sesi.selesaiAt && batasAt
+        ? Math.floor((batasAt.getTime() - Date.now()) / 1000)
+        : null;
+    return {
+      ...sesi,
+      durasiTotalMenit,
+      batasAt,
+      sisaDetik,
+      waktuHabis: sisaDetik !== null && sisaDetik <= 0,
+    };
+  }
+
+  /** Daftar sesi semua peserta pada satu ujian + sisa waktu live. */
+  async getSesi(ujianPraktekId: string) {
+    await this.getUjianOrThrow(ujianPraktekId);
+    const rows = await this.prisma.sesiUjianPeserta.findMany({
+      where: { ujianPraktekId },
+      include: { calonAnggota: { select: { id: true, namaLengkap: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((s) => this.withTimer(s));
+  }
+
+  /** Mulai sesi peserta (sekali — sesi kedua ditolak). */
+  async startSesi(
+    ujianPraktekId: string,
+    calonAnggotaId: string,
+    userId?: string,
+    durasiStandarMenit?: number,
+  ) {
+    const ujian = await this.getUjianOrThrow(ujianPraktekId);
+    if (ujian.status === 'selesai' || ujian.status === 'dibatalkan') {
+      throw new BadRequestException('Ujian praktek sudah selesai atau dibatalkan');
+    }
+
+    const calon = await this.prisma.calonAnggota.findUnique({
+      where: { id: calonAnggotaId },
+      select: { id: true },
+    });
+    if (!calon) throw new NotFoundException('Calon anggota tidak ditemukan');
+
+    try {
+      const sesi = await this.prisma.sesiUjianPeserta.create({
+        data: {
+          ujianPraktekId,
+          calonAnggotaId,
+          durasiStandarMenit: durasiStandarMenit ?? ujian.durasiMenit ?? 30,
+          mulaiAt: new Date(),
+          status: 'berlangsung',
+        },
+        include: { calonAnggota: { select: { id: true, namaLengkap: true } } },
+      });
+      this.logger.log(`Sesi ujian dimulai (ujian ${ujianPraktekId}, calon ${calonAnggotaId}, oleh ${userId ?? 'system'})`);
+      return this.withTimer(sesi);
+    } catch (err) {
+      if ((err as { code?: string }).code === 'P2002') {
+        throw new BadRequestException(
+          'Peserta sudah memiliki sesi — ujian hanya menggunakan 1 sesi',
+        );
+      }
+      throw err;
+    }
+  }
+
+  /** Tambah waktu +10 menit — maksimal SEKALI per peserta. */
+  async extendSesi(ujianPraktekId: string, calonAnggotaId: string, userId?: string) {
+    const sesi = await this.prisma.sesiUjianPeserta.findUnique({
+      where: { ujianPraktekId_calonAnggotaId: { ujianPraktekId, calonAnggotaId } },
+    });
+    if (!sesi) throw new NotFoundException('Sesi belum dimulai untuk peserta ini');
+    if (sesi.status === 'selesai') {
+      throw new BadRequestException('Sesi sudah selesai — tidak bisa menambah waktu');
+    }
+    if (sesi.tambahanMenit >= 10) {
+      throw new BadRequestException('Tambahan waktu (+10 menit) sudah digunakan');
+    }
+
+    const updated = await this.prisma.sesiUjianPeserta.update({
+      where: { id: sesi.id },
+      data: { tambahanMenit: sesi.tambahanMenit + 10, diperpanjangOleh: userId },
+      include: { calonAnggota: { select: { id: true, namaLengkap: true } } },
+    });
+    return this.withTimer(updated);
+  }
+
+  /** Akhiri sesi (opsional — waktu hanya pedoman). */
+  async finishSesi(ujianPraktekId: string, calonAnggotaId: string) {
+    const sesi = await this.prisma.sesiUjianPeserta.findUnique({
+      where: { ujianPraktekId_calonAnggotaId: { ujianPraktekId, calonAnggotaId } },
+    });
+    if (!sesi) throw new NotFoundException('Sesi belum dimulai untuk peserta ini');
+    if (sesi.status === 'selesai') {
+      return this.withTimer(sesi);
+    }
+
+    const updated = await this.prisma.sesiUjianPeserta.update({
+      where: { id: sesi.id },
+      data: { status: 'selesai', selesaiAt: new Date() },
+      include: { calonAnggota: { select: { id: true, namaLengkap: true } } },
+    });
+    return this.withTimer(updated);
   }
 }

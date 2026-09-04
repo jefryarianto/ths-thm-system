@@ -16,6 +16,7 @@ import {
   AssignExaminerDto,
   RemoveExaminerDto,
   AssignItemDto,
+  StartSesiDto,
   BulkScoreDto,
 } from './dto/ujian-praktek.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -149,11 +150,11 @@ export class UjianPraktekController {
   // ─── Reference Data ─────────────────────────────────────
 
   @Get(':kegiatanId/ujian-praktek/available-items')
-  @ApiOperation({ summary: 'Ambil item penilaian yang tersedia' })
+  @ApiOperation({ summary: 'Ambil item penilaian yang tersedia (utamakan set milik pendadaran, fallback template)' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
   @RequireScope('branch')
-  getAvailableItems() {
-    return this.service.getAvailableItems();
+  getAvailableItems(@Param('kegiatanId') kegiatanId: string) {
+    return this.service.getAvailableItems(kegiatanId);
   }
 
   @Get(':kegiatanId/ujian-praktek/available-examiners')
@@ -162,5 +163,53 @@ export class UjianPraktekController {
   @RequireScope('branch')
   getAvailableExaminers(@Param('kegiatanId') kegiatanId: string) {
     return this.service.getAvailableExaminers(kegiatanId);
+  }
+
+  // ─── Sesi Ujian per Peserta ─────────────────────────────
+  // 1 peserta = 1 sesi. Default 30 menit, penguji bisa +10 menit sekali.
+  // Waktu hanya pedoman — input nilai tidak diblokir setelah waktu habis.
+
+  @Get(':kegiatanId/ujian-praktek/:id/sesi')
+  @ApiOperation({ summary: 'Daftar sesi ujian semua peserta + sisa waktu (server-side)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
+  getSesi(@Param('id') id: string) {
+    return this.service.getSesi(id);
+  }
+
+  @Post(':kegiatanId/ujian-praktek/:id/sesi/:calonAnggotaId/start')
+  @ApiOperation({ summary: 'Mulai sesi ujian peserta (sekali — 1 peserta hanya 1 sesi)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
+  startSesi(
+    @Param('id') id: string,
+    @Param('calonAnggotaId') calonAnggotaId: string,
+    @Req() req: ScopedRequest,
+    @Body() dto?: StartSesiDto,
+  ) {
+    return this.service.startSesi(id, calonAnggotaId, req.user?.id, dto?.durasiStandarMenit);
+  }
+
+  @Post(':kegiatanId/ujian-praktek/:id/sesi/:calonAnggotaId/extend')
+  @ApiOperation({ summary: 'Tambah waktu +10 menit (maksimal sekali per peserta)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
+  extendSesi(
+    @Param('id') id: string,
+    @Param('calonAnggotaId') calonAnggotaId: string,
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.extendSesi(id, calonAnggotaId, req.user?.id);
+  }
+
+  @Post(':kegiatanId/ujian-praktek/:id/sesi/:calonAnggotaId/finish')
+  @ApiOperation({ summary: 'Akhiri sesi ujian peserta (opsional — waktu hanya pedoman)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
+  finishSesi(
+    @Param('id') id: string,
+    @Param('calonAnggotaId') calonAnggotaId: string,
+  ) {
+    return this.service.finishSesi(id, calonAnggotaId);
   }
 }

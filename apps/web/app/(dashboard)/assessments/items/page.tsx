@@ -3,13 +3,13 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useConfirm } from '@/components/ui/confirm-modal';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, ListOrdered, CheckCircle, XCircle, Trash2, Edit3 } from 'lucide-react';
+import { Plus, ListOrdered, Eye, EyeOff, CheckCircle, XCircle, Trash2, Edit3, RotateCcw } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import DataTable from '@/components/ui/data-table';
@@ -35,13 +35,17 @@ export default function ItemsPage() {
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
+  // Fase 7: tampilkan juga item yang disembunyikan (isActive=false)
+  const [showHidden, setShowHidden] = useState(false);
 
   const { data, meta, loading, refetch } = usePaginatedList<ItemRow>(() => {
     const params = getApiParams({ limit: 10 });
     if (debouncedSearch) params.search = debouncedSearch;
     else delete params.search;
+    if (showHidden) params.includeInactive = 'true';
+    else delete params.includeInactive;
     return apiClient.get('/assessments/items', { params }).then((r) => r.data);
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, showHidden]);
 
   const handlePageChange = useCallback(
     (p: number) => {
@@ -77,6 +81,21 @@ export default function ItemsPage() {
                 placeholder="Cari item penilaian..."
                 debounceMs={300}
               />
+
+              {/* Toggle tampil/sembunyikan item nonaktif (soft-disable tetap ada di DB) */}
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowHidden(!showHidden)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm border transition-colors ${
+                    showHidden
+                      ? 'bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400'
+                      : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  {showHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {showHidden ? 'Sembunyikan yang nonaktif' : 'Tampilkan yang disembunyikan'}
+                </button>
+              </div>
         
               <DataTable
                 columns={[
@@ -142,6 +161,23 @@ export default function ItemsPage() {
                         >
                           <Edit3 size={14} />
                         </Link>
+                        {!row.isActive && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await apiClient.post(`/assessments/items/${row.id}/restore`);
+                                refetch();
+                                toast('success', 'Item diaktifkan kembali');
+                              } catch {
+                                toast('error', 'Gagal mengaktifkan item');
+                              }
+                            }}
+                            className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                            title="Aktifkan kembali"
+                          >
+                            <RotateCcw size={14} />
+                          </button>
+                        )}
                         <button
                           onClick={async () => {
                             if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;

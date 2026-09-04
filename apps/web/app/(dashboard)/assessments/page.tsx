@@ -8,7 +8,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, ClipboardList, Eye, CheckCircle, XCircle, Trash2, Edit3, ListOrdered, Upload } from 'lucide-react';
+import { Plus, ClipboardList, Eye, EyeOff, CheckCircle, XCircle, Trash2, Edit3, ListOrdered, Upload, RotateCcw } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
@@ -44,6 +44,8 @@ export default function AssessmentsPage() {
   const toast = useToast();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('aspek');
+  // Fase 7: tampilkan juga aspek/item yang disembunyikan (isActive=false)
+  const [showHidden, setShowHidden] = useState(false);
   const { page, setPage, search, setSearch, hasActiveFilters, getApiParams, resetFilters } =
     useFilters();
   const debouncedSearch = useDebounce(search, 300);
@@ -53,16 +55,20 @@ export default function AssessmentsPage() {
       const params = getApiParams({ limit: 10 });
       if (debouncedSearch) params.search = debouncedSearch;
       else delete params.search;
+      if (showHidden) params.includeInactive = 'true';
+      else delete params.includeInactive;
       return apiClient.get('/assessments/aspects', { params }).then((r) => r.data);
-    }, [page, debouncedSearch, tab]);
+    }, [page, debouncedSearch, tab, showHidden]);
 
   const { data: itemsData, meta: itemsMeta, loading: itemsLoading, refetch: refetchItems } =
     usePaginatedList<ItemRow>(() => {
       const params = getApiParams({ limit: 10 });
       if (debouncedSearch) params.search = debouncedSearch;
       else delete params.search;
+      if (showHidden) params.includeInactive = 'true';
+      else delete params.includeInactive;
       return apiClient.get('/assessments/items', { params }).then((r) => r.data);
-    }, [page, debouncedSearch, tab]);
+    }, [page, debouncedSearch, tab, showHidden]);
 
   const meta = tab === 'aspek' ? aspekMeta : itemsMeta;
 
@@ -137,6 +143,21 @@ export default function AssessmentsPage() {
         placeholder={tab === 'aspek' ? 'Cari aspek penilaian...' : 'Cari item penilaian...'}
         debounceMs={300}
       />
+
+      {/* Toggle tampil/sembunyikan item nonaktif (soft-disable tetap ada di DB) */}
+      <div className="mb-4">
+        <button
+          onClick={() => { setShowHidden(!showHidden); setPage(1); }}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm border transition-colors ${
+            showHidden
+              ? 'bg-amber-50 dark:bg-amber-950 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400'
+              : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+          }`}
+        >
+          {showHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+          {showHidden ? 'Sembunyikan yang nonaktif' : 'Tampilkan yang disembunyikan'}
+        </button>
+      </div>
 
       {tab === 'aspek' ? (
         <DataTable
@@ -284,6 +305,21 @@ export default function AssessmentsPage() {
                   >
                     <Edit3 size={14} />
                   </Link>
+                  {!row.isActive && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await apiClient.post(`/assessments/items/${row.id}/restore`);
+                          refetchItems();
+                          toast('success', 'Item diaktifkan kembali');
+                        } catch { toast('error', 'Gagal mengaktifkan item'); }
+                      }}
+                      className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                      title="Aktifkan kembali"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       if (!(await confirm(`Hapus item "${row.namaItem}"?`))) return;

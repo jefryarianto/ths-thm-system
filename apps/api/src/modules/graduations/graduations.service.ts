@@ -23,12 +23,14 @@ import {
   UpdateGraduationDto,
   GraduationFilterDto,
   RegisterParticipantDto,
+  CreateParticipantDto,
   GraduateDto,
   ValidateResultDto,
   GenerateDocsDto,
 } from './dto/graduation.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { normalizePhone } from '../../common/utils/phone.util';
+import { AssessmentsService } from '../assessments/assessments.service';
 import bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -58,6 +60,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     private readonly documentsService: DocumentsService,
     private readonly nraService: NraService,
     private readonly memberMailService: MemberMailService,
+    private readonly assessmentsService: AssessmentsService,
     private readonly notificationsService: NotificationsService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
@@ -118,6 +121,27 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       tipe: 'pendadaran',
       status: 'draft',
     };
+  }
+
+  /**
+   * Setelah pendadaran dibuat → clone aspek+item penilaian dari template global
+   * menjadi milik pendadaran ini, sehingga tiap distrik/pendadaran bebas
+   * menyesuaikan aspek penilaian tanpa memengaruhi pendadaran lain.
+   * Best-effort: gagal clone TIDAK membatalkan pembuatan pendadaran.
+   */
+  protected async afterCreate(
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    result: any,
+    dto: CreateGraduationDto,
+  ): Promise<void> {
+    if (!result?.id) return;
+    try {
+      await this.assessmentsService.cloneTemplateForKegiatan(result.id);
+    } catch (err) {
+      this.logger.warn(
+        `Gagal clone template penilaian untuk pendadaran ${result.id}: ${(err as Error).message}`,
+      );
+    }
   }
 
   /**
@@ -647,13 +671,40 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   // ═══════════════════════════════════════════════════════════
-  //  PARTICIPANTS
+  //  PARTICIPANTS (Peserta pendadaran — 3 jalur)
+  //  1. manual        → POST :id/participants (calon baru dari form)
+  //  2. import        → POST :id/participants/import (baris file lengkap)
+  //  3. daftar_calon  → POST :id/register (calon yang sudah terdaftar)
+  //  Keikutsertaan dicatat di tabel peserta_pendadaran (link per-kegiatan);
+  //  kolom status calon tetap disinkronkan demi alur existing.
   // ═══════════════════════════════════════════════════════════
 
+  /** Pastikan tautan peserta-pendadaran ada (idempoten — unik per kegiatan). */
+  private async ensureParticipantLink(
+    graduationId: string,
+    calonAnggotaId: string,
+    sumber: 'manual' | 'import' | 'daftar_calon',
+    userId?: string,
+  ) {
+    const existing = await this.prisma.pesertaPendadaran.findUnique({
+      where: {
+        kegiatanId_calonAnggotaId: { kegiatanId: graduationId, calonAnggotaId },
+      },
+    });
+    if (existing) return existing;
+    return this.prisma.pesertaPendadaran.create({
+      data: { kegiatanId: graduationId, calonAnggotaId, sumber, diusulkanOleh: userId },
+    });
+  }
+
+  /**
+   * JALUR 3 — daftarkan calon yang SUDAH terdaftar di sistem sebagai peserta.
+   */
   async registerParticipant(
     graduationId: string,
     dto: RegisterParticipantDto,
     scope?: UserScope,
+    userId?: string,
   ) {
     // 1. Verify access to this pendadaran + existence
     await this.getGraduationOrThrow(graduationId, scope);
@@ -671,10 +722,72 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       'Calon anggota tidak ditemukan',
     );
 
+    await this.ensureParticipantLink(graduationId, dto.candidateId, 'daftar_calon', userId);
+
     const candidate = await this.prisma.calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'mengikuti_pendadaran' },
     });
+
+    if (candidate.email) {
+      this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
+    }
+
+    this.invalidateCache();
+    return candidate;
+  }
+
+  /**
+   * JALUR 1 — tambah peserta manual: buat calon anggota BARU langsung dari
+   * konteks pendadaran, lalu jadikan peserta (sumber 'manual').
+   */
+  async createParticipant(
+    graduationId: string,
+    dto: CreateParticipantDto,
+    scope?: UserScope,
+    userId?: string,
+  ) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const ranting = await this.prisma.ranting.findUnique({
+      where: { id: dto.rantingId },
+      select: { id: true, nama: true, wilayahId: true, wilayah: { select: { distrikId: true } } },
+    });
+    if (!ranting) throw new NotFoundException('Ranting tidak ditemukan');
+
+    // Batasi admin tingkat bawah membuat calon di luar wilayah kekuasaannya
+    if (scope?.rantingId && scope.rantingId !== dto.rantingId) {
+      throw new ForbiddenException('Anda hanya dapat menambah calon di ranting Anda');
+    }
+    if (scope?.wilayahId && scope.wilayahId !== ranting.wilayahId) {
+      throw new ForbiddenException('Anda hanya dapat menambah calon di wilayah Anda');
+    }
+    if (scope?.distrikId && scope.distrikId !== ranting.wilayah.distrikId) {
+      throw new ForbiddenException('Anda hanya dapat menambah calon di distrik Anda');
+    }
+
+    // Dedupe email (unik di level DB)
+    if (dto.email) {
+      const dupe = await this.prisma.calonAnggota.findUnique({ where: { email: dto.email } });
+      if (dupe) {
+        throw new BadRequestException(`Email sudah dipakai calon lain: ${dupe.namaLengkap}`);
+      }
+    }
+
+    const candidate = await this.prisma.calonAnggota.create({
+      data: {
+        rantingId: dto.rantingId,
+        namaLengkap: dto.namaLengkap,
+        jenisKelamin: dto.jenisKelamin === 'P' ? 'P' : 'L',
+        noHp: dto.noHp || null,
+        email: dto.email || null,
+        alamat: dto.alamat || null,
+        status: 'mengikuti_pendadaran',
+        usulOlehUserId: userId || 'system',
+      },
+    });
+
+    await this.ensureParticipantLink(graduationId, candidate.id, 'manual', userId);
 
     if (candidate.email) {
       this.sendGraduationRegisteredEmail(candidate.namaLengkap, candidate.email, graduationId);
@@ -691,63 +804,191 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   ) {
     await this.getGraduationOrThrow(graduationId, scope);
 
+    // Hapus tautan peserta (sumber kebenaran per-kegiatan)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (this.prisma as any).pesertaPendadaran.deleteMany({
+      where: { kegiatanId: graduationId, calonAnggotaId: dto.candidateId },
+    });
+
+    // Kembalikan status calon (alur existing)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (this.prisma as any).calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'diusulkan' },
     });
 
+    this.invalidateCache();
     // void — interceptor returns { success: true }
   }
 
   /**
-   * FIX BUG: sebelumnya mengeembalikan SELURUH calon dengan status
-   * 'mengikuti_pendadaran' di seluruh sistem (tanpa filter scope / graduation).
-   * Sekarang: verifikasi akses ke pendadaran + filter peserta sesuai scope
-   * (konsisten dengan pola calon anggota lain).
+   * Peserta pendadaran — diambil dari tautan peserta_pendadaran (per-kegiatan).
+   * FIX: sebelumnya mengembalikan SEMUA calon 'mengikuti_pendadaran' dalam scope
+   * (tercampur antar pendadaran). Sekarang tepat per pendadaran + info sumber.
    */
   async getParticipants(graduationId: string, scope?: UserScope) {
     await this.getGraduationOrThrow(graduationId, scope);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = { status: 'mengikuti_pendadaran' };
-    Object.assign(where, this.scopeHelper.buildScopeFilter(scope as UserScope));
-
-    const participants = await this.prisma.calonAnggota.findMany({
-      where,
-      include: { ranting: true },
+    const links = await this.prisma.pesertaPendadaran.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        calonAnggota: { include: { ranting: true } },
+      },
+      orderBy: { createdAt: 'asc' },
     });
 
-    return participants;
+    return links.map((l) => ({
+      ...l.calonAnggota,
+      sumberPeserta: l.sumber,
+      diusulkanOleh: l.diusulkanOleh,
+      terdaftarAt: l.createdAt,
+    }));
   }
 
+  /**
+   * Daftar calon yang BISA ditarik ke pendadaran ini (picker UI jalur 3):
+   * status 'diusulkan', terfilter scope pemanggil, exclude yang sudah terdaftar.
+   */
+  async getEligibleParticipants(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = { status: 'diusulkan' };
+    Object.assign(where, this.scopeHelper.buildScopeFilter(scope as UserScope));
+
+    const [candidates, linked] = await Promise.all([
+      this.prisma.calonAnggota.findMany({
+        where,
+        include: { ranting: { select: { id: true, nama: true } } },
+        orderBy: { namaLengkap: 'asc' },
+      }),
+      this.prisma.pesertaPendadaran.findMany({
+        where: { kegiatanId: graduationId },
+        select: { calonAnggotaId: true },
+      }),
+    ]);
+
+    const registered = new Set(linked.map((l) => l.calonAnggotaId));
+    return candidates.filter((c) => !registered.has(c.id));
+  }
+
+  /**
+   * JALUR 2 — import peserta dari file Excel/CSV (diparse di klien → JSON rows):
+   * - Baris berisi candidateId/id → tautkan calon yang sudah ada.
+   * - Baris data lengkap (nama_lengkap + ranting_id) → buat calon baru
+   *   dengan dedupe email/nama, lalu tautkan (sumber 'import').
+   */
   async importParticipants(
     graduationId: string,
-    data: Array<{ candidateId?: string; id?: string }>,
+    data: Array<{
+      candidateId?: string;
+      id?: string;
+      nama_lengkap?: string;
+      nama?: string;
+      name?: string;
+      ranting_id?: string;
+      rantingId?: string;
+      jenis_kelamin?: string;
+      no_hp?: string;
+      email?: string;
+    }>,
     scope?: UserScope,
+    userId?: string,
   ) {
     // Verify access to the graduation (throws 404 if not found / 403 if out of scope)
     await this.getGraduationOrThrow(graduationId, scope);
 
-    let imported = 0;
+    let linked = 0;
+    let created = 0;
+    const errors: string[] = [];
+
     for (const row of data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const candidateId = (row as any).candidateId || (row as any).id;
-      if (!candidateId) continue;
-      const candidate = await this.prisma.calonAnggota.findUnique({
-        where: { id: candidateId },
-      });
-      if (candidate && candidate.status === 'diusulkan') {
-        await this.prisma.calonAnggota.update({
-          where: { id: candidateId },
-          data: { status: 'mengikuti_pendadaran' },
+      const label = row.candidateId || row.nama_lengkap || row.nama || row.name || 'baris tanpa nama';
+      try {
+        const candidateId = row.candidateId || row.id;
+
+        // (a) Tautkan calon yang sudah ada di sistem
+        if (candidateId) {
+          const candidate = await this.prisma.calonAnggota.findUnique({
+            where: { id: candidateId },
+          });
+          if (!candidate) {
+            errors.push(`${label}: calon tidak ditemukan`);
+            continue;
+          }
+          await this.ensureParticipantLink(graduationId, candidateId, 'daftar_calon', userId);
+          if (candidate.status !== 'mengikuti_pendadaran') {
+            await this.prisma.calonAnggota.update({
+              where: { id: candidateId },
+              data: { status: 'mengikuti_pendadaran' },
+            });
+          }
+          linked++;
+          continue;
+        }
+
+        // (b) Buat calon baru dari baris file
+        const nama = row.nama_lengkap || row.nama || row.name;
+        if (!nama || !nama.trim()) {
+          errors.push(`${label}: nama_lengkap wajib diisi`);
+          continue;
+        }
+        const rantingId = row.ranting_id || row.rantingId;
+        if (!rantingId) {
+          errors.push(`${nama}: ranting_id wajib diisi`);
+          continue;
+        }
+        const ranting = await this.prisma.ranting.findUnique({
+          where: { id: rantingId },
+          select: { id: true },
         });
-        imported++;
+        if (!ranting) {
+          errors.push(`${nama}: ranting tidak ditemukan`);
+          continue;
+        }
+
+        // Dedupe: email dulu (unik di DB), lalu nama (case-insensitive) —
+        // calon yang sudah ada cukup ditautkan, tidak dibuat duplikat.
+        let existingCandidate = row.email
+          ? await this.prisma.calonAnggota.findUnique({ where: { email: row.email } })
+          : null;
+        if (!existingCandidate) {
+          existingCandidate = await this.prisma.calonAnggota.findFirst({
+            where: { namaLengkap: { equals: nama.trim(), mode: 'insensitive' } },
+          });
+        }
+        if (existingCandidate) {
+          await this.ensureParticipantLink(graduationId, existingCandidate.id, 'import', userId);
+          if (existingCandidate.status !== 'mengikuti_pendadaran') {
+            await this.prisma.calonAnggota.update({
+              where: { id: existingCandidate.id },
+              data: { status: 'mengikuti_pendadaran' },
+            });
+          }
+          linked++;
+          continue;
+        }
+
+        const candidate = await this.prisma.calonAnggota.create({
+          data: {
+            rantingId,
+            namaLengkap: nama.trim(),
+            jenisKelamin: row.jenis_kelamin === 'P' ? 'P' : 'L',
+            noHp: row.no_hp || null,
+            email: row.email || null,
+            status: 'mengikuti_pendadaran',
+            usulOlehUserId: userId || 'system',
+          },
+        });
+        await this.ensureParticipantLink(graduationId, candidate.id, 'import', userId);
+        created++;
+      } catch (err) {
+        errors.push(`${label}: ${(err as Error).message}`);
       }
     }
 
     this.invalidateCache();
-    return { imported };
+    return { imported: linked + created, linked, created, errors };
   }
 
   // ═══════════════════════════════════════════════════════════
