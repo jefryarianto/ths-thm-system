@@ -82,8 +82,8 @@ export class ScopeGuard implements CanActivate {
     // (ranting → wilayah → distrik) so services can scope by district.
     if (user.role === 'superadmin') {
       request.scope = {};
-    } else if (user.rantingId && ['admin_distrik', 'admin_wilayah'].includes(user.role)) {
-      // Resolve ranting → wilayah → distrik chain for district-level roles
+    } else if (user.role === 'admin_distrik' && user.rantingId) {
+      // admin_distrik: resolve ranting → wilayah → distrik chain
       const ranting = await this.prisma.ranting.findUnique({
         where: { id: user.rantingId },
         include: { wilayah: { include: { distrik: true } } },
@@ -93,6 +93,20 @@ export class ScopeGuard implements CanActivate {
           rantingId: user.rantingId,
           wilayahId: ranting.wilayahId,
           distrikId: ranting.wilayah?.distrikId,
+        };
+      } else {
+        request.scope = { rantingId: user.rantingId };
+      }
+    } else if (user.role === 'admin_wilayah' && user.rantingId) {
+      // admin_wilayah: scope to wilayah level only (not distrik)
+      const ranting = await this.prisma.ranting.findUnique({
+        where: { id: user.rantingId },
+        include: { wilayah: true },
+      });
+      if (ranting) {
+        request.scope = {
+          rantingId: user.rantingId,
+          wilayahId: ranting.wilayahId,
         };
       } else {
         request.scope = { rantingId: user.rantingId };
