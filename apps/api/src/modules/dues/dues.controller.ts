@@ -36,7 +36,7 @@ export class DuesController {
   }
 
   @Delete(':id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus iuran' })
   remove(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.remove(id, req.scope);
   }
@@ -54,37 +54,37 @@ export class DuesController {
   }
 
   @Get('arrears')
-  @CrudAuth('superadmin', 'admin_distrik', { scope: 'district', summary: 'Daftar iuran menunggak' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'district', summary: 'Daftar iuran menunggak' })
   getArrears() {
     return this.service.getArrears();
   }
 
   @Get('report')
-  @CrudAuth('superadmin', 'admin_distrik', { scope: 'district', summary: 'Laporan iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'district', summary: 'Laporan iuran' })
   getReport() {
     return this.service.getReport();
   }
 
   @Get('report/export')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Export laporan iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Export laporan iuran' })
   exportReport() {
     return this.service.exportReport();
   }
 
   @Post('import')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Import iuran dari CSV' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Import iuran dari CSV' })
   importDues(@Body() importDto: { data: Record<string, unknown>[] }) {
     return this.service.importDues(importDto.data);
   }
 
   @Patch('batch')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Batch payment untuk banyak anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Batch payment untuk banyak anggota' })
   batchPayment(@Body() dto: BatchPaymentDto) {
     return this.service.batchPayment(dto);
   }
 
   @Get('dashboard/stats')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Statistik dashboard iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Statistik dashboard iuran' })
   getDashboardStats() {
     return this.service.getDashboardStats();
   }

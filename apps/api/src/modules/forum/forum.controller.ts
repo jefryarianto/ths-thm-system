@@ -51,7 +51,7 @@ export class ForumController {
   }
 
   @Post('categories')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Buat kategori forum (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Buat kategori forum (admin)' })
   @ApiBody({ type: CreateCategoryDto, description: 'Data kategori forum baru' })
   @ApiCreatedResponse({ description: 'Kategori forum berhasil dibuat' })
   createCategory(@Body() dto: CreateCategoryDto) {
@@ -59,7 +59,7 @@ export class ForumController {
   }
 
   @Patch('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Perbarui kategori forum (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui kategori forum (admin)' })
   @ApiParam({ name: 'id', description: 'ID Kategori Forum', required: true })
   @ApiBody({ type: UpdateCategoryDto, description: 'Data kategori forum yang diperbarui' })
   @ApiOkResponse({ description: 'Kategori forum berhasil diperbarui' })
@@ -68,7 +68,7 @@ export class ForumController {
   }
 
   @Delete('categories/:id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus kategori forum (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus kategori forum (admin)' })
   @ApiParam({ name: 'id', description: 'ID Kategori Forum', required: true })
   @ApiOkResponse({ description: 'Kategori forum berhasil dihapus' })
   deleteCategory(@Param('id') id: string) {
@@ -120,7 +120,7 @@ export class ForumController {
   }
 
   @Patch('threads/:id/pin')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Pin/unpin thread (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Pin/unpin thread (admin)' })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiOkResponse({ description: 'Status pin thread berubah' })
   togglePin(@Param('id') id: string) {
@@ -128,7 +128,7 @@ export class ForumController {
   }
 
   @Patch('threads/:id/lock')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Lock/unlock thread (admin)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Lock/unlock thread (admin)' })
   @ApiParam({ name: 'id', description: 'ID Thread', required: true })
   @ApiOkResponse({ description: 'Status lock thread berubah' })
   toggleLock(@Param('id') id: string) {

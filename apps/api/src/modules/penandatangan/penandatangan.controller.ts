@@ -32,14 +32,14 @@ export class PenandatanganController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tambah penandatangan baru (scope distrik opsional)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Tambah penandatangan baru (scope distrik opsional)' })
   create(@Req() req: ScopedRequest, @Body() dto: CreatePenandatanganDto) {
     dto.distrikId = resolveWriteDistrikId(req, dto.distrikId ?? null) ?? undefined;
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Update penandatangan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', { summary: 'Update penandatangan' })
   update(@Req() req: ScopedRequest, @Param('id') id: string, @Body() dto: UpdatePenandatanganDto) {
     return this.service.update(id, dto, { role: req?.user?.role, distrikId: req?.scope?.distrikId });
   }

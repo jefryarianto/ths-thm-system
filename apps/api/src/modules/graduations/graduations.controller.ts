@@ -55,7 +55,7 @@ export class GraduationsController {
    * ke distriknya sendiri; superadmin bisa menyaring via scopeType/scopeId.
    */
   @Get('admin-kegiatan-options')
-  @CrudAuth('superadmin', 'admin_distrik', {
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', {
     summary: 'Opsi admin kegiatan — dipilih admin distrik/superadmin dari anggota aktif dalam distrik',
   })
   getAdminKegiatanOptions(
@@ -202,7 +202,7 @@ export class GraduationsController {
   }
 
   @Post(':id/examiners/:penugasanId/review')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Admin distrik menyetujui / menolak pengajuan penguji' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Admin distrik menyetujui / menolak pengajuan penguji' })
   reviewExaminer(
     @Param('id') id: string,
     @Param('penugasanId') penugasanId: string,
@@ -213,7 +213,7 @@ export class GraduationsController {
   }
 
   @Post(':id/scores/approve')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Admin distrik menyetujui seluruh nilai penguji' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Admin distrik menyetujui seluruh nilai penguji' })
   approveScores(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.approveScores(id, req.user?.id, req.scope);
   }

@@ -48,7 +48,7 @@ export class LettersController {
   }
 
   @Delete('incoming/:id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus surat masuk' })
   incomingRemove(@Param('id') id: string) {
     return this.service.incomingRemove(id);
   }
@@ -84,7 +84,7 @@ export class LettersController {
   }
 
   @Delete('outgoing/:id')
-  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Hapus surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus surat keluar' })
   outgoingRemove(@Param('id') id: string) {
     return this.service.outgoingRemove(id);
   }
@@ -96,13 +96,13 @@ export class LettersController {
   }
 
   @Get('incoming/export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_ranting', { summary: 'Ekspor surat masuk' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ekspor surat masuk' })
   incomingExport() {
     return this.service.incomingExport();
   }
 
   @Get('outgoing/export/csv')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_ranting', { summary: 'Ekspor surat keluar' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Ekspor surat keluar' })
   outgoingExport() {
     return this.service.outgoingExport();
   }
