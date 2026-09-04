@@ -6,6 +6,7 @@ import { GripVertical, ChevronDown, ChevronRight, Users, Building2, MapPin, Refr
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
 import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface OrgNode {
   id: string;
@@ -35,6 +36,14 @@ export default function OrgChartEditorPage() {
   const [wilayahId, setWilayahId] = useState('');
   const [rantingId, setRantingId] = useState('');
   const [periodeId, setPeriodeId] = useState('');
+  
+  // Role-based scope locking
+  const { user } = useAuth();
+  const userRole = user?.role || '';
+  const isWilayahScoped = userRole === 'admin_wilayah';
+  const isRantingScoped = userRole === 'admin_ranting';
+  const isScoped = isWilayahScoped || isRantingScoped;
+  const [scopeResolved, setScopeResolved] = useState(false);
 
   const [distriks, setDistriks] = useState<{ id: string; nama: string }[]>([]);
   const [wilayahs, setWilayahs] = useState<{ id: string; nama: string }[]>([]);
@@ -61,6 +70,38 @@ export default function OrgChartEditorPage() {
     apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`).then(({ data }) => setRantings(data.data || [])).catch(() => {});
   }, [wilayahId]);
 
+  // Resolve user scope on mount for scoped roles
+  useEffect(() => {
+    if (!isScoped || !user?.rantingId) {
+      setScopeResolved(true);
+      return;
+    }
+    // Fetch ranting → wilayah → distrik chain
+    apiClient.get(`/org-structure/ranting/${user.rantingId}`).then(({ data }) => {
+      const ranting = data.data || data;
+      const wilayahId = ranting?.wilayahId || ranting?.wilayah?.id || '';
+      const distrikId = ranting?.wilayah?.distrikId || ranting?.wilayah?.distrik?.id || '';
+      
+      if (isRantingScoped) {
+        setLevel('ranting');
+        if (distrikId) setDistrikId(distrikId);
+        // Set wilayah after distrik loads
+        if (wilayahId) {
+          // Need to wait for distrik effect to load wilayahs
+          setTimeout(() => setWilayahId(wilayahId), 100);
+          setTimeout(() => setRantingId(user.rantingId!), 200);
+        }
+      } else if (isWilayahScoped) {
+        setLevel('wilayah');
+        if (distrikId) setDistrikId(distrikId);
+        if (wilayahId) setTimeout(() => setWilayahId(wilayahId), 100);
+      }
+      setScopeResolved(true);
+    }).catch(() => {
+      setScopeResolved(true);
+    });
+  }, [isScoped, user?.rantingId, isRantingScoped, isWilayahScoped]);
+  
   // Fetch kepengurusan and build tree
   const fetchTree = useCallback(async () => {
     setLoading(true);
@@ -265,16 +306,18 @@ export default function OrgChartEditorPage() {
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Level</label>
             <select value={level} onChange={(e) => setLevel(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-              <option value="distrik">Distrik</option>
+              disabled={isScoped}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+              {(!isWilayahScoped) && <option value="distrik">Distrik</option>}
               <option value="wilayah">Wilayah</option>
-              <option value="ranting">Ranting</option>
+              {(!isWilayahScoped) && <option value="ranting">Ranting</option>}
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Distrik</label>
             <select value={distrikId} onChange={(e) => setDistrikId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              disabled={isScoped}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
               <option value="">Semua</option>
               {distriks.map((d) => <option key={d.id} value={d.id}>{d.nama}</option>)}
             </select>
@@ -283,7 +326,8 @@ export default function OrgChartEditorPage() {
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Wilayah</label>
               <select value={wilayahId} onChange={(e) => setWilayahId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                disabled={isRantingScoped}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
                 <option value="">Semua</option>
                 {wilayahs.map((w) => <option key={w.id} value={w.id}>{w.nama}</option>)}
               </select>
@@ -293,7 +337,8 @@ export default function OrgChartEditorPage() {
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ranting</label>
               <select value={rantingId} onChange={(e) => setRantingId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                disabled={isRantingScoped}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
                 <option value="">Semua</option>
                 {rantings.map((r) => <option key={r.id} value={r.id}>{r.nama}</option>)}
               </select>
