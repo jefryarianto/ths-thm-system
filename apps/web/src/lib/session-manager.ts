@@ -133,6 +133,19 @@ class SessionManager {
     localStorage.removeItem('refreshToken');
   }
 
+  /**
+   * Clean logout — clears tokens and state WITHOUT firing expired listeners
+   * (no toast, no redirect). Use this for voluntary logout.
+   */
+  logout() {
+    this._isExpired = false;
+    this._expiryWarningFired = false;
+    this.cancelExpiryWarning();
+    this.clearTokens();
+    localStorage.removeItem('session-expired');
+    localStorage.removeItem('user');
+  }
+
   reset() {
     this._isExpired = false;
     this._expiryWarningFired = false;

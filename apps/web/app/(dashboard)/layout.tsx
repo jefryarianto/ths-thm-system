@@ -3,7 +3,8 @@
 import { ReactNode, useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import apiClient, { clearTokens } from '@/lib/api-client';
+import apiClient from '@/lib/api-client';
+import { sessionManager } from '@/lib/session-manager';
 import { getSocket, disconnectSocket } from '@/lib/socket';
 import {
   Users,
@@ -532,8 +533,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleLogout = () => {
     setProfileOpen(false);
     disconnectSocket();
-    clearTokens();
-    localStorage.removeItem('user');
+    sessionManager.logout();
     router.push('/login');
   };
 
