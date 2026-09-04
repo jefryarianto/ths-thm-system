@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import {
   LoginDto,
   RegisterDto,
@@ -38,6 +39,7 @@ function parseCookie(cookieHeader: string, name: string): string | undefined {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
     @Inject('ENV') private readonly envConfig: typeof env,
   ) {}
 

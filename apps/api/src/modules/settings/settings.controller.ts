@@ -43,6 +43,22 @@ export class SettingsController {
     private readonly settingsService: SettingsService,
   ) {}
 
+  @Get('auth-providers')
+  @CrudAuth('superadmin')
+  async getAuthProviders() {
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'google_oauth_enabled' } });
+    return { googleOAuthEnabled: setting?.value !== false };
+  }
+
+  @Post('auth-providers')
+  @CrudAuth('superadmin')
+  async updateAuthProviders(@Body() body: { googleOAuthEnabled?: boolean }) {
+    if (body.googleOAuthEnabled !== undefined) {
+      await this.settingsService.updateSettings({ google_oauth_enabled: body.googleOAuthEnabled });
+    }
+    return { success: true };
+  }
+
   @Get()
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { scope: 'national', summary: 'Ambil semua pengaturan' })
   async getAllSettings() {
