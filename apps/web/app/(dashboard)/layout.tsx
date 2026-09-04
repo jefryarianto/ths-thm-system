@@ -82,7 +82,7 @@ const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
   // System admins live in Keanggotaan + Sistem (Users, Settings, Antrean) daily.
   superadmin: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi', 'Sistem'],
   admin_distrik: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi', 'Sistem'],
-  admin_wilayah: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi'],
+  admin_wilayah: ['Utama', 'Keanggotaan', 'Organisasi', 'Keuangan', 'Komunikasi'],
   admin_ranting: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi'],
   // Kegiatan organisasi → aktivitas & kalender.
   admin_kegiatan: ['Utama', 'Pelatihan & Penilaian', 'Keuangan', 'Komunikasi'],
@@ -137,8 +137,8 @@ const menuGroups: MenuGroup[] = [
       { href: '/org-documents', label: 'Dokumen Organisasi', icon: FileText, minRole: 'anggota' },
       { href: '/settings/jabatan', label: 'Jabatan', icon: Shield, minRole: 'superadmin' },
       { href: '/settings/periode', label: 'Periode', icon: Calendar, minRole: 'superadmin' },
-      { href: '/settings/kepengurusan', label: 'Kepengurusan', icon: Users, minRole: 'admin_distrik' },
-      { href: '/settings/org-chart-editor', label: 'Editor Org Chart', icon: Shield, minRole: 'admin_distrik' },
+      { href: '/settings/kepengurusan', label: 'Kepengurusan', icon: Users, minRole: 'admin_wilayah' },
+      { href: '/settings/org-chart-editor', label: 'Editor Org Chart', icon: Shield, minRole: 'admin_wilayah' },
     ],
   },
   {
