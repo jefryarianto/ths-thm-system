@@ -417,33 +417,50 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:3001
           NEXT_PUBLIC_ENABLE_REALTIME: false
 
-      - name: Start API server in background
+      - name: Start API server (retry on crash)
         shell: bash
+        timeout-minutes: 6
         run: |
           cd apps/api
-          ls -la dist/
-          node dist/main.js > ./smoke-test-api.log 2>&1 &
-          echo "API_PID=$!" >> $GITHUB_ENV
-          sleep 2
-          ps -p $API_PID -o pid,cmd || true
-
-      - name: Wait for API health
-        shell: bash
-        run: |
-          for i in $(seq 1 30); do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health 2>/dev/null || echo "000")
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "✅ API health check passed (attempt $i)"
-              curl -s http://localhost:3001/api/health
-              echo ""
-              exit 0
+          rm -f ./smoke-test-api.log
+          API_OK=0
+          # Up to 3 attempts — native segfaults (e.g. Prisma engine) are flaky
+          for attempt in 1 2 3; do
+            echo "🚀 Starting API (attempt $attempt/3)..."
+            node dist/main.js >> ./smoke-test-api.log 2>&1 &
+            API_PID=$!
+            echo "API_PID=$API_PID" >> "$GITHUB_ENV"
+            for i in $(seq 1 30); do
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "✅ API health check passed (attempt $attempt, poll $i)"
+                curl -s http://localhost:3001/api/health
+                echo ""
+                API_OK=1
+                break
+              fi
+              # Restart early when the process died during bootstrap
+              if ! kill -0 "$API_PID" 2>/dev/null; then
+                echo "⚠️ API process exited during bootstrap — will retry"
+                tail -20 ./smoke-test-api.log || true
+                break
+              fi
+              echo "   Waiting... (attempt $attempt, poll $i/30) HTTP $HTTP_CODE"
+              sleep 3
+            done
+            if [ "$API_OK" = "1" ]; then
+              break
             fi
-            echo "   Waiting... (attempt $i/30) HTTP $HTTP_CODE"
-            sleep 3
+            kill "$API_PID" 2>/dev/null || true
+            wait "$API_PID" 2>/dev/null || true
+            if [ "$attempt" = "3" ]; then
+              echo "❌ API failed to start after 3 attempts"
+              tail -50 ./smoke-test-api.log || true
+              exit 1
+            fi
+            echo "↻ Restarting API after failure..."
+            sleep 2
           done
-          echo "❌ API failed to start within 90 seconds"
-          tail -30 ./smoke-test-api.log 2>/dev/null || true
-          exit 1
 
       - name: Start Web server in background
         shell: bash
