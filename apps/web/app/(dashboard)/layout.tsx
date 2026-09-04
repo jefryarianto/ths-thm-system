@@ -87,7 +87,7 @@ const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
   // Kegiatan organisasi → aktivitas & kalender.
   admin_kegiatan: ['Utama', 'Pelatihan & Penilaian', 'Keuangan', 'Komunikasi'],
   // Penguji bekerja di halaman Penilaian.
-  penguji: ['Utama', 'Pelatihan & Penilaian', 'Keuangan', 'Komunikasi'],
+  penguji: ['Utama', 'Pelatihan & Penilaian'],
   anggota: ['Utama', 'Aktivitas', 'Keuangan', 'Komunikasi'],
 };
 
@@ -160,7 +160,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
       { href: '/gamification/admin', label: 'Admin', icon: Shield, minRole: 'admin_ranting' },
-      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'anggota' },
+      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'admin_kegiatan' },
       { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: BarChart3, minRole: 'admin_ranting' },
       { href: '/gamification/settings', label: 'Pengaturan Gamifikasi', icon: Settings, minRole: 'admin_ranting' },
     ],
