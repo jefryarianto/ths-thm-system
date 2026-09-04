@@ -539,6 +539,25 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-600">
           &copy; {new Date().getFullYear()} THS-THM System. All rights reserved.
         </p>
+
+        {/* Full-screen loading overlay */}
+        {loading && (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm">
+            <div className="relative">
+              {/* Outer ring */}
+              <div className="absolute inset-0 h-20 w-20 animate-spin rounded-full border-4 border-transparent border-t-navy-600 border-r-navy-400" />
+              {/* Inner ring (counter-rotate) */}
+              <div className="absolute inset-2 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-b-blue-500 border-l-blue-300" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+              {/* Logo center */}
+              <div className="relative flex h-20 w-20 items-center justify-center">
+                <img src="/logo.svg" alt="" className="h-12 w-12 animate-pulse" />
+              </div>
+            </div>
+            <p className="mt-6 text-sm font-medium text-navy-700 dark:text-blue-300 animate-pulse">
+              Memverifikasi kredensial...
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

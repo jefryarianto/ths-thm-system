@@ -30,9 +30,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         playSessionExpiredAlert();
-        toastRef.current('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman login...');
+        toastRef.current('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman utama...');
         timeoutId = setTimeout(() => {
-          routerRef.current.push('/login');
+          routerRef.current.replace('/');
         }, 1000);
       } else {
         if (timeoutId) {
