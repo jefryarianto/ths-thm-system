@@ -68,8 +68,8 @@ export function LandingPageContent() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <div className="max-w-4xl">
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold mb-6 leading-tight tracking-tight text-white">
+          <div className="max-w-4xl overflow-hidden">
+            <h1 className="text-[clamp(0.8rem,3.3vw,2.75rem)] font-serif font-bold mb-6 tracking-tight text-white whitespace-nowrap">
               TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA
             </h1>
             <div className="flex flex-col sm:flex-row gap-4">
