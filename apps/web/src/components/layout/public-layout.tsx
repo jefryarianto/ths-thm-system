@@ -32,7 +32,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* ── Top Utility Bar ── */}
       <div className="bg-navy-900 text-white text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">

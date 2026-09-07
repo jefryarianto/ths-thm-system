@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className="antialiased overflow-x-hidden">
         <ThemeProvider>
           <ToastProvider>
             <SessionProvider>
