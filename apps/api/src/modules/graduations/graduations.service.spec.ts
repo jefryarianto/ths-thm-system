@@ -11,6 +11,7 @@ import { DocumentsService } from '../documents/documents.service';
 import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AssessmentsService } from '../assessments/assessments.service';
+import { ExaminersService } from '../examiners/examiners.service';
 
 describe('GraduationsService', () => {
   let service: GraduationsService;
@@ -153,6 +154,10 @@ describe('GraduationsService', () => {
       .mockResolvedValue({ clonedAspects: 0, clonedItems: 0, skipped: true }),
   };
 
+  const mockExaminersService = {
+    create: jest.fn(),
+  };
+
   const mockCache = {
     getOrSet: jest.fn().mockImplementation((_key, factory) => factory()),
     invalidatePrefix: jest.fn(),
@@ -171,6 +176,7 @@ describe('GraduationsService', () => {
         { provide: NraService, useValue: mockNraService },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: AssessmentsService, useValue: mockAssessmentsService },
+        { provide: ExaminersService, useValue: mockExaminersService },
       ],
     }).compile();
 
@@ -621,6 +627,88 @@ describe('GraduationsService', () => {
     it('menolak bila pendadaran tidak ditemukan', async () => {
       mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(null);
       await expect(service.getExaminerCandidates('gX')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('addExaminerFromMember', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(mockGraduation);
+      mockPrisma.ujianPraktek.findMany.mockReset().mockResolvedValue([]);
+      mockExaminersService.create.mockReset();
+    });
+
+    it('BadRequest bila anggota tidak punya email (tanpa membuat akun)', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({ id: 'a1', namaLengkap: 'Tanpa Email', email: null });
+
+      await expect(
+        service.addExaminerFromMember('g1', { anggotaId: 'a1' }, true, 'admin1'),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockExaminersService.create).not.toHaveBeenCalled();
+    });
+
+    it('direct=true: buat/promote akun lalu penugasan langsung approved', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({
+        id: 'a1', namaLengkap: 'Anggota Satu', email: 'anggota@test.com',
+      });
+      mockExaminersService.create.mockResolvedValue({
+        data: { id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com' },
+        message: 'Akun anggota dipromosikan menjadi penguji',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com',
+      });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
+      mockPrisma.penugasanPenguji.create.mockResolvedValue({
+        id: 'pn1', status: 'approved',
+        pengujiUser: { id: 'u9', namaLengkap: 'Anggota Satu', email: 'anggota@test.com' },
+      });
+
+      const result = await service.addExaminerFromMember('g1', { anggotaId: 'a1' }, true, 'admin1');
+
+      expect(mockExaminersService.create).toHaveBeenCalledWith({
+        email: 'anggota@test.com',
+        namaLengkap: 'Anggota Satu',
+      });
+      expect(result.status).toBe('approved');
+      expect(mockPrisma.penugasanPenguji.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ pengujiUserId: 'u9', status: 'approved' }),
+        }),
+      );
+    });
+
+    it('direct=false: penugasan pending (alur pengajuan admin kegiatan)', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue({
+        id: 'a1', namaLengkap: 'Anggota Satu', email: 'anggota@test.com',
+      });
+      mockExaminersService.create.mockResolvedValue({
+        data: { id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com' },
+        message: 'Penguji berhasil ditambahkan',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u9', role: 'penguji', isActive: true, email: 'anggota@test.com',
+      });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
+      mockPrisma.penugasanPenguji.create.mockResolvedValue({
+        id: 'pn1', status: 'pending',
+        pengujiUser: { id: 'u9', namaLengkap: 'Anggota Satu', email: 'anggota@test.com' },
+      });
+
+      const result = await service.addExaminerFromMember('g1', { anggotaId: 'a1' }, false);
+
+      expect(result.status).toBe('pending');
+      expect(mockPrisma.penugasanPenguji.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ pengujiUserId: 'u9', status: 'pending' }),
+        }),
+      );
+    });
+
+    it('NotFound bila anggota tidak ditemukan', async () => {
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      await expect(
+        service.addExaminerFromMember('g1', { anggotaId: 'aX' }, true, 'admin1'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

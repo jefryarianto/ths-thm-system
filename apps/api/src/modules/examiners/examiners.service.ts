@@ -148,9 +148,11 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
         return { data: existing, message: 'User sudah terdaftar sebagai penguji aktif' };
       }
       // Promote akun eksisting (mis. role anggota) menjadi penguji.
+      // isActive: true — menambahkan penguji nonaktif yang lama juga
+      // mengaktifkannya kembali (niat eksplisit admin).
       const promoted = await this.prisma.user.update({
         where: { id: existing.id },
-        data: { role: 'penguji' },
+        data: { role: 'penguji', isActive: true },
       });
       this.invalidateCache();
       this.audit('UPDATE', 'user', promoted.id, null, {

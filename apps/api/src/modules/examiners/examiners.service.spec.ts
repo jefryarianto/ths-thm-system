@@ -134,7 +134,10 @@ describe('ExaminersService', () => {
       const result = await service.create({ email: 'a@test.com', namaLengkap: 'Ali' });
       expect(result.data.role).toBe('penguji');
       expect(result.message).toContain('dipromosikan');
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({ where: { id: 'u9' }, data: { role: 'penguji' } });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u9' },
+        data: { role: 'penguji', isActive: true },
+      });
       expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
 

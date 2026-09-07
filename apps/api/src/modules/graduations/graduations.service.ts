@@ -31,6 +31,7 @@ import {
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { normalizePhone } from '../../common/utils/phone.util';
 import { AssessmentsService } from '../assessments/assessments.service';
+import { ExaminersService } from '../examiners/examiners.service';
 import bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -62,6 +63,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     private readonly memberMailService: MemberMailService,
     private readonly assessmentsService: AssessmentsService,
     private readonly notificationsService: NotificationsService,
+    private readonly examinersService: ExaminersService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
   ) {
     super(prisma, scopeHelper, cache, {
@@ -1614,6 +1616,60 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       .catch(() => {});
 
     return assignment;
+  }
+
+  /**
+   * Ajukan/tambah penguji LANGSUNG dari anggota terdaftar (dari dalam
+   * pendadaran) — tanpa harus lewat menu Manajemen Penguji dulu.
+   * Akun anggota dibuat/dipromosikan menjadi penguji (idempoten, reuse
+   * ExaminersService), lalu penugasan dibuat: langsung 'approved' bila
+   * caller berhak langsung (superadmin/admin distrik/wilayah/ranting),
+   * atau 'pending' menunggu persetujuan admin distrik (admin kegiatan).
+   */
+  async addExaminerFromMember(
+    graduationId: string,
+    dto: { anggotaId: string; peran?: string; catatan?: string },
+    direct: boolean,
+    userId?: string,
+    scope?: UserScope,
+  ) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'closed' || grad.status === 'cancelled') {
+      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat menambah penguji.');
+    }
+
+    const anggota = await this.prisma.anggota.findFirst({
+      where: { id: dto.anggotaId, deletedAt: null },
+      select: { id: true, namaLengkap: true, email: true },
+    });
+    if (!anggota) throw new NotFoundException('Anggota tidak ditemukan');
+    if (!anggota.email) {
+      throw new BadRequestException(
+        'Anggota belum punya email — lengkapi email anggota terlebih dahulu di manajemen anggota',
+      );
+    }
+
+    // Buat/promote akun penguji (idempoten) — welcome/promotion email dikirim
+    // oleh ExaminersService.
+    const result = await this.examinersService.create({
+      email: anggota.email,
+      namaLengkap: anggota.namaLengkap,
+    });
+    const pengujiUser = result.data as { id: string; isActive: boolean };
+
+    if (direct) {
+      return this.addExaminerManually(
+        graduationId,
+        { pengujiUserId: pengujiUser.id, peran: dto.peran, catatan: dto.catatan },
+        userId,
+        scope,
+      );
+    }
+    return this.proposeExaminer(
+      graduationId,
+      { pengujiUserId: pengujiUser.id, peran: dto.peran, catatan: dto.catatan },
+      scope,
+    );
   }
 
   /**

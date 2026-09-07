@@ -37,6 +37,7 @@ import {
   Mail,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
+import MemberSearchPicker from '@/components/members/MemberSearchPicker';
 import InvitationTab from './components/InvitationTab';
 
 // ─── Constants (inline - no external file dependency) ──
@@ -198,6 +199,13 @@ interface ExaminerOption {
   sumber?: 'manajemen_penguji' | 'daftar_hadir' | 'anggota_kegiatan';
 }
 
+interface MemberPickerResult {
+  id: string;
+  namaLengkap: string;
+  nomorAnggota?: string;
+  email?: string;
+}
+
 interface AdminKegiatanOption {
   anggotaId: string;
   namaLengkap: string;
@@ -278,6 +286,10 @@ export default function GraduationDetailPage() {
   const [examinersLoading, setExaminersLoading] = useState(false);
   const [examinerOptions, setExaminerOptions] = useState<ExaminerOption[]>([]);
   const [showProposeExaminer, setShowProposeExaminer] = useState(false);
+  const [proposePickMode, setProposePickMode] = useState<'kandidat' | 'anggota'>('kandidat');
+  const [proposeMember, setProposeMember] = useState<MemberPickerResult | null>(null);
+  const [manualPickMode, setManualPickMode] = useState<'kandidat' | 'anggota'>('kandidat');
+  const [manualMember, setManualMember] = useState<MemberPickerResult | null>(null);
   const [showManualAddExaminer, setShowManualAddExaminer] = useState(false);
   const [manualAddForm, setManualAddForm] = useState({ pengujiUserId: '', catatan: '' });
   const [manualAdding, setManualAdding] = useState(false);
@@ -653,16 +665,26 @@ export default function GraduationDetailPage() {
 
   const handleProposeExaminer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !proposeForm.pengujiUserId) return;
+    if (!id) return;
+    if (proposePickMode === 'anggota' && !proposeMember) return;
+    if (proposePickMode === 'kandidat' && !proposeForm.pengujiUserId) return;
     setProposing(true);
     setWorkflowMsg(null);
     try {
-      await apiClient.post(`/graduations/${id}/examiners`, {
-        pengujiUserId: proposeForm.pengujiUserId,
-        catatan: proposeForm.catatan || undefined,
-      });
+      if (proposePickMode === 'anggota' && proposeMember) {
+        await apiClient.post(`/graduations/${id}/examiners/from-member`, {
+          anggotaId: proposeMember.id,
+          catatan: proposeForm.catatan || undefined,
+        });
+      } else {
+        await apiClient.post(`/graduations/${id}/examiners`, {
+          pengujiUserId: proposeForm.pengujiUserId,
+          catatan: proposeForm.catatan || undefined,
+        });
+      }
       setShowProposeExaminer(false);
       setProposeForm({ pengujiUserId: '', catatan: '' });
+      setProposeMember(null);
       setWorkflowMsg({ ok: true, text: 'Penguji berhasil diajukan dan menunggu persetujuan admin distrik' });
       await fetchExaminers();
       await fetchCompleteness();
@@ -675,16 +697,26 @@ export default function GraduationDetailPage() {
 
   const handleManualAddExaminer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !manualAddForm.pengujiUserId) return;
+    if (!id) return;
+    if (manualPickMode === 'anggota' && !manualMember) return;
+    if (manualPickMode === 'kandidat' && !manualAddForm.pengujiUserId) return;
     setManualAdding(true);
     setWorkflowMsg(null);
     try {
-      await apiClient.post(`/graduations/${id}/examiners/manual`, {
-        pengujiUserId: manualAddForm.pengujiUserId,
-        catatan: manualAddForm.catatan || undefined,
-      });
+      if (manualPickMode === 'anggota' && manualMember) {
+        await apiClient.post(`/graduations/${id}/examiners/from-member`, {
+          anggotaId: manualMember.id,
+          catatan: manualAddForm.catatan || undefined,
+        });
+      } else {
+        await apiClient.post(`/graduations/${id}/examiners/manual`, {
+          pengujiUserId: manualAddForm.pengujiUserId,
+          catatan: manualAddForm.catatan || undefined,
+        });
+      }
       setShowManualAddExaminer(false);
       setManualAddForm({ pengujiUserId: '', catatan: '' });
+      setManualMember(null);
       setWorkflowMsg({ ok: true, text: 'Penguji berhasil ditambahkan secara manual (langsung disetujui & masuk semua sesi ujian)' });
       await fetchExaminers();
       await fetchCompleteness();
@@ -1834,11 +1866,22 @@ export default function GraduationDetailPage() {
             )}
 
             {/* Manual Add Examiner Modal (superadmin/admin_distrik — langsung approved) */}
-            <Modal open={showManualAddExaminer} onClose={() => setShowManualAddExaminer(false)} title="Tambah Penguji Manual" size="sm">
+            <Modal open={showManualAddExaminer} onClose={() => { setShowManualAddExaminer(false); setManualPickMode('kandidat'); setManualMember(null); }} title="Tambah Penguji Manual" size="sm">
               <form onSubmit={handleManualAddExaminer} className="space-y-4">
                 <p className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg px-3 py-2">
                   Penguji yang dipilih langsung berstatus <strong>Disetujui</strong> tanpa alur pengajuan, dan otomatis masuk ke semua sesi ujian praktek pendadaran ini.
                 </p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setManualPickMode('kandidat')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${manualPickMode === 'kandidat' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    Dari Kandidat Tersedia
+                  </button>
+                  <button type="button" onClick={() => setManualPickMode('anggota')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${manualPickMode === 'anggota' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    Cari Semua Anggota
+                  </button>
+                </div>
+                {manualPickMode === 'kandidat' ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih dari Anggota Terdaftar *</label>
                   <select
@@ -1884,6 +1927,17 @@ export default function GraduationDetailPage() {
                     )}
                   </select>
                 </div>
+                ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari Anggota Terdaftar *</label>
+                  <MemberSearchPicker
+                    value={manualMember?.id}
+                    onChange={(m) => setManualMember(m)}
+                    placeholder="Cari anggota berdasarkan nama / no anggota..."
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Akun penguji otomatis dibuat/dipromosikan dari anggota yang dipilih, lalu langsung ditugaskan di pendadaran ini.</p>
+                </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
                   <textarea
@@ -1914,8 +1968,19 @@ export default function GraduationDetailPage() {
             </Modal>
 
             {/* Propose Examiner Modal */}
-            <Modal open={showProposeExaminer} onClose={() => setShowProposeExaminer(false)} title="Ajukan Penguji" size="sm">
+            <Modal open={showProposeExaminer} onClose={() => { setShowProposeExaminer(false); setProposePickMode('kandidat'); setProposeMember(null); }} title="Ajukan Penguji" size="sm">
               <form onSubmit={handleProposeExaminer} className="space-y-4">
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setProposePickMode('kandidat')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${proposePickMode === 'kandidat' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    Dari Kandidat Tersedia
+                  </button>
+                  <button type="button" onClick={() => setProposePickMode('anggota')}
+                    className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition ${proposePickMode === 'anggota' ? 'bg-emerald-600 text-white border-emerald-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    Cari Semua Anggota
+                  </button>
+                </div>
+                {proposePickMode === 'kandidat' ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Penguji *</label>
                   <select
@@ -1961,6 +2026,17 @@ export default function GraduationDetailPage() {
                     )}
                   </select>
                 </div>
+                ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari Anggota Terdaftar *</label>
+                  <MemberSearchPicker
+                    value={proposeMember?.id}
+                    onChange={(m) => setProposeMember(m)}
+                    placeholder="Cari anggota berdasarkan nama / no anggota..."
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Akun penguji otomatis dibuat/dipromosikan dari anggota yang dipilih, lalu pengajuan dibuat menunggu persetujuan admin distrik.</p>
+                </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
                   <textarea

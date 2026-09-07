@@ -238,6 +238,20 @@ export class GraduationsController {
     return this.service.addExaminerManually(id, dto, req.user?.id, req.scope);
   }
 
+  @Post(':id/examiners/from-member')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Ajukan/tambah penguji langsung dari anggota terdaftar — akun dibuat/dipromosikan lalu ditugaskan (pending utk admin kegiatan, approved utk level di atasnya)' })
+  addExaminerFromMember(
+    @Param('id') id: string,
+    @Body() dto: { anggotaId: string; peran?: string; catatan?: string },
+    @Req() req: ScopedRequest,
+  ) {
+    const direct = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'].includes(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (req.user as any)?.role,
+    );
+    return this.service.addExaminerFromMember(id, dto, direct, req.user?.id, req.scope);
+  }
+
   @Post(':id/examiners/:penugasanId/review')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Admin distrik menyetujui / menolak pengajuan penguji' })
   reviewExaminer(
