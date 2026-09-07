@@ -199,6 +199,7 @@ const menuGroups: MenuGroup[] = [
       { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: Bell, minRole: 'admin_ranting' },
       { href: '/monitoring/incidents', label: 'Incidents', icon: AlertTriangle, minRole: 'admin_ranting' },
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
+      { href: '/settings#autentikasi', label: 'Autentikasi', icon: Shield, minRole: 'superadmin' },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
       { href: '/settings/penandatangan', label: 'Penandatangan', icon: PenLine, minRole: 'admin_distrik' },
       { href: '/settings/kartu', label: 'Template Kartu', icon: IdCard, minRole: 'admin_distrik' },
