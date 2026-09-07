@@ -586,13 +586,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       >
         {/* Brand + Toggle */}
-        <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-800 h-14 shrink-0">
+        <div className={`flex items-center justify-between border-b border-gray-200 dark:border-gray-800 h-14 shrink-0 transition-all duration-300 ${collapsed ? 'px-1' : 'p-3'}`}>
           {collapsed ? (
-            <Link href={user ? getHomePathForRole(user.role) : '/dashboard'} className="mx-auto">
+            <Link href={user ? getHomePathForRole(user.role) : '/dashboard'} className="flex items-center justify-center min-w-0">
               <img
                 src="/logo.svg"
                 alt="THS-THM"
-                className="h-8 w-8 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
+                className="h-6 w-6 rounded object-cover ring-1 ring-gray-200 dark:ring-gray-700 transition-all duration-300"
               />
             </Link>
           ) : (
@@ -607,12 +607,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           )}
           <button
             onClick={toggleSidebar}
-            className="p-1.5 rounded-xl hover:bg-navy-700 transition-colors text-navy-300 hover:text-white shrink-0"
+            className={`rounded-xl hover:bg-navy-700 transition-colors text-navy-300 hover:text-white shrink-0 ${collapsed ? 'p-1' : 'p-1.5'}`}
             title={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
             aria-label={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
             aria-expanded={!collapsed}
           >
-            {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+            {collapsed ? <PanelLeft size={16} /> : <PanelLeftClose size={18} />}
           </button>
         </div>
 

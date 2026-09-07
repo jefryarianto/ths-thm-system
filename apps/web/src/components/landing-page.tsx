@@ -139,7 +139,7 @@ export function LandingPageContent() {
                       <div className="relative h-96 sm:h-[28rem]">
                         {n.gambar ? (
                           <img
-                            src={n.gambar}
+                            src={`/api/uploads/${n.gambar}`}
                             alt={n.judul}
                             className="w-full h-full object-cover"
                           />

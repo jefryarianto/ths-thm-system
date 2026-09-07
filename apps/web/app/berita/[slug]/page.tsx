@@ -80,7 +80,7 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
 
   return (
     <PublicLayout>
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back link */}
         <Link
           href="/berita"

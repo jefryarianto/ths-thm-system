@@ -84,7 +84,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex lg:items-center lg:gap-1">
+            <div className="hidden xl:flex xl:items-center xl:gap-1">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -108,7 +108,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 rounded-lg text-navy-600 hover:bg-navy-50 transition-colors duration-200"
+                className="xl:hidden p-2 rounded-lg text-navy-600 hover:bg-navy-50 transition-colors duration-200"
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
               >
@@ -120,7 +120,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* ── Mobile Navigation Drawer ── */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white animate-slide-down">
+          <div className="xl:hidden border-t border-gray-100 bg-white animate-slide-down">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               {NAV_LINKS.map((link) => (
                 <Link
