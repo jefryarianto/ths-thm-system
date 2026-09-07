@@ -813,6 +813,13 @@ export default function GraduationDetailPage() {
     } catch { /* ignore */ }
   };
 
+  const handleAutoSyncUjian = async (ujianId: string) => {
+    try {
+      await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/auto-sync`);
+      await fetchUjianList();
+    } catch { /* ignore */ }
+  };
+
   const expandUjian = async (ujianId: string) => {
     if (expandedUjian === ujianId) {
       setExpandedUjian(null);
@@ -1295,6 +1302,14 @@ export default function GraduationDetailPage() {
               </div>
             )}
 
+            {/* Info aturan penilaian: semua penguji × semua aspek */}
+            <div className="flex items-start gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-xl text-xs text-blue-800 dark:text-blue-300">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <p>
+                Aturan penilaian pendadaran ini: <strong>semua penguji menguji semua aspek</strong> — tidak ada pembagian aspek per penguji. Setiap ujian otomatis berisi seluruh item penilaian aktif &amp; seluruh penguji approved. Bila ada item/penguji baru setelah ujian dibuat, gunakan tombol <strong>Sinkronkan</strong> pada ujian terkait.
+              </p>
+            </div>
+
             {/* Toolbar */}
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1435,6 +1450,11 @@ export default function GraduationDetailPage() {
                               <CheckCircle2 size={12} /> Akhiri Ujian
                             </button>
                           )}
+                          <button onClick={() => handleAutoSyncUjian(ujian.id)}
+                            title="Pastikan semua item penilaian aktif & semua penguji approved masuk ke ujian ini"
+                            className="flex items-center gap-1 px-3 py-1.5 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition">
+                            <RefreshCw size={12} /> Sinkronkan
+                          </button>
                         </div>
 
                         {/* --- Penguji (Examiners) --- */}

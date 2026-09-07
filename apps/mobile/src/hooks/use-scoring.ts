@@ -117,11 +117,11 @@ export async function submitScores(
 export async function getUjianPraktekId(kegiatanId: string): Promise<string | null> {
   try {
     const { data } = await apiClient.get(`/graduations/${kegiatanId}/ujian-praktek`);
-    const list = data?.data as Array<{ id: string }> | undefined;
-    if (list && list.length > 0) {
-      return list[0].id;
-    }
-    return null;
+    const list = (data?.data ?? []) as Array<{ id: string; status?: string }>;
+    // Semua ujian setara (aturan: semua penguji × semua aspek) — pilih ujian
+    // pertama yang tidak dibatalkan.
+    const active = list.find((u) => u.status !== 'dibatalkan') ?? list[0];
+    return active?.id ?? null;
   } catch {
     return null;
   }

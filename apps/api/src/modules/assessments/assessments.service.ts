@@ -92,6 +92,35 @@ export class AssessmentsService {
     if (dto.skorMaksimal === undefined || Number(dto.skorMaksimal) <= 0) data.skorMaksimal = 100;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const item = await this.prisma.itemPenilaian.create({ data: data as any });
+    // Aturan "semua penguji menguji semua aspek": item baru yang aspek-nya
+    // milik pendadaran tertentu otomatis dilampirkan ke semua ujian praktek
+    // pendadaran tsb (additive). Item di bawah aspek template global
+    // (kegiatanId=null) tidak auto-attach — gunakan tombol Sinkronkan per
+    // ujian bila perlu. Scoping item selalu via aspek (item tanpa kegiatanId).
+    try {
+      const aspek = await this.prisma.aspekPenilaian.findUnique({
+        where: { id: item.aspekId },
+        select: { kegiatanId: true },
+      });
+      if (aspek?.kegiatanId) {
+        const ujianList = await this.prisma.ujianPraktek.findMany({
+          where: { kegiatanId: aspek.kegiatanId },
+          select: { id: true },
+        });
+        if (ujianList.length > 0) {
+          await this.prisma.ujianPraktekItem.createMany({
+            data: ujianList.map((u) => ({
+              ujianPraktekId: u.id,
+              itemPenilaianId: item.id,
+              urutan: item.urutan,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+    } catch {
+      // Non-blocking: auto-attach gagal tidak boleh menggagalkan create item.
+    }
     return item;
   }
 

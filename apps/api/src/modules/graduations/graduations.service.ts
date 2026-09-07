@@ -1578,6 +1578,28 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     });
     this.invalidateCache();
 
+    // Aturan "semua penguji menguji semua aspek": penguji yang baru approved
+    // otomatis dilampirkan ke semua ujian praktek pendadaran ini (additive).
+    if (dto.approved) {
+      try {
+        const ujianList = await this.prisma.ujianPraktek.findMany({
+          where: { kegiatanId: graduationId },
+          select: { id: true },
+        });
+        if (ujianList.length > 0) {
+          await this.prisma.ujianPraktekPenilai.createMany({
+            data: ujianList.map((u) => ({
+              ujianPraktekId: u.id,
+              pengujiUserId: updated.pengujiUserId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      } catch {
+        // Non-blocking: auto-attach gagal tidak boleh menggagalkan approval.
+      }
+    }
+
     // Notify the penguji about the decision
     const grad2 = await this.prisma.kegiatan.findUnique({
       where: { id: graduationId },

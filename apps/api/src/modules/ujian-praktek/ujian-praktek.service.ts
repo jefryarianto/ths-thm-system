@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateUjianPraktekDto,
@@ -58,16 +65,34 @@ export class UjianPraktekService {
     const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: kegiatanId } });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
 
-    const data = await this.prisma.ujianPraktek.create({
-      data: {
-        kegiatanId,
-        nama: dto.nama,
-        deskripsi: dto.deskripsi,
-        tanggal: dto.tanggal ? new Date(dto.tanggal) : null,
-        durasiMenit: dto.durasiMenit,
-        status: 'draft',
-      },
+    // Aturan pendadaran: SEMUA penguji menguji SEMUA aspek/item — tidak ada
+    // pembagian aspek per penguji. Saat ujian dibuat, seluruh item penilaian
+    // aktif milik pendadaran (fallback template) dan seluruh penguji approved
+    // otomatis dilampirkan ke ujian.
+    const [items, examinerIds] = await Promise.all([
+      this.getActiveItemsForKegiatan(kegiatanId),
+      this.getApprovedExaminerIds(kegiatanId),
+    ]);
+
+    const data = await this.prisma.$transaction(async (tx) => {
+      const ujian = await tx.ujianPraktek.create({
+        data: {
+          kegiatanId,
+          nama: dto.nama,
+          deskripsi: dto.deskripsi,
+          tanggal: dto.tanggal ? new Date(dto.tanggal) : null,
+          durasiMenit: dto.durasiMenit,
+          status: 'draft',
+        },
+      });
+      await this.attachItems(tx, ujian.id, items);
+      await this.attachExaminers(tx, ujian.id, examinerIds);
+      return ujian;
     });
+
+    this.logger.log(
+      `Ujian praktek "${dto.nama}" (kegiatan ${kegiatanId}) dibuat dengan auto-fill: ${items.length} item, ${examinerIds.length} penguji approved`,
+    );
     return data;
   }
 
@@ -187,6 +212,24 @@ export class UjianPraktekService {
       throw new BadRequestException('Ujian praktek sudah selesai atau dibatalkan');
     }
 
+    // Guard akses: penguji (role=penguji) hanya bisa input nilai bila penugasan
+    // penguji pada pendadaran ini berstatus approved. Admin/superadmin boleh
+    // input atas nama penguji mana pun (mis. penguji berhalangan). Sesuai
+    // aturan "semua penguji menguji semua aspek", tidak ada filter aspek.
+    const scorer = await this.prisma.user.findUnique({
+      where: { id: pengujiUserId },
+      select: { role: true },
+    });
+    if (scorer?.role === 'penguji') {
+      const approved = await this.prisma.penugasanPenguji.findFirst({
+        where: { kegiatanId: ujian.kegiatanId, pengujiUserId, status: 'approved' },
+        select: { id: true },
+      });
+      if (!approved) {
+        throw new ForbiddenException('Penguji belum disetujui (approved) untuk pendadaran ini');
+      }
+    }
+
     const results: Array<{ calonAnggotaId: string; itemPenilaianId: string; skor: number }> = [];
 
     for (const scoreDto of dto.scores) {
@@ -241,6 +284,89 @@ export class UjianPraktekService {
     return { scored: results.length };
   }
 
+  // ─── Auto-fill: semua penguji × semua aspek/item ──────────
+
+  /**
+   * Resolusi scope aspek penilaian: set milik pendadaran (hasil clone template)
+   * bila pendadaran sudah punya; fallback ke template global (kegiatanId=null)
+   * bila belum (legacy).
+   */
+  private async resolveItemScope(kegiatanId: string): Promise<string | null> {
+    const owned = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId, isActive: true },
+    });
+    return owned > 0 ? kegiatanId : null;
+  }
+
+  /** Item penilaian AKTIF untuk pendadaran (urut per aspek, lalu urutan item). */
+  private async getActiveItemsForKegiatan(kegiatanId: string) {
+    const scopeKegiatanId = await this.resolveItemScope(kegiatanId);
+    return this.prisma.itemPenilaian.findMany({
+      where: { isActive: true, aspek: { kegiatanId: scopeKegiatanId, isActive: true } },
+      orderBy: [{ aspek: { namaAspek: 'asc' } }, { urutan: 'asc' }],
+      select: { id: true, urutan: true },
+    });
+  }
+
+  /** Semua penguji berstatus approved pada pendadaran (sumber kebenaran penugasan). */
+  private async getApprovedExaminerIds(kegiatanId: string): Promise<string[]> {
+    const rows = await this.prisma.penugasanPenguji.findMany({
+      where: { kegiatanId, status: 'approved' },
+      select: { pengujiUserId: true },
+    });
+    return [...new Set(rows.map((r) => r.pengujiUserId))];
+  }
+
+  /** Attach item ke ujian (additive, idempoten via unique constraint). */
+  private attachItems(
+    tx: Prisma.TransactionClient,
+    ujianPraktekId: string,
+    items: Array<{ id: string; urutan: number }>,
+  ) {
+    if (items.length === 0) return Promise.resolve();
+    return tx.ujianPraktekItem.createMany({
+      // Urutan global mengikuti daftar terurut (per aspek) → tampilan
+      // item di ujian ter-group per aspek.
+      data: items.map((item, idx) => ({
+        ujianPraktekId,
+        itemPenilaianId: item.id,
+        urutan: idx + 1,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  /** Attach penguji ke ujian (additive, idempoten via unique constraint). */
+  private attachExaminers(tx: Prisma.TransactionClient, ujianPraktekId: string, pengujiUserIds: string[]) {
+    if (pengujiUserIds.length === 0) return Promise.resolve();
+    return tx.ujianPraktekPenilai.createMany({
+      data: pengujiUserIds.map((pengujiUserId) => ({ ujianPraktekId, pengujiUserId })),
+      skipDuplicates: true,
+    });
+  }
+
+  /**
+   * Auto-sync (additive & idempoten): pastikan ujian memiliki SEMUA item
+   * penilaian aktif dan SEMUA penguji approved milik pendadaran. Tidak
+   * menghapus apa pun yang sudah ada — termasuk yang dihapus manual.
+   * Berguna untuk ujian lama & setelah item/penguji baru ditambahkan.
+   */
+  async autoSync(id: string) {
+    const ujian = await this.getUjianOrThrow(id);
+    const [items, examinerIds] = await Promise.all([
+      this.getActiveItemsForKegiatan(ujian.kegiatanId),
+      this.getApprovedExaminerIds(ujian.kegiatanId),
+    ]);
+    await this.prisma.$transaction(async (tx) => {
+      await this.attachItems(tx, ujian.id, items);
+      await this.attachExaminers(tx, ujian.id, examinerIds);
+    });
+    this.logger.log(
+      `Auto-sync ujian ${id} (kegiatan ${ujian.kegiatanId}): ${items.length} item & ${examinerIds.length} penguji approved dipastikan ter-attach`,
+    );
+    return this.findOne(id);
+  }
+
   // ─── Available Assessment Items ──────────────────────────
 
   /**
@@ -250,10 +376,7 @@ export class UjianPraktekService {
    * Hanya aspek & item AKTIF — item yang disembunyikan tidak ditawarkan.
    */
   async getAvailableItems(kegiatanId: string) {
-    const owned = await this.prisma.aspekPenilaian.count({
-      where: { kegiatanId, isActive: true },
-    });
-    const scopeKegiatanId = owned > 0 ? kegiatanId : null;
+    const scopeKegiatanId = await this.resolveItemScope(kegiatanId);
     return this.prisma.itemPenilaian.findMany({
       where: { isActive: true, aspek: { kegiatanId: scopeKegiatanId, isActive: true } },
       include: { aspek: true },

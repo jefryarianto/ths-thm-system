@@ -77,6 +77,14 @@ export class UjianPraktekController {
     return this.service.remove(id);
   }
 
+  @Post(':kegiatanId/ujian-praktek/:id/auto-sync')
+  @ApiOperation({ summary: 'Sinkronkan semua item aktif & penguji approved ke ujian (additive & idempoten)' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_kegiatan')
+  @RequireScope('branch')
+  autoSync(@Param('id') id: string) {
+    return this.service.autoSync(id);
+  }
+
   // ─── Examiner Management ───────────────────────────────
 
   @Post(':kegiatanId/ujian-praktek/:id/examiners')
