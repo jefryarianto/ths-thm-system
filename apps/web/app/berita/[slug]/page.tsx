@@ -1,10 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { use } from 'react';
 import { PublicLayout } from '@/components';
 import { Calendar, ArrowLeft } from 'lucide-react';
+import { Metadata } from 'next';
 import { logError } from '@/lib/error-logger';
 
 interface Berita {
@@ -17,32 +14,66 @@ interface Berita {
   slug: string;
 }
 
-export default function BeritaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const [berita, setBerita] = useState<Berita | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+// In production NEXT_PUBLIC_API_URL = "https://ths-thm.cloud/api"
+// In dev, fall back to localhost with /api prefix (matching NestJS global prefix)
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-  useEffect(() => {
-    async function fetchBerita() {
-      try {
-        const res = await fetch(`/api/public/berita/${slug}`);
-        if (res.status === 404) {
-          setNotFound(true);
-          return;
-        }
-        if (!res.ok) throw new Error('Failed to fetch');
-        const json = await res.json();
-        setBerita(json.data ?? json);
-      } catch (error) {
-        logError(error, { module: 'Berita', action: 'fetchDetail', slug });
-        setNotFound(true);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchBerita();
-  }, [slug]);
+async function fetchBerita(slug: string): Promise<Berita | null> {
+  try {
+    const res = await fetch(`${API_BASE}/public/berita/${slug}`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? json;
+  } catch (error) {
+    logError(error, { module: 'Berita', action: 'fetchDetail', slug });
+    return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const berita = await fetchBerita(slug);
+
+  if (!berita) {
+    return {
+      title: 'Berita Tidak Ditemukan | THS-THM',
+      description: 'Berita yang Anda cari tidak ditemukan.',
+    };
+  }
+
+  return {
+    title: `${berita.judul} | THS-THM Berita`,
+    description: berita.ringkasan,
+    openGraph: {
+      title: berita.judul,
+      description: berita.ringkasan,
+      type: 'article',
+      publishedTime: berita.tanggal,
+      ...(berita.gambar && {
+        images: [`${API_BASE}/uploads/${berita.gambar}`],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: berita.judul,
+      description: berita.ringkasan,
+    },
+  };
+}
+
+export default async function BeritaDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const berita = await fetchBerita(slug);
 
   const formatTanggal = (tanggal: string) =>
     new Date(tanggal).toLocaleDateString('id-ID', {
@@ -51,17 +82,7 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
       year: 'numeric',
     });
 
-  if (loading) {
-    return (
-      <PublicLayout>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-800 border-t-transparent" />
-        </div>
-      </PublicLayout>
-    );
-  }
-
-  if (notFound || !berita) {
+  if (!berita) {
     return (
       <PublicLayout>
         <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -121,7 +142,7 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
 
         {/* Konten (HTML) */}
         <div
-          className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-navy-800 prose-a:underline prose-li:text-gray-700 prose-blockquote:text-gray-700 prose-blockquote:border-navy-800"
+          className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-serif prose-p:text-gray-700 prose-a:text-navy-800 prose-a:underline prose-li:text-gray-700 prose-blockquote:text-gray-700 prose-blockquote:border-navy-800"
           dangerouslySetInnerHTML={{ __html: berita.konten }}
         />
       </article>
