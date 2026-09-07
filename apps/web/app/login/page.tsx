@@ -228,7 +228,7 @@ export default function LoginPage() {
   const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br bg-white">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
       
       <Suspense fallback={null}>
         <OAuthCallbackHandler />
