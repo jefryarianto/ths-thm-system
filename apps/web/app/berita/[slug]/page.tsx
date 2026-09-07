@@ -91,7 +91,7 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
         </Link>
 
         {/* Meta */}
-        <div className="flex items-center gap-3 text-sm text-gray-400 mb-4">
+        <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
           <span className="flex items-center gap-1">
             <Calendar size={14} />
             <time>{formatTanggal(berita.tanggal)}</time>
@@ -121,7 +121,7 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
 
         {/* Konten (HTML) */}
         <div
-          className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-navy-800"
+          className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-navy-800 prose-a:underline prose-li:text-gray-700 prose-blockquote:text-gray-700 prose-blockquote:border-navy-800"
           dangerouslySetInnerHTML={{ __html: berita.konten }}
         />
       </article>
