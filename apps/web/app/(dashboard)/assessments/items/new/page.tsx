@@ -164,14 +164,14 @@ export default function NewItemPenilaianPage() {
                 </FormField>
               </div>
         
-              <FormField label="Urutan">
+              <FormField label="Urutan (opsional)">
                 <input
                   type="number"
                   value={form.urutan}
                   onChange={(e) => setForm((prev) => ({ ...prev, urutan: parseInt(e.target.value) || 0 }))}
                   min="1"
                   step="1"
-                  placeholder="Otomatis jika kosong"
+                  placeholder="Opsional — server otomatis (max+1) jika kosong"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 />
               </FormField>

@@ -20,6 +20,7 @@ describe('AssessmentsService', () => {
     itemPenilaian: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
@@ -94,8 +95,57 @@ describe('AssessmentsService', () => {
   describe('createItem', () => {
     it('should create an item', async () => {
       mockPrisma.itemPenilaian.create.mockResolvedValue({ id: 'i1', namaItem: 'Tendangan' });
+      mockPrisma.itemPenilaian.findFirst.mockResolvedValue(null);
       const result = await service.createItem({ namaItem: 'Tendangan', skorMaksimal: 100 } as any);
       expect(result).toBeDefined();
+    });
+
+    it('should default urutan to max(urutan)+1 when not provided', async () => {
+      mockPrisma.itemPenilaian.findFirst.mockResolvedValue({ urutan: 3 });
+      mockPrisma.itemPenilaian.create.mockResolvedValue({ id: 'i1' });
+      await service.createItem({
+        aspekId: 'a1',
+        kodeItem: 'I0101',
+        namaItem: 'Tendangan',
+        skorMaksimal: 100,
+        bobot: 1,
+      } as any);
+      expect(mockPrisma.itemPenilaian.findFirst).toHaveBeenCalledWith({
+        where: { aspekId: 'a1' },
+        orderBy: { urutan: 'desc' },
+        select: { urutan: true },
+      });
+      const data = mockPrisma.itemPenilaian.create.mock.calls[0][0].data;
+      expect(data.urutan).toBe(4);
+    });
+
+    it('should default urutan to 1 when aspek has no items yet', async () => {
+      mockPrisma.itemPenilaian.findFirst.mockResolvedValue(null);
+      mockPrisma.itemPenilaian.create.mockResolvedValue({ id: 'i1' });
+      await service.createItem({
+        aspekId: 'a1',
+        kodeItem: 'I0101',
+        namaItem: 'Tendangan',
+        skorMaksimal: 100,
+        bobot: 1,
+      } as any);
+      const data = mockPrisma.itemPenilaian.create.mock.calls[0][0].data;
+      expect(data.urutan).toBe(1);
+    });
+
+    it('should keep provided urutan unchanged (no lookup)', async () => {
+      mockPrisma.itemPenilaian.create.mockResolvedValue({ id: 'i1' });
+      await service.createItem({
+        aspekId: 'a1',
+        kodeItem: 'I0101',
+        namaItem: 'Tendangan',
+        skorMaksimal: 100,
+        bobot: 1,
+        urutan: 7,
+      } as any);
+      expect(mockPrisma.itemPenilaian.findFirst).not.toHaveBeenCalled();
+      const data = mockPrisma.itemPenilaian.create.mock.calls[0][0].data;
+      expect(data.urutan).toBe(7);
     });
   });
 

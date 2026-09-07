@@ -18,12 +18,20 @@ import SearchBar from '@/components/ui/search-bar';
 import { useToast } from '@/components/ui/toast';
 
 
+interface AssessmentItemLite {
+  id: string;
+  kodeItem: string;
+  namaItem: string;
+  isActive: boolean;
+}
+
 interface AssessmentRow {
   id: string;
   kodeAspek: string;
   namaAspek: string;
   bobot: number;
   isActive: boolean;
+  itemPenilaian?: AssessmentItemLite[];
 }
 
 interface ItemRow {
@@ -164,6 +172,7 @@ export default function AssessmentsPage() {
           columns={[
             { label: 'Kode' },
             { label: 'Aspek' },
+            { label: 'Item', hidden: 'hidden sm:table-cell' },
             { label: 'Bobot', align: 'right', hidden: 'hidden sm:table-cell' },
             { label: 'Aktif', align: 'center' },
             { label: 'Aksi', align: 'right', hidden: 'hidden md:table-cell' },
@@ -178,7 +187,7 @@ export default function AssessmentsPage() {
           totalPages={aspekMeta.totalPages}
           total={aspekMeta.total}
           onPageChange={handlePageChange}
-          colSpan={5}
+          colSpan={6}
           renderRow={(row: AssessmentRow) => (
             <tr
               key={row.id}
@@ -191,6 +200,29 @@ export default function AssessmentsPage() {
               </td>
               <td className="px-4 py-3">
                 <span className="font-medium text-gray-900 dark:text-white">{row.namaAspek}</span>
+              </td>
+              <td className="px-4 py-3 hidden sm:table-cell">
+                {row.itemPenilaian && row.itemPenilaian.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {row.itemPenilaian.slice(0, 3).map((it) => (
+                      <span
+                        key={it.id}
+                        className={`text-[11px] px-1.5 py-0.5 rounded-md ${it.isActive
+                          ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                          : 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400'}`}
+                      >
+                        {it.namaItem}
+                      </span>
+                    ))}
+                    {row.itemPenilaian.length > 3 && (
+                      <span className="text-[11px] px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md">
+                        +{row.itemPenilaian.length - 3}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-400">-</span>
+                )}
               </td>
               <td className="px-4 py-3 text-right hidden sm:table-cell">
                 <span className="text-gray-600 dark:text-gray-400">{Number(row.bobot) * 100}%</span>
@@ -207,16 +239,32 @@ export default function AssessmentsPage() {
                   <Link
                     href={`/assessments/aspects/${row.id}/edit`}
                     className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950 rounded-md transition-colors inline-flex"
-                    title="Edit"
+                    title="Edit aspek & item"
                   >
                     <Edit3 size={14} />
                   </Link>
+                  {!row.isActive && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await apiClient.post(`/assessments/aspects/${row.id}/restore`);
+                          refetchAspek();
+                          toast('success', 'Aspek diaktifkan kembali. Item disembunyikan bisa di-restore dari Edit aspek.');
+                        } catch { toast('error', 'Gagal mengaktifkan aspek'); }
+                      }}
+                      className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 rounded-md transition-colors"
+                      title="Aktifkan kembali"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       try {
                         const newStatus = !row.isActive;
                         await apiClient.patch(`/assessments/aspects/${row.id}`, { isActive: newStatus });
                         refetchAspek();
+                        toast('success', newStatus ? 'Aspek diaktifkan' : 'Aspek disembunyikan');
                       } catch { toast('error', 'Gagal mengubah status aspek'); }
                     }}
                     className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
@@ -230,10 +278,11 @@ export default function AssessmentsPage() {
                       try {
                         await apiClient.delete(`/assessments/aspects/${row.id}`);
                         refetchAspek();
+                        toast('success', 'Aspek dinonaktifkan bersama item-itemnya. Pendadaran yang sudah punya kopie aspek tidak terpengaruh.');
                       } catch { toast('error', 'Gagal menghapus aspek'); }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
-                    title="Hapus"
+                    title="Hapus (nonaktif aspek & items)"
                   >
                     <Trash2 size={14} />
                   </button>

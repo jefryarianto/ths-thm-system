@@ -28,8 +28,10 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
     }, persistentAudit);
   }
 
-  /** Include item child relations by default (hanya item aktif). */
-  protected readonly DEFAULT_INCLUDE = { itemPenilaian: { where: { isActive: true } } };
+  /** Include item child relations by default (hanya item aktif), deterministik per urutan. */
+  protected readonly DEFAULT_INCLUDE = {
+    itemPenilaian: { where: { isActive: true }, orderBy: { urutan: 'asc' as const } },
+  };
 
   /**
    * List aspek penilaian.
@@ -97,8 +99,16 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
       where: { id },
       data: { isActive: false },
     });
+    // Cascade soft-disable: semua item aspek ini juga disembunyikan supaya
+    // tidak ada item orfan yang masih tampil di daftar item (score lama tetap
+    // di DB, hanya isActive:false). Items yang disembunyikan via cascade bisa
+    // di-restore manual per-item dari page Edit Aspek.
+    await this.prisma.itemPenilaian.updateMany({
+      where: { aspekId: id, isActive: true },
+      data: { isActive: false },
+    });
     this.invalidateCache();
-    return { message: 'Aspek penilaian dinonaktifkan' };
+    return { message: 'Aspek penilaian dinonaktifkan bersama item-itemnya' };
   }
 
   /** Aktifkan kembali aspek yang disembunyikan (soft-disable). */

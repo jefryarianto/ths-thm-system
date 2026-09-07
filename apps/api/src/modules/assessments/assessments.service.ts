@@ -35,7 +35,9 @@ export class AssessmentsService {
   async getItems(query: AssessmentFilterDto) {
     // Hanya tampilkan item AKTIF — soft-disable (isActive:false) tidak muncul di list.
     // (Alur scoring mobile/penguji memakai default ini; admin web pakai includeInactive.)
-    const where: Record<string, unknown> = { isActive: true };
+    const includeInactive = query.includeInactive === true;
+    const where: Record<string, unknown> = {};
+    if (!includeInactive) where.isActive = true;
     if (query.aspekId) {
       where.aspekId = query.aspekId;
     } else if (query.kegiatanId) {
@@ -71,8 +73,25 @@ export class AssessmentsService {
   }
 
   async createItem(dto: CreateItemDto) {
+    // Kolom `urutan` di DB adalah INTEGER NOT NULL tanpa default. Bila klien
+    // tidak kirim (DTO optional; form web "otomatis jika kosong"), compute
+    // otomatis max(urutan)+1 per aspek supaya Tambah Item tidak gagal 500.
+    let urutan = dto.urutan;
+    if (!urutan || urutan <= 0) {
+      const last = await this.prisma.itemPenilaian.findFirst({
+        where: { aspekId: dto.aspekId },
+        orderBy: { urutan: 'desc' },
+        select: { urutan: true },
+      });
+      urutan = (last?.urutan ?? 0) + 1;
+    }
+    const data: Record<string, unknown> = { ...dto, urutan };
+    // Fallback defensiv — DTO validation sudah mandow bobot/skorMaksimal,
+    // tapi pastikan nilai positif supaya endpoint robust tegen partial payload.
+    if (dto.bobot === undefined || Number(dto.bobot) <= 0) data.bobot = 1;
+    if (dto.skorMaksimal === undefined || Number(dto.skorMaksimal) <= 0) data.skorMaksimal = 100;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const item = await this.prisma.itemPenilaian.create({ data: dto as any });
+    const item = await this.prisma.itemPenilaian.create({ data: data as any });
     return item;
   }
 

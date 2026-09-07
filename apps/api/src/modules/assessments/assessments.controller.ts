@@ -59,7 +59,7 @@ export class AssessmentsController {
   }
 
   @Delete('aspects/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus aspek penilaian' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus aspek penilaian' })
   @ApiParam({ name: 'id', description: 'ID Aspek Penilaian', required: true })
   @ApiOkResponse({ description: 'Aspek penilaian dinonaktifkan (soft-disable, tidak tampil di list)' })
   deleteAspect(@Param('id') id: string) {
@@ -102,7 +102,7 @@ export class AssessmentsController {
   }
 
   @Delete('items/:id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Hapus item penilaian' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Hapus item penilaian' })
   @ApiParam({ name: 'id', description: 'ID Item Penilaian', required: true })
   @ApiOkResponse({ description: 'Item penilaian dinonaktifkan' })
   deleteItem(@Param('id') id: string) {
