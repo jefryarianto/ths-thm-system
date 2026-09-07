@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { PublicService } from './public.service';
 import { Public } from '../../common/decorators/public.decorator';
@@ -14,6 +14,17 @@ export class PublicController {
   @Get('berita')
   async getBerita() {
     return this.publicService.getBerita();
+  }
+
+  @Public()
+  @Get('berita/:slug')
+  @ApiOperation({ summary: 'Detail berita by slug (public)' })
+  async getBeritaBySlug(@Param('slug') slug: string) {
+    const berita = await this.publicService.getBeritaBySlug(slug);
+    if (!berita) {
+      throw new NotFoundException('Berita tidak ditemukan');
+    }
+    return berita;
   }
 
   @Public()

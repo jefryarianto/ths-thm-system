@@ -20,6 +20,12 @@ export class PublicService {
     });
   }
 
+  async getBeritaBySlug(slug: string) {
+    return this.prisma.berita.findFirst({
+      where: { slug, isVisible: true },
+    });
+  }
+
   async getGaleri() {
     return this.prisma.galeri.findMany({
       where: { isVisible: true },
