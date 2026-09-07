@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ExaminersService } from './examiners.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
@@ -19,6 +19,7 @@ describe('ExaminersService', () => {
       findMany: jest.fn(),
       count: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
@@ -114,11 +115,41 @@ describe('ExaminersService', () => {
     });
   });
 
-  describe('create', () => {
-    it('should create an examiner with hashed password', async () => {
-      mockPrisma.user.create.mockResolvedValue({ id: 'u1', role: 'penguji' });
+  describe('create (promote-or-create)', () => {
+    it('membuat akun penguji baru bila email belum terdaftar', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: 'u1', role: 'penguji', email: 'penguji@test.com' });
       const result = await service.create({ email: 'penguji@test.com', namaLengkap: 'Budi' });
       expect(result.data.role).toBe('penguji');
+      expect(mockPrisma.user.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('promote akun anggota eksisting menjadi penguji (tanpa duplikat)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u9', role: 'anggota', isActive: true, email: 'a@test.com', namaLengkap: 'Ali',
+      });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u9', role: 'penguji', email: 'a@test.com', namaLengkap: 'Ali' });
+      const result = await service.create({ email: 'a@test.com', namaLengkap: 'Ali' });
+      expect(result.data.role).toBe('penguji');
+      expect(result.message).toContain('dipromosikan');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({ where: { id: 'u9' }, data: { role: 'penguji' } });
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('idempoten bila user sudah penguji aktif', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1', role: 'penguji', isActive: true, email: 'penguji@test.com', namaLengkap: 'Budi',
+      });
+      const result = await service.create({ email: 'penguji@test.com', namaLengkap: 'Budi' });
+      expect(result.message).toContain('sudah terdaftar');
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('menolak bila email kosong', async () => {
+      await expect(service.create({ email: '', namaLengkap: 'X' })).rejects.toThrow(BadRequestException);
     });
   });
 

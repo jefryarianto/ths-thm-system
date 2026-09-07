@@ -3,9 +3,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateExaminerDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Email anggota (dipakai sebagai akun login penguji)' })
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -15,6 +16,16 @@ export class CreateExaminerDto {
   @ApiProperty()
   @IsString()
   namaLengkap: string;
+
+  @ApiPropertyOptional({ description: 'Diabaikan di sini — peran ditentukan saat penugasan pada pendadaran' })
+  @IsOptional()
+  @IsString()
+  peran?: string;
+
+  @ApiPropertyOptional({ description: 'Diabaikan di sini — catatan diisi saat penugasan pada pendadaran' })
+  @IsOptional()
+  @IsString()
+  catatan?: string;
 }
 
 export class UpdateExaminerDto {

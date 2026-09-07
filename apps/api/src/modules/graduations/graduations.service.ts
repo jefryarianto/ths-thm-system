@@ -1456,17 +1456,85 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
     }
 
+    // 3. Anggota TERDAFTAR pada kegiatan (KegiatanPeserta) yang punya akun login
+    const peserta = await this.prisma.kegiatanPeserta.findMany({
+      where: { kegiatanId: graduationId },
+      include: {
+        anggota: { select: { id: true, namaLengkap: true, email: true, nomorAnggota: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Resolve akun User untuk peserta yang belum di-resolve (batch — hindari N+1)
+    const memberEmails = peserta
+      .map((p) => p.anggota.email)
+      .filter((e): e is string => !!e && !usersByEmail.has(e));
+    if (memberEmails.length > 0) {
+      const users = await this.prisma.user.findMany({
+        where: { email: { in: memberEmails } },
+        select: { id: true, email: true },
+      });
+      for (const u of users) usersByEmail.set(u.email, u.id);
+    }
+
+    const listedIds = new Set<string>([
+      ...registeredIds,
+      ...fromAttendance.map((a) => a.id),
+    ]);
+    const fromRegistered: Array<{
+      id: string;
+      namaLengkap: string;
+      email: string | null;
+      nomorAnggota: string | null;
+      sumber: 'anggota_kegiatan';
+    }> = [];
+    for (const p of peserta) {
+      const userId = p.anggota.email ? usersByEmail.get(p.anggota.email) : undefined;
+      if (!userId || listedIds.has(userId)) continue;
+      listedIds.add(userId);
+      fromRegistered.push({
+        id: userId,
+        namaLengkap: p.anggota.namaLengkap,
+        email: p.anggota.email,
+        nomorAnggota: p.anggota.nomorAnggota,
+        sumber: 'anggota_kegiatan',
+      });
+    }
+
     return {
       manajemenPenguji: registered.map((r) => ({ ...r, sumber: 'manajemen_penguji' })),
       daftarHadir: fromAttendance,
+      anggotaKegiatan: fromRegistered,
     };
+  }
+
+  /**
+   * Syarat kandidat penguji #3: user (via email) adalah anggota yang
+   * TERDAFTAR sebagai peserta kegiatan pendadaran ini (KegiatanPeserta).
+   */
+  private async isKegiatanParticipant(
+    graduationId: string,
+    pengujiEmail: string | null,
+  ): Promise<boolean> {
+    if (!pengujiEmail) return false;
+    const anggota = await this.prisma.anggota.findFirst({
+      where: { email: pengujiEmail, deletedAt: null },
+      select: { id: true },
+    });
+    if (!anggota) return false;
+    const peserta = await this.prisma.kegiatanPeserta.findFirst({
+      where: { kegiatanId: graduationId, anggotaId: anggota.id },
+      select: { id: true },
+    });
+    return !!peserta;
   }
 
   /**
    * Admin kegiatan mengajukan penguji untuk pendadaran (status pending).
    * Penguji yang diajukan akan menunggu persetujuan admin distrik.
    * Calon penguji sah bila: terdaftar di manajemen penguji (aktif) ATAU
-   * tercatat HADIR pada kegiatan ini (undangan status='hadir').
+   * tercatat HADIR pada kegiatan ini (undangan status='hadir') ATAU
+   * terdaftar sebagai peserta kegiatan ini (KegiatanPeserta) dengan akun login.
    */
   async proposeExaminer(
     graduationId: string,
@@ -1503,9 +1571,14 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    if (!isRegisteredPenguji && !isAttendee) {
+    const isKegiatanMember =
+      !isRegisteredPenguji && !isAttendee
+        ? await this.isKegiatanParticipant(graduationId, penguji.email)
+        : false;
+
+    if (!isRegisteredPenguji && !isAttendee && !isKegiatanMember) {
       throw new BadRequestException(
-        'Calon penguji harus terdaftar di manajemen penguji (status aktif) atau tercatat HADIR pada pendadaran ini',
+        'Calon penguji harus terdaftar di manajemen penguji (status aktif), tercatat HADIR, atau terdaftar sebagai peserta pada pendadaran ini',
       );
     }
 
@@ -1547,7 +1620,8 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
    * Superadmin/admin_distrik (level yang berhak menyetujui) menambahkan penguji
    * SECARA LANGSUNG — tanpa alur pengajuan → persetujuan. Status penugasan
    * langsung 'approved'. Kandidat sah: terdaftar di manajemen penguji (aktif)
-   * ATAU tercatat HADIR pada pendadaran ini. Sesuai aturan "semua penguji
+   * ATAU tercatat HADIR pada pendadaran ini ATAU terdaftar sebagai peserta
+   * kegiatan (KegiatanPeserta). Sesuai aturan "semua penguji
    * menguji semua aspek", penguji baru langsung di-attach ke semua ujian
    * praktek pendadaran. Penugasan pending yang sudah ada ikut di-approve.
    */
@@ -1584,9 +1658,13 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
         isAttendee = !!inv;
       }
     }
-    if (!isRegisteredPenguji && !isAttendee) {
+    const isKegiatanMember =
+      !isRegisteredPenguji && !isAttendee
+        ? await this.isKegiatanParticipant(graduationId, penguji.email)
+        : false;
+    if (!isRegisteredPenguji && !isAttendee && !isKegiatanMember) {
       throw new BadRequestException(
-        'Calon penguji harus terdaftar di manajemen penguji (status aktif) atau tercatat HADIR pada pendadaran ini',
+        'Calon penguji harus terdaftar di manajemen penguji (status aktif), tercatat HADIR, atau terdaftar sebagai peserta pada pendadaran ini',
       );
     }
 

@@ -22,8 +22,6 @@ export default function NewExaminerPage() {
   const router = useRouter();
   const toast = useToast();
   const [selectedMember, setSelectedMember] = useState<MemberResult | null>(null);
-  const [peran, setPeran] = useState('penguji');
-  const [catatan, setCatatan] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,14 +30,17 @@ export default function NewExaminerPage() {
       toast('error', 'Pilih anggota terlebih dahulu');
       return;
     }
+    if (!selectedMember.email) {
+      toast('error', 'Anggota yang dipilih belum punya email. Lengkapi email anggota terlebih dahulu di manajemen anggota.');
+      return;
+    }
     setSaving(true);
     try {
       await apiClient.post('/examiners', {
-        email: selectedMember.email || '',
+        email: selectedMember.email,
         namaLengkap: selectedMember.namaLengkap,
-        peran,
-        catatan: catatan || undefined,
       });
+      toast('success', 'Penguji berhasil ditambahkan — akun dibuat/dipromosikan sebagai penguji');
       router.push('/examiners');
     } catch (err: any) {
       toast('error', err?.response?.data?.message || 'Gagal menyimpan penguji');
@@ -81,34 +82,9 @@ export default function NewExaminerPage() {
             )}
           </div>
 
-          {/* Peran */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Peran
-            </label>
-            <select
-              value={peran}
-              onChange={(e) => setPeran(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="penguji">Penguji</option>
-              <option value="ketua_penguji">Ketua Penguji</option>
-              <option value="sekretaris">Sekretaris</option>
-            </select>
-          </div>
-
-          {/* Catatan */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Catatan
-            </label>
-            <textarea
-              value={catatan}
-              onChange={(e) => setCatatan(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Catatan tambahan (opsional)"
-            />
+          {/* Info */}
+          <div className="px-3 py-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg text-xs text-blue-800 dark:text-blue-300">
+            Anggota yang sudah punya akun akan <strong>dipromosikan</strong> menjadi penguji (password tetap); yang belum akan dibuatkan akun dengan email set-password. Peran (ketua penguji/anggota) dan catatan ditentukan saat penugasan pada masing-masing pendadaran.
           </div>
 
           {/* Actions */}

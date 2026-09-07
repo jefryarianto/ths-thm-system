@@ -32,7 +32,7 @@ export class ExaminersController extends BaseCrudController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah penguji baru' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Tambah penguji (dari anggota terdaftar; akun eksisting dipromosikan, idempoten)' })
   create(@Body() dto: CreateExaminerDto) {
     return super.create(dto);
   }

@@ -213,7 +213,7 @@ export class GraduationsController {
   }
 
   @Get(':id/examiner-candidates')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Kandidat penguji: manajemen penguji aktif + anggota hadir pada kegiatan' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Kandidat penguji: manajemen penguji aktif + anggota hadir + anggota terdaftar pada kegiatan (yang punya akun)' })
   getExaminerCandidates(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.getExaminerCandidates(id, req.scope);
   }

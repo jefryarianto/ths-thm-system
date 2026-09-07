@@ -87,6 +87,10 @@ describe('GraduationsService', () => {
     ujianPraktekPenilai: {
       createMany: jest.fn(),
     },
+    kegiatanPeserta: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+    },
   };
 
   const mockGraduation = {
@@ -554,6 +558,7 @@ describe('GraduationsService', () => {
       mockPrisma.user.findMany.mockReset();
       mockPrisma.undanganPendadaran.findMany.mockReset();
       mockPrisma.user.findUnique.mockReset();
+      mockPrisma.kegiatanPeserta.findMany.mockReset().mockResolvedValue([]);
     });
 
     it('should return registered penguji aktif + anggota hadir with sumber', async () => {
@@ -577,6 +582,7 @@ describe('GraduationsService', () => {
       expect(result.daftarHadir).toHaveLength(1);
       expect(result.daftarHadir[0].sumber).toBe('daftar_hadir');
       expect(result.daftarHadir[0].id).toBe('u2');
+      expect(result.anggotaKegiatan).toHaveLength(0);
     });
 
     it('should skip anggota hadir tanpa akun User atau yang sudah terdaftar penguji', async () => {
@@ -589,6 +595,32 @@ describe('GraduationsService', () => {
 
       const result = await service.getExaminerCandidates('g1');
       expect(result.daftarHadir).toHaveLength(0);
+      expect(result.anggotaKegiatan).toHaveLength(0);
+    });
+
+    it('mengembalikan 3 sumber kandidat (manajemen, hadir, peserta kegiatan) tanpa duplikat', async () => {
+      mockPrisma.user.findMany
+        .mockResolvedValueOnce([{ id: 'u1', namaLengkap: 'Penguji Satu', email: 'p1@test.com' }]) // 1. manajemen penguji
+        .mockResolvedValueOnce([{ id: 'u2', email: 'p2@test.com' }]) // resolve email hadir
+        .mockResolvedValueOnce([{ id: 'u3', email: 'p3@test.com' }]); // resolve email peserta kegiatan
+      mockPrisma.undanganPendadaran.findMany.mockResolvedValue([
+        { anggota: { id: 'a1', namaLengkap: 'Hadir Satu', email: 'p2@test.com', nomorAnggota: '001' } },
+      ]);
+      mockPrisma.kegiatanPeserta.findMany.mockResolvedValue([
+        { anggota: { id: 'a2', namaLengkap: 'Peserta Satu', email: 'p3@test.com', nomorAnggota: '002' } },
+        { anggota: { id: 'a3', namaLengkap: 'Dup Penguji', email: 'p1@test.com', nomorAnggota: '003' } }, // sudah di manajemen penguji
+      ]);
+
+      const result = await service.getExaminerCandidates('g1');
+      expect(result.manajemenPenguji).toHaveLength(1);
+      expect(result.daftarHadir).toHaveLength(1);
+      expect(result.anggotaKegiatan).toHaveLength(1);
+      expect(result.anggotaKegiatan[0]).toMatchObject({ id: 'u3', sumber: 'anggota_kegiatan' });
+    });
+
+    it('menolak bila pendadaran tidak ditemukan', async () => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue(null);
+      await expect(service.getExaminerCandidates('gX')).rejects.toThrow(NotFoundException);
     });
   });
 

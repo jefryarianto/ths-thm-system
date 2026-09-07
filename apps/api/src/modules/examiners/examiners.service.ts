@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Optional,
+} from '@nestjs/common';
 import { MailService } from '../../mail/mail.service';
 import { env } from '../../config/env.validation';
 import { examinerWelcomeEmail, examinerAssignmentEmail } from '../../mail/email-templates';
@@ -116,7 +121,46 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
 
   // ── CRUD: create ─────────────────────────────────────────
 
+  // ── CRUD: create (promote-or-create) ─────────────────────
+  // Halaman "Tambah Penguji" memilih ANGGOTA terdaftar. Bila anggota sudah
+  // punya akun login (email sama), akun tsb DIPROMOSIKAN menjadi penguji
+  // (tanpa reset password). Bila belum, dibuatkan akun baru dengan password
+  // default + email set-password. Idempoten: penguji aktif tidak diduplikasi.
+
   async create(dto: CreateExaminerDto) {
+    const email = (dto.email || '').trim();
+    if (!email) {
+      throw new BadRequestException(
+        'Anggota belum punya email — lengkapi email anggota terlebih dahulu di manajemen anggota',
+      );
+    }
+
+    let existing = await this.prisma.user.findUnique({ where: { email } });
+    if (!existing) {
+      existing = await this.prisma.user.findFirst({
+        where: { email: { equals: email, mode: 'insensitive' } },
+      });
+    }
+
+    if (existing) {
+      if (existing.role === 'penguji' && existing.isActive) {
+        // Idempoten: sudah terdaftar sebagai penguji aktif.
+        return { data: existing, message: 'User sudah terdaftar sebagai penguji aktif' };
+      }
+      // Promote akun eksisting (mis. role anggota) menjadi penguji.
+      const promoted = await this.prisma.user.update({
+        where: { id: existing.id },
+        data: { role: 'penguji' },
+      });
+      this.invalidateCache();
+      this.audit('UPDATE', 'user', promoted.id, null, {
+        promoteToPenguji: true,
+        previousRole: existing.role,
+      });
+      this.sendPromotionEmail(promoted.email, promoted.namaLengkap);
+      return { data: promoted, message: 'Akun anggota dipromosikan menjadi penguji' };
+    }
+
     return this.baseCreate(dto, undefined, undefined, 'Penguji berhasil ditambahkan');
   }
 
@@ -248,6 +292,20 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
   }
 
   // ── Private helpers ──────────────────────────────────────
+
+  /** Email info penunjukan penguji untuk akun yang sudah ada (promote). */
+  private sendPromotionEmail(email: string, nama: string) {
+    this.mailService
+      .sendMail({
+        to: email,
+        subject: 'Penunjukan sebagai Penguji THS-THM',
+        html: `<p>Assalamu'alaikum ${nama},</p><p>Anda telah ditunjuk sebagai <strong>penguji</strong> di sistem THS-THM. Masuk menggunakan akun email ini di <a href="${env.frontendUrl}/login">${env.frontendUrl}/login</a>. Bila belum pernah mengatur password, gunakan fitur "Lupa Password".</p>`,
+        metadata: { module: 'examiners', template: 'examinerPromotionEmail', email },
+      })
+      .catch(() => {
+        this.logger.warn(`Failed to send promotion email to examiner ${email}`);
+      });
+  }
 
   private sendWelcomeEmail(email: string, nama: string, setPasswordUrl: string) {
     this.mailService
