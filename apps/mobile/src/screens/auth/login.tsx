@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../../lib/api-client';
 import { useAuthStore, AuthState } from '../../store/auth-store';
 import { useMobileOAuth } from '../../hooks/useMobileOAuth';
 import { registerForPushNotifications } from '../../lib/fcm';
@@ -40,6 +41,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(true);
   const [showVideo, setShowVideo] = useState(!splashPlayed);
   const videoOpacity = useRef(new Animated.Value(1)).current;
   // Ref pemutar video agar bisa di-pause eksplisit (video TIDAK boleh loop di belakang login)
@@ -67,6 +69,15 @@ export default function LoginScreen() {
   useEffect(() => {
     // Tandai splash sudah diputar — jangan ulangi saat kembali ke login (logout)
     splashPlayed = true;
+    // Cek apakah Google OAuth diaktifkan oleh admin
+    apiClient
+      .get('/auth/providers')
+      .then(({ data }) => {
+        if (typeof data?.googleOAuthEnabled === 'boolean') {
+          setGoogleOAuthEnabled(data.googleOAuthEnabled);
+        }
+      })
+      .catch(() => {});
     // Jaga-jaga: jika video gagal dimuat/diputar, login tetap muncul setelah 12 detik
     const safety = setTimeout(stopAndHide, 12000);
     return () => {
@@ -189,28 +200,31 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        {/* OAuth Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>Atau login dengan</Text>
-          <View style={styles.dividerLine} />
-        </View>
+        {/* OAuth Divider & Button */}
+        {googleOAuthEnabled && (
+          <>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Atau login dengan</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-        {/* Google OAuth */}
-        <TouchableOpacity
-          style={[styles.oauthButton, oauthLoading === 'google' && styles.oauthButtonDisabled]}
-          onPress={handleGoogleLogin}
-          disabled={!!oauthLoading}
-        >
-          {oauthLoading === 'google' ? (
-            <ActivityIndicator color="#374151" />
-          ) : (
-            <>
-              <Text style={styles.oauthIcon}>G</Text>
-              <Text style={styles.oauthButtonText}> Login dengan Google</Text>
-            </>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.oauthButton, oauthLoading === 'google' && styles.oauthButtonDisabled]}
+              onPress={handleGoogleLogin}
+              disabled={!!oauthLoading}
+            >
+              {oauthLoading === 'google' ? (
+                <ActivityIndicator color="#374151" />
+              ) : (
+                <>
+                  <Text style={styles.oauthIcon}>G</Text>
+                  <Text style={styles.oauthButtonText}> Login dengan Google</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
 
         <TouchableOpacity
           style={styles.forgotPassword}

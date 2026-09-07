@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleOAuthStrategy } from './strategies/google-oauth.strategy';
+import { GoogleOAuthEnabledGuard } from './guards/google-oauth-enabled.guard';
 import { env } from '../../config/env.validation';
 import { ApprovalModule } from '../approvals/approval.module';
 @Module({
@@ -21,6 +22,7 @@ import { ApprovalModule } from '../approvals/approval.module';
     AuthService,
     JwtStrategy,
     GoogleOAuthStrategy,
+    GoogleOAuthEnabledGuard,
     {
       provide: 'ENV',
       useValue: env,

@@ -445,6 +445,10 @@ export default function SettingsPage() {
         <ArrowRight size={18} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition" />
       </Link>
 
+      {/* == Autentikasi == */}
+      <SectionHeader icon={<Lock size={20} className="text-blue-600 dark:text-blue-400" />} title="Autentikasi" subtitle="Pengaturan metode masuk pengguna" />
+      <GoogleOAuthToggle />
+
       {/* == Sistem == */}
       <SectionHeader icon={<SettingsIcon size={20} className="text-purple-600 dark:text-purple-400" />} title="Sistem" subtitle="Pengaturan teknis, email, keamanan, dan cadangan data" />
 

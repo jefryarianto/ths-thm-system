@@ -42,4 +42,19 @@ test.describe('OAuth Login Flow', () => {
     await page.goto('/login?token=fake_test_token&refresh=fake_test_refresh');
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
   });
+
+  test('hides OAuth buttons when Google OAuth is disabled in settings', async ({ page }) => {
+    await page.route('**/api/auth/providers', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ googleOAuthEnabled: false }),
+      });
+    });
+
+    await page.goto('/login');
+    await expect(page.getByText('THS-THM').first()).toBeVisible();
+    await expect(page.locator('text=Atau login dengan')).not.toBeVisible();
+    await expect(page.locator('a[href*="/api/auth/google"]')).not.toBeVisible();
+  });
 });

@@ -21,6 +21,7 @@ import {
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { GoogleOAuthEnabledGuard } from './guards/google-oauth-enabled.guard';
 import { Request, Response } from 'express';
 import { env } from '../../config/env.validation';
 import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
@@ -294,9 +295,21 @@ export class AuthController {
 
   // ── OAuth Endpoints ──
 
+  /**
+   * Status provider autentikasi (publik — dipakai halaman login web & mobile
+   * untuk menyembunyikan tombol Google saat OAuth dinonaktifkan via Settings).
+   */
+  @Get('providers')
+  @Public()
+  @ApiOperation({ summary: 'Status provider autentikasi (publik)' })
+  async getAuthProviders() {
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'google_oauth_enabled' } });
+    return { googleOAuthEnabled: setting?.value !== false };
+  }
+
   @Get('google')
   @Public()
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOAuthEnabledGuard, AuthGuard('google'))
   @ApiOperation({ summary: 'Login dengan Google' })
   googleAuth() {
     // Guard redirects to Google
@@ -304,7 +317,7 @@ export class AuthController {
 
   @Get('google/callback')
   @Public()
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOAuthEnabledGuard, AuthGuard('google'))
   @ApiOperation({ summary: 'Callback login Google' })
   async googleAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

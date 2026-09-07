@@ -26,6 +26,7 @@ Authorization: Bearer <access_token>
 | POST | `/auth/reset` | Reset password dengan token | **Public** |
 | POST | `/auth/magic-link` | Kirim magic link login | **Public** |
 | POST | `/auth/magic-link/verify` | Verifikasi magic link token | **Public** |
+| GET | `/auth/providers` | Status provider autentikasi (Google OAuth status) | **Public** |
 | GET | `/auth/google` | Redirect ke Google OAuth | **Public** |
 | GET | `/auth/google/callback` | Google OAuth callback | **Public** |
 | GET | `/auth/me` | Profil user yang login | Auth |
