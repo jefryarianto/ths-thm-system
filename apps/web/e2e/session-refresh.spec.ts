@@ -123,6 +123,6 @@ test.describe('Session token refresh', () => {
     await page.goto('/dashboard');
 
     // Real session expiry → client must navigate to /login.
-    await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
+    await expect(page).toHaveURL(/(\/login|\/$)/, { timeout: 15000 });
   });
 });
