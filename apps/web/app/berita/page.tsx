@@ -75,8 +75,16 @@ export default function BeritaPage() {
                       href={`/berita/${data[0].slug}`}
                       className="block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all group"
                     >
-                      <div className="bg-navy-50 h-64 flex items-center justify-center">
-                        <span className="text-7xl opacity-20">📰</span>
+                      <div className="bg-navy-50 h-64 flex items-center justify-center overflow-hidden">
+                        {data[0].gambar ? (
+                          <img
+                            src={`/api/uploads/${data[0].gambar}`}
+                            alt={data[0].judul}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <span className="text-7xl opacity-20">📰</span>
+                        )}
                       </div>
                       <div className="p-6">
                         <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
@@ -104,8 +112,16 @@ export default function BeritaPage() {
                         href={`/berita/${berita.slug}`}
                         className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all group"
                       >
-                        <div className="bg-navy-50 h-40 flex items-center justify-center">
-                          <span className="text-5xl opacity-20">📰</span>
+                        <div className="bg-navy-50 h-40 flex items-center justify-center overflow-hidden">
+                          {berita.gambar ? (
+                            <img
+                              src={`/api/uploads/${berita.gambar}`}
+                              alt={berita.judul}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                          ) : (
+                            <span className="text-5xl opacity-20">📰</span>
+                          )}
                         </div>
                         <div className="p-5">
                           <div className="flex items-center gap-1 text-xs text-gray-400 mb-2">
