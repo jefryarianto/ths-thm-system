@@ -33,7 +33,6 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
         }
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
-        console.log('Berita detail:', json.data ?? json);
         setBerita(json.data ?? json);
       } catch (error) {
         logError(error, { module: 'Berita', action: 'fetchDetail', slug });
@@ -111,10 +110,6 @@ export default function BeritaDetailPage({ params }: { params: Promise<{ slug: s
               src={`/api/uploads/${berita.gambar}`}
               alt={berita.judul}
               className="w-full h-auto"
-              onError={(e) => {
-                console.error('Image failed to load:', (e.target as HTMLImageElement).src);
-              }}
-              onLoad={() => console.log('Image loaded successfully')}
             />
           </div>
         )}
