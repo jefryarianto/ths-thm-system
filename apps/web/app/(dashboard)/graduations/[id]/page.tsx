@@ -278,6 +278,9 @@ export default function GraduationDetailPage() {
   const [examinersLoading, setExaminersLoading] = useState(false);
   const [examinerOptions, setExaminerOptions] = useState<ExaminerOption[]>([]);
   const [showProposeExaminer, setShowProposeExaminer] = useState(false);
+  const [showManualAddExaminer, setShowManualAddExaminer] = useState(false);
+  const [manualAddForm, setManualAddForm] = useState({ pengujiUserId: '', catatan: '' });
+  const [manualAdding, setManualAdding] = useState(false);
   const [proposeForm, setProposeForm] = useState({ pengujiUserId: '', catatan: '' });
   const [proposing, setProposing] = useState(false);
   const [approveScoresLoading, setApproveScoresLoading] = useState(false);
@@ -664,6 +667,28 @@ export default function GraduationDetailPage() {
       setWorkflowMsg({ ok: false, text: msg || 'Gagal mengajukan penguji' });
     }
     setProposing(false);
+  };
+
+  const handleManualAddExaminer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !manualAddForm.pengujiUserId) return;
+    setManualAdding(true);
+    setWorkflowMsg(null);
+    try {
+      await apiClient.post(`/graduations/${id}/examiners/manual`, {
+        pengujiUserId: manualAddForm.pengujiUserId,
+        catatan: manualAddForm.catatan || undefined,
+      });
+      setShowManualAddExaminer(false);
+      setManualAddForm({ pengujiUserId: '', catatan: '' });
+      setWorkflowMsg({ ok: true, text: 'Penguji berhasil ditambahkan secara manual (langsung disetujui & masuk semua sesi ujian)' });
+      await fetchExaminers();
+      await fetchCompleteness();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setWorkflowMsg({ ok: false, text: msg || 'Gagal menambahkan penguji' });
+    }
+    setManualAdding(false);
   };
 
   const handleReviewExaminer = async (penugasanId: string, approved: boolean) => {
@@ -1636,17 +1661,27 @@ export default function GraduationDetailPage() {
                   Penguji Pendadaran
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">
-                  Admin kegiatan mengajukan penguji, lalu admin distrik menyetujuinya
+                  Admin kegiatan mengajukan penguji, lalu admin distrik menyetujuinya · Superadmin/admin distrik juga dapat menambah penguji secara manual
                 </p>
               </div>
-              {isAdminKegiatanLevel && (
-                <button
-                  onClick={() => { setShowProposeExaminer(true); fetchExaminerOptions(); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
-                >
-                  <Plus size={14} /> Ajukan Penguji
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {isAdminKegiatanLevel && (
+                  <button
+                    onClick={() => { setShowProposeExaminer(true); fetchExaminerOptions(); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition"
+                  >
+                    <Plus size={14} /> Ajukan Penguji
+                  </button>
+                )}
+                {isDistrikLevel && (
+                  <button
+                    onClick={() => { setShowManualAddExaminer(true); fetchExaminerOptions(); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                  >
+                    <UserCheck size={14} /> Tambah Manual
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Workflow message */}
@@ -1689,6 +1724,14 @@ export default function GraduationDetailPage() {
                     className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
                   >
                     <Plus size={14} /> Ajukan Penguji Pertama
+                  </button>
+                )}
+                {isDistrikLevel && (
+                  <button
+                    onClick={() => { setShowManualAddExaminer(true); fetchExaminerOptions(); }}
+                    className="mt-4 ml-2 inline-flex items-center gap-1.5 px-4 py-2 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-950 transition"
+                  >
+                    <UserCheck size={14} /> Tambah Manual
                   </button>
                 )}
               </div>
@@ -1785,6 +1828,75 @@ export default function GraduationDetailPage() {
                 )}
               </div>
             )}
+
+            {/* Manual Add Examiner Modal (superadmin/admin_distrik — langsung approved) */}
+            <Modal open={showManualAddExaminer} onClose={() => setShowManualAddExaminer(false)} title="Tambah Penguji Manual" size="sm">
+              <form onSubmit={handleManualAddExaminer} className="space-y-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg px-3 py-2">
+                  Penguji yang dipilih langsung berstatus <strong>Disetujui</strong> tanpa alur pengajuan, dan otomatis masuk ke semua sesi ujian praktek pendadaran ini.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih dari Anggota Terdaftar *</label>
+                  <select
+                    value={manualAddForm.pengujiUserId}
+                    onChange={(e) => setManualAddForm({ ...manualAddForm, pengujiUserId: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">Pilih penguji...</option>
+                    {examinerOptions.some((o) => o.sumber === 'manajemen_penguji') && (
+                      <optgroup label="Manajemen Penguji (aktif)">
+                        {examinerOptions
+                          .filter((o) => o.sumber === 'manajemen_penguji')
+                          .map((o) => (
+                            <option key={o.id} value={o.id}>{o.namaLengkap} ({o.email})</option>
+                          ))}
+                      </optgroup>
+                    )}
+                    {examinerOptions.some((o) => o.sumber === 'daftar_hadir') && (
+                      <optgroup label="Daftar Hadir Pendadaran">
+                        {examinerOptions
+                          .filter((o) => o.sumber === 'daftar_hadir')
+                          .map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.namaLengkap} ({o.nomorAnggota || o.email})
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
+                    {examinerOptions.length === 0 && (
+                      <option value="" disabled>Belum ada kandidat penguji. Tambahkan di manajemen penguji atau catat kehadiran anggota terlebih dahulu.</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
+                  <textarea
+                    value={manualAddForm.catatan}
+                    onChange={(e) => setManualAddForm({ ...manualAddForm, catatan: e.target.value })}
+                    rows={2}
+                    placeholder="Contoh: ditunjuk langsung oleh admin distrik"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualAddExaminer(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={manualAdding}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                  >
+                    {manualAdding ? 'Menambahkan...' : 'Tambahkan Penguji'}
+                  </button>
+                </div>
+              </form>
+            </Modal>
 
             {/* Propose Examiner Modal */}
             <Modal open={showProposeExaminer} onClose={() => setShowProposeExaminer(false)} title="Ajukan Penguji" size="sm">

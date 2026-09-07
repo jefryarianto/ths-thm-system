@@ -1544,6 +1544,111 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   /**
+   * Superadmin/admin_distrik (level yang berhak menyetujui) menambahkan penguji
+   * SECARA LANGSUNG — tanpa alur pengajuan → persetujuan. Status penugasan
+   * langsung 'approved'. Kandidat sah: terdaftar di manajemen penguji (aktif)
+   * ATAU tercatat HADIR pada pendadaran ini. Sesuai aturan "semua penguji
+   * menguji semua aspek", penguji baru langsung di-attach ke semua ujian
+   * praktek pendadaran. Penugasan pending yang sudah ada ikut di-approve.
+   */
+  async addExaminerManually(
+    graduationId: string,
+    dto: { pengujiUserId: string; peran?: string; catatan?: string },
+    userId?: string,
+    scope?: UserScope,
+  ) {
+    const grad = await this.getGraduationOrThrow(graduationId, scope);
+    if (grad.status === 'closed' || grad.status === 'cancelled') {
+      throw new BadRequestException('Pendadaran sudah ditutup/dibatalkan. Tidak dapat menambah penguji.');
+    }
+
+    const penguji = await this.prisma.user.findUnique({
+      where: { id: dto.pengujiUserId },
+      select: { id: true, role: true, isActive: true, email: true },
+    });
+    if (!penguji) throw new BadRequestException('User yang dipilih tidak ditemukan');
+
+    // Kandidat sah: (1) manajemen penguji aktif, (2) anggota tercatat HADIR
+    const isRegisteredPenguji = penguji.role === 'penguji' && penguji.isActive !== false;
+    let isAttendee = false;
+    if (!isRegisteredPenguji && penguji.email) {
+      const anggota = await this.prisma.anggota.findFirst({
+        where: { email: penguji.email, deletedAt: null },
+        select: { id: true },
+      });
+      if (anggota) {
+        const inv = await this.prisma.undanganPendadaran.findFirst({
+          where: { kegiatanId: graduationId, anggotaId: anggota.id, status: 'hadir' },
+          select: { id: true },
+        });
+        isAttendee = !!inv;
+      }
+    }
+    if (!isRegisteredPenguji && !isAttendee) {
+      throw new BadRequestException(
+        'Calon penguji harus terdaftar di manajemen penguji (status aktif) atau tercatat HADIR pada pendadaran ini',
+      );
+    }
+
+    const now = new Date();
+    const existing = await this.prisma.penugasanPenguji.findFirst({
+      where: { kegiatanId: graduationId, pengujiUserId: dto.pengujiUserId },
+    });
+
+    let assignment;
+    if (existing && existing.status === 'approved') {
+      throw new BadRequestException('Penguji ini sudah terdaftar (approved) untuk pendadaran ini');
+    }
+
+    if (existing) {
+      // Pending/rejected → langsung disetujui via penambahan manual
+      assignment = await this.prisma.penugasanPenguji.update({
+        where: { id: existing.id },
+        data: {
+          status: 'approved',
+          peran: dto.peran || existing.peran,
+          catatan: dto.catatan ?? existing.catatan,
+          disetujuiOleh: userId || null,
+          disetujuiAt: now,
+        },
+        include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
+      });
+    } else {
+      assignment = await this.prisma.penugasanPenguji.create({
+        data: {
+          kegiatanId: graduationId,
+          pengujiUserId: dto.pengujiUserId,
+          peran: dto.peran || 'penguji',
+          catatan: dto.catatan,
+          status: 'approved',
+          disetujuiOleh: userId || null,
+          disetujuiAt: now,
+        },
+        include: { pengujiUser: { select: { id: true, namaLengkap: true, email: true } } },
+      });
+    }
+    this.invalidateCache();
+
+    // Aturan "semua penguji menguji semua aspek": attach penguji ke semua ujian
+    try {
+      const ujianList = await this.prisma.ujianPraktek.findMany({
+        where: { kegiatanId: graduationId },
+        select: { id: true },
+      });
+      if (ujianList.length > 0) {
+        await this.prisma.ujianPraktekPenilai.createMany({
+          data: ujianList.map((u) => ({ ujianPraktekId: u.id, pengujiUserId: dto.pengujiUserId })),
+          skipDuplicates: true,
+        });
+      }
+    } catch {
+      // Non-blocking: auto-attach gagal tidak boleh menggagalkan penambahan penguji.
+    }
+
+    return assignment;
+  }
+
+  /**
    * Admin distrik menyetujui / menolak pengajuan penguji.
    * Hanya penugasan ber-status pending yang dapat direview.
    */

@@ -228,6 +228,16 @@ export class GraduationsController {
     return this.service.proposeExaminer(id, dto, req.scope);
   }
 
+  @Post(':id/examiners/manual')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Superadmin/admin distrik menambahkan penguji secara manual — langsung approved, pilih dari kandidat terdaftar' })
+  addExaminerManually(
+    @Param('id') id: string,
+    @Body() dto: { pengujiUserId: string; peran?: string; catatan?: string },
+    @Req() req: ScopedRequest,
+  ) {
+    return this.service.addExaminerManually(id, dto, req.user?.id, req.scope);
+  }
+
   @Post(':id/examiners/:penugasanId/review')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Admin distrik menyetujui / menolak pengajuan penguji' })
   reviewExaminer(

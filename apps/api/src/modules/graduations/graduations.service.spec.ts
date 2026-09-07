@@ -81,6 +81,12 @@ describe('GraduationsService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    ujianPraktek: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    ujianPraktekPenilai: {
+      createMany: jest.fn(),
+    },
   };
 
   const mockGraduation = {
@@ -583,6 +589,81 @@ describe('GraduationsService', () => {
 
       const result = await service.getExaminerCandidates('g1');
       expect(result.daftarHadir).toHaveLength(0);
+    });
+  });
+
+  describe('addExaminerManually', () => {
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockReset().mockResolvedValue({ nama: 'Pendadaran Test' });
+      mockPrisma.user.findUnique.mockReset();
+      mockPrisma.anggota.findFirst.mockReset();
+      mockPrisma.undanganPendadaran.findFirst.mockReset();
+      mockPrisma.penugasanPenguji.findFirst.mockReset();
+      mockPrisma.penugasanPenguji.create.mockReset();
+      mockPrisma.penugasanPenguji.update.mockReset();
+      mockPrisma.ujianPraktek.findMany.mockReset().mockResolvedValue([]);
+      mockPrisma.ujianPraktekPenilai.createMany.mockReset();
+    });
+
+    it('membuat penugasan langsung approved dan auto-attach ke semua ujian praktek', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue(null);
+      mockPrisma.penugasanPenguji.create.mockResolvedValue({
+        id: 'p1',
+        kegiatanId: 'g1',
+        pengujiUserId: 'u1',
+        status: 'approved',
+        pengujiUser: { id: 'u1', namaLengkap: 'Penguji Uji', email: 'p@test.com' },
+      });
+      mockPrisma.ujianPraktek.findMany.mockResolvedValue([{ id: 'uj1' }, { id: 'uj2' }]);
+
+      const result = await service.addExaminerManually('g1', { pengujiUserId: 'u1' }, 'admin1');
+      expect(result.status).toBe('approved');
+      expect(mockPrisma.penugasanPenguji.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'approved', disetujuiOleh: 'admin1' }),
+        }),
+      );
+      expect(mockPrisma.ujianPraktekPenilai.createMany).toHaveBeenCalledWith({
+        data: [
+          { ujianPraktekId: 'uj1', pengujiUserId: 'u1' },
+          { ujianPraktekId: 'uj2', pengujiUserId: 'u1' },
+        ],
+        skipDuplicates: true,
+      });
+    });
+
+    it('penugasan pending yang sudah ada langsung di-approve (tanpa duplikat)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1', status: 'pending', peran: 'penguji', catatan: null });
+      mockPrisma.penugasanPenguji.update.mockResolvedValue({
+        id: 'p1',
+        status: 'approved',
+        pengujiUser: { id: 'u1', namaLengkap: 'Penguji Uji', email: 'p@test.com' },
+      });
+
+      const result = await service.addExaminerManually('g1', { pengujiUserId: 'u1' });
+      expect(result.status).toBe('approved');
+      expect(mockPrisma.penugasanPenguji.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'p1' } }),
+      );
+      expect(mockPrisma.penugasanPenguji.create).not.toHaveBeenCalled();
+    });
+
+    it('BadRequest bila penguji sudah approved', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'penguji', isActive: true, email: 'p@test.com' });
+      mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'p1', status: 'approved', peran: 'penguji', catatan: null });
+      await expect(service.addExaminerManually('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('BadRequest bila kandidat bukan penguji aktif dan tidak hadir', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'anggota', isActive: true, email: 'a@test.com' });
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      await expect(service.addExaminerManually('g1', { pengujiUserId: 'u1' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
