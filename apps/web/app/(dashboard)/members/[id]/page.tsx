@@ -3,7 +3,7 @@
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import { CARD, COLORS, FRONT, BACK, getLevelVisual, photoCrop, fmt, decorFrontSvg, decorBackSvg, guillocheSvg, cardCss, resolveCardSpec } from '@/lib/card-design';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
@@ -34,6 +34,7 @@ import {
   Image,
   Printer,
   Pencil,
+  RefreshCw,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import EditMemberModal from '@/components/members/EditMemberModal';
@@ -212,6 +213,84 @@ function MemberPhotoWeb({ src, iconSrc, crop, iconCls }: { src: string | null; i
     />  );
 }
 
+/**
+ * Canvas kartu 856×540 yang di-scale penuhi lebar kontainer (ala CardShell mobile).
+ * Autemps: semua elemen dalam kartu memakai koordinat absolut kanvas 856×540;
+ * tanpa scaling, layout akan melenceng saat kolom dashboard lebih estreto dari 856px.
+ *
+ * Teknik:
+ * - Wrapper (relative, ukuran visual = 856s×540s) memberikan latar + border + shadow.
+ * - Layer clip (absolute inset-0, overflow hidden, radius 28s) menangani overflow dari
+ *   layout box 856×540 yang tetap besar saat `transform: scale()` (transform tidak
+ *   mengubah layout) — tanpa clip, layout box residu bisa membuat scroll tersedia.
+ * - Canvas dalam (856×540, transform scale(s), origin top-left) memuati children.
+ */
+function ScaledCardCanvas({ kind, children }: { kind: 'front' | 'back'; children: ReactNode }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const measure = () => {
+      const el = wrapRef.current;
+      if (!el) return;
+      const w = el.getBoundingClientRect().width;
+      if (w <= 0) return;
+      setScale(Math.min(w, CARD.W) / CARD.W);
+    };
+    measure();
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(measure, 120);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
+  const bg = kind === 'front' ? COLORS.front.bg : COLORS.back.bg;
+  const borderColor = kind === 'front' ? COLORS.front.border : COLORS.back.border;
+  const visualW = CARD.W * scale;
+  const visualH = CARD.H * scale;
+  const radius = CARD.RADIUS * scale;
+
+  return (
+    <div ref={wrapRef} className="flex justify-center">
+      <div
+        className="relative"
+        style={{
+          width: visualW,
+          height: visualH,
+          background: bg,
+          border: `1px solid ${borderColor}`,
+          borderRadius: radius,
+          boxShadow: '0 20px 40px rgba(0,0,0,0.18), 0 4px 6px rgba(0,0,0,0.08)',
+        }}
+      >
+        {/* Clip layout overflow dari canvas 856×540 (trasform scale tidak mengubah layout) */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{ borderRadius: radius }}
+        >
+          <div
+            className="relative"
+            style={{
+              width: CARD.W,
+              height: CARD.H,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page Component ───
 
 export default function MemberDetailPage() {
@@ -240,7 +319,7 @@ export default function MemberDetailPage() {
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
     template?: { frontImage?: string | null; backImage?: string | null; overlayConfig?: Record<string, unknown> } | null;
   } | null>(null);
-  const [cardLoading, setCardLoading] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [cardLoading, setCardLoading] = useState(false);
 
   const fetchMember = useCallback(async () => {
     if (!id) return;
@@ -265,31 +344,38 @@ export default function MemberDetailPage() {
   }, [fetchMember]);
 
   // Fetch digital card data when card tab is active
-  useEffect(() => {
-    if (activeTab === 'card' && member && !cardData) {
-      setCardLoading(true);
+  const fetchCardData = useCallback(async () => {
+    if (!member) return;
+    setCardLoading(true);
+    try {
       const token = localStorage.getItem('accessToken');
-      fetch(`${window.location.origin}/api/members/${member.id}/digital-card`, {
+      const response = await fetch(`${window.location.origin}/api/members/${member.id}/digital-card`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.success) {
-            setCardData({
-              qrCode: data.data.qrCode,
-              signerName: data.data.card?.signerName,
-              signerTitle: data.data.card?.signerTitle,
-              signatureImage: data.data.signatureImage || null,
-              stampImage: data.data.stampImage || null,
-              levelVisual: data.data.levelVisual || null,
-              template: data.data.template || null,
-            });
-          }
-        })
-        .catch(() => {})
-        .finally(() => setCardLoading(false));
+      });
+      const data = await response.json();
+      if (data.success) {
+        setCardData({
+          qrCode: data.data.qrCode,
+          signerName: data.data.card?.signerName,
+          signerTitle: data.data.card?.signerTitle,
+          signatureImage: data.data.signatureImage || null,
+          stampImage: data.data.stampImage || null,
+          levelVisual: data.data.levelVisual || null,
+          template: data.data.template || null,
+        });
+      }
+    } catch {
+      // Silently fail - card will show with default values
+    } finally {
+      setCardLoading(false);
     }
-  }, [activeTab, member, cardData]);
+  }, [member]);
+
+  useEffect(() => {
+    if (activeTab === 'card' && member) {
+      fetchCardData();
+    }
+  }, [activeTab, member, fetchCardData]);
 
   // Spec runtime kartu dari template aktif (null = desain bawaan packages/card-design)
   const cardSpec = resolveCardSpec(cardData?.template ?? undefined);
@@ -977,21 +1063,38 @@ export default function MemberDetailPage() {
               {/* ── Tab: Kartu Digital ── */}
               {activeTab === 'card' && (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                       <IdCard size={20} className="text-blue-500" />
                       Kartu Anggota Digital (KTA)
                     </h3>
+                    <button
+                      onClick={fetchCardData}
+                      disabled={cardLoading}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                      <RefreshCw size={16} className={cardLoading ? 'animate-spin' : ''} />
+                      {cardLoading ? 'Memuat...' : 'Refresh'}
+                    </button>
                   </div>
-        
+
+                  {/* Loading State */}
+                  {cardLoading && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Memuat data kartu anggota...</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Card Previews - hidden during loading */}
+                  <div className={`space-y-6 ${cardLoading ? 'hidden' : ''}`}>
                   {/* Front Side Preview - geometri 856×540 dari packages/card-design (sumber tunggal) */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Depan</h4>
-                    <div
-                      className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border"
-                      style={{ background: COLORS.front.bg, borderColor: COLORS.front.border }}
-                    >
-                      {cardSpec.hasFrontImage ? (
+                    <ScaledCardCanvas kind="front">
+                    {cardSpec.hasFrontImage ? (
                         /* Template aktif: gambar desain depan sebagai latar (menggantikan dekorasi bawaan) */
                         <img
                           src={`/api/uploads/${encodeURIComponent(cardSpec.template!.frontImage!)}`}
@@ -1192,11 +1295,11 @@ export default function MemberDetailPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </ScaledCardCanvas>
                   </div>                  {/* Back Side Preview - geometri dari packages/card-design (sumber tunggal) */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sisi Belakang</h4>
-                    <div className="relative w-full max-w-[856px] aspect-[856/540] rounded-[28px] overflow-hidden shadow-2xl border" style={{ background: COLORS.back.bg, borderColor: COLORS.back.border }}>
+                    <ScaledCardCanvas kind="back">
                       {cardSpec.hasBackImage ? (
                         /* Template aktif: gambar desain belakang sebagai latar */
                         <img
@@ -1269,34 +1372,50 @@ export default function MemberDetailPage() {
                           </div>
                         </div>
                       </div>
+                    </ScaledCardCanvas>
+                  </div>
+                  </div>
+                  {/* Download Actions */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Download size={18} className="text-blue-500" />
+                      Unduh & Cetak Kartu
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <button
+                        onClick={() => downloadKTA(member.id, 'pdf')}
+                        className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg hover:shadow-xl"
+                      >
+                        <Download size={20} />
+                        Download PDF - 2 Sisi
+                      </button>
+                      <button
+                        onClick={() => downloadKTA(member.id, 'image')}
+                        className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg hover:shadow-xl"
+                      >
+                        <Image size={20} />
+                        Download PNG - 2 Sisi
+                      </button>
+                      <button
+                        onClick={() => previewKTA(member.id)}
+                        className="flex items-center justify-center gap-3 px-6 py-4 bg-slate-700 text-white rounded-xl hover:bg-slate-800 transition font-medium shadow-lg hover:shadow-xl"
+                      >
+                        <Printer size={20} />
+                        Preview & Cetak (HTML)
+                      </button>
                     </div>
-                  </div>                  {/* Download Actions */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <button
-                      onClick={() => downloadKTA(member.id, 'pdf')}
-                      className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium shadow-lg"
-                    >
-                      <Download size={20} />
-                      Download PDF - 2 Sisi
-                    </button>
-                    <button
-                      onClick={() => downloadKTA(member.id, 'image')}
-                      className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-medium shadow-lg"
-                    >
-                      <Image size={20} />
-                      Download PNG - 2 Sisi
-                    </button>
-                    <button
-                      onClick={() => previewKTA(member.id)}
-                      className="flex items-center justify-center gap-3 px-6 py-4 bg-slate-700 text-white rounded-xl hover:bg-slate-800 transition font-medium shadow-lg"
-                    >
-                      <Printer size={20} />
-                      Preview & Cetak (HTML)
-                    </button>
                   </div>
         
-                  <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 text-sm text-yellow-700 dark:text-yellow-400">
-                    Kartu digital ini menggunakan format CR80 landscape (856x540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-700 dark:text-blue-400">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Informasi Kartu Digital</p>
+                        <p className="mt-1 text-blue-600 dark:text-blue-500">
+                          Kartu digital ini menggunakan format CR80 landscape (856×540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
