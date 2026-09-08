@@ -282,6 +282,12 @@ model Distrik {
   stempels              Stempel[]
   dokumenPenandatangans DokumenPenandatangan[]
 
+  // ── Jabatan preset per distrik (NULL = global, fallback semua distrik) ──
+  jabatans Jabatan[]
+
+  // ── Template kartu anggota per distrik (NULL = global) ──
+  cardTemplates CardTemplate[]
+
   @@map("distrik")
 }
 
@@ -1475,14 +1481,22 @@ model PeriodeAktif {
 
 model Jabatan {
   id        String   @id @default(uuid())
-  nama      String   @unique
-  kode      String?  @unique
+  /// Nama unik per scope — dijaga index unik parsial di migration SQL:
+  /// (nama, COALESCE(distrik_id,'GLOBAL')). Distrik boleh mendefinisikan ulang
+  /// jabatan global (mis. "Sekretaris" distrik A berbeda urutan/kode).
+  nama      String
+  kode      String?
   urutan    Int      @default(0)
+  /// Cakupan distrik (NULL = global/nasional). Preset distrik digunakan oleh
+  /// distrik tersebut; global dipakai semua distrik sebagai fallback.
+  distrikId String?  @map("distrik_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   pengurus Kepengurusan[]
+  distrik  Distrik?        @relation(fields: [distrikId], references: [id], onDelete: Cascade)
 
+  @@index([distrikId])
   @@map("jabatan")
 }
 
@@ -2113,16 +2127,24 @@ model DokumenPenandatangan {
 /// bila tidak ada, renderer memakai desain bawaan.
 model CardTemplate {
   id            String   @id @default(uuid())
-  name          String   @unique
+  /// Slug template — unik per scope (global + per distrik), dijaga index unik
+  /// parsial di migration SQL: (name, COALESCE(distrik_id,'GLOBAL')).
+  name          String
   label         String
   frontImage    String?  @map("front_image")
   backImage     String?  @map("back_image")
   overlayConfig Json     @map("overlay_config")
   isActive      Boolean  @default(false) @map("is_active")
+  /// Cakupan distrik (NULL = global/nasional). Template distrik diprioritaskan
+  /// di atas global saat resolve kartu anggota; satu aktif per scope.
+  distrikId     String?  @map("distrik_id")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
+  distrik Distrik? @relation(fields: [distrikId], references: [id], onDelete: Cascade)
+
   @@index([isActive])
+  @@index([distrikId, isActive])
   @@map("card_templates")
 }
 

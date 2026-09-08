@@ -6,12 +6,13 @@ import { useConfirm } from '@/components/ui/confirm-modal';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
-import { Plus, PenLine, Edit3, Trash2, CheckCircle, XCircle, Eye, RefreshCw, Save, IdCard, AlertCircle, Globe } from 'lucide-react';
+import { Plus, PenLine, Edit3, Trash2, CheckCircle, XCircle, Eye, RefreshCw, Save, IdCard, AlertCircle, Globe, Upload, Stamp as StampIcon } from 'lucide-react';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
 import SummaryBar from '@/components/ui/summary-bar';
 import Modal from '@/components/ui/modal';
 import FormField from '@/components/ui/form-field';
+import JabatanSelect from '@/components/ui/jabatan-select';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -30,6 +31,27 @@ interface DistrictOption {
   id: string;
   nama: string;
   kodeDistrik?: string;
+}
+
+/** Gambar tanda tangan (tabel tanda_tangan) — punya cakupan distrik. */
+interface TandaTanganRow {
+  id: string;
+  nama: string;
+  jabatan: string;
+  imagePath?: string | null;
+  isActive: boolean;
+  distrikId?: string | null;
+  distrik?: { id: string; nama: string } | null;
+}
+
+/** Stempel (tabel stempel) — punya cakupan distrik. */
+interface StampRow {
+  id: string;
+  nama: string;
+  imagePath?: string | null;
+  isActive: boolean;
+  distrikId?: string | null;
+  distrik?: { id: string; nama: string } | null;
 }
 
 export default function PenandatanganPage() {
@@ -63,6 +85,22 @@ export default function PenandatanganPage() {
   const [docSlots, setDocSlots] = useState<Record<string, string[]>>({});
   const [savingDoc, setSavingDoc] = useState<string | null>(null);
 
+  // Gambar tanda tangan & stempel per scope (tabel tanda_tangan / stempel)
+  const [ttdRows, setTtdRows] = useState<TandaTanganRow[]>([]);
+  const [stampRows, setStampRows] = useState<StampRow[]>([]);
+
+  // Upload Tanda Tangan modal
+  const [showTtdModal, setShowTtdModal] = useState(false);
+  const [ttdForm, setTtdForm] = useState({ nama: '', jabatan: '', file: null as File | null });
+  const [savingTtd, setSavingTtd] = useState(false);
+  const [ttdError, setTtdError] = useState('');
+
+  // Upload Stempel modal
+  const [showStampModal, setShowStampModal] = useState(false);
+  const [stampForm, setStampForm] = useState({ nama: '', file: null as File | null });
+  const [savingStamp, setSavingStamp] = useState(false);
+  const [stampError, setStampError] = useState('');
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -79,6 +117,19 @@ export default function PenandatanganPage() {
       const { data: res } = await apiClient.get('/org-structure/distrik', { params: { limit: 200 } });
       const list = (res.data ?? res ?? []) as DistrictOption[];
       setDistricts(list);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  const fetchTtdStamps = useCallback(async () => {
+    try {
+      const [sigRes, stampRes] = await Promise.all([
+        apiClient.get('/settings/signatures'),
+        apiClient.get('/settings/stamps'),
+      ]);
+      setTtdRows((sigRes.data?.data || sigRes.data || []) as TandaTanganRow[]);
+      setStampRows((stampRes.data?.data || stampRes.data || []) as StampRow[]);
     } catch {
       // silent
     }
@@ -131,7 +182,8 @@ export default function PenandatanganPage() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchTtdStamps();
+  }, [fetchData, fetchTtdStamps]);
 
 useEffect(() => {
   fetchDocAssignments();
@@ -261,6 +313,114 @@ useEffect(() => {
     setSavingDoc(null);
   };
 
+  // ─── Gambar Tanda Tangan & Stempel (per scope) ───
+
+  /** Baris yang relevan untuk scope aktif (API sudah ter-scope; filter client sebagai jaring pengaman). */
+  const scopedTtd = ttdRows.filter((s) => (s.distrikId ?? null) === (scope || null));
+  const scopedStamps = stampRows.filter((s) => (s.distrikId ?? null) === (scope || null));
+
+  const openTtdModal = () => {
+    setTtdForm({ nama: '', jabatan: 'Koordinator Distrik', file: null });
+    setTtdError('');
+    setShowTtdModal(true);
+  };
+
+  const saveTtd = async () => {
+    if (!ttdForm.file) {
+      setTtdError('Pilih file gambar tanda tangan terlebih dahulu');
+      return;
+    }
+    setSavingTtd(true);
+    setTtdError('');
+    try {
+      // Raw fetch — apiClient memaksa Content-Type JSON yang merusak multipart.
+      const fd = new FormData();
+      fd.append('file', ttdForm.file);
+      fd.append('nama', ttdForm.nama.trim());
+      fd.append('jabatan', ttdForm.jabatan.trim());
+      fd.append('distrikId', scope || '');
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/settings/signatures', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTtdError(data?.message || 'Gagal mengupload tanda tangan');
+        return;
+      }
+      setShowTtdModal(false);
+      toast('success', `Tanda tangan tersimpan (${scopeLabel})`);
+      fetchTtdStamps();
+    } catch {
+      setTtdError('Gagal mengupload tanda tangan. Silakan coba lagi.');
+    }
+    setSavingTtd(false);
+  };
+
+  const deleteTtd = async (row: TandaTanganRow) => {
+    if (!(await confirm(`Hapus gambar tanda tangan "${row.nama}"?`))) return;
+    try {
+      await apiClient.delete(`/settings/signatures/${row.id}`);
+      toast('success', 'Tanda tangan dihapus');
+      fetchTtdStamps();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal menghapus tanda tangan');
+    }
+  };
+
+  const openStampModal = () => {
+    setStampForm({ nama: '', file: null });
+    setStampError('');
+    setShowStampModal(true);
+  };
+
+  const saveStamp = async () => {
+    if (!stampForm.file) {
+      setStampError('Pilih file gambar stempel terlebih dahulu');
+      return;
+    }
+    setSavingStamp(true);
+    setStampError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', stampForm.file);
+      fd.append('nama', stampForm.nama.trim() || `Stempel ${scopeLabel}`);
+      fd.append('distrikId', scope || '');
+      const token = localStorage.getItem('accessToken');
+      const res = await fetch('/api/settings/stamp', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStampError(data?.message || 'Gagal mengupload stempel');
+        return;
+      }
+      setShowStampModal(false);
+      toast('success', `Stempel tersimpan (${scopeLabel})`);
+      fetchTtdStamps();
+    } catch {
+      setStampError('Gagal mengupload stempel. Silakan coba lagi.');
+    }
+    setSavingStamp(false);
+  };
+
+  const deleteStamp = async (row: StampRow) => {
+    if (!(await confirm(`Hapus stempel "${row.nama}"?`))) return;
+    try {
+      await apiClient.delete(`/settings/stamp/${row.id}`);
+      toast('success', 'Stempel dihapus');
+      fetchTtdStamps();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal menghapus stempel');
+    }
+  };
+
   return (
     <PermissionGuard module="settings" action="view">
       <PageContainer>
@@ -285,12 +445,12 @@ useEffect(() => {
         <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-400">
           <IdCard size={16} className="shrink-0 mt-0.5" />
           <p>
-            Penandatangan dengan status <strong>Aktif</strong> dipakai sebagai bawaan pada dokumen.
-            Anda boleh mengaktifkan <strong>lebih dari satu</strong> penandatangan per distrik
-            (misal: Koordinator Distrik + Pastor Moderator).
-            Di bagian <strong>Penandatangan per Dokumen</strong> (bawah), Anda bisa mengatur 1-3
-            penandatangan khusus untuk tiap jenis dokumen (mis. moderator + koordinator distrik pada
-            KTA, atau koordinator distrik + ketua panitia pada piagam).
+            Penandatangan dengan status <strong>Aktif</strong> dipakai sebagai bawaan pada dokumen
+            (satu penandatangan aktif per distrik/global).
+            Untuk menampilkan lebih dari satu penandatangan pada satu dokumen (mis. Koordinator
+            Distrik + Pastor Moderator pada KTA), gunakan bagian <strong>Penandatangan per
+            Dokumen</strong> (bawah) — di sana Anda bisa mengatur 1-3 penandatangan khusus untuk
+            tiap jenis dokumen.
           </p>
         </div>
 
@@ -441,6 +601,149 @@ useEffect(() => {
           )}
         </div>
 
+        {/* ─── Gambar Tanda Tangan (per scope) ─── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Gambar Tanda Tangan — {scopeLabel}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Upload gambar tanda tangan untuk distrik ini. Gambar aktif dipakai pada kartu
+                anggota & dokumen distrik; bila kosong, otomatis memakai tanda tangan global.
+              </p>
+            </div>
+            <button
+              onClick={openTtdModal}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Upload size={14} /> Upload Tanda Tangan
+            </button>
+          </div>
+          {scopedTtd.length === 0 ? (
+            <p className="text-sm text-gray-400 py-4">
+              Belum ada gambar tanda tangan pada scope ini — dokumen memakai tanda tangan global.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {scopedTtd.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between gap-3 py-2.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {s.imagePath ? (
+                      <img
+                        src={`/api/uploads/${encodeURIComponent(s.imagePath)}`}
+                        alt={s.nama}
+                        className="w-16 h-10 object-contain bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                      />
+                    ) : (
+                      <div className="w-16 h-10 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                        <PenLine size={14} className="text-gray-400" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{s.nama}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{s.jabatan}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {s.isActive ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+                        <CheckCircle size={12} /> Aktif
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                        <XCircle size={12} /> Nonaktif
+                      </span>
+                    )}
+                    {!isSuperadmin || s.distrikId ? (
+                      <button
+                        onClick={() => deleteTtd(s)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                        title="Hapus"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ─── Stempel (per scope) ─── */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Stempel — {scopeLabel}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Upload stempel distrik. Stempel aktif dipakai bersama tanda tangan pada kartu &
+                dokumen; bila kosong, otomatis memakai stempel global.
+              </p>
+            </div>
+            <button
+              onClick={openStampModal}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+            >
+              <Upload size={14} /> Upload Stempel
+            </button>
+          </div>
+          {scopedStamps.length === 0 ? (
+            <p className="text-sm text-gray-400 py-4">
+              Belum ada stempel pada scope ini — dokumen memakai stempel global.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {scopedStamps.map((st) => (
+                <div
+                  key={st.id}
+                  className="flex items-center justify-between gap-3 py-2.5 border-b border-gray-100 dark:border-gray-700/50 last:border-0"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {st.imagePath ? (
+                      <img
+                        src={`/api/uploads/${encodeURIComponent(st.imagePath)}`}
+                        alt={st.nama}
+                        className="w-16 h-10 object-contain bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                      />
+                    ) : (
+                      <div className="w-16 h-10 rounded border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                        <StampIcon size={14} className="text-gray-400" />
+                      </div>
+                    )}
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{st.nama}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {st.isActive ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+                        <CheckCircle size={12} /> Aktif
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                        <XCircle size={12} /> Nonaktif
+                      </span>
+                    )}
+                    {!isSuperadmin || st.distrikId ? (
+                      <button
+                        onClick={() => deleteStamp(st)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
+                        title="Hapus"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ─── Penandatangan per Dokumen (1-3) ─── */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
           <div className="mb-4">
@@ -528,13 +831,7 @@ useEffect(() => {
               />
             </FormField>
             <FormField label="Jabatan" required>
-              <input
-                type="text"
-                value={form.jabatan}
-                onChange={(e) => setForm((p) => ({ ...p, jabatan: e.target.value }))}
-                placeholder="Contoh: Koordinator Distrik"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
+              <JabatanSelect value={form.jabatan} onChange={(v) => setForm((p) => ({ ...p, jabatan: v }))} />
             </FormField>
             <FormField label="Cakupan">
               {isSuperadmin ? (
@@ -593,6 +890,94 @@ useEffect(() => {
               >
                 <Save size={14} />{' '}
                 {saving ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+        {/* ─── Upload Tanda Tangan Modal ─── */}
+        <Modal
+          open={showTtdModal}
+          onClose={() => setShowTtdModal(false)}
+          title={`Upload Tanda Tangan — ${scopeLabel}`}
+        >
+          <div className="space-y-4">
+            <FormField label="Nama" required>
+              <input
+                type="text"
+                value={ttdForm.nama}
+                onChange={(e) => setTtdForm((p) => ({ ...p, nama: e.target.value }))}
+                placeholder="Contoh: Yoseph Pehan Betan"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </FormField>
+            <FormField label="Jabatan" required>
+              <JabatanSelect value={ttdForm.jabatan} onChange={(v) => setTtdForm((p) => ({ ...p, jabatan: v }))} />
+            </FormField>
+            <FormField label="File Gambar" required>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => setTtdForm((p) => ({ ...p, file: e.target.files?.[0] || null }))}
+                className="w-full text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 file:text-sm hover:file:bg-blue-100"
+              />
+            </FormField>
+            {ttdError && <p className="text-sm text-red-600 dark:text-red-400">{ttdError}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowTtdModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                onClick={saveTtd}
+                disabled={savingTtd}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Upload size={14} /> {savingTtd ? 'Mengunggah...' : 'Upload'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* ─── Upload Stempel Modal ─── */}
+        <Modal
+          open={showStampModal}
+          onClose={() => setShowStampModal(false)}
+          title={`Upload Stempel — ${scopeLabel}`}
+        >
+          <div className="space-y-4">
+            <FormField label="Nama Stempel">
+              <input
+                type="text"
+                value={stampForm.nama}
+                onChange={(e) => setStampForm((p) => ({ ...p, nama: e.target.value }))}
+                placeholder={`Stempel ${scopeLabel}`}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </FormField>
+            <FormField label="File Gambar" required>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => setStampForm((p) => ({ ...p, file: e.target.files?.[0] || null }))}
+                className="w-full text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 file:text-sm hover:file:bg-blue-100"
+              />
+            </FormField>
+            {stampError && <p className="text-sm text-red-600 dark:text-red-400">{stampError}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowStampModal(false)}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                onClick={saveStamp}
+                disabled={savingStamp}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Upload size={14} /> {savingStamp ? 'Mengunggah...' : 'Upload'}
               </button>
             </div>
           </div>

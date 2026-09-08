@@ -425,6 +425,110 @@ export async function registerDashboardPageMocks(page: Page) {
     });
   });
 
+  // ── Penandatangan page — /settings/penandatangan ──
+  // Penandatangan list (scope-aware: superadmin sees all)
+  await page.route(/\/api\/penandatangan(\?|$)/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { id: 'signer-1', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
+          { id: 'signer-2', nama: 'Pastor Moderator', jabatan: 'Moderator', isActive: false, distrikId: null, distrik: null },
+        ],
+      }),
+    });
+  });
+
+  // Penandatangan per dokumen assignments (1-3 signers per doc type)
+  await page.route(/\/api\/penandatangan\/dokumen(\?|$)/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          {
+            type: 'kartu_anggota',
+            label: 'Kartu Anggota (KTA)',
+            signers: [{ penandatanganId: 'signer-1', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik' }],
+          },
+          {
+            type: 'sertifikat_pendadaran',
+            label: 'Sertifikat Pendadaran',
+            signers: [],
+          },
+          {
+            type: 'sertifikat_pelatihan',
+            label: 'Sertifikat Pelatihan',
+            signers: [],
+          },
+          {
+            type: 'piagam_prestasi',
+            label: 'Piagam Prestasi',
+            signers: [],
+          },
+        ],
+      }),
+    });
+  });
+
+  // Districts for the penandatangan scope selector
+  await page.route(/\/api\/org-structure\/distrik/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { id: 'distrik-1', nama: 'Distrik A', kodeDistrik: 'D001' },
+          { id: 'distrik-2', nama: 'Distrik B', kodeDistrik: 'D002' },
+        ],
+      }),
+    });
+  });
+
+  // Jabatan list (dipakai JabatanSelect + halaman Settings → Jabatan). Kini
+  // district-scoped: preset global (distrikId null) + preset per distrik.
+  // Dapat dioverride per-spec (mockAuth dipanggil sebelum route spesifik, jadi
+  // registrasi terakhir menang).
+  await page.route(/\/api\/jabatan(\?|$)/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { id: 'j1', nama: 'Pastor Moderator', urutan: 0, distrikId: null, distrik: null, _count: { pengurus: 0 } },
+          { id: 'j2', nama: 'Koordinator Distrik', urutan: 1, distrikId: null, distrik: null, _count: { pengurus: 0 } },
+          { id: 'j3', nama: 'Sekretaris', urutan: 2, distrikId: null, distrik: null, _count: { pengurus: 0 } },
+          { id: 'j4', nama: 'Sekretaris', urutan: 0, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' }, _count: { pengurus: 0 } },
+        ],
+      }),
+    });
+  });
+
+  // User scope (auto-scope for non-superadmin)
+  await page.route(/\/api\/auth\/scope/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { role: 'superadmin', distrikId: null, wilayahId: null, rantingId: null },
+      }),
+    });
+  });
+
   // ── Settings ──
   await page.route(/\/api\/settings$/, async (route) => {
     await route.fulfill({
@@ -457,27 +561,48 @@ export async function registerDashboardPageMocks(page: Page) {
     });
   });
 
-  await page.route(/\/api\/settings\/signatures/, async (route) => {
+  // Gambar tanda tangan (scope-aware: superadmin sees all, others see own distrik + global)
+  await page.route(/\/api\/settings\/signatures(\?|$)/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         success: true,
         data: [
-          { id: 'sig-1', namaLengkap: 'Ketua THS', jabatan: 'Ketua', isActive: true },
-          { id: 'sig-2', namaLengkap: 'Sekretaris', jabatan: 'Sekretaris', isActive: true },
+          { id: 'sig-1', nama: 'Ketua THS', jabatan: 'Ketua', imagePath: 'sig-ketua.png', isActive: true, distrikId: null, distrik: null },
+          { id: 'sig-2', nama: 'Koordinator Distrik A', jabatan: 'Koordinator Distrik', imagePath: 'sig-koord.png', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
         ],
       }),
     });
   });
 
-  await page.route(/\/api\/settings\/stamp/, async (route) => {
+  // Stempel list (scope-aware)
+  await page.route(/\/api\/settings\/stamps(\?|$)/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         success: true,
-        data: { nama: 'Stempel THS-THM', label: 'Stempel Resmi' },
+        data: [
+          { id: 'stamp-1', nama: 'Stempel Resmi', imagePath: 'stempel-resmi.png', isActive: true, distrikId: null, distrik: null },
+          { id: 'stamp-2', nama: 'Stempel Distrik A', imagePath: 'stempel-a.png', isActive: true, distrikId: 'distrik-1', distrik: { id: 'distrik-1', nama: 'Distrik A' } },
+        ],
+      }),
+    });
+  });
+
+  // Single stamp (used by /settings page legacy display)
+  await page.route(/\/api\/settings\/stamp(\?|$)/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: { id: 'stamp-1', nama: 'Stempel THS-THM', imagePath: 'stempel-resmi.png', isActive: true, distrikId: null },
       }),
     });
   });

@@ -78,6 +78,62 @@ describe('CardTemplatesService', () => {
       mockPrisma.cardTemplate.findFirst.mockRejectedValue(new Error('relation does not exist'));
       await expect(service.resolveActive()).resolves.toBeNull();
     });
+
+    it('memprioritaskan template aktif distrik, fallback ke global', async () => {
+      const scopedTpl = { id: 't-d', name: 'kta-lrt', isActive: true, distrikId: 'd-lrt' };
+      const globalTpl = { id: 't-g', name: 'classic', isActive: true, distrikId: null };
+      mockPrisma.cardTemplate.findFirst
+        .mockResolvedValueOnce(scopedTpl);
+
+      await expect(service.resolveActive('d-lrt')).resolves.toEqual(scopedTpl);
+      expect(mockPrisma.cardTemplate.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isActive: true, distrikId: 'd-lrt' } }),
+      );
+
+      // Tanpa template distrik → global
+      mockPrisma.cardTemplate.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(globalTpl);
+      await expect(service.resolveActive('d-lrt')).resolves.toEqual(globalTpl);
+      expect(mockPrisma.cardTemplate.findFirst).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where: { isActive: true, distrikId: null } }),
+      );
+    });
+
+    it('global langsung tanpa distrikId', async () => {
+      const tpl = { id: 't1', name: 'classic' };
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue(tpl);
+      await expect(service.resolveActive()).resolves.toEqual(tpl);
+      expect(mockPrisma.cardTemplate.findFirst).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findAll (scoping)', () => {
+    it('superadmin melihat semua template', async () => {
+      mockPrisma.cardTemplate.findMany.mockResolvedValue([]);
+      await service.findAll({ role: 'superadmin', distrikId: undefined });
+      expect(mockPrisma.cardTemplate.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: undefined }),
+      );
+    });
+
+    it('admin_distrik melihat template distriknya + global', async () => {
+      mockPrisma.cardTemplate.findMany.mockResolvedValue([]);
+      await service.findAll({ role: 'admin_distrik', distrikId: 'd-lrt' });
+      expect(mockPrisma.cardTemplate.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { OR: [{ distrikId: 'd-lrt' }, { distrikId: null }] },
+        }),
+      );
+    });
+
+    it('tanpa scope → semua template (API key / panggilan internal)', async () => {
+      mockPrisma.cardTemplate.findMany.mockResolvedValue([]);
+      await service.findAll();
+      expect(mockPrisma.cardTemplate.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: undefined }),
+      );
+    });
   });
 
   describe('create', () => {
@@ -86,13 +142,27 @@ describe('CardTemplatesService', () => {
       expect(mockPrisma.cardTemplate.create).not.toHaveBeenCalled();
     });
 
-    it('menolak nama duplicate', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 'x', name: 'classic' });
+    it('menolak nama duplicate pada scope yang sama', async () => {
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue({ id: 'x', name: 'classic', distrikId: null });
       await expect(service.create({ name: 'classic' })).rejects.toThrow(/sudah dipakai/);
+      expect(mockPrisma.cardTemplate.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { name: 'classic', distrikId: null } }),
+      );
+    });
+
+    it('nama yang sama di distrik berbeda diperbolehkan (unik per scope)', async () => {
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
+      mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({ id: 't2', ...data }));
+      const result = await service.create({ name: 'kta-new' }, undefined, 'd-lrt');
+      expect(result.name).toBe('kta-new');
+      expect(result.distrikId).toBe('d-lrt');
+      expect(mockPrisma.cardTemplate.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ distrikId: 'd-lrt', isActive: false }) }),
+      );
     });
 
     it('membuat template dengan overlayConfig disanitasi & gambar divalidasi', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue(null);
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
       mockPrisma.cardTemplate.create.mockImplementation(async ({ data }: any) => ({ id: 't1', ...data }));
 
       const result = await service.create(
@@ -108,25 +178,51 @@ describe('CardTemplatesService', () => {
     });
 
     it('menolak overlayConfig yang bukan objek', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue(null);
+      mockPrisma.cardTemplate.findFirst.mockResolvedValue(null);
       await expect(service.create({ name: 'kta-x', overlayConfig: '[1,2]' })).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('activate', () => {
-    it('menonaktifkan semua lalu mengaktifkan satu (atomik)', async () => {
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1' });
+    it('menonaktifkan semua pada scope yg sama lalu mengaktifkan satu (atomik)', async () => {
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', distrikId: 'd-lrt' });
       mockPrisma.$transaction.mockResolvedValue([]);
       mockPrisma.cardTemplate.update.mockResolvedValue({ id: 't1', isActive: true });
-      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: true });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: true, distrikId: 'd-lrt' });
 
-      const result = await service.activate('t1');
+      const result = await service.activate('t1', { role: 'admin_distrik', distrikId: 'd-lrt' });
 
       expect(mockPrisma.$transaction).toHaveBeenCalled();
       const txArgs = mockPrisma.$transaction.mock.calls[0][0];
       expect(Array.isArray(txArgs)).toBe(true);
-      expect(txArgs).toHaveLength(2); // deaktivasi semua + aktivasi satu
+      expect(txArgs).toHaveLength(2); // deaktivasi scope + aktivasi satu
+      // Deaktivasi dibatasi ke scope yang sama (distrik d-lrt), bukan semua global
+      expect(mockPrisma.cardTemplate.updateMany).toHaveBeenCalledWith({
+        where: { distrikId: 'd-lrt' },
+        data: { isActive: false },
+      });
       expect(result.isActive).toBe(true);
+    });
+
+    it('deaktivasi scope global memakai distrikId null', async () => {
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', distrikId: null });
+      mockPrisma.$transaction.mockResolvedValue([]);
+      mockPrisma.cardTemplate.update.mockResolvedValue({ id: 't1', isActive: true });
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't1', isActive: true, distrikId: null });
+
+      await service.activate('t1', { role: 'superadmin', distrikId: undefined });
+      expect(mockPrisma.cardTemplate.updateMany).toHaveBeenCalledWith({
+        where: { distrikId: null },
+        data: { isActive: false },
+      });
+    });
+
+    it('admin_distrik tidak bisa mengaktifkan template global', async () => {
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't-global', distrikId: null });
+      await expect(service.activate('t-global', { role: 'admin_distrik', distrikId: 'd-lrt' })).rejects.toThrow(
+        /distrik Anda sendiri/,
+      );
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('NotFound bila template tidak ada', async () => {
@@ -147,6 +243,22 @@ describe('CardTemplatesService', () => {
       const result = await service.remove('t1');
       expect(result.deleted).toBe(true);
       expect(mockUnlink).toHaveBeenCalledTimes(2);
+    });
+
+    it('admin_distrik tidak bisa menghapus template distrik lain', async () => {
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't-lain', isActive: false, distrikId: 'd-lain' });
+      await expect(service.remove('t-lain', { role: 'admin_distrik', distrikId: 'd-lrt' })).rejects.toThrow(
+        /distrik Anda sendiri/,
+      );
+      expect(mockPrisma.cardTemplate.delete).not.toHaveBeenCalled();
+    });
+
+    it('admin_distrik boleh menghapus template distriknya sendiri', async () => {
+      mockPrisma.cardTemplate.findUnique.mockResolvedValue({ id: 't-sendiri', isActive: false, distrikId: 'd-lrt' });
+      mockPrisma.cardTemplate.delete.mockResolvedValue({});
+      const result = await service.remove('t-sendiri', { role: 'admin_distrik', distrikId: 'd-lrt' });
+      expect(result.deleted).toBe(true);
+      expect(mockPrisma.cardTemplate.delete).toHaveBeenCalledWith({ where: { id: 't-sendiri' } });
     });
   });
 });

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
-import { IdCard, Upload, CheckCircle2, Trash2, RefreshCw, Pencil, ImageIcon } from 'lucide-react';
+import { IdCard, Upload, CheckCircle2, Trash2, RefreshCw, Pencil, Globe } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface CardTemplateItem {
   id: string;
@@ -14,8 +15,16 @@ interface CardTemplateItem {
   backImage: string | null;
   overlayConfig: Record<string, unknown>;
   isActive: boolean;
+  distrikId?: string | null;
+  distrik?: { id: string; nama: string } | null;
   createdAt: string;
   updatedAt: string;
+}
+
+interface DistrictOption {
+  id: string;
+  nama: string;
+  kodeDistrik?: string;
 }
 
 /** Preset overlayConfig default — hanya lapisan keamanan, data anggota tetap overlay bawaan. */
@@ -36,6 +45,7 @@ const DEFAULT_OVERLAY = JSON.stringify(
 export default function KartuSettingsPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
+  const { role } = useAuth();
   const [templates, setTemplates] = useState<CardTemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,6 +56,43 @@ export default function KartuSettingsPage() {
   const [showOverlay, setShowOverlay] = useState(false);
   const frontRef = useRef<HTMLInputElement>(null);
   const backRef = useRef<HTMLInputElement>(null);
+
+  // Cakupan: '' = Global (Nasional), selain itu id distrik
+  const [districts, setDistricts] = useState<DistrictOption[]>([]);
+  const [scope, setScope] = useState('');
+  const [scopeName, setScopeName] = useState('');
+  const isSuperadmin = role === 'superadmin';
+
+  const fetchDistricts = useCallback(async () => {
+    try {
+      const { data: res } = await apiClient.get('/org-structure/distrik', { params: { limit: 200 } });
+      const list = (res.data ?? res ?? []) as DistrictOption[];
+      setDistricts(list);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  // Fetch user scope on mount (auto-set for admin_distrik)
+  useEffect(() => {
+    if (!isSuperadmin && role) {
+      apiClient.get('/auth/scope').then(({ data: res }) => {
+        if (res?.distrikId) {
+          setScope(res.distrikId);
+          fetchDistricts().then(() => {
+            // Pakai daftar distrik dari response scope bila tersedia, else fetch
+          });
+          apiClient.get('/org-structure/distrik', { params: { limit: 200 } }).then(({ data: dRes }) => {
+            const list = (dRes.data ?? dRes ?? []) as DistrictOption[];
+            const match = list.find((d) => d.id === res.distrikId);
+            setScopeName(match?.nama || 'Distrik');
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    } else {
+      fetchDistricts();
+    }
+  }, [isSuperadmin, role, fetchDistricts]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -62,6 +109,13 @@ export default function KartuSettingsPage() {
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
+
+  const scopeLabel = scope
+    ? (isSuperadmin ? districts.find((d) => d.id === scope)?.nama || 'Distrik' : scopeName || 'Distrik')
+    : 'Global (Nasional)';
+
+  /** Template yang relevan untuk scope aktif (API sudah ter-scope; filter client sebagai jaring pengaman). */
+  const scopedTemplates = templates.filter((t) => (t.distrikId ?? null) === (scope || null));
 
   const resetForm = () => {
     setEditingId(null);
@@ -105,6 +159,8 @@ export default function KartuSettingsPage() {
     fd.append('name', name.trim());
     if (label.trim()) fd.append('label', label.trim());
     fd.append('overlayConfig', JSON.stringify(overlay));
+    // Superadmin memilih scope lewat selector; admin_distrik dikunci backend ke distriknya.
+    if (isSuperadmin && scope) fd.append('distrikId', scope);
     const front = frontRef.current?.files?.[0];
     const back = backRef.current?.files?.[0];
     if (front) fd.append('front', front);
@@ -121,7 +177,7 @@ export default function KartuSettingsPage() {
         await apiClient.post('/card-templates', fd, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        toast('success', 'Template dibuat — klik "Set Aktif" untuk menerapkannya ke semua kartu');
+        toast('success', `Template dibuat untuk ${scopeLabel} — klik "Set Aktif" untuk menerapkannya`);
       }
       resetForm();
       fetchTemplates();
@@ -133,14 +189,17 @@ export default function KartuSettingsPage() {
   };
 
   const handleActivate = async (t: CardTemplateItem) => {
+    const targetScope = t.distrikId
+      ? (isSuperadmin ? districts.find((d) => d.id === t.distrikId)?.nama || 'Distrik' : scopeName || 'Distrik')
+      : 'Global (Nasional)';
     const ok = await confirm({
       title: 'Set template aktif?',
-      message: `Semua kartu (web, mobile, PDF/PNG) akan memakai desain "${t.label}". Template lain otomatis non-aktif.`,
+      message: `Semua kartu pada scope ${targetScope} (web, mobile, PDF/PNG) akan memakai desain "${t.label}". Template lain pada scope yang sama otomatis non-aktif.`,
     });
     if (!ok) return;
     try {
       await apiClient.patch(`/card-templates/${t.id}/activate`, {});
-      toast('success', `Template "${t.label}" sekarang aktif`);
+      toast('success', `Template "${t.label}" sekarang aktif untuk ${targetScope}`);
       fetchTemplates();
     } catch (err) {
       toast('error', errMessage(err, 'Gagal mengaktifkan template'));
@@ -164,7 +223,7 @@ export default function KartuSettingsPage() {
 
   // ── UI: Header + Form ──
 
-  const activeTemplate = templates.find((t) => t.isActive);
+  const activeTemplate = scopedTemplates.find((t) => t.isActive);
 
   return (
     <div className="space-y-6 p-6">
@@ -176,16 +235,60 @@ export default function KartuSettingsPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Upload desain kartu (sisi depan + belakang, rasio kartu ID 856:540 ≈ 1,58, PNG/JPG max 5MB).
           Data anggota, foto, QR, tanda tangan & stempel digambar sistem <strong>di atas</strong> desain Anda.
-          Satu template aktif dipakai seragam di web, mobile, dan PDF.
+          Setiap distrik bisa punya template sendiri; bila distrik belum punya template aktif, kartunya
+          otomatis memakai template <strong>Global</strong>.
         </p>
         {activeTemplate && (
           <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
-            <CheckCircle2 size={14} /> Aktif: {activeTemplate.label}
+            <CheckCircle2 size={14} /> Aktif ({scopeLabel}): {activeTemplate.label}
           </div>
         )}
-        {!activeTemplate && templates.length > 0 && (
+        {!activeTemplate && scopedTemplates.length > 0 && (
           <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 text-xs font-semibold">
-            <RefreshCw size={14} /> Belum ada template aktif — desain bawaan (klasik) digunakan
+            <RefreshCw size={14} /> Belum ada template aktif untuk {scopeLabel} — fallback ke Global / desain bawaan
+          </div>
+        )}
+      </div>
+
+      {/* ─── Scope Distrik ─── */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+        <div className="flex items-start gap-2.5">
+          <Globe size={16} className="shrink-0 mt-0.5 text-indigo-500" />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Cakupan Template</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Kelola template kartu per <strong>distrik</strong> (setiap distrik bisa punya desain sendiri)
+              atau <strong>global</strong>. Bila satu distrik belum diatur, kartunya otomatis memakai
+              template global.
+            </p>
+          </div>
+        </div>
+        {isSuperadmin ? (
+          <div className="mt-4 max-w-md">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Sedang mengelola template untuk:
+            </label>
+            <select
+              value={scope}
+              onChange={(e) => setScope(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Global (Nasional)</option>
+              {districts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nama}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+              {scopeLabel}
+            </span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              (ditentukan otomatis oleh sistem)
+            </span>
           </div>
         )}
       </div>
@@ -193,7 +296,7 @@ export default function KartuSettingsPage() {
       {/* Form buat/edit */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-          {editingId ? 'Edit Template' : 'Upload Template Baru'}
+          {editingId ? 'Edit Template' : `Upload Template Baru — ${scopeLabel}`}
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -267,7 +370,7 @@ export default function KartuSettingsPage() {
             disabled={saving}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50"
           >
-            <Upload size={16} /> {saving ? 'Menyimpan…' : editingId ? 'Simpan Perubahan' : 'Upload Template'}
+            <Upload size={16} /> {saving ? 'Menyimpan…' : editingId ? 'Simpan Perubahan' : `Upload Template (${scopeLabel})`}
           </button>
           {editingId && (
             <button
@@ -283,17 +386,18 @@ export default function KartuSettingsPage() {
       {/* Galeri template */}
       <div>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-          Galeri Template ({templates.length})
+          Galeri Template {scopeLabel} ({scopedTemplates.length})
         </h2>
         {loading ? (
           <p className="text-sm text-gray-400">Memuat…</p>
-        ) : templates.length === 0 ? (
+        ) : scopedTemplates.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Belum ada template. Desain bawaan (klasik) sedang dipakai — upload template pertama untuk menggantinya.
+            Belum ada template untuk {scopeLabel}. Desain bawaan (klasik) sedang dipakai — upload template
+            pertama untuk menggantinya.
           </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {templates.map((t) => (
+            {scopedTemplates.map((t) => (
               <div
                 key={t.id}
                 className={`rounded-xl border bg-white dark:bg-gray-800 overflow-hidden shadow-sm ${
@@ -338,6 +442,11 @@ export default function KartuSettingsPage() {
                       </span>
                     )}
                   </div>
+                  {t.distrikId && (
+                    <p className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 text-[11px] font-medium">
+                      <Globe size={10} /> {isSuperadmin ? districts.find((d) => d.id === t.distrikId)?.nama || 'Distrik' : scopeName || 'Distrik'}
+                    </p>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {!t.isActive && (
                       <button

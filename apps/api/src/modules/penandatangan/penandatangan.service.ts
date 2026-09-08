@@ -187,14 +187,18 @@ export class PenandatanganService {
 
   async create(dto: CreatePenandatanganDto) {
     const scopeKey = dto.distrikId ?? null;
-    return this.prisma.penandatangan.create({
-      data: {
-        nama: dto.nama,
-        jabatan: dto.jabatan,
-        isActive: dto.isActive ?? false,
-        distrikId: scopeKey,
-      },
-    });
+    try {
+      return await this.prisma.penandatangan.create({
+        data: {
+          nama: dto.nama,
+          jabatan: dto.jabatan,
+          isActive: dto.isActive ?? false,
+          distrikId: scopeKey,
+        },
+      });
+    } catch (err) {
+      throw this.mapUniqueActiveError(err);
+    }
   }
 
   async update(id: string, dto: UpdatePenandatanganDto, scope?: DistrikScopeInfo) {
@@ -206,15 +210,19 @@ export class PenandatanganService {
       throw new ForbiddenException('Anda hanya dapat mengubah penandatangan distrik Anda sendiri');
     }
 
-    return this.prisma.penandatangan.update({
-      where: { id },
-      data: {
-        ...(dto.nama !== undefined && { nama: dto.nama }),
-        ...(dto.jabatan !== undefined && { jabatan: dto.jabatan }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-        ...(dto.distrikId !== undefined && { distrikId: dto.distrikId ?? null }),
-      },
-    });
+    try {
+      return await this.prisma.penandatangan.update({
+        where: { id },
+        data: {
+          ...(dto.nama !== undefined && { nama: dto.nama }),
+          ...(dto.jabatan !== undefined && { jabatan: dto.jabatan }),
+          ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+          ...(dto.distrikId !== undefined && { distrikId: dto.distrikId ?? null }),
+        },
+      });
+    } catch (err) {
+      throw this.mapUniqueActiveError(err);
+    }
   }
 
   async remove(id: string) {
@@ -225,5 +233,20 @@ export class PenandatanganService {
     await this.prisma.dokumenPenandatangan.deleteMany({ where: { penandatanganId: id } });
     await this.prisma.penandatangan.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  /**
+   * Index unik parsial `penandatangans_single_active_scope_idx` menjaga hanya
+   * SATU penandatangan aktif per scope (global/per-distrik). Bila pelanggaran,
+   * ubah error DB P2002 menjadi pesan 400 yang jelas (bukan 500).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private mapUniqueActiveError(err: any): unknown {
+    if (err?.code === 'P2002' && String(err?.meta?.target ?? '').includes('single_active')) {
+      return new BadRequestException(
+        'Hanya satu penandatangan aktif per distrik/global. Nonaktifkan penandatangan aktif lain terlebih dahulu, atau gunakan "Penandatangan per Dokumen" untuk menambah penandatangan lain.',
+      );
+    }
+    return err;
   }
 }

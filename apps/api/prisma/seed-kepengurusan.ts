@@ -56,12 +56,13 @@ async function main() {
   console.log('--- Jabatan ---');
   const jabatans: Record<string, { id: string }> = {};
   for (const j of JABATAN_LIST) {
-    const existing = await prisma.jabatan.findUnique({ where: { nama: j.nama } });
+    // Nama unik per scope (global = distrikId null) sejak jabatan district-scoped
+    const existing = await prisma.jabatan.findFirst({ where: { nama: j.nama, distrikId: null } });
     if (existing) {
       jabatans[j.nama] = existing;
       console.log(`  "${j.nama}" already exists`);
     } else {
-      const created = await prisma.jabatan.create({ data: j });
+      const created = await prisma.jabatan.create({ data: { ...j, distrikId: null } });
       jabatans[j.nama] = created;
       console.log(`  "${j.nama}" created`);
     }

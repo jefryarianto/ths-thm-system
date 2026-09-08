@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers, Upload, ImagePlus, User, Lock, Bell, Settings as SettingsIcon, Mail, Smartphone, Database, FileText, Users } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
+import JabatanSelect from '@/components/ui/jabatan-select';
 import Card from '@/components/cards/card';
 import InfoRow from '@/components/ui/info-row';
 import FormField from '@/components/ui/form-field';
@@ -885,13 +886,7 @@ export default function SettingsPage() {
               />
             </FormField>
             <FormField label="Jabatan">
-              <input
-                type="text"
-                value={signatureForm.jabatan}
-                onChange={(e) => setSignatureForm((p) => ({ ...p, jabatan: e.target.value }))}
-                placeholder="Contoh: Koordinator Distrik"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
+              <JabatanSelect value={signatureForm.jabatan} onChange={(v) => setSignatureForm((p) => ({ ...p, jabatan: v }))} />
             </FormField>
           </div>
           <FormField label="File Gambar (PNG/JPEG/WebP, maks 5MB)" required>

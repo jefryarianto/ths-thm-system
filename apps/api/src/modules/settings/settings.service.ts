@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable, Optional, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -126,8 +126,16 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
     });
   }
 
-  async getSignatures() {
+  /**
+   * Daftar tanda tangan sesuai scope pemanggil.
+   * superadmin: semua. admin_distrik dst.: tanda tangan distriknya + global.
+   */
+  async getSignatures(scope?: { role?: string; distrikId?: string | null }) {
+    const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
     return this.prisma.tandaTangan.findMany({
+      where: isScoped
+        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
+        : undefined,
       orderBy: [{ isActive: 'desc' }, { createdAt: 'desc' }],
       include: {
         user: { select: { namaLengkap: true } },
@@ -136,8 +144,50 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
     });
   }
 
-  async deleteSignature(id: string) {
+  /**
+   * Hapus tanda tangan. admin_distrik dst. hanya boleh hapus milik distriknya
+   * sendiri; baris global (distrikId NULL) tetap superadmin-only.
+   */
+  async deleteSignature(id: string, scope?: { role?: string; distrikId?: string | null }) {
+    const existing = await this.prisma.tandaTangan.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tanda tangan tidak ditemukan');
+
+    if (scope?.role && scope.role !== 'superadmin') {
+      if ((existing.distrikId ?? null) !== (scope.distrikId ?? null)) {
+        throw new ForbiddenException('Anda hanya dapat menghapus tanda tangan distrik Anda sendiri');
+      }
+    }
     await this.prisma.tandaTangan.delete({ where: { id } });
+  }
+
+  /**
+   * Daftar stempel sesuai scope pemanggil (pola sama dengan getSignatures).
+   */
+  async getStamps(scope?: { role?: string; distrikId?: string | null }) {
+    const isScoped = scope?.role && scope.role !== 'superadmin' && scope.distrikId;
+    return this.prisma.stempel.findMany({
+      where: isScoped
+        ? { OR: [{ distrikId: scope!.distrikId! }, { distrikId: null }] }
+        : undefined,
+      orderBy: [{ isActive: 'desc' }, { updatedAt: 'desc' }],
+      include: { distrik: { select: { id: true, nama: true } } },
+    });
+  }
+
+  /**
+   * Hapus stempel. admin_distrik dst. hanya boleh hapus milik distriknya
+   * sendiri; baris global (distrikId NULL) tetap superadmin-only.
+   */
+  async deleteStamp(id: string, scope?: { role?: string; distrikId?: string | null }) {
+    const existing = await this.prisma.stempel.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Stempel tidak ditemukan');
+
+    if (scope?.role && scope.role !== 'superadmin') {
+      if ((existing.distrikId ?? null) !== (scope.distrikId ?? null)) {
+        throw new ForbiddenException('Anda hanya dapat menghapus stempel distrik Anda sendiri');
+      }
+    }
+    await this.prisma.stempel.delete({ where: { id } });
   }
 
   async uploadStamp(dto: CreateStampDto) {

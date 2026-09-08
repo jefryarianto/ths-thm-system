@@ -109,15 +109,30 @@ export class MembersDigitalCardService {
     });
   }
 
-    /** Template kartu aktif (desain upload global) — null = desain bawaan. Cache 5 menit. */
-  private async resolveActiveTemplate() {
-    const cacheKey = 'digital-card:template:active';
+    /**
+   * Template kartu aktif untuk distrik anggota (desain upload per distrik) —
+   * distrik dulu, lalu global, lalu null = desain bawaan. Cache 5 menit per scope.
+   */
+  private async resolveActiveTemplate(distrikId?: string) {
+    const cacheKey = `digital-card:template:active:${distrikId || 'global'}`;
     const cached = this.cache.get(cacheKey);
     if (cached !== undefined) {
       return cached === null ? null : cached;
     }
     try {
-      const template = await this.prisma.cardTemplate.findFirst({ where: { isActive: true } });
+      let template = null;
+      if (distrikId) {
+        template = await this.prisma.cardTemplate.findFirst({
+          where: { isActive: true, distrikId },
+          orderBy: { updatedAt: 'desc' },
+        });
+      }
+      if (!template) {
+        template = await this.prisma.cardTemplate.findFirst({
+          where: { isActive: true, distrikId: null },
+          orderBy: { updatedAt: 'desc' },
+        });
+      }
       if (!template) {
         this.cache.set(cacheKey, null, 300_000);
         return null;
@@ -141,7 +156,7 @@ export class MembersDigitalCardService {
     const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
-    const template = await this.resolveActiveTemplate();
+    const template = await this.resolveActiveTemplate(distrikId);
 
     return {
       success: true,
@@ -160,9 +175,9 @@ export class MembersDigitalCardService {
 
   async getDigitalCardImage(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
     // PNG 2 sisi: render halaman gabungan (depan+belakang) lalu konversi ke PNG
-    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
+    const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
-    const template = await this.resolveActiveTemplate();
+    const template = await this.resolveActiveTemplate(distrikId);
     const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template }, { combined: true });
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
     return pdfToPng(pdfBuffer);
@@ -241,9 +256,9 @@ export class MembersDigitalCardService {
   }
 
   async getDigitalCardPdf(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
-    const { card, memberData, verificationUrl, levelVisual } = await this.prepareDigitalCardData(memberId, scope, user);
+    const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
-    const template = await this.resolveActiveTemplate();
+    const template = await this.resolveActiveTemplate(distrikId);
     return this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template });
   }
 

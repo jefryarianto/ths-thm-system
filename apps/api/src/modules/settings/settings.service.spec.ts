@@ -37,11 +37,15 @@ describe('SettingsService', () => {
       findMany: jest.fn(),
       updateMany: jest.fn(),
       delete: jest.fn(),
+      findUnique: jest.fn(),
     },
     stempel: {
       create: jest.fn(),
       updateMany: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
     },
     kepengurusan: {
       findMany: jest.fn(),
@@ -176,9 +180,11 @@ describe('SettingsService', () => {
 
   describe('deleteSignature', () => {
     it('should delete a signature', async () => {
+      mockPrisma.tandaTangan.findUnique.mockResolvedValue({ id: '1', distrikId: null });
       mockPrisma.tandaTangan.delete.mockResolvedValue({});
 
-      const result = await service.deleteSignature('1');
+      await service.deleteSignature('1');
+      expect(mockPrisma.tandaTangan.delete).toHaveBeenCalledWith({ where: { id: '1' } });
     });
   });
 
@@ -204,6 +210,87 @@ describe('SettingsService', () => {
 
       const result = await service.getStamp();
       expect(result).toBeNull();
+    });
+  });
+
+  describe('getSignatures (scoped)', () => {
+    it('should scope signatures to own district + global for admin_distrik', async () => {
+      mockPrisma.tandaTangan.findMany.mockResolvedValue([]);
+
+      await service.getSignatures({ role: 'admin_distrik', distrikId: 'd1' });
+
+      expect(mockPrisma.tandaTangan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { OR: [{ distrikId: 'd1' }, { distrikId: null }] },
+        }),
+      );
+    });
+
+    it('should not scope for superadmin', async () => {
+      mockPrisma.tandaTangan.findMany.mockResolvedValue([]);
+
+      await service.getSignatures({ role: 'superadmin', distrikId: 'd1' });
+
+      expect(mockPrisma.tandaTangan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: undefined }),
+      );
+    });
+  });
+
+  describe('deleteSignature (scoped)', () => {
+    it('should allow admin_distrik to delete own district signature', async () => {
+      mockPrisma.tandaTangan.findUnique.mockResolvedValue({ id: 'sig1', distrikId: 'd1' });
+      mockPrisma.tandaTangan.delete.mockResolvedValue({});
+
+      await service.deleteSignature('sig1', { role: 'admin_distrik', distrikId: 'd1' });
+      expect(mockPrisma.tandaTangan.delete).toHaveBeenCalledWith({ where: { id: 'sig1' } });
+    });
+
+    it('should forbid admin_distrik deleting global signature', async () => {
+      mockPrisma.tandaTangan.findUnique.mockResolvedValue({ id: 'sig-global', distrikId: null });
+
+      await expect(
+        service.deleteSignature('sig-global', { role: 'admin_distrik', distrikId: 'd1' }),
+      ).rejects.toThrow('Anda hanya dapat menghapus tanda tangan distrik Anda sendiri');
+      expect(mockPrisma.tandaTangan.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when signature missing', async () => {
+      mockPrisma.tandaTangan.findUnique.mockResolvedValue(null);
+
+      await expect(service.deleteSignature('missing')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getStamps (scoped)', () => {
+    it('should scope stamps to own district + global for admin_distrik', async () => {
+      mockPrisma.stempel.findMany.mockResolvedValue([]);
+
+      await service.getStamps({ role: 'admin_distrik', distrikId: 'd1' });
+
+      expect(mockPrisma.stempel.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { OR: [{ distrikId: 'd1' }, { distrikId: null }] },
+        }),
+      );
+    });
+  });
+
+  describe('deleteStamp (scoped)', () => {
+    it('should allow admin_distrik to delete own district stamp', async () => {
+      mockPrisma.stempel.findUnique.mockResolvedValue({ id: 'st1', distrikId: 'd1' });
+      mockPrisma.stempel.delete.mockResolvedValue({});
+
+      await service.deleteStamp('st1', { role: 'admin_distrik', distrikId: 'd1' });
+      expect(mockPrisma.stempel.delete).toHaveBeenCalledWith({ where: { id: 'st1' } });
+    });
+
+    it('should forbid admin_distrik deleting global stamp', async () => {
+      mockPrisma.stempel.findUnique.mockResolvedValue({ id: 'st-global', distrikId: null });
+
+      await expect(
+        service.deleteStamp('st-global', { role: 'admin_distrik', distrikId: 'd1' }),
+      ).rejects.toThrow('Anda hanya dapat menghapus stempel distrik Anda sendiri');
     });
   });
 
