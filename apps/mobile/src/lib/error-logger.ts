@@ -8,6 +8,8 @@
  */
 
 import { Platform } from 'react-native';
+import axios from 'axios';
+import { API_URL } from './api-client';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -66,6 +68,45 @@ function formatError(error: unknown, context?: ErrorContext): Record<string, unk
   return entry;
 }
 
+// ─── Server-side error reporting ─────────────────────────────
+// Kirim error ke endpoint /api/logs/error (public, rate-limited) untuk
+// monitoring terpusat. Dedupe per (module + message) supaya crash-loop
+// di satu perangkat tidak membanjiri server selama 30 detik. Best-effort:
+// kegagalan pelaporan TIDAK PERNAH boleh merusak alur utama aplikasi.
+
+const LOG_REPORT_INTERVAL_MS = 30_000;
+const lastReportedAt = new Map<string, number>();
+
+async function reportToServer(entry: Record<string, unknown>): Promise<void> {
+  const key = `${String(entry.module ?? 'app')}|${String(entry.message ?? '')}`.slice(0, 200);
+  const now = Date.now();
+  const last = lastReportedAt.get(key) ?? 0;
+  if (now - last < LOG_REPORT_INTERVAL_MS) return;
+  lastReportedAt.set(key, now);
+
+  // Whitelist eksplisit — hanya field yang dideklarasikan di DTO backend
+  // yang dikirim (ValidationPipe global memakai forbidNonWhitelisted).
+  const payload: Record<string, unknown> = {
+    timestamp: entry.timestamp,
+    level: entry.level,
+    platform: entry.platform,
+    module: entry.module,
+    action: entry.action,
+    errorName: entry.errorName,
+    message: String(entry.message ?? '').slice(0, 1000),
+    stack: typeof entry.stack === 'string' ? entry.stack.slice(0, 4000) : undefined,
+  };
+
+  try {
+    // Gunakan axios polos (tanpa interceptor auth) supaya pelaporan error
+    // tidak terlibat refresh-token / retry yang bisa memicu loop.
+
+    await axios.post(`${API_URL}/api/logs/error`, payload, { timeout: 5000 });
+  } catch {
+    // Abaikan — logging tidak boleh menggagalkan apa pun
+  }
+}
+
 /**
  * Main error logging function.
  * Silently ignores SESSION_EXPIRED errors (handled by session-expired event bus).
@@ -88,8 +129,8 @@ export function logError(
   } else {
     // In production, use structured JSON format
     console.error(JSON.stringify(entry));
-    // TODO: Send to backend API for centralized monitoring
-    // apiClient.post('/logs/error', { entry }).catch(() => {});
+    // Kirim juga ke backend untuk monitoring terpusat (best-effort, fire-and-forget)
+    void reportToServer(entry);
   }
 }
 

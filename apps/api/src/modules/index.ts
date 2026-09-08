@@ -12,6 +12,7 @@ export { AssessmentsModule } from './assessments/assessments.module';
 export { DocumentsModule } from './documents/documents.module';
 export { OrgDocumentsModule } from './org-documents/org-documents.module';
 export { LettersModule } from './letters/letters.module';
+export { LogsModule } from './logs/logs.module';
 export { DuesModule } from './dues/dues.module';
 export { PaymentsModule } from './payments/payments.module';
 export { NotificationsModule } from './notifications/notifications.module';
