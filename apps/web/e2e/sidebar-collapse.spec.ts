@@ -7,11 +7,12 @@ test.describe('Sidebar Collapse', () => {
 
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockMembers: true });
-    // Navigate to base URL first (land on correct origin so localStorage is accessible),
-    // clear any stale sidebar state from a previous test, then go to the test page.
-    // This avoids SecurityError on about:blank where localStorage has null origin.
-    await page.goto('/');
-    await page.evaluate(() => localStorage.removeItem('sidebarCollapsed'));
+    // Clear sidebar state via addInitScript (runs before page JS on every navigation)
+    // This avoids the need to visit '/' first, which now redirects to /login or /dashboard.
+    await page.addInitScript(() => {
+      localStorage.removeItem('sidebarCollapsed');
+      localStorage.removeItem('sidebarCollapsedGroups');
+    });
     await page.goto('/members');
   });
 
