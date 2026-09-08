@@ -68,9 +68,27 @@ export function LandingPageContent() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-          <div className="max-w-4xl overflow-hidden">
-            <h1 className="text-[clamp(0.8rem,3.3vw,2.75rem)] font-serif font-bold mb-6 tracking-tight text-white whitespace-nowrap">
-              TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA
+          <div className="max-w-4xl">
+            <h1 className="mb-8 w-full" aria-label="TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA">
+              <svg
+                viewBox="0 0 1000 45"
+                className="w-full h-auto"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
+              >
+                <text
+                  x="0"
+                  y="35"
+                  fill="white"
+                  style={{
+                    fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+                    fontWeight: 700,
+                    fontSize: '36px',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA
+                </text>
+              </svg>
             </h1>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
