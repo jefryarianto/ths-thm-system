@@ -1,15 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { getHomePathForRole } from '@/lib/role-redirect';
-import { LandingPageContent } from '@/components';
 
 export default function HomePage() {
-  const router = useRouter();
-  const [checked, setChecked] = useState(false);
-  const [isAuthed, setIsAuthed] = useState(false);
-
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -20,23 +14,11 @@ export default function HomePage() {
       } catch {
         /* ignore */
       }
-      router.replace(getHomePathForRole(role));
-      setIsAuthed(true);
+      window.location.replace(getHomePathForRole(role));
+    } else {
+      window.location.replace('/login');
     }
-    setChecked(true);
-  }, [router]);
+  }, []);
 
-  if (!checked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Mengalihkan...</p>
-      </div>
-    );
-  }
-
-  if (isAuthed) {
-    return null;
-  }
-
-  return <LandingPageContent />;
+  return null;
 }

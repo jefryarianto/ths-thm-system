@@ -276,6 +276,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user, isAdmin, isSystemAdmin, hasMinRole, isActivityScoped, isActivityAdmin, isActivityPenguji } = useAuth();
   
+  // Redirect non-admin users (anggota) to forum
+  useEffect(() => {
+    if (!user) return;
+    if (!hasMinRole('penguji')) {
+      window.location.replace('/forum');
+    }
+  }, [user, hasMinRole]);
   // Scope badge state
   const [scopeName, setScopeName] = useState<string | null>(null);
   const [scopeLevel, setScopeLevel] = useState<string | null>(null);
