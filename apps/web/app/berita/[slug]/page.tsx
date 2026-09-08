@@ -101,51 +101,53 @@ export default async function BeritaDetailPage({
 
   return (
     <PublicLayout>
-      <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Back link */}
-        <Link
-          href="/berita"
-          className="inline-flex items-center gap-2 text-navy-800 font-semibold hover:text-gold-600 transition-colors mb-6"
-        >
-          <ArrowLeft size={16} />
-          Kembali ke Berita
-        </Link>
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back link */}
+          <Link
+            href="/berita"
+            className="inline-flex items-center gap-2 text-navy-800 font-semibold hover:text-gold-600 transition-colors mb-6"
+          >
+            <ArrowLeft size={16} />
+            Kembali ke Berita
+          </Link>
 
-        {/* Meta */}
-        <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
-          <span className="flex items-center gap-1">
-            <Calendar size={14} />
-            <time>{formatTanggal(berita.tanggal)}</time>
-          </span>
-        </div>
-
-        {/* Title */}
-        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-gray-900 mb-6">
-          {berita.judul}
-        </h1>
-
-        {/* Hero image */}
-        {berita.gambar && (
-          <div className="rounded-xl overflow-hidden mb-8 border border-gray-200">
-            <img
-              src={`/api/uploads/${berita.gambar}`}
-              alt={berita.judul}
-              className="w-full h-auto"
-            />
+          {/* Meta */}
+          <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
+            <span className="flex items-center gap-1">
+              <Calendar size={14} />
+              <time>{formatTanggal(berita.tanggal)}</time>
+            </span>
           </div>
-        )}
 
-        {/* Ringkasan */}
-        <p className="text-lg text-gray-600 leading-relaxed mb-8 border-l-4 border-gold-400 pl-4 italic">
-          {berita.ringkasan}
-        </p>
+          {/* Title */}
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-gray-900 mb-6">
+            {berita.judul}
+          </h1>
 
-        {/* Konten (HTML) */}
-        <div
-          className="prose prose-lg max-w-none w-full prose-headings:text-gray-900 prose-headings:font-serif prose-p:text-gray-700 prose-a:text-navy-800 prose-a:underline prose-li:text-gray-700 prose-blockquote:text-gray-700 prose-blockquote:border-navy-800"
-          dangerouslySetInnerHTML={{ __html: berita.konten }}
-        />
-      </article>
+          {/* Hero image */}
+          {berita.gambar && (
+            <div className="rounded-xl overflow-hidden mb-8 border border-gray-200">
+              <img
+                src={`/api/uploads/${berita.gambar}`}
+                alt={berita.judul}
+                className="w-full h-auto"
+              />
+            </div>
+          )}
+
+          {/* Ringkasan */}
+          <p className="text-lg text-gray-600 leading-relaxed mb-8 border-l-4 border-gold-400 pl-4 italic">
+            {berita.ringkasan}
+          </p>
+
+          {/* Konten (HTML) */}
+          <div
+            className="prose prose-lg max-w-none w-full prose-headings:text-gray-900 prose-headings:font-serif prose-p:text-gray-700 prose-a:text-navy-800 prose-a:underline prose-li:text-gray-700 prose-blockquote:text-gray-700 prose-blockquote:border-navy-800"
+            dangerouslySetInnerHTML={{ __html: berita.konten }}
+          />
+        </div>
+      </section>
     </PublicLayout>
   );
 }
