@@ -71,18 +71,18 @@ export function LandingPageContent() {
           <div className="max-w-4xl">
             <h1 className="mb-8 w-full" aria-label="TUNGGAL HATI SEMINARI — TUNGGAL HATI MARIA">
               <svg
-                viewBox="0 0 1000 45"
+                viewBox="0 0 1300 50"
                 className="w-full h-auto"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
               >
                 <text
                   x="0"
-                  y="35"
+                  y="40"
                   fill="white"
                   style={{
                     fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
                     fontWeight: 700,
-                    fontSize: '36px',
+                    fontSize: '38px',
                     letterSpacing: '-0.01em'
                   }}
                 >
