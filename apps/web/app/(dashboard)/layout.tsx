@@ -295,8 +295,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [groupHeights, setGroupHeights] = useState<Record<string, number>>({});
   const groupContentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Session expiry is handled entirely in api-client.ts:
-  // DOM-level toast + window.location.href redirect.
+  // Session expiry is handled entirely by session-manager + SessionProvider:
+  // DOM-level toast + window.location.replace('/') hard redirect (no history).
   // No event listener needed here.
 
   const isDesktop = useCallback(() => window.innerWidth >= 1024, []);

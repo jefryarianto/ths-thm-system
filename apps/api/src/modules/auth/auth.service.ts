@@ -1093,7 +1093,7 @@ export class AuthService {
   }
 
   setRefreshTokenCookie(res: Response, refreshToken: string) {
-    // Convert JWT duration ('7d') to milliseconds for cookie maxAge.
+    // Convert JWT duration ('14d') to milliseconds for cookie maxAge.
     const maxAge = parseDurationToMs(this.envConfig.jwtRefreshExpiresIn) ?? 7 * 24 * 60 * 60 * 1000;
 
     res.cookie('refreshToken', refreshToken, {

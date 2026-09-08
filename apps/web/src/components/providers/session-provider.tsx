@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { sessionManager } from '@/lib/session-manager';
 import { useToast } from '@/components/ui/toast';
 import { SessionWarningToast } from '@/components/session-warning-toast';
@@ -9,15 +9,12 @@ import { useActivityTracker } from '@/hooks/use-activity-tracker';
 import { playSessionWarningAlert, playSessionExpiredAlert } from '@/lib/notification-alert';
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const toast = useToast();
   const toastRef = useRef(toast);
   const pathnameRef = useRef(pathname);
-  const routerRef = useRef(router);
   toastRef.current = toast;
   pathnameRef.current = pathname;
-  routerRef.current = router;
 
   // Session expired listener — stable, runs once
   useEffect(() => {
@@ -32,7 +29,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         playSessionExpiredAlert();
         toastRef.current('error', 'Sesi Anda telah berakhir. Mengalihkan ke halaman utama...');
         timeoutId = setTimeout(() => {
-          routerRef.current.replace('/');
+          window.location.replace('/');
         }, 1000);
       } else {
         if (timeoutId) {
