@@ -90,6 +90,9 @@ export function LandingPageContent() {
                 </text>
               </svg>
             </h1>
+            <p className="mb-8 w-full text-center sm:text-left text-sm sm:text-base lg:text-lg text-white/70 tracking-wide">
+              Pro Patria et Ecclesia
+            </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/daftar"
