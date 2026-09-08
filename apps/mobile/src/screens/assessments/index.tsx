@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
@@ -51,7 +51,7 @@ export default function AssessmentsScreen() {
         <TouchableOpacity
           style={styles.addBtn}
           activeOpacity={0.7}
-          onPress={() => router.push('/assessments/create')}
+          onPress={() => Alert.alert('Belum Tersedia', 'Fitur pembuatan aspek penilaian sedang dalam pengembangan.')}
         >
           <Ionicons name="add" size={22} color="#fff" />
         </TouchableOpacity>

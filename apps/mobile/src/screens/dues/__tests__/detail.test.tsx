@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
   router: { push: jest.fn(), replace: jest.fn() },
 }));
 
-jest.mock('../../lib/api-client', () => ({
+jest.mock('../../../lib/api-client', () => ({
   __esModule: true,
   default: {
     get: jest.fn(),
@@ -35,7 +35,7 @@ describe('DuesDetailScreen', () => {
   });
 
   it('shows bank info when loaded', async () => {
-    const mockApi = require('../../lib/api-client').default;
+    const mockApi = require('../../../lib/api-client').default;
     mockApi.get
       .mockResolvedValueOnce({
         data: {
@@ -71,7 +71,7 @@ describe('DuesDetailScreen', () => {
   });
 
   it('shows error toast when API fails', async () => {
-    const mockApi = require('../../lib/api-client').default;
+    const mockApi = require('../../../lib/api-client').default;
     mockApi.get.mockRejectedValue(new Error('Network error'));
 
     render(<DuesDetailScreen />);
