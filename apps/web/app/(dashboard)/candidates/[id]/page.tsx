@@ -170,7 +170,7 @@ export default function CandidateDetailPage() {
       candidate.ranting?.nama,
     ]
       .filter(Boolean)
-      .join(' ? ') || '-';
+      .join(' → ') || '-';
   return (
       <PermissionGuard module="candidates" action="view">
         <Breadcrumbs suffix={{ href: '#', label: candidate?.namaLengkap || 'Detail' }} />

@@ -658,7 +658,7 @@ function MockBatchProgressCard({
     if (processing > 0) parts.push(`${processing} diproses`);
     if (pending > 0) parts.push(`${pending} antri`);
     parts.push(`dari ${batch.total}`);
-    return parts.join(' ? ');
+    return parts.join(' • ');
   };
 
   const borderColor =

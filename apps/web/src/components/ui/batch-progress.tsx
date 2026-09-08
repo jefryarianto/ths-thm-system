@@ -473,5 +473,5 @@ function computeJobSummary(jobs: BatchJobItem[]): string {
   if (pending > 0) parts.push(`${pending} antri`);
   parts.push(`dari ${total}`);
 
-  return parts.join(' ? ');
+  return parts.join(' • ');
 }

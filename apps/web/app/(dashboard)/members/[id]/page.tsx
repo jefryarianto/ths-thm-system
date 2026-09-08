@@ -293,6 +293,23 @@ function ScaledCardCanvas({ kind, children }: { kind: 'front' | 'back'; children
 
 // ─── Page Component ───
 
+/** Tumpukan strip tingkatan (simbol balok) — dipakai di badge header & InfoRow,.
+ * Konsisten dengan desain kartu (pakai `color` dari getLevelVisual/LEVELS). */
+function LevelStrips({ count, color, title, className = '' }: { count: number; color: string; title?: string; className?: string }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      title={title}
+      aria-hidden
+      className={`inline-flex flex-col items-center gap-[2px] rounded-[3px] ${className}`}
+      style={{ width: 18, padding: '2px 3px', backgroundColor: `${color}1f`, border: `1px solid ${color}4d` }}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <span key={i} style={{ width: 12, height: 3, borderRadius: 1, backgroundColor: color }} />
+      ))}
+    </span>
+  );
+}
 export default function MemberDetailPage() {
   const toast = useToast();
   const params = useParams();
@@ -465,7 +482,7 @@ export default function MemberDetailPage() {
       const dadar = fmt.dadar(member?.tempatDadar, member?.tahunDadar);
       const lv = getLevelVisual(member?.tingkat, data.data.levelVisual || null);
       const stripHtml = Array.from({ length: lv.stripCount })
-        .map(() => `<div class="rank-strip" style="background:${lv.stripColor}"></div>`)
+        .map(() => `<div class="rank-strip" style="background:${lv.color}"></div>`)
         .join('');
       // Foto - fallback siluet man/woman-icon saat foto tidak ada ATAU gagal dimuat (onerror → 404/korup)
       const photoIconSrc = m.jenisKelamin === 'P' ? `${window.location.origin}/woman-icon.png` : `${window.location.origin}/man-icon.png`;
@@ -662,7 +679,7 @@ export default function MemberDetailPage() {
   const orgPath =
     [member.ranting?.wilayah?.distrik?.nama, member.ranting?.wilayah?.nama, member.ranting?.nama]
       .filter(Boolean)
-      .join(' ? ') || '-';
+      .join(' → ') || '-';
 
   // ── Data turunan kartu (sesuai template desain) ──
   const levelVisual = getLevelVisual(member.tingkat, cardData?.levelVisual || null);
@@ -714,9 +731,16 @@ export default function MemberDetailPage() {
                   <StatusBadge key="validasi" status={member.statusValidasi} bordered />,
                   <StatusBadge key="data" status={member.statusData} bordered />,
                   ...(member.tingkat ? [
-                    <span key="tingkat" className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+                    <span key="tingkat" className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
                       <Award size={12} />
                       {member.tingkat}
+                      {levelVisual.stripCount > 0 && (
+                        <LevelStrips
+                          count={levelVisual.stripCount}
+                          color={levelVisual.color}
+                          title={`${levelVisual.label} · ${levelVisual.stripCount} strip`}
+                        />
+                      )}
                     </span>
                   ] : []),
                 ]}
@@ -894,7 +918,34 @@ export default function MemberDetailPage() {
                       </h3>
                       <div className="space-y-2">
                         <InfoRow icon={Users} label="Jalur Organisasi" value={orgPath} />
-                        <InfoRow icon={Award} label="Tingkatan" value={member.tingkat || null} />
+                        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                          <div className="p-2 rounded-lg bg-white dark:bg-gray-700 shadow-sm">
+                            <Award size={16} className="text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                              Tingkatan
+                            </p>
+                            {member.tingkat ? (
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {member.tingkat}
+                                </span>
+                                {levelVisual.stripCount > 0 && (
+                                  <LevelStrips
+                                    count={levelVisual.stripCount}
+                                    color={levelVisual.color}
+                                    title={`${levelVisual.label} · ${levelVisual.stripCount} strip`}
+                                  />
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-sm font-medium text-gray-400 dark:text-gray-500 italic mt-0.5">
+                                Tidak ada data
+                              </p>
+                            )}
+                          </div>
+                        </div>
                         <InfoRow
                           icon={Calendar}
                           label="Terakhir Diperbarui"
@@ -1178,7 +1229,7 @@ export default function MemberDetailPage() {
                                 <div
                                   key={i}
                                   className="w-full rounded-sm border border-black/25"
-                                  style={{ height: FRONT.rank.strip.h, borderRadius: FRONT.rank.strip.radius, backgroundColor: levelVisual.stripColor }}
+                                  style={{ height: FRONT.rank.strip.h, borderRadius: FRONT.rank.strip.radius, backgroundColor: levelVisual.color }}
                                 />
                               ))}
                             </div>
