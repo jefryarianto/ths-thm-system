@@ -165,22 +165,34 @@ jobs:
         shell: bash
         run: |
           cd apps/web
-          npx next start -p 3002 &
+          npx next start -p 3002 > next-server.log 2>&1 &
           # Store PID for later cleanup
           echo "NEXT_PID=$!" >> $GITHUB_ENV
 
       - name: Wait for Next.js to be ready
         shell: bash
         run: |
-          for i in $(seq 1 30); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/ | grep -q "200\|302"; then
-              echo "✅ Next.js server is ready (attempt $i)"
+          # "Ready" = server merespons HTTP apa pun (bukan hanya 200/302).
+          # Playwright memock semua panggilan API via page.route(), jadi landing
+          # page yang balas 4xx/5xx tidak boleh memblokir run. curl "000" =
+          # belum ada yang listen di port.
+          for i in $(seq 1 60); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/ 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" != "000" ]; then
+              echo "✅ Next.js server is ready (attempt $i, HTTP $HTTP_CODE)"
               exit 0
             fi
-            echo "   Waiting... (attempt $i/30)"
+            # Fail fast bila proses mati saat bootstrap + tampilkan lognya
+            if ! kill -0 "$NEXT_PID" 2>/dev/null; then
+              echo "❌ Next.js process exited during bootstrap:"
+              tail -50 next-server.log 2>/dev/null || true
+              exit 1
+            fi
+            echo "   Waiting... (attempt $i/60) HTTP $HTTP_CODE"
             sleep 3
           done
-          echo "❌ Next.js server failed to start within 90 seconds"
+          echo "❌ Next.js server failed to start within 180 seconds"
+          tail -50 next-server.log 2>/dev/null || true
           exit 1
 
       - name: Run Playwright tests (shard ${{ matrix.shard }}/${{ strategy.job-total }})
