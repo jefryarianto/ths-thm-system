@@ -181,7 +181,28 @@
   100% { transform: translateX(400%); }
 }
 
-@keyframes goldShimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* ── Prose content (berita, sejarah, etc.) ── */
+/* Ensure all child elements in HTML content are full-width and responsive */
+.prose img {
+  @apply w-full h-auto rounded-lg;
+}
+
+.prose table {
+  @apply w-full table-auto;
+}
+
+.prose figure {
+  @apply w-full;
+}
+
+.prose iframe {
+  @apply w-full aspect-video;
+}
+
+.prose pre {
+  @apply overflow-x-auto;
+}
+
+.prose > div {
+  @apply w-full;
 }
