@@ -1,5 +1,29 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
+
+/** AsyncStorage key untuk setelan "periksa pembaruan otomatis saat aplikasi dibuka". */
+export const OTA_AUTO_CHECK_KEY = '@settings/ota_auto_check';
+
+/** Baca setelan auto-check pembaruan (default: aktif). */
+export async function getOtaAutoCheckEnabled(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(OTA_AUTO_CHECK_KEY);
+    return value === null ? true : value === '1';
+  } catch {
+    return true;
+  }
+}
+
+/** Simpan setelan auto-check pembaruan. */
+export async function setOtaAutoCheckEnabled(enabled: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(OTA_AUTO_CHECK_KEY, enabled ? '1' : '0');
+  } catch {
+    /* best-effort */
+  }
+}
+
 
 interface OTAUpdateState {
   /** Whether an update is currently being downloaded */
@@ -102,17 +126,30 @@ export function useOTAUpdate(): UseOTAUpdateReturn {
     setShowUpdatePrompt(false);
   }, []);
 
-  // Check for updates on mount (once)
+  // Check for updates on mount (once) — hanya jika setelan auto-check aktif.
+  // Pemeriksaan + unduhan background native (checkAutomatically: "ON_LOAD" di app.json)
+  // TETAP berjalan terlepas dari setelan ini; yang dikendalikan di sini hanyalah
+  // pemeriksaan JS dan tampilnya prompt otomatis kepada pengguna.
   useEffect(() => {
     if (didCheckRef.current) return;
     didCheckRef.current = true;
 
-    // Delay the check slightly so the app has time to render
-    const timer = setTimeout(() => {
-      checkForUpdate();
-    }, 3000);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
 
-    return () => clearTimeout(timer);
+    (async () => {
+      const enabled = await getOtaAutoCheckEnabled();
+      if (cancelled || !enabled) return;
+      // Delay the check slightly so the app has time to render
+      timer = setTimeout(() => {
+        checkForUpdate();
+      }, 3000);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [checkForUpdate]);
 
   // Background updates are handled by checkAutomatically: "ON_LOAD" in app.json.

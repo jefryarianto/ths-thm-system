@@ -181,6 +181,7 @@ export default function RootLayout() {
           <Stack.Screen name="forum/t/[threadId]" />
           <Stack.Screen name="org-documents" />
           <Stack.Screen name="camera/photo" />
+          <Stack.Screen name="about" />
         </Stack>
       </>
     </GlobalErrorBoundary>

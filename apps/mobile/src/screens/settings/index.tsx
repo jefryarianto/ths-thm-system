@@ -85,6 +85,21 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Tentang Aplikasi */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => router.push('/about' as never)}
+          >
+            <Ionicons name="information-circle" size={20} color="#2563eb" />
+            <View style={styles.linkContent}>
+              <Text style={styles.linkLabel}>Tentang Aplikasi</Text>
+              <Text style={styles.linkDesc}>Versi aplikasi &amp; pembaruan</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
+          </TouchableOpacity>
+        </View>
+
         {/* Logout */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
