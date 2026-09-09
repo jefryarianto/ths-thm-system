@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { formatDate, formatPeriode, formatRupiah } from '@/lib/format';
 import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
@@ -180,8 +180,11 @@ export default function DuesPage() {
                       if (!(await confirm('Hapus iuran ini?'))) return;
                       try {
                         await apiClient.delete(`/dues/${d.id}`);
+                        toast('success', 'Iuran berhasil dihapus');
                         refetch();
-                      } catch { toast('error', 'Gagal menghapus iuran'); }
+                      } catch (err) {
+                        toast('error', extractErrorMessage(err, 'Gagal menghapus iuran'));
+                      }
                     }}
                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-md transition-colors"
                     title="Hapus"

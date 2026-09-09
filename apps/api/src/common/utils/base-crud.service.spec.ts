@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BaseCrudService, OPTIMISTIC_VERSIONED_MODELS } from './base-crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -39,8 +39,8 @@ class TestIuranService extends BaseCrudService<Record<string, unknown>, UpdateDt
       scopeStrategy: 'anggota_indirect',
     });
   }
-  async doRemove(id: string, message?: string) {
-    return this.baseRemove(id, undefined, message);
+  async doRemove(id: string, scope?: any, message?: string) {
+    return this.baseRemove(id, scope, message);
   }
 }
 
@@ -71,6 +71,9 @@ describe('BaseCrudService optimistic locking', () => {
 
   beforeEach(() => {
     prisma = {
+      ranting: {
+        findUnique: jest.fn(),
+      },
       anggota: {
         findUnique: jest.fn(),
         update: jest.fn(),
@@ -86,6 +89,7 @@ describe('BaseCrudService optimistic locking', () => {
     };
     scopeHelper = {
       verifyResourceAccess: jest.fn().mockResolvedValue(undefined),
+      hasAccessToResourceAsync: jest.fn().mockResolvedValue(true),
     };
     cache = {
       getOrSet: jest.fn((_k: string, f: () => Promise<unknown>) => f()),
@@ -165,7 +169,7 @@ describe('BaseCrudService optimistic locking', () => {
   it('should delete iuran (anggota_indirect, no rantingId) without throwing', async () => {
     prisma.iuran.findUnique.mockResolvedValue({ anggota: { rantingId: 'r1' } });
     prisma.iuran.delete.mockResolvedValue({ id: 'i1' });
-    await expect(iuranSvc.doRemove('i1', 'Data iuran berhasil dihapus')).resolves.toEqual({
+    await expect(iuranSvc.doRemove('i1', undefined, 'Data iuran berhasil dihapus')).resolves.toEqual({
       message: 'Data iuran berhasil dihapus',
     });
     expect(prisma.iuran.delete).toHaveBeenCalledWith({ where: { id: 'i1' } });
@@ -182,6 +186,62 @@ describe('BaseCrudService optimistic locking', () => {
     expect(prisma.iuran.findUnique).not.toHaveBeenCalledWith({
       where: { id: 'i2' },
       select: { rantingId: true },
+    });
+  });
+
+  describe('delete scope verification (anggota_indirect)', () => {
+    beforeEach(() => {
+      // Entity exists in scope — assignee ranting r1
+      prisma.iuran.findUnique.mockResolvedValue({ anggotaId: 'a1', anggota: { rantingId: 'r1' } });
+      prisma.iuran.delete.mockResolvedValue({ id: 'i1' });
+      scopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+    });
+
+    it('should delete when user scope matches the resource ranting', async () => {
+      const result = await iuranSvc.doRemove('i1', { rantingId: 'r1' });
+      expect(result).toEqual({ message: 'Data berhasil dihapus' });
+      expect(scopeHelper.hasAccessToResourceAsync).toHaveBeenCalledWith(
+        prisma,
+        { rantingId: 'r1' },
+        'r1',
+      );
+      expect(prisma.iuran.delete).toHaveBeenCalledWith({ where: { id: 'i1' } });
+    });
+
+    it('should delete when user scope has no ranting restriction (national)', async () => {
+      // empty scope => hasAccessToResourceAsync short-circuits to true for national
+      scopeHelper.hasAccessToResourceAsync.mockImplementation(
+        async (_p: any, s: any, resourceRantingId?: string) => {
+          if (!s || (!s.rantingId && !s.wilayahId && !s.distrikId)) return true;
+          if (!resourceRantingId) return true;
+          return s.rantingId === resourceRantingId;
+        },
+      );
+      const result = await iuranSvc.doRemove('i1', {});
+      expect(result).toEqual({ message: 'Data berhasil dihapus' });
+      expect(prisma.iuran.delete).toHaveBeenCalledWith({ where: { id: 'i1' } });
+    });
+
+    it('should throw ForbiddenException when user scope does not match the resource ranting', async () => {
+      scopeHelper.hasAccessToResourceAsync.mockImplementation(
+        async (_p: any, s: any, resourceRantingId?: string) => {
+          return !!(!s || (!s.rantingId && !s.wilayahId && !s.distrikId)) || s.rantingId === resourceRantingId;
+        },
+      );
+      // User at ranting r2, resource belongs to r1
+      await expect(iuranSvc.doRemove('i1', { rantingId: 'r2' })).rejects.toThrow(
+        ForbiddenException,
+      );
+      // Delete must NOT have been attempted
+      expect(prisma.iuran.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when the entity no longer exists during scope check', async () => {
+      prisma.iuran.findUnique.mockResolvedValue(null);
+      await expect(iuranSvc.doRemove('missing', { rantingId: 'r1' })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.iuran.delete).not.toHaveBeenCalled();
     });
   });
 });

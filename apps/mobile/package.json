@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "jest",
     "version:bump": "node ../../scripts/bump-runtime-version.js",
     "version:bump:minor": "node ../../scripts/bump-runtime-version.js minor",
     "version:bump:major": "node ../../scripts/bump-runtime-version.js major"

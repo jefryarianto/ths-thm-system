@@ -1,12 +1,16 @@
 // @ts-nocheck
 module.exports = {
-  testEnvironment: 'jsdom',
+  // Extend React Native's official jest preset, which supplies the native-module
+  // mocks and a react-native-enabled test environment (required for screen tests
+  // that import StyleSheet, Platform, TurboModules, etc.).
+  preset: 'react-native',
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.config.js' }],
+    '^.+\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.config.js' }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo-|@expo|react-native-.*|@react-navigation|react-native-reanimated|react-native-gesture-handler|react-native-screens|react-native-safe-area-context|@react-native-async-storage)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native|expo-|@expo|react-native-.*|@react-navigation|react-native-reanimated|react-native-gesture-handler|react-native-screens|react-native-safe-area-context|@react-native-async-storage|zustand)/)',
   ],
+  // Keep the repo-wide native-module and expo mocks on top of the RN preset.
   setupFiles: ['./jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'android.js', 'ios.js', 'native.js', 'json'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}'],
