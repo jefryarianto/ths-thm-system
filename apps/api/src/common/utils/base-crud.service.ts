@@ -500,6 +500,34 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     await this.verifyScope(id, scope);
     await this.beforeRemove(id);
 
+    // Capture rantingId BEFORE deletion (model-aware) so the audit trail survives
+    // the row removal. Best-effort: a failing audit lookup must never block an
+    // otherwise-valid deletion.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let rid: string | null | undefined;
+    try {
+      if (this.scopeStrategy === 'anggota_indirect') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pre: any = await this.prismaDelegate.findUnique({
+          where: { id },
+          select: { anggota: { select: { rantingId: true } } },
+        });
+        rid = pre?.anggota?.rantingId ?? null;
+      } else if (this.scopeStrategy === 'ranting') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pre: any = await this.prismaDelegate.findUnique({
+          where: { id },
+          select: { rantingId: true },
+        });
+        rid = pre?.rantingId ?? null;
+      } else {
+        // 'kegiatan' strategy: entity carries scopeType/scopeId, no rantingId.
+        rid = null;
+      }
+    } catch {
+      rid = null; // best-effort: never block deletion for audit metadata
+    }
+
     try {
       if (this.config.softDelete) {
         await this.prismaDelegate.update({
@@ -518,10 +546,6 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
 
     await this.afterRemove(id);
     this.invalidateCache();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const entity = await this.prismaDelegate.findUnique({ where: { id }, select: { rantingId: true } });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rid = (entity as any)?.rantingId;
     this.audit(this.config.softDelete ? 'SOFT_DELETE' : 'DELETE', this.config.model, id, undefined, undefined, rid);
     return { message: message || 'Data berhasil dihapus' };
   }

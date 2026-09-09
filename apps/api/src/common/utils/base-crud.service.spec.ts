@@ -27,6 +27,23 @@ class TestVersionedService extends BaseCrudService<Record<string, unknown>, Upda
   }
 }
 
+class TestIuranService extends BaseCrudService<Record<string, unknown>, UpdateDto> {
+  constructor(
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
+  ) {
+    super(prisma, scopeHelper, cache, {
+      model: 'iuran',
+      prefix: 'test:',
+      scopeStrategy: 'anggota_indirect',
+    });
+  }
+  async doRemove(id: string, message?: string) {
+    return this.baseRemove(id, undefined, message);
+  }
+}
+
 class TestPlainService extends BaseCrudService<Record<string, unknown>, UpdateDto> {
   constructor(
     prisma: PrismaService,
@@ -50,6 +67,7 @@ describe('BaseCrudService optimistic locking', () => {
   let cache: any;
   let versionedSvc: TestVersionedService;
   let plainSvc: TestPlainService;
+  let iuranSvc: TestIuranService;
 
   beforeEach(() => {
     prisma = {
@@ -61,6 +79,10 @@ describe('BaseCrudService optimistic locking', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
       },
+      iuran: {
+        findUnique: jest.fn(),
+        delete: jest.fn(),
+      },
     };
     scopeHelper = {
       verifyResourceAccess: jest.fn().mockResolvedValue(undefined),
@@ -71,6 +93,7 @@ describe('BaseCrudService optimistic locking', () => {
     };
     versionedSvc = new TestVersionedService(prisma as never, scopeHelper as never, cache as never);
     plainSvc = new TestPlainService(prisma as never, scopeHelper as never, cache as never);
+    iuranSvc = new TestIuranService(prisma as never, scopeHelper as never, cache as never);
   });
 
   it('should contain versioned models', () => {
@@ -136,6 +159,29 @@ describe('BaseCrudService optimistic locking', () => {
     expect(prisma.latihan.update).toHaveBeenCalledWith({
       where: { id: 'l1' },
       data: { nama: 'Baru' },
+    });
+  });
+
+  it('should delete iuran (anggota_indirect, no rantingId) without throwing', async () => {
+    prisma.iuran.findUnique.mockResolvedValue({ anggota: { rantingId: 'r1' } });
+    prisma.iuran.delete.mockResolvedValue({ id: 'i1' });
+    await expect(iuranSvc.doRemove('i1', 'Data iuran berhasil dihapus')).resolves.toEqual({
+      message: 'Data iuran berhasil dihapus',
+    });
+    expect(prisma.iuran.delete).toHaveBeenCalledWith({ where: { id: 'i1' } });
+  });
+
+  it('should resolve iuran rantingId through anggota.rantingId, never a direct rantingId', async () => {
+    prisma.iuran.findUnique.mockResolvedValue({ anggota: { rantingId: 'r2' } });
+    prisma.iuran.delete.mockResolvedValue({ id: 'i2' });
+    await iuranSvc.doRemove('i2');
+    expect(prisma.iuran.findUnique).toHaveBeenCalledWith({
+      where: { id: 'i2' },
+      select: { anggota: { select: { rantingId: true } } },
+    });
+    expect(prisma.iuran.findUnique).not.toHaveBeenCalledWith({
+      where: { id: 'i2' },
+      select: { rantingId: true },
     });
   });
 });
