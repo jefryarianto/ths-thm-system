@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../theme';
 
 interface OTAUpdatePromptProps {
   /** Whether the modal is visible */
@@ -50,7 +51,7 @@ export function OTAUpdatePrompt({
             <Ionicons
               name={isDownloading ? 'cloud-download' : 'arrow-up-circle'}
               size={48}
-              color="#6366f1"
+              color={theme.colors.primary}
             />
           </View>
 
@@ -78,7 +79,7 @@ export function OTAUpdatePrompt({
           {/* Progress / Buttons */}
           {isDownloading ? (
             <View style={styles.downloadingContainer}>
-              <ActivityIndicator size="large" color="#6366f1" />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text style={styles.downloadingText}>Mengunduh...</Text>
             </View>
           ) : (
@@ -98,7 +99,7 @@ export function OTAUpdatePrompt({
                     <Text style={styles.buttonSecondaryText}>Nanti Saja</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.buttonPrimary} onPress={onUpdate}>
-                    <Ionicons name="download" size={16} color="#fff" style={{ marginRight: 6 }} />
+                    <Ionicons name="download" size={16} color={theme.colors.textOnPrimary} style={{ marginRight: 6 }} />
                     <Text style={styles.buttonPrimaryText}>Perbarui Sekarang</Text>
                   </TouchableOpacity>
                 </>
@@ -114,19 +115,19 @@ export function OTAUpdatePrompt({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: theme.spacing.xxl,
   },
   dialog: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 28,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.xxxl - 4,
     width: '100%',
     maxWidth: 380,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -136,74 +137,74 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#eef2ff',
+    backgroundColor: theme.colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 8,
+    fontSize: theme.typography.size.xl,
+    fontWeight: theme.typography.weight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   description: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: theme.typography.size.md,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 20,
+    marginBottom: theme.spacing.xl,
   },
   errorHint: {
-    fontSize: 12,
-    color: '#94a3b8',
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.textMuted,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
     fontStyle: 'italic',
   },
   downloadingContainer: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: theme.spacing.lg,
   },
   downloadingText: {
-    fontSize: 14,
-    color: '#6366f1',
-    marginTop: 12,
-    fontWeight: '500',
+    fontSize: theme.typography.size.md,
+    color: theme.colors.primary,
+    marginTop: theme.spacing.md,
+    fontWeight: theme.typography.weight.medium,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: theme.spacing.md,
     width: '100%',
   },
   buttonPrimary: {
     flex: 1,
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md + 2,
+    paddingHorizontal: theme.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonPrimaryText: {
-    color: '#fff',
+    color: theme.colors.textOnPrimary,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: theme.typography.weight.semibold,
   },
   buttonSecondary: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md + 2,
+    paddingHorizontal: theme.spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonSecondaryText: {
-    color: '#64748b',
+    color: theme.colors.textSecondary,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: theme.typography.weight.semibold,
   },
 });

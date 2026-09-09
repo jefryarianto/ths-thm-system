@@ -58,8 +58,22 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#6b7280',
-        tabBarStyle: { backgroundColor: '#fff', borderTopColor: '#e5e7eb' },
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopWidth: 0,
+          borderTopColor: 'transparent',
+          height: 64,
+          paddingBottom: 8,
+          paddingTop: 8,
+          shadowColor: '#0f172a',
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -3 },
+          elevation: 12,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarItemStyle: { paddingVertical: 2 },
       }}
     >
       {/* Halaman ini tetap ada tapi tidak tampil di tab bar (diakses dari shortcut Beranda) */}

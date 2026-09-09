@@ -17,6 +17,7 @@ import { safeIconName } from '../../lib/icons';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { formatRupiah } from '../../lib/format';
 import { ProfileCard, ScreenShell } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface MemberDetail {
   id: string;
@@ -144,7 +145,7 @@ export default function MemberDetailScreen() {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   if (!member)
@@ -175,21 +176,21 @@ export default function MemberDetailScreen() {
   const renderInfo = () => (
     <View style={styles.infoCard}>
       <View style={styles.infoRow}>
-        <Ionicons name="card" size={18} color="#6b7280" />
+        <Ionicons name="card" size={18} color={theme.colors.textSecondary} />
         <View style={styles.infoContent}>
           <Text style={styles.infoLabel}>No. Anggota</Text>
           <Text style={styles.infoValue}>{member.noAnggota}</Text>
         </View>
       </View>
       <View style={styles.infoRow}>
-        <Ionicons name="trending-up" size={18} color="#6b7280" />
+        <Ionicons name="trending-up" size={18} color={theme.colors.textSecondary} />
         <View style={styles.infoContent}>
           <Text style={styles.infoLabel}>Tingkat</Text>
           <Text style={styles.infoValue}>{member.tingkat}</Text>
         </View>
       </View>
       <View style={styles.infoRow}>
-        <Ionicons name="shield-checkmark" size={18} color="#6b7280" />
+        <Ionicons name="shield-checkmark" size={18} color={theme.colors.textSecondary} />
         <View style={styles.infoContent}>
           <Text style={styles.infoLabel}>Status</Text>
           <Text style={[styles.infoValue, { color: statusColor }]}>{statusLabel}</Text>
@@ -197,7 +198,7 @@ export default function MemberDetailScreen() {
       </View>
       {member.ranting && (
         <View style={styles.infoRow}>
-          <Ionicons name="location" size={18} color="#6b7280" />
+          <Ionicons name="location" size={18} color={theme.colors.textSecondary} />
           <View style={styles.infoContent}>
             <Text style={styles.infoLabel}>Ranting</Text>
             <Text style={styles.infoValue}>{member.ranting.nama}</Text>
@@ -206,7 +207,7 @@ export default function MemberDetailScreen() {
       )}
       {member.alamat && (
         <View style={styles.infoRow}>
-          <Ionicons name="home" size={18} color="#6b7280" />
+          <Ionicons name="home" size={18} color={theme.colors.textSecondary} />
           <View style={styles.infoContent}>
             <Text style={styles.infoLabel}>Alamat</Text>
             <Text style={styles.infoValue}>{member.alamat}</Text>
@@ -215,7 +216,7 @@ export default function MemberDetailScreen() {
       )}
       {member.noHp && (
         <View style={styles.infoRow}>
-          <Ionicons name="call" size={18} color="#6b7280" />
+          <Ionicons name="call" size={18} color={theme.colors.textSecondary} />
           <View style={styles.infoContent}>
             <Text style={styles.infoLabel}>No. HP</Text>
             <Text style={styles.infoValue}>{member.noHp}</Text>
@@ -224,7 +225,7 @@ export default function MemberDetailScreen() {
       )}
       {member.email && (
         <View style={styles.infoRow}>
-          <Ionicons name="mail" size={18} color="#6b7280" />
+          <Ionicons name="mail" size={18} color={theme.colors.textSecondary} />
           <View style={styles.infoContent}>
             <Text style={styles.infoLabel}>Email</Text>
             <Text style={styles.infoValue}>{member.email}</Text>
@@ -236,11 +237,11 @@ export default function MemberDetailScreen() {
 
   const renderDues = () => {
     if (duesLoading)
-      return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
+      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 24 }} />;
     if (dues.length === 0)
       return (
         <View style={styles.empty}>
-          <Ionicons name="cash" size={48} color="#d1d5db" />
+          <Ionicons name="cash" size={48} color={theme.colors.border} />
           <Text style={styles.emptyText}>Belum ada data iuran</Text>
         </View>
       );
@@ -281,11 +282,11 @@ export default function MemberDetailScreen() {
 
   const renderTrainings = () => {
     if (trainingsLoading)
-      return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
+      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 24 }} />;
     if (trainings.length === 0)
       return (
         <View style={styles.empty}>
-          <Ionicons name="fitness" size={48} color="#d1d5db" />
+          <Ionicons name="fitness" size={48} color={theme.colors.border} />
           <Text style={styles.emptyText}>Belum ada data latihan</Text>
         </View>
       );
@@ -399,11 +400,11 @@ export default function MemberDetailScreen() {
 
   const renderDocuments = () => {
     if (docsLoading)
-      return <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 24 }} />;
+      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 24 }} />;
     if (documents.length === 0)
       return (
         <View style={styles.empty}>
-          <Ionicons name="document-text" size={48} color="#d1d5db" />
+          <Ionicons name="document-text" size={48} color={theme.colors.border} />
           <Text style={styles.emptyText}>Belum ada dokumen</Text>
         </View>
       );
@@ -421,7 +422,7 @@ export default function MemberDetailScreen() {
         <View style={styles.docSummaryRow}>
           {summary.map((s) => (
             <View key={s.tipe} style={styles.docSummaryCard}>
-              <Ionicons name={safeIconName(TIPE_ICONS[s.tipe] || 'document-text')} size={16} color="#2563eb" />
+              <Ionicons name={safeIconName(TIPE_ICONS[s.tipe] || 'document-text')} size={16} color={theme.colors.primary} />
               <Text style={styles.docSummaryLabel} numberOfLines={1}>
                 {DOKUMEN_TIPE_LABEL[s.tipe] || s.tipe}
               </Text>
@@ -447,7 +448,7 @@ export default function MemberDetailScreen() {
                   <Ionicons
                     name={safeIconName(TIPE_ICONS[item.tipe] || 'document-text')}
                     size={22}
-                    color="#2563eb"
+                    color={theme.colors.primary}
                     style={{ marginRight: 10 }}
                   />
                   <View style={styles.listCardBody}>
@@ -486,7 +487,7 @@ export default function MemberDetailScreen() {
                       style={styles.docActionBtn}
                       onPress={() => downloadDocument(item)}
                     >
-                      <Ionicons name="download" size={15} color="#2563eb" />
+                      <Ionicons name="download" size={15} color={theme.colors.primary} />
                       <Text style={styles.docActionText}>Download</Text>
                     </TouchableOpacity>
                   )}
@@ -503,8 +504,8 @@ export default function MemberDetailScreen() {
                     style={styles.docActionBtn}
                     onPress={() => router.push(`/documents/${item.id}` as any)}
                   >
-                    <Ionicons name="open-outline" size={15} color="#6b7280" />
-                    <Text style={[styles.docActionText, { color: '#6b7280' }]}>Detail</Text>
+                    <Ionicons name="open-outline" size={15} color={theme.colors.textMuted} />
+                    <Text style={[styles.docActionText, { color: theme.colors.textMuted }]}>Detail</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -553,7 +554,7 @@ export default function MemberDetailScreen() {
             <Ionicons
               name={safeIconName(tab.icon)}
               size={16}
-              color={activeTab === tab.key ? '#2563eb' : '#6b7280'}
+              color={activeTab === tab.key ? theme.colors.primary : theme.colors.textSecondary}
             />
             <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
               {tab.label}
@@ -567,124 +568,124 @@ export default function MemberDetailScreen() {
     </ScreenShell>
   );
 }const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background },
+  errorText: { fontSize: theme.typography.size.md, color: theme.colors.danger },
 
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    padding: 4,
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.xs,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    borderRadius: 10,
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.sm + 2,
   },
-  tabActive: { backgroundColor: '#eff6ff' },
-  tabLabel: { fontSize: 12, fontWeight: '500', color: '#6b7280' },
-  tabLabelActive: { color: '#2563eb', fontWeight: '600' },
+  tabActive: { backgroundColor: theme.colors.primarySofter },
+  tabLabel: { fontSize: theme.typography.size.sm, fontWeight: theme.typography.weight.medium, color: theme.colors.textSecondary },
+  tabLabelActive: { color: theme.colors.primary, fontWeight: theme.typography.weight.semibold },
 
-  tabContent: { paddingHorizontal: 16, marginTop: 12 },
+  tabContent: { paddingHorizontal: theme.spacing.lg, marginTop: theme.spacing.md },
 
   // Used by renderDues() and renderTrainings() list items
-  statusBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12 },
-  statusText: { fontSize: 12, fontWeight: '600' },
+  statusBadge: { paddingHorizontal: theme.spacing.md + 2, paddingVertical: 5, borderRadius: theme.radius.md },
+  statusText: { fontSize: theme.typography.size.sm, fontWeight: theme.typography.weight.semibold },
 
   infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md + 2,
+    padding: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 12,
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  infoLabel: { fontSize: theme.typography.size.xs, color: theme.colors.textMuted, marginBottom: 2 },
+  infoValue: { fontSize: theme.typography.size.md, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
 
   listCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md + 2,
+    marginBottom: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   listCardBody: { flex: 1 },
-  listCardTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  listCardMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  listCardTitle: { fontSize: theme.typography.size.md, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  listCardMeta: { fontSize: theme.typography.size.sm, color: theme.colors.textSecondary, marginTop: 2 },
 
-  empty: { alignItems: 'center', paddingTop: 40 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  empty: { alignItems: 'center', paddingTop: theme.spacing.xxxl },
+  emptyText: { fontSize: theme.typography.size.md, color: theme.colors.textMuted, marginTop: theme.spacing.md },
 
   // ── Dokumen tab ──
   docSummaryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   docSummaryCard: {
     width: '48%',
     flexGrow: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    padding: 12,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
     gap: 2,
   },
-  docSummaryLabel: { fontSize: 11, color: '#6b7280' },
-  docSummaryCount: { fontSize: 20, fontWeight: '700', color: '#111827' },
+  docSummaryLabel: { fontSize: theme.typography.size.xs, color: theme.colors.textSecondary },
+  docSummaryCount: { fontSize: theme.typography.size.xl, fontWeight: theme.typography.weight.bold, color: theme.colors.text },
 
   docCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.md + 2,
+    marginBottom: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   docCardTop: { flexDirection: 'row', alignItems: 'center' },
-  docTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  docNumber: { fontSize: 12, fontFamily: 'monospace', color: '#2563eb', marginTop: 2 },
+  docTitle: { fontSize: theme.typography.size.md, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  docNumber: { fontSize: theme.typography.size.sm, fontFamily: 'monospace', color: theme.colors.primary, marginTop: 2 },
   docCardMeta: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 8,
-    paddingTop: 8,
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.surfaceMuted,
   },
-  docMetaText: { fontSize: 11, color: '#9ca3af' },
-  docActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  docMetaText: { fontSize: theme.typography.size.xs, color: theme.colors.textMuted },
+  docActions: { flexDirection: 'row', gap: theme.spacing.sm, marginTop: theme.spacing.sm + 2 },
   docActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.sm - 2,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.primarySofter,
   },
-  docActionText: { fontSize: 12, fontWeight: '600', color: '#2563eb' },
+  docActionText: { fontSize: theme.typography.size.sm, fontWeight: theme.typography.weight.semibold, color: theme.colors.primary },
 });

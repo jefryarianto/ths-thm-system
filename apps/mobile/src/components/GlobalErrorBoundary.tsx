@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { logError } from '../lib/error-logger';
+import { theme } from '../theme';
 
 interface State {
   hasError: boolean;
@@ -127,77 +128,78 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   content: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: theme.spacing.xxl,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: theme.typography.size.xl,
+    fontWeight: theme.typography.weight.bold,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.text,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: theme.typography.size.md,
     textAlign: 'center',
-    marginBottom: 16,
-    color: '#666',
+    marginBottom: theme.spacing.lg,
+    color: theme.colors.textSecondary,
   },
   detailBox: {
     alignSelf: 'stretch',
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderRadius: theme.radius.sm,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
-    marginBottom: 16,
+    borderColor: theme.colors.borderStrong,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   detailLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
+    fontSize: theme.typography.size.sm,
+    fontWeight: theme.typography.weight.bold,
+    color: theme.colors.textSecondary,
     marginBottom: 6,
   },
   detailText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#b91c1c',
+    fontWeight: theme.typography.weight.medium,
+    color: theme.colors.danger,
   },
   detailStack: {
     fontSize: 11,
     fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-    color: '#64748b',
+    color: theme.colors.textMuted,
     lineHeight: 16,
-    marginTop: 8,
+    marginTop: theme.spacing.sm,
   },
   button: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: 10,
     borderRadius: 6,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: theme.colors.textOnPrimary,
+    fontWeight: theme.typography.weight.semibold,
   },
   secondaryButton: {
     marginTop: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: 10,
     borderRadius: 6,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
   },
   secondaryButtonText: {
-    color: '#374151',
-    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.weight.semibold,
   },
   hint: {
-    marginTop: 16,
-    fontSize: 12,
-    color: '#9ca3af',
+    marginTop: theme.spacing.lg,
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
 });

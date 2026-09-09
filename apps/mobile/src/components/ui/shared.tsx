@@ -13,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { theme } from '../../theme';
 
 interface BackButtonProps {
   /** warna ikon panah (default putih) */
@@ -24,11 +25,11 @@ interface BackButtonProps {
 }
 
 /** Tombol/ikon kembali — melayang di kiri-atas setiap halaman (safe-area aware). */
-export function BackButton({ color = '#fff', bg = 'rgba(15,23,42,0.55)', onPress }: BackButtonProps) {
+export function BackButton({ color = theme.colors.textOnPrimary, bg = theme.colors.overlay, onPress }: BackButtonProps) {
   const insets = useSafeAreaInsets();
   return (
     <TouchableOpacity
-      style={[styles.backBtn, { top: insets.top + 8, backgroundColor: bg }]}
+      style={[styles.backBtn, { top: insets.top + theme.spacing.sm, backgroundColor: bg }]}
       onPress={onPress || (() => (router.canGoBack() ? router.back() : router.replace('/')))}       hitSlop={10}
       activeOpacity={0.7}
       accessibilityLabel="Kembali"
@@ -45,7 +46,7 @@ interface LoadingViewProps {
 export function LoadingView({ message = 'Memuat...' }: LoadingViewProps) {
   return (
     <View style={styles.center}>
-      <ActivityIndicator size="large" color="#2563eb" />
+      <ActivityIndicator size="large" color={theme.colors.primary} />
       <Text style={styles.message}>{message}</Text>
     </View>
   );
@@ -116,17 +117,17 @@ interface SearchBarProps {
 export function SearchBar({ value, onChangeText, placeholder = 'Cari...' }: SearchBarProps) {
   return (
     <View style={styles.searchContainer}>
-      <Ionicons name="search" size={16} color="#9ca3af" />
+      <Ionicons name="search" size={16} color={theme.colors.textMuted} />
       <TextInput
         style={styles.searchInput}
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={theme.colors.textMuted}
         value={value}
         onChangeText={onChangeText}
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={() => onChangeText('')}>
-          <Ionicons name="close-circle" size={16} color="#9ca3af" />
+          <Ionicons name="close-circle" size={16} color={theme.colors.textMuted} />
         </TouchableOpacity>
       )}
     </View>
@@ -144,7 +145,7 @@ export interface InfoRowProps {
 export function SectionTitle({ icon, text }: { icon: string; text: string }) {
   return (
     <Text style={referenceStyles.sectionTitle}>
-      <Ionicons name={safeIconName(icon)} size={16} color="#2563eb" /> {text}
+      <Ionicons name={safeIconName(icon)} size={16} color={theme.colors.primary} /> {text}
     </Text>
   );
 }
@@ -152,7 +153,7 @@ export function SectionTitle({ icon, text }: { icon: string; text: string }) {
 export function InfoRow({ icon, label, value }: InfoRowProps) {
   return (
     <View style={referenceStyles.infoRow}>
-      <Ionicons name={safeIconName(icon)} size={15} color="#9ca3af" />
+      <Ionicons name={safeIconName(icon)} size={15} color={theme.colors.textMuted} />
       <View style={{ flex: 1 }}>
         <Text style={referenceStyles.infoLabel}>{label}</Text>
         <Text style={referenceStyles.infoValue}>{value}</Text>
@@ -235,13 +236,13 @@ export function StatusCard({
       )}
       {createdAt && (
         <View style={referenceStyles.timelineRow}>
-          <Ionicons name="calendar-outline" size={13} color="#9ca3af" />
+          <Ionicons name="calendar-outline" size={13} color={theme.colors.textMuted} />
           <Text style={referenceStyles.timelineText}>Diajukan {fmtDate(createdAt)}</Text>
         </View>
       )}
       {updatedAt && (
         <View style={referenceStyles.timelineRow}>
-          <Ionicons name="refresh-outline" size={13} color="#9ca3af" />
+          <Ionicons name="refresh-outline" size={13} color={theme.colors.textMuted} />
           <Text style={referenceStyles.timelineText}>Diperbarui {fmtDateTime(updatedAt)}</Text>
         </View>
       )}
@@ -306,7 +307,7 @@ export function ScreenShell({ title, children, variant, onRefresh, badgeLabel, b
     <View style={shellStyles.container}>
       <View style={[shellStyles.header, { paddingTop: insets.top + (variant === 'detail' ? 16 : 12) }, variant === 'detail' ? shellStyles.headerDetail : shellStyles.headerReference]}>
         <TouchableOpacity onPress={() => router.back()} style={shellStyles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
         </TouchableOpacity>
         <Text style={shellStyles.headerTitle} numberOfLines={1}>
           {title}
@@ -318,11 +319,11 @@ export function ScreenShell({ title, children, variant, onRefresh, badgeLabel, b
         )}
         {variant === 'reference' && onRefresh && (
           <TouchableOpacity onPress={onRefresh} style={shellStyles.refreshBtn}>
-            <Ionicons name="refresh" size={20} color="#bfdbfe" />
+            <Ionicons name="refresh" size={20} color={theme.colors.headerSub} />
           </TouchableOpacity>
         )}
       </View>
-      <ScrollView style={shellStyles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <ScrollView style={shellStyles.scroll} contentContainerStyle={{ padding: theme.spacing.lg, paddingBottom: theme.spacing.xxxl + theme.spacing.sm }}>
         {children}
       </ScrollView>
     </View>
@@ -348,7 +349,7 @@ export function ReferenceScreenState({
   onRetry: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const safeHeader = { backgroundColor: '#2563eb', paddingTop: insets.top + 12, paddingBottom: 14, paddingHorizontal: 16 } as const;
+  const safeHeader = { backgroundColor: theme.colors.header, paddingTop: insets.top + theme.spacing.md, paddingBottom: theme.spacing.md + 2, paddingHorizontal: theme.spacing.lg } as const;
 
   // ID guard
   if (!id) {
@@ -357,7 +358,7 @@ export function ReferenceScreenState({
         <View style={safeHeader}>
           <View style={referenceStyles.headerRow}>
             <TouchableOpacity onPress={() => router.back()} style={referenceStyles.backBtn}>
-              <Ionicons name="arrow-back" size={22} color="#fff" />
+              <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
             </TouchableOpacity>
             <Text style={referenceStyles.headerTitle}>{title}</Text>
           </View>
@@ -374,13 +375,13 @@ export function ReferenceScreenState({
         <View style={safeHeader}>
           <View style={referenceStyles.headerRow}>
             <TouchableOpacity onPress={() => router.back()} style={referenceStyles.backBtn}>
-              <Ionicons name="arrow-back" size={22} color="#fff" />
+              <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
             </TouchableOpacity>
             <Text style={referenceStyles.headerTitle}>{title}</Text>
           </View>
         </View>
         <View style={referenceStyles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2563eb" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={referenceStyles.loadingText}>Memuat {title.toLowerCase()}...</Text>
         </View>
       </View>
@@ -394,7 +395,7 @@ export function ReferenceScreenState({
         <View style={safeHeader}>
           <View style={referenceStyles.headerRow}>
             <TouchableOpacity onPress={() => router.back()} style={referenceStyles.backBtn}>
-              <Ionicons name="arrow-back" size={22} color="#fff" />
+              <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
             </TouchableOpacity>
             <Text style={referenceStyles.headerTitle}>{title}</Text>
           </View>
@@ -438,7 +439,7 @@ export function TabBar({ tabs, activeKey, onChange }: TabBarProps) {
           <Ionicons
             name={safeIconName(tab.icon)}
             size={14}
-            color={activeKey === tab.key ? '#fff' : '#6b7280'}
+            color={activeKey === tab.key ? theme.colors.textOnPrimary : theme.colors.textSecondary}
           />
           <Text style={[tabStyles.label, activeKey === tab.key && tabStyles.activeLabel]}>
             {tab.label}
@@ -452,130 +453,130 @@ export function TabBar({ tabs, activeKey, onChange }: TabBarProps) {
 const tabStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
-    margin: 16,
+    backgroundColor: theme.colors.surfaceMuted,
+    margin: theme.spacing.lg,
     marginBottom: 0,
-    borderRadius: 10,
-    padding: 3,
+    borderRadius: theme.radius.md + 2,
+    padding: theme.spacing.xs,
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: theme.spacing.sm + 1,
+    borderRadius: theme.radius.sm + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: theme.spacing.xs,
   },
-  active: { backgroundColor: '#2563eb' },
-  label: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
-  activeLabel: { color: '#fff' },
+  active: { backgroundColor: theme.colors.primary },
+  label: { fontSize: theme.typography.size.xs, fontWeight: theme.typography.weight.semibold, color: theme.colors.textMuted },
+  activeLabel: { color: theme.colors.textOnPrimary },
 });
 
 // ─── Merged shell styles (used by ScreenShell) ──────────────────
 
 const shellStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.header,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: theme.spacing.md,
   },
   headerDetail: {
-    padding: 24,
-    paddingBottom: 16,
+    padding: theme.spacing.xxl,
+    paddingBottom: theme.spacing.lg,
   },
   headerReference: {
-    paddingBottom: 14,
-    paddingHorizontal: 16,
+    paddingBottom: theme.spacing.md + 2,
+    paddingHorizontal: theme.spacing.lg,
   },
-  backBtn: { padding: 4 },
+  backBtn: { padding: theme.spacing.xs },
   headerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
+    color: theme.colors.textOnPrimary,
+    fontSize: theme.typography.size.lg,
+    fontWeight: theme.typography.weight.bold,
     flex: 1,
   },
   headerBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.xs - 1,
+    borderRadius: theme.radius.sm,
     alignSelf: 'center',
   },
-  headerBadgeText: { fontSize: 11, fontWeight: '600' },
-  refreshBtn: { padding: 4 },
+  headerBadgeText: { fontSize: theme.typography.size.xs, fontWeight: theme.typography.weight.semibold },
+  refreshBtn: { padding: theme.spacing.xs },
   scroll: { flex: 1 },
 });
 
 // ─── Shared reference-detail styles ─────────────────────────
 
 export const referenceStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', paddingTop: 54, paddingBottom: 14, paddingHorizontal: 16 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  refreshBtn: { padding: 4 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: { backgroundColor: theme.colors.header, paddingTop: theme.spacing.xxxl + theme.spacing.xxl - 2, paddingBottom: theme.spacing.md + 2, paddingHorizontal: theme.spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  backBtn: { padding: theme.spacing.xs },
+  headerTitle: { color: theme.colors.textOnPrimary, fontSize: theme.typography.size.lg, fontWeight: theme.typography.weight.bold },
+  refreshBtn: { padding: theme.spacing.xs },
   scroll: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#6b7280' },
+  loadingText: { marginTop: theme.spacing.md, fontSize: theme.typography.size.md, color: theme.colors.textSecondary },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 10,
+    gap: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.sm + 2,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderRadius: theme.radius.sm + 2,
   },
-  infoLabel: { fontSize: 11, color: '#9ca3af', textTransform: 'uppercase' },
-  infoValue: { fontSize: 14, color: '#111827', fontWeight: '500' },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 12 },
+  infoLabel: { fontSize: theme.typography.size.xs, color: theme.colors.textMuted, textTransform: 'uppercase' },
+  infoValue: { fontSize: theme.typography.size.md, color: theme.colors.text, fontWeight: theme.typography.weight.medium },
+  sectionTitle: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text, marginBottom: theme.spacing.md },
   // Section card (white card with shadow) — shared by all reference screens
   cardSection: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md + 2,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
   // Status card (header variant) styles
   statusHeader: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md + 2,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   statusIconBox: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: theme.radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  badgeContainer: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginTop: 4 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
-  idText: { fontSize: 11, color: '#9ca3af', fontFamily: 'monospace', marginTop: 6 },
-  timelineRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
-  timelineText: { fontSize: 12, color: '#6b7280' },
+  statusTitle: { fontSize: theme.typography.size.lg, fontWeight: theme.typography.weight.bold, color: theme.colors.text },
+  badgeContainer: { alignSelf: 'flex-start', paddingHorizontal: theme.spacing.sm + 2, paddingVertical: theme.spacing.xs - 1, borderRadius: theme.radius.sm, marginTop: theme.spacing.xs },
+  badgeText: { fontSize: theme.typography.size.xs, fontWeight: theme.typography.weight.semibold },
+  idText: { fontSize: theme.typography.size.xs, color: theme.colors.textMuted, fontFamily: 'monospace', marginTop: theme.spacing.sm - 2 },
+  timelineRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm - 2, marginTop: theme.spacing.sm - 2 },
+  timelineText: { fontSize: theme.typography.size.sm, color: theme.colors.textSecondary },
   // Status card (centered variant) styles
   statusCardCentered: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xxl,
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
+    marginBottom: theme.spacing.md,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -586,18 +587,18 @@ export const referenceStyles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
-  statusTitleCentered: { fontSize: 16, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  statusSubtitle: { fontSize: 14, color: '#6b7280', marginBottom: 4 },
+  statusTitleCentered: { fontSize: theme.typography.size.lg, fontWeight: theme.typography.weight.bold, color: theme.colors.text, textAlign: 'center' },
+  statusSubtitle: { fontSize: theme.typography.size.md, color: theme.colors.textSecondary, marginBottom: theme.spacing.xs },
   // Profile card styles
   profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xxl,
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
+    marginBottom: theme.spacing.md,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -606,22 +607,22 @@ export const referenceStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
-  avatarText: { fontSize: 24, fontWeight: '700', color: '#2563eb' },
-  name: { fontSize: 20, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  statusBadge: { paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, marginTop: 8 },
-  statusText: { fontSize: 12, fontWeight: '600' },
-  rantingText: { fontSize: 13, color: '#6b7280', marginTop: 6 },
+  avatarText: { fontSize: theme.typography.size.xxl, fontWeight: theme.typography.weight.bold, color: theme.colors.primary },
+  name: { fontSize: theme.typography.size.xl, fontWeight: theme.typography.weight.bold, color: theme.colors.text, textAlign: 'center' },
+  statusBadge: { paddingHorizontal: theme.spacing.md + 2, paddingVertical: 5, borderRadius: theme.radius.md, marginTop: theme.spacing.sm },
+  statusText: { fontSize: theme.typography.size.sm, fontWeight: theme.typography.weight.semibold },
+  rantingText: { fontSize: 13, color: theme.colors.textSecondary, marginTop: theme.spacing.sm - 2 },
 });
 
 const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute' as const,
-    left: 12,
+    left: theme.spacing.md,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -629,7 +630,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center' as const,
     zIndex: 999,
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.25,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -638,90 +639,98 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: 24,
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.xxl,
   },
   message: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6b7280',
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.size.md,
+    color: theme.colors.textSecondary,
   },
   errorIcon: {
     fontSize: 40,
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
   errorText: {
     fontSize: 15,
-    color: '#dc2626',
-    fontWeight: '500',
+    color: theme.colors.danger,
+    fontWeight: theme.typography.weight.medium,
     textAlign: 'center',
     lineHeight: 22,
   },
   retryButton: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
+    marginTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xxl,
+    paddingVertical: theme.spacing.sm + 2,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.sm,
   },
   retryText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: theme.colors.textOnPrimary,
+    fontSize: theme.typography.size.md,
+    fontWeight: theme.typography.weight.semibold,
   },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.pill,
     alignSelf: 'flex-start',
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: theme.typography.size.xs,
+    fontWeight: theme.typography.weight.semibold,
   },
   filterRow: {
     flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: theme.colors.surfaceMuted,
     flexWrap: 'wrap',
   },
   filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: '#f3f4f6',
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingVertical: theme.spacing.sm - 2,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.colors.primarySofter,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   filterChipActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   filterText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.textMuted,
+    fontWeight: theme.typography.weight.semibold,
   },
   filterTextActive: {
-    color: '#fff',
+    color: theme.colors.textOnPrimary,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    margin: 16,
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.lg,
     marginBottom: 0,
-    borderRadius: 10,
+    borderRadius: theme.radius.md + 2,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.md + 2,
+    paddingVertical: theme.spacing.sm + 2,
+    shadowColor: theme.colors.dark,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#111827',
-    marginLeft: 8,
+    fontSize: theme.typography.size.md,
+    color: theme.colors.text,
+    marginLeft: theme.spacing.sm,
   },
 });

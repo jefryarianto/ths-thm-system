@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { proactivelyRefresh } from '../lib/api-client';
 import { scheduleExpiryWarning, resetSessionExpired } from '../lib/session-expired';
+import { theme } from '../theme';
 
 interface SessionExpiryWarningProps {
   visible: boolean;
@@ -101,7 +102,7 @@ export function SessionExpiryWarning({ visible, expiresInSeconds: initial, onDis
               activeOpacity={0.7}
             >
               {refreshing ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.colors.textOnPrimary} />
               ) : (
                 <Text style={styles.extendBtnText}>Perpanjang Sesi</Text>
               )}
@@ -120,20 +121,20 @@ export function SessionExpiryWarning({ visible, expiresInSeconds: initial, onDis
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing.xxl,
   },
   card: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl,
+    paddingVertical: theme.spacing.xxxl,
+    paddingHorizontal: theme.spacing.xxl,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -145,63 +146,63 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   iconWarning: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: theme.colors.warningLight,
   },
   iconUrgent: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: theme.colors.dangerLight,
   },
   iconText: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#d97706',
+    color: theme.colors.warning,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
+    fontSize: theme.typography.size.xl,
+    fontWeight: theme.typography.weight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 4,
+    fontSize: theme.typography.size.md,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
   },
   countdown: {
     fontSize: 42,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
-    color: '#d97706',
-    marginBottom: 16,
+    color: theme.colors.warning,
+    marginBottom: theme.spacing.lg,
   },
   countdownUrgent: {
-    color: '#dc2626',
+    color: theme.colors.danger,
   },
   progressTrack: {
     width: '100%',
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: theme.spacing.lg,
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
   },
   progressNormal: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: theme.colors.warning,
   },
   progressUrgent: {
-    backgroundColor: '#dc2626',
+    backgroundColor: theme.colors.danger,
   },
   hint: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: theme.spacing.xxl,
   },
   buttons: {
     width: '100%',
@@ -209,31 +210,31 @@ const styles = StyleSheet.create({
   },
   extendBtn: {
     width: '100%',
-    backgroundColor: '#2563eb',
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md + 2,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   extendBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.textOnPrimary,
+    fontSize: theme.typography.size.lg,
+    fontWeight: theme.typography.weight.semibold,
   },
   btnDisabled: {
     opacity: 0.6,
   },
   logoutBtn: {
     width: '100%',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md,
     alignItems: 'center',
   },
   logoutBtnText: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: '500',
+    color: theme.colors.textSecondary,
+    fontSize: theme.typography.size.md,
+    fontWeight: theme.typography.weight.medium,
   },
 });

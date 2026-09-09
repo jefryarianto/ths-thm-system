@@ -138,29 +138,41 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Aksen gradasi halus di bagian atas (efek cahaya modern) */}
+      <View style={styles.topGlow} pointerEvents="none" />
       <View style={styles.header}>
         {/* Logo organisasi — langsung tampil tanpa lingkaran putih, biar muat penuh */}
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>THS-THM</Text>
         <Text style={styles.subtitle}>Sistem Manajemen</Text>
+        <View style={styles.brandChip}>
+          <View style={styles.brandDot} />
+          <Text style={styles.brandChipText}>Organisasi Profesional</Text>
+        </View>
       </View>
       <View style={styles.form}>
         <Text style={styles.label}>Email / No. HP</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="email@ths-thm.org atau 08xxx"
-          keyboardType="default"
-          autoCapitalize="none"
-        />
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.passwordWrap}>
+        <View style={styles.inputWrap}>
+          <Ionicons name="mail-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
           <TextInput
-            style={[styles.input, styles.passwordInput]}
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="email@ths-thm.org atau 08xxx"
+            placeholderTextColor="#94a3b8"
+            keyboardType="default"
+            autoCapitalize="none"
+          />
+        </View>
+        <Text style={styles.label}>Password</Text>
+        <View style={styles.inputWrap}>
+          <Ionicons name="lock-closed-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
             value={password}
             onChangeText={setPassword}
             placeholder="Password"
+            placeholderTextColor="#94a3b8"
             secureTextEntry={!showPassword}
           />
           {/* Intip Password */}
@@ -172,7 +184,7 @@ export default function LoginScreen() {
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={22}
-              color="#6b7280"
+              color="#94a3b8"
             />
           </TouchableOpacity>
         </View>
@@ -270,69 +282,103 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  container: { flex: 1, backgroundColor: '#f6f7fb', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  topGlow: {
+    position: 'absolute',
+    top: -120,
+    left: -80,
+    right: -80,
+    height: 280,
+    backgroundColor: '#2563eb',
+    borderRadius: 160,
+    opacity: 0.10,
+  },
   videoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.55)' },
   skipButton: { position: 'absolute', bottom: 44, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.25)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' },
   skipText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  header: { alignItems: 'center', marginBottom: 20 },
-  logo: { width: 128, height: 128, marginBottom: 12 },
-  title: { fontSize: 34, fontWeight: 'bold', color: '#1d4ed8', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#6b7280', marginTop: 2, textAlign: 'center' },
+  header: { alignItems: 'center', marginBottom: 24 },
+  logo: { width: 116, height: 116, marginBottom: 14, borderRadius: 24, backgroundColor: '#fff', padding: 8 },
+  title: { fontSize: 32, fontWeight: 'bold', color: '#1e3a8a', textAlign: 'center', letterSpacing: 0.5 },
+  subtitle: { fontSize: 15, color: '#64748b', marginTop: 2, textAlign: 'center' },
+  brandChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#1d4ed8',
+  },
+  brandDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#93c5fd' },
+  brandChipText: { fontSize: 12, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
   form: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
-  input: {
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: '#eef2f7',
+  },
+  label: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 6, marginTop: 14 },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 14,
+  },
+  inputIcon: { marginRight: 10 },
+  input: {
+    flex: 1,
+    paddingVertical: 13,
     fontSize: 16,
-    backgroundColor: '#f9fafb',
+    color: '#0f172a',
   },
   passwordWrap: { position: 'relative' },
   passwordInput: { paddingRight: 48 },
   eyeButton: {
-    position: 'absolute',
-    right: 12,
-    top: 0,
-    bottom: 0,
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingLeft: 12,
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 14,
     gap: 8,
   },
-  rememberText: { fontSize: 14, color: '#374151', fontWeight: '500' },
+  rememberText: { fontSize: 14, color: '#334155', fontWeight: '500' },
   button: {
     backgroundColor: '#2563eb',
-    borderRadius: 8,
-    padding: 13,
+    borderRadius: 12,
+    padding: 15,
     alignItems: 'center',
-    marginTop: 18,
+    marginTop: 20,
+    shadowColor: '#2563eb',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 14 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#d1d5db' },
-  dividerText: { marginHorizontal: 12, fontSize: 13, color: '#9ca3af' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
+  dividerText: { marginHorizontal: 12, fontSize: 13, color: '#94a3b8' },
   oauthButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 13,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#e2e8f0',
     backgroundColor: '#fff',
     marginBottom: 8,
   },
@@ -340,20 +386,20 @@ const styles = StyleSheet.create({
   oauthIcon: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
+    color: '#1f2937',
     width: 24,
     height: 24,
     textAlign: 'center',
     lineHeight: 24,
     backgroundColor: '#f3f4f6',
-    borderRadius: 4,
+    borderRadius: 6,
     overflow: 'hidden',
   },
-  oauthButtonText: { fontSize: 14, fontWeight: '600', color: '#374151' },
+  oauthButtonText: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
   forgotPassword: {
-    marginTop: 10,
+    marginTop: 8,
     alignItems: 'center',
     padding: 6,
   },
-  forgotPasswordText: { fontSize: 13, color: '#2563eb', fontWeight: '500' },
+  forgotPasswordText: { fontSize: 13, color: '#2563eb', fontWeight: '600' },
 });

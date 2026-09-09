@@ -90,9 +90,14 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        {/* Aksen dekoratif lembut di header */}
+        <View style={styles.headerGlow} pointerEvents="none" />
         <Text style={styles.greeting}>Selamat Datang,</Text>
         <Text style={styles.name}>
           {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
+        </Text>
+        <Text style={styles.roleHint}>
+          {isAnggota ? 'Anggota' : role ? role.replace(/_/g, ' ') : 'Anggota'}
         </Text>
         {/* Lonceng notifikasi + badge jumlah belum dibaca (kanan atas) */}
         <TouchableOpacity
@@ -131,16 +136,31 @@ export default function HomeScreen() {
           <LoadingView message="Memuat data anggota..." />
         ) : (
           <View style={styles.statusCard}>
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Status</Text>
-              <Text
+            <View style={styles.statusHeader}>
+              <View style={styles.statusAvatar}>
+                <Ionicons name="person" size={22} color="#2563eb" />
+              </View>
+              <View style={styles.statusTitleWrap}>
+                <Text style={styles.statusTitle}>Profil Anggota</Text>
+                <Text style={styles.statusSubtitle}>
+                  {member?.statusKeanggotaan === 'aktif' ? 'Anggota aktif' : 'Perlu perhatian'}
+                </Text>
+              </View>
+              <View
                 style={[
-                  styles.statusValue,
-                  { color: member?.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626' },
+                  styles.statusPill,
+                  { backgroundColor: member?.statusKeanggotaan === 'aktif' ? '#d1fae5' : '#fee2e2' },
                 ]}
               >
-                {member?.statusKeanggotaan || 'Aktif'}
-              </Text>
+                <Text
+                  style={[
+                    styles.statusPillText,
+                    { color: member?.statusKeanggotaan === 'aktif' ? '#059669' : '#dc2626' },
+                  ]}
+                >
+                  {member?.statusKeanggotaan || 'Aktif'}
+                </Text>
+              </View>
             </View>
             <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>No. Anggota</Text>
@@ -158,8 +178,18 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 32 },
+  container: { flex: 1, backgroundColor: '#f6f7fb' },
+  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 36, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  headerGlow: {
+    position: 'absolute',
+    top: -40,
+    right: -30,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: '#60a5fa',
+    opacity: 0.18,
+  },
   bellBtn: { position: 'absolute', right: 20, padding: 6, zIndex: 10 },
   bellBadge: {
     position: 'absolute',
@@ -178,53 +208,88 @@ const styles = StyleSheet.create({
   bellBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   greeting: { color: '#bfdbfe', fontSize: 14 },
   name: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -6 },
+  roleHint: { color: '#93c5fd', fontSize: 13, marginTop: 4, fontWeight: '500' },
+  cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -10, paddingHorizontal: 12 },
   iconChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
   },
   card: {
     width: '30%',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     margin: '1.5%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f0f4f8',
   },
   cardLabel: {
     fontSize: 12,
-    color: '#374151',
+    color: '#334155',
     marginTop: 8,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  infoSection: { padding: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 12 },
+  infoSection: { padding: 16, paddingTop: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 12 },
   statusCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#f0f4f8',
   },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  statusAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  statusTitleWrap: { flex: 1 },
+  statusTitle: { fontSize: 15, fontWeight: '700', color: '#0f172a' },
+  statusSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  statusPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  statusPillText: { fontSize: 12, fontWeight: '700' },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: '#f1f5f9',
   },
-  statusLabel: { fontSize: 14, color: '#6b7280' },
-  statusValue: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  statusLabel: { fontSize: 14, color: '#64748b' },
+  statusValue: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
 });
