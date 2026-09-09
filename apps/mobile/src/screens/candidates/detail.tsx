@@ -11,6 +11,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { ProfileCard, ScreenShell } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface CandidateDetail {
   id: string;
@@ -26,11 +27,11 @@ interface CandidateDetail {
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  diusulkan: { label: 'Diusulkan', bg: '#eff6ff', color: '#2563eb' },
-  mengikuti_pendadaran: { label: 'Pendadaran', bg: '#fef3c7', color: '#d97706' },
-  lulus: { label: 'Lulus', bg: '#ecfdf5', color: '#16a34a' },
-  gagal: { label: 'Gagal', bg: '#fef2f2', color: '#dc2626' },
-  dibatalkan: { label: 'Dibatalkan', bg: '#f3f4f6', color: '#6b7280' },
+  diusulkan: { label: 'Diusulkan', bg: theme.colors.primarySofter, color: theme.colors.primary },
+  mengikuti_pendadaran: { label: 'Pendadaran', bg: theme.colors.warningLight, color: theme.colors.warning },
+  lulus: { label: 'Lulus', bg: theme.colors.successLight, color: theme.colors.success },
+  gagal: { label: 'Gagal', bg: theme.colors.dangerLight, color: theme.colors.danger },
+  dibatalkan: { label: 'Dibatalkan', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary },
 };
 
 export default function CandidateDetailScreen() {
@@ -132,7 +133,7 @@ export default function CandidateDetailScreen() {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   if (!candidate)
@@ -144,8 +145,8 @@ export default function CandidateDetailScreen() {
 
   const ss = STATUS_STYLES[candidate.status] || {
     label: candidate.status,
-    bg: '#f3f4f6',
-    color: '#6b7280',
+    bg: theme.colors.surfaceMuted,
+    color: theme.colors.textSecondary,
   };
   const isActionable = candidate.status === 'diusulkan';
   const isPending = actionLoading !== '';
@@ -166,7 +167,7 @@ export default function CandidateDetailScreen() {
         {/* Detail Info */}
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
-            <Ionicons name="person" size={18} color="#6b7280" />
+            <Ionicons name="person" size={18} color={theme.colors.textSecondary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Jenis Kelamin</Text>
               <Text style={styles.infoValue}>
@@ -176,7 +177,7 @@ export default function CandidateDetailScreen() {
           </View>
           {candidate.tempatLahir && (
             <View style={styles.infoRow}>
-              <Ionicons name="location" size={18} color="#6b7280" />
+              <Ionicons name="location" size={18} color={theme.colors.textSecondary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tempat Lahir</Text>
                 <Text style={styles.infoValue}>{candidate.tempatLahir}</Text>
@@ -185,7 +186,7 @@ export default function CandidateDetailScreen() {
           )}
           {candidate.tanggalLahir && (
             <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={18} color="#6b7280" />
+              <Ionicons name="calendar" size={18} color={theme.colors.textSecondary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tanggal Lahir</Text>
                 <Text style={styles.infoValue}>
@@ -196,7 +197,7 @@ export default function CandidateDetailScreen() {
           )}
           {candidate.alamat && (
             <View style={styles.infoRow}>
-              <Ionicons name="home" size={18} color="#6b7280" />
+              <Ionicons name="home" size={18} color={theme.colors.textSecondary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Alamat</Text>
                 <Text style={styles.infoValue}>{candidate.alamat}</Text>
@@ -205,7 +206,7 @@ export default function CandidateDetailScreen() {
           )}
           {candidate.noHp && (
             <View style={styles.infoRow}>
-              <Ionicons name="call" size={18} color="#6b7280" />
+              <Ionicons name="call" size={18} color={theme.colors.textSecondary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>No. HP</Text>
                 <Text style={styles.infoValue}>{candidate.noHp}</Text>
@@ -213,7 +214,7 @@ export default function CandidateDetailScreen() {
             </View>
           )}
           <View style={styles.infoRow}>
-            <Ionicons name="calendar" size={18} color="#6b7280" />
+            <Ionicons name="calendar" size={18} color={theme.colors.textSecondary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Diusulkan Tanggal</Text>
               <Text style={styles.infoValue}>
@@ -236,10 +237,10 @@ export default function CandidateDetailScreen() {
               disabled={isPending}
             >
               {isPending && actionLoading === 'approve' ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.colors.surface} />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <Ionicons name="checkmark-circle" size={20} color={theme.colors.surface} />
                   <Text style={styles.actionText}>Setujui</Text>
                 </>
               )}
@@ -250,10 +251,10 @@ export default function CandidateDetailScreen() {
               disabled={isPending}
             >
               {isPending && actionLoading === 'reject' ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.colors.surface} />
               ) : (
                 <>
-                  <Ionicons name="close-circle" size={20} color="#fff" />
+                  <Ionicons name="close-circle" size={20} color={theme.colors.surface} />
                   <Text style={styles.actionText}>Tolak</Text>
                 </>
               )}
@@ -268,19 +269,19 @@ export default function CandidateDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   section: { padding: 16 },
 
 
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   infoRow: {
     flexDirection: 'row',
@@ -288,11 +289,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  infoLabel: { fontSize: 11, color: theme.colors.textMuted, marginBottom: 2 },
+  infoValue: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
 
   actionRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
   actionBtn: {
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
   },
-  approveBtn: { backgroundColor: '#16a34a' },
-  rejectBtn: { backgroundColor: '#dc2626' },
-  actionText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  approveBtn: { backgroundColor: theme.colors.success },
+  rejectBtn: { backgroundColor: theme.colors.danger },
+  actionText: { color: theme.colors.surface, fontSize: 15, fontWeight: '600' },
 });

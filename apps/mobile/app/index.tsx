@@ -3,6 +3,7 @@ import { useAuthStore, AuthState } from '../src/store/auth-store';
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { theme } from '../src/theme';
 
 const LOGO = require('../assets/images/logo.png');
 
@@ -66,7 +67,7 @@ const splashStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
   },
   content: {
     alignItems: 'center',
@@ -79,14 +80,14 @@ const splashStyles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#fff',
+    color: theme.colors.surface,
     letterSpacing: 4,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#bfdbfe',
+    color: theme.colors.headerSub,
     marginBottom: 4,
   },
   version: {
@@ -97,7 +98,7 @@ const splashStyles = StyleSheet.create({
   },
   tagline: {
     fontSize: 12,
-    color: '#93c5fd',
+    color: theme.colors.primaryLight,
   },
 });
 

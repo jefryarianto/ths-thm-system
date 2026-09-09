@@ -16,6 +16,7 @@ import { useOrgDocuments, TIPE_OPTIONS } from '../../hooks/use-org-documents';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function OrgDocumentsScreen() {
   const [filter, setFilter] = useState('');
@@ -57,7 +58,7 @@ export default function OrgDocumentsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="document-text" size={48} color="#d1d5db" />
+            <Ionicons name="document-text" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>Belum ada dokumen</Text>
           </View>
         }
@@ -76,7 +77,7 @@ export default function OrgDocumentsScreen() {
               onPress={() => item.fileUrl && handleDownload(item.fileUrl, item.nama)}
             >
               <View style={styles.iconBox}>
-                <Ionicons name={safeIconName(icon)} size={22} color="#2563eb" />
+                <Ionicons name={safeIconName(icon)} size={22} color={theme.colors.primary} />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.name} numberOfLines={2}>
@@ -94,7 +95,7 @@ export default function OrgDocumentsScreen() {
                   </Text>
                 </View>
               </View>
-              {item.fileUrl && <Ionicons name="download-outline" size={20} color="#6b7280" />}
+              {item.fileUrl && <Ionicons name="download-outline" size={20} color={theme.colors.textSecondary} />}
             </TouchableOpacity>
           );
         }}
@@ -104,20 +105,20 @@ export default function OrgDocumentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -126,16 +127,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   cardBody: { flex: 1 },
-  name: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  name: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  metaText: { fontSize: 12, color: '#6b7280' },
-  metaDot: { fontSize: 12, color: '#9ca3af' },
+  metaText: { fontSize: 12, color: theme.colors.textSecondary },
+  metaDot: { fontSize: 12, color: theme.colors.textMuted },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

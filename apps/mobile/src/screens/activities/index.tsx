@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import {
   useActivities,
@@ -13,6 +12,7 @@ import {
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function ActivitiesScreen() {
   const [filter, setFilter] = useState<string>('');
@@ -37,7 +37,7 @@ export default function ActivitiesScreen() {
           activeOpacity={0.7}
           onPress={() => Alert.alert('Belum Tersedia', 'Fitur pembuatan kegiatan sedang dalam pengembangan.')}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
@@ -50,7 +50,7 @@ export default function ActivitiesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="calendar" size={48} color="#d1d5db" />
+            <Ionicons name="calendar" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>Belum ada kegiatan</Text>
           </View>
         }
@@ -58,8 +58,8 @@ export default function ActivitiesScreen() {
           const icon = TIPE_ICONS[item.tipe] || 'ellipsis-horizontal';
           const statusStyle = STATUS_STYLES[item.status] || {
             label: item.status,
-            bg: '#f3f4f6',
-            color: '#6b7280',
+            bg: theme.colors.surfaceMuted,
+            color: theme.colors.textSecondary,
           };
           const d = new Date(item.tanggalMulai);
           const months = [
@@ -94,11 +94,11 @@ export default function ActivitiesScreen() {
                   {item.nama}
                 </Text>
                 <View style={styles.metaRow}>
-                  <Ionicons name={safeIconName(icon)} size={13} color="#6b7280" />
+                  <Ionicons name={safeIconName(icon)} size={13} color={theme.colors.textSecondary} />
                   <Text style={styles.metaText}>{item.tipe}</Text>
                   {item.lokasi && (
                     <>
-                      <Ionicons name="location" size={13} color="#6b7280" />
+                      <Ionicons name="location" size={13} color={theme.colors.textSecondary} />
                       <Text style={styles.metaText}>{item.lokasi}</Text>
                     </>
                   )}
@@ -118,35 +118,56 @@ export default function ActivitiesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
-  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', position: 'absolute', right: 24, top: 60 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: {
+    backgroundColor: theme.colors.header,
+    padding: 24,
+    paddingBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 24,
+    top: 60,
+  },
+  headerTitle: {
+    color: theme.colors.textOnPrimary,
+    fontSize: theme.typography.size.xxl - 2,
+    fontWeight: theme.typography.weight.bold,
+  },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
 
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   dateBox: { width: 44, alignItems: 'center', marginRight: 12 },
-  dateDay: { fontSize: 20, fontWeight: '700', color: '#2563eb' },
-  dateMonth: { fontSize: 10, color: '#6b7280', marginTop: -2 },
+  dateDay: { fontSize: 20, fontWeight: theme.typography.weight.bold, color: theme.colors.primary },
+  dateMonth: { fontSize: 10, color: theme.colors.textSecondary, marginTop: -2 },
   cardBody: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  title: {
+    fontSize: 15,
+    fontWeight: theme.typography.weight.semibold,
+    color: theme.colors.text,
+  },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  metaText: { fontSize: 12, color: '#6b7280' },
+  metaText: { fontSize: 12, color: theme.colors.textSecondary },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
-  statusText: { fontSize: 11, fontWeight: '600' },
+  statusText: { fontSize: 11, fontWeight: theme.typography.weight.semibold },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 import { getNotificationSoundEnabled, setNotificationSoundEnabled } from '../../lib/notification-alert';
+import { theme } from '../../theme';
 
 interface NotificationType {
   key: string;
@@ -117,7 +118,7 @@ export default function NotificationPreferencesScreen() {
     <ScrollView style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pengaturan Notifikasi</Text>
         <Text style={styles.headerSub}>
@@ -132,7 +133,7 @@ export default function NotificationPreferencesScreen() {
           onPress={() => batchToggle(true)}
           disabled={saving === 'all'}
         >
-          <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
+          <Ionicons name="checkmark-circle" size={16} color={theme.colors.success} />
           <Text style={styles.batchBtnText}>Aktifkan Semua</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -140,7 +141,7 @@ export default function NotificationPreferencesScreen() {
           onPress={() => batchToggle(false)}
           disabled={saving === 'all'}
         >
-          <Ionicons name="close-circle" size={16} color="#dc2626" />
+          <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
           <Text style={styles.batchBtnText}>Nonaktifkan Semua</Text>
         </TouchableOpacity>
       </View>
@@ -153,7 +154,7 @@ export default function NotificationPreferencesScreen() {
             <Ionicons
               name={soundEnabled ? 'volume-high' : 'volume-mute'}
               size={22}
-              color={soundEnabled ? '#d97706' : '#9ca3af'}
+              color={soundEnabled ? theme.colors.warning : theme.colors.textMuted}
             />
           </View>
           <View style={styles.prefInfo}>
@@ -167,8 +168,8 @@ export default function NotificationPreferencesScreen() {
           <Switch
             value={soundEnabled}
             onValueChange={handleToggleSound}
-            trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
-            thumbColor={soundEnabled ? '#d97706' : '#9ca3af'}
+            trackColor={{ false: theme.colors.borderStrong, true: theme.colors.warning }}
+            thumbColor={soundEnabled ? theme.colors.warning : theme.colors.textMuted}
             style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
           />
         </View>
@@ -185,7 +186,7 @@ export default function NotificationPreferencesScreen() {
                   <Ionicons
                     name={iconName as any}
                     size={22}
-                    color={anyEnabled ? '#2563eb' : '#9ca3af'}
+                    color={anyEnabled ? theme.colors.primary : theme.colors.textMuted}
                   />
                 </View>
                 <View style={styles.prefInfo}>
@@ -199,30 +200,30 @@ export default function NotificationPreferencesScreen() {
                       <Ionicons
                         name="phone-portrait"
                         size={14}
-                        color={p.inApp ? '#2563eb' : '#9ca3af'}
+                        color={p.inApp ? theme.colors.primary : theme.colors.textMuted}
                       />
                       <Switch
                         value={p.inApp}
                         onValueChange={(val) => toggleChannel(type.key, 'inApp', val)}
-                        trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-                        thumbColor={p.inApp ? '#2563eb' : '#9ca3af'}
+                        trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primaryLight }}
+                        thumbColor={p.inApp ? theme.colors.primary : theme.colors.textMuted}
                         disabled={saving === `${type.key}:inApp`}
                         style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
                       />
                     </View>
                     <View style={styles.channelToggle}>
-                      <Ionicons name="mail" size={14} color={p.email ? '#16a34a' : '#9ca3af'} />
+                      <Ionicons name="mail" size={14} color={p.email ? theme.colors.success : theme.colors.textMuted} />
                       <Switch
                         value={p.email}
                         onValueChange={(val) => toggleChannel(type.key, 'email', val)}
-                        trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                        thumbColor={p.email ? '#16a34a' : '#9ca3af'}
+                        trackColor={{ false: theme.colors.borderStrong, true: theme.colors.successLight }}
+                        thumbColor={p.email ? theme.colors.success : theme.colors.textMuted}
                         disabled={saving === `${type.key}:email`}
                         style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
                       />
                     </View>
                     {saving === `${type.key}:inApp` || saving === `${type.key}:email` ? (
-                      <ActivityIndicator size="small" color="#2563eb" />
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
                     ) : null}
                   </View>
                 </View>
@@ -234,7 +235,7 @@ export default function NotificationPreferencesScreen() {
         )}
 
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={18} color="#3b82f6" />
+          <Ionicons name="information-circle" size={18} color={theme.colors.primary} />
           <Text style={styles.infoText}>
             Atur channel per jenis notifikasi. Nonaktifkan email untuk hanya menerima notifikasi
             in-app, atau nonaktifkan keduanya untuk berhenti menerima notifikasi jenis tersebut.
@@ -248,10 +249,10 @@ export default function NotificationPreferencesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 20,
     flexDirection: 'row',
@@ -260,8 +261,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
-  headerSub: { color: '#bfdbfe', fontSize: 13 },
+  headerTitle: { color: theme.colors.surface, fontSize: 18, fontWeight: '700', flex: 1 },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13 },
 
   batchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 12 },
   batchBtn: {
@@ -270,26 +271,26 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  batchBtnText: { fontSize: 12, fontWeight: '500', color: '#374151' },
+  batchBtnText: { fontSize: 12, fontWeight: '500', color: theme.colors.textSecondary },
 
   section: { paddingHorizontal: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 12 },
 
   prefCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.02,
     shadowRadius: 4,
     elevation: 1,
@@ -298,16 +299,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#dbeafe',
+    backgroundColor: theme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  prefIconDisabled: { backgroundColor: '#f3f4f6' },
+  prefIconDisabled: { backgroundColor: theme.colors.surfaceMuted },
   prefInfo: { flex: 1 },
-  prefLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  prefLabelDisabled: { color: '#9ca3af' },
-  prefDesc: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  prefLabel: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  prefLabelDisabled: { color: theme.colors.textMuted },
+  prefDesc: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
 
   channelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   channelToggle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -315,14 +316,14 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     gap: 10,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderRadius: 12,
     padding: 14,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
   },
-  infoText: { flex: 1, fontSize: 12, color: '#1e40af', lineHeight: 18 },
+  infoText: { flex: 1, fontSize: 12, color: theme.colors.primaryDark, lineHeight: 18 },
 
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 });

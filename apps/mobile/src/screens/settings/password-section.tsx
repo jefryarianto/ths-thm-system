@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
+import { theme } from '../../theme';
 
 export default function PasswordSection() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -54,14 +55,14 @@ export default function PasswordSection() {
   return (
     <View>
       <View style={styles.sectionHeader}>
-        <Ionicons name="lock-closed" size={20} color="#2563eb" />
+        <Ionicons name="lock-closed" size={20} color={theme.colors.primary} />
         <Text style={styles.sectionTitle}>Ganti Password</Text>
       </View>
 
       <View style={styles.card}>
         {!showPasswordForm ? (
           <TouchableOpacity style={styles.editButton} onPress={() => setShowPasswordForm(true)}>
-            <Ionicons name="key" size={14} color="#2563eb" />
+            <Ionicons name="key" size={14} color={theme.colors.primary} />
             <Text style={styles.editButtonText}>Ganti Password</Text>
           </TouchableOpacity>
         ) : (
@@ -79,7 +80,7 @@ export default function PasswordSection() {
                 style={styles.eyeButton}
                 onPress={() => setShowOldPass(!showOldPass)}
               >
-                <Ionicons name={showOldPass ? 'eye-off' : 'eye'} size={20} color="#6b7280" />
+                <Ionicons name={showOldPass ? 'eye-off' : 'eye'} size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -96,7 +97,7 @@ export default function PasswordSection() {
                 style={styles.eyeButton}
                 onPress={() => setShowNewPass(!showNewPass)}
               >
-                <Ionicons name={showNewPass ? 'eye-off' : 'eye'} size={20} color="#6b7280" />
+                <Ionicons name={showNewPass ? 'eye-off' : 'eye'} size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -125,7 +126,7 @@ export default function PasswordSection() {
                 disabled={savingPassword}
               >
                 {savingPassword ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={theme.colors.surface} size="small" />
                 ) : (
                   <Text style={styles.saveButtonText}>Ganti</Text>
                 )}
@@ -149,31 +150,31 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748b',
+    color: theme.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#eef2f7',
-    shadowColor: '#0f172a',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 6, marginTop: 12 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6, marginTop: 12 },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
     borderRadius: 12,
     padding: 12,
     fontSize: 15,
-    backgroundColor: '#f8fafc',
-    color: '#0f172a',
+    backgroundColor: theme.colors.surfaceMuted,
+    color: theme.colors.text,
   },
   editButton: {
     flexDirection: 'row',
@@ -182,29 +183,29 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: theme.colors.primaryLight,
   },
-  editButtonText: { fontSize: 14, fontWeight: '600', color: '#2563eb' },
+  editButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.primary },
   buttonRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 16 },
   saveButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  saveButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  saveButtonText: { color: theme.colors.surface, fontSize: 14, fontWeight: '600' },
   cancelButton: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  cancelButtonText: { color: '#334155', fontSize: 14, fontWeight: '600' },
+  cancelButtonText: { color: theme.colors.textSecondary, fontSize: 14, fontWeight: '600' },
   buttonDisabled: { opacity: 0.5 },
   passwordRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   eyeButton: { padding: 8 },

@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import apiClient from '../../lib/api-client';
 import { CAMERA } from '../../lib/card-design';
+import { theme } from '../../theme';
 
 /**
  * Layar pengambilan foto potret dengan OVERLAY / BOUNDING BOX wajah (ala SIM).
@@ -59,7 +60,7 @@ export default function CameraPhotoScreen() {
     return (
       <View style={styles.container}>
         <StatusBar style="light" />
-        <ActivityIndicator size="large" color="#fff" />
+        <ActivityIndicator size="large" color={theme.colors.surface} />
       </View>
     );
   }
@@ -68,7 +69,7 @@ export default function CameraPhotoScreen() {
     return (
       <View style={styles.container}>
         <StatusBar style="light" />
-        <Ionicons name="camera-outline" size={64} color="#cbd5e1" />
+        <Ionicons name="camera-outline" size={64} color={theme.colors.border} />
         <Text style={styles.permissionText}>Izin kamera diperlukan untuk mengambil foto KTA</Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
           <Text style={styles.permissionBtnText}>Berikan Izin Kamera</Text>
@@ -94,7 +95,7 @@ export default function CameraPhotoScreen() {
       <View style={styles.overlay} pointerEvents="none">
         {/* Header hint */}
         <View style={styles.hintBox}>
-          <Ionicons name="scan" size={18} color="#fff" />
+          <Ionicons name="scan" size={18} color={theme.colors.surface} />
           <Text style={styles.hintText}>Posisikan wajah di dalam oval, bahu di bawah garis</Text>
         </View>
 
@@ -121,12 +122,12 @@ export default function CameraPhotoScreen() {
         style={styles.flashBtn}
         onPress={() => setFlash((f) => (f === 'off' ? 'on' : 'off'))}
       >
-        <Ionicons name={flash === 'off' ? 'flash-off' : 'flash'} size={22} color="#fff" />
+        <Ionicons name={flash === 'off' ? 'flash-off' : 'flash'} size={22} color={theme.colors.surface} />
       </TouchableOpacity>
 
       {/* Close */}
       <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
-        <Ionicons name="close" size={28} color="#fff" />
+        <Ionicons name="close" size={28} color={theme.colors.surface} />
       </TouchableOpacity>
 
       {/* Capture */}
@@ -137,7 +138,7 @@ export default function CameraPhotoScreen() {
           disabled={uploading || captureLock}
         >
           {uploading ? (
-            <ActivityIndicator color="#fff" size="large" />
+            <ActivityIndicator color={theme.colors.surface} size="large" />
           ) : (
             <View style={styles.captureInner} />
           )}
@@ -149,7 +150,7 @@ export default function CameraPhotoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { flex: 1, backgroundColor: theme.colors.dark },
   overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center' },
 
   hintBox: {
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     paddingVertical: CAMERA.hint.padV,
     paddingHorizontal: CAMERA.hint.padH,
   },
-  hintText: { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  hintText: { color: theme.colors.surface, fontSize: 13, fontWeight: '600', textAlign: 'center' },
 
   dimTop: { flex: CAMERA.overlay.dimTop, backgroundColor: CAMERA.overlay.dimColor },
   dimRow: { flexDirection: 'row' },
@@ -245,15 +246,15 @@ const styles = StyleSheet.create({
   },
   uploadingText: { color: CAMERA.uploading.color, marginTop: CAMERA.uploading.marginTop, fontSize: CAMERA.uploading.fontSize, fontWeight: '600' },
 
-  permissionText: { color: '#cbd5e1', fontSize: 14, marginTop: 16, textAlign: 'center', paddingHorizontal: 32 },
+  permissionText: { color: theme.colors.border, fontSize: 14, marginTop: 16, textAlign: 'center', paddingHorizontal: 32 },
   permissionBtn: {
     marginTop: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 28,
     paddingVertical: 12,
     borderRadius: 12,
   },
-  permissionBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  permissionBtnText: { color: theme.colors.surface, fontSize: 15, fontWeight: '600' },
   cancelLink: { marginTop: 16, padding: 8 },
-  cancelLinkText: { color: '#93c5fd', fontSize: 14 },
+  cancelLinkText: { color: theme.colors.primaryLight, fontSize: 14 },
 });

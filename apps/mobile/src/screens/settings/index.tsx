@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { useAuthStore } from '../../store/auth-store';
 import ProfileSection from './profile-section';
 import PasswordSection from './password-section';
+import { theme } from '../../theme';
 
 export default function SettingsScreen() {
   const logout = useAuthStore((s) => s.logout);
@@ -70,25 +71,25 @@ export default function SettingsScreen() {
               activeOpacity={0.6}
             >
               <View style={styles.iconChip}>
-                <Ionicons name="notifications-outline" size={20} color="#2563eb" />
+                <Ionicons name="notifications-outline" size={20} color={theme.colors.primary} />
               </View>
               <View style={styles.linkContent}>
                 <Text style={styles.linkLabel}>Pengaturan Notifikasi</Text>
                 <Text style={styles.linkDesc}>Aktifkan/nonaktifkan jenis notifikasi</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.border} />
             </TouchableOpacity>
 
             {/* Theme Toggle */}
             <View style={[styles.linkButton, styles.linkButtonNoBorder]}>
               <View style={styles.iconChip}>
-                <Ionicons name="moon-outline" size={20} color="#2563eb" />
+                <Ionicons name="moon-outline" size={20} color={theme.colors.primary} />
               </View>
               <View style={styles.linkContent}>
                 <Text style={styles.linkLabel}>Mode Gelap</Text>
                 <Text style={styles.linkDesc}>Tersedia di pengaturan sistem</Text>
               </View>
-              <Ionicons name="construct-outline" size={18} color="#cbd5e1" />
+              <Ionicons name="construct-outline" size={18} color={theme.colors.border} />
             </View>
           </View>
         </View>
@@ -103,13 +104,13 @@ export default function SettingsScreen() {
               activeOpacity={0.6}
             >
               <View style={styles.iconChip}>
-                <Ionicons name="information-circle-outline" size={20} color="#2563eb" />
+                <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
               </View>
               <View style={styles.linkContent}>
                 <Text style={styles.linkLabel}>Tentang Aplikasi</Text>
                 <Text style={styles.linkDesc}>Versi aplikasi &amp; pembaruan</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.border} />
             </TouchableOpacity>
           </View>
         </View>
@@ -117,7 +118,7 @@ export default function SettingsScreen() {
         {/* Logout */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.6}>
-            <Ionicons name="log-out-outline" size={20} color="#dc2626" />
+            <Ionicons name="log-out-outline" size={20} color={theme.colors.danger} />
             <Text style={styles.logoutText}>Keluar</Text>
           </TouchableOpacity>
         </View>
@@ -130,32 +131,32 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#f6f7fb' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 28,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  headerTitle: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  headerTitle: { color: theme.colors.surface, fontSize: 24, fontWeight: 'bold' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   section: { padding: 16, paddingBottom: 0 },
   groupLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748b',
+    color: theme.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
     marginLeft: 4,
   },
   group: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#eef2f7',
-    shadowColor: '#0f172a',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
@@ -167,36 +168,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#eef2f7',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   linkButtonNoBorder: { borderBottomWidth: 0 },
   iconChip: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   linkContent: { flex: 1 },
-  linkLabel: { fontSize: 15, fontWeight: '600', color: '#0f172a' },
-  linkDesc: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  linkLabel: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  linkDesc: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#fee2e2',
-    shadowColor: '#0f172a',
+    borderColor: theme.colors.dangerLight,
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  logoutText: { fontSize: 16, fontWeight: '600', color: '#dc2626' },
+  logoutText: { fontSize: 16, fontWeight: '600', color: theme.colors.danger },
 });

@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import apiClient from '../../lib/api-client';
+import { theme } from '../../theme';
 
 interface KegiatanItem {
   id: string;
@@ -275,9 +276,9 @@ export default function QRScanScreen() {
   };
 
   const modeConfig = {
-    verify: { icon: 'document-text' as const, label: 'Verifikasi Dokumen', color: '#2563eb' },
-    checkin: { icon: 'location' as const, label: 'Check-in Kegiatan', color: '#16a34a' },
-    lookup: { icon: 'person' as const, label: 'Cari Anggota', color: '#9333ea' },
+    verify: { icon: 'document-text' as const, label: 'Verifikasi Dokumen', color: theme.colors.primary },
+    checkin: { icon: 'location' as const, label: 'Check-in Kegiatan', color: theme.colors.success },
+    lookup: { icon: 'person' as const, label: 'Cari Anggota', color: theme.colors.primary },
   };
 
   const currentMode = modeConfig[scanMode];
@@ -294,7 +295,7 @@ export default function QRScanScreen() {
           <View style={styles.pickerHeader}>
             <Text style={styles.pickerTitle}>Pilih Kegiatan</Text>
             <TouchableOpacity onPress={() => setShowKegiatanPicker(false)}>
-              <Ionicons name="close" size={24} color="#6b7280" />
+              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           </View>
           {kegiatanList.length === 0 ? (
@@ -316,12 +317,12 @@ export default function QRScanScreen() {
                       <Text style={styles.pickerItemName} numberOfLines={1}>{k.nama}</Text>
                       {k.lokasi && (
                         <View style={styles.pickerItemMeta}>
-                          <Ionicons name="location" size={11} color="#9ca3af" />
+                          <Ionicons name="location" size={11} color={theme.colors.textMuted} />
                           <Text style={styles.pickerItemMetaText} numberOfLines={1}>{k.lokasi}</Text>
                         </View>
                       )}
                     </View>
-                    {isSelected && <Ionicons name="checkmark-circle" size={20} color="#16a34a" />}
+                    {isSelected && <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />}
                   </TouchableOpacity>
                 );
               })}
@@ -337,7 +338,7 @@ export default function QRScanScreen() {
     return (
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}><Text style={styles.headerTitle}>QR Scanner</Text></View>
-        <View style={styles.scannerArea}><ActivityIndicator size="large" color="#2563eb" /></View>
+        <View style={styles.scannerArea}><ActivityIndicator size="large" color={theme.colors.primary} /></View>
       </View>
     );
   }
@@ -347,7 +348,7 @@ export default function QRScanScreen() {
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}><Text style={styles.headerTitle}>QR Scanner</Text></View>
         <View style={styles.scannerArea}>
-          <Ionicons name="camera-outline" size={64} color="#6b7280" />
+          <Ionicons name="camera-outline" size={64} color={theme.colors.textSecondary} />
           <Text style={styles.scannerHint}>Izin kamera diperlukan untuk scan QR code</Text>
           <TouchableOpacity style={styles.scanButton} onPress={requestPermission}>
             <Text style={styles.scanButtonText}>Berikan Izin Kamera</Text>
@@ -372,8 +373,8 @@ export default function QRScanScreen() {
             style={[styles.modeTab, scanMode === mode && { backgroundColor: modeConfig[mode].color }]}
             onPress={() => handleModeSwitch(mode)}
           >
-            <Ionicons name={modeConfig[mode].icon} size={16} color={scanMode === mode ? '#fff' : '#6b7280'} />
-            <Text style={[styles.modeTabText, scanMode === mode && { color: '#fff' }]}>
+            <Ionicons name={modeConfig[mode].icon} size={16} color={scanMode === mode ? theme.colors.surface : theme.colors.textSecondary} />
+            <Text style={[styles.modeTabText, scanMode === mode && { color: theme.colors.surface }]}>
               {modeConfig[mode].label}
             </Text>
           </TouchableOpacity>
@@ -399,7 +400,7 @@ export default function QRScanScreen() {
             <Text style={styles.scanOverlayText}>Arahkan QR code ke dalam frame</Text>
           </View>
           <TouchableOpacity style={styles.stopCameraButton} onPress={() => setCameraActive(false)}>
-            <Ionicons name="close-circle" size={28} color="#fff" />
+            <Ionicons name="close-circle" size={28} color={theme.colors.surface} />
             <Text style={styles.stopCameraText}>Tutup Kamera</Text>
           </TouchableOpacity>
         </View>
@@ -418,7 +419,7 @@ export default function QRScanScreen() {
               onPress={() => setShowKegiatanPicker(true)}
             >
               <View style={styles.kegiatanSelectorLeft}>
-                <Ionicons name="calendar" size={18} color="#16a34a" />
+                <Ionicons name="calendar" size={18} color={theme.colors.success} />
                 {selectedKegiatan ? (
                   <View style={styles.kegiatanSelectorInfo}>
                     <Text style={styles.kegiatanSelectorName} numberOfLines={1}>
@@ -436,7 +437,7 @@ export default function QRScanScreen() {
                   </Text>
                 )}
               </View>
-              <Ionicons name="chevron-down" size={18} color="#9ca3af" />
+              <Ionicons name="chevron-down" size={18} color={theme.colors.textMuted} />
             </TouchableOpacity>
           )}
 
@@ -460,7 +461,7 @@ export default function QRScanScreen() {
             disabled={scanning}
           >
             {scanning ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={theme.colors.surface} />
             ) : (
               <Text style={styles.scanButtonText}>{currentMode.label}</Text>
             )}
@@ -470,10 +471,10 @@ export default function QRScanScreen() {
 
       {/* Scan Result */}
       {scanResult && (
-        <View style={[styles.resultCard, { borderLeftColor: scanResult.success ? '#16a34a' : '#dc2626' }]}>
+        <View style={[styles.resultCard, { borderLeftColor: scanResult.success ? theme.colors.success : theme.colors.danger }]}>
           <View style={styles.resultHeader}>
-            <Ionicons name={scanResult.success ? 'checkmark-circle' : 'close-circle'} size={24} color={scanResult.success ? '#16a34a' : '#dc2626'} />
-            <Text style={[styles.resultTitle, { color: scanResult.success ? '#16a34a' : '#dc2626' }]}>
+            <Ionicons name={scanResult.success ? 'checkmark-circle' : 'close-circle'} size={24} color={scanResult.success ? theme.colors.success : theme.colors.danger} />
+            <Text style={[styles.resultTitle, { color: scanResult.success ? theme.colors.success : theme.colors.danger }]}>
               {scanResult.message}
             </Text>
           </View>
@@ -540,7 +541,7 @@ export default function QRScanScreen() {
                   <Ionicons
                     name={item.type === 'document_verify' ? 'document-text' : item.type === 'check_in' ? 'location' : 'person'}
                     size={16}
-                    color="#6b7280"
+                    color={theme.colors.textSecondary}
                   />
                 </View>
                 <View style={styles.historyContent}>
@@ -563,80 +564,80 @@ export default function QRScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#111827', padding: 24, paddingBottom: 20 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.text, padding: 24, paddingBottom: 20 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: 'bold' },
   modeSelector: { flexDirection: 'row', padding: 12, gap: 8 },
   modeTab: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 10, borderRadius: 10, backgroundColor: '#fff',
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+    paddingVertical: 10, borderRadius: 10, backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.dark, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
   },
-  modeTabText: { fontSize: 11, fontWeight: '600', color: '#6b7280' },
+  modeTabText: { fontSize: 11, fontWeight: '600', color: theme.colors.textSecondary },
   scannerArea: { alignItems: 'center', padding: 20 },
-  scannerHint: { color: '#6b7280', fontSize: 13, marginBottom: 20, textAlign: 'center' },
+  scannerHint: { color: theme.colors.textSecondary, fontSize: 13, marginBottom: 20, textAlign: 'center' },
   viewfinder: {
     width: 200, height: 200, borderWidth: 3, borderRadius: 20,
     justifyContent: 'center', alignItems: 'center', marginBottom: 20,
-    backgroundColor: '#fff',
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 3,
+    backgroundColor: theme.colors.surface,
+    shadowColor: theme.colors.dark, shadowOpacity: 0.1, shadowRadius: 10, elevation: 3,
   },
   scanButton: {
     paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 6, elevation: 3,
+    shadowColor: theme.colors.dark, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3,
   },
-  scanButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  scanButtonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '600' },
 
   // Kegiatan Selector
   kegiatanSelector: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 16,
-    borderWidth: 1, borderColor: '#e5e7eb', width: '100%',
-    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+    backgroundColor: theme.colors.surface, borderRadius: 12, padding: 14, marginBottom: 16,
+    borderWidth: 1, borderColor: theme.colors.border, width: '100%',
+    shadowColor: theme.colors.dark, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   kegiatanSelectorLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   kegiatanSelectorInfo: { flex: 1 },
-  kegiatanSelectorName: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  kegiatanSelectorMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  kegiatanSelectorPlaceholder: { fontSize: 14, color: '#9ca3af' },
+  kegiatanSelectorName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  kegiatanSelectorMeta: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  kegiatanSelectorPlaceholder: { fontSize: 14, color: theme.colors.textMuted },
 
   // Kegiatan Chips (horizontal scroll)
   kegiatanScrollContainer: { marginBottom: 12 },
   kegiatanScroll: {},
   kegiatanChip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: '#fff', marginRight: 8, borderWidth: 1, borderColor: '#e5e7eb',
+    backgroundColor: theme.colors.surface, marginRight: 8, borderWidth: 1, borderColor: theme.colors.border,
   },
-  kegiatanChipActive: { backgroundColor: '#16a34a', borderColor: '#16a34a' },
-  kegiatanChipText: { fontSize: 12, fontWeight: '500', color: '#374151' },
-  kegiatanChipTextActive: { color: '#fff' },
+  kegiatanChipActive: { backgroundColor: theme.colors.success, borderColor: theme.colors.success },
+  kegiatanChipText: { fontSize: 12, fontWeight: '500', color: theme.colors.textSecondary },
+  kegiatanChipTextActive: { color: theme.colors.surface },
 
   // Picker Modal
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
+    flex: 1, backgroundColor: theme.colors.overlay,
     justifyContent: 'flex-end',
   },
   pickerContainer: {
-    backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     maxHeight: '60%', paddingBottom: 30,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12, elevation: 8,
+    shadowColor: theme.colors.dark, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8,
   },
   pickerHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb',
+    padding: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.border,
   },
-  pickerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  pickerTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.text },
   pickerList: { padding: 8 },
   pickerItem: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: 14, borderRadius: 12, marginBottom: 4,
   },
-  pickerItemSelected: { backgroundColor: '#ecfdf5' },
+  pickerItemSelected: { backgroundColor: theme.colors.successLight },
   pickerItemLeft: { flex: 1, marginRight: 8 },
-  pickerItemName: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  pickerItemName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
   pickerItemMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  pickerItemMetaText: { fontSize: 12, color: '#9ca3af' },
-  emptyPickerText: { textAlign: 'center', color: '#9ca3af', padding: 30, fontSize: 14 },
+  pickerItemMetaText: { fontSize: 12, color: theme.colors.textMuted },
+  emptyPickerText: { textAlign: 'center', color: theme.colors.textMuted, padding: 30, fontSize: 14 },
 
   // Camera styles
   cameraContainer: { width: '100%', height: 350, position: 'relative', marginBottom: 16 },
@@ -647,37 +648,37 @@ const styles = StyleSheet.create({
   cornerTR: { position: 'absolute', top: 0, right: 0, width: 30, height: 30, borderTopWidth: 3, borderRightWidth: 3, borderRadius: 4 },
   cornerBL: { position: 'absolute', bottom: 0, left: 0, width: 30, height: 30, borderBottomWidth: 3, borderLeftWidth: 3, borderRadius: 4 },
   cornerBR: { position: 'absolute', bottom: 0, right: 0, width: 30, height: 30, borderBottomWidth: 3, borderRightWidth: 3, borderRadius: 4 },
-  scanOverlayText: { color: '#fff', fontSize: 13, marginTop: 16, textShadowColor: '#000', textShadowRadius: 4 },
+  scanOverlayText: { color: theme.colors.surface, fontSize: 13, marginTop: 16, textShadowColor: theme.colors.dark, textShadowRadius: 4 },
   stopCameraButton: {
     position: 'absolute', bottom: 16, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: theme.colors.overlay, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
   },
-  stopCameraText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  stopCameraText: { color: theme.colors.surface, fontSize: 13, fontWeight: '600' },
 
   // Result styles
   resultCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16, marginHorizontal: 16, marginBottom: 16,
-    borderLeftWidth: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+    backgroundColor: theme.colors.surface, borderRadius: 12, padding: 16, marginHorizontal: 16, marginBottom: 16,
+    borderLeftWidth: 4, shadowColor: theme.colors.dark, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
   resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   resultTitle: { fontSize: 16, fontWeight: '700' },
-  resultDetail: { fontSize: 13, color: '#6b7280', marginTop: 8, lineHeight: 20 },
+  resultDetail: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 8, lineHeight: 20 },
 
   // Info styles
   section: { padding: 16, paddingBottom: 0 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sectionTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  clearText: { fontSize: 12, color: '#dc2626', fontWeight: '500' },
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: 20 },
+  sectionTitle: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  clearText: { fontSize: 12, color: theme.colors.danger, fontWeight: '500' },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', padding: 20 },
 
   // History styles
   historyItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 10,
-    padding: 12, marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: theme.colors.surface, borderRadius: 10,
+    padding: 12, marginBottom: 8, shadowColor: theme.colors.dark, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
   },
-  historyIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
+  historyIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.surfaceMuted, justifyContent: 'center', alignItems: 'center' },
   historyContent: { flex: 1 },
-  historyResult: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  historyDetail: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
-  historyTime: { fontSize: 11, color: '#d1d5db', marginTop: 4 },
+  historyResult: { fontSize: 13, fontWeight: '600', color: theme.colors.text },
+  historyDetail: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
+  historyTime: { fontSize: 11, color: theme.colors.borderStrong, marginTop: 4 },
 });

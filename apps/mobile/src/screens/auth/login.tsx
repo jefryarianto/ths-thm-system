@@ -21,6 +21,7 @@ import apiClient from '../../lib/api-client';
 import { useAuthStore, AuthState } from '../../store/auth-store';
 import { useMobileOAuth } from '../../hooks/useMobileOAuth';
 import { registerForPushNotifications } from '../../lib/fcm';
+import { theme } from '../../theme';
 
 // Logo resmi THS-THM (di-bundle bersama app)
 const LOGO = require('../../../assets/images/logo.png');
@@ -153,26 +154,26 @@ export default function LoginScreen() {
       <View style={styles.form}>
         <Text style={styles.label}>Email / No. HP</Text>
         <View style={styles.inputWrap}>
-          <Ionicons name="mail-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
+          <Ionicons name="mail-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
             placeholder="email@ths-thm.org atau 08xxx"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={theme.colors.textMuted}
             keyboardType="default"
             autoCapitalize="none"
           />
         </View>
         <Text style={styles.label}>Password</Text>
         <View style={styles.inputWrap}>
-          <Ionicons name="lock-closed-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
+          <Ionicons name="lock-closed-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
             placeholder="Password"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={theme.colors.textMuted}
             secureTextEntry={!showPassword}
           />
           {/* Intip Password */}
@@ -184,7 +185,7 @@ export default function LoginScreen() {
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={22}
-              color="#94a3b8"
+              color={theme.colors.textMuted}
             />
           </TouchableOpacity>
         </View>
@@ -194,8 +195,8 @@ export default function LoginScreen() {
           <Switch
             value={rememberMe}
             onValueChange={setRememberMe}
-            trackColor={{ false: '#d1d5db', true: '#2563eb' }}
-            thumbColor={rememberMe ? '#fff' : '#f9fafb'}
+            trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primary }}
+            thumbColor={rememberMe ? theme.colors.surface : theme.colors.surfaceMuted}
           />
           <Text style={styles.rememberText}>Ingat saya</Text>
         </View>
@@ -206,7 +207,7 @@ export default function LoginScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={theme.colors.surface} />
           ) : (
             <Text style={styles.buttonText}>Masuk</Text>
           )}
@@ -227,7 +228,7 @@ export default function LoginScreen() {
               disabled={!!oauthLoading}
             >
               {oauthLoading === 'google' ? (
-                <ActivityIndicator color="#374151" />
+                <ActivityIndicator color={theme.colors.textSecondary} />
               ) : (
                 <>
                   <Text style={styles.oauthIcon}>G</Text>
@@ -282,24 +283,24 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7fb', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
   topGlow: {
     position: 'absolute',
     top: -120,
     left: -80,
     right: -80,
     height: 280,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 160,
     opacity: 0.10,
   },
   videoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.55)' },
   skipButton: { position: 'absolute', bottom: 44, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.25)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' },
-  skipText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  skipText: { color: theme.colors.surface, fontSize: 14, fontWeight: '600' },
   header: { alignItems: 'center', marginBottom: 24 },
-  logo: { width: 116, height: 116, marginBottom: 14, borderRadius: 24, backgroundColor: '#fff', padding: 8 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#1e3a8a', textAlign: 'center', letterSpacing: 0.5 },
-  subtitle: { fontSize: 15, color: '#64748b', marginTop: 2, textAlign: 'center' },
+  logo: { width: 116, height: 116, marginBottom: 14, borderRadius: 24, backgroundColor: theme.colors.surface, padding: 8 },
+  title: { fontSize: 32, fontWeight: 'bold', color: theme.colors.text, textAlign: 'center', letterSpacing: 0.5 },
+  subtitle: { fontSize: 15, color: theme.colors.textMuted, marginTop: 2, textAlign: 'center' },
   brandChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,30 +309,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#1d4ed8',
+    backgroundColor: theme.colors.primaryDark,
   },
-  brandDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#93c5fd' },
-  brandChipText: { fontSize: 12, fontWeight: '600', color: '#fff', letterSpacing: 0.3 },
+  brandDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.primaryLight },
+  brandChipText: { fontSize: 12, fontWeight: '600', color: theme.colors.surface, letterSpacing: 0.3 },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
     padding: 24,
-    shadowColor: '#0f172a',
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.08,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },
     elevation: 6,
     borderWidth: 1,
-    borderColor: '#eef2f7',
+    borderColor: theme.colors.surfaceMuted,
   },
-  label: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 6, marginTop: 14 },
+  label: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6, marginTop: 14 },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.surfaceMuted,
     paddingHorizontal: 14,
   },
   inputIcon: { marginRight: 10 },
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 13,
     fontSize: 16,
-    color: '#0f172a',
+    color: theme.colors.text,
   },
   passwordWrap: { position: 'relative' },
   passwordInput: { paddingRight: 48 },
@@ -353,24 +354,24 @@ const styles = StyleSheet.create({
     marginTop: 14,
     gap: 8,
   },
-  rememberText: { fontSize: 14, color: '#334155', fontWeight: '500' },
+  rememberText: { fontSize: 14, color: theme.colors.textSecondary, fontWeight: '500' },
   button: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 12,
     padding: 15,
     alignItems: 'center',
     marginTop: 20,
-    shadowColor: '#2563eb',
+    shadowColor: theme.colors.primary,
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
-  dividerText: { marginHorizontal: 12, fontSize: 13, color: '#94a3b8' },
+  dividerLine: { flex: 1, height: 1, backgroundColor: theme.colors.border },
+  dividerText: { marginHorizontal: 12, fontSize: 13, color: theme.colors.textMuted },
   oauthButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -378,28 +379,28 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
     marginBottom: 8,
   },
   oauthButtonDisabled: { opacity: 0.5 },
   oauthIcon: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1f2937',
+    color: theme.colors.text,
     width: 24,
     height: 24,
     textAlign: 'center',
     lineHeight: 24,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 6,
     overflow: 'hidden',
   },
-  oauthButtonText: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
+  oauthButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
   forgotPassword: {
     marginTop: 8,
     alignItems: 'center',
     padding: 6,
   },
-  forgotPasswordText: { fontSize: 13, color: '#2563eb', fontWeight: '600' },
+  forgotPasswordText: { fontSize: 13, color: theme.colors.primary, fontWeight: '600' },
 });

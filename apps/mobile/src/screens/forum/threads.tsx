@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useForumThreads } from '../../hooks/use-forum';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function ForumThreadsScreen() {
   const { categoryId, categoryName } = useLocalSearchParams<{
@@ -33,7 +34,7 @@ export default function ForumThreadsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>{categoryName || 'Thread'}</Text>
@@ -44,23 +45,23 @@ export default function ForumThreadsScreen() {
           activeOpacity={0.7}
           onPress={() => router.push('/forum/create')}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color="#9ca3af" />
+        <Ionicons name="search" size={16} color={theme.colors.textMuted} />
         <TextInput
           style={styles.searchInput}
           placeholder="Cari thread..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={theme.colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color="#9ca3af" />
+            <Ionicons name="close-circle" size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -72,7 +73,7 @@ export default function ForumThreadsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="chatbubbles" size={48} color="#d1d5db" />
+            <Ionicons name="chatbubbles" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>
               {search
                 ? 'Tidak ada thread yang cocok'
@@ -89,13 +90,13 @@ export default function ForumThreadsScreen() {
             <View style={styles.cardContent}>
               <View style={styles.titleRow}>
                 {item.isPinned && (
-                  <Ionicons name="pin" size={14} color="#2563eb" />
+                  <Ionicons name="pin" size={14} color={theme.colors.primary} />
                 )}
                 <Text style={styles.title} numberOfLines={1}>
                   {item.judul}
                 </Text>
                 {item.isLocked && (
-                  <Ionicons name="lock-closed" size={12} color="#ef4444" />
+                  <Ionicons name="lock-closed" size={12} color={theme.colors.danger} />
                 )}
               </View>
               <Text style={styles.excerpt} numberOfLines={2}>
@@ -111,9 +112,9 @@ export default function ForumThreadsScreen() {
                   <Text style={styles.metaText}>{item.author?.namaLengkap}</Text>
                 </View>
                 <View style={styles.metaRight}>
-                  <Ionicons name="chatbubble" size={11} color="#9ca3af" />
+                  <Ionicons name="chatbubble" size={11} color={theme.colors.textMuted} />
                   <Text style={styles.metaText}>{item._count?.posts ?? 0}</Text>
-                  <Ionicons name="eye" size={11} color="#9ca3af" style={{ marginLeft: 8 }} />
+                  <Ionicons name="eye" size={11} color={theme.colors.textMuted} style={{ marginLeft: 8 }} />
                   <Text style={styles.metaText}>{item.viewCount}</Text>
                 </View>
               </View>
@@ -126,9 +127,9 @@ export default function ForumThreadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -144,38 +145,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 12, marginTop: 2 },
+  headerTitle: { color: theme.colors.surface, fontSize: 18, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 12, marginTop: 2 },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     margin: 16,
     marginBottom: 0,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: theme.colors.text, marginLeft: 8 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
   cardContent: { padding: 14 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  title: { fontSize: 15, fontWeight: '600', color: '#111827', flex: 1 },
+  title: { fontSize: 15, fontWeight: '600', color: theme.colors.text, flex: 1 },
   excerpt: {
     fontSize: 12,
-    color: '#6b7280',
+    color: theme.colors.textSecondary,
     marginTop: 6,
     lineHeight: 17,
   },
@@ -191,12 +192,12 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 10, fontWeight: '700', color: '#2563eb' },
-  metaText: { fontSize: 11, color: '#9ca3af' },
+  avatarText: { fontSize: 10, fontWeight: '700', color: theme.colors.primary },
+  metaText: { fontSize: 11, color: theme.colors.textMuted },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

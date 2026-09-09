@@ -29,6 +29,7 @@ import * as MediaLibrary from 'expo-media-library';
 
 // ─── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ───
 import { CARD, COLORS, FRONT, BACK, DECOR, FONTS, getLevelVisual, photoCrop, resolveCardSpec } from '../../lib/card-design';
+import { theme } from '../../theme';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -114,10 +115,10 @@ type FoilStop = { offset: string; color: string; opacity: number };
 function FoilShimmer({ kind = 'info' }: { kind?: 'info' | 'logo' | 'sig' }) {
   const cfg: { id: string; opacity: number; stops: FoilStop[] } =
     kind === 'logo'
-      ? { id: 'foilLogo', opacity: 1, stops: [{ offset: '0', color: '#ffffff', opacity: 0 }, { offset: '0.5', color: '#ffffff', opacity: 0.55 }, { offset: '1', color: '#ffffff', opacity: 0 }] }
+      ? { id: 'foilLogo', opacity: 1, stops: [{ offset: '0', color: theme.colors.surface, opacity: 0 }, { offset: '0.5', color: theme.colors.surface, opacity: 0.55 }, { offset: '1', color: theme.colors.surface, opacity: 0 }] }
       : kind === 'sig'
-        ? { id: 'foilSig', opacity: 0.25, stops: [{ offset: '0', color: '#22d3ee', opacity: 1 }, { offset: '0.5', color: '#ffffff', opacity: 1 }, { offset: '1', color: '#fcd34d', opacity: 1 }] }
-        : { id: 'foilInfo', opacity: 0.15, stops: [{ offset: '0', color: '#22d3ee', opacity: 1 }, { offset: '0.5', color: '#ffffff', opacity: 1 }, { offset: '1', color: '#fcd34d', opacity: 1 }] };
+        ? { id: 'foilSig', opacity: 0.25, stops: [{ offset: '0', color: '#22d3ee', opacity: 1 }, { offset: '0.5', color: theme.colors.surface, opacity: 1 }, { offset: '1', color: '#fcd34d', opacity: 1 }] }
+        : { id: 'foilInfo', opacity: 0.15, stops: [{ offset: '0', color: '#22d3ee', opacity: 1 }, { offset: '0.5', color: theme.colors.surface, opacity: 1 }, { offset: '1', color: '#fcd34d', opacity: 1 }] };
   return (
     <Svg width="100%" height="100%" viewBox="0 0 400 220" style={StyleSheet.absoluteFill} opacity={cfg.opacity} pointerEvents="none">
       <Defs>
@@ -160,7 +161,7 @@ function BackGradient() {
         </LinearGradient>
       </Defs>
       <Rect x={0} y={0} width={CARD_W} height={CARD_H} fill="url(#backGrad)" />
-      <Path d={DECOR.backWave} fill="#ffffff" opacity={0.06} />
+      <Path d={DECOR.backWave} fill={theme.colors.surface} opacity={0.06} />
     </Svg>
   );
 }
@@ -246,7 +247,7 @@ function CardShell({ children, dark = false }: { children: React.ReactNode; dark
   const scale = Math.min(width - 32, CARD_W) / CARD_W;
 
   return (
-    <View style={{ width: CARD_W * scale, height: CARD_H * scale, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 }}>
+    <View style={{ width: CARD_W * scale, height: CARD_H * scale, shadowColor: theme.colors.dark, shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 }}>
       <View
         style={[
           styles.cardCanvas,
@@ -366,7 +367,7 @@ function MemberCardFront({ member, cardData, validUntilText }: { member: MemberI
       {/* Watermark — peta indonesia.png washout di tengah (tidak mengganggu foto kanan atas) */}
       {spec.watermark.front && (
         <View style={styles.watermarkWrap} pointerEvents="none">
-          <IndonesiaMapWatermark color="#1d4ed8" opacity={0.35} size={{ width: 600, height: 207 }} />
+          <IndonesiaMapWatermark color={theme.colors.primaryDark} opacity={0.35} size={{ width: 600, height: 207 }} />
         </View>
       )}
 
@@ -533,7 +534,7 @@ function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }: { memb
       {/* Watermark — siluet peta titik halftone PUTIH di tengah */}
       {spec.watermark.back && (
         <View style={styles.backWatermarkWrap} pointerEvents="none">
-          <IndonesiaMapWatermark color="#ffffff" opacity={0.5} size={{ width: 480, height: 166 }} />
+          <IndonesiaMapWatermark color={theme.colors.surface} opacity={0.5} size={{ width: 480, height: 166 }} />
         </View>
       )}
 
@@ -810,11 +811,11 @@ export default function DigitalCardScreen() {
       {/* Simpan / unduh kartu */}
       <View style={styles.saveRow}>
         <TouchableOpacity style={[styles.saveBtn, styles.saveBtnPdf]} onPress={savePdf} disabled={!!saving} activeOpacity={0.8}>
-          <Ionicons name="download-outline" size={18} color="#fff" />
+          <Ionicons name="download-outline" size={18} color={theme.colors.surface} />
           <Text style={styles.saveBtnText}>{saving === 'pdf' ? 'Menyimpan…' : 'Simpan PDF'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.saveBtn, styles.saveBtnPng]} onPress={saveToGallery} disabled={!!saving} activeOpacity={0.8}>
-          <Ionicons name="image-outline" size={18} color="#fff" />
+          <Ionicons name="image-outline" size={18} color={theme.colors.surface} />
           <Text style={styles.saveBtnText}>{saving === 'png' ? 'Menyimpan…' : 'Simpan ke Galeri'}</Text>
         </TouchableOpacity>
       </View>
@@ -832,24 +833,24 @@ export default function DigitalCardScreen() {
 // Layout memakai koordinat kanvas 856×540 (CardShell yang menangani scaling).
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   containerContent: { padding: 16, paddingBottom: 40, alignItems: 'center' },
-  pageTitle: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 4, alignSelf: 'flex-start' },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#6b7280', marginTop: 20, marginBottom: 10, alignSelf: 'flex-start' },
+  pageTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.text, marginBottom: 4, alignSelf: 'flex-start' },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginTop: 20, marginBottom: 10, alignSelf: 'flex-start' },
   flipFace: {
     position: 'absolute',
     top: 0,
     left: 0,
     backfaceVisibility: 'hidden',
   },
-  flipHint: { fontSize: 12, color: '#6b7280', marginTop: 10, alignSelf: 'flex-start' },
+  flipHint: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 10, alignSelf: 'flex-start' },
 
   // Tombol simpan kartu
   saveRow: { flexDirection: 'row', gap: 10, marginTop: 12, alignSelf: 'stretch' },
   saveBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 10 },
-  saveBtnPdf: { backgroundColor: '#2563eb' },
+  saveBtnPdf: { backgroundColor: theme.colors.primary },
   saveBtnPng: { backgroundColor: '#0f766e' },
-  saveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  saveBtnText: { color: theme.colors.surface, fontSize: 14, fontWeight: '700' },
 
   // ── Canvas kartu 856×540 (di-scale oleh CardShell) ──
   cardCanvas: { width: CARD_W, height: CARD_H, borderRadius: CARD.RADIUS, overflow: 'hidden' },
@@ -867,7 +868,7 @@ const styles = StyleSheet.create({
   watermarkLogo: { width: 260, height: 260 },
   backWatermarkWrap: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', opacity: 1 },
   backWatermarkLogo: { width: 260, height: 260 },
-  watermarkText: { fontSize: 48, fontWeight: '900', color: '#1e3a5f' },
+  watermarkText: { fontSize: 48, fontWeight: '900', color: theme.colors.text },
 
   content: { ...StyleSheet.absoluteFillObject, zIndex: 10 },
 
@@ -876,8 +877,8 @@ const styles = StyleSheet.create({
   // Logo — ukuran dari spec
   logo: { width: FRONT.logo.size, height: FRONT.logo.size, borderRadius: FRONT.logo.radius, backgroundColor: FRONT.logo.bg, overflow: 'hidden', borderWidth: FRONT.logo.border, borderColor: FRONT.logo.borderColor },
   logoImg: { width: FRONT.logo.img, height: FRONT.logo.img, alignSelf: 'center' },
-  logoInner: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: '#334155', alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 10, fontWeight: '900', color: '#171717' },
+  logoInner: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.textSecondary, alignItems: 'center', justifyContent: 'center' },
+  logoText: { fontSize: 10, fontWeight: '900', color: theme.colors.text },
   headerText: { flex: 1 },
   // Semua baris header ukuran sama (16px), font Open Sans Bold — tinggi blok 4×20 = 80 + padding 28 = 108 ≤ 110
   row1: { fontSize: FRONT.header.row.fontSize, fontWeight: '900', color: COLORS.headerText, letterSpacing: FRONT.header.row.spacing[0], lineHeight: FRONT.header.row.lineHeight, fontFamily: OPEN_SANS_BOLD },
@@ -989,7 +990,7 @@ const styles = StyleSheet.create({
     padding: BACK.qr.padding, alignItems: 'center', justifyContent: 'center',
   },
   qrImg: { width: '100%', height: '100%' },
-  qrPlaceholder: { fontSize: 24, fontWeight: '700', color: '#94a3b8' },
+  qrPlaceholder: { fontSize: 24, fontWeight: '700', color: theme.colors.textMuted },
   // Area teks belakang transparan (tanpa kotak putih) — teks putih langsung di atas gradien
   backInfoBox: {
     position: 'absolute', left: BACK.info.left, top: BACK.info.top, right: BACK.info.right,
@@ -1001,11 +1002,11 @@ const styles = StyleSheet.create({
   backColon: { width: BACK.info.row.colon.w, fontSize: BACK.info.row.label.fontSize, fontWeight: '700', color: COLORS.white, opacity: 0.9 },
   backRowValue: { flex: 1, fontSize: BACK.info.row.value.fontSize, fontWeight: '600', color: COLORS.white, fontFamily: ROBOTO_REGULAR },
   backFooter: { position: 'absolute', left: BACK.footer.left, right: BACK.footer.right, bottom: BACK.footer.bottom, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 },
-  footerText: { flex: 1, fontSize: BACK.footer.text.fontSize, lineHeight: BACK.footer.text.lineHeight, color: '#f0f9ff', opacity: BACK.footer.text.opacity, fontFamily: ROBOTO_REGULAR },
+  footerText: { flex: 1, fontSize: BACK.footer.text.fontSize, lineHeight: BACK.footer.text.lineHeight, color: theme.colors.primarySofter, opacity: BACK.footer.text.opacity, fontFamily: ROBOTO_REGULAR },
   footerUrl: { alignItems: 'flex-end' },
-  footerUrlLabel: { fontSize: BACK.footer.urlLabel.fontSize, color: '#f0f9ff', opacity: BACK.footer.urlLabel.opacity, textTransform: 'uppercase', fontFamily: ROBOTO_REGULAR },
+  footerUrlLabel: { fontSize: BACK.footer.urlLabel.fontSize, color: theme.colors.primarySofter, opacity: BACK.footer.urlLabel.opacity, textTransform: 'uppercase', fontFamily: ROBOTO_REGULAR },
   footerUrlValue: { fontSize: BACK.footer.urlValue.fontSize, fontWeight: '700', color: COLORS.white, marginTop: BACK.footer.urlValue.marginTop, fontFamily: ROBOTO_BOLD },
 
-  noteBox: { marginTop: 24, backgroundColor: '#fef9c3', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#fde68a', width: '100%' },
-  noteText: { fontSize: 13, lineHeight: 19, color: '#a16207' },
+  noteBox: { marginTop: 24, backgroundColor: theme.colors.warningLight, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: theme.colors.warningLight, width: '100%' },
+  noteText: { fontSize: 13, lineHeight: 19, color: theme.colors.warning },
 });

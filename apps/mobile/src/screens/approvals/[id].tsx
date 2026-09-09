@@ -23,6 +23,7 @@ import {
   getReferenceRoute,
 } from '../../hooks/use-approvals';
 import { LoadingView, ErrorView } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function ApprovalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -75,7 +76,7 @@ export default function ApprovalDetailScreen() {
     );
   }
 
-  const st = STATUS_STYLES[approval.status] || { label: approval.status, color: '#6b7280', bg: '#f3f4f6' };
+  const st = STATUS_STYLES[approval.status] || { label: approval.status, color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted };
   const isPending = approval.status === 'pending';
 
   return (
@@ -83,13 +84,13 @@ export default function ApprovalDetailScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitleArea}>
             <Text style={styles.headerTitle}>Detail Persetujuan</Text>
           </View>
           <TouchableOpacity onPress={refetch} style={styles.refreshBtn}>
-            <Ionicons name="refresh" size={20} color="#bfdbfe" />
+            <Ionicons name="refresh" size={20} color={theme.colors.headerSub} />
           </TouchableOpacity>
         </View>
       </View>
@@ -133,12 +134,12 @@ export default function ApprovalDetailScreen() {
         {isPending && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              <Ionicons name="shield-checkmark" size={16} color="#2563eb" /> Tindakan
+              <Ionicons name="shield-checkmark" size={16} color={theme.colors.primary} /> Tindakan
             </Text>
             <TextInput
               style={styles.noteInput}
               placeholder="Tambahkan catatan (opsional)..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               value={note}
               onChangeText={setNote}
               multiline
@@ -151,10 +152,10 @@ export default function ApprovalDetailScreen() {
                 onPress={() => handleAction('approve')}
               >
                 {actionLoading === 'approve' ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.colors.textOnPrimary} />
                 ) : (
                   <>
-                    <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                    <Ionicons name="checkmark-circle" size={18} color={theme.colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Setujui</Text>
                   </>
                 )}
@@ -165,10 +166,10 @@ export default function ApprovalDetailScreen() {
                 onPress={() => handleAction('reject')}
               >
                 {actionLoading === 'reject' ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.colors.textOnPrimary} />
                 ) : (
                   <>
-                    <Ionicons name="close-circle" size={18} color="#fff" />
+                    <Ionicons name="close-circle" size={18} color={theme.colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Tolak</Text>
                   </>
                 )}
@@ -180,7 +181,7 @@ export default function ApprovalDetailScreen() {
         {/* Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            <Ionicons name="document-text" size={16} color="#2563eb" /> Informasi Pengajuan
+            <Ionicons name="document-text" size={16} color={theme.colors.primary} /> Informasi Pengajuan
           </Text>
           <View style={styles.infoCard}>
             <InfoRow icon="document" label="Tipe" value={REQUEST_TYPE_LABELS[approval.requestType] || approval.requestType} />
@@ -197,9 +198,9 @@ export default function ApprovalDetailScreen() {
                   activeOpacity={0.7}
                   onPress={() => router.push(refRoute as any)}
                 >
-                  <Ionicons name={safeIconName(refRoute.icon)} size={18} color="#2563eb" />
+                  <Ionicons name={safeIconName(refRoute.icon)} size={18} color={theme.colors.primary} />
                   <Text style={styles.referenceBtnText}>{refRoute.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color="#93c5fd" />
+                  <Ionicons name="chevron-forward" size={18} color={theme.colors.primaryLight} />
                 </TouchableOpacity>
               );
             })()}
@@ -209,7 +210,7 @@ export default function ApprovalDetailScreen() {
         {/* Levels Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            <Ionicons name="layers" size={16} color="#2563eb" /> Level Persetujuan
+            <Ionicons name="layers" size={16} color={theme.colors.primary} /> Level Persetujuan
           </Text>
           {approval.levels.length > 0 ? (
             <View style={styles.levelsTimeline}>
@@ -219,7 +220,7 @@ export default function ApprovalDetailScreen() {
             </View>
           ) : (
             <View style={styles.emptyLevels}>
-              <Ionicons name="alert-circle" size={28} color="#d1d5db" />
+              <Ionicons name="alert-circle" size={28} color={theme.colors.borderStrong} />
               <Text style={styles.emptyLevelsText}>Tidak ada level persetujuan</Text>
             </View>
           )}
@@ -232,7 +233,7 @@ export default function ApprovalDetailScreen() {
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={safeIconName(icon)} size={15} color="#9ca3af" />
+      <Ionicons name={safeIconName(icon)} size={15} color={theme.colors.textMuted} />
       <View style={{ flex: 1 }}>
         <Text style={styles.infoLabel}>{label}</Text>
         <Text style={styles.infoValue}>{value}</Text>
@@ -242,7 +243,7 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
 }
 
 function LevelCard({ level, index, isLast }: { level: ApprovalLevel; index: number; isLast: boolean }) {
-  const ls = STATUS_STYLES[level.status] || { label: level.status, color: '#6b7280', bg: '#f3f4f6' };
+  const ls = STATUS_STYLES[level.status] || { label: level.status, color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted };
 
   return (
     <View style={styles.levelRow}>
@@ -281,23 +282,20 @@ function LevelCard({ level, index, isLast }: { level: ApprovalLevel; index: numb
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', paddingTop: 54, paddingBottom: 14, paddingHorizontal: 16 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: { backgroundColor: theme.colors.header, paddingTop: 54, paddingBottom: 14, paddingHorizontal: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   backBtn: { padding: 4 },
   headerTitleArea: { flex: 1 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  headerTitle: { color: theme.colors.textOnPrimary, fontSize: 18, fontWeight: theme.typography.weight.bold },
   refreshBtn: { padding: 4 },
   scroll: { flex: 1 },
   statusHeader: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    ...theme.shadow.card,
   },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statusIconBox: {
@@ -307,30 +305,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
+  statusTitle: { fontSize: 17, fontWeight: theme.typography.weight.bold, color: theme.colors.text },
   badge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginTop: 4 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
-  idText: { fontSize: 11, color: '#9ca3af', fontFamily: 'monospace', marginTop: 10 },
-  metaInfo: { fontSize: 12, color: '#6b7280', marginTop: 4 },
+  badgeText: { fontSize: 11, fontWeight: theme.typography.weight.semibold },
+  idText: { fontSize: 11, color: theme.colors.textMuted, fontFamily: 'monospace', marginTop: 10 },
+  metaInfo: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 4 },
   section: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    ...theme.shadow.card,
   },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 12 },
+  sectionTitle: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text, marginBottom: 12 },
   noteInput: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md - 2,
     padding: 10,
     fontSize: 13,
-    color: '#111827',
-    backgroundColor: '#f9fafb',
+    color: theme.colors.text,
+    backgroundColor: theme.colors.background,
     textAlignVertical: 'top',
     minHeight: 60,
   },
@@ -342,11 +337,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: theme.radius.md - 2,
   },
-  approveBtn: { backgroundColor: '#16a34a' },
-  rejectBtn: { backgroundColor: '#dc2626' },
-  actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  approveBtn: { backgroundColor: theme.colors.success },
+  rejectBtn: { backgroundColor: theme.colors.danger },
+  actionBtnText: { color: theme.colors.textOnPrimary, fontSize: 14, fontWeight: theme.typography.weight.semibold },
   infoCard: { gap: 8 },
   infoRow: {
     flexDirection: 'row',
@@ -354,11 +349,11 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
     borderRadius: 10,
   },
-  infoLabel: { fontSize: 11, color: '#9ca3af', textTransform: 'uppercase' },
-  infoValue: { fontSize: 14, color: '#111827', fontWeight: '500' },
+  infoLabel: { fontSize: 11, color: theme.colors.textMuted, textTransform: 'uppercase' },
+  infoValue: { fontSize: 14, color: theme.colors.text, fontWeight: theme.typography.weight.medium },
   referenceBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,14 +361,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     marginTop: 4,
   },
   referenceBtnText: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
-    color: '#2563eb',
+    fontWeight: theme.typography.weight.semibold,
+    color: theme.colors.primary,
   },
   levelsTimeline: { gap: 0 },
   levelRow: { flexDirection: 'row', gap: 0, minHeight: 80 },
@@ -387,17 +382,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
-  timelineDotText: { fontSize: 11, fontWeight: '700' },
+  timelineDotText: { fontSize: 11, fontWeight: theme.typography.weight.bold },
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     marginTop: -2,
     marginBottom: -2,
   },
   levelContent: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.background,
     borderRadius: 10,
     padding: 12,
     marginLeft: 10,
@@ -409,12 +404,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
   },
-  levelName: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  levelName: { fontSize: 14, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
   levelBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  levelBadgeText: { fontSize: 10, fontWeight: '600' },
-  levelRole: { fontSize: 12, color: '#6b7280' },
-  levelDate: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
-  levelNote: { fontSize: 11, color: '#6b7280', fontStyle: 'italic', marginTop: 4 },
+  levelBadgeText: { fontSize: 10, fontWeight: theme.typography.weight.semibold },
+  levelRole: { fontSize: 12, color: theme.colors.textSecondary },
+  levelDate: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
+  levelNote: { fontSize: 11, color: theme.colors.textSecondary, fontStyle: 'italic', marginTop: 4 },
   emptyLevels: { alignItems: 'center', paddingVertical: 24 },
-  emptyLevelsText: { fontSize: 13, color: '#9ca3af', marginTop: 8 },
+  emptyLevelsText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 8 },
 });

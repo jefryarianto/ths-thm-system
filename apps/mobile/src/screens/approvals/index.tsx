@@ -26,6 +26,7 @@ import {
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, ErrorView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function ApprovalsListScreen() {
   const { data, loading, error, refetch } = usePendingApprovals();
@@ -107,7 +108,7 @@ export default function ApprovalsListScreen() {
             <Text style={styles.headerTitle}>Persetujuan</Text>
             <Text style={styles.headerSub}>{(data ?? []).length} menunggu</Text>
           </View>
-          <Ionicons name="shield-checkmark" size={28} color="#bfdbfe" />
+          <Ionicons name="shield-checkmark" size={28} color={theme.colors.headerSub} />
         </View>
       </View>
 
@@ -128,7 +129,7 @@ export default function ApprovalsListScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="checkmark-circle" size={48} color="#d1d5db" />
+            <Ionicons name="checkmark-circle" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyTitle}>
               {searchQuery.trim()
                 ? 'Tidak ditemukan'
@@ -168,7 +169,7 @@ function ApprovalCard({
   onPress: () => void;
 }) {
   const iconName = REQUEST_TYPE_ICONS[item.requestType] || 'document';
-  const st = STATUS_STYLES[item.status] || { label: item.status, color: '#6b7280', bg: '#f3f4f6' };
+  const st = STATUS_STYLES[item.status] || { label: item.status, color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted };
   const isPending = item.status === 'pending';
 
   return (
@@ -196,7 +197,7 @@ function ApprovalCard({
 
       <View style={styles.cardBody}>
         <View style={styles.metaRow}>
-          <Ionicons name="finger-print" size={13} color="#9ca3af" />
+          <Ionicons name="finger-print" size={13} color={theme.colors.textMuted} />
           <Text style={styles.metaText}>ID: {item.itemId}</Text>
         </View>
       </View>
@@ -204,7 +205,7 @@ function ApprovalCard({
       {item.levels && item.levels.length > 0 && (
         <View style={styles.levelsRow}>
           {item.levels.map((l, i) => {
-            const ls = STATUS_STYLES[l.status] || { label: l.status, color: '#6b7280', bg: '#f3f4f6' };
+            const ls = STATUS_STYLES[l.status] || { label: l.status, color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted };
             return (
               <View key={i} style={[styles.levelDot, { backgroundColor: ls.bg, borderColor: ls.color }]}>
                 <Text style={[styles.levelDotText, { color: ls.color }]}>
@@ -224,10 +225,10 @@ function ApprovalCard({
             onPress={() => onAction(item.id, 'approve')}
           >
             {actionLoading === `${item.id}-approve` ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={theme.colors.surface} />
             ) : (
               <>
-                <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                <Ionicons name="checkmark-circle" size={16} color={theme.colors.surface} />
                 <Text style={styles.actionBtnText}>Setujui</Text>
               </>
             )}
@@ -238,10 +239,10 @@ function ApprovalCard({
             onPress={() => onAction(item.id, 'reject')}
           >
             {actionLoading === `${item.id}-reject` ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={theme.colors.surface} />
             ) : (
               <>
-                <Ionicons name="close-circle" size={16} color="#fff" />
+                <Ionicons name="close-circle" size={16} color={theme.colors.surface} />
                 <Text style={styles.actionBtnText}>Tolak</Text>
               </>
             )}
@@ -253,22 +254,19 @@ function ApprovalCard({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: { backgroundColor: theme.colors.header, padding: 24, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  headerTitle: { color: theme.colors.textOnPrimary, fontSize: theme.typography.size.xxl - 2, fontWeight: theme.typography.weight.bold },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -283,24 +281,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardTitleArea: { flex: 1 },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  cardDate: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  cardTitle: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  cardDate: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
-  statusText: { fontSize: 11, fontWeight: '600' },
+  statusText: { fontSize: 11, fontWeight: theme.typography.weight.semibold },
   cardBody: { marginTop: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontSize: 12, color: '#6b7280' },
+  metaText: { fontSize: 12, color: theme.colors.textSecondary },
   levelsRow: {
     flexDirection: 'row',
     gap: 6,
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.surfaceMuted,
   },
   levelDot: {
     width: 24,
@@ -310,14 +308,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  levelDotText: { fontSize: 10, fontWeight: '700' },
+  levelDotText: { fontSize: 10, fontWeight: theme.typography.weight.bold },
   actionRow: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.surfaceMuted,
   },
   actionBtn: {
     flex: 1,
@@ -328,10 +326,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
   },
-  approveBtn: { backgroundColor: '#16a34a' },
-  rejectBtn: { backgroundColor: '#dc2626' },
-  actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  approveBtn: { backgroundColor: theme.colors.success },
+  rejectBtn: { backgroundColor: theme.colors.danger },
+  actionBtnText: { color: theme.colors.surface, fontSize: 13, fontWeight: theme.typography.weight.semibold },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#6b7280', marginTop: 12 },
-  emptySub: { fontSize: 13, color: '#9ca3af', marginTop: 4 },
+  emptyTitle: { fontSize: 16, fontWeight: theme.typography.weight.semibold, color: theme.colors.textSecondary, marginTop: 12 },
+  emptySub: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4 },
 });

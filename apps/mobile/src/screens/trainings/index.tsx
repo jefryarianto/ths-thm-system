@@ -9,6 +9,7 @@ import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface Training {
   id: string;
@@ -83,7 +84,7 @@ export default function TrainingsScreen() {
           activeOpacity={0.7}
           onPress={() => Alert.alert('Belum Tersedia', 'Fitur pembuatan latihan sedang dalam pengembangan.')}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
@@ -104,7 +105,7 @@ export default function TrainingsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="fitness" size={48} color="#d1d5db" />
+            <Ionicons name="fitness" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>
               {search || filterMateri ? 'Tidak ada latihan yang cocok' : 'Belum ada data latihan'}
             </Text>
@@ -121,7 +122,7 @@ export default function TrainingsScreen() {
           >
             <View style={styles.cardLeft}>
               <View style={styles.iconCircle}>
-                <Ionicons name="fitness" size={20} color="#2563eb" />
+                <Ionicons name="fitness" size={20} color={theme.colors.primary} />
               </View>
             </View>
             <View style={styles.cardBody}>
@@ -132,19 +133,19 @@ export default function TrainingsScreen() {
               <View style={styles.metaRow}>
                 {item.lokasi && (
                   <View style={styles.metaItem}>
-                    <Ionicons name="location" size={11} color="#9ca3af" />
+                    <Ionicons name="location" size={11} color={theme.colors.textMuted} />
                     <Text style={styles.metaText}>{item.lokasi}</Text>
                   </View>
                 )}
                 {item.pelatih && (
                   <View style={styles.metaItem}>
-                    <Ionicons name="person" size={11} color="#9ca3af" />
+                    <Ionicons name="person" size={11} color={theme.colors.textMuted} />
                     <Text style={styles.metaText}>{item.pelatih.namaLengkap}</Text>
                   </View>
                 )}
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.borderStrong} />
           </TouchableOpacity>
         )}
       />
@@ -153,21 +154,21 @@ export default function TrainingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
   addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -177,16 +178,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardBody: { flex: 1 },
-  materi: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  date: { fontSize: 12, color: '#6b7280', marginTop: 4 },
+  materi: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  date: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 4 },
   metaRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  metaText: { fontSize: 11, color: '#9ca3af' },
+  metaText: { fontSize: 11, color: theme.colors.textMuted },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

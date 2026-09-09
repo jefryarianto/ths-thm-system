@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { createForumThread } from '../../hooks/use-forum';
 import { LoadingView } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface Category {
   id: string;
@@ -73,7 +74,7 @@ export default function CreateThreadScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Buat Thread Baru</Text>
       </View>
@@ -113,7 +114,7 @@ export default function CreateThreadScreen() {
             value={judul}
             onChangeText={setJudul}
             placeholder="Judul thread..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={theme.colors.textMuted}
           />
         </View>
 
@@ -125,7 +126,7 @@ export default function CreateThreadScreen() {
             value={konten}
             onChangeText={setKonten}
             placeholder="Tulis konten thread..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={theme.colors.textMuted}
             multiline
             numberOfLines={8}
             textAlignVertical="top"
@@ -139,10 +140,10 @@ export default function CreateThreadScreen() {
           disabled={submitting}
         >
           {submitting ? (
-            <ActivityIndicator color="#fff" size="small" />
+            <ActivityIndicator color={theme.colors.surface} size="small" />
           ) : (
             <>
-              <Ionicons name="send" size={18} color="#fff" />
+              <Ionicons name="send" size={18} color={theme.colors.surface} />
               <Text style={styles.submitBtnText}>Buat Thread</Text>
             </>
           )}
@@ -155,9 +156,9 @@ export default function CreateThreadScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -165,12 +166,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  headerTitle: { color: theme.colors.surface, fontSize: 18, fontWeight: '700' },
 
   section: { padding: 16 },
 
   fieldGroup: { marginBottom: 20 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 8 },
 
   selectContainer: {
     flexDirection: 'row',
@@ -181,25 +182,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 10,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
   },
   selectOptionActive: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#2563eb',
+    backgroundColor: theme.colors.primarySofter,
+    borderColor: theme.colors.primary,
   },
-  selectOptionText: { fontSize: 13, color: '#374151', fontWeight: '500' },
-  selectOptionTextActive: { color: '#2563eb', fontWeight: '600' },
+  selectOptionText: { fontSize: 13, color: theme.colors.textSecondary, fontWeight: '500' },
+  selectOptionTextActive: { color: theme.colors.primary, fontWeight: '600' },
 
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#111827',
+    color: theme.colors.text,
   },
   kontenInput: { minHeight: 160, textAlignVertical: 'top' },
 
@@ -208,11 +209,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     marginTop: 8,
   },
-  submitBtnText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  submitBtnText: { fontSize: 16, fontWeight: '600', color: theme.colors.surface },
   btnDisabled: { opacity: 0.5 },
 });

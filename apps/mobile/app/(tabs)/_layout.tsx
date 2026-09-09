@@ -3,6 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import apiClient from '../../src/lib/api-client';
+import { theme } from '../../src/theme';
 
 function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -18,7 +19,7 @@ const badgeStyles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -8,
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.colors.danger,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -26,7 +27,7 @@ const badgeStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  text: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  text: { color: theme.colors.surface, fontSize: 10, fontWeight: '700' },
 });
 
 export default function TabLayout() {
@@ -57,16 +58,16 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.colors.surface,
           borderTopWidth: 0,
           borderTopColor: 'transparent',
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
-          shadowColor: '#0f172a',
+          shadowColor: theme.colors.text,
           shadowOpacity: 0.08,
           shadowRadius: 12,
           shadowOffset: { width: 0, height: -3 },

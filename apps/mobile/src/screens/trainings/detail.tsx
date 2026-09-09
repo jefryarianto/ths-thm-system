@@ -5,6 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, InfoRow, ScreenShell, TabBar, referenceStyles } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface TrainingDetail {
   id: string;
@@ -77,16 +78,16 @@ export default function TrainingDetailScreen() {
   let badgeBg = '';
   if (diffDays > 0) {
     badgeLabel = 'Akan Datang';
-    badgeColor = '#d97706';
-    badgeBg = '#fef3c7';
+    badgeColor = theme.colors.warning;
+    badgeBg = theme.colors.warningLight;
   } else if (diffDays === 0) {
     badgeLabel = 'Hari Ini';
-    badgeColor = '#16a34a';
-    badgeBg = '#ecfdf5';
+    badgeColor = theme.colors.success;
+    badgeBg = theme.colors.successLight;
   } else {
     badgeLabel = 'Sudah';
-    badgeColor = '#6b7280';
-    badgeBg = '#f3f4f6';
+    badgeColor = theme.colors.textSecondary;
+    badgeBg = theme.colors.surfaceMuted;
   }
 
   const formatDate = (dateStr: string) => {
@@ -139,7 +140,7 @@ export default function TrainingDetailScreen() {
           <View style={styles.qrSection}>
             <View style={styles.qrCard}>
               <View style={styles.qrHeader}>
-                <Ionicons name="qr-code" size={18} color="#2563eb" />
+                <Ionicons name="qr-code" size={18} color={theme.colors.primary} />
                 <Text style={styles.qrTitle}>QR Check-in</Text>
               </View>
               <Text style={styles.qrHint}>Scan QR ini untuk check-in latihan</Text>
@@ -163,11 +164,11 @@ export default function TrainingDetailScreen() {
               <View key={att.id} style={styles.attCard}>
                 <View style={styles.attLeft}>
                   <View
-                    style={[styles.attDot, { backgroundColor: att.hadir ? '#22c55e' : '#ef4444' }]}
+                    style={[styles.attDot, { backgroundColor: att.hadir ? theme.colors.success : theme.colors.danger }]}
                   />
                   <Text style={styles.attName}>{att.anggota?.namaLengkap || 'Unknown'}</Text>
                 </View>
-                <Text style={[styles.attStatus, { color: att.hadir ? '#16a34a' : '#dc2626' }]}>
+                <Text style={[styles.attStatus, { color: att.hadir ? theme.colors.success : theme.colors.danger }]}>
                   {att.hadir ? 'Hadir' : 'Tidak Hadir'}
                 </Text>
               </View>
@@ -221,30 +222,30 @@ export default function TrainingDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   // Tabs removed — using shared TabBar component
 
   section: { padding: 16 },
-  subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
+  subTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.text, marginBottom: 12 },
 
   // Attendance
   attCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   attLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   attDot: { width: 8, height: 8, borderRadius: 4 },
-  attName: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  attName: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
   attStatus: { fontSize: 12, fontWeight: '600' },
 
   // Evaluation
@@ -252,54 +253,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   evalLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   evalAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  evalAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
+  evalAvatarText: { fontSize: 14, fontWeight: '700', color: theme.colors.primary },
   evalInfo: { flex: 1 },
-  evalName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  evalNote: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  evalName: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
+  evalNote: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
   evalScore: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
   },
-  evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  evalScoreText: { fontSize: 16, fontWeight: '700', color: theme.colors.primary },
 
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 
   // QR Code
   qrSection: { padding: 16, paddingBottom: 0 },
   qrCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
   },
   qrHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  qrTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  qrHint: { fontSize: 12, color: '#6b7280', marginBottom: 16, textAlign: 'center' },
+  qrTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  qrHint: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 16, textAlign: 'center' },
   qrContainer: {
     padding: 12,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
 });

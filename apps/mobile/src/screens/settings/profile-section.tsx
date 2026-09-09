@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -61,7 +62,7 @@ export default function ProfileSection() {
   return (
     <View>
       <View style={styles.sectionHeader}>
-        <Ionicons name="person-circle" size={20} color="#2563eb" />
+        <Ionicons name="person-circle" size={20} color={theme.colors.primary} />
         <Text style={styles.sectionTitle}>Profil Saya</Text>
       </View>
 
@@ -87,7 +88,7 @@ export default function ProfileSection() {
 
         {/* Satu pintu edit: layar /profile/edit (nama, HP, alamat, TTL, foto, password) */}
         <TouchableOpacity style={styles.editButton} onPress={() => router.push('/profile/edit' as never)}>
-          <Ionicons name="pencil" size={14} color="#2563eb" />
+          <Ionicons name="pencil" size={14} color={theme.colors.primary} />
           <Text style={styles.editButtonText}>Edit Profil</Text>
         </TouchableOpacity>
       </View>
@@ -106,17 +107,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748b',
+    color: theme.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#eef2f7',
-    shadowColor: '#0f172a',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
@@ -127,25 +128,25 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#dbeafe',
+    backgroundColor: theme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     borderWidth: 3,
-    borderColor: '#eff6ff',
+    borderColor: theme.colors.primarySofter,
   },
   avatarImg: {
     width: 72,
     height: 72,
     borderRadius: 36,
   },
-  avatarText: { fontSize: 26, fontWeight: 'bold', color: '#2563eb' },
+  avatarText: { fontSize: 26, fontWeight: 'bold', color: theme.colors.primary },
   roleBadge: {
     fontSize: 12,
-    color: '#fff',
+    color: theme.colors.surface,
     marginTop: 8,
     textTransform: 'capitalize',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: 999,
@@ -157,10 +158,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
-  infoLabel: { fontSize: 14, color: '#64748b' },
-  infoValue: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
+  infoLabel: { fontSize: 14, color: theme.colors.textMuted },
+  infoValue: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -169,9 +170,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: theme.colors.primaryLight,
   },
-  editButtonText: { fontSize: 14, fontWeight: '600', color: '#2563eb' },
+  editButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.primary },
 });

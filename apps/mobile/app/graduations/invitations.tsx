@@ -14,6 +14,7 @@ import { useFocusEffect, router } from 'expo-router';
 import { safeIconName } from '../../src/lib/icons';
 import apiClient, { unwrap } from '../../src/lib/api-client';
 import { LoadingView } from '../../src/components/ui/shared';
+import { theme } from '../../src/theme';
 
 interface Invitation {
   id: string;
@@ -30,9 +31,9 @@ interface Invitation {
 }
 
 const STATUS_STYLES: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  dikirim: { label: 'Dikirim', icon: 'mail-outline', color: '#6b7280', bg: '#f3f4f6' },
-  hadir: { label: 'Hadir', icon: 'checkmark-circle', color: '#16a34a', bg: '#ecfdf5' },
-  tidak_hadir: { label: 'Tidak Hadir', icon: 'close-circle', color: '#dc2626', bg: '#fef2f2' },
+  dikirim: { label: 'Dikirim', icon: 'mail-outline', color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted },
+  hadir: { label: 'Hadir', icon: 'checkmark-circle', color: theme.colors.success, bg: theme.colors.successLight },
+  tidak_hadir: { label: 'Tidak Hadir', icon: 'close-circle', color: theme.colors.danger, bg: theme.colors.dangerLight },
 };
 
 export default function InvitationsScreen() {
@@ -99,14 +100,14 @@ export default function InvitationsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Undangan Saya</Text>
             <Text style={styles.headerSub}>{invitations.length} undangan</Text>
           </View>
-          <Ionicons name="mail-open" size={28} color="#bfdbfe" />
+          <Ionicons name="mail-open" size={28} color={theme.colors.headerSub} />
         </View>
       </View>
 
@@ -124,7 +125,7 @@ export default function InvitationsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="mail-open" size={48} color="#d1d5db" />
+            <Ionicons name="mail-open" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyTitle}>Belum ada undangan</Text>
             <Text style={styles.emptyText}>
               Undangan pendadaran dikirim otomatis H-7 ke anggota senior atau tingkat Pratama
@@ -138,7 +139,7 @@ export default function InvitationsScreen() {
             <View style={styles.card}>
               <View style={styles.cardTop}>
                 <View style={styles.iconBox}>
-                  <Ionicons name="school" size={20} color="#2563eb" />
+                  <Ionicons name="school" size={20} color={theme.colors.primary} />
                 </View>
                 <View style={styles.cardBody}>
                   <Text style={styles.title} numberOfLines={1}>
@@ -172,7 +173,7 @@ export default function InvitationsScreen() {
                     disabled={confirmingId === item.id}
                     onPress={() => confirm(item, true)}
                   >
-                    <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                    <Ionicons name="checkmark-circle" size={16} color={theme.colors.surface} />
                     <Text style={styles.hadirText}>
                       {confirmingId === item.id ? 'Menyimpan...' : 'Hadir'}
                     </Text>
@@ -183,7 +184,7 @@ export default function InvitationsScreen() {
                     disabled={confirmingId === item.id}
                     onPress={() => confirm(item, false)}
                   >
-                    <Ionicons name="close-circle" size={16} color="#dc2626" />
+                    <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
                     <Text style={styles.tidakText}>Tidak Hadir</Text>
                   </TouchableOpacity>
                 </View>
@@ -197,21 +198,21 @@ export default function InvitationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20 },
   headerBack: { padding: 4, marginRight: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
-  hint: { fontSize: 12, color: '#6b7280', marginBottom: 12 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
+  hint: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 12 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -221,14 +222,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardBody: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  date: { fontSize: 12, color: '#6b7280', marginTop: 4 },
-  lokasi: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  title: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  date: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 4 },
+  lokasi: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.surfaceMuted,
     paddingTop: 12,
   },
   actionBtn: {
@@ -256,11 +257,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
   },
-  hadirBtn: { backgroundColor: '#059669' },
-  tidakBtn: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#fca5a5' },
-  hadirText: { fontSize: 13, fontWeight: '600', color: '#fff' },
-  tidakText: { fontSize: 13, fontWeight: '600', color: '#dc2626' },
+  hadirBtn: { backgroundColor: theme.colors.success },
+  tidakBtn: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.dangerLight },
+  hadirText: { fontSize: 13, fontWeight: '600', color: theme.colors.surface },
+  tidakText: { fontSize: 13, fontWeight: '600', color: theme.colors.danger },
   empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
-  emptyTitle: { fontSize: 15, fontWeight: '600', color: '#6b7280', marginTop: 12 },
-  emptyText: { fontSize: 13, color: '#9ca3af', marginTop: 6, textAlign: 'center', lineHeight: 19 },
+  emptyTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.textSecondary, marginTop: 12 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 19 },
 });

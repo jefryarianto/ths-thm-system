@@ -6,6 +6,7 @@ import { useReferenceDetail } from '../../hooks/use-reference-detail';
 import { InfoRow, SectionTitle, StatusCard, ScreenShell, ReferenceScreenState, referenceStyles } from '../../components/ui/shared';
 import apiClient from '../../lib/api-client';
 import type { Document } from '../../types';
+import { theme } from '../../theme';
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -18,9 +19,9 @@ const TIPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  draft: { label: 'Draft', color: '#6b7280', bg: '#f3f4f6', icon: 'document' },
-  published: { label: 'Published', color: '#16a34a', bg: '#ecfdf5', icon: 'checkmark-circle' },
-  archived: { label: 'Diarsipkan', color: '#d97706', bg: '#fef3c7', icon: 'archive' },
+  draft: { label: 'Draft', color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted, icon: 'document' },
+  published: { label: 'Published', color: theme.colors.success, bg: theme.colors.successLight, icon: 'checkmark-circle' },
+  archived: { label: 'Diarsipkan', color: theme.colors.warning, bg: theme.colors.warningLight, icon: 'archive' },
 };
 
 // ─── Screen ─────────────────────────────────────────────────
@@ -35,7 +36,7 @@ export default function ReferenceDocumentScreen() {
   if (stateView) return stateView;
   if (!document) return null;
 
-  const st = STATUS_STYLES[document.status] || { label: document.status, color: '#6b7280', bg: '#f3f4f6', icon: 'document' };
+  const st = STATUS_STYLES[document.status] || { label: document.status, color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted, icon: 'document' };
   const tipeLabel = TIPE_LABELS[document.tipe] || document.tipe;
 
   const handleDownload = async () => {
@@ -74,7 +75,7 @@ export default function ReferenceDocumentScreen() {
       {document.filePath && (
         <View style={referenceStyles.cardSection}>
           <TouchableOpacity style={styles.downloadBtn} onPress={handleDownload} activeOpacity={0.7}>
-            <Ionicons name="download" size={18} color="#fff" />
+            <Ionicons name="download" size={18} color={theme.colors.surface} />
             <Text style={styles.downloadBtnText}>Download / Lihat Dokumen</Text>
           </TouchableOpacity>
         </View>
@@ -96,8 +97,8 @@ export default function ReferenceDocumentScreen() {
 // ─── Styles ─────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  downloadBtn: { backgroundColor: '#2563eb', borderRadius: 12, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  downloadBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
-  qrContainer: { backgroundColor: '#f9fafb', borderRadius: 10, padding: 16, alignItems: 'center' },
+  downloadBtn: { backgroundColor: theme.colors.primary, borderRadius: 12, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  downloadBtnText: { fontSize: 15, fontWeight: '600', color: theme.colors.surface },
+  qrContainer: { backgroundColor: theme.colors.surfaceMuted, borderRadius: 10, padding: 16, alignItems: 'center' },
   qrImage: { width: 200, height: 200 },
 });

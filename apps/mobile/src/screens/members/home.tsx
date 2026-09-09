@@ -10,6 +10,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import { useAuthStore } from '../../store/auth-store';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { theme } from '../../theme';
 
 const memberItems = [
   { icon: 'chatbubbles', label: 'Forum', route: '/forum' },
@@ -106,7 +107,7 @@ export default function HomeScreen() {
           activeOpacity={0.7}
           accessibilityLabel="Notifikasi"
         >
-          <Ionicons name="notifications" size={24} color="#fff" />
+          <Ionicons name="notifications" size={24} color={theme.colors.surface} />
           {unreadCount > 0 && (
             <View style={styles.bellBadge}>
               <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
@@ -123,7 +124,7 @@ export default function HomeScreen() {
             onPress={() => router.push(item.route as any)}
           >
             <View style={styles.iconChip}>
-              <Ionicons name={safeIconName(item.icon)} size={24} color="#2563eb" />
+              <Ionicons name={safeIconName(item.icon)} size={24} color={theme.colors.primary} />
             </View>
             <Text style={styles.cardLabel}>{item.label}</Text>
           </TouchableOpacity>
@@ -138,7 +139,7 @@ export default function HomeScreen() {
           <View style={styles.statusCard}>
             <View style={styles.statusHeader}>
               <View style={styles.statusAvatar}>
-                <Ionicons name="person" size={22} color="#2563eb" />
+                <Ionicons name="person" size={22} color={theme.colors.primary} />
               </View>
               <View style={styles.statusTitleWrap}>
                 <Text style={styles.statusTitle}>Profil Anggota</Text>
@@ -149,13 +150,13 @@ export default function HomeScreen() {
               <View
                 style={[
                   styles.statusPill,
-                  { backgroundColor: member?.statusKeanggotaan === 'aktif' ? '#d1fae5' : '#fee2e2' },
+                  { backgroundColor: member?.statusKeanggotaan === 'aktif' ? theme.colors.successLight : theme.colors.dangerLight },
                 ]}
               >
                 <Text
                   style={[
                     styles.statusPillText,
-                    { color: member?.statusKeanggotaan === 'aktif' ? '#059669' : '#dc2626' },
+                    { color: member?.statusKeanggotaan === 'aktif' ? theme.colors.success : theme.colors.danger },
                   ]}
                 >
                   {member?.statusKeanggotaan || 'Aktif'}
@@ -178,8 +179,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7fb' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 36, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 36, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   headerGlow: {
     position: 'absolute',
     top: -40,
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: '#60a5fa',
+    backgroundColor: theme.colors.primaryLight,
     opacity: 0.18,
   },
   bellBtn: { position: 'absolute', right: 20, padding: 6, zIndex: 10 },
@@ -198,64 +199,64 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#dc2626',
+    backgroundColor: theme.colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 1.5,
-    borderColor: '#2563eb',
+    borderColor: theme.colors.primary,
   },
-  bellBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-  greeting: { color: '#bfdbfe', fontSize: 14 },
-  name: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  roleHint: { color: '#93c5fd', fontSize: 13, marginTop: 4, fontWeight: '500' },
+  bellBadgeText: { color: theme.colors.surface, fontSize: 10, fontWeight: '800' },
+  greeting: { color: theme.colors.headerSub, fontSize: 14 },
+  name: { color: theme.colors.surface, fontSize: 22, fontWeight: 'bold', marginTop: 4 },
+  roleHint: { color: theme.colors.primaryLight, fontSize: 13, marginTop: 4, fontWeight: '500' },
   cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -10, paddingHorizontal: 12 },
   iconChip: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: theme.colors.primaryLight,
   },
   card: {
     width: '30%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 14,
     margin: '1.5%',
     alignItems: 'center',
-    shadowColor: '#0f172a',
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.06,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#f0f4f8',
+    borderColor: theme.colors.surfaceMuted,
   },
   cardLabel: {
     fontSize: 12,
-    color: '#334155',
+    color: theme.colors.textSecondary,
     marginTop: 8,
     textAlign: 'center',
     fontWeight: '600',
   },
   infoSection: { padding: 16, paddingTop: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.text, marginBottom: 12 },
   statusCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#0f172a',
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.06,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#f0f4f8',
+    borderColor: theme.colors.surfaceMuted,
   },
   statusHeader: {
     flexDirection: 'row',
@@ -263,20 +264,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   statusAvatar: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   statusTitleWrap: { flex: 1 },
-  statusTitle: { fontSize: 15, fontWeight: '700', color: '#0f172a' },
-  statusSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
+  statusTitle: { fontSize: 15, fontWeight: '700', color: theme.colors.text },
+  statusSubtitle: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2 },
   statusPill: {
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -288,8 +289,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
-  statusLabel: { fontSize: 14, color: '#64748b' },
-  statusValue: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
+  statusLabel: { fontSize: 14, color: theme.colors.textMuted },
+  statusValue: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
 });

@@ -32,6 +32,7 @@ import {
 import type { Reward, LeaderboardEntry, PointEvent } from '../../hooks/use-gamification';
 import Confetti from './confetti';
 import GamificationTour from './tour';
+import { theme } from '../../theme';
 
 interface Badge {
   id: string;
@@ -60,10 +61,10 @@ interface OrgNode {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  latihan: '#3b82f6',
-  iuran: '#22c55e',
-  prestasi: '#a855f7',
-  keaktifan: '#f59e0b',
+  latihan: theme.colors.primary,
+  iuran: theme.colors.success,
+  prestasi: theme.colors.primary,
+  keaktifan: theme.colors.warning,
 };
 
 const RANK_ICONS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
@@ -175,17 +176,17 @@ function PointsChart({ data }: { data: Array<{ month: string; cumulative: number
               y1={y}
               x2={width - padding}
               y2={y}
-              stroke="#e5e7eb"
+              stroke={theme.colors.border}
               strokeWidth={0.5}
             />
           );
         })}
-        <Path d={pathData.d} stroke="#3b82f6" strokeWidth={2} fill="none" strokeLinecap="round" />
+        <Path d={pathData.d} stroke={theme.colors.primary} strokeWidth={2} fill="none" strokeLinecap="round" />
         {data.map((point, i) => {
           const x = padding + i * pathData.stepX;
           const y =
             height - padding - (point.cumulative / pathData.maxVal) * (height - padding * 2);
-          return <Circle key={i} cx={x} cy={y} r={2.5} fill="#3b82f6" />;
+          return <Circle key={i} cx={x} cy={y} r={2.5} fill={theme.colors.primary} />;
         })}
         {labels.map((point, i) => {
           const idx = data.indexOf(point);
@@ -206,7 +207,7 @@ function PointsChart({ data }: { data: Array<{ month: string; cumulative: number
             'Des',
           ];
           return (
-            <SvgText key={i} x={x} y={height - 4} fontSize={8} fill="#9ca3af" textAnchor="middle">
+            <SvgText key={i} x={x} y={height - 4} fontSize={8} fill={theme.colors.textMuted} textAnchor="middle">
               {months[parseInt(m) - 1]} {y.slice(2)}
             </SvgText>
           );
@@ -317,7 +318,7 @@ export default function GamificationScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Memuat gamifikasi...</Text>
       </View>
     );
@@ -336,7 +337,7 @@ export default function GamificationScreen() {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
       }
     >
       {/* Tab Selector */}
@@ -352,7 +353,7 @@ export default function GamificationScreen() {
               <Ionicons
                 name={tab.icon}
                 size={16}
-                color={activeTab === tab.key ? '#fff' : '#6b7280'}
+                color={activeTab === tab.key ? theme.colors.surface : theme.colors.textSecondary}
               />
               <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
                 {tab.label}
@@ -369,7 +370,7 @@ export default function GamificationScreen() {
             <>
               <View style={styles.pointsCard}>
                 <View style={styles.pointsHeader}>
-                  <Ionicons name={'zap' as any} size={28} color="#f59e0b" />
+                  <Ionicons name={'zap' as any} size={28} color={theme.colors.warning} />
                   <View style={styles.liveIndicator}>
                     <PulseDot />
                     <Text style={styles.liveText}>Live</Text>
@@ -389,7 +390,7 @@ export default function GamificationScreen() {
               {/* Cara Mendapatkan Poin — biar tidak bingung asal poin */}
               <View style={styles.howPointsCard}>
                 <View style={styles.howPointsHeader}>
-                  <Ionicons name="help-circle" size={18} color="#3b82f6" />
+                  <Ionicons name="help-circle" size={18} color={theme.colors.primary} />
                   <Text style={styles.howPointsTitle}>Cara Mendapatkan Poin</Text>
                 </View>
                 <View style={styles.howPointsRow}>
@@ -426,12 +427,12 @@ export default function GamificationScreen() {
               )}
               <View style={styles.streaksRow}>
                 <TouchableOpacity style={styles.streakCard} activeOpacity={0.7}>
-                  <Ionicons name="flame" size={24} color="#3b82f6" />
+                  <Ionicons name="flame" size={24} color={theme.colors.primary} />
                   <Text style={styles.streakValue}>{profile.streaks.latihan}</Text>
                   <Text style={styles.streakLabel}>Streak Latihan</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.streakCard} activeOpacity={0.7}>
-                  <Ionicons name="star" size={24} color="#22c55e" />
+                  <Ionicons name="star" size={24} color={theme.colors.success} />
                   <Text style={styles.streakValue}>{profile.streaks.iuran}</Text>
                   <Text style={styles.streakLabel}>Streak Iuran</Text>
                 </TouchableOpacity>
@@ -481,30 +482,30 @@ export default function GamificationScreen() {
       <AnimatedTabContent active={activeTab === 'leaderboard'}>
         <View style={styles.section}>
           <View style={styles.leaderboardHeader}>
-            <Ionicons name="trophy" size={24} color="#f59e0b" />
+            <Ionicons name="trophy" size={24} color={theme.colors.warning} />
             <Text style={styles.leaderboardTitle}>Peringkat Anggota</Text>
             <TouchableOpacity
               style={styles.publicRankButton}
               onPress={() => router.push('/public-leaderboard')}
               activeOpacity={0.7}
             >
-              <Ionicons name="earth" size={14} color="#fff" />
+              <Ionicons name="earth" size={14} color={theme.colors.surface} />
               <Text style={styles.publicRankButtonText}>Peringkat Publik</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.searchContainer}>
-            <Ionicons name="search" size={16} color="#9ca3af" style={styles.searchIcon} />
+            <Ionicons name="search" size={16} color={theme.colors.textMuted} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               placeholder="Cari anggota..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClear}>
-                <Ionicons name="close-circle" size={16} color="#9ca3af" />
+                <Ionicons name="close-circle" size={16} color={theme.colors.textMuted} />
               </TouchableOpacity>
             )}
           </View>
@@ -635,13 +636,13 @@ export default function GamificationScreen() {
                   </View>
                 </View>
                 <View style={styles.leaderboardPoints}>
-                  <Ionicons name={'zap' as any} size={14} color="#f59e0b" />
+                  <Ionicons name={'zap' as any} size={14} color={theme.colors.warning} />
                   <Text style={styles.pointsText}>{entry.points.toLocaleString('id-ID')}</Text>
                 </View>
               </TouchableOpacity>
             ))
           ) : leaderboardLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" style={{ padding: 20 }} />
+            <ActivityIndicator size="small" color={theme.colors.primary} style={{ padding: 20 }} />
           ) : (
             <Text style={styles.emptyText}>Belum ada data leaderboard</Text>
           )}
@@ -696,7 +697,7 @@ export default function GamificationScreen() {
                   )}
                   <View style={styles.rewardMeta}>
                     <View style={styles.rewardPoints}>
-                      <Ionicons name={'zap' as any} size={12} color="#f59e0b" />
+                      <Ionicons name={'zap' as any} size={12} color={theme.colors.warning} />
                       <Text style={styles.rewardPointsText}>
                         {reward.pointCost.toLocaleString('id-ID')}
                       </Text>
@@ -709,7 +710,7 @@ export default function GamificationScreen() {
                 <Ionicons
                   name={reward.stock > 0 ? 'gift' : 'close-circle'}
                   size={24}
-                  color={reward.stock > 0 ? '#8b5cf6' : '#ef4444'}
+                  color={reward.stock > 0 ? '#8b5cf6' : theme.colors.danger}
                 />
               </TouchableOpacity>
             ))}
@@ -737,12 +738,12 @@ export default function GamificationScreen() {
                   <Text style={styles.badgeCardDesc}>{badge.description}</Text>
                 </View>
                 {isEarned ? (
-                  <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
+                  <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
                 ) : (
                   <View
                     style={[
                       styles.categoryBadge,
-                      { backgroundColor: CATEGORY_COLORS[badge.category] || '#6b7280' },
+                      { backgroundColor: CATEGORY_COLORS[badge.category] || theme.colors.textSecondary },
                     ]}
                   >
                     <Text style={styles.categoryText}>{badge.category}</Text>
@@ -760,13 +761,13 @@ export default function GamificationScreen() {
           style={styles.adminButton}
           onPress={() => router.push('/admin-rewards' as never)}
         >
-          <Ionicons name="settings" size={16} color="#6b7280" />
+          <Ionicons name="settings" size={16} color={theme.colors.textSecondary} />
           <Text style={styles.adminButtonText}>Admin Reward</Text>
         </TouchableOpacity>
       )}
       <GamificationTour show={tourVisible} onClose={() => setTourVisible(false)} />
       <TouchableOpacity style={styles.tourButton} onPress={() => setTourVisible(true)}>
-        <Ionicons name="help-circle" size={18} color="#3b82f6" />
+        <Ionicons name="help-circle" size={18} color={theme.colors.primary} />
         <Text style={styles.tourButtonText}>Panduan Fitur</Text>
       </TouchableOpacity>
       <View style={{ height: 40 }} />
@@ -775,21 +776,21 @@ export default function GamificationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#6b7280' },
-  errorText: { marginTop: 12, fontSize: 14, color: '#ef4444', textAlign: 'center' },
+  loadingText: { marginTop: 12, fontSize: 14, color: theme.colors.textSecondary },
+  errorText: { marginTop: 12, fontSize: 14, color: theme.colors.danger, textAlign: 'center' },
   retryButton: {
     marginTop: 16,
     paddingHorizontal: 24,
     paddingVertical: 10,
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
   },
-  retryText: { color: '#fff', fontWeight: '600' },
+  retryText: { color: theme.colors.surface, fontWeight: '600' },
 
   tabContainer: { paddingHorizontal: 16 },
-  tabRow: { flexDirection: 'row', backgroundColor: '#e5e7eb', borderRadius: 12, padding: 3 },
+  tabRow: { flexDirection: 'row', backgroundColor: theme.colors.border, borderRadius: 12, padding: 3 },
   tab: {
     flex: 1,
     flexDirection: 'row',
@@ -800,27 +801,27 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabActive: {
-    backgroundColor: '#3b82f6',
-    shadowColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
   },
-  tabText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
-  tabTextActive: { color: '#fff' },
+  tabText: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary },
+  tabTextActive: { color: theme.colors.surface },
 
   section: { paddingHorizontal: 16, paddingTop: 16 },
 
   pointsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -833,45 +834,45 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   liveIndicator: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
-  liveText: { fontSize: 10, color: '#22c55e', fontWeight: '600' },
-  pointsValue: { fontSize: 42, fontWeight: '800', color: '#f59e0b', marginTop: 8 },
-  pointsLabel: { fontSize: 14, color: '#6b7280', marginTop: 4 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.success },
+  liveText: { fontSize: 10, color: theme.colors.success, fontWeight: '600' },
+  pointsValue: { fontSize: 42, fontWeight: '800', color: theme.colors.warning, marginTop: 8 },
+  pointsLabel: { fontSize: 14, color: theme.colors.textSecondary, marginTop: 4 },
 
   streaksRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   streakCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.dark,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
   },
-  streakValue: { fontSize: 28, fontWeight: '700', color: '#1f2937', marginTop: 8 },
-  streakLabel: { fontSize: 12, color: '#6b7280', marginTop: 4 },
+  streakValue: { fontSize: 28, fontWeight: '700', color: theme.colors.text, marginTop: 8 },
+  streakLabel: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 4 },
 
   subSection: { marginBottom: 16 },
-  subTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
+  subTitle: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 12 },
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   badgeItem: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 12,
     alignItems: 'center',
     width: 80,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   badgeIcon: { fontSize: 28 },
   badgeName: {
     fontSize: 10,
-    color: '#374151',
+    color: theme.colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
     fontWeight: '500',
@@ -880,100 +881,100 @@ const styles = StyleSheet.create({
   eventItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   eventIconWrap: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   eventIcon: { fontSize: 16 },
   eventInfo: { flex: 1, marginLeft: 10 },
-  eventDesc: { fontSize: 13, color: '#1f2937', fontWeight: '500' },
-  eventTime: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  eventDesc: { fontSize: 13, color: theme.colors.text, fontWeight: '500' },
+  eventTime: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   eventPoints: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: theme.colors.warningLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
-  eventPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
+  eventPointsText: { fontSize: 11, fontWeight: '700', color: theme.colors.warning },
 
   leaderboardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  leaderboardTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', flexShrink: 1 },
+  leaderboardTitle: { fontSize: 16, fontWeight: '600', color: theme.colors.text, flexShrink: 1 },
   publicRankButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginLeft: 'auto',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 10,
   },
-  publicRankButtonText: { fontSize: 12, fontWeight: '600', color: '#fff' },
+  publicRankButtonText: { fontSize: 12, fontWeight: '600', color: theme.colors.surface },
   leaderboardItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  topThree: { backgroundColor: '#fffbeb', borderColor: '#fde68a' },
+  topThree: { backgroundColor: theme.colors.warningLight, borderColor: theme.colors.warningLight },
   rankIcon: { fontSize: 20, width: 36, textAlign: 'center' },
   leaderboardInfo: { flex: 1 },
-  leaderboardName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
+  leaderboardName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
   leaderboardMeta: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  metaItem: { fontSize: 11, color: '#6b7280' },
+  metaItem: { fontSize: 11, color: theme.colors.textSecondary },
   leaderboardPoints: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fef3c7',
+    backgroundColor: theme.colors.warningLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  pointsText: { fontSize: 13, fontWeight: '700', color: '#92400e' },
+  pointsText: { fontSize: 13, fontWeight: '700', color: theme.colors.warning },
 
   badgeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  badgeEarned: { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
+  badgeEarned: { backgroundColor: theme.colors.successLight, borderColor: theme.colors.successLight },
   badgeCardIcon: { fontSize: 28, width: 40, textAlign: 'center' },
   badgeCardInfo: { flex: 1, marginLeft: 8 },
-  badgeCardName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
-  badgeCardDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  badgeCardName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  badgeCardDesc: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   categoryBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  categoryText: { fontSize: 10, color: '#fff', fontWeight: '600' },
+  categoryText: { fontSize: 10, color: theme.colors.surface, fontWeight: '600' },
 
   rewardCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   rewardIcon: { fontSize: 32, width: 44, textAlign: 'center' },
   rewardMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
@@ -981,26 +982,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: '#fef3c7',
+    backgroundColor: theme.colors.warningLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
   },
-  rewardPointsText: { fontSize: 11, fontWeight: '700', color: '#92400e' },
-  rewardStock: { fontSize: 11, color: '#6b7280' },
+  rewardPointsText: { fontSize: 11, fontWeight: '700', color: theme.colors.warning },
+  rewardStock: { fontSize: 11, color: theme.colors.textSecondary },
 
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     paddingHorizontal: 10,
     marginBottom: 10,
   },
   searchIcon: { marginRight: 6 },
-  searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: '#1f2937' },
+  searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: theme.colors.text },
   searchClear: { padding: 4 },
 
   filterRow: { flexDirection: 'row', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
@@ -1008,33 +1009,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  filterChipActive: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
+  filterChipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   filterChipDisabled: { opacity: 0.4 },
-  filterChipText: { fontSize: 11, color: '#6b7280', fontWeight: '500' },
-  filterChipTextActive: { color: '#fff' },
+  filterChipText: { fontSize: 11, color: theme.colors.textSecondary, fontWeight: '500' },
+  filterChipTextActive: { color: theme.colors.surface },
   filterChipClear: {
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#fee2e2',
+    backgroundColor: theme.colors.dangerLight,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: theme.colors.dangerLight,
   },
-  filterChipClearText: { fontSize: 12, color: '#ef4444', fontWeight: '700' },
+  filterChipClearText: { fontSize: 12, color: theme.colors.danger, fontWeight: '700' },
 
   chartSection: { marginBottom: 16 },
-  chartTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 8 },
+  chartTitle: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 8 },
   chartContainer: { alignItems: 'center', paddingVertical: 8 },
   chartWrapper: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
   },
 
@@ -1043,7 +1044,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     marginTop: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1053,26 +1054,26 @@ const styles = StyleSheet.create({
 
   // ── Cara Mendapatkan Poin ──
   howPointsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     marginBottom: 16,
   },
   howPointsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  howPointsTitle: { fontSize: 14, fontWeight: '700', color: '#1f2937' },
+  howPointsTitle: { fontSize: 14, fontWeight: '700', color: theme.colors.text },
   howPointsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 7,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   howPointsIcon: { fontSize: 16, width: 28 },
-  howPointsDesc: { flex: 1, fontSize: 13, color: '#374151' },
-  howPointsValue: { fontSize: 13, fontWeight: '700', color: '#f59e0b' },
-  howPointsNote: { fontSize: 11, color: '#9ca3af', marginTop: 10, lineHeight: 16 },
+  howPointsDesc: { flex: 1, fontSize: 13, color: theme.colors.textSecondary },
+  howPointsValue: { fontSize: 13, fontWeight: '700', color: theme.colors.warning },
+  howPointsNote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 10, lineHeight: 16 },
 
   loadMoreButton: {
     flexDirection: 'row',
@@ -1080,13 +1081,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 14,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
   },
-  loadMoreText: { fontSize: 13, fontWeight: '600', color: '#3b82f6' },
+  loadMoreText: { fontSize: 13, fontWeight: '600', color: theme.colors.primary },
   adminButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1095,12 +1096,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginHorizontal: 16,
     marginTop: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  adminButtonText: { fontSize: 13, fontWeight: '500', color: '#6b7280' },
+  adminButtonText: { fontSize: 13, fontWeight: '500', color: theme.colors.textSecondary },
   tourButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1109,11 +1110,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginHorizontal: 16,
     marginTop: 6,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
   },
-  tourButtonText: { fontSize: 13, fontWeight: '500', color: '#3b82f6' },
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },
+  tourButtonText: { fontSize: 13, fontWeight: '500', color: theme.colors.primary },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 20 },
 });

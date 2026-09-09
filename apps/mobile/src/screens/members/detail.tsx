@@ -68,9 +68,9 @@ const DOKUMEN_TIPE_LABEL: Record<string, string> = {
 
 /** Label & warna badge status dokumen (enum StatusDokumen). */
 const DOKUMEN_STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  generated: { label: 'Ter-generate', color: '#047857', bg: '#ecfdf5' },
-  downloaded: { label: 'Diunduh', color: '#1d4ed8', bg: '#eff6ff' },
-  revoked: { label: 'Dicabut', color: '#dc2626', bg: '#fef2f2' },
+  generated: { label: 'Ter-generate', color: theme.colors.success, bg: theme.colors.successLight },
+  downloaded: { label: 'Diunduh', color: theme.colors.primaryDark, bg: theme.colors.primarySofter },
+  revoked: { label: 'Dicabut', color: 'theme.colors.danger', bg: theme.colors.dangerLight },
 };
 
 const TIPE_ICONS: Record<string, string> = {
@@ -155,7 +155,7 @@ export default function MemberDetailScreen() {
       </View>
     );
 
-  const statusColor = member.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626';
+  const statusColor = member.statusKeanggotaan === 'aktif' ? theme.colors.success : 'theme.colors.danger';
   const statusLabel = member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif';
 
   const months = [
@@ -252,7 +252,7 @@ export default function MemberDetailScreen() {
         scrollEnabled={false}
         contentContainerStyle={{ paddingBottom: 8 }}
         renderItem={({ item }) => {
-          const dueStatus = item.status === 'lunas' ? '#16a34a' : '#dc2626';
+          const dueStatus = item.status === 'lunas' ? theme.colors.success : 'theme.colors.danger';
           const dueLabel = item.status === 'lunas' ? 'Lunas' : 'Belum Lunas';
           return (
             <View style={styles.listCard}>
@@ -268,7 +268,7 @@ export default function MemberDetailScreen() {
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: item.status === 'lunas' ? '#ecfdf5' : '#fef2f2' },
+                  { backgroundColor: item.status === 'lunas' ? theme.colors.successLight : theme.colors.dangerLight },
                 ]}
               >
                 <Text style={[styles.statusText, { color: dueStatus }]}>{dueLabel}</Text>
@@ -299,10 +299,10 @@ export default function MemberDetailScreen() {
         renderItem={({ item }) => {
           const hadirColor =
             item.statusKehadiran === 'hadir'
-              ? '#16a34a'
+              ? theme.colors.success
               : item.statusKehadiran === 'izin'
-                ? '#d97706'
-                : '#dc2626';
+                ? theme.colors.warning
+                : 'theme.colors.danger';
           const hadirLabel =
             item.statusKehadiran === 'hadir'
               ? 'Hadir'
@@ -327,10 +327,10 @@ export default function MemberDetailScreen() {
                   {
                     backgroundColor:
                       item.statusKehadiran === 'hadir'
-                        ? '#ecfdf5'
+                        ? theme.colors.successLight
                         : item.statusKehadiran === 'izin'
-                          ? '#fef3c7'
-                          : '#fef2f2',
+                          ? theme.colors.warningLight
+                          : theme.colors.dangerLight,
                   },
                 ]}
               >
@@ -439,8 +439,8 @@ export default function MemberDetailScreen() {
           renderItem={({ item }) => {
             const statusMeta = DOKUMEN_STATUS_META[item.status] || {
               label: item.status || '-',
-              color: '#6b7280',
-              bg: '#f3f4f6',
+              color: theme.colors.textSecondary,
+              bg: theme.colors.surfaceMuted,
             };
             return (
               <View style={styles.docCard}>
@@ -496,8 +496,8 @@ export default function MemberDetailScreen() {
                       style={styles.docActionBtn}
                       onPress={() => verifyDocument(item)}
                     >
-                      <Ionicons name="shield-checkmark" size={15} color="#047857" />
-                      <Text style={[styles.docActionText, { color: '#047857' }]}>Verifikasi</Text>
+                      <Ionicons name="shield-checkmark" size={15} color={theme.colors.success} />
+                      <Text style={[styles.docActionText, { color: theme.colors.success }]}>Verifikasi</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity
@@ -532,14 +532,14 @@ export default function MemberDetailScreen() {
   };
 
   return (
-    <ScreenShell title="Detail Anggota" variant="detail" badgeLabel={statusLabel} badgeColor={statusColor} badgeBg={member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2'}>
+    <ScreenShell title="Detail Anggota" variant="detail" badgeLabel={statusLabel} badgeColor={statusColor} badgeBg={member.statusKeanggotaan === 'aktif' ? theme.colors.successLight : theme.colors.dangerLight}>
 
       <ProfileCard
         name={member.namaLengkap}
         initial={member.namaLengkap.charAt(0)}
         badgeLabel={statusLabel}
         badgeColor={statusColor}
-        badgeBg={member.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2'}
+        badgeBg={member.statusKeanggotaan === 'aktif' ? theme.colors.successLight : theme.colors.dangerLight}
         subtitle={member.ranting?.nama}
         containerStyle={{ margin: 16, marginBottom: 0 }}
       />

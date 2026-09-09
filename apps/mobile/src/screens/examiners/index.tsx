@@ -17,6 +17,7 @@ import apiClient from '../../lib/api-client';
 import { LoadingView, SearchBar } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface Examiner {
   id: string;
@@ -110,7 +111,7 @@ export default function ExaminersScreen() {
           activeOpacity={0.7}
           onPress={() => setShowAdd(true)}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
@@ -143,7 +144,7 @@ export default function ExaminersScreen() {
         contentContainerStyle={{ padding: 16, paddingTop: 8 }}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="school-outline" size={40} color="#cbd5e1" />
+            <Ionicons name="school-outline" size={40} color={theme.colors.border} />
             <Text style={styles.emptyText}>Belum ada data penguji</Text>
           </View>
         }
@@ -157,24 +158,24 @@ export default function ExaminersScreen() {
               <View style={styles.cardInfo}>
                 <Text style={styles.cardName} numberOfLines={1}>{item.namaLengkap}</Text>
                 <Text style={styles.cardEmail} numberOfLines={1}>{item.email}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: aktif ? '#ecfdf5' : '#fef2f2' }]}>
-                  <Text style={[styles.statusText, { color: aktif ? '#16a34a' : '#dc2626' }]}>
+                <View style={[styles.statusBadge, { backgroundColor: aktif ? theme.colors.successLight : theme.colors.dangerLight }]}>
+                  <Text style={[styles.statusText, { color: aktif ? theme.colors.success : theme.colors.danger }]}>
                     {aktif ? 'Aktif' : 'Nonaktif'}
                   </Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={[styles.toggleBtn, { backgroundColor: aktif ? '#fee2e2' : '#dcfce7' }]}
+                style={[styles.toggleBtn, { backgroundColor: aktif ? theme.colors.dangerLight : theme.colors.successLight }]}
                 onPress={() => handleToggle(item)}
                 disabled={toggling === item.id}
               >
                 {toggling === item.id ? (
-                  <ActivityIndicator size="small" color="#6b7280" />
+                  <ActivityIndicator size="small" color={theme.colors.textSecondary} />
                 ) : (
                   <Ionicons
                     name={aktif ? 'toggle' : 'toggle-outline'}
                     size={26}
-                    color={aktif ? '#dc2626' : '#16a34a'}
+                    color={aktif ? theme.colors.danger : theme.colors.success}
                   />
                 )}
               </TouchableOpacity>
@@ -190,7 +191,7 @@ export default function ExaminersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Tambah Penguji</Text>
               <TouchableOpacity onPress={() => setShowAdd(false)}>
-                <Ionicons name="close" size={24} color="#6b7280" />
+                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalHint}>
@@ -199,14 +200,14 @@ export default function ExaminersScreen() {
             <TextInput
               style={styles.input}
               placeholder="Nama lengkap *"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               value={addForm.namaLengkap}
               onChangeText={(t) => setAddForm({ ...addForm, namaLengkap: t })}
             />
             <TextInput
               style={styles.input}
               placeholder="Email *"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
               value={addForm.email}
@@ -218,7 +219,7 @@ export default function ExaminersScreen() {
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={theme.colors.surface} />
               ) : (
                 <Text style={styles.saveBtnText}>Simpan Penguji</Text>
               )}
@@ -231,21 +232,21 @@ export default function ExaminersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#111827',
+    backgroundColor: theme.colors.text,
     padding: 24,
     paddingBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
-  headerSub: { color: '#9ca3af', fontSize: 13, marginTop: 2 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: 'bold' },
+  headerSub: { color: theme.colors.textMuted, fontSize: 13, marginTop: 2 },
   addBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
@@ -255,23 +256,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  filterChipText: { fontSize: 12, fontWeight: '500', color: '#374151' },
-  filterChipTextActive: { color: '#fff' },
+  filterChipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  filterChipText: { fontSize: 12, fontWeight: '500', color: theme.colors.textSecondary },
+  filterChipTextActive: { color: theme.colors.surface },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
@@ -280,15 +281,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  avatarText: { fontSize: 16, fontWeight: '700', color: theme.colors.primary },
   cardInfo: { flex: 1, marginRight: 8 },
-  cardName: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  cardEmail: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  cardName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  cardEmail: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   statusBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
@@ -305,14 +306,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   empty: { alignItems: 'center', paddingVertical: 50 },
-  emptyText: { fontSize: 13, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, marginTop: 12 },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -324,25 +325,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  modalHint: { fontSize: 12, color: '#6b7280', marginBottom: 16 },
+  modalTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.text },
+  modalHint: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 16 },
   input: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#111827',
-    backgroundColor: '#f9fafb',
+    color: theme.colors.text,
+    backgroundColor: theme.colors.surfaceMuted,
     marginBottom: 12,
   },
   saveBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 4,
   },
-  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  saveBtnText: { color: theme.colors.surface, fontSize: 15, fontWeight: '600' },
 });

@@ -17,6 +17,7 @@ import {
   getOtaAutoCheckEnabled,
   setOtaAutoCheckEnabled,
 } from '../src/hooks/use-ota-update';
+import { theme } from '../src/theme';
 
 /** Format tanggal update dalam locale Indonesia. */
 function formatDate(date?: Date): string {
@@ -127,7 +128,7 @@ export default function AboutScreen() {
       {/* Identitas aplikasi */}
       <View style={styles.identity}>
         <View style={styles.logoCircle}>
-          <Ionicons name="shield-checkmark" size={44} color="#2563eb" />
+          <Ionicons name="shield-checkmark" size={44} color={theme.colors.primary} />
         </View>
         <Text style={styles.appName}>THS-THM</Text>
         <Text style={styles.appDesc}>
@@ -165,7 +166,7 @@ export default function AboutScreen() {
             <Text style={styles.infoLabel}>Status</Text>
             {isChecking || isDownloading ? (
               <View style={styles.statusInline}>
-                <ActivityIndicator size="small" color="#2563eb" />
+                <ActivityIndicator size="small" color={theme.colors.primary} />
                 <Text style={[styles.statusChip, styles.statusInfo]}>
                   {isChecking ? 'Memeriksa…' : 'Mengunduh…'}
                 </Text>
@@ -219,7 +220,7 @@ export default function AboutScreen() {
                   onPress={handleApplyUpdate}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="reload" size={16} color="#fff" style={{ marginRight: 6 }} />
+                  <Ionicons name="reload" size={16} color={theme.colors.surface} style={{ marginRight: 6 }} />
                   <Text style={styles.buttonPrimaryText}>Muat Ulang &amp; Terapkan</Text>
                 </TouchableOpacity>
               ) : isDownloading ? null : isUpdateAvailable ? (
@@ -228,7 +229,7 @@ export default function AboutScreen() {
                   onPress={handleDownloadUpdate}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="cloud-download" size={16} color="#fff" style={{ marginRight: 6 }} />
+                  <Ionicons name="cloud-download" size={16} color={theme.colors.surface} style={{ marginRight: 6 }} />
                   <Text style={styles.buttonPrimaryText}>Unduh Pembaruan</Text>
                 </TouchableOpacity>
               ) : (
@@ -238,7 +239,7 @@ export default function AboutScreen() {
                   disabled={isChecking}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="search" size={16} color="#2563eb" style={{ marginRight: 6 }} />
+                  <Ionicons name="search" size={16} color={theme.colors.primary} style={{ marginRight: 6 }} />
                   <Text style={styles.buttonSecondaryText}>
                     {isChecking ? 'Memeriksa…' : 'Cek Pembaruan Sekarang'}
                   </Text>
@@ -283,8 +284,8 @@ export default function AboutScreen() {
           <Switch
             value={autoCheck === null ? true : autoCheck}
             onValueChange={handleToggleAutoCheck}
-            trackColor={{ false: '#d1d5db', true: '#2563eb' }}
-            thumbColor="#fff"
+            trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primary }}
+            thumbColor={theme.colors.surface}
             disabled={autoCheck === null}
           />
         </View>
@@ -301,46 +302,46 @@ export default function AboutScreen() {
 
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7fb' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 28,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  identity: { alignItems: 'center', paddingVertical: 28, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eef2f7' },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: 'bold', marginTop: 4 },
+  identity: { alignItems: 'center', paddingVertical: 28, backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.surfaceMuted },
   logoCircle: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: theme.colors.primaryLight,
   },
-  appName: { fontSize: 22, fontWeight: '700', color: '#0f172a' },
-  appDesc: { fontSize: 13, color: '#64748b', textAlign: 'center', marginTop: 6, lineHeight: 19 },
+  appName: { fontSize: 22, fontWeight: '700', color: theme.colors.text },
+  appDesc: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 19 },
   section: { padding: 16, paddingBottom: 0 },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#64748b',
+    color: theme.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
     marginLeft: 4,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#eef2f7',
+    borderColor: theme.colors.surfaceMuted,
     paddingVertical: 4,
-    shadowColor: '#0f172a',
+    shadowColor: theme.colors.text,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
@@ -354,9 +355,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-  infoLabel: { fontSize: 14, color: '#64748b' },
-  infoValue: { fontSize: 14, fontWeight: '600', color: '#0f172a', maxWidth: '60%', textAlign: 'right' },
-  divider: { height: 1, backgroundColor: '#f1f5f9', marginHorizontal: 16 },
+  infoLabel: { fontSize: 14, color: theme.colors.textMuted },
+  infoValue: { fontSize: 14, fontWeight: '600', color: theme.colors.text, maxWidth: '60%', textAlign: 'right' },
+  divider: { height: 1, backgroundColor: theme.colors.surfaceMuted, marginHorizontal: 16 },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -366,17 +367,17 @@ const styles = StyleSheet.create({
   },
   statusInline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusChip: { fontSize: 13, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
-  statusNeutral: { color: '#475569', backgroundColor: '#f1f5f9' },
-  statusInfo: { color: '#1d4ed8', backgroundColor: '#dbeafe' },
-  statusSuccess: { color: '#166534', backgroundColor: '#dcfce7' },
-  statusError: { color: '#991b1b', backgroundColor: '#fee2e2' },
+  statusNeutral: { color: theme.colors.textSecondary, backgroundColor: theme.colors.surfaceMuted },
+  statusInfo: { color: theme.colors.primaryDark, backgroundColor: theme.colors.primaryLight },
+  statusSuccess: { color: theme.colors.success, backgroundColor: theme.colors.successLight },
+  statusError: { color: theme.colors.danger, backgroundColor: theme.colors.dangerLight },
   errorText: {
     fontSize: 12,
-    color: '#b91c1c',
+    color: theme.colors.danger,
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  hintText: { fontSize: 12, color: '#94a3b8', textAlign: 'center', paddingHorizontal: 16 },
+  hintText: { fontSize: 12, color: theme.colors.textMuted, textAlign: 'center', paddingHorizontal: 16 },
   actionArea: { padding: 16, paddingTop: 4, gap: 10, alignItems: 'center' },
   button: {
     flexDirection: 'row',
@@ -387,11 +388,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignSelf: 'stretch',
   },
-  buttonPrimary: { backgroundColor: '#2563eb', shadowColor: '#2563eb', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  buttonPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  buttonSecondary: { backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe' },
-  buttonSecondaryText: { color: '#2563eb', fontSize: 15, fontWeight: '600' },
-  retryText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
+  buttonPrimary: { backgroundColor: theme.colors.primary, shadowColor: theme.colors.primary, shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  buttonPrimaryText: { color: theme.colors.surface, fontSize: 15, fontWeight: '600' },
+  buttonSecondary: { backgroundColor: theme.colors.primarySofter, borderWidth: 1, borderColor: theme.colors.headerSub },
+  buttonSecondaryText: { color: theme.colors.primary, fontSize: 15, fontWeight: '600' },
+  retryText: { fontSize: 13, fontWeight: '600', color: theme.colors.primary },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -399,12 +400,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   settingContent: { flex: 1, marginRight: 12 },
-  settingLabel: { fontSize: 15, fontWeight: '600', color: '#0f172a' },
-  settingDesc: { fontSize: 12, color: '#94a3b8', marginTop: 2, lineHeight: 17 },
+  settingLabel: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  settingDesc: { fontSize: 12, color: theme.colors.textMuted, marginTop: 2, lineHeight: 17 },
   footer: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#94a3b8',
+    color: theme.colors.textMuted,
     marginTop: 24,
   },
 });

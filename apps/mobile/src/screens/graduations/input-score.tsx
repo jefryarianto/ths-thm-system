@@ -28,6 +28,7 @@ import {
   SesiUjian,
 } from '../../hooks/use-scoring';
 import { LoadingView, ErrorView, SearchBar } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 type FormState = 'loading_ujian' | 'select_participant' | 'input_scores' | 'submitting' | 'confirm';
 
@@ -288,14 +289,14 @@ export default function InputScoreScreen() {
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Nilai Tersimpan</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.confirmContainer}>
           <View style={styles.confirmIcon}>
-            <Ionicons name="checkmark-circle" size={64} color="#16a34a" />
+            <Ionicons name="checkmark-circle" size={64} color={theme.colors.success} />
           </View>
           <Text style={styles.confirmTitle}>Nilai berhasil disimpan!</Text>
 
@@ -310,7 +311,7 @@ export default function InputScoreScreen() {
             </View>
             <View style={styles.confirmRow}>
               <Text style={styles.confirmLabel}>Persentase</Text>
-              <Text style={[styles.confirmPct, { color: pct >= 70 ? '#16a34a' : '#dc2626' }]}>{pct}%</Text>
+              <Text style={[styles.confirmPct, { color: pct >= 70 ? theme.colors.success : theme.colors.danger }]}>{pct}%</Text>
             </View>
             <View style={styles.confirmRow}>
               <Text style={styles.confirmLabel}>Item Dinilai</Text>
@@ -320,11 +321,11 @@ export default function InputScoreScreen() {
 
           <View style={styles.confirmActions}>
             <TouchableOpacity style={styles.confirmBtnPrimary} onPress={handleBackToList}>
-              <Ionicons name="people" size={18} color="#fff" />
+              <Ionicons name="people" size={18} color={theme.colors.surface} />
               <Text style={styles.confirmBtnText}>Nilai Peserta Lain</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.confirmBtnSecondary} onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={18} color="#2563eb" />
+              <Ionicons name="arrow-back" size={18} color={theme.colors.primary} />
               <Text style={styles.confirmBtnSecondaryText}>Kembali ke Detail</Text>
             </TouchableOpacity>
           </View>
@@ -353,7 +354,7 @@ export default function InputScoreScreen() {
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pilih Peserta</Text>
         </View>
@@ -363,12 +364,12 @@ export default function InputScoreScreen() {
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           {error ? (
             <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={16} color="#dc2626" />
+              <Ionicons name="alert-circle" size={16} color={theme.colors.danger} />
               <Text style={styles.errorBannerText}>{error}</Text>
             </View>
           ) : filteredParticipants.length === 0 ? (
             <View style={styles.emptyBox}>
-              <Ionicons name="people" size={48} color="#d1d5db" />
+              <Ionicons name="people" size={48} color={theme.colors.borderStrong} />
               <Text style={styles.emptyText}>
                 {search ? 'Tidak ada peserta yang cocok' : 'Belum ada peserta terdaftar'}
               </Text>
@@ -388,7 +389,7 @@ export default function InputScoreScreen() {
                   <Text style={styles.partName}>{p.namaLengkap || 'Unknown'}</Text>
                   {p.ranting?.nama && <Text style={styles.partNo}>{p.ranting.nama}</Text>}
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+                <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
               </TouchableOpacity>
             ))
           )}
@@ -403,7 +404,7 @@ export default function InputScoreScreen() {
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={handleBackToList} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle} numberOfLines={1}>
@@ -438,7 +439,7 @@ export default function InputScoreScreen() {
                       disabled={sesiBusy || sesi.tambahanMenit >= 10}
                       onPress={handleExtendSesi}
                     >
-                      <Ionicons name="add-circle-outline" size={15} color="#fff" />
+                      <Ionicons name="add-circle-outline" size={15} color={theme.colors.surface} />
                       <Text style={styles.timerBtnText}>+10 Mnt</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.timerBtnFinish} disabled={sesiBusy} onPress={handleFinishSesi}>
@@ -456,7 +457,7 @@ export default function InputScoreScreen() {
                   </Text>
                 </View>
                 <TouchableOpacity style={styles.timerBtn} disabled={sesiBusy} onPress={handleStartSesi}>
-                  <Ionicons name="play" size={15} color="#fff" />
+                  <Ionicons name="play" size={15} color={theme.colors.surface} />
                   <Text style={styles.timerBtnText}>Mulai</Text>
                 </TouchableOpacity>
               </>
@@ -475,7 +476,7 @@ export default function InputScoreScreen() {
               <View
                 style={[
                   styles.progressBarFill,
-                  { width: `${totalScore.pct}%`, backgroundColor: totalScore.pct >= 70 ? '#16a34a' : totalScore.pct >= 40 ? '#eab308' : '#dc2626' },
+                  { width: `${totalScore.pct}%`, backgroundColor: totalScore.pct >= 70 ? theme.colors.success : totalScore.pct >= 40 ? theme.colors.warning : theme.colors.danger },
                 ]}
               />
             </View>
@@ -485,7 +486,7 @@ export default function InputScoreScreen() {
           {/* Aspects & Items */}
           {!aspects || aspects.length === 0 ? (
             <View style={styles.emptyBox}>
-              <Ionicons name="alert-circle" size={48} color="#d1d5db" />
+              <Ionicons name="alert-circle" size={48} color={theme.colors.borderStrong} />
               <Text style={styles.emptyText}>Belum ada aspek penilaian. Hubungi admin.</Text>
             </View>
           ) : (
@@ -527,7 +528,7 @@ export default function InputScoreScreen() {
                               if (current > 0) handleScoreChange(item.id, String(Math.max(0, current - 5)));
                             }}
                           >
-                            <Ionicons name="remove" size={18} color="#6b7280" />
+                            <Ionicons name="remove" size={18} color={theme.colors.textSecondary} />
                           </TouchableOpacity>
 
                           <TextInput
@@ -535,7 +536,7 @@ export default function InputScoreScreen() {
                             keyboardType="number-pad"
                             value={scoreVal !== undefined ? String(scoreVal) : ''}
                             placeholder="Nilai"
-                            placeholderTextColor="#d1d5db"
+                            placeholderTextColor={theme.colors.borderStrong}
                             onChangeText={(v) => handleScoreChange(item.id, v)}
                             editable={formState !== 'submitting'}
                           />
@@ -547,14 +548,14 @@ export default function InputScoreScreen() {
                               if (current < skorMaks) handleScoreChange(item.id, String(Math.min(skorMaks, current + 5)));
                             }}
                           >
-                            <Ionicons name="add" size={18} color="#6b7280" />
+                            <Ionicons name="add" size={18} color={theme.colors.textSecondary} />
                           </TouchableOpacity>
                         </View>
 
                         <TextInput
                           style={styles.noteInput}
                           placeholder="Catatan (opsional)..."
-                          placeholderTextColor="#d1d5db"
+                          placeholderTextColor={theme.colors.borderStrong}
                           value={currentNotes[item.id] || ''}
                           onChangeText={(v) => handleNoteChange(item.id, v)}
                           editable={formState !== 'submitting'}
@@ -583,10 +584,10 @@ export default function InputScoreScreen() {
             onPress={handleSubmit}
           >
             {formState === 'submitting' ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={theme.colors.surface} size="small" />
             ) : (
               <>
-                <Ionicons name="save" size={18} color="#fff" />
+                <Ionicons name="save" size={18} color={theme.colors.surface} />
                 <Text style={styles.submitBtnText}>Simpan Nilai</Text>
               </>
             )}
@@ -600,9 +601,9 @@ export default function InputScoreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -610,34 +611,34 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
-  headerSub: { color: '#bfdbfe', fontSize: 12, marginTop: 2 },
+  headerTitle: { color: theme.colors.surface, fontSize: 18, fontWeight: '700', flex: 1 },
+  headerSub: { color: theme.colors.headerSub, fontSize: 12, marginTop: 2 },
 
   // Error
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fef2f2',
+    backgroundColor: theme.colors.dangerLight,
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: theme.colors.dangerLight,
   },
-  errorBannerText: { color: '#dc2626', fontSize: 13, flex: 1 },
+  errorBannerText: { color: theme.colors.danger, fontSize: 13, flex: 1 },
 
   // Participant List
   participantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -646,51 +647,51 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  partAvatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  partAvatarText: { fontSize: 16, fontWeight: '700', color: theme.colors.primary },
   partInfo: { flex: 1 },
-  partName: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  partNo: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  partName: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  partNo: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
 
   // Progress
   progressCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  progressLabel: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
-  progressScore: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  progressLabel: { fontSize: 13, color: theme.colors.textSecondary, fontWeight: '500' },
+  progressScore: { fontSize: 18, fontWeight: '700', color: theme.colors.text },
   progressBarBg: {
     height: 8,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
   },
   progressBarFill: { height: '100%', borderRadius: 4 },
-  progressPct: { fontSize: 12, color: '#6b7280', textAlign: 'right' },
+  progressPct: { fontSize: 12, color: theme.colors.textSecondary, textAlign: 'right' },
 
   // Aspect
   aspectCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -702,24 +703,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   aspectIcon: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  aspectIconText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  aspectName: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  aspectDesc: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  aspectCount: { fontSize: 11, color: '#9ca3af' },
+  aspectIconText: { color: theme.colors.surface, fontSize: 13, fontWeight: '700' },
+  aspectName: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  aspectDesc: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  aspectCount: { fontSize: 11, color: theme.colors.textMuted },
 
   // Item
   itemCard: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
@@ -730,8 +731,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  itemName: { fontSize: 13, fontWeight: '500', color: '#374151', flex: 1 },
-  itemMaks: { fontSize: 11, color: '#9ca3af', fontWeight: '500', marginLeft: 8 },
+  itemName: { fontSize: 13, fontWeight: '500', color: theme.colors.textSecondary, flex: 1 },
+  itemMaks: { fontSize: 11, color: theme.colors.textMuted, fontWeight: '500', marginLeft: 8 },
   scoreInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -742,7 +743,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -751,118 +752,118 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    backgroundColor: '#fff',
+    borderColor: theme.colors.borderStrong,
+    backgroundColor: theme.colors.surface,
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: theme.colors.text,
   },
   scoreInputFilled: {
-    borderColor: '#2563eb',
-    backgroundColor: '#eff6ff',
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primarySofter,
   },
   noteInput: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     borderRadius: 8,
     padding: 8,
     fontSize: 12,
-    color: '#6b7280',
-    backgroundColor: '#fff',
+    color: theme.colors.textSecondary,
+    backgroundColor: theme.colors.surface,
   },
-  noItemsText: { fontSize: 12, color: '#9ca3af', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
+  noItemsText: { fontSize: 12, color: theme.colors.textMuted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
 
   // Timer Sesi Ujian
   timerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     padding: 14,
     marginBottom: 12,
     gap: 10,
   },
-  timerLabel: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
-  timerValue: { fontSize: 28, fontWeight: '800', color: '#111827', fontVariant: ['tabular-nums'] },
-  timerHabis: { color: '#dc2626', fontSize: 20 },
-  timerNote: { fontSize: 11, color: '#9ca3af', fontStyle: 'italic', marginTop: 2 },
+  timerLabel: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: '600' },
+  timerValue: { fontSize: 28, fontWeight: '800', color: theme.colors.text, fontVariant: ['tabular-nums'] },
+  timerHabis: { color: theme.colors.danger, fontSize: 20 },
+  timerNote: { fontSize: 11, color: theme.colors.textMuted, fontStyle: 'italic', marginTop: 2 },
   timerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  timerBtnDisabled: { backgroundColor: '#93c5fd' },
-  timerBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  timerBtnDisabled: { backgroundColor: theme.colors.primaryLight },
+  timerBtnText: { color: theme.colors.surface, fontSize: 12, fontWeight: '700' },
   timerBtnFinish: {
     alignItems: 'center',
-    backgroundColor: '#fee2e2',
+    backgroundColor: theme.colors.dangerLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  timerBtnFinishText: { color: '#dc2626', fontSize: 12, fontWeight: '700' },
+  timerBtnFinishText: { color: theme.colors.danger, fontSize: 12, fontWeight: '700' },
 
   // Submit Bar
   submitBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    shadowColor: '#000',
+    borderTopColor: theme.colors.border,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   submitInfo: { alignItems: 'flex-end' },
-  submitInfoLabel: { fontSize: 11, color: '#9ca3af' },
-  submitInfoScore: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  submitInfoLabel: { fontSize: 11, color: theme.colors.textMuted },
+  submitInfoScore: { fontSize: 16, fontWeight: '700', color: theme.colors.text },
   submitBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
   },
-  submitBtnDisabled: { backgroundColor: '#93c5fd' },
-  submitBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  submitBtnDisabled: { backgroundColor: theme.colors.primaryLight },
+  submitBtnText: { color: theme.colors.surface, fontSize: 15, fontWeight: '700' },
 
   // Confirm
   confirmContainer: { alignItems: 'center', padding: 24 },
   confirmIcon: { marginTop: 30, marginBottom: 12 },
-  confirmTitle: { fontSize: 20, fontWeight: '700', color: '#16a34a', marginBottom: 24 },
+  confirmTitle: { fontSize: 20, fontWeight: '700', color: theme.colors.success, marginBottom: 24 },
   confirmCard: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   confirmRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
-  confirmLabel: { fontSize: 13, color: '#6b7280' },
-  confirmValue: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  confirmScore: { fontSize: 16, fontWeight: '700', color: '#111827' },
+  confirmLabel: { fontSize: 13, color: theme.colors.textSecondary },
+  confirmValue: { fontSize: 13, fontWeight: '600', color: theme.colors.text },
+  confirmScore: { fontSize: 16, fontWeight: '700', color: theme.colors.text },
   confirmPct: { fontSize: 16, fontWeight: '700' },
   confirmActions: { width: '100%', gap: 10 },
   confirmBtnPrimary: {
@@ -870,25 +871,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
   },
-  confirmBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  confirmBtnText: { color: theme.colors.surface, fontSize: 15, fontWeight: '700' },
   confirmBtnSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
   },
-  confirmBtnSecondaryText: { color: '#2563eb', fontSize: 15, fontWeight: '600' },
+  confirmBtnSecondaryText: { color: theme.colors.primary, fontSize: 15, fontWeight: '600' },
 
   // Empty
   emptyBox: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12, textAlign: 'center' },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12, textAlign: 'center' },
 });

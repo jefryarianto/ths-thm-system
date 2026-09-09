@@ -8,6 +8,7 @@ import { useGraduations, STATUS_STYLES, FILTERS } from '../../hooks/use-graduati
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -31,7 +32,7 @@ export default function GraduationsScreen() {
             <Text style={styles.headerTitle}>Pendadaran</Text>
             <Text style={styles.headerSub}>{(data ?? []).length} ujian</Text>
           </View>
-          <Ionicons name="school" size={28} color="#bfdbfe" />
+          <Ionicons name="school" size={28} color={theme.colors.headerSub} />
         </View>
       </View>
 
@@ -46,7 +47,7 @@ export default function GraduationsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="school" size={48} color="#d1d5db" />
+            <Ionicons name="school" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>
               {search || filterStatus ? 'Tidak ada pendadaran yang cocok' : 'Belum ada pendadaran'}
             </Text>
@@ -56,8 +57,8 @@ export default function GraduationsScreen() {
           const ss = STATUS_STYLES[item.status] || {
             label: item.status,
             icon: 'ellipse',
-            bg: '#f3f4f6',
-            color: '#6b7280',
+            bg: theme.colors.surfaceMuted,
+            color: theme.colors.textSecondary,
           };
           const d = new Date(item.tanggalMulai);
           return (
@@ -77,13 +78,13 @@ export default function GraduationsScreen() {
                 </Text>
                 {item.lokasi && (
                   <View style={styles.metaRow}>
-                    <Ionicons name="location" size={13} color="#9ca3af" />
+                    <Ionicons name="location" size={13} color={theme.colors.textMuted} />
                     <Text style={styles.metaText}>{item.lokasi}</Text>
                   </View>
                 )}
                 {item.tanggalSelesai && (
                   <View style={styles.metaRow}>
-                    <Ionicons name="time" size={13} color="#9ca3af" />
+                    <Ionicons name="time" size={13} color={theme.colors.textMuted} />
                     <Text style={styles.metaText}>
                       Selesai: {new Date(item.tanggalSelesai).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </Text>
@@ -103,33 +104,33 @@ export default function GraduationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
   dateBox: { width: 44, alignItems: 'center', marginRight: 12 },
-  dateDay: { fontSize: 20, fontWeight: '700', color: '#2563eb' },
-  dateMonth: { fontSize: 10, color: '#6b7280' },
-  dateYear: { fontSize: 9, color: '#9ca3af', marginTop: -1 },
+  dateDay: { fontSize: 20, fontWeight: '700', color: theme.colors.primary },
+  dateMonth: { fontSize: 10, color: theme.colors.textSecondary },
+  dateYear: { fontSize: 9, color: theme.colors.textMuted, marginTop: -1 },
   cardBody: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  title: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  metaText: { fontSize: 12, color: '#6b7280' },
+  metaText: { fontSize: 12, color: theme.colors.textSecondary },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,5 +142,5 @@ const styles = StyleSheet.create({
   },
   statusText: { fontSize: 11, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

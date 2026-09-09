@@ -9,6 +9,7 @@ import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface DashboardStats {
   totalMembers: number;
@@ -47,29 +48,29 @@ export default function ReportsScreen() {
       icon: 'people',
       label: 'Total Anggota',
       value: stats.totalMembers,
-      color: '#2563eb',
-      bg: '#eff6ff',
+      color: theme.colors.primary,
+      bg: theme.colors.primarySofter,
     },
     {
       icon: 'person-add',
       label: 'Calon Anggota',
       value: stats.totalCandidates,
-      color: '#7c3aed',
-      bg: '#f5f3ff',
+      color: theme.colors.primary,
+      bg: theme.colors.primarySofter,
     },
     {
       icon: 'school',
       label: 'Lulus Pendadaran',
       value: stats.totalGraduated,
-      color: '#16a34a',
-      bg: '#f0fdf4',
+      color: theme.colors.success,
+      bg: theme.colors.successLight,
     },
     {
       icon: 'cash',
       label: 'Total Iuran',
       value: formatRupiah(stats.totalDuesCollected),
-      color: '#d97706',
-      bg: '#fef3c7',
+      color: theme.colors.warning,
+      bg: theme.colors.warningLight,
     },
   ];
 
@@ -78,15 +79,15 @@ export default function ReportsScreen() {
       icon: 'alert-circle',
       label: 'Validasi Pending',
       value: stats.pendingValidasi,
-      color: '#dc2626',
-      bg: '#fef2f2',
+      color: theme.colors.danger,
+      bg: theme.colors.dangerLight,
     },
     {
       icon: 'warning',
       label: 'Data Tidak Lengkap',
       value: stats.incompleteData,
-      color: '#ea580c',
-      bg: '#fff7ed',
+      color: theme.colors.warning,
+      bg: theme.colors.warningLight,
     },
   ];
 
@@ -182,19 +183,19 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#dc2626' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  errorText: { fontSize: 14, color: theme.colors.danger },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   content: { padding: 16 },
   cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   statCard: { width: '48%', borderRadius: 14, padding: 16, alignItems: 'center', gap: 6 },
   statValue: { fontSize: 22, fontWeight: '700' },
-  statLabel: { fontSize: 12, color: '#6b7280', textAlign: 'center' },
+  statLabel: { fontSize: 12, color: theme.colors.textSecondary, textAlign: 'center' },
   alertSection: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.text, marginBottom: 10 },
   alertCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -203,36 +204,36 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   alertBody: { flex: 1, marginLeft: 10 },
-  alertValue: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  alertLabel: { fontSize: 12, color: '#6b7280' },
+  alertValue: { fontSize: 18, fontWeight: '700', color: theme.colors.text },
+  alertLabel: { fontSize: 12, color: theme.colors.textSecondary },
   section: { marginBottom: 16 },
-  statusList: { backgroundColor: '#fff', borderRadius: 12, padding: 14 },
+  statusList: { backgroundColor: theme.colors.surface, borderRadius: 12, padding: 14 },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
-  statusLabel: { width: 90, fontSize: 13, color: '#374151', fontWeight: '500' },
+  statusLabel: { width: 90, fontSize: 13, color: theme.colors.textSecondary, fontWeight: '500' },
   statusBarBg: {
     flex: 1,
     height: 8,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     borderRadius: 4,
     marginHorizontal: 8,
   },
-  statusBar: { height: 8, backgroundColor: '#2563eb', borderRadius: 4 },
-  statusCount: { width: 30, textAlign: 'right', fontSize: 13, fontWeight: '600', color: '#111827' },
+  statusBar: { height: 8, backgroundColor: theme.colors.primary, borderRadius: 4 },
+  statusCount: { width: 30, textAlign: 'right', fontSize: 13, fontWeight: '600', color: theme.colors.text },
   duesRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
-  duesMonth: { width: 60, fontSize: 11, color: '#6b7280' },
+  duesMonth: { width: 60, fontSize: 11, color: theme.colors.textSecondary },
   duesBarBg: {
     flex: 1,
     height: 6,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     borderRadius: 3,
     marginHorizontal: 6,
   },
-  duesBar: { height: 6, backgroundColor: '#16a34a', borderRadius: 3 },
-  duesAmount: { width: 80, textAlign: 'right', fontSize: 11, color: '#374151', fontWeight: '500' },
+  duesBar: { height: 6, backgroundColor: theme.colors.success, borderRadius: 3 },
+  duesAmount: { width: 80, textAlign: 'right', fontSize: 11, color: theme.colors.textSecondary, fontWeight: '500' },
 });

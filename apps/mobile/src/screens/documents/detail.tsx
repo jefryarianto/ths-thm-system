@@ -15,6 +15,7 @@ import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, InfoRow, StatusBadge, ScreenShell, referenceStyles } from '../../components/ui/shared';
 import type { Document } from '../../types';
+import { theme } from '../../theme';
 
 const TIPE_LABELS: Record<string, string> = {
   kartu_anggota: 'Kartu Anggota (KTA)',
@@ -25,9 +26,9 @@ const TIPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  generated: { label: 'Ter-generate', color: '#047857', bg: '#ecfdf5' },
-  downloaded: { label: 'Diunduh', color: '#1d4ed8', bg: '#eff6ff' },
-  revoked: { label: 'Dicabut', color: '#dc2626', bg: '#fef2f2' },
+  generated: { label: 'Ter-generate', color: theme.colors.success, bg: theme.colors.successLight },
+  downloaded: { label: 'Diunduh', color: theme.colors.primaryDark, bg: theme.colors.primarySofter },
+  revoked: { label: 'Dicabut', color: theme.colors.danger, bg: theme.colors.dangerLight },
 };
 
 export default function DocumentDetailScreen() {
@@ -57,8 +58,8 @@ export default function DocumentDetailScreen() {
 
   const ss = STATUS_STYLES[document.status] || {
     label: document.status,
-    color: '#6b7280',
-    bg: '#f3f4f6',
+    color: theme.colors.textSecondary,
+    bg: theme.colors.surfaceMuted,
   };
 
   const handleDownload = async () => {
@@ -89,7 +90,7 @@ export default function DocumentDetailScreen() {
           {document.anggota && <InfoRow icon="person" label="Anggota" value={document.anggota.namaLengkap} />}
           <InfoRow icon="calendar" label="Tanggal Generate" value={new Date(document.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })} />
           <View style={styles.statusRow}>
-            <Ionicons name="flag" size={15} color="#9ca3af" />
+            <Ionicons name="flag" size={15} color={theme.colors.textMuted} />
             <View style={{ flex: 1 }}>
               <Text style={referenceStyles.infoLabel}>Status</Text>
               <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
@@ -101,7 +102,7 @@ export default function DocumentDetailScreen() {
       {document.filePath && (
         <View style={styles.section}>
           <TouchableOpacity style={styles.downloadBtn} onPress={handleDownload}>
-            <Ionicons name="download" size={18} color="#fff" />
+            <Ionicons name="download" size={18} color={theme.colors.surface} />
             <Text style={styles.downloadBtnText}>Download / Lihat Dokumen</Text>
           </TouchableOpacity>
         </View>
@@ -121,8 +122,8 @@ export default function DocumentDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   section: { padding: 16 },
   statusRow: {
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
   },
 
   downloadBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -142,16 +143,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  downloadBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  downloadBtnText: { fontSize: 15, fontWeight: '600', color: theme.colors.surface },
 
-  subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
+  subTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.text, marginBottom: 12 },
   qrContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   qrImage: { width: 200, height: 200 },
 });

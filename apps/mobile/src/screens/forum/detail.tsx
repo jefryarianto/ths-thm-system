@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useForumThread, createForumPost, deleteForumPost, updateForumPost, markAsSolution, togglePinThread, toggleLockThread, useCurrentMemberId } from '../../hooks/use-forum';
 import { useRole } from '../../hooks/use-role';
 import { LoadingView, ScreenShell } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function ForumThreadDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -143,8 +144,8 @@ export default function ForumThreadDetailScreen() {
         <View style={styles.threadCard}>
           <View style={styles.threadHeader}>
             <View style={styles.titleRow}>
-              {thread.isPinned && <Ionicons name="pin" size={16} color="#2563eb" />}
-              {thread.isLocked && <Ionicons name="lock-closed" size={16} color="#ef4444" />}
+              {thread.isPinned && <Ionicons name="pin" size={16} color={theme.colors.primary} />}
+              {thread.isLocked && <Ionicons name="lock-closed" size={16} color={theme.colors.danger} />}
             </View>
             <View style={styles.threadAuthor}>
               <View style={styles.avatar}>
@@ -157,7 +158,7 @@ export default function ForumThreadDetailScreen() {
                 <Text style={styles.dateText}>{formatDate(thread.createdAt)}</Text>
               </View>
               <View style={styles.viewCount}>
-                <Ionicons name="eye" size={14} color="#9ca3af" />
+                <Ionicons name="eye" size={14} color={theme.colors.textMuted} />
                 <Text style={styles.viewCountText}>{thread.viewCount}</Text>
               </View>
             </View>
@@ -174,7 +175,7 @@ export default function ForumThreadDetailScreen() {
                 <Ionicons
                   name="pin"
                   size={14}
-                  color={thread.isPinned ? '#2563eb' : '#6b7280'}
+                  color={thread.isPinned ? theme.colors.primary : theme.colors.textSecondary}
                 />
                 <Text style={styles.adminBtnText}>
                   {thread.isPinned ? 'Unpin' : 'Pin'}
@@ -187,7 +188,7 @@ export default function ForumThreadDetailScreen() {
                 <Ionicons
                   name="lock-closed"
                   size={14}
-                  color={thread.isLocked ? '#ef4444' : '#6b7280'}
+                  color={thread.isLocked ? theme.colors.danger : theme.colors.textSecondary}
                 />
                 <Text style={styles.adminBtnText}>
                   {thread.isLocked ? 'Unlock' : 'Lock'}
@@ -212,7 +213,7 @@ export default function ForumThreadDetailScreen() {
           >
             {post.isSolution && (
               <View style={styles.solutionBadge}>
-                <Ionicons name="checkmark-circle" size={14} color="#16a34a" />
+                <Ionicons name="checkmark-circle" size={14} color={theme.colors.success} />
                 <Text style={styles.solutionBadgeText}>Solusi</Text>
               </View>
             )}
@@ -282,7 +283,7 @@ export default function ForumThreadDetailScreen() {
                             setEditContent(post.konten);
                           }}
                         >
-                          <Ionicons name="pencil" size={14} color="#6b7280" />
+                          <Ionicons name="pencil" size={14} color={theme.colors.textSecondary} />
                         </TouchableOpacity>
                       )}
                       {canMarkSolution && (
@@ -290,7 +291,7 @@ export default function ForumThreadDetailScreen() {
                           style={styles.postActionBtn}
                           onPress={() => handleMarkSolution(post.id)}
                         >
-                          <Ionicons name="checkmark-circle-outline" size={14} color="#6b7280" />
+                          <Ionicons name="checkmark-circle-outline" size={14} color={theme.colors.textSecondary} />
                         </TouchableOpacity>
                       )}
                       {canManage && (
@@ -298,7 +299,7 @@ export default function ForumThreadDetailScreen() {
                           style={styles.postActionBtn}
                           onPress={() => handleDeletePost(post.id)}
                         >
-                          <Ionicons name="trash-outline" size={14} color="#ef4444" />
+                          <Ionicons name="trash-outline" size={14} color={theme.colors.danger} />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -318,7 +319,7 @@ export default function ForumThreadDetailScreen() {
               value={reply}
               onChangeText={setReply}
               placeholder="Tulis balasan..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               multiline
               numberOfLines={3}
             />
@@ -329,10 +330,10 @@ export default function ForumThreadDetailScreen() {
                 disabled={submitting || !reply.trim()}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={theme.colors.surface} size="small" />
                 ) : (
                   <>
-                    <Ionicons name="send" size={16} color="#fff" />
+                    <Ionicons name="send" size={16} color={theme.colors.surface} />
                     <Text style={styles.sendBtnText}>Kirim Balasan</Text>
                   </>
                 )}
@@ -343,7 +344,7 @@ export default function ForumThreadDetailScreen() {
 
         {thread.isLocked && (
           <View style={styles.lockedInfo}>
-            <Ionicons name="lock-closed" size={18} color="#9ca3af" />
+            <Ionicons name="lock-closed" size={18} color={theme.colors.textMuted} />
             <Text style={styles.lockedInfoText}>
               Thread ini dikunci. Tidak dapat menambah balasan baru.
             </Text>
@@ -356,8 +357,8 @@ export default function ForumThreadDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   breadcrumb: {
     flexDirection: 'row',
@@ -367,18 +368,18 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     flexWrap: 'wrap',
   },
-  breadcrumbLink: { fontSize: 12, color: '#2563eb' },
-  breadcrumbSep: { fontSize: 12, color: '#9ca3af' },
-  breadcrumbCurrent: { fontSize: 12, color: '#6b7280', flex: 1 },
+  breadcrumbLink: { fontSize: 12, color: theme.colors.primary },
+  breadcrumbSep: { fontSize: 12, color: theme.colors.textMuted },
+  breadcrumbCurrent: { fontSize: 12, color: theme.colors.textSecondary, flex: 1 },
 
   threadCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     margin: 16,
     marginBottom: 8,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   threadHeader: {},
   titleRow: { flexDirection: 'row', gap: 4, marginBottom: 8 },
@@ -387,24 +388,24 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
-  authorName: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  dateText: { fontSize: 11, color: '#9ca3af' },
+  avatarText: { fontSize: 14, fontWeight: '700', color: theme.colors.primary },
+  authorName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  dateText: { fontSize: 11, color: theme.colors.textMuted },
   viewCount: { flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 'auto' },
-  viewCountText: { fontSize: 11, color: '#9ca3af' },
+  viewCountText: { fontSize: 11, color: theme.colors.textMuted },
   kontenBox: { marginTop: 12 },
-  kontenText: { fontSize: 14, color: '#374151', lineHeight: 20 },
+  kontenText: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 20 },
   adminActions: {
     flexDirection: 'row',
     gap: 10,
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.surfaceMuted,
   },
   adminBtn: {
     flexDirection: 'row',
@@ -412,30 +413,30 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 4,
     paddingHorizontal: 10,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 8,
   },
-  adminBtnText: { fontSize: 12, color: '#6b7280' },
+  adminBtnText: { fontSize: 12, color: theme.colors.textSecondary },
 
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: theme.colors.textSecondary,
     paddingHorizontal: 16,
     marginBottom: 8,
   },
 
   postCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     marginHorizontal: 16,
     marginBottom: 6,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   postCardSolution: {
-    borderColor: '#86efac',
+    borderColor: theme.colors.successLight,
     borderWidth: 2,
   },
   solutionBadge: {
@@ -444,21 +445,21 @@ const styles = StyleSheet.create({
     gap: 4,
     marginBottom: 8,
   },
-  solutionBadgeText: { fontSize: 12, fontWeight: '600', color: '#16a34a' },
+  solutionBadgeText: { fontSize: 12, fontWeight: '600', color: theme.colors.success },
   postHeader: { marginBottom: 8 },
   postAuthor: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   avatarSmall: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarSmallText: { fontSize: 11, fontWeight: '700', color: '#2563eb' },
-  postAuthorName: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  postDate: { fontSize: 10, color: '#9ca3af', marginLeft: 'auto' },
-  postKonten: { fontSize: 13, color: '#374151', lineHeight: 19 },
+  avatarSmallText: { fontSize: 11, fontWeight: '700', color: theme.colors.primary },
+  postAuthorName: { fontSize: 13, fontWeight: '600', color: theme.colors.text },
+  postDate: { fontSize: 10, color: theme.colors.textMuted, marginLeft: 'auto' },
+  postKonten: { fontSize: 13, color: theme.colors.textSecondary, lineHeight: 19 },
   postActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -466,18 +467,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.surfaceMuted,
   },
   postActionBtn: { padding: 4 },
 
   editInput: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     padding: 10,
     fontSize: 13,
-    color: '#111827',
+    color: theme.colors.text,
     minHeight: 60,
     textAlignVertical: 'top',
   },
@@ -486,35 +487,35 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
   },
-  cancelBtnText: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  cancelBtnText: { fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary },
   saveBtn: {
     paddingVertical: 6,
     paddingHorizontal: 14,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
   },
-  saveBtnText: { fontSize: 12, fontWeight: '600', color: '#fff' },
+  saveBtnText: { fontSize: 12, fontWeight: '600', color: theme.colors.surface },
 
   replyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     margin: 16,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  replyTitle: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 8 },
+  replyTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.text, marginBottom: 8 },
   replyInput: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 10,
     padding: 12,
     fontSize: 14,
-    color: '#111827',
+    color: theme.colors.text,
     minHeight: 72,
     textAlignVertical: 'top',
   },
@@ -523,22 +524,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
-  sendBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  sendBtnText: { fontSize: 14, fontWeight: '600', color: theme.colors.surface },
   btnDisabled: { opacity: 0.5 },
 
   lockedInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     margin: 16,
     padding: 14,
     borderRadius: 10,
   },
-  lockedInfoText: { fontSize: 13, color: '#6b7280', flex: 1 },
+  lockedInfoText: { fontSize: 13, color: theme.colors.textSecondary, flex: 1 },
 });

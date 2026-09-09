@@ -7,12 +7,13 @@ import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, ScreenShell, TabBar } from '../../components/ui/shared';
 import { useRole } from '../../hooks/use-role';
 import type { Graduation, GraduationParticipant, GraduationEvaluation, GraduationResult } from '../../types';
+import { theme } from '../../theme';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: 'Draft', color: '#6b7280', bg: '#f3f4f6' },
-  published: { label: 'Berlangsung', color: '#16a34a', bg: '#ecfdf5' },
-  closed: { label: 'Selesai', color: '#2563eb', bg: '#eff6ff' },
-  cancelled: { label: 'Dibatalkan', color: '#dc2626', bg: '#fef2f2' },
+  draft: { label: 'Draft', color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted },
+  published: { label: 'Berlangsung', color: theme.colors.success, bg: theme.colors.successLight },
+  closed: { label: 'Selesai', color: theme.colors.primary, bg: theme.colors.primarySofter },
+  cancelled: { label: 'Dibatalkan', color: theme.colors.danger, bg: theme.colors.dangerLight },
 };
 
 export default function GraduationDetailScreen() {
@@ -100,8 +101,8 @@ export default function GraduationDetailScreen() {
 
   const ss = STATUS_STYLES[graduation.status] || {
     label: graduation.status,
-    color: '#6b7280',
-    bg: '#f3f4f6',
+    color: theme.colors.textSecondary,
+    bg: theme.colors.surfaceMuted,
   };
 
   const formatDate = (dateStr: string) => {
@@ -309,7 +310,7 @@ export default function GraduationDetailScreen() {
         <View style={styles.section}>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={18} color="#2563eb" />
+              <Ionicons name="calendar" size={18} color={theme.colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tanggal Mulai</Text>
                 <Text style={styles.infoValue}>{formatDate(graduation.tanggalMulai)}</Text>
@@ -317,7 +318,7 @@ export default function GraduationDetailScreen() {
             </View>
             {graduation.tanggalSelesai && (
               <View style={styles.infoRow}>
-                <Ionicons name="time" size={18} color="#2563eb" />
+                <Ionicons name="time" size={18} color={theme.colors.primary} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Tanggal Selesai</Text>
                   <Text style={styles.infoValue}>{formatDate(graduation.tanggalSelesai)}</Text>
@@ -326,7 +327,7 @@ export default function GraduationDetailScreen() {
             )}
             {graduation.lokasi && (
               <View style={styles.infoRow}>
-                <Ionicons name="location" size={18} color="#2563eb" />
+                <Ionicons name="location" size={18} color={theme.colors.primary} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Lokasi</Text>
                   <Text style={styles.infoValue}>{graduation.lokasi}</Text>
@@ -335,7 +336,7 @@ export default function GraduationDetailScreen() {
             )}
             {graduation.penguji && (
               <View style={styles.infoRow}>
-                <Ionicons name="person" size={18} color="#2563eb" />
+                <Ionicons name="person" size={18} color={theme.colors.primary} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Penguji</Text>
                   <Text style={styles.infoValue}>{graduation.penguji.namaLengkap}</Text>
@@ -343,7 +344,7 @@ export default function GraduationDetailScreen() {
               </View>
             )}
             <View style={styles.infoRow}>
-              <Ionicons name="flag" size={18} color="#2563eb" />
+              <Ionicons name="flag" size={18} color={theme.colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Status</Text>
                 <View style={[styles.statusBadge, { backgroundColor: ss.bg }]}>
@@ -357,7 +358,7 @@ export default function GraduationDetailScreen() {
           {graduation.status === 'published' && (
             <View style={styles.qrCard}>
               <View style={styles.qrHeader}>
-                <Ionicons name="qr-code" size={18} color="#059669" />
+                <Ionicons name="qr-code" size={18} color={theme.colors.success} />
                 <Text style={styles.qrTitle}>QR Absensi Pendadaran</Text>
               </View>
               <Text style={styles.qrHint}>
@@ -394,10 +395,10 @@ export default function GraduationDetailScreen() {
                     {
                       backgroundColor:
                         p.status === 'lulus'
-                          ? '#ecfdf5'
+                          ? theme.colors.successLight
                           : p.status === 'gagal'
-                            ? '#fef2f2'
-                            : '#eff6ff',
+                            ? theme.colors.dangerLight
+                            : theme.colors.primarySofter,
                     },
                   ]}
                 >
@@ -407,10 +408,10 @@ export default function GraduationDetailScreen() {
                       {
                         color:
                           p.status === 'lulus'
-                            ? '#16a34a'
+                            ? theme.colors.success
                             : p.status === 'gagal'
-                              ? '#dc2626'
-                              : '#2563eb',
+                              ? theme.colors.danger
+                              : theme.colors.primary,
                       },
                     ]}
                   >
@@ -434,12 +435,12 @@ export default function GraduationDetailScreen() {
               activeOpacity={0.7}
               onPress={() => router.push(`/graduations/input-score?id=${graduation.id}` as any)}
             >
-              <Ionicons name="create" size={20} color="#fff" />
+              <Ionicons name="create" size={20} color={theme.colors.surface} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.inputNilaiTitle}>Input Nilai</Text>
                 <Text style={styles.inputNilaiSub}>Pilih peserta dan isi nilai ujian praktek</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#93c5fd" />
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryLight} />
             </TouchableOpacity>
           )}
 
@@ -483,7 +484,7 @@ export default function GraduationDetailScreen() {
           {scoreProgress && (
             <View style={styles.progressCard}>
               <View style={styles.progressHeader}>
-                <Ionicons name="analytics" size={18} color="#2563eb" />
+                <Ionicons name="analytics" size={18} color={theme.colors.primary} />
                 <Text style={styles.progressTitle}>Progress Pengisian Nilai</Text>
                 <Text style={styles.progressCount}>
                   {scoreProgress.totalEntered}/{scoreProgress.totalExpectedScores}
@@ -496,7 +497,7 @@ export default function GraduationDetailScreen() {
                     styles.progressBarFill,
                     {
                       width: `${Math.min(scoreProgress.percentage, 100)}%`,
-                      backgroundColor: scoreProgress.percentage === 100 ? '#10b981' : scoreProgress.percentage >= 50 ? '#2563eb' : '#f59e0b',
+                      backgroundColor: scoreProgress.percentage === 100 ? theme.colors.success : scoreProgress.percentage >= 50 ? theme.colors.primary : theme.colors.warning,
                     },
                   ]}
                 />
@@ -520,7 +521,7 @@ export default function GraduationDetailScreen() {
                             styles.progressBarFillSmall,
                             {
                               width: `${Math.min(p.percentage, 100)}%`,
-                              backgroundColor: p.percentage === 100 ? '#10b981' : p.percentage >= 50 ? '#2563eb' : '#f59e0b',
+                              backgroundColor: p.percentage === 100 ? theme.colors.success : p.percentage >= 50 ? theme.colors.primary : theme.colors.warning,
                             },
                           ]}
                         />
@@ -545,7 +546,7 @@ export default function GraduationDetailScreen() {
               }
             }}
           >
-            <Ionicons name={showCreateUjian ? 'close' : 'add-circle'} size={20} color="#fff" />
+            <Ionicons name={showCreateUjian ? 'close' : 'add-circle'} size={20} color={theme.colors.surface} />
             <Text style={styles.createBtnText}>{showCreateUjian ? 'Batal' : 'Buat Ujian Baru'}</Text>
           </TouchableOpacity>
 
@@ -594,7 +595,7 @@ export default function GraduationDetailScreen() {
                     style={styles.ujianHeader}
                     onPress={() => setExpandedUjian(isExpanded ? null : ujian.id)}
                   >
-                    <Ionicons name="document-text" size={18} color="#2563eb" />
+                    <Ionicons name="document-text" size={18} color={theme.colors.primary} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.ujianName}>{ujian.nama}</Text>
                       <Text style={styles.ujianMeta}>
@@ -602,7 +603,7 @@ export default function GraduationDetailScreen() {
                         {ujian.durasiMenit ? ` | ${ujian.durasiMenit} menit` : ''}
                       </Text>
                     </View>
-                    <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color="#9ca3af" />
+                    <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.colors.textMuted} />
                   </TouchableOpacity>
 
                   {isExpanded && (
@@ -618,7 +619,7 @@ export default function GraduationDetailScreen() {
                                 <Text style={styles.ujianItemAspek}>{item.itemPenilaian?.aspek?.namaAspek || ''} | Max {Number(item.itemPenilaian?.skorMaksimal || 0)}</Text>
                               </View>
                               <TouchableOpacity onPress={() => handleRemoveItem(ujian.id, item.itemPenilaian?.id)}>
-                                <Ionicons name="close-circle" size={18} color="#dc2626" />
+                                <Ionicons name="close-circle" size={18} color={theme.colors.danger} />
                               </TouchableOpacity>
                             </View>
                           ))
@@ -635,7 +636,7 @@ export default function GraduationDetailScreen() {
                                 style={styles.addItemBtn}
                                 onPress={() => handleAssignItem(ujian.id, item.id)}
                               >
-                                <Ionicons name="add-circle" size={16} color="#2563eb" />
+                                <Ionicons name="add-circle" size={16} color={theme.colors.primary} />
                                 <Text style={styles.addItemText}>{item.namaItem} ({item.aspek?.namaAspek || ''})</Text>
                               </TouchableOpacity>
                             ))}
@@ -654,7 +655,7 @@ export default function GraduationDetailScreen() {
                                 <Text style={styles.ujianItemAspek}>{p.pengujiUser?.email || ''}</Text>
                               </View>
                               <TouchableOpacity onPress={() => handleRemoveExaminer(ujian.id, p.pengujiUser?.id)}>
-                                <Ionicons name="close-circle" size={18} color="#dc2626" />
+                                <Ionicons name="close-circle" size={18} color={theme.colors.danger} />
                               </TouchableOpacity>
                             </View>
                           ))
@@ -671,7 +672,7 @@ export default function GraduationDetailScreen() {
                                 style={styles.addItemBtn}
                                 onPress={() => handleAssignExaminer(ujian.id, ex.id)}
                               >
-                                <Ionicons name="add-circle" size={16} color="#2563eb" />
+                                <Ionicons name="add-circle" size={16} color={theme.colors.primary} />
                                 <Text style={styles.addItemText}>{ex.namaLengkap} ({ex.email || ''})</Text>
                               </TouchableOpacity>
                             ))}
@@ -684,7 +685,7 @@ export default function GraduationDetailScreen() {
                         style={styles.deleteUjianBtn}
                         onPress={() => handleDeleteUjian(ujian.id, ujian.nama)}
                       >
-                        <Ionicons name="trash" size={16} color="#dc2626" />
+                        <Ionicons name="trash" size={16} color={theme.colors.danger} />
                         <Text style={styles.deleteUjianText}>Hapus Ujian</Text>
                       </TouchableOpacity>
                     </View>
@@ -717,11 +718,11 @@ export default function GraduationDetailScreen() {
                 </View>
                 <View style={[
                   styles.examinerStatusBadge,
-                  { backgroundColor: ex.status === 'approved' ? '#ecfdf5' : ex.status === 'rejected' ? '#fef2f2' : '#fffbeb' }
+                  { backgroundColor: ex.status === 'approved' ? theme.colors.successLight : ex.status === 'rejected' ? theme.colors.dangerLight : theme.colors.warningLight }
                 ]}>
                   <Text style={[
                     styles.examinerStatusText,
-                    { color: ex.status === 'approved' ? '#16a34a' : ex.status === 'rejected' ? '#dc2626' : '#d97706' }
+                    { color: ex.status === 'approved' ? theme.colors.success : ex.status === 'rejected' ? theme.colors.danger : theme.colors.warning }
                   ]}>
                     {ex.status === 'approved' ? 'Disetujui' : ex.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
                   </Text>
@@ -758,7 +759,7 @@ export default function GraduationDetailScreen() {
             onPress={generateDocs}
             disabled={genDocsLoading}
           >
-            <Ionicons name="document-text" size={18} color="#fff" />
+            <Ionicons name="document-text" size={18} color={theme.colors.surface} />
             <View style={{ flex: 1 }}>
               <Text style={styles.genDocsTitle}>
                 {genDocsLoading ? 'Mengenerate...' : 'Generate Sertifikat'}
@@ -856,19 +857,19 @@ export default function GraduationDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   // Tabs removed — using shared TabBar component
 
   section: { padding: 16 },
 
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   infoRow: {
     flexDirection: 'row',
@@ -876,11 +877,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  infoLabel: { fontSize: 11, color: theme.colors.textMuted, marginBottom: 2 },
+  infoValue: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -891,48 +892,48 @@ const styles = StyleSheet.create({
 
   // QR Absensi
   qrCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
     marginTop: 16,
   },
   qrHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginBottom: 6 },
-  qrTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  qrHint: { fontSize: 12, color: '#6b7280', textAlign: 'center', marginBottom: 16 },
+  qrTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  qrHint: { fontSize: 12, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: 16 },
   qrContainer: {
     padding: 12,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
 
   partCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   partLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   partAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  partAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
-  partName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  partNo: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  partAvatarText: { fontSize: 14, fontWeight: '700', color: theme.colors.primary },
+  partName: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
+  partNo: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
   partStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   partStatusText: { fontSize: 11, fontWeight: '600' },
 
@@ -940,167 +941,167 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   evalLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   evalAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  evalAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
+  evalAvatarText: { fontSize: 14, fontWeight: '700', color: theme.colors.primary },
   evalInfo: { flex: 1 },
-  evalName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  evalAspek: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  evalNote: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  evalName: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
+  evalAspek: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  evalNote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   evalScore: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
   },
-  evalScoreText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  evalScoreText: { fontSize: 16, fontWeight: '700', color: theme.colors.primary },
 
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 
   // Ujian CRUD
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
     gap: 8,
-    shadowColor: '#2563eb',
+    shadowColor: theme.colors.primary,
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
-  createBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  createBtnText: { color: theme.colors.surface, fontSize: 14, fontWeight: '700' },
   createForm: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  formLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 4, marginTop: 8 },
+  formLabel: { fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 4, marginTop: 8 },
   formInput: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     padding: 12,
     fontSize: 14,
-    color: '#111827',
+    color: theme.colors.text,
   },
   submitBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: theme.colors.success,
     borderRadius: 10,
     padding: 12,
     alignItems: 'center',
     marginTop: 12,
   },
-  submitBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  ujianExpanded: { paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  submitBtnText: { color: theme.colors.surface, fontSize: 14, fontWeight: '600' },
+  ujianExpanded: { paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.surfaceMuted },
   ujianSection: { marginTop: 12 },
-  ujianSectionTitle: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  ujianSectionTitle: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 8 },
   ujianItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
     borderRadius: 8,
     marginBottom: 4,
   },
-  emptyTextSmall: { fontSize: 12, color: '#9ca3af', textAlign: 'center', paddingVertical: 12 },
+  emptyTextSmall: { fontSize: 12, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 12 },
   // Score Progress
   progressCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   progressHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  progressTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: '#111827' },
-  progressCount: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  progressBarBg: { height: 8, backgroundColor: '#f3f4f6', borderRadius: 4, marginBottom: 6 },
+  progressTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  progressCount: { fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary },
+  progressBarBg: { height: 8, backgroundColor: theme.colors.surfaceMuted, borderRadius: 4, marginBottom: 6 },
   progressBarFill: { height: 8, borderRadius: 4 },
   progressFooter: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  progressFooterText: { fontSize: 11, color: '#9ca3af' },
-  progressPercent: { fontSize: 12, fontWeight: '700', color: '#374151' },
-  pengujiBreakdown: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-  pengujiBreakdownTitle: { fontSize: 12, fontWeight: '600', color: '#6b7280', marginBottom: 6 },
+  progressFooterText: { fontSize: 11, color: theme.colors.textMuted },
+  progressPercent: { fontSize: 12, fontWeight: '700', color: theme.colors.textSecondary },
+  pengujiBreakdown: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: theme.colors.surfaceMuted },
+  pengujiBreakdownTitle: { fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
   pengujiRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  pengujiName: { width: 80, fontSize: 11, color: '#374151' },
-  progressBarBgSmall: { flex: 1, height: 4, backgroundColor: '#f3f4f6', borderRadius: 2 },
+  pengujiName: { width: 80, fontSize: 11, color: theme.colors.textSecondary },
+  progressBarBgSmall: { flex: 1, height: 4, backgroundColor: theme.colors.surfaceMuted, borderRadius: 2 },
   progressBarFillSmall: { height: 4, borderRadius: 2 },
-  pengujiPercent: { width: 35, fontSize: 10, color: '#6b7280', textAlign: 'right' },
-  addSection: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-  addSectionLabel: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  pengujiPercent: { width: 35, fontSize: 10, color: theme.colors.textSecondary, textAlign: 'right' },
+  addSection: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.colors.surfaceMuted },
+  addSectionLabel: { fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
   addItemBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderRadius: 8,
     marginBottom: 4,
   },
-  addItemText: { fontSize: 12, color: '#2563eb', fontWeight: '500' },
+  addItemText: { fontSize: 12, color: theme.colors.primary, fontWeight: '500' },
   deleteUjianBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: '#fef2f2',
+    backgroundColor: theme.colors.dangerLight,
     borderRadius: 10,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: theme.colors.dangerLight,
   },
-  deleteUjianText: { fontSize: 12, fontWeight: '600', color: '#dc2626' },
+  deleteUjianText: { fontSize: 12, fontWeight: '600', color: theme.colors.danger },
   // Ujian Praktek
   ujianCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   ujianHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  ujianName: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  ujianMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  ujianItems: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  ujianName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  ujianMeta: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  ujianItems: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.colors.surfaceMuted },
   ujianItem: { paddingVertical: 6 },
-  ujianItemName: { fontSize: 13, fontWeight: '500', color: '#374151' },
-  ujianItemAspek: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+  ujianItemName: { fontSize: 13, fontWeight: '500', color: theme.colors.textSecondary },
+  ujianItemAspek: { fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
 
   // Penguji
   examinerCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     gap: 10,
   },
   examinerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -1108,14 +1109,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  examinerAvatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
-  examinerName: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  examinerMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  examinerNote: { fontSize: 11, color: '#9ca3af', marginTop: 4, fontStyle: 'italic' },
+  examinerAvatarText: { fontSize: 16, fontWeight: '700', color: theme.colors.primary },
+  examinerName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  examinerMeta: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  examinerNote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 4, fontStyle: 'italic' },
   examinerStatusBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
   examinerStatusText: { fontSize: 11, fontWeight: '600' },
   examinerActions: { flexDirection: 'row', gap: 8 },
@@ -1126,71 +1127,71 @@ const styles = StyleSheet.create({
   inputNilaiBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
     gap: 12,
-    shadowColor: '#2563eb',
+    shadowColor: theme.colors.primary,
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
-  inputNilaiTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  inputNilaiSub: { color: '#bfdbfe', fontSize: 12, marginTop: 2 },
+  inputNilaiTitle: { color: theme.colors.surface, fontSize: 15, fontWeight: '700' },
+  inputNilaiSub: { color: theme.colors.headerSub, fontSize: 12, marginTop: 2 },
 
   // Validasi Hasil
   genDocsBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#059669',
+    backgroundColor: theme.colors.success,
     borderRadius: 14,
     padding: 16,
     marginBottom: 16,
     gap: 12,
-    shadowColor: '#059669',
+    shadowColor: theme.colors.success,
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
-  genDocsTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  genDocsSub: { color: '#a7f3d0', fontSize: 12, marginTop: 2 },
+  genDocsTitle: { color: theme.colors.surface, fontSize: 15, fontWeight: '700' },
+  genDocsSub: { color: theme.colors.successLight, fontSize: 12, marginTop: 2 },
   genDocsResult: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: theme.colors.successLight,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
+    borderColor: theme.colors.successLight,
   },
-  genDocsResultText: { fontSize: 13, fontWeight: '600', color: '#047857' },
-  genDocsResultError: { fontSize: 11, color: '#dc2626', marginTop: 4 },
+  genDocsResultText: { fontSize: 13, fontWeight: '600', color: theme.colors.success },
+  genDocsResultError: { fontSize: 11, color: theme.colors.danger, marginTop: 4 },
   resultCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
     gap: 8,
   },
   resultLeft: { flex: 1, minWidth: 0 },
-  resultName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  resultMeta: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  resultName: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
+  resultMeta: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
   resultBadges: { flexDirection: 'row', gap: 6, marginTop: 6 },
   resultBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, fontSize: 10, fontWeight: '600' },
-  badgeLulus: { backgroundColor: '#ecfdf5', color: '#16a34a' },
-  badgeGagal: { backgroundColor: '#fef2f2', color: '#dc2626' },
-  badgeApproved: { backgroundColor: '#ecfdf5', color: '#16a34a' },
-  badgeRejected: { backgroundColor: '#fef2f2', color: '#dc2626' },
-  badgePending: { backgroundColor: '#fffbeb', color: '#d97706' },
+  badgeLulus: { backgroundColor: theme.colors.successLight, color: theme.colors.success },
+  badgeGagal: { backgroundColor: theme.colors.dangerLight, color: theme.colors.danger },
+  badgeApproved: { backgroundColor: theme.colors.successLight, color: theme.colors.success },
+  badgeRejected: { backgroundColor: theme.colors.dangerLight, color: theme.colors.danger },
+  badgePending: { backgroundColor: theme.colors.warningLight, color: theme.colors.warning },
   resultActions: { flexDirection: 'row', gap: 6, flexShrink: 0 },
   actionBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
-  approveBtn: { backgroundColor: '#059669' },
-  rejectBtn: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#fca5a5' },
-  approveText: { fontSize: 12, fontWeight: '600', color: '#fff' },
-  rejectText: { fontSize: 12, fontWeight: '600', color: '#dc2626' },
+  approveBtn: { backgroundColor: theme.colors.success },
+  rejectBtn: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.dangerLight },
+  approveText: { fontSize: 12, fontWeight: '600', color: theme.colors.surface },
+  rejectText: { fontSize: 12, fontWeight: '600', color: theme.colors.danger },
 });

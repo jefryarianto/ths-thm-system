@@ -8,6 +8,7 @@ import { useApi } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 type LetterTab = 'incoming' | 'outgoing';
 
@@ -28,11 +29,11 @@ interface OutgoingLetter extends BaseLetter {
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  draft: { label: 'Draft', bg: '#f3f4f6', color: '#6b7280' },
-  diterima: { label: 'Diterima', bg: '#eff6ff', color: '#2563eb' },
-  diproses: { label: 'Diproses', bg: '#fef3c7', color: '#d97706' },
-  terkirim: { label: 'Terkirim', bg: '#ecfdf5', color: '#16a34a' },
-  diarsipkan: { label: 'Diarsipkan', bg: '#f3f4f6', color: '#6b7280' },
+  draft: { label: 'Draft', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary },
+  diterima: { label: 'Diterima', bg: theme.colors.primarySofter, color: theme.colors.primary },
+  diproses: { label: 'Diproses', bg: theme.colors.warningLight, color: theme.colors.warning },
+  terkirim: { label: 'Terkirim', bg: theme.colors.successLight, color: theme.colors.success },
+  diarsipkan: { label: 'Diarsipkan', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary },
 };
 
 const STATUS_FILTERS = [
@@ -115,23 +116,23 @@ export default function LettersScreen() {
           activeOpacity={0.7}
           onPress={() => Alert.alert('Belum Tersedia', 'Fitur pembuatan surat sedang dalam pengembangan.')}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color="#9ca3af" />
+        <Ionicons name="search" size={16} color={theme.colors.textMuted} />
         <TextInput
           style={styles.searchInput}
           placeholder="Cari surat..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={theme.colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color="#9ca3af" />
+            <Ionicons name="close-circle" size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -147,7 +148,7 @@ export default function LettersScreen() {
             setTab('incoming');
           }}
         >
-          <Ionicons name="mail-open" size={16} color={tab === 'incoming' ? '#fff' : '#6b7280'} />
+          <Ionicons name="mail-open" size={16} color={tab === 'incoming' ? theme.colors.surface : theme.colors.textSecondary} />
           <Text style={[styles.tabText, tab === 'incoming' && styles.tabTextActive]}>Masuk</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -156,7 +157,7 @@ export default function LettersScreen() {
             setTab('outgoing');
           }}
         >
-          <Ionicons name="mail" size={16} color={tab === 'outgoing' ? '#fff' : '#6b7280'} />
+          <Ionicons name="mail" size={16} color={tab === 'outgoing' ? theme.colors.surface : theme.colors.textSecondary} />
           <Text style={[styles.tabText, tab === 'outgoing' && styles.tabTextActive]}>Keluar</Text>
         </TouchableOpacity>
       </View>
@@ -168,7 +169,7 @@ export default function LettersScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="mail" size={48} color="#d1d5db" />
+            <Ionicons name="mail" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>
               Belum ada surat {tab === 'incoming' ? 'masuk' : 'keluar'}
             </Text>
@@ -177,8 +178,8 @@ export default function LettersScreen() {
         renderItem={({ item }) => {
           const s = STATUS_STYLES[item.status] || {
             label: item.status,
-            bg: '#f3f4f6',
-            color: '#6b7280',
+            bg: theme.colors.surfaceMuted,
+            color: theme.colors.textSecondary,
           };
           return (
             <TouchableOpacity
@@ -188,7 +189,7 @@ export default function LettersScreen() {
             >
               <View style={styles.cardTop}>
                 <View style={styles.iconCircle}>
-                  <Ionicons name="document-text" size={18} color="#2563eb" />
+                  <Ionicons name="document-text" size={18} color={theme.colors.primary} />
                 </View>
                 <View style={styles.cardBody}>
                   <Text style={styles.perihal} numberOfLines={1}>
@@ -215,28 +216,28 @@ export default function LettersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
   addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', position: 'absolute', right: 24, top: 60 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     margin: 16,
     marginBottom: 0,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: theme.colors.text, marginLeft: 8 },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     margin: 16,
     marginBottom: 0,
     borderRadius: 10,
@@ -251,17 +252,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  tabActive: { backgroundColor: '#2563eb' },
-  tabText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
-  tabTextActive: { color: '#fff' },
+  tabActive: { backgroundColor: theme.colors.primary },
+  tabText: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary },
+  tabTextActive: { color: theme.colors.surface },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -271,19 +272,19 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   cardBody: { flex: 1 },
-  perihal: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  nomorSurat: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  partner: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+  perihal: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  nomorSurat: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  partner: { fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
 
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
   statusText: { fontSize: 11, fontWeight: '600' },
-  date: { fontSize: 11, color: '#9ca3af', marginTop: 8 },
+  date: { fontSize: 11, color: theme.colors.textMuted, marginTop: 8 },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

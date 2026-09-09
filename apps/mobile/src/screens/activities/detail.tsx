@@ -12,6 +12,7 @@ import { safeIconName } from '../../lib/icons';
 import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, ScreenShell, TabBar } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 interface ActivityDetail {
   id: string;
@@ -40,10 +41,10 @@ interface ActivityDocument {
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  draft: { label: 'Draft', bg: '#f3f4f6', color: '#6b7280' },
-  published: { label: 'Berlangsung', bg: '#ecfdf5', color: '#16a34a' },
-  closed: { label: 'Selesai', bg: '#eff6ff', color: '#2563eb' },
-  cancelled: { label: 'Dibatalkan', bg: '#fef2f2', color: '#dc2626' },
+  draft: { label: 'Draft', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary },
+  published: { label: 'Berlangsung', bg: theme.colors.successLight, color: theme.colors.success },
+  closed: { label: 'Selesai', bg: theme.colors.primarySofter, color: theme.colors.primary },
+  cancelled: { label: 'Dibatalkan', bg: theme.colors.dangerLight, color: theme.colors.danger },
 };
 
 const TIPE_ICONS: Record<string, string> = {
@@ -99,8 +100,8 @@ export default function ActivityDetailScreen() {
   const icon = TIPE_ICONS[activity.tipe] || 'ellipsis-horizontal';
   const statusStyle = STATUS_STYLES[activity.status] || {
     label: activity.status,
-    bg: '#f3f4f6',
-    color: '#6b7280',
+    bg: theme.colors.surfaceMuted,
+    color: theme.colors.textSecondary,
   };
 
   const formatDate = (dateStr: string) => {
@@ -142,14 +143,14 @@ export default function ActivityDetailScreen() {
         <View style={styles.section}>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Ionicons name={safeIconName(icon)} size={20} color="#2563eb" />
+              <Ionicons name={safeIconName(icon)} size={20} color={theme.colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tipe Kegiatan</Text>
                 <Text style={styles.infoValue}>{activity.tipe}</Text>
               </View>
             </View>
             <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={20} color="#2563eb" />
+              <Ionicons name="calendar" size={20} color={theme.colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Tanggal Mulai</Text>
                 <Text style={styles.infoValue}>{formatDate(activity.tanggalMulai)}</Text>
@@ -157,7 +158,7 @@ export default function ActivityDetailScreen() {
             </View>
             {activity.tanggalSelesai && (
               <View style={styles.infoRow}>
-                <Ionicons name="calendar-outline" size={20} color="#2563eb" />
+                <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Tanggal Selesai</Text>
                   <Text style={styles.infoValue}>{formatDate(activity.tanggalSelesai)}</Text>
@@ -166,7 +167,7 @@ export default function ActivityDetailScreen() {
             )}
             {activity.lokasi && (
               <View style={styles.infoRow}>
-                <Ionicons name="location" size={20} color="#2563eb" />
+                <Ionicons name="location" size={20} color={theme.colors.primary} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Lokasi</Text>
                   <Text style={styles.infoValue}>{activity.lokasi}</Text>
@@ -175,7 +176,7 @@ export default function ActivityDetailScreen() {
             )}
             {activity.deskripsi && (
               <View style={styles.infoRow}>
-                <Ionicons name="document-text" size={20} color="#2563eb" />
+                <Ionicons name="document-text" size={20} color={theme.colors.primary} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Deskripsi</Text>
                   <Text style={styles.infoValue}>{activity.deskripsi}</Text>
@@ -189,7 +190,7 @@ export default function ActivityDetailScreen() {
             <View style={styles.qrSection}>
               <View style={styles.qrCard}>
                 <View style={styles.qrHeader}>
-                  <Ionicons name="qr-code" size={18} color="#2563eb" />
+                  <Ionicons name="qr-code" size={18} color={theme.colors.primary} />
                   <Text style={styles.qrTitle}>QR Check-in</Text>
                 </View>
                 <Text style={styles.qrHint}>Scan QR ini untuk check-in kegiatan</Text>
@@ -226,7 +227,7 @@ export default function ActivityDetailScreen() {
                   <Ionicons
                     name={p.hadir ? 'checkmark-circle' : 'close-circle'}
                     size={20}
-                    color={p.hadir ? '#22c55e' : '#ef4444'}
+                    color={p.hadir ? theme.colors.success : theme.colors.danger}
                   />
                 )}
               </View>
@@ -248,7 +249,7 @@ export default function ActivityDetailScreen() {
                   <Ionicons
                     name={doc.tipe?.includes('pdf') ? 'document' : 'document-text'}
                     size={24}
-                    color="#2563eb"
+                    color={theme.colors.primary}
                   />
                 </View>
                 <View style={styles.docInfo}>
@@ -257,7 +258,7 @@ export default function ActivityDetailScreen() {
                   </Text>
                   {doc.tipe && <Text style={styles.docType}>{doc.tipe}</Text>}
                 </View>
-                <Ionicons name="download-outline" size={20} color="#6b7280" />
+                <Ionicons name="download-outline" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             ))
           ) : (
@@ -271,18 +272,19 @@ export default function ActivityDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   // Tabs removed — using shared TabBar component
 
   section: { padding: 16 },
   infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
+    ...theme.shadow.card,
   },
   infoRow: {
     flexDirection: 'row',
@@ -290,71 +292,73 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  subTitle: { fontSize: 15, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
+  infoLabel: { fontSize: 11, color: theme.colors.textMuted, marginBottom: 2 },
+  infoValue: { fontSize: 14, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
+  subTitle: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text, marginBottom: 12 },
 
   participantCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   participantAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  participantAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
+  participantAvatarText: { fontSize: 14, fontWeight: theme.typography.weight.bold, color: theme.colors.primary },
   participantInfo: { flex: 1 },
-  participantName: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  participantName: { fontSize: 14, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
 
   docCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   docIcon: { marginRight: 12 },
   docInfo: { flex: 1 },
-  docName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  docType: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  docName: { fontSize: 14, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
+  docType: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
 
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 
   // QR Code
   qrSection: { padding: 16, paddingBottom: 0 },
   qrCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
   },
   qrHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  qrTitle: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  qrHint: { fontSize: 12, color: '#6b7280', marginBottom: 16, textAlign: 'center' },
+  qrTitle: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  qrHint: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 16, textAlign: 'center' },
   qrContainer: {
     padding: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
 });

@@ -9,6 +9,7 @@ import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared'
 import { useRole } from '../../hooks/use-role';
 import apiClient from '../../lib/api-client';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Semua' },
@@ -53,7 +54,7 @@ export default function MembersScreen() {
             activeOpacity={0.7}
             onPress={() => Alert.alert('Belum Tersedia', 'Fitur penambahan anggota sedang dalam pengembangan.')}
           >
-            <Ionicons name="add" size={22} color="#fff" />
+            <Ionicons name="add" size={22} color={theme.colors.surface} />
           </TouchableOpacity>
         )}
       </View>
@@ -74,12 +75,12 @@ export default function MembersScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="people" size={48} color="#d1d5db" />
+            <Ionicons name="people" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>Belum ada anggota</Text>
           </View>
         }
         renderItem={({ item }) => {
-          const statusColor = item.statusKeanggotaan === 'aktif' ? '#16a34a' : '#dc2626';
+          const statusColor = item.statusKeanggotaan === 'aktif' ? theme.colors.success : theme.colors.danger;
           const statusLabel = item.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif';
           const isIncomplete = item.statusData === 'incomplete';
           const validationStatus = item.statusValidasi;
@@ -101,13 +102,13 @@ export default function MembersScreen() {
                   <Text style={styles.name}>{item.namaLengkap}</Text>
                   {isIncomplete && (
                     <View style={styles.warningBadge}>
-                      <Ionicons name="warning" size={12} color="#ea580c" />
+                      <Ionicons name="warning" size={12} color={theme.colors.warning} />
                       <Text style={styles.warningText}>Data belum lengkap</Text>
                     </View>
                   )}
                   {validationStatus === 'pending' && (
                     <View style={styles.pendingBadge}>
-                      <Ionicons name="time" size={12} color="#2563eb" />
+                      <Ionicons name="time" size={12} color={theme.colors.primary} />
                       <Text style={styles.pendingText}>Menunggu persetujuan</Text>
                     </View>
                   )}
@@ -117,7 +118,7 @@ export default function MembersScreen() {
                   {item.ranting && (
                     <>
                       <Text style={styles.metaDot}>·</Text>
-                      <Ionicons name="location" size={11} color="#9ca3af" />
+                      <Ionicons name="location" size={11} color={theme.colors.textMuted} />
                       <Text style={styles.metaText}>{item.ranting.nama}</Text>
                     </>
                   )}
@@ -131,16 +132,16 @@ export default function MembersScreen() {
                         {
                           backgroundColor:
                             item.statusValidasi === 'approved'
-                              ? '#dcfce7'
+                              ? theme.colors.successLight
                               : item.statusValidasi === 'rejected'
-                              ? '#fef2f2'
-                              : '#eff6ff',
+                              ? theme.colors.dangerLight
+                              : theme.colors.primarySofter,
                           color:
                             item.statusValidasi === 'approved'
-                              ? '#166534'
+                              ? theme.colors.success
                               : item.statusValidasi === 'rejected'
-                              ? '#991c1b'
-                              : '#2563eb',
+                              ? theme.colors.danger
+                              : theme.colors.primary,
                         },
                       ]}
                     >
@@ -156,7 +157,7 @@ export default function MembersScreen() {
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: item.statusKeanggotaan === 'aktif' ? '#ecfdf5' : '#fef2f2' },
+                  { backgroundColor: item.statusKeanggotaan === 'aktif' ? theme.colors.successLight : theme.colors.dangerLight },
                 ]}
               >
                 <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
@@ -170,21 +171,21 @@ export default function MembersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
   addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
@@ -193,26 +194,26 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  avatarText: { fontSize: 16, fontWeight: '700', color: theme.colors.primary },
   cardBody: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  name: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  warningBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#fed7aa', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
-  warningText: { fontSize: 10, color: '#9a3412', fontWeight: '600' },
-  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#dbeafe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
-  pendingText: { fontSize: 10, color: '#2563eb', fontWeight: '600' },
+  name: { fontSize: 15, fontWeight: '600', color: theme.colors.text },
+  warningBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: theme.colors.warningLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+  warningText: { fontSize: 10, color: theme.colors.warning, fontWeight: '600' },
+  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: theme.colors.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
+  pendingText: { fontSize: 10, color: theme.colors.primary, fontWeight: '600' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
-  metaText: { fontSize: 12, color: '#6b7280' },
-  metaDot: { fontSize: 12, color: '#9ca3af' },
-  tingkatText: { fontSize: 11, color: '#2563eb', fontWeight: '500' },
+  metaText: { fontSize: 12, color: theme.colors.textSecondary },
+  metaDot: { fontSize: 12, color: theme.colors.textMuted },
+  tingkatText: { fontSize: 11, color: theme.colors.primary, fontWeight: '500' },
   validationBadge: { fontSize: 10, fontWeight: '600', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginLeft: 6 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
   statusText: { fontSize: 11, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

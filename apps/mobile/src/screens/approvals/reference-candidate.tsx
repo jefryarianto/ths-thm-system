@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useReferenceDetail } from '../../hooks/use-reference-detail';
 import { InfoRow, SectionTitle, ProfileCard, ScreenShell, ReferenceScreenState, referenceStyles } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -23,11 +24,11 @@ interface CandidateDetail {
 // ─── Constants ──────────────────────────────────────────────
 
 const CANDIDATE_STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  diusulkan: { label: 'Diusulkan', bg: '#eff6ff', color: '#2563eb' },
-  mengikuti_pendadaran: { label: 'Pendadaran', bg: '#fef3c7', color: '#d97706' },
-  lulus: { label: 'Lulus', bg: '#ecfdf5', color: '#16a34a' },
-  gagal: { label: 'Gagal', bg: '#fef2f2', color: '#dc2626' },
-  dibatalkan: { label: 'Dibatalkan', bg: '#f3f4f6', color: '#6b7280' },
+  diusulkan: { label: 'Diusulkan', bg: theme.colors.primarySofter, color: theme.colors.primary },
+  mengikuti_pendadaran: { label: 'Pendadaran', bg: theme.colors.warningLight, color: theme.colors.warning },
+  lulus: { label: 'Lulus', bg: theme.colors.successLight, color: theme.colors.success },
+  gagal: { label: 'Gagal', bg: theme.colors.dangerLight, color: 'theme.colors.danger' },
+  dibatalkan: { label: 'Dibatalkan', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary },
 };
 
 // ─── Screen ─────────────────────────────────────────────────
@@ -44,8 +45,8 @@ export default function ReferenceCandidateScreen() {
 
   const ss = CANDIDATE_STATUS_STYLES[candidate.status] || {
     label: candidate.status,
-    bg: '#f3f4f6',
-    color: '#6b7280',
+    bg: theme.colors.surfaceMuted,
+    color: theme.colors.textSecondary,
   };
   const genderLabel = candidate.jenisKelamin === 'L' ? 'Laki-laki' : candidate.jenisKelamin === 'P' ? 'Perempuan' : candidate.jenisKelamin;
 
@@ -100,5 +101,5 @@ function fmtDate(s: string) {
 // ─── Styles ─────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 8 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 8 },
 });

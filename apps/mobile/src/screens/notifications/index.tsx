@@ -7,6 +7,7 @@ import apiClient from '../../lib/api-client';
 import { useNotifications, formatTime, TYPE_ICONS, NotificationItem } from '../../hooks/use-notifications';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 /** Terjemahkan field backend ke label yang bisa dibaca user. */
 const MISSING_FIELD_LABELS: Record<string, string> = {
@@ -65,7 +66,7 @@ export default function NotificationsScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.navigate('/(tabs)/home' as never)} style={{ padding: 4, marginRight: 8 }}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Notifikasi</Text>
@@ -83,7 +84,7 @@ export default function NotificationsScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center', color: '#6b7280', marginTop: 40 }}>
+          <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginTop: 40 }}>
             Belum ada notifikasi
           </Text>
         }
@@ -125,54 +126,51 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: theme.colors.border,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  markAllRead: { fontSize: 13, color: '#2563eb', fontWeight: '500' },
+  headerTitle: { fontSize: 18, fontWeight: theme.typography.weight.bold, color: theme.colors.text },
+  markAllRead: { fontSize: 13, color: theme.colors.primary, fontWeight: theme.typography.weight.medium },
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     padding: 14,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
+    ...theme.shadow.card,
   },
-  unread: { borderLeftWidth: 3, borderLeftColor: '#2563eb' },
+  unread: { borderLeftWidth: 3, borderLeftColor: theme.colors.primary },
   icon: { fontSize: 24, marginRight: 12, marginTop: 2 },
   content: { flex: 1 },
-  title: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  body: { fontSize: 13, color: '#6b7280', marginTop: 4, lineHeight: 18 },
-  time: { fontSize: 11, color: '#9ca3af', marginTop: 6 },
+  title: { fontSize: 14, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  body: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4, lineHeight: 18 },
+  time: { fontSize: 11, color: theme.colors.textMuted, marginTop: 6 },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     marginTop: 6,
     marginLeft: 8,
   },
   missingBox: {
-    backgroundColor: '#fff7ed',
+    backgroundColor: theme.colors.warningLight,
     borderWidth: 1,
-    borderColor: '#fed7aa',
+    borderColor: theme.colors.warningLight,
     borderRadius: 8,
     padding: 8,
     marginTop: 6,
   },
-  missingLabel: { fontSize: 11, fontWeight: '700', color: '#9a3412' },
-  missingValue: { fontSize: 12, color: '#9a3412', marginTop: 2, lineHeight: 16 },
-  openEdit: { fontSize: 12, color: '#2563eb', fontWeight: '600', marginTop: 6 },
+  missingLabel: { fontSize: 11, fontWeight: theme.typography.weight.bold, color: theme.colors.warning },
+  missingValue: { fontSize: 12, color: theme.colors.warning, marginTop: 2, lineHeight: 16 },
+  openEdit: { fontSize: 12, color: theme.colors.primary, fontWeight: theme.typography.weight.semibold, marginTop: 6 },
 });

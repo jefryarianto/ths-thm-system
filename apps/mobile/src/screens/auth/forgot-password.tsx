@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import { theme } from '../../theme';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -77,7 +78,7 @@ export default function ForgotPasswordScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={theme.colors.surface} />
               ) : (
                 <Text style={styles.buttonText}>Kirim Link Reset</Text>
               )}
@@ -90,44 +91,44 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6', justifyContent: 'center', padding: 24 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted, justifyContent: 'center', padding: 24 },
   backBtn: { position: 'absolute', top: 60, left: 24, zIndex: 10 },
-  backText: { fontSize: 14, color: '#2563eb', fontWeight: '500' },
+  backText: { fontSize: 14, color: theme.colors.primary, fontWeight: '500' },
   header: { alignItems: 'center', marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#1d4ed8' },
-  subtitle: { fontSize: 14, color: '#6b7280', marginTop: 8, textAlign: 'center', lineHeight: 20 },
+  title: { fontSize: 28, fontWeight: 'bold', color: theme.colors.primaryDark },
+  subtitle: { fontSize: 14, color: theme.colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 20 },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
   },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
   },
   button: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginTop: 24,
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '600' },
   successBox: { alignItems: 'center', paddingVertical: 8 },
-  successTitle: { fontSize: 18, fontWeight: '700', color: '#16a34a', marginBottom: 8 },
+  successTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.success, marginBottom: 8 },
   successText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,

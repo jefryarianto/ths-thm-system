@@ -6,6 +6,7 @@ import { useCandidates, STATUS_STYLES, STATUS_FILTERS } from '../../hooks/use-ca
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function CandidatesScreen() {
   const [search, setSearch] = useState('');
@@ -37,15 +38,15 @@ export default function CandidatesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="people" size={48} color="#d1d5db" />
+            <Ionicons name="people" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>Belum ada calon anggota</Text>
           </View>
         }
         renderItem={({ item }) => {
           const ss = STATUS_STYLES[item.status] || {
             label: item.status,
-            bg: '#f3f4f6',
-            color: '#6b7280',
+            bg: theme.colors.surfaceMuted,
+            color: theme.colors.textSecondary,
           };
           return (
             <TouchableOpacity
@@ -63,7 +64,7 @@ export default function CandidatesScreen() {
                 <Text style={styles.name}>{item.namaLengkap}</Text>
                 {item.ranting && (
                   <View style={styles.metaItem}>
-                    <Ionicons name="location" size={11} color="#9ca3af" />
+                    <Ionicons name="location" size={11} color={theme.colors.textMuted} />
                     <Text style={styles.metaText}>{item.ranting.nama}</Text>
                   </View>
                 )}
@@ -87,41 +88,38 @@ export default function CandidatesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: { backgroundColor: theme.colors.header, padding: 24, paddingBottom: 20 },
+  headerTitle: { color: theme.colors.textOnPrimary, fontSize: theme.typography.size.xxl - 2, fontWeight: theme.typography.weight.bold },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  avatarText: { fontSize: 16, fontWeight: theme.typography.weight.bold, color: theme.colors.primary },
   cardBody: { flex: 1 },
-  name: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  name: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
-  metaText: { fontSize: 12, color: '#6b7280' },
-  date: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  metaText: { fontSize: 12, color: theme.colors.textSecondary },
+  date: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 8 },
-  statusText: { fontSize: 11, fontWeight: '600' },
+  statusText: { fontSize: 11, fontWeight: theme.typography.weight.semibold },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

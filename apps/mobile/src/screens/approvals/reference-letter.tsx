@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useReferenceDetail } from '../../hooks/use-reference-detail';
 import { InfoRow, SectionTitle, StatusCard, ScreenShell, ReferenceScreenState, referenceStyles } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -30,11 +31,11 @@ interface LetterDetail {
 // ─── Constants ──────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; color: string; icon: string }> = {
-  draft: { label: 'Draft', bg: '#f3f4f6', color: '#6b7280', icon: 'document' },
-  diterima: { label: 'Diterima', bg: '#eff6ff', color: '#2563eb', icon: 'mail-open' },
-  diproses: { label: 'Diproses', bg: '#fef3c7', color: '#d97706', icon: 'sync' },
-  terkirim: { label: 'Terkirim', bg: '#ecfdf5', color: '#16a34a', icon: 'mail' },
-  diarsipkan: { label: 'Diarsipkan', bg: '#f3f4f6', color: '#6b7280', icon: 'archive' },
+  draft: { label: 'Draft', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary, icon: 'document' },
+  diterima: { label: 'Diterima', bg: theme.colors.primarySofter, color: theme.colors.primary, icon: 'mail-open' },
+  diproses: { label: 'Diproses', bg: theme.colors.warningLight, color: theme.colors.warning, icon: 'sync' },
+  terkirim: { label: 'Terkirim', bg: theme.colors.successLight, color: theme.colors.success, icon: 'mail' },
+  diarsipkan: { label: 'Diarsipkan', bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary, icon: 'archive' },
 };
 
 // ─── Screen ─────────────────────────────────────────────────
@@ -49,7 +50,7 @@ export default function ReferenceLetterScreen() {
   if (stateView) return stateView;
   if (!letter) return null;
 
-  const st = STATUS_STYLES[letter.status] || { label: letter.status, bg: '#f3f4f6', color: '#6b7280', icon: 'document' };
+  const st = STATUS_STYLES[letter.status] || { label: letter.status, bg: theme.colors.surfaceMuted, color: theme.colors.textSecondary, icon: 'document' };
 
   return (
     <ScreenShell title="Detail Surat" variant="reference" onRefresh={refetch} badgeLabel={st.label} badgeColor={st.color} badgeBg={st.bg}>
@@ -89,7 +90,7 @@ export default function ReferenceLetterScreen() {
           {letter.disposisi.map((d) => (
             <View key={d.id} style={styles.disposisiCard}>
               <View style={styles.disposisiHeader}>
-                <Ionicons name="arrow-forward-circle" size={16} color="#d97706" />
+                <Ionicons name="arrow-forward-circle" size={16} color={theme.colors.warning} />
                 <Text style={styles.disposisiTujuan}>{d.tujuan}</Text>
               </View>
               {d.catatan && <Text style={styles.disposisiCatatan}>{d.catatan}</Text>}
@@ -113,11 +114,11 @@ function fmtFullDate(s: string) {
 // ─── Styles ─────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  contentCard: { backgroundColor: '#f9fafb', borderRadius: 10, padding: 12 },
-  contentText: { fontSize: 14, color: '#4b5563', lineHeight: 22 },
-  disposisiCard: { backgroundColor: '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 6, borderLeftWidth: 3, borderLeftColor: '#d97706' },
+  contentCard: { backgroundColor: theme.colors.surfaceMuted, borderRadius: 10, padding: 12 },
+  contentText: { fontSize: 14, color: theme.colors.textSecondary, lineHeight: 22 },
+  disposisiCard: { backgroundColor: theme.colors.surfaceMuted, borderRadius: 10, padding: 12, marginBottom: 6, borderLeftWidth: 3, borderLeftColor: theme.colors.warning },
   disposisiHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  disposisiTujuan: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  disposisiCatatan: { fontSize: 13, color: '#6b7280', marginTop: 4, marginLeft: 22 },
-  disposisiStatus: { fontSize: 11, color: '#9ca3af', marginTop: 4, marginLeft: 22 },
+  disposisiTujuan: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  disposisiCatatan: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4, marginLeft: 22 },
+  disposisiStatus: { fontSize: 11, color: theme.colors.textMuted, marginTop: 4, marginLeft: 22 },
 });

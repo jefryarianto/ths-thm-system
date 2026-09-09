@@ -14,6 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { safeIconName } from '../../lib/icons';
+import { theme } from '../../theme';
 
 export default function ResetPasswordScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -64,7 +65,7 @@ export default function ResetPasswordScreen() {
     return (
       <View style={styles.center}>
         <View style={styles.errorIconWrapper}>
-          <Ionicons name="alert-circle" size={48} color="#dc2626" />
+          <Ionicons name="alert-circle" size={48} color={theme.colors.danger} />
         </View>
         <Text style={styles.errorTitle}>Link Tidak Valid</Text>
         <Text style={styles.errorText}>
@@ -113,7 +114,7 @@ export default function ResetPasswordScreen() {
             <Ionicons
               name={safeIconName(showPassword ? 'eye-off' : 'eye')}
               size={20}
-              color="#6b7280"
+              color={theme.colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -137,7 +138,7 @@ export default function ResetPasswordScreen() {
             <Ionicons
               name={safeIconName(showConfirm ? 'eye-off' : 'eye')}
               size={20}
-              color="#6b7280"
+              color={theme.colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -148,7 +149,7 @@ export default function ResetPasswordScreen() {
             <Ionicons
               name={safeIconName(minLengthOk ? 'checkmark-circle' : 'ellipse-outline')}
               size={18}
-              color={minLengthOk ? '#16a34a' : '#9ca3af'}
+              color={minLengthOk ? theme.colors.success : theme.colors.textMuted}
             />
             <Text style={styles.requirementText}>Minimal 6 karakter</Text>
           </View>
@@ -156,7 +157,7 @@ export default function ResetPasswordScreen() {
             <Ionicons
               name={safeIconName(passwordsMatch ? 'checkmark-circle' : 'ellipse-outline')}
               size={18}
-              color={passwordsMatch ? '#16a34a' : '#9ca3af'}
+              color={passwordsMatch ? theme.colors.success : theme.colors.textMuted}
             />
             <Text style={styles.requirementText}>Konfirmasi password cocok</Text>
           </View>
@@ -168,7 +169,7 @@ export default function ResetPasswordScreen() {
           disabled={loading || success}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={theme.colors.surface} />
           ) : (
             <Text style={styles.buttonText}>Reset Password</Text>
           )}
@@ -181,7 +182,7 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     justifyContent: 'center',
     padding: 24,
   },
@@ -190,55 +191,55 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
   },
   errorIconWrapper: { marginBottom: 16 },
-  errorTitle: { color: '#111827', fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-  errorText: { color: '#6b7280', fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
+  errorTitle: { color: theme.colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+  errorText: { color: theme.colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   backBtn: { position: 'absolute', top: 60, left: 24, zIndex: 10 },
-  backText: { fontSize: 14, color: '#2563eb', fontWeight: '500' },
+  backText: { fontSize: 14, color: theme.colors.primary, fontWeight: '500' },
   header: { alignItems: 'center', marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#1d4ed8' },
-  subtitle: { fontSize: 14, color: '#6b7280', marginTop: 8, textAlign: 'center', lineHeight: 20 },
+  title: { fontSize: 28, fontWeight: 'bold', color: theme.colors.primaryDark },
+  subtitle: { fontSize: 14, color: theme.colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 20 },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
   },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
   inputWrapper: { position: 'relative', marginBottom: 12 },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 8,
     padding: 12,
     paddingRight: 44,
     fontSize: 16,
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.colors.surfaceMuted,
   },
   eyeBtn: { position: 'absolute', right: 12, top: 0, bottom: 0, justifyContent: 'center' },
   requirements: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
     borderRadius: 8,
     padding: 12,
     marginTop: 4,
   },
-  requirementsTitle: { fontSize: 12, fontWeight: '600', color: '#1d4ed8', marginBottom: 6 },
+  requirementsTitle: { fontSize: 12, fontWeight: '600', color: theme.colors.primaryDark, marginBottom: 6 },
   requirementRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  requirementText: { fontSize: 13, color: '#1e40af' },
+  requirementText: { fontSize: 13, color: theme.colors.primaryDark },
   button: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginTop: 16,
   },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '600' },
 });

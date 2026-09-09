@@ -21,6 +21,7 @@ import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
 import { useMemberProfile, MemberProfile } from '../../hooks/use-member-profile';
+import { theme } from '../../theme';
 
 // ── Helper tanggal (local time, hindari pergeseran zona UTC) ──
 const parseTanggal = (iso: string): Date | null => {
@@ -243,7 +244,7 @@ export default function EditProfileScreen() {
           if (errors[key]) setErrors((e) => ({ ...e, [key]: '' }));
         }}
         placeholder={options?.placeholder || `Masukkan ${label.toLowerCase()}`}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={theme.colors.textMuted}
         multiline={options?.multiline}
         numberOfLines={options?.multiline ? 3 : 1}
         keyboardType={options?.keyboardType || 'default'}
@@ -268,15 +269,15 @@ export default function EditProfileScreen() {
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profil</Text>
         </View>
 
         {/* Data Incomplete Banner */}
         {memberProfile?.statusData === 'incomplete' && (
-          <View style={[styles.banner, { backgroundColor: '#fff7ed', borderColor: '#fed7aa' }]}>
-            <Ionicons name="warning" size={20} color="#ea580c" />
+          <View style={[styles.banner, { backgroundColor: theme.colors.warningLight, borderColor: theme.colors.warningLight }]}>
+            <Ionicons name="warning" size={20} color={theme.colors.warning} />
             <View style={styles.bannerInner}>
               <Text style={styles.bannerTitle}>Data Belum Lengkap</Text>
               <Text style={styles.bannerContent}>
@@ -288,8 +289,8 @@ export default function EditProfileScreen() {
 
         {/* Approval Status Badge */}
         {memberProfile?.statusValidasi === 'pending' && memberProfile?.statusData === 'complete' && (
-          <View style={[styles.banner, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}>
-            <Ionicons name="time" size={20} color="#2563eb" />
+          <View style={[styles.banner, { backgroundColor: theme.colors.primarySofter, borderColor: theme.colors.headerSub }]}>
+            <Ionicons name="time" size={20} color={theme.colors.primary} />
             <View style={styles.bannerInner}>
               <Text style={styles.bannerTitle}>Menunggu Persetujuan</Text>
               <Text style={styles.bannerContent}>Data Anda diverifikasi oleh admin ranting → wilayah → distrik.</Text>
@@ -298,9 +299,9 @@ export default function EditProfileScreen() {
         )}
 
         {saveMsg && (
-          <View style={[styles.banner, { backgroundColor: saveMsg.ok ? '#ecfdf5' : '#fef2f2', borderColor: saveMsg.ok ? '#a7f3d0' : '#fecaca' }]}>
-            <Ionicons name={saveMsg.ok ? 'checkmark-circle' : 'alert-circle'} size={20} color={saveMsg.ok ? '#047857' : '#b91c1c'} />
-            <Text style={[styles.bannerContent, { color: saveMsg.ok ? '#047857' : '#b91c1c', fontWeight: '600' }]}>{saveMsg.text}</Text>
+          <View style={[styles.banner, { backgroundColor: saveMsg.ok ? theme.colors.successLight : theme.colors.dangerLight, borderColor: saveMsg.ok ? theme.colors.successLight : theme.colors.dangerLight }]}>
+            <Ionicons name={saveMsg.ok ? 'checkmark-circle' : 'alert-circle'} size={20} color={saveMsg.ok ? theme.colors.success : theme.colors.danger} />
+            <Text style={[styles.bannerContent, { color: saveMsg.ok ? theme.colors.success : theme.colors.danger, fontWeight: '600' }]}>{saveMsg.text}</Text>
           </View>
         )}
 
@@ -312,11 +313,11 @@ export default function EditProfileScreen() {
                 <Image source={{ uri: photoUri }} style={styles.photo} />
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={28} color="#2563eb" />
+                  <Ionicons name="camera" size={28} color={theme.colors.primary} />
                 </View>
               )}
               <View style={styles.photoBadge}>
-                <Ionicons name="pencil" size={12} color="#fff" />
+                <Ionicons name="pencil" size={12} color={theme.colors.surface} />
               </View>
             </View>
             <Text style={styles.photoHint}>Foto pasfoto (background otomatis dihapus ala SIM)</Text>
@@ -324,12 +325,12 @@ export default function EditProfileScreen() {
             {/* Ambil foto via kamera (overlay wajah) atau dari galeri */}
             <View style={styles.photoActions}>
               <TouchableOpacity style={styles.photoActionBtn} onPress={() => router.push('/camera/photo' as any)}>
-                <Ionicons name="camera" size={16} color="#fff" />
+                <Ionicons name="camera" size={16} color={theme.colors.surface} />
                 <Text style={styles.photoActionText}>Ambil Foto</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.photoActionBtn, styles.photoActionBtnSecondary]} onPress={pickImage}>
-                <Ionicons name="images" size={16} color="#2563eb" />
-                <Text style={[styles.photoActionText, { color: '#2563eb' }]}>Pilih dari Galeri</Text>
+                <Ionicons name="images" size={16} color={theme.colors.primary} />
+                <Text style={[styles.photoActionText, { color: theme.colors.primary }]}>Pilih dari Galeri</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -358,7 +359,7 @@ export default function EditProfileScreen() {
               <Text style={form.tanggalLahir ? styles.inputText : styles.inputPlaceholder}>
                 {form.tanggalLahir ? formatTanggalDisplay(form.tanggalLahir) : 'Pilih tanggal lahir'}
               </Text>
-              <Ionicons name="calendar-outline" size={18} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+              <Ionicons name="calendar-outline" size={18} color={theme.colors.textMuted} style={{ marginLeft: 'auto' }} />
             </TouchableOpacity>
             {showDatePicker && (
               <DateTimePicker
@@ -397,10 +398,10 @@ export default function EditProfileScreen() {
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={theme.colors.surface} size="small" />
               ) : (
                 <>
-                  <Ionicons name="checkmark" size={18} color="#fff" />
+                  <Ionicons name="checkmark" size={18} color={theme.colors.surface} />
                   <Text style={styles.saveBtnText}>Simpan</Text>
                 </>
               )}
@@ -409,7 +410,7 @@ export default function EditProfileScreen() {
 
           {/* Info */}
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle" size={18} color="#3b82f6" />
+            <Ionicons name="information-circle" size={18} color={theme.colors.primary} />
             <Text style={styles.infoText}>
               Email hanya dapat dibaca. Hubungi admin untuk perubahan email.
             </Text>
@@ -420,14 +421,14 @@ export default function EditProfileScreen() {
         <View style={styles.section}>
           <View style={styles.pwCard}>
             <View style={styles.pwHeader}>
-              <Ionicons name="key" size={18} color="#2563eb" />
+              <Ionicons name="key" size={18} color={theme.colors.primary} />
               <Text style={styles.pwTitle}>Ubah Password</Text>
             </View>
             <Text style={styles.pwHint}>Minimal 6 karakter. Gunakan password baru saat login berikutnya.</Text>
 
             {pwMsg && (
-              <View style={[styles.pwMsg, { backgroundColor: pwMsg.ok ? '#ecfdf5' : '#fef2f2', borderColor: pwMsg.ok ? '#a7f3d0' : '#fecaca' }]}>
-                <Text style={[styles.pwMsgText, { color: pwMsg.ok ? '#047857' : '#b91c1c' }]}>{pwMsg.text}</Text>
+              <View style={[styles.pwMsg, { backgroundColor: pwMsg.ok ? theme.colors.successLight : theme.colors.dangerLight, borderColor: pwMsg.ok ? theme.colors.successLight : theme.colors.dangerLight }]}>
+                <Text style={[styles.pwMsgText, { color: pwMsg.ok ? theme.colors.success : theme.colors.danger }]}>{pwMsg.text}</Text>
               </View>
             )}
 
@@ -436,7 +437,7 @@ export default function EditProfileScreen() {
               style={styles.input}
               secureTextEntry
               placeholder="Password saat ini"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               value={pw.currentPassword}
               onChangeText={(t) => setPw((p) => ({ ...p, currentPassword: t }))}
             />
@@ -445,7 +446,7 @@ export default function EditProfileScreen() {
               style={styles.input}
               secureTextEntry
               placeholder="Minimal 6 karakter"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               value={pw.newPassword}
               onChangeText={(t) => setPw((p) => ({ ...p, newPassword: t }))}
             />
@@ -454,7 +455,7 @@ export default function EditProfileScreen() {
               style={styles.input}
               secureTextEntry
               placeholder="Ulangi password baru"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.colors.textMuted}
               value={pw.confirmPassword}
               onChangeText={(t) => setPw((p) => ({ ...p, confirmPassword: t }))}
             />
@@ -464,10 +465,10 @@ export default function EditProfileScreen() {
               disabled={pwSaving}
             >
               {pwSaving ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={theme.colors.surface} size="small" />
               ) : (
                 <>
-                  <Ionicons name="key-outline" size={16} color="#fff" />
+                  <Ionicons name="key-outline" size={16} color={theme.colors.surface} />
                   <Text style={styles.pwBtnText}>Ubah Password</Text>
                 </>
               )}
@@ -483,10 +484,10 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
   header: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     padding: 24,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -494,23 +495,23 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backBtn: { padding: 4 },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  headerTitle: { color: theme.colors.surface, fontSize: 18, fontWeight: '700' },
 
   section: { padding: 16 },
 
   photoSection: { alignItems: 'center', marginBottom: 24 },
   photoContainer: { position: 'relative', marginBottom: 8 },
-  photo: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: '#fff' },
+  photo: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: theme.colors.surface },
   photoPlaceholder: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: '#dbeafe',
+    backgroundColor: theme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
+    borderColor: theme.colors.surface,
+    shadowColor: theme.colors.dark,
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
@@ -522,70 +523,70 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: theme.colors.surface,
   },
-  photoHint: { fontSize: 12, color: '#9ca3af', marginBottom: 12 },
+  photoHint: { fontSize: 12, color: theme.colors.textMuted, marginBottom: 12 },
   photoActions: { flexDirection: 'row', gap: 10, marginTop: 2 },
   photoActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
   },
   photoActionBtnSecondary: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
   },
-  photoActionText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  photoActionText: { color: theme.colors.surface, fontSize: 13, fontWeight: '600' },
 
   fieldGroup: { marginBottom: 16 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#111827',
+    color: theme.colors.text,
   },
-  inputError: { borderColor: '#ef4444', borderWidth: 2 },
+  inputError: { borderColor: theme.colors.danger, borderWidth: 2 },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
-  inputDisabled: { backgroundColor: '#f3f4f6', color: '#9ca3af' },
-  errorText: { fontSize: 11, color: '#ef4444', marginTop: 4 },
-  inputText: { fontSize: 15, color: '#111827' },
-  inputPlaceholder: { fontSize: 15, color: '#9ca3af' },
+  inputDisabled: { backgroundColor: theme.colors.surfaceMuted, color: theme.colors.textMuted },
+  errorText: { fontSize: 11, color: theme.colors.danger, marginTop: 4 },
+  inputText: { fontSize: 15, color: theme.colors.text },
+  inputPlaceholder: { fontSize: 15, color: theme.colors.textMuted },
   dateDoneBtn: {
     alignSelf: 'flex-end',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginTop: 8,
   },
-  dateDoneText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  dateDoneText: { color: theme.colors.surface, fontSize: 14, fontWeight: '600' },
 
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cancelBtn: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  cancelBtnText: { fontSize: 15, fontWeight: '600', color: '#374151' },
+  cancelBtnText: { fontSize: 15, fontWeight: '600', color: theme.colors.textSecondary },
   saveBtn: {
     flex: 1,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 10,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -593,36 +594,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  saveBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  saveBtnText: { fontSize: 15, fontWeight: '600', color: theme.colors.surface },
   btnDisabled: { opacity: 0.5 },
 
   infoBox: {
     flexDirection: 'row',
     gap: 10,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     borderRadius: 12,
     padding: 14,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: theme.colors.headerSub,
   },
-  infoText: { flex: 1, fontSize: 12, color: '#1e40af', lineHeight: 18 },
+  infoText: { flex: 1, fontSize: 12, color: theme.colors.primaryDark, lineHeight: 18 },
 
   // ── Ubah Password ──
   pwCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   pwHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  pwTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  pwHint: { fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 18 },
+  pwTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.text },
+  pwHint: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 16, lineHeight: 18 },
   pwMsg: { borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 14 },
   pwMsgText: { fontSize: 12, fontWeight: '600' },
   pwBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 10,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -631,7 +632,7 @@ const styles = StyleSheet.create({
     gap: 6,
     marginTop: 8,
   },
-  pwBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  pwBtnText: { fontSize: 15, fontWeight: '600', color: theme.colors.surface },
 
   // ── Banners ──
   banner: {
@@ -645,6 +646,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bannerInner: { flex: 1 },
-  bannerTitle: { fontSize: 14, fontWeight: '700', color: '#9a3412', marginBottom: 2 },
-  bannerContent: { fontSize: 12, color: '#9a3412', lineHeight: 18 },
+  bannerTitle: { fontSize: 14, fontWeight: '700', color: theme.colors.warning, marginBottom: 2 },
+  bannerContent: { fontSize: 12, color: theme.colors.warning, lineHeight: 18 },
 });

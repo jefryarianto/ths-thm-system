@@ -21,6 +21,7 @@ import {
 } from '../../hooks/use-documents';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, FilterChips } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 export default function DocumentsScreen() {
   const [search, setSearch] = useState('');
@@ -37,7 +38,7 @@ export default function DocumentsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.navigate('/(tabs)/home' as never)} style={{ padding: 4, marginRight: 8 }}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Dokumen</Text>
@@ -47,17 +48,17 @@ export default function DocumentsScreen() {
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color="#9ca3af" />
+        <Ionicons name="search" size={16} color={theme.colors.textMuted} />
         <TextInput
           style={styles.searchInput}
           placeholder="Cari dokumen..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={theme.colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color="#9ca3af" />
+            <Ionicons name="close-circle" size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -71,7 +72,7 @@ export default function DocumentsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="document-text" size={48} color="#d1d5db" />
+            <Ionicons name="document-text" size={48} color={theme.colors.borderStrong} />
             <Text style={styles.emptyText}>
               {search || filterTipe ? 'Tidak ada dokumen yang cocok' : 'Belum ada dokumen'}
             </Text>
@@ -80,8 +81,8 @@ export default function DocumentsScreen() {
         renderItem={({ item }) => {
           const ss = STATUS_STYLES[item.status] || {
             label: item.status,
-            color: '#6b7280',
-            bg: '#f3f4f6',
+            color: theme.colors.textSecondary,
+            bg: theme.colors.surfaceMuted,
           };
           const iconName = TIPE_ICONS[item.tipe] || 'document-text';
           const tipeLabel = TIPE_LABELS[item.tipe] || item.tipe;
@@ -92,7 +93,7 @@ export default function DocumentsScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.iconCircle}>
-                <Ionicons name={safeIconName(iconName)} size={22} color="#2563eb" />
+                <Ionicons name={safeIconName(iconName)} size={22} color={theme.colors.primary} />
               </View>
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>{tipeLabel}</Text>
@@ -108,7 +109,7 @@ export default function DocumentsScreen() {
                 <Ionicons
                   name={item.filePath ? 'download-outline' : 'time-outline'}
                   size={18}
-                  color={item.filePath ? '#2563eb' : '#9ca3af'}
+                  color={item.filePath ? theme.colors.primary : theme.colors.textMuted}
                   style={{ marginTop: 6 }}
                 />
               </View>
@@ -121,54 +122,51 @@ export default function DocumentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, paddingBottom: 20 },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: '#bfdbfe', fontSize: 13, marginTop: 4 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: { backgroundColor: theme.colors.header, padding: 24, paddingBottom: 20 },
+  headerTitle: { color: theme.colors.textOnPrimary, fontSize: theme.typography.size.xxl - 2, fontWeight: theme.typography.weight.bold },
+  headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     margin: 16,
     marginBottom: 0,
-    borderRadius: 10,
+    borderRadius: theme.radius.md - 2,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  searchInput: { flex: 1, fontSize: 14, color: '#111827', marginLeft: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: theme.colors.text, marginLeft: 8 },
 
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   cardInfo: { flex: 1 },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  cardMember: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  cardDate: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+  cardTitle: { fontSize: 14, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  cardMember: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  cardDate: { fontSize: 11, color: theme.colors.textMuted, marginTop: 1 },
   cardRight: { alignItems: 'center', marginLeft: 8 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
-  statusText: { fontSize: 10, fontWeight: '600' },
+  statusText: { fontSize: 10, fontWeight: theme.typography.weight.semibold },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 });

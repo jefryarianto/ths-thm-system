@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useReferenceDetail } from '../../hooks/use-reference-detail';
 import { InfoRow, SectionTitle, ProfileCard, ScreenShell, ReferenceScreenState, referenceStyles } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -35,20 +36,20 @@ export default function ReferenceMemberScreen() {
   if (!member) return null;
 
   const isActive = member.statusKeanggotaan === 'aktif';
-  const statusColor = isActive ? '#16a34a' : '#dc2626';
+  const statusColor = isActive ? theme.colors.success : 'theme.colors.danger';
   const statusLabel = isActive ? 'Aktif' : 'Nonaktif';
   const memberNumber = member.nomorAnggota || member.noAnggota || '-';
 
   const genderLabel = member.jenisKelamin === 'L' ? 'Laki-laki' : member.jenisKelamin === 'P' ? 'Perempuan' : undefined;
 
   return (
-    <ScreenShell title="Detail Anggota" variant="reference" onRefresh={refetch} badgeLabel={statusLabel} badgeColor={statusColor} badgeBg={isActive ? '#ecfdf5' : '#fef2f2'}>
+    <ScreenShell title="Detail Anggota" variant="reference" onRefresh={refetch} badgeLabel={statusLabel} badgeColor={statusColor} badgeBg={isActive ? theme.colors.successLight : theme.colors.dangerLight}>
       <ProfileCard
         name={member.namaLengkap}
         initial={member.namaLengkap.charAt(0)}
         badgeLabel={statusLabel}
         badgeColor={statusColor}
-        badgeBg={isActive ? '#ecfdf5' : '#fef2f2'}
+        badgeBg={isActive ? theme.colors.successLight : theme.colors.dangerLight}
         subtitle={member.ranting?.nama}
       />
 
@@ -88,5 +89,5 @@ function fmtDate(s: string) {
 // ─── Styles ─────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 8 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 8 },
 });

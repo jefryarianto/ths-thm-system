@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { theme } from '../../theme';
 
 const TOUR_STORAGE_KEY = 'gamification_tour_seen_v2';
 
@@ -165,7 +166,7 @@ export default function GamificationTour({
         <View style={styles.modal}>
           {/* Close button */}
           <TouchableOpacity style={styles.closeButton} onPress={handleSkip}>
-            <Ionicons name="close" size={20} color="#9ca3af" />
+            <Ionicons name="close" size={20} color={theme.colors.textMuted} />
           </TouchableOpacity>
 
           {/* Step indicator */}
@@ -175,7 +176,7 @@ export default function GamificationTour({
                 key={idx}
                 style={[
                   styles.dot,
-                  { backgroundColor: idx === currentStep ? step.color : '#e5e7eb' },
+                  { backgroundColor: idx === currentStep ? step.color : theme.colors.border },
                 ]}
               />
             ))}
@@ -208,7 +209,7 @@ export default function GamificationTour({
           <View style={styles.actions}>
             {currentStep > 0 ? (
               <TouchableOpacity onPress={handlePrev} style={styles.secondaryButton}>
-                <Ionicons name="arrow-back" size={16} color="#6b7280" />
+                <Ionicons name="arrow-back" size={16} color={theme.colors.textSecondary} />
                 <Text style={styles.secondaryText}>Kembali</Text>
               </TouchableOpacity>
             ) : (
@@ -223,7 +224,7 @@ export default function GamificationTour({
                 style={[styles.primaryButton, { backgroundColor: step.color }]}
               >
                 <Text style={styles.primaryText}>Selanjutnya</Text>
-                <Ionicons name="arrow-forward" size={16} color="#fff" />
+                <Ionicons name="arrow-forward" size={16} color={theme.colors.surface} />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -231,7 +232,7 @@ export default function GamificationTour({
                 style={[styles.primaryButton, { backgroundColor: step.color }]}
               >
                 <Text style={styles.primaryText}>Mulai!</Text>
-                <Ionicons name="rocket" size={16} color="#fff" />
+                <Ionicons name="rocket" size={16} color={theme.colors.surface} />
               </TouchableOpacity>
             )}
           </View>
@@ -244,19 +245,19 @@ export default function GamificationTour({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   modal: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     padding: 28,
     paddingTop: 20,
     position: 'relative',
-    shadowColor: '#000',
+    shadowColor: theme.colors.dark,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 24,
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -307,13 +308,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1f2937',
+    color: theme.colors.text,
     marginBottom: 12,
     textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -330,12 +331,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
   },
   secondaryText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6b7280',
+    color: theme.colors.textSecondary,
   },
   primaryButton: {
     flexDirection: 'row',
@@ -348,6 +349,6 @@ const styles = StyleSheet.create({
   primaryText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#fff',
+    color: theme.colors.surface,
   },
 });

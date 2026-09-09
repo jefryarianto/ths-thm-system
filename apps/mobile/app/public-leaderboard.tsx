@@ -14,6 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../src/lib/api-client';
+import { theme } from '../src/theme';
 
 interface LeaderboardEntry {
   rank: number;
@@ -71,7 +72,7 @@ export default function PublicLeaderboardScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Memuat leaderboard...</Text>
       </View>
     );
@@ -82,11 +83,11 @@ export default function PublicLeaderboardScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.surface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Peringkat Publik</Text>
         <TouchableOpacity onPress={fetchLeaderboard} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={22} color="#fff" />
+          <Ionicons name="refresh" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
@@ -104,7 +105,7 @@ export default function PublicLeaderboardScreen() {
                 <Text style={styles.podiumPoints}>
                   {leaderboard[1]?.points?.toLocaleString('id-ID') || 0}
                 </Text>
-                <View style={[styles.podiumBar, { height: 60, backgroundColor: '#e5e7eb' }]} />
+                <View style={[styles.podiumBar, { height: 60, backgroundColor: theme.colors.border }]} />
               </View>
               {/* 1st */}
               <View style={styles.podiumItem}>
@@ -115,7 +116,7 @@ export default function PublicLeaderboardScreen() {
                 <Text style={styles.podiumPointsFirst}>
                   {leaderboard[0]?.points?.toLocaleString('id-ID') || 0}
                 </Text>
-                <View style={[styles.podiumBar, { height: 80, backgroundColor: '#fbbf24' }]} />
+                <View style={[styles.podiumBar, { height: 80, backgroundColor: theme.colors.warning }]} />
               </View>
               {/* 3rd */}
               <View style={styles.podiumItem}>
@@ -126,7 +127,7 @@ export default function PublicLeaderboardScreen() {
                 <Text style={styles.podiumPoints}>
                   {leaderboard[2]?.points?.toLocaleString('id-ID') || 0}
                 </Text>
-                <View style={[styles.podiumBar, { height: 40, backgroundColor: '#fed7aa' }]} />
+                <View style={[styles.podiumBar, { height: 40, backgroundColor: theme.colors.warningLight }]} />
               </View>
             </View>
           </View>
@@ -170,9 +171,9 @@ export default function PublicLeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' },
-  loadingText: { marginTop: 12, fontSize: 14, color: '#6b7280' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
+  loadingText: { marginTop: 12, fontSize: 14, color: theme.colors.textSecondary },
   scrollView: { flex: 1 },
 
   // Header
@@ -180,13 +181,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     paddingTop: 50,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
   backButton: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.surface },
   refreshButton: { padding: 4 },
 
   // Podium
@@ -195,17 +196,17 @@ const styles = StyleSheet.create({
   podiumItem: { alignItems: 'center', flex: 1 },
   podiumIcon: { fontSize: 24 },
   podiumIconFirst: { fontSize: 32 },
-  podiumName: { fontSize: 11, color: '#6b7280', marginTop: 4, textAlign: 'center', maxWidth: 80 },
+  podiumName: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 4, textAlign: 'center', maxWidth: 80 },
   podiumNameFirst: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1f2937',
+    color: theme.colors.text,
     marginTop: 4,
     textAlign: 'center',
     maxWidth: 90,
   },
-  podiumPoints: { fontSize: 11, color: '#92400e', fontWeight: '600', marginTop: 2 },
-  podiumPointsFirst: { fontSize: 13, color: '#92400e', fontWeight: '700', marginTop: 2 },
+  podiumPoints: { fontSize: 11, color: theme.colors.warning, fontWeight: '600', marginTop: 2 },
+  podiumPointsFirst: { fontSize: 13, color: theme.colors.warning, fontWeight: '700', marginTop: 2 },
   podiumBar: { width: 40, borderRadius: 8, marginTop: 8 },
 
   // List
@@ -213,21 +214,21 @@ const styles = StyleSheet.create({
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
-  topThree: { backgroundColor: '#fffbeb', borderColor: '#fde68a' },
+  topThree: { backgroundColor: theme.colors.warningLight, borderColor: theme.colors.warningLight },
   rankSection: { width: 36, alignItems: 'center' },
   rankText: { fontSize: 16 },
   infoSection: { flex: 1, marginLeft: 8 },
-  nameText: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
+  nameText: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
   metaRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  metaItem: { fontSize: 11, color: '#6b7280' },
+  metaItem: { fontSize: 11, color: theme.colors.textSecondary },
   pointsSection: { alignItems: 'center' },
   levelIcon: { fontSize: 16 },
-  pointsValue: { fontSize: 13, fontWeight: '700', color: '#92400e' },
+  pointsValue: { fontSize: 13, fontWeight: '700', color: theme.colors.warning },
 });

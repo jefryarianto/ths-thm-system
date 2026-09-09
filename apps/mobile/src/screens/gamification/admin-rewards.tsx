@@ -14,6 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../../src/lib/api-client';
+import { theme } from '../../theme';
 
 interface Reward {
   id: string;
@@ -39,10 +40,10 @@ interface Redemption {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: '#f59e0b',
-  approved: '#3b82f6',
-  rejected: '#ef4444',
-  completed: '#22c55e',
+  pending: theme.colors.warning,
+  approved: theme.colors.primary,
+  rejected: theme.colors.danger,
+  completed: theme.colors.success,
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -179,7 +180,7 @@ export default function AdminRewardsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -189,11 +190,11 @@ export default function AdminRewardsScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.surface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Admin Reward</Text>
         <TouchableOpacity onPress={fetchData} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={22} color="#fff" />
+          <Ionicons name="refresh" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
       </View>
 
@@ -221,7 +222,7 @@ export default function AdminRewardsScreen() {
         {activeTab === 'rewards' && (
           <View style={styles.section}>
             <TouchableOpacity style={styles.addButton} onPress={openCreateForm}>
-              <Ionicons name="add-circle" size={20} color="#fff" />
+              <Ionicons name="add-circle" size={20} color={theme.colors.surface} />
               <Text style={styles.addButtonText}>Tambah Reward</Text>
             </TouchableOpacity>
 
@@ -241,10 +242,10 @@ export default function AdminRewardsScreen() {
                 </View>
                 <View style={styles.cardActions}>
                   <TouchableOpacity onPress={() => openEditForm(reward)} style={styles.actionBtn}>
-                    <Ionicons name="create" size={18} color="#3b82f6" />
+                    <Ionicons name="create" size={18} color={theme.colors.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDelete(reward)} style={styles.actionBtn}>
-                    <Ionicons name="trash" size={18} color="#ef4444" />
+                    <Ionicons name="trash" size={18} color={theme.colors.danger} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -266,7 +267,7 @@ export default function AdminRewardsScreen() {
                   <View
                     style={[
                       styles.statusBadge,
-                      { backgroundColor: STATUS_COLORS[r.status] || '#6b7280' },
+                      { backgroundColor: STATUS_COLORS[r.status] || theme.colors.textSecondary },
                     ]}
                   >
                     <Text style={styles.statusText}>{STATUS_LABELS[r.status] || r.status}</Text>
@@ -281,14 +282,14 @@ export default function AdminRewardsScreen() {
                       style={[styles.approveBtn, styles.actionBtn2]}
                       onPress={() => handleRedemptionAction(r.id, 'approved')}
                     >
-                      <Ionicons name="checkmark" size={16} color="#fff" />
+                      <Ionicons name="checkmark" size={16} color={theme.colors.surface} />
                       <Text style={styles.actionBtnText}>Setujui</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.rejectBtn, styles.actionBtn2]}
                       onPress={() => handleRedemptionAction(r.id, 'rejected')}
                     >
-                      <Ionicons name="close" size={16} color="#fff" />
+                      <Ionicons name="close" size={16} color={theme.colors.surface} />
                       <Text style={styles.actionBtnText}>Tolak</Text>
                     </TouchableOpacity>
                   </View>
@@ -298,7 +299,7 @@ export default function AdminRewardsScreen() {
                     style={[styles.completeBtn, styles.actionBtn2]}
                     onPress={() => handleRedemptionAction(r.id, 'completed')}
                   >
-                    <Ionicons name="checkmark-done" size={16} color="#fff" />
+                    <Ionicons name="checkmark-done" size={16} color={theme.colors.surface} />
                     <Text style={styles.actionBtnText}>Selesaikan</Text>
                   </TouchableOpacity>
                 )}
@@ -319,7 +320,7 @@ export default function AdminRewardsScreen() {
                 {editingReward ? 'Edit Reward' : 'Tambah Reward'}
               </Text>
               <TouchableOpacity onPress={() => setShowForm(false)}>
-                <Ionicons name="close" size={24} color="#6b7280" />
+                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <ScrollView>
@@ -329,7 +330,7 @@ export default function AdminRewardsScreen() {
                 value={formData.name}
                 onChangeText={(t) => setFormData({ ...formData, name: t })}
                 placeholder="Nama reward"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textMuted}
               />
               <Text style={styles.modalLabel}>Deskripsi</Text>
               <TextInput
@@ -337,7 +338,7 @@ export default function AdminRewardsScreen() {
                 value={formData.description}
                 onChangeText={(t) => setFormData({ ...formData, description: t })}
                 placeholder="Deskripsi reward"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textMuted}
                 multiline
               />
               <Text style={styles.modalLabel}>Icon (emoji)</Text>
@@ -346,7 +347,7 @@ export default function AdminRewardsScreen() {
                 value={formData.icon}
                 onChangeText={(t) => setFormData({ ...formData, icon: t })}
                 placeholder="🎁"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textMuted}
               />
               <Text style={styles.modalLabel}>Biaya Poin</Text>
               <TextInput
@@ -354,7 +355,7 @@ export default function AdminRewardsScreen() {
                 value={formData.pointCost}
                 onChangeText={(t) => setFormData({ ...formData, pointCost: t })}
                 placeholder="100"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textMuted}
                 keyboardType="numeric"
               />
               <Text style={styles.modalLabel}>Stok</Text>
@@ -363,7 +364,7 @@ export default function AdminRewardsScreen() {
                 value={formData.stock}
                 onChangeText={(t) => setFormData({ ...formData, stock: t })}
                 placeholder="0"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={theme.colors.textMuted}
                 keyboardType="numeric"
               />
               <TouchableOpacity
@@ -372,7 +373,7 @@ export default function AdminRewardsScreen() {
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.colors.surface} />
                 ) : (
                   <Text style={styles.saveButtonText}>
                     {editingReward ? 'Simpan Perubahan' : 'Buat Reward'}
@@ -388,7 +389,7 @@ export default function AdminRewardsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollView: { flex: 1 },
 
@@ -397,28 +398,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     paddingTop: 50,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
   backButton: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.surface },
   refreshButton: { padding: 4 },
 
   // Tabs
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     padding: 4,
     marginHorizontal: 16,
     marginTop: 12,
     borderRadius: 10,
   },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
-  tabActive: { backgroundColor: '#3b82f6' },
-  tabText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
-  tabTextActive: { color: '#fff' },
+  tabActive: { backgroundColor: theme.colors.primary },
+  tabText: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary },
+  tabTextActive: { color: theme.colors.surface },
 
   // Sections
   section: { paddingHorizontal: 16, paddingTop: 12 },
@@ -429,53 +430,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#22c55e',
+    backgroundColor: theme.colors.success,
     paddingVertical: 12,
     borderRadius: 12,
     marginBottom: 12,
   },
-  addButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  addButtonText: { color: theme.colors.surface, fontSize: 14, fontWeight: '600' },
 
   // Reward Card
   card: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
   },
   cardInactive: { opacity: 0.6 },
   cardIcon: { fontSize: 32, width: 44, textAlign: 'center' },
   cardInfo: { flex: 1, marginLeft: 8 },
-  cardName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
-  cardDesc: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  cardName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  cardDesc: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   cardMeta: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  cardPoints: { fontSize: 11, fontWeight: '700', color: '#92400e' },
-  cardStock: { fontSize: 11, color: '#6b7280' },
-  cardInactiveLabel: { fontSize: 11, color: '#ef4444', fontWeight: '600' },
+  cardPoints: { fontSize: 11, fontWeight: '700', color: theme.colors.warning },
+  cardStock: { fontSize: 11, color: theme.colors.textSecondary },
+  cardInactiveLabel: { fontSize: 11, color: theme.colors.danger, fontWeight: '600' },
   cardActions: { flexDirection: 'column', gap: 8 },
   actionBtn: { padding: 6 },
 
   // Redemption Card
   redemptionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   redemptionHeader: { flexDirection: 'row', alignItems: 'center' },
   redemptionIcon: { fontSize: 24, width: 36, textAlign: 'center' },
   redemptionInfo: { flex: 1, marginLeft: 8 },
-  redemptionName: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
-  redemptionMember: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  redemptionName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  redemptionMember: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  statusText: { fontSize: 11, color: '#fff', fontWeight: '600' },
-  redemptionPoints: { fontSize: 13, fontWeight: '700', color: '#92400e', marginTop: 8 },
+  statusText: { fontSize: 11, color: theme.colors.surface, fontWeight: '600' },
+  redemptionPoints: { fontSize: 13, fontWeight: '700', color: theme.colors.warning, marginTop: 8 },
   redemptionActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   actionBtn2: {
     flex: 1,
@@ -486,15 +487,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
   },
-  approveBtn: { backgroundColor: '#22c55e' },
-  rejectBtn: { backgroundColor: '#ef4444' },
-  completeBtn: { backgroundColor: '#3b82f6', marginTop: 8 },
-  actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  approveBtn: { backgroundColor: theme.colors.success },
+  rejectBtn: { backgroundColor: theme.colors.danger },
+  completeBtn: { backgroundColor: theme.colors.primary, marginTop: 8 },
+  actionBtnText: { color: theme.colors.surface, fontSize: 13, fontWeight: '600' },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: theme.colors.overlay, justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -506,27 +507,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937' },
-  modalLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 12 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.text },
+  modalLabel: { fontSize: 13, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6, marginTop: 12 },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.borderStrong,
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: '#1f2937',
-    backgroundColor: '#f9fafb',
+    color: theme.colors.text,
+    backgroundColor: theme.colors.surfaceMuted,
   },
   modalTextArea: { minHeight: 80, textAlignVertical: 'top' },
   saveButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 20,
   },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  saveButtonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '600' },
 
   // Empty
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 20 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 20 },
 });

@@ -7,6 +7,7 @@ import { formatDate, formatPeriode, formatRupiah } from '../../lib/format';
 import { usePaginatedList } from '../../hooks/use-api';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView, StatusBadge, FilterChips, ErrorView } from '../../components/ui/shared';
+import { theme } from '../../theme';
 import { router } from 'expo-router';
 
 interface DuesItem {
@@ -26,10 +27,10 @@ interface BankInfo {
 }
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  lunas: { label: 'Lunas', color: '#16a34a', bg: '#ecfdf5' },
-  menunggak: { label: 'Menunggak', color: '#dc2626', bg: '#fef2f2' },
-  belum_dibayar: { label: 'Belum Dibayar', color: '#6b7280', bg: '#f3f4f6' },
-  menunggu_verifikasi: { label: 'Menunggu', color: '#ca8a04', bg: '#fef3c7' },
+  lunas: { label: 'Lunas', color: theme.colors.success, bg: theme.colors.successLight },
+  menunggak: { label: 'Menunggak', color: theme.colors.danger, bg: theme.colors.dangerLight },
+  belum_dibayar: { label: 'Belum Dibayar', color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted },
+  menunggu_verifikasi: { label: 'Menunggu', color: theme.colors.warning, bg: theme.colors.warningLight },
 };
 
 const FILTERS = [
@@ -100,7 +101,7 @@ export default function DuesScreen() {
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity onPress={() => router.navigate('/(tabs)/home' as never)} style={{ padding: 4, marginRight: 12 }}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={styles.totalLabel}>Total Pembayaran</Text>
@@ -118,7 +119,7 @@ export default function DuesScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 12 }}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Ionicons name="arrow-back" size={22} color={theme.colors.textOnPrimary} />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
           <Text style={styles.totalLabel}>Total Pembayaran</Text>
@@ -146,7 +147,7 @@ export default function DuesScreen() {
             {bankInfo && (
               <View style={styles.bankCard}>
                 <View style={styles.bankCardHeader}>
-                  <Ionicons name="business" size={16} color="#2563eb" />
+                  <Ionicons name="business" size={16} color={theme.colors.primary} />
                   <Text style={styles.bankCardTitle}>Pembayaran via Transfer</Text>
                 </View>
                 <View style={styles.bankRow}>
@@ -185,8 +186,8 @@ export default function DuesScreen() {
         renderItem={({ item }) => {
           const ss = STATUS_STYLES[item.status] || {
             label: item.status,
-            color: '#6b7280',
-            bg: '#f3f4f6',
+            color: theme.colors.textSecondary,
+            bg: theme.colors.surfaceMuted,
           };
           return (
             <View style={styles.card}>
@@ -219,22 +220,19 @@ export default function DuesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f4f6' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  header: { backgroundColor: '#2563eb', padding: 24, flexDirection: 'row', alignItems: 'center' },
-  totalLabel: { color: '#bfdbfe', fontSize: 13 },
-  totalAmount: { color: '#fff', fontSize: 28, fontWeight: '700', marginTop: 4 },
-  countLabel: { color: '#bfdbfe', fontSize: 12, marginTop: 6 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background },
+  header: { backgroundColor: theme.colors.header, padding: 24, flexDirection: 'row', alignItems: 'center' },
+  totalLabel: { color: theme.colors.headerSub, fontSize: 13 },
+  totalAmount: { color: theme.colors.textOnPrimary, fontSize: 28, fontWeight: theme.typography.weight.bold, marginTop: 4 },
+  countLabel: { color: theme.colors.headerSub, fontSize: 12, marginTop: 6 },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: theme.colors.surfaceMuted,
+    ...theme.shadow.card,
   },
   cardTouchable: {
     flexDirection: 'row',
@@ -243,35 +241,35 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   cardLeft: { flex: 1 },
-  periode: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  tanggal: { fontSize: 12, color: '#6b7280', marginTop: 2 },
+  periode: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
+  tanggal: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 },
   cardRight: { alignItems: 'flex-end' },
-  jumlah: { fontSize: 15, fontWeight: '600', color: '#111827' },
+  jumlah: { fontSize: 15, fontWeight: theme.typography.weight.semibold, color: theme.colors.text },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
+  emptyText: { fontSize: 14, color: theme.colors.textMuted, marginTop: 12 },
 
   // ── Info rekening aktif ──
   bankCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   bankCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  bankCardTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  bankCardTitle: { fontSize: 15, fontWeight: theme.typography.weight.bold, color: theme.colors.text },
   bankRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 7,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
-  bankLabel: { fontSize: 13, color: '#6b7280', width: 100 },
-  bankValue: { fontSize: 14, fontWeight: '600', color: '#111827', flex: 1 },
-  bankAccNumber: { fontSize: 15, fontWeight: '700', color: '#2563eb', flex: 1, letterSpacing: 1 },
-  qrisContainer: { alignItems: 'center', marginTop: 12, padding: 10, backgroundColor: '#f9fafb', borderRadius: 10 },
+  bankLabel: { fontSize: 13, color: theme.colors.textSecondary, width: 100 },
+  bankValue: { fontSize: 14, fontWeight: theme.typography.weight.semibold, color: theme.colors.text, flex: 1 },
+  bankAccNumber: { fontSize: 15, fontWeight: theme.typography.weight.bold, color: theme.colors.primary, flex: 1, letterSpacing: 1 },
+  qrisContainer: { alignItems: 'center', marginTop: 12, padding: 10, backgroundColor: theme.colors.background, borderRadius: 10 },
   qrisImage: { width: 160, height: 160 },
-  qrisLabel: { fontSize: 12, color: '#6b7280', marginTop: 6 },
+  qrisLabel: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 6 },
 });

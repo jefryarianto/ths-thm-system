@@ -5,6 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView, StatusBadge, ScreenShell, TabBar } from '../../components/ui/shared';
 import { STATUS_STYLES } from '../../hooks/use-assessments';
+import { theme } from '../../theme';
 import type { AssessmentsAspect, AssessmentsItem, AssessmentsScore } from '../../types';
 
 export default function AssessmentDetailScreen() {
@@ -43,8 +44,8 @@ export default function AssessmentDetailScreen() {
 
   const ss = STATUS_STYLES[aspect.status] || {
     label: aspect.status,
-    color: '#6b7280',
-    bg: '#f3f4f6',
+    color: theme.colors.textSecondary,
+    bg: theme.colors.surfaceMuted,
   };
 
   const tabs = [
@@ -59,7 +60,7 @@ export default function AssessmentDetailScreen() {
         <View style={styles.infoCard}>
           {aspect.deskripsi ? (
             <View style={styles.infoRow}>
-              <Ionicons name="document-text" size={18} color="#2563eb" />
+              <Ionicons name="document-text" size={18} color={theme.colors.primary} />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Deskripsi</Text>
                 <Text style={styles.infoValue}>{aspect.deskripsi}</Text>
@@ -67,14 +68,14 @@ export default function AssessmentDetailScreen() {
             </View>
           ) : null}
           <View style={styles.infoRow}>
-            <Ionicons name="list" size={18} color="#2563eb" />
+            <Ionicons name="list" size={18} color={theme.colors.primary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Jumlah Item</Text>
               <Text style={styles.infoValue}>{items.length} item</Text>
             </View>
           </View>
           <View style={styles.infoRow}>
-            <Ionicons name="flag" size={18} color="#2563eb" />
+            <Ionicons name="flag" size={18} color={theme.colors.primary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Status</Text>
               <StatusBadge label={ss.label} color={ss.color} bg={ss.bg} />
@@ -92,7 +93,7 @@ export default function AssessmentDetailScreen() {
               <View key={item.id} style={styles.itemCard}>
                 <View style={styles.itemLeft}>
                   <View style={styles.itemIcon}>
-                    <Ionicons name="create" size={16} color="#2563eb" />
+                    <Ionicons name="create" size={16} color={theme.colors.primary} />
                   </View>
                   <View style={styles.itemInfo}>
                     <Text style={styles.itemName}>{item.nama}</Text>
@@ -156,17 +157,17 @@ export default function AssessmentDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
-  errorText: { fontSize: 14, color: '#ef4444' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background },
+  errorText: { fontSize: 14, color: theme.colors.danger },
 
   section: { padding: 16 },
 
   infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg - 2,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   infoRow: {
     flexDirection: 'row',
@@ -174,11 +175,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.surfaceMuted,
   },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: '#9ca3af', marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '500', color: '#111827' },
+  infoLabel: { fontSize: 11, color: theme.colors.textMuted, marginBottom: 2 },
+  infoValue: { fontSize: 14, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
 
   // Tabs removed — using shared TabBar component
 
@@ -186,66 +187,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   itemLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   itemIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
   itemInfo: { flex: 1 },
-  itemName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  itemType: { fontSize: 11, color: '#6b7280', marginTop: 2 },
+  itemName: { fontSize: 14, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
+  itemType: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
   itemWeight: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.surfaceMuted,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  itemWeightText: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  itemWeightText: { fontSize: 12, fontWeight: theme.typography.weight.semibold, color: theme.colors.textSecondary },
 
   scoreCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
     padding: 14,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: theme.colors.surfaceMuted,
   },
   scoreLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   scoreAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scoreAvatarText: { fontSize: 14, fontWeight: '700', color: '#2563eb' },
+  scoreAvatarText: { fontSize: 14, fontWeight: theme.typography.weight.bold, color: theme.colors.primary },
   scoreInfo: { flex: 1 },
-  scoreName: { fontSize: 14, fontWeight: '500', color: '#111827' },
-  scoreItem: { fontSize: 11, color: '#6b7280', marginTop: 2 },
-  scoreNote: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
-  scoreDate: { fontSize: 10, color: '#9ca3af', marginTop: 2 },
+  scoreName: { fontSize: 14, fontWeight: theme.typography.weight.medium, color: theme.colors.text },
+  scoreItem: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  scoreNote: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
+  scoreDate: { fontSize: 10, color: theme.colors.textMuted, marginTop: 2 },
   scoreBadge: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primarySofter,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
   },
-  scoreBadgeText: { fontSize: 16, fontWeight: '700', color: '#2563eb' },
+  scoreBadgeText: { fontSize: 16, fontWeight: theme.typography.weight.bold, color: theme.colors.primary },
 
-  emptyText: { fontSize: 13, color: '#9ca3af', textAlign: 'center', paddingVertical: 30 },
+  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 });

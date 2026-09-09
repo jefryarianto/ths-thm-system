@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useReferenceDetail } from '../../hooks/use-reference-detail';
 import { InfoRow, SectionTitle, StatusCard, ScreenShell, ReferenceScreenState, referenceStyles } from '../../components/ui/shared';
+import { theme } from '../../theme';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -44,10 +45,10 @@ const CLAIM_STATUS_LABELS: Record<string, string> = {
 };
 
 const CLAIM_STATUS_STYLES: Record<string, { color: string; bg: string; icon: string }> = {
-  pending: { color: '#b45309', bg: '#fef3c7', icon: 'time' },
-  diproses: { color: '#2563eb', bg: '#dbeafe', icon: 'sync' },
-  disetujui: { color: '#16a34a', bg: '#dcfce7', icon: 'checkmark-circle' },
-  ditolak: { color: '#dc2626', bg: '#fee2e2', icon: 'close-circle' },
+  pending: { color: theme.colors.warning, bg: theme.colors.warningLight, icon: 'time' },
+  diproses: { color: theme.colors.primary, bg: theme.colors.primaryLight, icon: 'sync' },
+  disetujui: { color: theme.colors.success, bg: theme.colors.successLight, icon: 'checkmark-circle' },
+  ditolak: { color: 'theme.colors.danger', bg: theme.colors.dangerLight, icon: 'close-circle' },
 };
 
 // ─── Screen ─────────────────────────────────────────────────
@@ -63,7 +64,7 @@ export default function ReferenceClaimScreen() {
   if (stateView) return stateView;
   if (!claim) return null;
 
-  const st = CLAIM_STATUS_STYLES[claim.status] || { color: '#6b7280', bg: '#f3f4f6', icon: 'help-circle' };
+  const st = CLAIM_STATUS_STYLES[claim.status] || { color: theme.colors.textSecondary, bg: theme.colors.surfaceMuted, icon: 'help-circle' };
 
   return (
     <ScreenShell title="Detail Klaim" variant="reference" onRefresh={refetch} badgeLabel={CLAIM_STATUS_LABELS[claim.status] || claim.status} badgeColor={st.color} badgeBg={st.bg}>
@@ -85,7 +86,7 @@ export default function ReferenceClaimScreen() {
         {claim.catatan && <InfoRow icon="chatbubble-ellipses" label="Catatan" value={claim.catatan} />}
         {claim.alasanPenolakan && (
           <View style={[styles.infoRowAlert]}>
-            <Ionicons name="close-circle" size={15} color="#dc2626" />
+            <Ionicons name="close-circle" size={15} color="theme.colors.danger" />
             <View style={{ flex: 1 }}>
               <Text style={styles.alertLabel}>ALASAN DITOLAK</Text>
               <Text style={styles.alertValue}>{claim.alasanPenolakan}</Text>
@@ -102,7 +103,7 @@ export default function ReferenceClaimScreen() {
         {claim.anggota.email && <InfoRow icon="mail" label="Email" value={claim.anggota.email} />}
         {claim.anggota.noHp && <InfoRow icon="call" label="No. HP" value={claim.anggota.noHp} />}
         <TouchableOpacity style={styles.memberLinkBtn} activeOpacity={0.7} onPress={() => router.push(`/approvals/reference-member?id=${claim.anggota.id}` as any)}>
-          <Ionicons name="open-outline" size={16} color="#2563eb" />
+          <Ionicons name="open-outline" size={16} color={theme.colors.primary} />
           <Text style={styles.memberLinkText}>Lihat Detail Anggota</Text>
         </TouchableOpacity>
       </View>
@@ -113,9 +114,9 @@ export default function ReferenceClaimScreen() {
 // ─── Styles ─────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  memberLinkBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#eff6ff', borderRadius: 10, borderWidth: 1, borderColor: '#bfdbfe', marginTop: 4 },
-  memberLinkText: { fontSize: 13, fontWeight: '600', color: '#2563eb' },
-  infoRowAlert: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#fee2e2', borderRadius: 10, borderWidth: 1, borderColor: '#fecaca' },
-  alertLabel: { fontSize: 11, color: '#991b1b', textTransform: 'uppercase' },
-  alertValue: { fontSize: 14, color: '#991b1b', fontWeight: '500' },
+  memberLinkBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: theme.colors.primarySofter, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.headerSub, marginTop: 4 },
+  memberLinkText: { fontSize: 13, fontWeight: '600', color: theme.colors.primary },
+  infoRowAlert: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: theme.colors.dangerLight, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.dangerLight },
+  alertLabel: { fontSize: 11, color: theme.colors.danger, textTransform: 'uppercase' },
+  alertValue: { fontSize: 14, color: theme.colors.danger, fontWeight: '500' },
 });
