@@ -133,7 +133,13 @@ android {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
-            shrinkResources true
+            // DILARANG menyalakan shrinkResources: resource update embedded expo-updates
+            // (font ikon res/raw/__node_modules_*) hanya dirujuk DINAMIS via
+            // Resources.getIdentifier() dari manifest embedded — resource shrinker tidak
+            // bisa melihatnya lalu MENGGANTI isinya jadi file 0-byte. Akibatnya font
+            // Ionicons dsb. gagal dimuat (Minikin "buffer invalid") dan semua ikon
+            // tampil sebagai kotak/tofu. minifyEnabled (R8) tetap aman untuk kode.
+            shrinkResources false
             minifyEnabled true
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)

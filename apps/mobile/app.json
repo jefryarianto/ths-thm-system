@@ -32,14 +32,14 @@
           "fonts": [
             "./assets/fonts/ocr-a-extended.ttf",
             "./assets/fonts/open-sans-bold.ttf",
-            "./assets/fonts/roboto-regular.ttf",
-            "./assets/fonts/roboto-bold.ttf",
+            "./assets/fonts/Roboto-Regular.ttf",
+            "./assets/fonts/Roboto-Bold.ttf",
             "./assets/fonts/Ionicons.ttf"
           ]
         }
       ]
     ],
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": "1.0.1",
     "updates": {
       "url": "https://u.expo.dev/f9fed5cb-78d4-42b3-a253-a5b3674e8a2c",
       "enabled": true,
