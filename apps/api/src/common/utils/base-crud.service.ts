@@ -179,8 +179,10 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const entity = await this.prismaDelegate.findUnique({
         where: { id },
-        select: { anggotaId: true },
-        include: { anggota: { select: { rantingId: true } } },
+        select: {
+          anggotaId: true,
+          anggota: { select: { rantingId: true } },
+        },
       });
       if (!entity) {
         throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
