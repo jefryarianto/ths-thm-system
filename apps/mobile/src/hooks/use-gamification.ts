@@ -87,23 +87,34 @@ export interface GamificationData {
 
 /**
  * Fetch gamification profile for a member.
+ *
+ * Guard: bila `anggotaId` masih null (mis. sedang memuat identitas anggota dari
+ * `/members/me`), jangan kirim request ke `/gamification/profile/null` — itu
+ * memicu error 401/404 ke backend dan user melihat pesan "Harus login" palsu.
+ * Bypass request dan kembalikan profile kosong (null) sampai id tersedia.
  */
 export function useGamificationProfile(anggotaId: string | null) {
   return useApi<GamificationProfile>(
-    () => apiClient.get(`/gamification/profile/${anggotaId}`).then((r) => r.data.data),
+    () => {
+      if (!anggotaId) return Promise.resolve(null);
+      return apiClient.get(`/gamification/profile/${anggotaId}`).then((r) => r.data.data);
+    },
     [anggotaId],
   );
 }
 
 /**
  * Fetch points history for a member.
+ * Sama seperti profile — jangan request saat `anggotaId` masih null.
  */
 export function usePointsHistory(anggotaId: string | null) {
   return useApi<PointHistory[]>(
-    () =>
-      apiClient
+    () => {
+      if (!anggotaId) return Promise.resolve([]);
+      return apiClient
         .get(`/gamification/profile/${anggotaId}/points-history`)
-        .then((r) => r.data.data || []),
+        .then((r) => r.data.data || []);
+    },
     [anggotaId],
   );
 }

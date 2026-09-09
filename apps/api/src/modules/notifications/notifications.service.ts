@@ -654,6 +654,71 @@ export class NotificationsService {
     await this.pushBroadcast(title, body, [userId]);
   }
 
+  /**
+   * URL layanan push resmi Expo (digunakan untuk token Expo: `ExponentPushToken[...]`).
+   * App mobile memakai `expo-notifications` + `Notifications.getExpoPushTokenAsync()`
+   * yang menghasilkan TOKEN EXPO (bukan raw FCM token). firebase-admin TIDAK bisa
+   * mengirim ke token Expo — jadi token tersebut harus dikirim lewat API HTTP Expo.
+   */
+  private static readonly EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+  /** Deteksi token Expo (`ExponentPushToken[xxxxxxxx]`). Token FCM asli tidak memakai awalan ini. */
+  private isExpoToken(token: string): boolean {
+    return token.startsWith('ExponentPushToken[');
+  }
+
+  /**
+   * Kirim push satu-per-satu ke token Expo lewat API HTTP Expo.
+   * Returns jumlah berhasil + menghapus token yang sudah invalid/unregistered.
+   */
+  private async pushExpo(title: string, body: string, tokens: { id: string; token: string }[]): Promise<void> {
+    if (tokens.length === 0) return;
+
+    const messages = tokens.map((t) => ({
+      to: t.token,
+      title,
+      body,
+      sound: 'default',
+      data: { click_action: 'FLUTTER_NOTIFICATION_CLICK' },
+    }));
+
+    try {
+      // Global fetch tersedia di Node 18+ (NestJS modern sudah memakai Node 18+).
+      const headers: Record<string, string> = { 'content-type': 'application/json' };
+      if (process.env.EXPO_ACCESS_TOKEN) {
+        headers.authorization = `Bearer ${process.env.EXPO_ACCESS_TOKEN}`;
+      }
+      const res = await fetch(NotificationsService.EXPO_PUSH_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(messages),
+      });
+
+      const payload = (await res.json()) as {
+        data?: { status?: string; details?: { error?: string }; id?: string }[];
+      };
+
+      const results = payload?.data || [];
+      results.forEach((r, i) => {
+        const tok = tokens[i];
+        // Status "DeviceNotRegistered" / error "DeviceNotRegistered" → token tidak valid lagi.
+        if (r?.status === 'error' && r?.details?.error === 'DeviceNotRegistered' && tok) {
+          this.prisma.deviceToken
+            .updateMany({ where: { token: tok.token }, data: { isActive: false } })
+            .catch(() => {});
+        }
+      });
+
+      if (res.ok) {
+        this.logger.log(`Expo push: ${results.filter((r) => r?.status === 'ok').length} success, ${results.filter((r) => r?.status === 'error').length} failures`);
+      } else {
+        this.logger.warn(`Expo push HTTP ${res.status}: ${JSON.stringify(payload).slice(0, 200)}`);
+      }
+    } catch (error) {
+      this.logger.warn('Expo push failed:', (error as Error).message);
+    }
+  }
+
   private async pushBroadcast(title: string, body: string, userIds: string[]) {
     try {
       if (userIds.length === 0) return;
@@ -663,6 +728,16 @@ export class NotificationsService {
       });
 
       if (tokens.length === 0) return;
+
+      // Pisahkan token Expo vs. token FCM asli (ditangani oleh service yang berbeda).
+      const expoTokens = tokens.filter((t) => this.isExpoToken(t.token));
+      const fcmTokens = tokens.filter((t) => !this.isExpoToken(t.token));
+
+      if (expoTokens.length > 0) {
+        await this.pushExpo(title, body, expoTokens);
+      }
+
+      if (fcmTokens.length === 0) return;
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const admin = require('firebase-admin');
@@ -677,8 +752,8 @@ export class NotificationsService {
       }
 
       const BATCH_SIZE = 500;
-      for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
-        const batch = tokens.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < fcmTokens.length; i += BATCH_SIZE) {
+        const batch = fcmTokens.slice(i, i + BATCH_SIZE);
         const message = {
           tokens: batch.map((t) => t.token),
           notification: { title, body },
