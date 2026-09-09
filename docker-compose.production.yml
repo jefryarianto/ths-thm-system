@@ -106,7 +106,7 @@ services:
     container_name: ths-thm-web
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: https://ths-thm.cloud/api
+      NEXT_PUBLIC_API_URL: https://ths-thm.cloud
       NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ORG: ${SENTRY_ORG}

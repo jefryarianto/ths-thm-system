@@ -89,7 +89,8 @@ export function downloadXlsx(
  */
 export async function serverExport(type: string, format: 'xlsx' | 'csv' = 'xlsx'): Promise<void> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-  const url = `${baseUrl}/api/reports/export/${type}?format=${format}&t=${Date.now()}`;
+  const apiBase = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+  const url = `${apiBase}/reports/export/${type}?format=${format}&t=${Date.now()}`;
   const token = localStorage.getItem('accessToken');
 
   try {

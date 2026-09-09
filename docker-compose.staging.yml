@@ -103,7 +103,7 @@ services:
     container_name: ths-thm-staging-web
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: https://staging.ths-thm.cloud/api
+      NEXT_PUBLIC_API_URL: https://staging.ths-thm.cloud
       NEXT_PUBLIC_SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ORG: ${SENTRY_ORG}

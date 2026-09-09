@@ -14,9 +14,11 @@ interface Berita {
   slug: string;
 }
 
-// In production NEXT_PUBLIC_API_URL = "https://ths-thm.cloud/api"
-// In dev, fall back to localhost with /api prefix (matching NestJS global prefix)
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// In production NEXT_PUBLIC_API_URL = "https://ths-thm.cloud"
+// In dev, fall back to localhost (matching NestJS global prefix /api)
+const API_BASE = process.env.NEXT_PUBLIC_API_URL 
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api` 
+  : 'http://localhost:3001/api';
 
 async function fetchBerita(slug: string): Promise<Berita | null> {
   try {

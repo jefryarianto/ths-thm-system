@@ -16,10 +16,13 @@ const nextConfig = {
     return [];
   },
   async rewrites() {
+    const rawBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // Normalize: strip trailing /api so the rewrite always produces exactly one /api prefix
+    const baseUrl = rawBase.replace(/\/api\/?$/, '');
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/:path*`,
+        destination: `${baseUrl}/api/:path*`,
       },
     ];
   },
