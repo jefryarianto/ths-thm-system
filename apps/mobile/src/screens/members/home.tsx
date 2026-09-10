@@ -124,13 +124,11 @@ export default function HomeScreen() {
           )}
         </TouchableOpacity>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.greeting}>Selamat Datang,</Text>
+          <Text style={styles.greeting}>Gloria, Selamat Datang</Text>
           <Text style={styles.name}>
             {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
           </Text>
-          <Text style={styles.roleHint}>
-            {isAnggota ? 'Anggota' : role ? role.replace(/_/g, ' ') : 'Anggota'}
-          </Text>
+          <Text style={styles.roleHint}>{member?.nomorAnggota || 'Anggota THS-THM'}</Text>
         </View>
         <TouchableOpacity
           style={[styles.bellBtn, { top: insets.top + 6 }]}

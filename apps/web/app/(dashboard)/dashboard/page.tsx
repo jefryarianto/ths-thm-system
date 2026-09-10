@@ -15,7 +15,6 @@ import {
   AlertCircle,
   GraduationCap,
   ClipboardCheck,
-  Users,
   Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -68,6 +67,36 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
 
 // ─── Activity-Scoped Dashboard (admin_kegiatan & penguji) ───
 
+/** Salam beranda: "Gloria, Selamat Datang, {nama}" + nomor anggota di bawah nama. */
+function GloriaGreeting({ className = '' }: { className?: string }) {
+  const { user } = useAuth();
+  const [nomorAnggota, setNomorAnggota] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get('/members/me')
+      .then(({ data }) => {
+        const member = data?.data || data;
+        if (active) setNomorAnggota(member?.nomorAnggota || null);
+      })
+      .catch(() => {
+        if (active) setNomorAnggota(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return (
+    <p className={`text-sm text-gray-500 dark:text-gray-400 mt-1 ${className}`}>
+      Gloria, Selamat Datang,{' '}
+      <span className="font-medium text-gray-700 dark:text-gray-200">
+        {user?.namaLengkap || 'Anggota THS-THM'}
+      </span>
+      {nomorAnggota ? <span className="ml-2 font-mono text-xs text-gray-400">{nomorAnggota}</span> : null}
+    </p>
+  );
+}
+
 interface AssignedKegiatan {
   id: string;
   nama: string;
@@ -78,7 +107,7 @@ interface AssignedKegiatan {
 }
 
 function ActivityScopedDashboard() {
-  const { user, isActivityAdmin, isActivityPenguji } = useAuth();
+  const { isActivityAdmin } = useAuth();
   const [kegiatan, setKegiatan] = useState<AssignedKegiatan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,11 +135,7 @@ function ActivityScopedDashboard() {
           {isActivityAdmin ? <GraduationCap size={24} className="text-blue-600" /> : <ClipboardCheck size={24} className="text-blue-600" />}
           {isActivityAdmin ? 'Kegiatan Saya' : 'Penilaian Saya'}
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {isActivityAdmin 
-            ? 'Daftar kegiatan yang Anda kelola' 
-            : 'Daftar kegiatan yang Anda nilai'}
-        </p>
+        <GloriaGreeting />
       </div>
 
       {/* Stats */}
@@ -254,9 +279,7 @@ export default function DashboardPage() {
             <TrendingUp size={24} className="text-blue-600" />
             Dashboard
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Ringkasan data dan aktivitas sistem THS-THM
-          </p>
+          <GloriaGreeting />
         </div>
         <div className="flex items-center gap-3">
           {lastUpdated && (
