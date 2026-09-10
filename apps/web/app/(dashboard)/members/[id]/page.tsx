@@ -1311,15 +1311,15 @@ export default function MemberDetailPage() {
                           </div>
                         </div>
 
-                        {/* Signer - teks di atas, stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
-                        <div className="absolute text-right" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
-                          <div className="absolute font-black font-['Roboto']" style={{ right: FRONT.signer.title1.right, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize }}>
+                        {/* Signer - teks RATA-KIRI: batas kanan ditentukan baris terpanjang; stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
+                        <div className="absolute text-left" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
+                          <div className="absolute font-black font-['Roboto']" style={{ left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize }}>
                             KOORDINATORAT DISTRIK THS-THM
                           </div>
-                          <div className="absolute font-bold font-['Roboto']" style={{ right: FRONT.signer.title2.right, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize }}>
+                          <div className="absolute font-bold font-['Roboto']" style={{ left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize }}>
                             KEUSKUPAN {(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}
                           </div>
-                          <div className="absolute" style={{ right: FRONT.signer.wrap.right, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h }}>
+                          <div className="absolute" style={{ left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h }}>
                             <div
                               className="absolute rounded-full overflow-hidden flex items-center justify-center border-2"
                               style={{
@@ -1377,12 +1377,12 @@ export default function MemberDetailPage() {
                               </div>
                             )}
                           </div>
-                          <div className="absolute w-full text-right" style={{ left: 0, bottom: 0 }}>
-                            <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'right' }}>
+                          <div className="absolute w-full text-left" style={{ left: 0, bottom: 0 }}>
+                            <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'left' }}>
                               {(cardData?.signerName || 'Koordinator Distrik').toUpperCase()}
                             </div>
                             {cardData?.signerTitle ? (
-                              <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'right' }}>
+                              <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'left' }}>
                                 {cardData.signerTitle.toUpperCase()}
                               </div>
                             ) : null}

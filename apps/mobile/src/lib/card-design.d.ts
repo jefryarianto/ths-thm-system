@@ -90,9 +90,9 @@ declare const FRONT: Freeze<{
     bottom: number;
     w: number;
     h: number;
-    title1: { right: number; top: number; fontSize: number; align: string };
-    title2: { right: number; top: number; fontSize: number; align: string };
-    wrap: { right: number; top: number; w: number; h: number };
+    title1: { left: number; top: number; fontSize: number };
+    title2: { left: number; top: number; fontSize: number };
+    wrap: { left: number; top: number; w: number; h: number };
     sig: {
       left: number;
       top: number;
@@ -111,8 +111,8 @@ declare const FRONT: Freeze<{
       rotate: number;
       text: { fontSize: number };
     };
-    name: { fontSize: number; underline: boolean; align: string };
-    title: { fontSize: number; marginTop: number; align: string };
+    name: { fontSize: number; underline: boolean };
+    title: { fontSize: number; marginTop: number };
   };
   watermark: { left: number; top: number; w: number; h: number; color: string; opacity: number };
   bgCircle1: { top: number; right: number; size: number };

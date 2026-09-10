@@ -267,9 +267,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   // Stempel 110 px (50% dari 220 px ≈ 1,1 cm pada skala CR80 856 px = 8.56 cm), cap di-upload di dalamnya
-  // Blok penandatangan digeser ke kanan (right 24) & teks koordinator turun sejajar di bawah data Wilayah;
-  // teks KOORDINATOR/KEUSKUPAN (gelap, di atas area putih) → stempel (tdk ditebalkan) + ttd → nama (underline) + jabatan (putih, di atas pita biru bawah)
-  // Grup pengesahan dinaikkan (bottom 14 → bawah teks sejajar tanggal masa laku) & digeser kanan (right -8)
+  // Blok penandatangan: teks RATA-KIRI — batas kanan ditentukan baris terpanjang
+  // (kotak di-anchor kanan right:-8 ≈ tepi kartu); teks KOORDINATOR/KEUSKUPAN (gelap,
+  // di atas area putih) → stempel (tdk ditebalkan) + ttd → nama (underline) + jabatan
+  // (putih, di atas pita biru bawah). Grup pengesahan dinaikkan (bottom 14 → bawah teks
+  // sejajar tanggal masa laku).
   signature: {
     position: 'absolute',
     right: FRONT.signer.right,
@@ -279,30 +281,30 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   // Teks KOORDINATORAT diturunkan: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel;
-  // rata kanan (right 0) sesuai spec FRONT.signer.title1/2
+  // rata kiri (left 0) sesuai spec FRONT.signer.title1/2 — baris terpanjang jadi batas kanan
   sigTitle1: {
     position: 'absolute',
-    right: 0,
+    left: FRONT.signer.title1.left,
     top: FRONT.signer.title1.top,
     color: COLORS.value,
     fontSize: FRONT.signer.title1.fontSize,
     fontWeight: 'heavy',
-    textAlign: 'right',
+    textAlign: 'left',
     textTransform: 'uppercase',
   },
   sigTitle2: {
     position: 'absolute',
-    right: 0,
+    left: FRONT.signer.title2.left,
     top: FRONT.signer.title2.top,
     color: COLORS.value,
     fontSize: FRONT.signer.title2.fontSize,
     fontWeight: 'heavy',
-    textAlign: 'right',
+    textAlign: 'left',
     textTransform: 'uppercase',
   },
   sigWrap: {
     position: 'absolute',
-    right: 0,
+    left: FRONT.signer.wrap.left,
     top: FRONT.signer.wrap.top,
     width: FRONT.signer.wrap.w,
     height: FRONT.signer.wrap.h,
@@ -364,7 +366,7 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 14,
     fontWeight: 'heavy',
-    textAlign: 'right',
+    textAlign: 'left',
     textTransform: 'uppercase',
     textDecoration: 'underline',
   },
@@ -374,7 +376,7 @@ const styles = StyleSheet.create({
     fontWeight: 'semibold',
     opacity: 0.95,
     marginTop: 1,
-    textAlign: 'right',
+    textAlign: 'left',
     textTransform: 'uppercase',
   },
 

@@ -278,25 +278,26 @@ function frontSide(d: CardSvgData): string {
   s += txt(botX, botY, validUntilStr, { size: FRONT.bottom.value.fontSize, weight: 700, fill: FRONT.bottom.value.color });
   s += `</g>`;
 
-  // Signer — rata kanan (right 24), judul/stempel/nama sejajar kanan
+  // Signer — teks RATA-KIRI: batas kanan ditentukan baris terpanjang. Kotak di-anchor
+  // kanan (right:-8 ≈ tepi kanan kartu); judul/stempel/nama sejajar kiri (x=0).
   const sg = FRONT.signer;
   const sgX0 = CARD.W - sg.right - sg.w;
   const sgY0 = CARD.H - sg.bottom - sg.h;
   s += `<g transform="translate(${sgX0} ${sgY0})">`;
-  s += txt(sg.w, sg.title1.top + sg.title1.fontSize, 'KOORDINATORAT DISTRIK THS-THM', {
+  s += txt(0, sg.title1.top + sg.title1.fontSize, 'KOORDINATORAT DISTRIK THS-THM', {
     size: sg.title1.fontSize,
     weight: 900,
     fill: COLORS.value,
-    anchor: 'end',
+    anchor: 'start',
   });
-  s += txt(sg.w, sg.title2.top + sg.title2.fontSize, `KEUSKUPAN ${distrik}`, {
+  s += txt(0, sg.title2.top + sg.title2.fontSize, `KEUSKUPAN ${distrik}`, {
     size: sg.title2.fontSize,
     weight: 700,
     fill: COLORS.value,
-    anchor: 'end',
+    anchor: 'start',
   });
   // Stempel
-  const wrapX = sg.w - sg.wrap.w, // right:0
+  const wrapX = sg.wrap.left, // rata kiri (left 0)
     wrapY = sg.wrap.top;
   const stamX = wrapX + sg.stamp.left;
   const stamY = wrapY + sg.stamp.top;
@@ -327,23 +328,23 @@ function frontSide(d: CardSvgData): string {
       transform: `rotate(${sg.sig.rotate} ${sigX + sg.sig.w / 2} ${sigY + sg.sig.h / 2})`,
     });
   }
-  // Nama + jabatan (bawah, rata kanan) — bisa lebih dari satu penandatangan
+  // Nama + jabatan (bawah, rata kiri) — bisa lebih dari satu penandatangan
   signers.forEach((sgn, i) => {
     const rowBottom = sg.h - i * 34;
     const nameBaseline = rowBottom - 4;
-    s += txt(sg.w, nameBaseline, (sgn.signerName || 'Koordinator Distrik').toUpperCase(), {
+    s += txt(0, nameBaseline, (sgn.signerName || 'Koordinator Distrik').toUpperCase(), {
       size: sg.name.fontSize,
       weight: 900,
       fill: COLORS.value,
-      anchor: 'end',
+      anchor: 'start',
       decoration: 'underline',
     });
     if (sgn.signerTitle) {
-      s += txt(sg.w, nameBaseline + sg.title.fontSize + sg.title.marginTop, sgn.signerTitle.toUpperCase(), {
+      s += txt(0, nameBaseline + sg.title.fontSize + sg.title.marginTop, sgn.signerTitle.toUpperCase(), {
         size: sg.title.fontSize,
         weight: 700,
         fill: COLORS.value,
-        anchor: 'end',
+        anchor: 'start',
       });
     }
   });

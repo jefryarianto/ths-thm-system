@@ -100,14 +100,14 @@ const FRONT = Object.freeze({
     value: Object.freeze({ fontSize: 16, color: COLORS.value, marginTop: 2 }),
   }),
   signer: Object.freeze({
-    right: 24, bottom: 14, w: 400, h: 146,
-    title1: Object.freeze({ right: 0, top: 35, fontSize: 13, align: 'right' }),
-    title2: Object.freeze({ right: 0, top: 52, fontSize: 12, align: 'right' }),
-    wrap: Object.freeze({ right: 0, top: 35, w: 175, h: 96 }),
+    right: -8, bottom: 14, w: 400, h: 146,
+    title1: Object.freeze({ left: 0, top: 35, fontSize: 13 }),
+    title2: Object.freeze({ left: 0, top: 52, fontSize: 12 }),
+    wrap: Object.freeze({ left: 0, top: 35, w: 175, h: 96 }),
     sig: Object.freeze({ left: -68, top: 28, w: 175, h: 60, fontSize: 26, rotate: -8, color: COLORS.ttd }),
     stamp: Object.freeze({ left: -55, top: 0, size: 110, radius: 55, border: 2, rotate: -8, text: Object.freeze({ fontSize: 11 }) }),
-    name: Object.freeze({ fontSize: 14, underline: true, align: 'right' }),
-    title: Object.freeze({ fontSize: 12, marginTop: 1, align: 'right' }),
+    name: Object.freeze({ fontSize: 14, underline: true }),
+    title: Object.freeze({ fontSize: 12, marginTop: 1 }),
   }),
   watermark: Object.freeze({ left: 128, top: 166, w: 600, h: 207, color: '#1d4ed8', opacity: 0.35 }),
   bgCircle1: Object.freeze({ top: -80, right: -80, size: 320 }),
@@ -383,15 +383,15 @@ function cardCss() {
 .card .bottom-label { font-size: ${f.bottom.label.fontSize}px; font-weight: 700; color: ${f.bottom.label.color}; margin-bottom: ${f.bottom.label.marginBottom}px; }
 .card .bottom-value { font-size: ${f.bottom.value.fontSize}px; font-weight: 700; color: ${f.bottom.value.color}; margin-top: ${f.bottom.value.marginTop}px; }
 .card .signer { position: absolute; right: ${f.signer.right}px; bottom: ${f.signer.bottom}px; width: ${f.signer.w}px; height: ${f.signer.h}px; }
-.card .sig-title1 { position: absolute; right: ${f.signer.title1.right}px; top: ${f.signer.title1.top}px; font-size: ${f.signer.title1.fontSize}px; font-weight: 900; color: ${COLORS.value}; text-align: right; white-space: nowrap; }
-.card .sig-title2 { position: absolute; right: ${f.signer.title2.right}px; top: ${f.signer.title2.top}px; font-size: ${f.signer.title2.fontSize}px; font-weight: 700; color: ${COLORS.value}; text-align: right; white-space: nowrap; }
-.card .sig-wrap { position: absolute; right: ${f.signer.wrap.right}px; top: ${f.signer.wrap.top}px; width: ${f.signer.wrap.w}px; height: ${f.signer.wrap.h}px; }
+.card .sig-title1 { position: absolute; left: ${f.signer.title1.left}px; top: ${f.signer.title1.top}px; font-size: ${f.signer.title1.fontSize}px; font-weight: 900; color: ${COLORS.value}; white-space: nowrap; }
+.card .sig-title2 { position: absolute; left: ${f.signer.title2.left}px; top: ${f.signer.title2.top}px; font-size: ${f.signer.title2.fontSize}px; font-weight: 700; color: ${COLORS.value}; white-space: nowrap; }
+.card .sig-wrap { position: absolute; left: ${f.signer.wrap.left}px; top: ${f.signer.wrap.top}px; width: ${f.signer.wrap.w}px; height: ${f.signer.wrap.h}px; }
 .card .sig-text { position: absolute; left: ${f.signer.sig.left}px; top: ${f.signer.sig.top}px; width: ${f.signer.sig.w}px; height: ${f.signer.sig.h}px; font-size: ${f.signer.sig.fontSize}px; font-style: italic; color: ${f.signer.sig.color}; transform: rotate(${f.signer.sig.rotate}deg); }
 .card .stamp { position: absolute; left: ${f.signer.stamp.left}px; top: ${f.signer.stamp.top}px; width: ${f.signer.stamp.size}px; height: ${f.signer.stamp.size}px; border-radius: ${f.signer.stamp.radius}px; border: ${f.signer.stamp.border}px solid ${COLORS.stampBorder}; display: flex; align-items: center; justify-content: center; transform: rotate(${f.signer.stamp.rotate}deg); overflow: hidden; font-size: ${f.signer.stamp.text.fontSize}px; font-weight: 900; color: ${COLORS.stampText}; }
 .card .stamp img { width: 100%; height: 100%; object-fit: cover; }
-.card .signer-row { position: absolute; left: 0; bottom: 0; z-index: 5; width: 100%; display: flex; flex-direction: column; align-items: flex-end; }
-.card .signer-name { font-size: ${f.signer.name.fontSize}px; font-weight: 900; color: ${COLORS.value}; text-decoration: underline; text-align: right; }
-.card .signer-title { font-size: ${f.signer.title.fontSize}px; font-weight: 700; color: ${COLORS.value}; margin-top: ${f.signer.title.marginTop}px; text-align: right; }
+.card .signer-row { position: absolute; left: 0; bottom: 0; z-index: 5; width: 100%; display: flex; flex-direction: column; align-items: flex-start; }
+.card .signer-name { font-size: ${f.signer.name.fontSize}px; font-weight: 900; color: ${COLORS.value}; text-decoration: underline; }
+.card .signer-title { font-size: ${f.signer.title.fontSize}px; font-weight: 700; color: ${COLORS.value}; margin-top: ${f.signer.title.marginTop}px; }
 .card .back-band { position: absolute; top: 0; left: 0; right: 0; height: ${b.header.height}px; background: linear-gradient(135deg, ${COLORS.header.from}, ${COLORS.header.to}); }
 .card .back-header { position: absolute; top: 0; left: 0; right: 0; height: ${b.header.height}px; display: flex; align-items: center; padding: 0 ${b.header.padH}px; gap: ${b.header.gap}px; }
 .card .back-header .bh-hairline { position: absolute; left: 0; right: 0; bottom: 0; height: ${b.header.hairline.height}px; background: ${b.header.hairline.color}; }

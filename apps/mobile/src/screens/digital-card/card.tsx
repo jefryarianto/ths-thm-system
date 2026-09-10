@@ -787,16 +787,17 @@ const styles = StyleSheet.create({
   bottomLabel: { fontSize: FRONT.bottom.label.fontSize, fontWeight: '700', color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom, fontFamily: LABEL_FONT },
   bottomValue: { fontSize: FRONT.bottom.value.fontSize, fontWeight: '700', color: FRONT.bottom.value.color, marginTop: FRONT.bottom.value.marginTop, fontFamily: ROBOTO_BOLD },
 
-  // ── Signer ── diletakkan di bawah data Wilayah (top box ≈ 392), grup di-anchor kanan
-  // (right 24) & rata-kanan: garis terpanjang menentukan jarak dari tepi kanan kartu;
-  // teks KOORDINATOR/KEUSKUPAN di atas; stempel + ttd di tengah; nama (underline) + jabatan
-  // di bawah (semua rata kanan). Font Roboto sama dgn "Berlaku sampai".
+  // ── Signer ── teks RATA-KIRI: batas kanan ditentukan baris terpanjang. Kotak
+  // di-anchor kanan (right:-8 ≈ tepi kanan kartu); judul/stempel/nama sejajar kiri
+  // agar baris terpanjang menjulur ke kanan menuju tepi kartu. Teks KOORDINATOR/
+  // KEUSKUPAN di atas; stempel + ttd di tengah; nama (underline) + jabatan di bawah
+  // (semua rata kiri). Font Roboto sama dgn "Berlaku sampai".
   signerBox: { position: 'absolute', right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h },
   // Teks KOORDINATORAT: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel (sigWrap top 35)
-  sigTitle1: { position: 'absolute', right: FRONT.signer.title1.right, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'right' },
-  sigTitle2: { position: 'absolute', right: FRONT.signer.title2.right, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, fontWeight: '700', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'right' },
+  sigTitle1: { position: 'absolute', left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
+  sigTitle2: { position: 'absolute', left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, fontWeight: '700', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
   // ttd ditebalkan via 3 lapis di posisi sama (bukan berbayang) — ukuran dari spec
-  sigWrap: { position: 'absolute', right: FRONT.signer.wrap.right, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h },
+  sigWrap: { position: 'absolute', left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h },
   sig: { position: 'absolute', left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, fontSize: FRONT.signer.sig.fontSize, fontStyle: 'italic', color: FRONT.signer.sig.color, transform: [{ rotate: `${FRONT.signer.sig.rotate}deg` }], fontFamily: ROBOTO_REGULAR },
   sigImgWrap: { position: 'absolute', left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h },
   sigImg: { position: 'absolute', left: 0, top: 0, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h, opacity: 0.7, transform: [{ rotate: `${FRONT.signer.sig.rotate}deg` }] },
@@ -809,10 +810,11 @@ const styles = StyleSheet.create({
   },
   stampImg: { width: '100%', height: '100%' },
   stampText: { fontSize: FRONT.signer.stamp.text.fontSize, fontWeight: '900', color: COLORS.stampText, fontFamily: ROBOTO_BOLD },
-  // Nama + jabatan menimpa bagian bawah stempel (zIndex di atas), rata kanan (24px dari tepi)
-  signerRow: { position: 'absolute', left: 0, bottom: 0, zIndex: 5, alignItems: 'flex-end', width: '100%' },
-  signerName: { fontSize: FRONT.signer.name.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textDecorationLine: 'underline', textAlign: 'right' },
-  signerTitle: { fontSize: FRONT.signer.title.fontSize, fontWeight: '700', color: COLORS.value, marginTop: FRONT.signer.title.marginTop, fontFamily: ROBOTO_BOLD, textAlign: 'right' },
+  // Nama + jabatan menimpa bagian bawah stempel (zIndex di atas), rata kiri —
+  // baris terpanjang menentukan batas kanan (bukan 24px dari tepi kanan)
+  signerRow: { position: 'absolute', left: 0, bottom: 0, zIndex: 5, alignItems: 'flex-start', width: '100%' },
+  signerName: { fontSize: FRONT.signer.name.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textDecorationLine: 'underline', textAlign: 'left' },
+  signerTitle: { fontSize: FRONT.signer.title.fontSize, fontWeight: '700', color: COLORS.value, marginTop: FRONT.signer.title.marginTop, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
 
   // ── Back ──
   // Header band — seperti header depan (AbstractHeader di dalam container berukuran BACK.header.height)
