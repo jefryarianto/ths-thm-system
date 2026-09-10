@@ -4,7 +4,6 @@ import {
   Text,
   Image,
   StyleSheet,
-  Pressable,
   Animated,
   useWindowDimensions,
   StyleProp,
@@ -15,7 +14,7 @@ import Svg, { Path, Rect, Defs, Pattern, LinearGradient, Stop } from 'react-nati
 import { API_URL } from '../../lib/api-client';
 
 // ─── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ───
-import { CARD, COLORS, FRONT, BACK, DECOR, FONTS, getLevelVisual, photoCrop, resolveCardSpec } from '../../lib/card-design';
+import { CARD, COLORS, FRONT, BACK, DECOR, FONTS, PATTERN, fmt, getLevelVisual, photoCrop, patternRows, resolveCardSpec } from '../../lib/card-design';
 import { theme } from '../../theme';
 
 // Logo resmi THS-THM (di-bundle bersama app)
@@ -179,6 +178,42 @@ function GuillocheBorder({ patternId, strokeColor }: { patternId: string; stroke
       ))}
       <Rect x={16} y={16} width={824} height={508} rx={22} fill="none" stroke={`url(#${patternId})`} strokeWidth={14} opacity={0.5} />
     </Svg>
+  );
+}
+
+/** Watermark nama — baris nama anggota diulang miring (−24°), anti-fotokopi
+ *  (ditumpuk di bawah konten utama, di atas latar/dekor). Spec: PATTERN. */
+function NamePattern({ name, side }: { name: string; side: 'front' | 'back' }) {
+  const cfg = side === 'back' ? PATTERN.back : PATTERN.front;
+  const rows = patternRows(name, side);
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {rows.map((row, i) => (
+        <View
+          key={i}
+          style={{
+            position: 'absolute',
+            left: -80,
+            right: -80,
+            top: cfg.top + i * cfg.stepY,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: cfg.gapX,
+            opacity: cfg.opacity,
+            transform: [{ rotate: `${cfg.angle}deg` }],
+          }}
+        >
+          {row.map((w, j) => (
+            <Text
+              key={j}
+              style={{ fontSize: cfg.fontSize, letterSpacing: cfg.letterSpacing, color: cfg.color, fontWeight: '900' }}
+            >
+              {w}
+            </Text>
+          ))}
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -354,6 +389,9 @@ export function MemberCardFront({ member, cardData, validUntilText }: { member: 
         </View>
       )}
 
+      {/* Pattern nama miring (anti-fotokopi) — spec PATTERN.front */}
+      <NamePattern name={member?.namaLengkap || 'THS-THM'} side="front" />
+
       <View style={styles.content}>
         {/* Header — 4 baris + logo */}
         <View style={styles.headerRow}>
@@ -521,11 +559,21 @@ export function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }:
         </View>
       )}
 
+      {/* Pattern nama miring (anti-fotokopi) — spec PATTERN.back */}
+      <NamePattern name={member?.namaLengkap || 'THS-THM'} side="back" />
+
       <View style={styles.content}>
-        {/* Title */}
-        <View style={styles.backTitleBox}>
-          <Text style={styles.backTitle}>VERIFIKASI KARTU ANGGOTA</Text>
-          <Text style={styles.backSubtitle}>Scan QR untuk memeriksa keabsahan anggota</Text>
+        {/* Header band — sama dengan header depan (gradien biru) + hairline */}
+        <View style={styles.backHeader}>
+          <AbstractHeader />
+          <View style={styles.backHeaderLogo}>
+            <Image source={LOGO} style={styles.backHeaderLogoImg} resizeMode="contain" />
+          </View>
+          <View style={styles.backHeaderText}>
+            <Text style={styles.backHeaderTitle}>VERIFIKASI KARTU ANGGOTA</Text>
+            <Text style={styles.backHeaderSubtitle}>Scan QR untuk memeriksa keabsahan anggota</Text>
+          </View>
+          <View style={styles.backHeaderHairline} />
         </View>
 
         {/* QR */}
@@ -542,11 +590,11 @@ export function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }:
           <Text style={styles.backDesc}>
             Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.
           </Text>
-          <BackRow label="TTL" value={ttl.toUpperCase()} />
-          <BackRow label="DADAR" value={dadar.toUpperCase()} />
-          <BackRow label="Status" value={member?.statusKeanggotaan === 'aktif' ? 'AKTIF' : 'NONAKTIF'} />
-          <BackRow label="Valid s/d" value={validUntilText} />
-          <BackRow label="Alamat" value={`THS-THM, ${(member?.ranting?.wilayah?.distrik?.alamat || 'Distrik').toUpperCase()}`} />
+          <BackRow label="TTL" value={fmt.proper(ttl)} />
+          <BackRow label="DADAR" value={fmt.proper(dadar)} />
+          <BackRow label="Status" value={fmt.proper(member?.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')} />
+          <BackRow label="Valid s/d" value={fmt.proper(validUntilText)} />
+          <BackRow label="Alamat" value={`THS-THM, ${fmt.proper(member?.ranting?.wilayah?.distrik?.alamat || 'Distrik')}`} />
         </View>
 
         {/* Footer */}
@@ -572,12 +620,15 @@ export function FlipCard({
   ttl,
   dadar,
   validUntilText,
+  flipRef,
 }: {
   member: MemberInfo | null;
   cardData: CardData | null;
   ttl: string;
   dadar: string;
   validUntilText: string;
+  /** Bila diisi, flip di-publish ke sini agar bisa dipicu dari luar (gesture zoom di layar). */
+  flipRef?: React.MutableRefObject<(() => void) | null>;
 }) {
   const { width } = useWindowDimensions();
   const scale = Math.min(width - 32, CARD_W) / CARD_W;
@@ -591,17 +642,18 @@ export function FlipCard({
     setFlipped((prev) => !prev);
     Animated.spring(anim, {
       toValue: flipped ? 0 : 1,
-      friction: 9,
-      tension: 12,
+      friction: 14,
+      tension: 160,
       useNativeDriver: true,
     }).start();
   };
+  if (flipRef) flipRef.current = flip;
 
   const frontRotate = anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
   const backRotate = anim.interpolate({ inputRange: [0, 1], outputRange: ['180deg', '360deg'] });
 
   return (
-    <Pressable onPress={flip} style={{ width: cardW, height: cardH }} accessibilityRole="button" accessibilityLabel={flipped ? 'Tampilkan sisi depan kartu' : 'Tampilkan sisi belakang kartu'}>
+    <View style={{ width: cardW, height: cardH }}>
       <Animated.View
         style={[
           styles.flipFace,
@@ -620,7 +672,7 @@ export function FlipCard({
       >
         <MemberCardBack member={member} cardData={cardData} ttl={ttl} dadar={dadar} validUntilText={validUntilText} />
       </Animated.View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -735,17 +787,16 @@ const styles = StyleSheet.create({
   bottomLabel: { fontSize: FRONT.bottom.label.fontSize, fontWeight: '700', color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom, fontFamily: LABEL_FONT },
   bottomValue: { fontSize: FRONT.bottom.value.fontSize, fontWeight: '700', color: FRONT.bottom.value.color, marginTop: FRONT.bottom.value.marginTop, fontFamily: ROBOTO_BOLD },
 
-  // ── Signer ── diletakkan di bawah data Wilayah (top box ≈ 392), blok digeser ke kanan (right 24);
-  // teks KOORDINATOR/KEUSKUPAN di atas; stempel (border tipis, tdk ditebalkan) + ttd di tengah;
-  // nama (underline) + jabatan di bawah, font Roboto sama dgn "Berlaku sampai"
-  // Grup pengesahan dinaikkan (bottom 14) agar bagian bawah teks sejajar dengan tanggal masa laku,
-  // dan digeser ke kanan (right -8 → left 464) sesuai mock
+  // ── Signer ── diletakkan di bawah data Wilayah (top box ≈ 392), grup di-anchor kanan
+  // (right 24) & rata-kanan: garis terpanjang menentukan jarak dari tepi kanan kartu;
+  // teks KOORDINATOR/KEUSKUPAN di atas; stempel + ttd di tengah; nama (underline) + jabatan
+  // di bawah (semua rata kanan). Font Roboto sama dgn "Berlaku sampai".
   signerBox: { position: 'absolute', right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h },
   // Teks KOORDINATORAT: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel (sigWrap top 35)
-  sigTitle1: { position: 'absolute', left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
-  sigTitle2: { position: 'absolute', left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, fontWeight: '700', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'left' },
+  sigTitle1: { position: 'absolute', right: FRONT.signer.title1.right, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'right' },
+  sigTitle2: { position: 'absolute', right: FRONT.signer.title2.right, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, fontWeight: '700', color: COLORS.value, fontFamily: ROBOTO_BOLD, textAlign: 'right' },
   // ttd ditebalkan via 3 lapis di posisi sama (bukan berbayang) — ukuran dari spec
-  sigWrap: { position: 'absolute', left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h },
+  sigWrap: { position: 'absolute', right: FRONT.signer.wrap.right, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h },
   sig: { position: 'absolute', left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, fontSize: FRONT.signer.sig.fontSize, fontStyle: 'italic', color: FRONT.signer.sig.color, transform: [{ rotate: `${FRONT.signer.sig.rotate}deg` }], fontFamily: ROBOTO_REGULAR },
   sigImgWrap: { position: 'absolute', left: FRONT.signer.sig.left, top: FRONT.signer.sig.top, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h },
   sigImg: { position: 'absolute', left: 0, top: 0, width: FRONT.signer.sig.w, height: FRONT.signer.sig.h, opacity: 0.7, transform: [{ rotate: `${FRONT.signer.sig.rotate}deg` }] },
@@ -758,15 +809,20 @@ const styles = StyleSheet.create({
   },
   stampImg: { width: '100%', height: '100%' },
   stampText: { fontSize: FRONT.signer.stamp.text.fontSize, fontWeight: '900', color: COLORS.stampText, fontFamily: ROBOTO_BOLD },
-  // Nama + jabatan menimpa bagian bawah stempel (zIndex di atas), rata kiri
-  signerRow: { position: 'absolute', left: 0, bottom: 0, zIndex: 5, alignItems: 'flex-start', width: '100%' },
-  signerName: { fontSize: FRONT.signer.name.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textDecorationLine: 'underline' },
-  signerTitle: { fontSize: FRONT.signer.title.fontSize, fontWeight: '700', color: COLORS.value, marginTop: FRONT.signer.title.marginTop, fontFamily: ROBOTO_BOLD },
+  // Nama + jabatan menimpa bagian bawah stempel (zIndex di atas), rata kanan (24px dari tepi)
+  signerRow: { position: 'absolute', left: 0, bottom: 0, zIndex: 5, alignItems: 'flex-end', width: '100%' },
+  signerName: { fontSize: FRONT.signer.name.fontSize, fontWeight: '900', color: COLORS.value, fontFamily: ROBOTO_BOLD, textDecorationLine: 'underline', textAlign: 'right' },
+  signerTitle: { fontSize: FRONT.signer.title.fontSize, fontWeight: '700', color: COLORS.value, marginTop: FRONT.signer.title.marginTop, fontFamily: ROBOTO_BOLD, textAlign: 'right' },
 
   // ── Back ──
-  backTitleBox: { position: 'absolute', top: BACK.title.top, left: 0, right: 0, alignItems: 'center' },
-  backTitle: { fontSize: BACK.title.fontSize, fontWeight: '900', color: COLORS.white, letterSpacing: BACK.title.letterSpacing, fontFamily: ROBOTO_BOLD },
-  backSubtitle: { fontSize: BACK.title.subtitle.fontSize, color: COLORS.white, opacity: 0.9, marginTop: BACK.title.subtitle.marginTop, fontFamily: ROBOTO_REGULAR },
+  // Header band — seperti header depan (AbstractHeader di dalam container berukuran BACK.header.height)
+  backHeader: { position: 'absolute', top: 0, left: 0, right: 0, height: BACK.header.height, flexDirection: 'row', alignItems: 'center', paddingHorizontal: BACK.header.padH, gap: BACK.header.gap, overflow: 'hidden' },
+  backHeaderLogo: { width: BACK.header.logo.size, height: BACK.header.logo.size, borderRadius: BACK.header.logo.radius, backgroundColor: BACK.header.logo.bg, borderWidth: BACK.header.logo.border, borderColor: BACK.header.logo.borderColor, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  backHeaderLogoImg: { width: BACK.header.logo.img, height: BACK.header.logo.img },
+  backHeaderText: { flex: 1 },
+  backHeaderTitle: { fontSize: BACK.header.title.fontSize, fontWeight: '900', color: COLORS.white, letterSpacing: BACK.header.title.letterSpacing, fontFamily: ROBOTO_BOLD },
+  backHeaderSubtitle: { fontSize: BACK.header.subtitle.fontSize, color: COLORS.white, opacity: BACK.header.subtitle.opacity, marginTop: BACK.header.subtitle.marginTop, fontFamily: ROBOTO_REGULAR },
+  backHeaderHairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: BACK.header.hairline.height, backgroundColor: BACK.header.hairline.color },
   qrBox: {
     position: 'absolute', left: BACK.qr.left, top: BACK.qr.top, width: BACK.qr.size, height: BACK.qr.size,
     backgroundColor: BACK.qr.bg, borderRadius: BACK.qr.radius, borderWidth: BACK.qr.border, borderColor: BACK.qr.borderColor,
@@ -781,7 +837,8 @@ const styles = StyleSheet.create({
   },
   backDesc: { fontSize: BACK.info.desc.fontSize, lineHeight: BACK.info.desc.lineHeight, color: COLORS.white, opacity: BACK.info.desc.opacity, marginBottom: BACK.info.desc.marginBottom, fontFamily: ROBOTO_REGULAR },
   backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: BACK.info.row.marginBottom },
-  backRowLabel: { width: BACK.info.row.label.w, fontSize: BACK.info.row.label.fontSize, fontWeight: '700', color: COLORS.white, textTransform: 'uppercase', fontFamily: LABEL_FONT },
+  // Label sisi belakang memakai Proper Case (TTL/DADAR/Status/Valid s/d/Alamat)
+  backRowLabel: { width: BACK.info.row.label.w, fontSize: BACK.info.row.label.fontSize, fontWeight: '700', color: COLORS.white, fontFamily: LABEL_FONT },
   backColon: { width: BACK.info.row.colon.w, fontSize: BACK.info.row.label.fontSize, fontWeight: '700', color: COLORS.white, opacity: 0.9 },
   backRowValue: { flex: 1, fontSize: BACK.info.row.value.fontSize, fontWeight: '600', color: COLORS.white, fontFamily: ROBOTO_REGULAR },
   backFooter: { position: 'absolute', left: BACK.footer.left, right: BACK.footer.right, bottom: BACK.footer.bottom, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 },

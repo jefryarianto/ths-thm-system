@@ -1,18 +1,141 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView, ErrorView } from '../../components/ui/shared';
-import { useRefresh } from '../../hooks/use-refresh';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { theme } from '../../theme';
 import { FlipCard, type MemberInfo, type CardData } from './card';
+import apiClient, { API_URL, unwrap } from '../../lib/api-client';
+import { LoadingView, ErrorView } from '../../components/ui/shared';
+import { useRefresh } from '../../hooks/use-refresh';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
+// ─── Pendukung simpan kartu ───
+
+/**
+ * Cek hasil unduhan: file harus tersimpan (>0 byte) DAN isinya benar-benar kartu
+ * (bukan respons JSON/HTML error yang mencekik byte-size). Indikasi via "magic"
+ * format: PDF diawali `%PDF`, PNG diawali signature `\x89PNG`.
+ */
+async function assertDownloadedFile(path: string, kind: 'pdf' | 'png'): Promise<void> {
+  const info = await FileSystem.getInfoAsync(path);
+  if (!info.exists) throw new Error('FILE_MISSING');
+  if ('size' in info && typeof info.size === 'number' && info.size <= 0) throw new Error('EMPTY_FILE');
+  // 4096 char base64 ≈ 3 KB pertama — cukup untuk memeriksa signature.
+  let head = '';
+  try {
+    head = await FileSystem.readAsStringAsync(path, { encoding: FileSystem.EncodingType.Base64 });
+  } catch {
+    throw new Error('UNREADABLE');
+  }
+  const sig = head.slice(0, 32);
+  if (kind === 'pdf' && !sig.startsWith('JVBERi0')) throw new Error('NOT_PDF');
+  if (kind === 'png' && !sig.startsWith('iVBORw0KGgo')) throw new Error('NOT_PNG');
+}
+
+/** Bungkus FlipCard dengan zoom (pinch 2 jari → 1–3,5×), pan (geser 2 jari),
+ *  dan ketuk untuk membalik (tunggal) / double-tap untuk zoom. */
+function ZoomableCard({
+  member,
+  cardData,
+  ttl,
+  dadar,
+  validUntilText,
+}: {
+  member: MemberInfo | null;
+  cardData: CardData | null;
+  ttl: string;
+  dadar: string;
+  validUntilText: string;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const tx = useRef(new Animated.Value(0)).current;
+  const ty = useRef(new Animated.Value(0)).current;
+  const flipRef = useRef<(() => void) | null>(null);
+
+  const savedScale = useRef(1);
+  const pinchStart = useRef(1);
+  const lastPinch = useRef(1);
+  const savedTx = useRef(0);
+  const savedTy = useRef(0);
+  const curTx = useRef(0);
+  const curTy = useRef(0);
+
+  const MIN = 1;
+  const MAX = 3.5;
+  const clampS = (v: number) => Math.min(Math.max(v, MIN), MAX);
+  const resetPan = () => {
+    savedTx.current = 0; savedTy.current = 0; curTx.current = 0; curTy.current = 0;
+    tx.setValue(0); ty.setValue(0);
+  };
+
+  const pinch = Gesture.Pinch()
+    .onStart(() => { pinchStart.current = savedScale.current; })
+    .onUpdate((e) => { lastPinch.current = e.scale; scale.setValue(clampS(pinchStart.current * e.scale)); })
+    .onEnd(() => {
+      const s = clampS(pinchStart.current * lastPinch.current);
+      savedScale.current = s;
+      scale.setValue(s);
+      if (s <= MIN) resetPan();
+    });
+
+  const pan = Gesture.Pan()
+    .averageTouches(true)
+    .minPointers(2)
+    .maxPointers(2)
+    .onUpdate((e) => {
+      // Pan hanya aktif saat kartu sudah di-zoom (>1×); di 1× abaikan geseran 2 jari
+      if (savedScale.current <= MIN) return;
+      const nx = savedTx.current + e.translationX;
+      const ny = savedTy.current + e.translationY;
+      curTx.current = nx; curTy.current = ny;
+      tx.setValue(nx); ty.setValue(ny);
+    })
+    .onEnd(() => { savedTx.current = curTx.current; savedTy.current = curTy.current; });
+
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .maxDelay(220)
+    .onEnd(() => {
+      if (savedScale.current > MIN) {
+        savedScale.current = MIN;
+        resetPan();
+        Animated.timing(scale, { toValue: MIN, duration: 200, useNativeDriver: true }).start();
+      } else {
+        savedScale.current = 2.2;
+        Animated.spring(scale, { toValue: 2.2, friction: 8, tension: 60, useNativeDriver: true }).start();
+      }
+    });
+
+  const singleTap = Gesture.Tap()
+    .maxDelay(220)
+    .requireExternalGestureToFail(doubleTap)
+    .onEnd(() => flipRef.current?.());
+
+  const composed = Gesture.Simultaneous(pinch, pan, Gesture.Exclusive(doubleTap, singleTap));
+
+  return (
+    <GestureHandlerRootView style={styles.zoomRoot}>
+      <GestureDetector gesture={composed}>
+        <View style={styles.zoomStage}>
+          <Animated.View style={{ transform: [{ translateX: tx }, { translateY: ty }, { scale }] }}>
+            <FlipCard
+              member={member}
+              cardData={cardData}
+              ttl={ttl}
+              dadar={dadar}
+              validUntilText={validUntilText}
+              flipRef={flipRef}
+            />
+          </Animated.View>
+        </View>
+      </GestureDetector>
+    </GestureHandlerRootView>
+  );
+}
 
 // ─── Screen ───
 
@@ -97,18 +220,26 @@ export default function DigitalCardScreen() {
   const savePdf = async () => {
     if (!memberId) return;
     setSaving('pdf');
+    const dest = `${FileSystem.cacheDirectory}kartu-anggota-${memberId}.pdf`;
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      const url = `${API_URL}/api/members/${memberId}/digital-card/pdf`;
-      const dest = `${FileSystem.cacheDirectory}kartu-anggota-${memberId}.pdf`;
-      await FileSystem.downloadAsync(url, dest, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      await FileSystem.downloadAsync(`${API_URL}/api/members/${memberId}/digital-card/pdf`, dest, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      await assertDownloadedFile(dest, 'pdf');
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(dest, { mimeType: 'application/pdf', dialogTitle: 'Simpan Kartu Anggota' });
       } else {
         Alert.alert('Kartu tersimpan', `PDF tersimpan di: ${dest}`);
       }
-    } catch {
-      Alert.alert('Gagal', 'Gagal mengunduh PDF kartu. Periksa koneksi internet.');
+    } catch (err) {
+      await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+      Alert.alert(
+        'Gagal',
+        (err as Error)?.message === 'EMPTY_FILE'
+          ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
+          : 'Gagal mengunduh PDF kartu. Periksa koneksi internet lalu coba lagi.',
+      );
     } finally {
       setSaving(null);
     }
@@ -117,15 +248,17 @@ export default function DigitalCardScreen() {
   const saveToGallery = async () => {
     if (!memberId) return;
     setSaving('png');
+    const dest = `${FileSystem.documentDirectory}kartu-anggota-${memberId}.png`;
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      const url = `${API_URL}/api/members/${memberId}/digital-card/image`;
-      // documentDirectory (bukan cache) agar file tidak terhapus saat sistem membersihkan cache
-      const dest = `${FileSystem.documentDirectory}kartu-anggota-${memberId}.png`;
-      await FileSystem.downloadAsync(url, dest, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      await FileSystem.downloadAsync(`${API_URL}/api/members/${memberId}/digital-card/image`, dest, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      await assertDownloadedFile(dest, 'png');
 
       const perm = await MediaLibrary.requestPermissionsAsync();
       if (!perm.granted) {
+        await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
         Alert.alert('Izin Diperlukan', 'Aktifkan izin akses media untuk menyimpan ke galeri.');
         return;
       }
@@ -144,8 +277,14 @@ export default function DigitalCardScreen() {
         // Album opsional — file tetap tersimpan di MediaStore
       }
       Alert.alert('Tersimpan', 'Kartu PNG berhasil disimpan ke galeri (folder THS-THM).');
-    } catch {
-      Alert.alert('Gagal', 'Gagal menyimpan kartu ke galeri. Coba lagi.');
+    } catch (err) {
+      await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+      Alert.alert(
+        'Gagal',
+        (err as Error)?.message === 'EMPTY_FILE'
+          ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
+          : 'Gagal menyimpan kartu ke galeri. Periksa koneksi internet lalu coba lagi.',
+      );
     } finally {
       setSaving(null);
     }
@@ -178,8 +317,8 @@ export default function DigitalCardScreen() {
     >
       <Text style={styles.pageTitle}>Kartu Anggota Digital (KTA)</Text>
 
-      <FlipCard member={member} cardData={cardData} ttl={ttl} dadar={dadar} validUntilText={validUntilText} />
-      <Text style={styles.flipHint}>👆 Ketuk kartu untuk melihat sisi belakang (QR verifikasi)</Text>
+      <ZoomableCard member={member} cardData={cardData} ttl={ttl} dadar={dadar} validUntilText={validUntilText} />
+      <Text style={styles.flipHint}>👆 Ketuk kartu untuk membalik • Cubit 2 jari untuk zoom</Text>
 
       {/* Simpan / unduh kartu */}
       <View style={styles.saveRow}>
@@ -191,12 +330,6 @@ export default function DigitalCardScreen() {
           <Ionicons name="image-outline" size={18} color={theme.colors.surface} />
           <Text style={styles.saveBtnText}>{saving === 'png' ? 'Menyimpan…' : 'Simpan ke Galeri'}</Text>
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.noteBox}>
-        <Text style={styles.noteText}>
-          Kartu digital ini menggunakan format CR80 landscape (856×540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
-        </Text>
       </View>
     </ScrollView>
   );
@@ -218,6 +351,7 @@ const styles = StyleSheet.create({
   saveBtnPng: { backgroundColor: '#0f766e' },
   saveBtnText: { color: theme.colors.surface, fontSize: 14, fontWeight: '700' },
 
-  noteBox: { marginTop: 24, backgroundColor: theme.colors.warningLight, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: theme.colors.warningLight, width: '100%' },
-  noteText: { fontSize: 13, lineHeight: 19, color: theme.colors.warning },
+  // Zoom kartu — stage selebar layar agar transform pinch/pan bisa melampaui kartu
+  zoomRoot: { flex: 1, width: '100%' },
+  zoomStage: { alignItems: 'center' },
 });

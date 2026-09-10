@@ -98,15 +98,17 @@ const FRONT = Object.freeze({
     label: Object.freeze({ fontSize: 13, color: COLORS.label, marginBottom: 2 }),
     value: Object.freeze({ fontSize: 16, color: COLORS.value, marginTop: 2 }),
   }),
+  // Grup penandatangan di-anchor kanan (right 24, rata-kanan): garis terpanjang
+  // menentukan jarak dari tepi kanan kartu — judul, stempel, dan nama sejajar kanan.
   signer: Object.freeze({
-    right: -8, bottom: 14, w: 400, h: 146,
-    title1: Object.freeze({ left: 0, top: 35, fontSize: 13 }),
-    title2: Object.freeze({ left: 0, top: 52, fontSize: 12 }),
-    wrap: Object.freeze({ left: 0, top: 35, w: 175, h: 96 }),
+    right: 24, bottom: 14, w: 400, h: 146,
+    title1: Object.freeze({ right: 0, top: 35, fontSize: 13, align: 'right' }),
+    title2: Object.freeze({ right: 0, top: 52, fontSize: 12, align: 'right' }),
+    wrap: Object.freeze({ right: 0, top: 35, w: 175, h: 96 }),
     sig: Object.freeze({ left: -68, top: 28, w: 175, h: 60, fontSize: 26, rotate: -8, color: COLORS.ttd }),
     stamp: Object.freeze({ left: -55, top: 0, size: 110, radius: 55, border: 2, rotate: -8, text: Object.freeze({ fontSize: 11 }) }),
-    name: Object.freeze({ fontSize: 14, underline: true }),
-    title: Object.freeze({ fontSize: 12, marginTop: 1 }),
+    name: Object.freeze({ fontSize: 14, underline: true, align: 'right' }),
+    title: Object.freeze({ fontSize: 12, marginTop: 1, align: 'right' }),
   }),
   watermark: Object.freeze({ left: 128, top: 166, w: 600, h: 207, color: '#1d4ed8', opacity: 0.35 }),
   bgCircle1: Object.freeze({ top: -80, right: -80, size: 320 }),
@@ -115,6 +117,17 @@ const FRONT = Object.freeze({
 
 // ─── Layout SISI BELAKANG ───────────────────────────────────────────────────
 const BACK = Object.freeze({
+  // Pita/band header sisi belakang — seperti header depan (gradien biru), berisi
+  // logo kecil + judul verifikasi + subtitle; hairline di tepi bawah band.
+  header: Object.freeze({
+    height: 104,
+    padH: 28,
+    gap: 16,
+    logo: Object.freeze({ size: 68, radius: 34, bg: 'rgba(255,255,255,0.14)', border: 1, borderColor: 'rgba(255,255,255,0.45)', img: 62 }),
+    title: Object.freeze({ fontSize: 22, letterSpacing: 3 }),
+    subtitle: Object.freeze({ fontSize: 13, marginTop: 2, opacity: 0.88 }),
+    hairline: Object.freeze({ height: 1, color: 'rgba(255,255,255,0.30)' }),
+  }),
   title: Object.freeze({ top: 28, fontSize: 28, letterSpacing: 3, subtitle: Object.freeze({ fontSize: 15, marginTop: 4 }) }),
   qr: Object.freeze({ left: 48, top: 145, size: 210, radius: 16, border: 4, borderColor: '#1e3a5f', bg: '#ffffff', padding: 16 }),
   info: Object.freeze({
@@ -130,6 +143,19 @@ const BACK = Object.freeze({
   }),
   watermark: Object.freeze({ w: 480, h: 166, color: '#ffffff', opacity: 0.5 }),
 });
+
+// ─── Watermark nama (pattern diagonal berulang) — sisi depan & belakang ────
+const PATTERN = Object.freeze({
+  front: Object.freeze({ angle: -24, fontSize: 18, letterSpacing: 2, gapX: 16, cols: 6, rows: 9, top: 76, stepY: 40, color: '#1d4ed8', opacity: 0.05 }),
+  back: Object.freeze({ angle: -24, fontSize: 18, letterSpacing: 2, gapX: 16, cols: 6, rows: 9, top: 76, stepY: 40, color: '#ffffff', opacity: 0.06 }),
+});
+
+/** Baris-baris nama untuk watermark diagonal: rows × cols repetisi nama. */
+function patternRows(name, side) {
+  const cfg = (side === 'back' ? PATTERN.back : PATTERN.front);
+  const n = (name && String(name).trim()) || 'THS-THM';
+  return Array.from({ length: cfg.rows }).map(() => Array.from({ length: cfg.cols }).map(() => n));
+}
 
 // ─── Dekorasi (SVG): jalur & gradien kanon — dipakai mobile, web, dan preview ───
 const DECOR = Object.freeze({
@@ -296,6 +322,23 @@ const fmt = {
   validUntilText(base = new Date()) {
     return fmt.dateId(fmt.validUntilDate(base));
   },
+  // Proper Case (Title Case) untuk teks sisi belakang kartu. Singkatan TTL/DADAR
+  // dan angka murni (tahun, No.) dipertahankan; kata lain: huruf awal besar.
+  proper(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .map((w) => {
+        const ths = /^(ths-thm)([,.])?$/i.exec(w);
+        if (ths) return 'THS-THM' + (ths[2] || '');
+        if (/^(ttl|dadar|kta|qr|url)$/i.test(w)) return w.toUpperCase();
+        if (/^\d+([.,]\d+)?$/.test(w)) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+      })
+      .join(' ');
+  },
 };
 
 // ─── CSS untuk renderer DOM (web print preview & preview HTML) ─────────────
@@ -341,15 +384,22 @@ function cardCss() {
 .card .bottom-label { font-size: ${f.bottom.label.fontSize}px; font-weight: 700; color: ${f.bottom.label.color}; margin-bottom: ${f.bottom.label.marginBottom}px; }
 .card .bottom-value { font-size: ${f.bottom.value.fontSize}px; font-weight: 700; color: ${f.bottom.value.color}; margin-top: ${f.bottom.value.marginTop}px; }
 .card .signer { position: absolute; right: ${f.signer.right}px; bottom: ${f.signer.bottom}px; width: ${f.signer.w}px; height: ${f.signer.h}px; }
-.card .sig-title1 { position: absolute; left: ${f.signer.title1.left}px; top: ${f.signer.title1.top}px; font-size: ${f.signer.title1.fontSize}px; font-weight: 900; color: ${COLORS.value}; }
-.card .sig-title2 { position: absolute; left: ${f.signer.title2.left}px; top: ${f.signer.title2.top}px; font-size: ${f.signer.title2.fontSize}px; font-weight: 700; color: ${COLORS.value}; }
-.card .sig-wrap { position: absolute; left: ${f.signer.wrap.left}px; top: ${f.signer.wrap.top}px; width: ${f.signer.wrap.w}px; height: ${f.signer.wrap.h}px; }
+.card .sig-title1 { position: absolute; right: ${f.signer.title1.right}px; top: ${f.signer.title1.top}px; font-size: ${f.signer.title1.fontSize}px; font-weight: 900; color: ${COLORS.value}; text-align: right; white-space: nowrap; }
+.card .sig-title2 { position: absolute; right: ${f.signer.title2.right}px; top: ${f.signer.title2.top}px; font-size: ${f.signer.title2.fontSize}px; font-weight: 700; color: ${COLORS.value}; text-align: right; white-space: nowrap; }
+.card .sig-wrap { position: absolute; right: ${f.signer.wrap.right}px; top: ${f.signer.wrap.top}px; width: ${f.signer.wrap.w}px; height: ${f.signer.wrap.h}px; }
 .card .sig-text { position: absolute; left: ${f.signer.sig.left}px; top: ${f.signer.sig.top}px; width: ${f.signer.sig.w}px; height: ${f.signer.sig.h}px; font-size: ${f.signer.sig.fontSize}px; font-style: italic; color: ${f.signer.sig.color}; transform: rotate(${f.signer.sig.rotate}deg); }
 .card .stamp { position: absolute; left: ${f.signer.stamp.left}px; top: ${f.signer.stamp.top}px; width: ${f.signer.stamp.size}px; height: ${f.signer.stamp.size}px; border-radius: ${f.signer.stamp.radius}px; border: ${f.signer.stamp.border}px solid ${COLORS.stampBorder}; display: flex; align-items: center; justify-content: center; transform: rotate(${f.signer.stamp.rotate}deg); overflow: hidden; font-size: ${f.signer.stamp.text.fontSize}px; font-weight: 900; color: ${COLORS.stampText}; }
 .card .stamp img { width: 100%; height: 100%; object-fit: cover; }
-.card .signer-row { position: absolute; left: 0; bottom: 0; z-index: 5; width: 100%; }
-.card .signer-name { font-size: ${f.signer.name.fontSize}px; font-weight: 900; color: ${COLORS.value}; text-decoration: underline; }
-.card .signer-title { font-size: ${f.signer.title.fontSize}px; font-weight: 700; color: ${COLORS.value}; margin-top: ${f.signer.title.marginTop}px; }
+.card .signer-row { position: absolute; left: 0; bottom: 0; z-index: 5; width: 100%; display: flex; flex-direction: column; align-items: flex-end; }
+.card .signer-name { font-size: ${f.signer.name.fontSize}px; font-weight: 900; color: ${COLORS.value}; text-decoration: underline; text-align: right; }
+.card .signer-title { font-size: ${f.signer.title.fontSize}px; font-weight: 700; color: ${COLORS.value}; margin-top: ${f.signer.title.marginTop}px; text-align: right; }
+.card .back-band { position: absolute; top: 0; left: 0; right: 0; height: ${b.header.height}px; background: linear-gradient(135deg, ${COLORS.header.from}, ${COLORS.header.to}); }
+.card .back-header { position: absolute; top: 0; left: 0; right: 0; height: ${b.header.height}px; display: flex; align-items: center; padding: 0 ${b.header.padH}px; gap: ${b.header.gap}px; }
+.card .back-header .bh-hairline { position: absolute; left: 0; right: 0; bottom: 0; height: ${b.header.hairline.height}px; background: ${b.header.hairline.color}; }
+.card .back-header .bh-logo { width: ${b.header.logo.size}px; height: ${b.header.logo.size}px; border-radius: ${b.header.logo.radius}px; background: ${b.header.logo.bg}; border: ${b.header.logo.border}px solid ${b.header.logo.borderColor}; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; }
+.card .back-header .bh-logo img { width: ${b.header.logo.img}px; height: ${b.header.logo.img}px; }
+.card .back-header .bh-title { font-size: ${b.header.title.fontSize}px; font-weight: 900; color: #fff; letter-spacing: ${b.header.title.letterSpacing}px; line-height: 1.1; }
+.card .back-header .bh-sub { font-size: ${b.header.subtitle.fontSize}px; color: #fff; opacity: ${b.header.subtitle.opacity}; margin-top: ${b.header.subtitle.marginTop}px; }
 .card .back-title { position: absolute; top: ${b.title.top}px; left: 0; right: 0; text-align: center; }
 .card .back-title .t { font-size: ${b.title.fontSize}px; font-weight: 900; color: ${COLORS.white}; letter-spacing: ${b.title.letterSpacing}px; }
 .card .back-title .s { font-size: ${b.title.subtitle.fontSize}px; color: ${COLORS.white}; opacity: 0.9; margin-top: ${b.title.subtitle.marginTop}px; }
@@ -358,7 +408,7 @@ function cardCss() {
 .card .back-info { position: absolute; left: ${b.info.left}px; top: ${b.info.top}px; right: ${b.info.right}px; padding: ${b.info.padding}px; }
 .card .back-desc { font-size: ${b.info.desc.fontSize}px; line-height: ${b.info.desc.lineHeight}px; color: ${COLORS.white}; opacity: ${b.info.desc.opacity}; margin-bottom: ${b.info.desc.marginBottom}px; }
 .card .back-row { display: flex; align-items: center; margin-bottom: ${b.info.row.marginBottom}px; }
-.card .back-row .lbl { width: ${b.info.row.label.w}px; font-size: ${b.info.row.label.fontSize}px; font-weight: 700; color: ${COLORS.white}; text-transform: uppercase; }
+.card .back-row .lbl { width: ${b.info.row.label.w}px; font-size: ${b.info.row.label.fontSize}px; font-weight: 700; color: ${COLORS.white}; }
 .card .back-row .colon { width: ${b.info.row.colon.w}px; font-size: ${b.info.row.label.fontSize}px; font-weight: 700; color: ${COLORS.white}; opacity: 0.9; }
 .card .back-row .val { flex: 1; font-size: ${b.info.row.value.fontSize}px; font-weight: 600; color: ${COLORS.white}; }
 .card .back-footer { position: absolute; left: ${b.footer.left}px; right: ${b.footer.right}px; bottom: ${b.footer.bottom}px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
@@ -457,9 +507,11 @@ module.exports = {
   FRONT,
   BACK,
   DECOR,
+  PATTERN,
   LEVELS,
   getLevelVisual,
   photoCrop,
+  patternRows,
   fmt,
   decorFrontSvg,
   decorBackSvg,

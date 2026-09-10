@@ -5,7 +5,7 @@ const { KTA_LOGO_DATA_URL } = require('./kta-logo');
 const { MAP_INDONESIA_DATA_URL, MAP_INDONESIA_LIGHT_DATA_URL } = require('./map-indonesia');
 
 // ── Sumber tunggal desain kartu — packages/card-design (mobile/web/PDF/preview) ──
-const { CARD, COLORS, FRONT, BACK, getLevelVisual, photoCrop } = require('../../../common/utils/card-design');
+const { CARD, COLORS, FRONT, BACK, PATTERN, fmt, getLevelVisual, photoCrop, patternRows } = require('../../../common/utils/card-design');
 
 // Palette PDF: warna kanon dari spec; nilai yang tak ada di spec tetap lokal (gaya print khas PDF)
 const BLUE_900 = COLORS.label; // #1e3a5f — garis & judul kartu
@@ -278,30 +278,31 @@ const styles = StyleSheet.create({
     height: FRONT.signer.h,
     alignItems: 'flex-start',
   },
-  // Teks KOORDINATORAT diturunkan: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel
+  // Teks KOORDINATORAT diturunkan: tepi atas (top 35) tepat berhimpit dengan tepi atas stempel;
+  // rata kanan (right 0) sesuai spec FRONT.signer.title1/2
   sigTitle1: {
     position: 'absolute',
-    left: FRONT.signer.title1.left,
+    right: 0,
     top: FRONT.signer.title1.top,
     color: COLORS.value,
     fontSize: FRONT.signer.title1.fontSize,
     fontWeight: 'heavy',
-    textAlign: 'left',
+    textAlign: 'right',
     textTransform: 'uppercase',
   },
   sigTitle2: {
     position: 'absolute',
-    left: FRONT.signer.title2.left,
+    right: 0,
     top: FRONT.signer.title2.top,
     color: COLORS.value,
     fontSize: FRONT.signer.title2.fontSize,
     fontWeight: 'heavy',
-    textAlign: 'left',
+    textAlign: 'right',
     textTransform: 'uppercase',
   },
   sigWrap: {
     position: 'absolute',
-    left: FRONT.signer.wrap.left,
+    right: 0,
     top: FRONT.signer.wrap.top,
     width: FRONT.signer.wrap.w,
     height: FRONT.signer.wrap.h,
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 14,
     fontWeight: 'heavy',
-    textAlign: 'left',
+    textAlign: 'right',
     textTransform: 'uppercase',
     textDecoration: 'underline',
   },
@@ -373,6 +374,7 @@ const styles = StyleSheet.create({
     fontWeight: 'semibold',
     opacity: 0.95,
     marginTop: 1,
+    textAlign: 'right',
     textTransform: 'uppercase',
   },
 
@@ -398,26 +400,56 @@ const styles = StyleSheet.create({
     height: BACK.watermark.h,
     opacity: 0.14,
   },
-  backTitle: {
+  // Header band sisi belakang — gradien biru + logo + judul verifikasi + hairline
+  // (sinkron dengan AbstractHeader/backHeader mobile; spec BACK.header)
+  backHeader: {
     position: 'absolute',
-    top: BACK.title.top,
+    top: 0,
     left: 0,
     right: 0,
-    textAlign: 'center',
-    color: WHITE,
-    fontSize: BACK.title.fontSize,
-    fontWeight: 'heavy',
-    letterSpacing: BACK.title.letterSpacing,
+    height: BACK.header.height,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: BACK.header.padH,
+    gap: BACK.header.gap,
   },
-  backSubtitle: {
+  backHeaderLogo: {
+    width: BACK.header.logo.size,
+    height: BACK.header.logo.size,
+    borderRadius: BACK.header.logo.radius,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  backHeaderLogoImg: {
+    width: BACK.header.logo.img,
+    height: BACK.header.logo.img,
+  },
+  backHeaderText: {
+    flex: 1,
+  },
+  backHeaderTitle: {
+    color: WHITE,
+    fontSize: BACK.header.title.fontSize,
+    fontWeight: 'heavy',
+    letterSpacing: BACK.header.title.letterSpacing,
+  },
+  backHeaderSubtitle: {
+    color: WHITE,
+    fontSize: BACK.header.subtitle.fontSize,
+    opacity: BACK.header.subtitle.opacity,
+    marginTop: BACK.header.subtitle.marginTop,
+  },
+  backHeaderHairline: {
     position: 'absolute',
-    top: 66,
     left: 0,
     right: 0,
-    textAlign: 'center',
-    color: WHITE,
-    fontSize: BACK.title.subtitle.fontSize,
-    opacity: 0.9,
+    bottom: 0,
+    height: BACK.header.hairline.height,
+    backgroundColor: 'rgba(255,255,255,0.30)',
   },
   qrSection: {
     position: 'absolute',
@@ -594,6 +626,61 @@ function ShimmerOverlay({ width, height, id, colors }: { width: number; height: 
   );
 }
 
+/** Latar gradien band header sisi belakang — warna header depan (COLORS.header). */
+function BackHeaderGradient() {
+  return h(
+    Svg,
+    { width: 856, height: BACK.header.height, viewBox: `0 0 856 ${BACK.header.height}`, style: { position: 'absolute', top: 0, left: 0 } },
+    h(
+      Defs,
+      null,
+      h(
+        LinearGradient,
+        { id: 'backHeadGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' },
+        h(Stop, { offset: '0%', stopColor: COLORS.header.from }),
+        h(Stop, { offset: '100%', stopColor: COLORS.header.to }),
+      ),
+    ),
+    h(Rect, { x: 0, y: 0, width: 856, height: BACK.header.height, fill: 'url(#backHeadGrad)' }),
+  );
+}
+
+/** Watermark nama diagonal (anti-fotokopi) — baris nama diulang sesuai iterasi pattern. */
+function NamePattern({ name, side }: { name: string; side: 'front' | 'back' }) {
+  const cfg = side === 'back' ? PATTERN.back : PATTERN.front;
+  const rows = patternRows(name, side);
+  return h(
+    View,
+    { style: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 } },
+    rows.map((row: string[], i: number) =>
+      h(
+        View,
+        {
+          key: `np-${side}-${i}`,
+          style: {
+            position: 'absolute',
+            left: -80,
+            right: -80,
+            top: cfg.top + i * cfg.stepY,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: cfg.gapX,
+            opacity: cfg.opacity,
+            transform: `rotate(${cfg.angle}deg)`,
+          },
+        },
+        row.map((w: string, j: number) =>
+          h(
+            Text,
+            { key: `npw-${j}`, style: { fontSize: cfg.fontSize, letterSpacing: cfg.letterSpacing, color: cfg.color, fontWeight: 'heavy' } },
+            w,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /** Konten sisi depan (tanpa Page — dipakai untuk halaman normal & gabungan). */
 function buildFrontSide(props: MemberCardPdfProps) {
   const { member, cardConfig } = props;
@@ -646,6 +733,8 @@ function buildFrontSide(props: MemberCardPdfProps) {
             h(Image, { src: MAP_INDONESIA_DATA_URL, style: styles.watermarkLogo }),
           ),
         ]),
+    // Pattern nama miring (anti-fotokopi) — spec PATTERN.front
+    h(NamePattern, { key: 'patf', name: member.namaLengkap || 'THS-THM', side: 'front' }),
     // Header — 4 baris + logo
     h(
       View,
@@ -782,7 +871,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
             .map((s, i) =>
               h(
                 View,
-                { key: `sig-${i}`, style: { position: 'absolute', left: 0, bottom: i * 34, width: '100%', alignItems: 'flex-start' } },
+                { key: `sig-${i}`, style: { position: 'absolute', right: 0, bottom: i * 34, width: '100%', alignItems: 'flex-end' } },
                 // Nama penandatangan (underline) + jabatan — keduanya tampil di bawah stempel, font sama dgn "Berlaku sampai"
                 s.signerName
                   ? h(Text, { style: styles.signerName }, (s.signerName || '').toUpperCase())
@@ -793,7 +882,7 @@ function buildFrontSide(props: MemberCardPdfProps) {
         : [
             h(
               View,
-              { key: 'sig-fallback', style: { position: 'absolute', left: 0, bottom: 0, width: '100%', alignItems: 'flex-start' } },
+              { key: 'sig-fallback', style: { position: 'absolute', right: 0, bottom: 0, width: '100%', alignItems: 'flex-end' } },
               h(Text, { key: 'sig-n', style: styles.signerName }, (cardConfig.signerName || '').toUpperCase()),
               cardConfig.signerTitle
                 ? h(Text, { key: 'sig-nt', style: styles.signerTitle }, cardConfig.signerTitle.toUpperCase())
@@ -842,15 +931,33 @@ function buildBackSide(props: MemberCardPdfProps) {
             h(Image, { src: MAP_INDONESIA_LIGHT_DATA_URL, style: styles.backWatermarkImg }),
           ),
         ]),
-    h(Text, { key: 'title', style: styles.backTitle }, 'VERIFIKASI KARTU ANGGOTA'),
-    h(Text, { key: 'sub', style: styles.backSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),
+    // Pattern nama miring (anti-fotokopi) — spec PATTERN.back
+    h(NamePattern, { key: 'patb', name: member.namaLengkap || 'THS-THM', side: 'back' }),
+    // Header band — gradien biru + logo + judul verifikasi + hairline (spec BACK.header)
+    h(
+      View,
+      { key: 'head', style: styles.backHeader },
+      h(BackHeaderGradient, { key: 'headg' }),
+      h(
+        View,
+        { key: 'hlogo', style: styles.backHeaderLogo },
+        h(Image, { src: KTA_LOGO_DATA_URL, style: styles.backHeaderLogoImg }),
+      ),
+      h(
+        View,
+        { key: 'htext', style: styles.backHeaderText },
+        h(Text, { style: styles.backHeaderTitle }, 'VERIFIKASI KARTU ANGGOTA'),
+        h(Text, { style: styles.backHeaderSubtitle }, 'Scan QR untuk memeriksa keabsahan anggota'),
+      ),
+      h(View, { key: 'hhair', style: styles.backHeaderHairline }),
+    ),
     // QR Code
     h(
       View,
       { key: 'qr', style: styles.qrSection },
       h(Image, { src: cardConfig.qrDataUrl, style: styles.qrImage }),
     ),
-    // Back info
+    // Back info — nilai memakai Proper Case (fmt.proper: TTL/DADAR/THS-THM/pangkat dipertahankan)
     h(
       View,
       { key: 'info', style: styles.backInfo },
@@ -863,31 +970,31 @@ function buildBackSide(props: MemberCardPdfProps) {
         View,
         { key: 'r1', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'TTL'),
-        h(Text, { style: styles.backValue }, `: ${ttl}`),
+        h(Text, { style: styles.backValue }, `: ${fmt.proper(ttl)}`),
       ),
       h(
         View,
         { key: 'r2', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'DADAR'),
-        h(Text, { style: styles.backValue }, `: ${dadar}`),
+        h(Text, { style: styles.backValue }, `: ${fmt.proper(dadar)}`),
       ),
       h(
         View,
         { key: 'r3', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Status'),
-        h(Text, { style: styles.backValue }, `: ${member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif'}`),
+        h(Text, { style: styles.backValue }, `: ${fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')}`),
       ),
       h(
         View,
         { key: 'r4', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Valid s/d'),
-        h(Text, { style: styles.backValue }, `: ${validUntilStr}`),
+        h(Text, { style: styles.backValue }, `: ${fmt.proper(validUntilStr)}`),
       ),
       h(
         View,
         { key: 'r5', style: styles.backRow },
         h(Text, { style: styles.backLabel }, 'Alamat'),
-        h(Text, { style: styles.backValue }, `: THS-THM, ${(member.alamatDistrik || 'Distrik').toUpperCase()}`),
+        h(Text, { style: styles.backValue }, `: THS-THM, ${fmt.proper(member.alamatDistrik || 'Distrik')}`),
       ),
     ),
     // Footer

@@ -1,7 +1,7 @@
 'use client';
 
 import { PermissionGuard } from '@/components/auth/permission-guard';
-import { CARD, COLORS, FRONT, BACK, getLevelVisual, photoCrop, fmt, decorFrontSvg, decorBackSvg, guillocheSvg, cardCss, resolveCardSpec } from '@/lib/card-design';
+import { CARD, COLORS, FRONT, BACK, PATTERN, getLevelVisual, photoCrop, fmt, decorFrontSvg, decorBackSvg, guillocheSvg, cardCss, resolveCardSpec, patternRows } from '@/lib/card-design';
 
 import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -187,11 +187,34 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
 function BackPreview({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginBottom: BACK.info.row.marginBottom }}>
-      <div style={{ width: BACK.info.row.label.w, fontSize: BACK.info.row.label.fontSize, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase' }}>
+      <div style={{ width: BACK.info.row.label.w, fontSize: BACK.info.row.label.fontSize, fontWeight: 700, color: '#ffffff' }}>
         {label}
       </div>
       <div style={{ width: BACK.info.row.colon.w, fontSize: BACK.info.row.label.fontSize, fontWeight: 700, color: '#ffffff', opacity: 0.9 }}>:</div>
       <div style={{ flex: 1, fontSize: BACK.info.row.value.fontSize, fontWeight: 600, color: '#ffffff' }}>{value}</div>
+    </div>
+  );
+}
+
+/** Watermark nama — baris nama anggota diulang miring (−24°), anti-fotokopi (spec PATTERN). */
+function PatternWeb({ name, side }: { name: string; side: 'front' | 'back' }) {
+  const cfg = side === 'back' ? PATTERN.back : PATTERN.front;
+  const rows = patternRows(name, side);
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {rows.map((row, i) => (
+        <div
+          key={i}
+          className="absolute left-[-80px] right-[-80px] flex justify-center"
+          style={{ top: cfg.top + i * cfg.stepY, gap: cfg.gapX, opacity: cfg.opacity, transform: `rotate(${cfg.angle}deg)` }}
+        >
+          {row.map((w, j) => (
+            <span key={j} style={{ fontSize: cfg.fontSize, letterSpacing: cfg.letterSpacing, color: cfg.color, fontWeight: 900, whiteSpace: 'nowrap' }}>
+              {w}
+            </span>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -500,6 +523,16 @@ export default function MemberDetailPage() {
       const logoUrl = `${window.location.origin}/logo.svg`;
       const petaUrl = `${window.location.origin}/peta-indonesia.png`;
       const sig = FRONT.signer;
+      // Pattern nama miring (anti-fotokopi) untuk print — dikonversi ke HTML inline
+      const patternHtml = (rows: string[][], cfg: { top: number; stepY: number; gapX: number; angle: number; opacity: number; fontSize: number; letterSpacing: number; color: string }) =>
+        rows
+          .map(
+            (row, i) =>
+              `<div style="position:absolute;left:-80px;right:-80px;top:${cfg.top + i * cfg.stepY}px;display:flex;justify-content:center;gap:${cfg.gapX}px;transform:rotate(${cfg.angle}deg);opacity:${cfg.opacity}">` +
+              row.map((w) => `<span style="font-size:${cfg.fontSize}px;letter-spacing:${cfg.letterSpacing}px;color:${cfg.color};font-weight:900;white-space:nowrap">${w}</span>`).join('') +
+              `</div>`,
+          )
+          .join('');
 
       const win = window.open('', '_blank');
       if (!win) return;
@@ -522,6 +555,7 @@ export default function MemberDetailPage() {
   ${decorFrontSvg()}
   ${guillocheSvg('front')}
   <div class="watermark front" style="-webkit-mask-image:url('${petaUrl}');mask-image:url('${petaUrl}')"></div>
+  ${patternHtml(patternRows(m.namaLengkap || 'THS-THM', 'front'), PATTERN.front)}
   <div class="header-row">
     <div class="logo"><img src="${logoUrl}" alt="THS-THM" /></div>
     <div class="header-text">
@@ -565,18 +599,24 @@ export default function MemberDetailPage() {
   ${decorBackSvg()}
   ${guillocheSvg('back')}
   <div class="watermark back" style="-webkit-mask-image:url('${petaUrl}');mask-image:url('${petaUrl}')"></div>
-  <div class="back-title">
-    <div class="t">VERIFIKASI KARTU ANGGOTA</div>
-    <div class="s">Scan QR untuk memeriksa keabsahan anggota</div>
+  ${patternHtml(patternRows(m.namaLengkap || 'THS-THM', 'back'), PATTERN.back)}
+  <div class="back-band"></div>
+  <div class="back-header">
+    <div class="bh-logo"><img src="${logoUrl}" alt="THS-THM" /></div>
+    <div style="flex:1">
+      <div class="bh-title">VERIFIKASI KARTU ANGGOTA</div>
+      <div class="bh-sub">Scan QR untuk memeriksa keabsahan anggota</div>
+    </div>
+    <div class="bh-hairline"></div>
   </div>
   <div class="qr-box">${qr ? `<img src="${qr}" alt="QR"/>` : '<div style="width:100%;height:100%;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:4px">' + Array.from({ length: 25 }, (_, i) => `<div style="background:${i % 3 === 0 || i % 7 === 0 ? '#0f172a' : '#e2e8f0'};border-radius:2px"></div>`).join('') + '</div>'}</div>
   <div class="back-info">
     <div class="back-desc">Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.</div>
-    <div class="back-row"><span class="lbl">TTL</span><span class="colon">:</span><span class="val">${ttl.toUpperCase()}</span></div>
-    <div class="back-row"><span class="lbl">DADAR</span><span class="colon">:</span><span class="val">${dadar.toUpperCase()}</span></div>
-    <div class="back-row"><span class="lbl">STATUS</span><span class="colon">:</span><span class="val">${(m.statusKeanggotaan === 'aktif' ? 'AKTIF' : 'NONAKTIF')}</span></div>
-    <div class="back-row"><span class="lbl">VALID S/D</span><span class="colon">:</span><span class="val">${expiry.toUpperCase()}</span></div>
-    <div class="back-row"><span class="lbl">ALAMAT</span><span class="colon">:</span><span class="val">THS-THM, ${(m.alamatDistrik || 'Distrik').toUpperCase()}</span></div>
+    <div class="back-row"><span class="lbl">TTL</span><span class="colon">:</span><span class="val">${fmt.proper(ttl)}</span></div>
+    <div class="back-row"><span class="lbl">DADAR</span><span class="colon">:</span><span class="val">${fmt.proper(dadar)}</span></div>
+    <div class="back-row"><span class="lbl">Status</span><span class="colon">:</span><span class="val">${fmt.proper(m.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')}</span></div>
+    <div class="back-row"><span class="lbl">Valid s/d</span><span class="colon">:</span><span class="val">${fmt.proper(expiry)}</span></div>
+    <div class="back-row"><span class="lbl">Alamat</span><span class="colon">:</span><span class="val">THS-THM, ${fmt.proper(m.alamatDistrik || 'Distrik')}</span></div>
   </div>
   <div class="back-footer">
     <div class="footer-text">Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
@@ -1171,6 +1211,9 @@ export default function MemberDetailPage() {
                         </div>
                       )}
 
+                      {/* Pattern nama miring (anti-fotokopi) - spec PATTERN.front */}
+                      <PatternWeb name={member.namaLengkap || 'THS-THM'} side="front" />
+
                       <div className="relative z-10 h-full">
                         {/* Header - 4 baris + logo utuh */}
                         <div className="flex items-start text-white" style={{ padding: `${FRONT.header.padTop}px ${FRONT.header.padH}px`, gap: FRONT.header.gap }}>
@@ -1269,14 +1312,14 @@ export default function MemberDetailPage() {
                         </div>
 
                         {/* Signer - teks di atas, stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
-                        <div className="absolute text-left" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
-                          <div className="absolute font-black font-['Roboto']" style={{ left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize }}>
+                        <div className="absolute text-right" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
+                          <div className="absolute font-black font-['Roboto']" style={{ right: FRONT.signer.title1.right, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize }}>
                             KOORDINATORAT DISTRIK THS-THM
                           </div>
-                          <div className="absolute font-bold font-['Roboto']" style={{ left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize }}>
+                          <div className="absolute font-bold font-['Roboto']" style={{ right: FRONT.signer.title2.right, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize }}>
                             KEUSKUPAN {(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}
                           </div>
-                          <div className="absolute" style={{ left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h }}>
+                          <div className="absolute" style={{ right: FRONT.signer.wrap.right, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h }}>
                             <div
                               className="absolute rounded-full overflow-hidden flex items-center justify-center border-2"
                               style={{
@@ -1334,12 +1377,12 @@ export default function MemberDetailPage() {
                               </div>
                             )}
                           </div>
-                          <div className="absolute w-full" style={{ left: 0, bottom: 0 }}>
-                            <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value }}>
+                          <div className="absolute w-full text-right" style={{ left: 0, bottom: 0 }}>
+                            <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'right' }}>
                               {(cardData?.signerName || 'Koordinator Distrik').toUpperCase()}
                             </div>
                             {cardData?.signerTitle ? (
-                              <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop }}>
+                              <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'right' }}>
                                 {cardData.signerTitle.toUpperCase()}
                               </div>
                             ) : null}
@@ -1375,14 +1418,29 @@ export default function MemberDetailPage() {
                           <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain invert" />
                         </div>
                       )}
+
+                      {/* Pattern nama miring (anti-fotokopi) - spec PATTERN.back */}
+                      <PatternWeb name={member.namaLengkap || 'THS-THM'} side="back" />
+
                       <div className="relative z-10 h-full">
-                        <div className="absolute left-0 right-0 text-center" style={{ top: BACK.title.top }}>
-                          <div className="font-black text-white" style={{ fontSize: BACK.title.fontSize, letterSpacing: BACK.title.letterSpacing }}>
-                            VERIFIKASI KARTU ANGGOTA
+                        {/* Header band - gradien biru + logo + judul verifikasi + hairline (spec BACK.header) */}
+                        <div className="absolute left-0 right-0 flex items-center" style={{ top: 0, height: BACK.header.height, padding: `0 ${BACK.header.padH}px`, gap: BACK.header.gap }}>
+                          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${COLORS.header.from}, ${COLORS.header.to})` }} />
+                          <div
+                            className="relative rounded-full overflow-hidden flex items-center justify-center"
+                            style={{ width: BACK.header.logo.size, height: BACK.header.logo.size, background: BACK.header.logo.bg, border: `${BACK.header.logo.border}px solid ${BACK.header.logo.borderColor}` }}
+                          >
+                            <img src="/logo.svg" alt="THS-THM" style={{ width: BACK.header.logo.img, height: BACK.header.logo.img, objectFit: 'contain' }} />
                           </div>
-                          <div className="text-white opacity-90" style={{ fontSize: BACK.title.subtitle.fontSize, marginTop: BACK.title.subtitle.marginTop }}>
-                            Scan QR untuk memeriksa keabsahan anggota
+                          <div className="relative flex-1" style={{ color: '#ffffff' }}>
+                            <div className="font-black" style={{ fontSize: BACK.header.title.fontSize, letterSpacing: BACK.header.title.letterSpacing, lineHeight: 1.1 }}>
+                              VERIFIKASI KARTU ANGGOTA
+                            </div>
+                            <div className="opacity-90" style={{ fontSize: BACK.header.subtitle.fontSize, opacity: BACK.header.subtitle.opacity, marginTop: BACK.header.subtitle.marginTop }}>
+                              Scan QR untuk memeriksa keabsahan anggota
+                            </div>
                           </div>
+                          <div className="absolute left-0 right-0" style={{ bottom: 0, height: BACK.header.hairline.height, backgroundColor: BACK.header.hairline.color }} />
                         </div>
                         <div
                           className="absolute bg-white flex items-center justify-center rounded-2xl shadow-lg"
@@ -1403,11 +1461,11 @@ export default function MemberDetailPage() {
                           <p className="font-['Roboto'] text-white/95" style={{ fontSize: BACK.info.desc.fontSize, lineHeight: `${BACK.info.desc.lineHeight}px`, opacity: BACK.info.desc.opacity, marginBottom: BACK.info.desc.marginBottom }}>
                             Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.
                           </p>
-                          <BackPreview label="TTL" value={ttl.toUpperCase()} />
-                          <BackPreview label="DADAR" value={dadar.toUpperCase()} />
-                          <BackPreview label="Status" value={(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif').toUpperCase()} />
-                          <BackPreview label="VALID S/D" value={validUntilText} />
-                          <BackPreview label="Alamat" value={`THS-THM, ${(member.ranting?.wilayah?.distrik?.alamat || 'Distrik').toUpperCase()}`} />
+                          <BackPreview label="TTL" value={fmt.proper(ttl)} />
+                          <BackPreview label="DADAR" value={fmt.proper(dadar)} />
+                          <BackPreview label="Status" value={fmt.proper(member.statusKeanggotaan === 'aktif' ? 'Aktif' : 'Nonaktif')} />
+                          <BackPreview label="Valid s/d" value={fmt.proper(validUntilText)} />
+                          <BackPreview label="Alamat" value={`THS-THM, ${fmt.proper(member.ranting?.wilayah?.distrik?.alamat || 'Distrik')}`} />
                         </div>
                         <div className="absolute text-white flex items-end justify-between gap-6" style={{ left: BACK.footer.left, right: BACK.footer.right, bottom: BACK.footer.bottom }}>
                           <div className="opacity-95" style={{ flex: 1, fontSize: BACK.footer.text.fontSize, lineHeight: `${BACK.footer.text.lineHeight}px` }}>
@@ -1454,18 +1512,6 @@ export default function MemberDetailPage() {
                         <Printer size={20} />
                         Preview & Cetak (HTML)
                       </button>
-                    </div>
-                  </div>
-        
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-700 dark:text-blue-400">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Informasi Kartu Digital</p>
-                        <p className="mt-1 text-blue-600 dark:text-blue-500">
-                          Kartu digital ini menggunakan format CR80 landscape (856×540 px) dengan QR Code untuk verifikasi keaslian. Scan QR untuk memvalidasi data anggota.
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>

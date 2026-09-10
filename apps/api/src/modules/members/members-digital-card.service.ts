@@ -113,9 +113,11 @@ export class MembersDigitalCardService {
    * Template kartu aktif untuk distrik anggota (desain upload per distrik) —
    * distrik dulu, lalu global, lalu null = desain bawaan. Cache 5 menit per scope.
    */
-  private async resolveActiveTemplate(distrikId?: string) {
+  private async resolveActiveTemplate(
+    distrikId?: string,
+  ): Promise<{ id: string; name: string; label: string | null; frontImage: string | null; backImage: string | null; overlayConfig: unknown } | null> {
     const cacheKey = `digital-card:template:active:${distrikId || 'global'}`;
-    const cached = this.cache.get(cacheKey);
+    const cached = this.cache.get<{ id: string; name: string; label: string | null; frontImage: string | null; backImage: string | null; overlayConfig: unknown } | null>(cacheKey);
     if (cached !== undefined) {
       return cached === null ? null : cached;
     }
@@ -137,7 +139,7 @@ export class MembersDigitalCardService {
         this.cache.set(cacheKey, null, 300_000);
         return null;
       }
-      const result = {
+      const result: { id: string; name: string; label: string | null; frontImage: string | null; backImage: string | null; overlayConfig: unknown } = {
         id: template.id,
         name: template.name,
         label: template.label,
@@ -174,10 +176,54 @@ export class MembersDigitalCardService {
   }
 
   async getDigitalCardImage(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
-    // PNG 2 sisi: render halaman gabungan (depan+belakang) lalu konversi ke PNG
+    // PNG 2 sisi: render SVG (murni node) → sharp. SVG→PNG tak butuh binary eksternal
+    // (poppler/pdf-poppler), jadi hasilnya selalu PNG valid — tidak pernah kosong.
     const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const template = await this.resolveActiveTemplate(distrikId);
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const sharp = require('sharp');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildCardSvg } = require('../documents/pdf-templates/card-svg');
+      const svg = buildCardSvg({
+        member: {
+          namaLengkap: memberData.namaLengkap,
+          nomorAnggota: memberData.nomorAnggota,
+          jenisKelamin: memberData.jenisKelamin || 'L',
+          tempatLahir: memberData.tempatLahir,
+          tanggalLahir: memberData.tanggalLahir,
+          tingkat: memberData.tingkat,
+          tempatDadar: memberData.tempatDadar,
+          tahunDadar: memberData.tahunDadar,
+          ranting: memberData.ranting,
+          wilayah: memberData.wilayah,
+          distrik: memberData.distrik,
+          alamatDistrik: memberData.alamatDistrik,
+          statusKeanggotaan: memberData.statusKeanggotaan,
+        },
+        nomorDokumen: card.nomorDokumen,
+        qrDataUrl,
+        verificationUrl: card.verificationUrl,
+        signers: card.signers,
+        signerName: card.signerName,
+        signerTitle: card.signerTitle,
+        photoDataUrl: await this.resolvePhotoDataUrl(memberData.fotoPath, true),
+        signatureDataUrl: await this.resolvePhotoDataUrl(card.signatureImage),
+        stampDataUrl: await this.resolvePhotoDataUrl(card.stampImage),
+        frontImageDataUrl: await this.resolvePhotoDataUrl(template?.frontImage || null),
+        backImageDataUrl: await this.resolvePhotoDataUrl(template?.backImage || null),
+        levelVisual,
+        template: template || null,
+      });
+      // density 300 → PNG ±3566×4500 (resolusi setara pdftoppm -r 300)
+      return await sharp(Buffer.from(svg), { density: 300 }).png().toBuffer();
+    } catch (svgErr) {
+      this.logger.warn(`SVG→PNG gagal (${(svgErr as Error).message}), fallback ke PDF→poppler`);
+    }
+
+    // Fallback lama (dipakai bila sharp bermasalah di deployment tertentu)
     const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template }, { combined: true });
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
     return pdfToPng(pdfBuffer);

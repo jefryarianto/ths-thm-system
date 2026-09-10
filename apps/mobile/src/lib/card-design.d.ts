@@ -90,9 +90,9 @@ declare const FRONT: Freeze<{
     bottom: number;
     w: number;
     h: number;
-    title1: { left: number; top: number; fontSize: number };
-    title2: { left: number; top: number; fontSize: number };
-    wrap: { left: number; top: number; w: number; h: number };
+    title1: { right: number; top: number; fontSize: number; align: string };
+    title2: { right: number; top: number; fontSize: number; align: string };
+    wrap: { right: number; top: number; w: number; h: number };
     sig: {
       left: number;
       top: number;
@@ -111,8 +111,8 @@ declare const FRONT: Freeze<{
       rotate: number;
       text: { fontSize: number };
     };
-    name: { fontSize: number; underline: boolean };
-    title: { fontSize: number; marginTop: number };
+    name: { fontSize: number; underline: boolean; align: string };
+    title: { fontSize: number; marginTop: number; align: string };
   };
   watermark: { left: number; top: number; w: number; h: number; color: string; opacity: number };
   bgCircle1: { top: number; right: number; size: number };
@@ -120,6 +120,15 @@ declare const FRONT: Freeze<{
 }>;
 
 declare const BACK: Freeze<{
+  header: {
+    height: number;
+    padH: number;
+    gap: number;
+    logo: { size: number; radius: number; bg: string; border: number; borderColor: string; img: number };
+    title: { fontSize: number; letterSpacing: number };
+    subtitle: { fontSize: number; marginTop: number; opacity: number };
+    hairline: { height: number; color: string };
+  };
   title: {
     top: number;
     fontSize: number;
@@ -225,6 +234,22 @@ declare function getLevelVisual(
   fromApi: { stripCount: number; color: string; label?: string } | null,
 ): { stripCount: number; color: string; label: string };
 
+declare const PATTERN: Freeze<{
+  front: { angle: number; fontSize: number; letterSpacing: number; gapX: number; cols: number; rows: number; top: number; stepY: number; color: string; opacity: number };
+  back: { angle: number; fontSize: number; letterSpacing: number; gapX: number; cols: number; rows: number; top: number; stepY: number; color: string; opacity: number };
+}>;
+
+declare const fmt: {
+  ttl(tempatLahir?: string | null, tanggalLahir?: string | null): string;
+  dadar(tempatDadar?: string | null, tahunDadar?: string | null): string;
+  dateId(d: Date | string): string;
+  validUntilDate(base?: Date): Date;
+  validUntilText(base?: Date): string;
+  proper(str: string | null | undefined): string;
+};
+
+declare function patternRows(name: string | null | undefined, side: 'front' | 'back'): string[][];
+
 declare function photoCrop(boxW: number, boxH: number): {
   w: number;
   h: number;
@@ -250,4 +275,4 @@ export interface CardTemplateRuntime {
 
 declare function resolveCardSpec(activeTemplate: unknown): CardTemplateRuntime;
 
-export { CARD, FONTS, COLORS, FRONT, BACK, DECOR, CAMERA, getLevelVisual, photoCrop, resolveCardSpec };
+export { CARD, FONTS, COLORS, FRONT, BACK, DECOR, CAMERA, PATTERN, fmt, getLevelVisual, photoCrop, patternRows, resolveCardSpec };
