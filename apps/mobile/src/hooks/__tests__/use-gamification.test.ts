@@ -177,7 +177,7 @@ describe('useGamificationProfile', () => {
     const { result } = await renderHook(() => useGamificationProfile(null));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(mockApi.get).toHaveBeenCalled();
+    expect(mockApi.get).not.toHaveBeenCalled();
   });
 });
 

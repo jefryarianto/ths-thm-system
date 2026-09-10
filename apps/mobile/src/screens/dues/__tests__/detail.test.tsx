@@ -19,6 +19,7 @@ jest.mock('../../../lib/api-client', () => ({
     post: jest.fn(),
   },
   unwrap: (response: { data: unknown }) => response.data,
+  toAbsoluteUrl: jest.fn(() => null),
 }));
 
 import { render, screen, waitFor } from '@testing-library/react-native';
@@ -31,7 +32,7 @@ describe('DuesDetailScreen', () => {
 
   it('renders loading state initially', () => {
     const { getByText } = render(<DuesDetailScreen />);
-    expect(getByText('Memuat...')).toBeTruthy();
+    expect(getByText('Memuat detail iuran...')).toBeTruthy();
   });
 
   it('shows bank info when loaded', async () => {
@@ -39,25 +40,22 @@ describe('DuesDetailScreen', () => {
     mockApi.get
       .mockResolvedValueOnce({
         data: {
-          success: true,
-          data: {
-            id: '1',
-            periode: '2026/01',
-            jumlah: 50000,
-            status: 'belum_dibayar',
-            tanggalBayar: null,
-            buktiBayarPath: null,
-            createdAt: new Date().toISOString(),
-          },
+          id: '1',
+          periode: '2026/01',
+          jumlah: 50000,
+          status: 'belum_dibayar',
+          tanggalBayar: null,
         },
       })
       .mockResolvedValueOnce({
-        data: {
-          bankName: 'BCA',
-          accountNumber: '1234567890',
-          accountName: 'THS-THM',
-          qrisImageUrl: null,
-        },
+        data: [
+          {
+            bankName: 'BCA',
+            accountNumber: '1234567890',
+            accountName: 'THS-THM',
+            qrisImageUrl: null,
+          },
+        ],
       });
 
     render(<DuesDetailScreen />);
@@ -70,14 +68,14 @@ describe('DuesDetailScreen', () => {
     expect(screen.getByText('THS-THM')).toBeTruthy();
   });
 
-  it('shows error toast when API fails', async () => {
+  it('shows not-found state when API fails', async () => {
     const mockApi = require('../../../lib/api-client').default;
     mockApi.get.mockRejectedValue(new Error('Network error'));
 
     render(<DuesDetailScreen />);
 
     await waitFor(() => {
-      expect(screen.getByText('Gagal memuat data')).toBeTruthy();
+      expect(screen.getByText('Iuran tidak ditemukan')).toBeTruthy();
     });
   });
 });
