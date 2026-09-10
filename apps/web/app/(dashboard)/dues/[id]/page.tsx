@@ -163,24 +163,23 @@ export default function DuesDetailPage() {
         </Link>
 
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-          <div className="h-16 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 relative">
+        <div className="rounded-2xl shadow-sm overflow-hidden bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600">
+          <div className="relative px-6 py-5 pr-16">
             <button
               onClick={fetchDues}
-              className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition text-white"
+              className="absolute top-3 right-3 p-2 rounded-lg bg-white/20 hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/80 backdrop-blur-sm transition text-white"
               title="Refresh"
+              aria-label="Muat ulang detail iuran"
             >
               <RefreshCw size={14} />
             </button>
-          </div>
-          <div className="px-6 pb-6 -mt-6">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div className="w-14 h-14 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800">
-                <Receipt size={22} className="text-emerald-600" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 shrink-0 rounded-xl bg-white/20 flex items-center justify-center ring-1 ring-white/30">
+                <Receipt size={22} className="text-white" />
               </div>
-              <div className="flex-1 mt-2 sm:mt-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  <h1 className="text-xl font-bold text-white">
                     Iuran {formatPeriode(dues.periode)}
                   </h1>
                   <span
@@ -189,7 +188,7 @@ export default function DuesDetailPage() {
                     {FLAT_STATUS_LABELS[dues.status] || dues.status}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-emerald-50 mt-1">
                   {formatRupiah(Number(dues.jumlah))}
                 </p>
               </div>
