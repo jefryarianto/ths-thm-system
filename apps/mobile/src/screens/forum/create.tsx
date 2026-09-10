@@ -7,14 +7,13 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { createForumThread } from '../../hooks/use-forum';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 interface Category {
@@ -140,7 +139,7 @@ export default function CreateThreadScreen() {
           disabled={submitting}
         >
           {submitting ? (
-            <ActivityIndicator color={theme.colors.surface} size="small" />
+            <LoadingSpinner color={theme.colors.surface} size="small" />
           ) : (
             <>
               <Ionicons name="send" size={18} color={theme.colors.surface} />

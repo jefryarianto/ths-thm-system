@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -12,6 +11,7 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import apiClient from '../../lib/api-client';
 import { CAMERA } from '../../lib/card-design';
+import { LoadingSpinner } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 /**
@@ -60,7 +60,7 @@ export default function CameraPhotoScreen() {
     return (
       <View style={styles.container}>
         <StatusBar style="light" />
-        <ActivityIndicator size="large" color={theme.colors.surface} />
+        <LoadingSpinner size="large" color={theme.colors.surface} />
       </View>
     );
   }
@@ -138,7 +138,7 @@ export default function CameraPhotoScreen() {
           disabled={uploading || captureLock}
         >
           {uploading ? (
-            <ActivityIndicator color={theme.colors.surface} size="large" />
+            <LoadingSpinner color={theme.colors.surface} size="large" />
           ) : (
             <View style={styles.captureInner} />
           )}

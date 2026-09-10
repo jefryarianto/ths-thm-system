@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
   Alert,
   Linking,
@@ -16,7 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { formatRupiah } from '../../lib/format';
-import { ProfileCard, ScreenShell } from '../../components/ui/shared';
+import { LoadingSpinner, ProfileCard, ScreenShell } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 interface MemberDetail {
@@ -145,7 +144,7 @@ export default function MemberDetailScreen() {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <LoadingSpinner size="large" color={theme.colors.primary} />
       </View>
     );
   if (!member)
@@ -237,7 +236,7 @@ export default function MemberDetailScreen() {
 
   const renderDues = () => {
     if (duesLoading)
-      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 24 }} />;
+      return <View style={{ marginTop: 24 }}><LoadingSpinner size="small" color={theme.colors.primary} /></View>;
     if (dues.length === 0)
       return (
         <View style={styles.empty}>
@@ -282,7 +281,7 @@ export default function MemberDetailScreen() {
 
   const renderTrainings = () => {
     if (trainingsLoading)
-      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 24 }} />;
+      return <View style={{ marginTop: 24 }}><LoadingSpinner size="small" color={theme.colors.primary} /></View>;
     if (trainings.length === 0)
       return (
         <View style={styles.empty}>
@@ -400,7 +399,7 @@ export default function MemberDetailScreen() {
 
   const renderDocuments = () => {
     if (docsLoading)
-      return <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginTop: 24 }} />;
+      return <View style={{ marginTop: 24 }}><LoadingSpinner size="small" color={theme.colors.primary} /></View>;
     if (documents.length === 0)
       return (
         <View style={styles.empty}>

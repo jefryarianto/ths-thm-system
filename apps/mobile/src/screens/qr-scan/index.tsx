@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
   Modal,
 } from 'react-native';
@@ -14,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import apiClient from '../../lib/api-client';
 import { theme } from '../../theme';
+import { LoadingSpinner } from '../../components/ui/shared';
 
 interface KegiatanItem {
   id: string;
@@ -338,7 +338,7 @@ export default function QRScanScreen() {
     return (
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}><Text style={styles.headerTitle}>QR Scanner</Text></View>
-        <View style={styles.scannerArea}><ActivityIndicator size="large" color={theme.colors.primary} /></View>
+        <View style={styles.scannerArea}><LoadingSpinner size="large" color={theme.colors.primary} /></View>
       </View>
     );
   }
@@ -461,7 +461,7 @@ export default function QRScanScreen() {
             disabled={scanning}
           >
             {scanning ? (
-              <ActivityIndicator color={theme.colors.surface} />
+              <LoadingSpinner color={theme.colors.surface} />
             ) : (
               <Text style={styles.scanButtonText}>{currentMode.label}</Text>
             )}
@@ -489,7 +489,9 @@ export default function QRScanScreen() {
             Kegiatan Aktif ({kegiatanList.length})
           </Text>
           {loadingKegiatan ? (
-            <ActivityIndicator style={{ padding: 20 }} />
+            <View style={{ padding: 20 }}>
+              <LoadingSpinner />
+            </View>
           ) : kegiatanList.length > 0 ? (
             <View style={styles.kegiatanScrollContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.kegiatanScroll} nestedScrollEnabled>

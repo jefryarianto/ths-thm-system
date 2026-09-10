@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Modal,
   TextInput,
   Alert,
@@ -15,6 +14,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../../../src/lib/api-client';
 import { theme } from '../../theme';
+import { LoadingSpinner } from '../../components/ui/shared';
 
 interface Reward {
   id: string;
@@ -180,7 +180,7 @@ export default function AdminRewardsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <LoadingSpinner size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -373,7 +373,7 @@ export default function AdminRewardsScreen() {
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color={theme.colors.surface} />
+                  <LoadingSpinner size="small" color={theme.colors.surface} />
                 ) : (
                   <Text style={styles.saveButtonText}>
                     {editingReward ? 'Simpan Perubahan' : 'Buat Reward'}

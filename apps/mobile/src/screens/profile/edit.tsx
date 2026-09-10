@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -18,7 +17,7 @@ import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView } from '../../components/ui/shared';
 import { useAuthStore } from '../../store/auth-store';
 import { useMemberProfile, MemberProfile } from '../../hooks/use-member-profile';
 import { theme } from '../../theme';
@@ -398,7 +397,7 @@ export default function EditProfileScreen() {
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator color={theme.colors.surface} size="small" />
+                <LoadingSpinner color={theme.colors.surface} size="small" />
               ) : (
                 <>
                   <Ionicons name="checkmark" size={18} color={theme.colors.surface} />
@@ -465,7 +464,7 @@ export default function EditProfileScreen() {
               disabled={pwSaving}
             >
               {pwSaving ? (
-                <ActivityIndicator color={theme.colors.surface} size="small" />
+                <LoadingSpinner color={theme.colors.surface} size="small" />
               ) : (
                 <>
                   <Ionicons name="key-outline" size={16} color={theme.colors.surface} />

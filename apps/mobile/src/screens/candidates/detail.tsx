@@ -3,14 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { ProfileCard, ScreenShell } from '../../components/ui/shared';
+import { LoadingSpinner, ProfileCard, ScreenShell } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 interface CandidateDetail {
@@ -133,7 +132,7 @@ export default function CandidateDetailScreen() {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <LoadingSpinner size="large" color={theme.colors.primary} />
       </View>
     );
   if (!candidate)
@@ -237,7 +236,7 @@ export default function CandidateDetailScreen() {
               disabled={isPending}
             >
               {isPending && actionLoading === 'approve' ? (
-                <ActivityIndicator size="small" color={theme.colors.surface} />
+                <LoadingSpinner size="small" color={theme.colors.surface} />
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={20} color={theme.colors.surface} />
@@ -251,7 +250,7 @@ export default function CandidateDetailScreen() {
               disabled={isPending}
             >
               {isPending && actionLoading === 'reject' ? (
-                <ActivityIndicator size="small" color={theme.colors.surface} />
+                <LoadingSpinner size="small" color={theme.colors.surface} />
               ) : (
                 <>
                   <Ionicons name="close-circle" size={20} color={theme.colors.surface} />

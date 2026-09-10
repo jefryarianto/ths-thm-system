@@ -6,10 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
+import { LoadingSpinner } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 export default function PasswordSection() {
@@ -126,7 +126,7 @@ export default function PasswordSection() {
                 disabled={savingPassword}
               >
                 {savingPassword ? (
-                  <ActivityIndicator color={theme.colors.surface} size="small" />
+                   <LoadingSpinner color={theme.colors.surface} size="small" />
                 ) : (
                   <Text style={styles.saveButtonText}>Ganti</Text>
                 )}

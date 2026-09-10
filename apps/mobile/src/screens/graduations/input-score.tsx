@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -27,7 +26,7 @@ import {
   ScoreResult,
   SesiUjian,
 } from '../../hooks/use-scoring';
-import { LoadingView, ErrorView, SearchBar } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView, ErrorView, SearchBar } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 type FormState = 'loading_ujian' | 'select_participant' | 'input_scores' | 'submitting' | 'confirm';
@@ -584,7 +583,7 @@ export default function InputScoreScreen() {
             onPress={handleSubmit}
           >
             {formState === 'submitting' ? (
-              <ActivityIndicator color={theme.colors.surface} size="small" />
+              <LoadingSpinner color={theme.colors.surface} size="small" />
             ) : (
               <>
                 <Ionicons name="save" size={18} color={theme.colors.surface} />

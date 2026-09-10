@@ -5,14 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
-import { BackButton } from '../src/components/ui/shared';
+import { BackButton, LoadingSpinner } from '../src/components/ui/shared';
 import {
   getOtaAutoCheckEnabled,
   setOtaAutoCheckEnabled,
@@ -166,7 +165,7 @@ export default function AboutScreen() {
             <Text style={styles.infoLabel}>Status</Text>
             {isChecking || isDownloading ? (
               <View style={styles.statusInline}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <LoadingSpinner size="small" color={theme.colors.primary} />
                 <Text style={[styles.statusChip, styles.statusInfo]}>
                   {isChecking ? 'Memeriksa…' : 'Mengunduh…'}
                 </Text>

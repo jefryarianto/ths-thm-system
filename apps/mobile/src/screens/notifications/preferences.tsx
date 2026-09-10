@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   TouchableOpacity,
   Switch,
   Alert,
@@ -13,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView } from '../../components/ui/shared';
 import {
   setNotificationDeviceSettings,
   getNotificationDeviceSettings,
@@ -328,7 +327,9 @@ export default function NotificationPreferencesScreen() {
             </>
           )}
           {saving === 'quiet' && (
-            <ActivityIndicator size="small" color="#0284c7" style={{ marginTop: 8 }} />
+            <View style={{ marginTop: 8 }}>
+              <LoadingSpinner size="small" color="#0284c7" />
+            </View>
           )}
         </View>
       </View>

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -24,7 +23,7 @@ import {
   ApprovalRequest,
 } from '../../hooks/use-approvals';
 import { useRefresh } from '../../hooks/use-refresh';
-import { LoadingView, ErrorView, FilterChips, SearchBar } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView, ErrorView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
@@ -225,7 +224,7 @@ function ApprovalCard({
             onPress={() => onAction(item.id, 'approve')}
           >
             {actionLoading === `${item.id}-approve` ? (
-              <ActivityIndicator size="small" color={theme.colors.surface} />
+              <LoadingSpinner size="small" color={theme.colors.surface} />
             ) : (
               <>
                 <Ionicons name="checkmark-circle" size={16} color={theme.colors.surface} />
@@ -239,7 +238,7 @@ function ApprovalCard({
             onPress={() => onAction(item.id, 'reject')}
           >
             {actionLoading === `${item.id}-reject` ? (
-              <ActivityIndicator size="small" color={theme.colors.surface} />
+              <LoadingSpinner size="small" color={theme.colors.surface} />
             ) : (
               <>
                 <Ionicons name="close-circle" size={16} color={theme.colors.surface} />

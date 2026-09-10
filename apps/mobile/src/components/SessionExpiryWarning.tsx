@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { LoadingSpinner } from './ui/shared';
 import { proactivelyRefresh } from '../lib/api-client';
 import { scheduleExpiryWarning, resetSessionExpired } from '../lib/session-expired';
 import { theme } from '../theme';
@@ -102,7 +103,7 @@ export function SessionExpiryWarning({ visible, expiresInSeconds: initial, onDis
               activeOpacity={0.7}
             >
               {refreshing ? (
-                <ActivityIndicator size="small" color={theme.colors.textOnPrimary} />
+                <LoadingSpinner size="small" color={theme.colors.textOnPrimary} />
               ) : (
                 <Text style={styles.extendBtnText}>Perpanjang Sesi</Text>
               )}

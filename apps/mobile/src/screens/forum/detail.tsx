@@ -7,13 +7,12 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForumThread, createForumPost, deleteForumPost, updateForumPost, markAsSolution, togglePinThread, toggleLockThread, useCurrentMemberId } from '../../hooks/use-forum';
 import { useRole } from '../../hooks/use-role';
-import { LoadingView, ScreenShell } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView, ScreenShell } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 export default function ForumThreadDetailScreen() {
@@ -330,7 +329,7 @@ export default function ForumThreadDetailScreen() {
                 disabled={submitting || !reply.trim()}
               >
                 {submitting ? (
-                  <ActivityIndicator color={theme.colors.surface} size="small" />
+                  <LoadingSpinner color={theme.colors.surface} size="small" />
                 ) : (
                   <>
                     <Ionicons name="send" size={16} color={theme.colors.surface} />

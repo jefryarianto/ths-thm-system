@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import { LoadingSpinner } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 export default function ForgotPasswordScreen() {
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={theme.colors.surface} />
+                <LoadingSpinner color={theme.colors.surface} />
               ) : (
                 <Text style={styles.buttonText}>Kirim Link Reset</Text>
               )}

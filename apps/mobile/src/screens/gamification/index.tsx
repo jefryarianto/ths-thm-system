@@ -7,7 +7,6 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  ActivityIndicator,
   Animated,
   Easing,
   Dimensions,
@@ -33,6 +32,7 @@ import type { Reward, LeaderboardEntry, PointEvent } from '../../hooks/use-gamif
 import Confetti from './confetti';
 import GamificationTour from './tour';
 import { theme } from '../../theme';
+import { LoadingSpinner } from '../../components/ui/shared';
 
 interface Badge {
   id: string;
@@ -321,7 +321,7 @@ export default function GamificationScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <LoadingSpinner size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Memuat gamifikasi...</Text>
       </View>
     );
@@ -646,7 +646,9 @@ export default function GamificationScreen() {
               </TouchableOpacity>
             ))
           ) : leaderboardLoading ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} style={{ padding: 20 }} />
+            <View style={{ padding: 20 }}>
+              <LoadingSpinner size="small" color={theme.colors.primary} />
+            </View>
           ) : (
             <Text style={styles.emptyText}>Belum ada data leaderboard</Text>
           )}

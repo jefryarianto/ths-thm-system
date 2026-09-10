@@ -14,9 +14,9 @@ import { API_URL } from '../../lib/api-client';
 import { theme } from '../../theme';
 import { MemberCardFront } from '../digital-card/card';
 
-// Menu yang sudah jadi tab di bottom nav (Forum, Iuran, Digital ID, Profil) tidak diulang di kapsul.
+// Menu yang sudah jadi tab di bottom nav (Forum, Iuran, Scan QR, Profil) tidak diulang di kapsul.
 const quickItems = [
-  { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
+  { icon: 'card', label: 'Digital ID', route: '/(tabs)/digital-card' },
   { icon: 'document-text', label: 'Dokumen', route: '/documents' },
   { icon: 'mail-open', label: 'Undangan Pendadaran', route: '/graduations/invitations' },
   { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },

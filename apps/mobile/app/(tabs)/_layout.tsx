@@ -3,24 +3,24 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../src/theme';
 
-/** Tombol Digital ID di tengah tab bar — dinaikkan (raised) dengan lingkaran berisi ikon kartu. */
-function DigitalIdButton({
+/** Tombol Scan QR di tengah tab bar — dinaikkan (raised) dengan lingkaran berisi ikon pemindai. */
+function ScanButton({
   onPress,
 }: {
   onPress?: (e: import('react-native').GestureResponderEvent | import('react').MouseEvent<HTMLAnchorElement>) => void;
 }) {
   return (
-    <View style={styles.digitalIdWrap}>
+    <View style={styles.scanWrap}>
       <TouchableOpacity
-        style={styles.digitalIdBtn}
+        style={styles.scanBtn}
         onPress={onPress}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel="Digital ID"
+        accessibilityLabel="Scan QR"
       >
-        <Ionicons name="card" size={26} color={theme.colors.surface} />
+        <Ionicons name="qr-code" size={26} color={theme.colors.surface} />
       </TouchableOpacity>
-      <Text style={styles.digitalIdLabel}>Digital ID</Text>
+      <Text style={styles.scanLabel}>Scan QR</Text>
     </View>
   );
 }
@@ -52,8 +52,8 @@ export default function TabLayout() {
       {/* Layar tetap ada tapi tidak tampil di tab bar (diakses dari menu kapsul/shortcut lain) */}
       <Tabs.Screen name="documents" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
-      <Tabs.Screen name="qr-scan" options={{ href: null }} />
       <Tabs.Screen name="gamification" options={{ href: null }} />
+      <Tabs.Screen name="digital-card" options={{ href: null }} />
 
       <Tabs.Screen
         name="home"
@@ -73,12 +73,12 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Digital ID — tombol tengah yang dinaikkan (raised center button) */}
+      {/* Scan QR — tombol tengah yang dinaikkan (raised center button) untuk verifikasi dokumen/KTA & absensi */}
       <Tabs.Screen
-        name="digital-card"
+        name="qr-scan"
         options={{
           tabBarLabel: '',
-          tabBarButton: (props) => <DigitalIdButton onPress={props.onPress} />,
+          tabBarButton: (props) => <ScanButton onPress={props.onPress} />,
         }}
       />
       <Tabs.Screen
@@ -108,8 +108,8 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  digitalIdWrap: { alignItems: 'center', marginTop: -24 },
-  digitalIdBtn: {
+  scanWrap: { alignItems: 'center', marginTop: -24 },
+  scanBtn: {
     width: 54,
     height: 54,
     borderRadius: 27,
@@ -124,5 +124,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
-  digitalIdLabel: { fontSize: 11, fontWeight: '600', color: theme.colors.primary, marginTop: 2 },
+  scanLabel: { fontSize: 11, fontWeight: '600', color: theme.colors.primary, marginTop: 2 },
 });

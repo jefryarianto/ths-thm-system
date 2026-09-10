@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import apiClient from '../../lib/api-client';
+import { LoadingSpinner } from '../../components/ui/shared';
 import { safeIconName } from '../../lib/icons';
 import { theme } from '../../theme';
 
@@ -161,7 +161,7 @@ export default function ForceChangePasswordScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={theme.colors.surface} />
+            <LoadingSpinner color={theme.colors.surface} />
           ) : (
             <Text style={styles.buttonText}>Ubah Password</Text>
           )}

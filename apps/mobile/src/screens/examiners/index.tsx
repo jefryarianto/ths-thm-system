@@ -9,12 +9,11 @@ import {
   TextInput,
   Modal,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
-import { LoadingView, SearchBar } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView, SearchBar } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 import { BackButton } from '../../components/ui/shared';
 import { theme } from '../../theme';
@@ -170,7 +169,7 @@ export default function ExaminersScreen() {
                 disabled={toggling === item.id}
               >
                 {toggling === item.id ? (
-                  <ActivityIndicator size="small" color={theme.colors.textSecondary} />
+                   <LoadingSpinner size="small" color={theme.colors.textSecondary} />
                 ) : (
                   <Ionicons
                     name={aktif ? 'toggle' : 'toggle-outline'}
@@ -219,7 +218,7 @@ export default function ExaminersScreen() {
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator color={theme.colors.surface} />
+                 <LoadingSpinner color={theme.colors.surface} />
               ) : (
                 <Text style={styles.saveBtnText}>Simpan Penguji</Text>
               )}

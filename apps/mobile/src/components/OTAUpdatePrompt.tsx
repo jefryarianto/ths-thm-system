@@ -4,10 +4,10 @@ import {
   Text,
   Modal,
   TouchableOpacity,
-  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LoadingSpinner } from './ui/shared';
 import { theme } from '../theme';
 
 interface OTAUpdatePromptProps {
@@ -79,7 +79,7 @@ export function OTAUpdatePrompt({
           {/* Progress / Buttons */}
           {isDownloading ? (
             <View style={styles.downloadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <LoadingSpinner size="large" color={theme.colors.primary} />
               <Text style={styles.downloadingText}>Mengunduh...</Text>
             </View>
           ) : (

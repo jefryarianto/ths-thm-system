@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TextInput,
-  ActivityIndicator,
+  Animated,
+  Easing,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -39,6 +41,116 @@ export function BackButton({ color = theme.colors.textOnPrimary, bg = theme.colo
   );
 }
 
+// ─── Loading ring ala halaman login web ─────────────────────
+// Ring ganda (luar + dalam berputar berlawanan) dengan logo di tengah
+// dan teks berdenyut, sama seperti overlay loading login di web.
+
+type RingSize = 'sm' | 'md' | 'lg' | 'xl' | 'small' | 'large';
+
+const RING_SIZE: Record<string, { box: number; ring: number; inner: number; border: number; logo: number }> = {
+  sm: { box: 22, ring: 22, inner: 16, border: 3, logo: 0 },
+  md: { box: 44, ring: 44, inner: 32, border: 4, logo: 0 },
+  lg: { box: 64, ring: 64, inner: 48, border: 4, logo: 26 },
+  xl: { box: 96, ring: 96, inner: 72, border: 6, logo: 44 },
+  small: { box: 22, ring: 22, inner: 16, border: 3, logo: 0 },
+  large: { box: 64, ring: 64, inner: 48, border: 4, logo: 26 },
+};
+
+/** Spinner ring ganda (ala login web) — dua lingkaran berputar berlawanan
+ *  arah, opsional logo di tengah. Bisa dipakai untuk tombol (sm) maupun
+ *  tampilan loading penuh (lg/xl + logo). */
+export function LoadingRing({
+  size = 'md',
+  color = theme.colors.primary,
+  colorAlt,
+  twoTone = false,
+  showLogo = false,
+}: {
+  size?: RingSize;
+  color?: string;
+  colorAlt?: string;
+  /** Ring dalam memakai warna kontras (biru muda) seperti overload login web */
+  twoTone?: boolean;
+  showLogo?: boolean;
+}) {
+  const s = RING_SIZE[size];
+  const spin = useRef(new Animated.Value(0)).current;
+  const spinReverse = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const spinLoop = Animated.loop(
+      Animated.timing(spin, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }),
+    );
+    const reverseLoop = Animated.loop(
+      Animated.timing(spinReverse, { toValue: 1, duration: 1500, easing: Easing.linear, useNativeDriver: true }),
+    );
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.45, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    spinLoop.start();
+    reverseLoop.start();
+    pulseLoop.start();
+    return () => {
+      spinLoop.stop();
+      reverseLoop.stop();
+      pulseLoop.stop();
+    };
+  }, [spin, spinReverse, pulse]);
+
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const rotateReverse = spinReverse.interpolate({ inputRange: [0, 1], outputRange: ['360deg', '0deg'] });
+
+  return (
+    <View
+      style={{ width: s.box, height: s.box, alignItems: 'center', justifyContent: 'center' }}
+      accessibilityLabel="Memuat"
+    >
+      {/* Ring luar — berputar searah jarum jam */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: s.ring,
+          height: s.ring,
+          borderRadius: s.ring / 2,
+          borderWidth: s.border,
+          borderColor: 'transparent',
+          borderTopColor: color,
+          borderRightColor: colorAlt || color,
+          transform: [{ rotate }],
+        }}
+      />
+      {/* Ring dalam — berputar berlawanan arah */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          width: s.inner,
+          height: s.inner,
+          borderRadius: s.inner / 2,
+          borderWidth: Math.max(2, s.border - 1),
+          borderColor: 'transparent',
+          borderBottomColor: twoTone ? theme.colors.headerSub : color,
+          borderLeftColor: twoTone ? color : color,
+          opacity: twoTone ? 0.85 : 0.65,
+          transform: [{ rotate: rotateReverse }],
+        }}
+      />
+      {/* Logo di tengah — berdenyut (hanya saat tampilan penuh) */}
+      {showLogo && (
+        <Animated.View style={{ opacity: pulse }}>
+          <Image
+            source={require('../../../assets/images/logo.png')}
+            style={{ width: s.logo, height: s.logo, resizeMode: 'contain' }}
+          />
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
 interface LoadingSpinnerProps {
   size?: 'small' | 'large';
   color?: string;
@@ -49,14 +161,32 @@ export function LoadingSpinner({
   size = 'small',
   color = theme.colors.primary,
 }: LoadingSpinnerProps) {
-  return <ActivityIndicator size={size} color={color} accessibilityLabel="Memuat" />;
+  return <LoadingRing size={size} color={color} />;
 }
 
 interface LoadingViewProps extends LoadingSpinnerProps {
   message?: string;
 }
 
-/** Tampilan loading layar penuh yang konsisten dengan indikator loading aplikasi. */
+/** Teks pesan loading yang berdenyut (seperti "Memverifikasi kredensial..." di login web). */
+function PulseText({ text, color }: { text: string; color: string }) {
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.55, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return <Animated.Text style={[styles.message, { color, opacity: pulse }]}>{text}</Animated.Text>;
+}
+
+/** Tampilan loading layar penuh dengan ring ganda + logo, konsisten dengan login web. */
 export function LoadingView({
   message = 'Memuat...',
   size = 'large',
@@ -64,8 +194,8 @@ export function LoadingView({
 }: LoadingViewProps) {
   return (
     <View style={styles.center} accessibilityRole="progressbar" accessibilityLabel={message}>
-      <LoadingSpinner size={size} color={color} />
-      <Text style={styles.message}>{message}</Text>
+      <LoadingRing size={size} twoTone showLogo color={color} colorAlt={theme.colors.primaryDark} />
+      <PulseText text={message} color={theme.colors.textSecondary} />
     </View>
   );
 }
@@ -399,7 +529,7 @@ export function ReferenceScreenState({
           </View>
         </View>
         <View style={referenceStyles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <LoadingRing size="lg" twoTone showLogo />
           <Text style={referenceStyles.loadingText}>Memuat {title.toLowerCase()}...</Text>
         </View>
       </View>

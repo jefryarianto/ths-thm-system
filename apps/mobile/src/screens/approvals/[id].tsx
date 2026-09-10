@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -22,7 +21,7 @@ import {
   ApprovalLevel,
   getReferenceRoute,
 } from '../../hooks/use-approvals';
-import { LoadingView, ErrorView } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView, ErrorView } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 export default function ApprovalDetailScreen() {
@@ -152,7 +151,7 @@ export default function ApprovalDetailScreen() {
                 onPress={() => handleAction('approve')}
               >
                 {actionLoading === 'approve' ? (
-                  <ActivityIndicator size="small" color={theme.colors.textOnPrimary} />
+                  <LoadingSpinner size="small" color={theme.colors.textOnPrimary} />
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle" size={18} color={theme.colors.textOnPrimary} />
@@ -166,7 +165,7 @@ export default function ApprovalDetailScreen() {
                 onPress={() => handleAction('reject')}
               >
                 {actionLoading === 'reject' ? (
-                  <ActivityIndicator size="small" color={theme.colors.textOnPrimary} />
+                  <LoadingSpinner size="small" color={theme.colors.textOnPrimary} />
                 ) : (
                   <>
                     <Ionicons name="close-circle" size={18} color={theme.colors.textOnPrimary} />

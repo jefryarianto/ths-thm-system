@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
-  ActivityIndicator,
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +15,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import apiClient, { unwrap, toAbsoluteUrl } from '../../lib/api-client';
 import { formatDate, formatPeriode, formatRupiah } from '../../lib/format';
-import { LoadingView, StatusBadge } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView, StatusBadge } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
@@ -288,7 +287,7 @@ export default function DuesDetailScreen() {
                 disabled={submitting}
               >
                 {submitting ? (
-                  <ActivityIndicator color={theme.colors.textOnPrimary} size="small" />
+                  <LoadingSpinner color={theme.colors.textOnPrimary} size="small" />
                 ) : (
                   <Text style={styles.submitPayBtnText}>Kirim</Text>
                 )}
