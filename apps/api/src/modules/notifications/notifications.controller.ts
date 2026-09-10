@@ -164,6 +164,20 @@ export class NotificationsController {
     return this.service.findOne(id, user.id);
   }
 
+  @Delete()
+  @ApiOperation({ summary: 'Hapus semua notifikasi' })
+  @Roles(
+    'superadmin',
+    'admin_distrik',
+    'admin_wilayah',
+    'admin_ranting',
+    'admin_kegiatan',
+    'anggota',
+  )
+  deleteAll(@CurrentUser() user: { id: string }) {
+    return this.service.deleteAll(user.id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Hapus notifikasi' })
   @Roles(

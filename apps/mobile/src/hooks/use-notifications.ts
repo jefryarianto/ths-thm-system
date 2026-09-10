@@ -41,12 +41,18 @@ export const TYPE_ICONS: Record<string, string> = {
   umum: '📢',
 };
 
-export function useNotifications() {
+export function useNotifications(options?: { tipe?: string }) {
+  const tipe = options?.tipe;
   return useApi<NotificationItem[]>(
     () =>
       apiClient
-        .get('/notifications', { params: { limit: 50 } })
-        .then((r) => (unwrap(r) ?? []) as NotificationItem[]),
-    [],
+        .get('/notifications', {
+          params: { limit: 50, ...(tipe ? { tipe } : {}) },
+        })
+        .then((r) => {
+          const data = unwrap(r);
+          return (Array.isArray(data) ? data : (data as any)?.data ?? []) as NotificationItem[];
+        }),
+    [tipe],
   );
 }

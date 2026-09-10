@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -32,11 +32,33 @@ function navigateToNotification(notif: NotificationItem) {
   }
 }
 
+interface NotifType {
+  key: string;
+  label: string;
+}
+
 export default function NotificationsScreen() {
-  const { data: notifs, loading, refetch } = useNotifications();
+  const [filter, setFilter] = useState<string | null>(null);
+  const [types, setTypes] = useState<NotifType[]>([]);
+  const { data: notifs, loading, refetch } = useNotifications(filter ? { tipe: filter } : undefined);
   const { refreshing, onRefresh } = useRefresh(refetch);
 
-  const unreadCount = (notifs ?? []).filter((n) => !n.isRead).length;
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiClient.get('/notifications/stats');
+        const stats = res.data?.data;
+        if (stats?.types?.length > 0) {
+          setTypes(stats.types.map((t: NotifType) => ({ key: t.key, label: t.label })));
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
+
+  const notifsArray = Array.isArray(notifs) ? notifs : (notifs as any)?.data ?? [];
+  const unreadCount = notifsArray.filter((n: { isRead: boolean }) => !n.isRead).length;
 
   const markAllAsRead = async () => {
     try {
@@ -57,6 +79,24 @@ export default function NotificationsScreen() {
     navigateToNotification(item);
   };
 
+  const deleteAll = async () => {
+    Alert.alert('Hapus Semua', 'Yakin ingin menghapus semua notifikasi?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiClient.delete('/notifications');
+            refetch();
+          } catch {
+            Alert.alert('Gagal', 'Gagal menghapus notifikasi');
+          }
+        },
+      },
+    ]);
+  };
+
   const insets = useSafeAreaInsets();
 
   if (loading) return <LoadingView message="Memuat notifikasi..." />;
@@ -71,21 +111,57 @@ export default function NotificationsScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Notifikasi</Text>
         </View>
-        {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllAsRead}>
-            <Text style={styles.markAllRead}>Tandai semua dibaca ({unreadCount})</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerActions}>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={markAllAsRead}>
+              <Text style={styles.markAllRead}>Tandai semua dibaca ({unreadCount})</Text>
+            </TouchableOpacity>
+          )}
+          {notifsArray.length > 0 && (
+            <TouchableOpacity
+              onPress={deleteAll}
+              style={styles.deleteAll}
+              accessibilityLabel="Hapus semua"
+            >
+              <Ionicons name="trash-outline" size={14} color="#dc2626" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
+
+      {/* Filter by type */}
+      {types.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterBar}
+          contentContainerStyle={styles.filterContent}
+        >
+          <FilterChip
+            label="Semua"
+            active={filter === null}
+            onPress={() => setFilter(null)}
+          />
+          {types.map((t) => (
+            <FilterChip
+              key={t.key}
+              label={t.label}
+              active={filter === t.key}
+              onPress={() => setFilter(filter === t.key ? null : t.key)}
+            />
+          ))}
+        </ScrollView>
+      )}
+
       <FlatList
-        data={notifs}
+        data={notifsArray}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={
           <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginTop: 40 }}>
-            Belum ada notifikasi
+            {filter ? 'Tidak ada notifikasi untuk filter ini' : 'Belum ada notifikasi'}
           </Text>
         }
         renderItem={({ item }) => {
@@ -106,7 +182,7 @@ export default function NotificationsScreen() {
                     <Text style={styles.missingLabel}>Belum lengkap:</Text>
                     <Text style={styles.missingValue}>
                       {missingFields
-                        .map((f) => MISSING_FIELD_LABELS[f] || f.replace(/_/g, ' '))
+                        .map((f: string) => MISSING_FIELD_LABELS[f] || f.replace(/_/g, ' '))
                         .join(', ')}
                     </Text>
                   </View>
@@ -125,6 +201,22 @@ export default function NotificationsScreen() {
   );
 }
 
+function FilterChip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
@@ -138,7 +230,22 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   headerTitle: { fontSize: 18, fontWeight: theme.typography.weight.bold, color: theme.colors.text },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   markAllRead: { fontSize: 13, color: theme.colors.primary, fontWeight: theme.typography.weight.medium },
+  deleteAll: { padding: 2 },
+  filterBar: { backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+  filterContent: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 10 },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  chipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  chipText: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: '500' },
+  chipTextActive: { color: '#fff' },
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',

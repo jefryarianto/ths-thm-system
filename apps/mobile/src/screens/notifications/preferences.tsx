@@ -14,6 +14,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import apiClient, { unwrap } from '../../lib/api-client';
 import { LoadingView } from '../../components/ui/shared';
+import {
+  setNotificationDeviceSettings,
+  getNotificationDeviceSettings,
+} from '../../lib/fcm';
 import { getNotificationSoundEnabled, setNotificationSoundEnabled } from '../../lib/notification-alert';
 import { theme } from '../../theme';
 
@@ -24,8 +28,22 @@ interface NotificationType {
 }
 
 interface ChannelPrefs {
+  push: boolean;
   inApp: boolean;
   email: boolean;
+}
+
+interface GlobalPrefs {
+  push: boolean;
+  inApp: boolean;
+  email: boolean;
+}
+
+interface QuietHours {
+  enabled: boolean;
+  start: string;
+  end: string;
+  timezoneOffset: number;
 }
 
 const TYPE_ICONS: Record<string, string> = {
@@ -37,12 +55,57 @@ const TYPE_ICONS: Record<string, string> = {
   status_klaim: 'document-text',
   dokumen_ready: 'checkmark-done',
   badge_earned: 'medal',
+  approval_request: 'checkmark-circle',
+  forum_reply: 'chatbubble-ellipses',
+  forum_solution: 'checkmark-done-circle',
   umum: 'megaphone',
 };
 
+const FALLBACK_TYPES: NotificationType[] = [
+  { key: 'welcome', label: 'Selamat Datang', description: 'Notifikasi saat pertama kali mendaftar' },
+  { key: 'data_incomplete', label: 'Data Tidak Lengkap', description: 'Pengingat untuk melengkapi data diri' },
+  { key: 'reminder_latihan', label: 'Pengingat Latihan', description: 'Pengingat jadwal latihan rutin' },
+  { key: 'reminder_pendadaran', label: 'Pengingat Pendadaran', description: 'Pengingat jadwal ujian pendadaran' },
+  { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat pembayaran iuran' },
+  { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
+  { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
+  { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
+  { key: 'approval_request', label: 'Persetujuan', description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui' },
+  { key: 'forum_reply', label: 'Balasan Forum', description: 'Notifikasi saat ada balasan baru di thread forum' },
+  { key: 'forum_solution', label: 'Solusi Forum', description: 'Notifikasi saat balasan ditandai sebagai solusi' },
+  { key: 'umum', label: 'Umum', description: 'Notifikasi umum dan pengumuman' },
+];
+
+const DEFAULT_GLOBAL: GlobalPrefs = { push: true, inApp: true, email: true };
+const DEFAULT_QUIET_HOURS: QuietHours = {
+  enabled: false,
+  start: '22:00',
+  end: '06:00',
+  timezoneOffset: 0,
+};
+
+const pad = (n: number) => n.toString().padStart(2, '0');
+
+interface ChannelConfig {
+  key: 'push' | 'inApp' | 'email';
+  label: string;
+  icon: string;
+  color: string;
+  track: string;
+}
+
+const CHANNELS: ChannelConfig[] = [
+  { key: 'push', label: 'Push', icon: 'notifications', color: '#7c3aed', track: '#ddd6fe' },
+  { key: 'inApp', label: 'In-App', icon: 'phone-portrait', color: '#2563eb', track: '#bfdbfe' },
+  { key: 'email', label: 'Email', icon: 'mail', color: '#16a34a', track: '#86efac' },
+];
+
 export default function NotificationPreferencesScreen() {
   const [preferences, setPreferences] = useState<Record<string, ChannelPrefs>>({});
-  const [types, setTypes] = useState<NotificationType[]>([]);
+  const [types, setTypes] = useState<NotificationType[]>(FALLBACK_TYPES);
+  const [global, setGlobal] = useState<GlobalPrefs>(DEFAULT_GLOBAL);
+  const [quietHours, setQuietHours] = useState<QuietHours>(DEFAULT_QUIET_HOURS);
+  const [device, setDevice] = useState({ sound: true, vibrate: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -61,8 +124,21 @@ export default function NotificationPreferencesScreen() {
     (async () => {
       try {
         const res = await apiClient.get('/notifications/preferences');
-        setPreferences(unwrap(res) || {});
-        setTypes(res.data.types || []);
+        const data = unwrap<{
+          prefs: Record<string, ChannelPrefs>;
+          types: NotificationType[];
+          global: GlobalPrefs;
+          quietHours: QuietHours;
+        }>(res);
+        setPreferences(data.prefs || {});
+        if (data.types?.length > 0) setTypes(data.types);
+        setGlobal({ ...DEFAULT_GLOBAL, ...(data.global || {}) });
+        setQuietHours({ ...DEFAULT_QUIET_HOURS, ...(data.quietHours || {}) });
+      } catch {
+        /* keep fallbacks */
+      }
+      try {
+        setDevice(await getNotificationDeviceSettings());
       } catch {
         /* ignore */
       }
@@ -70,38 +146,94 @@ export default function NotificationPreferencesScreen() {
     })();
   }, []);
 
-  const toggleChannel = async (key: string, channel: 'inApp' | 'email', value: boolean) => {
+  const saveState = async (state: {
+    prefs: Record<string, ChannelPrefs>;
+    global: GlobalPrefs;
+    quietHours: QuietHours;
+  }) => {
+    try {
+      await apiClient.patch('/notifications/preferences', {
+        ...state.prefs,
+        global: state.global,
+        quietHours: {
+          ...state.quietHours,
+          timezoneOffset: new Date().getTimezoneOffset(),
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const toggleChannel = async (key: string, channel: 'push' | 'inApp' | 'email', value: boolean) => {
+    const snapshot = { preferences, global, quietHours };
     const newPrefs = {
       ...preferences,
-      [key]: { ...(preferences[key] || { inApp: true, email: true }), [channel]: value },
+      [key]: {
+        push: preferences[key]?.push ?? true,
+        inApp: preferences[key]?.inApp ?? true,
+        email: preferences[key]?.email ?? true,
+        [channel]: value,
+      },
     };
     setPreferences(newPrefs);
     setSaving(`${key}:${channel}`);
-
-    try {
-      await apiClient.patch('/notifications/preferences', newPrefs);
-    } catch {
-      // Revert on error
-      const reverted = { ...preferences };
-      setPreferences(reverted);
+    const ok = await saveState({ prefs: newPrefs, global, quietHours });
+    if (!ok) {
+      setPreferences(snapshot.preferences);
       Alert.alert('Gagal', 'Gagal menyimpan pengaturan');
     }
     setSaving(null);
   };
 
+  const toggleGlobal = async (channel: 'push' | 'inApp' | 'email', value: boolean) => {
+    const snapshot = { preferences, global, quietHours };
+    const newGlobal = { ...global, [channel]: value };
+    setGlobal(newGlobal);
+    setSaving(`global:${channel}`);
+    const ok = await saveState({ prefs: preferences, global: newGlobal, quietHours });
+    if (!ok) {
+      setGlobal(snapshot.global);
+      Alert.alert('Gagal', 'Gagal menyimpan pengaturan');
+    }
+    setSaving(null);
+  };
+
+  const updateQuietHours = async (patch: Partial<QuietHours>) => {
+    const snapshot = { preferences, global, quietHours };
+    const newQuietHours = { ...quietHours, ...patch };
+    setQuietHours(newQuietHours);
+    setSaving('quiet');
+    const ok = await saveState({ prefs: preferences, global, quietHours: newQuietHours });
+    if (!ok) {
+      setQuietHours(snapshot.quietHours);
+      Alert.alert('Gagal', 'Gagal menyimpan pengaturan');
+    }
+    setSaving(null);
+  };
+
+  const toggleDevice = async (field: 'sound' | 'vibrate', value: boolean) => {
+    const next = { ...device, [field]: value };
+    setDevice(next);
+    try {
+      await setNotificationDeviceSettings(next);
+    } catch {
+      Alert.alert('Gagal', 'Gagal menyimpan pengaturan perangkat');
+    }
+  };
+
   const batchToggle = async (value: boolean) => {
+    const snapshot = { preferences, global, quietHours };
     const updated = types.reduce(
-      (acc, t) => ({
-        ...acc,
-        [t.key]: { inApp: value, email: value },
-      }),
+      (acc, t) => ({ ...acc, [t.key]: { push: value, inApp: value, email: value } }),
       {} as Record<string, ChannelPrefs>,
     );
     setPreferences(updated);
     setSaving('all');
-    try {
-      await apiClient.patch('/notifications/preferences', updated);
-    } catch {
+    const ok = await saveState({ prefs: updated, global, quietHours });
+    if (!ok) {
+      setPreferences(snapshot.preferences);
       Alert.alert('Gagal', 'Gagal menyimpan pengaturan');
     }
     setSaving(null);
@@ -111,8 +243,11 @@ export default function NotificationPreferencesScreen() {
 
   if (loading) return <LoadingView message="Memuat pengaturan..." />;
 
-  const inAppCount = Object.values(preferences).filter((p) => p?.inApp !== false).length;
-  const emailCount = Object.values(preferences).filter((p) => p?.email !== false).length;
+  const countOn = (channel: 'push' | 'inApp' | 'email') =>
+    types.filter((t) => {
+      const p = preferences[t.key] || { push: true, inApp: true, email: true };
+      return global[channel] && p[channel] !== false;
+    }).length;
 
   return (
     <ScrollView style={styles.container}>
@@ -122,8 +257,124 @@ export default function NotificationPreferencesScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pengaturan Notifikasi</Text>
         <Text style={styles.headerSub}>
-          {inAppCount}/{types.length} in-app, {emailCount}/{types.length} email
+          {countOn('push')}/{types.length} push, {countOn('inApp')}/{types.length} in-app,{' '}
+          {countOn('email')}/{types.length} email
         </Text>
+      </View>
+
+      {/* ── Master Switches ── */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Channel Utama</Text>
+        <View style={styles.card}>
+          {CHANNELS.map((ch) => (
+            <View key={ch.key} style={styles.row}>
+              <View style={[styles.rowIcon, { backgroundColor: `${ch.color}1a` }]}>
+                <Ionicons name={ch.icon as any} size={18} color={ch.color} />
+              </View>
+              <View style={styles.rowContent}>
+                <Text style={styles.rowLabel}>
+                  {ch.key === 'push' ? 'Notifikasi Push' : ch.key === 'inApp' ? 'In-App' : 'Email'}
+                </Text>
+                <Text style={styles.rowDesc}>
+                  {ch.key === 'push'
+                    ? 'Kirim notifikasi ke perangkat via FCM'
+                    : ch.key === 'inApp'
+                      ? 'Tampilkan di daftar notifikasi aplikasi'
+                      : 'Kirim salinan melalui email'}
+                </Text>
+              </View>
+              <Switch
+                value={global[ch.key]}
+                onValueChange={(val) => toggleGlobal(ch.key, val)}
+                trackColor={{ false: '#d1d5db', true: ch.track }}
+                thumbColor={global[ch.key] ? ch.color : '#9ca3af'}
+                disabled={saving === `global:${ch.key}`}
+                accessibilityLabel={`Master ${ch.label}`}
+              />
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.sectionTitle}>Perangkat</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: '#fef3c7' }]}>
+              <Ionicons name="volume-high" size={18} color="#d97706" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={styles.rowLabel}>Suara</Text>
+              <Text style={styles.rowDesc}>Bunyi saat notifikasi push diterima</Text>
+            </View>
+            <Switch
+              value={device.sound}
+              onValueChange={(val) => toggleDevice('sound', val)}
+              trackColor={{ false: '#d1d5db', true: '#fcd34d' }}
+              thumbColor={device.sound ? '#d97706' : '#9ca3af'}
+              accessibilityLabel="Suara notifikasi"
+            />
+          </View>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: '#e0e7ff' }]}>
+              <Ionicons name="phone-portrait" size={18} color="#4f46e5" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={styles.rowLabel}>Getar</Text>
+              <Text style={styles.rowDesc}>Bergetar saat notifikasi push diterima</Text>
+            </View>
+            <Switch
+              value={device.vibrate}
+              onValueChange={(val) => toggleDevice('vibrate', val)}
+              trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
+              thumbColor={device.vibrate ? '#4f46e5' : '#9ca3af'}
+              accessibilityLabel="Getar notifikasi"
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* ── Quiet Hours ── */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Jangan Ganggu</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <View style={[styles.rowIcon, { backgroundColor: '#e0f2fe' }]}>
+              <Ionicons name="moon" size={18} color="#0284c7" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={styles.rowLabel}>Mode Tenang</Text>
+              <Text style={styles.rowDesc}>
+                Sembunyikan notifikasi push pada rentang waktu tertentu
+              </Text>
+            </View>
+            <Switch
+              value={quietHours.enabled}
+              onValueChange={(val) => updateQuietHours({ enabled: val })}
+              trackColor={{ false: '#d1d5db', true: '#bae6fd' }}
+              thumbColor={quietHours.enabled ? '#0284c7' : '#9ca3af'}
+              disabled={saving === 'quiet'}
+              accessibilityLabel="Mode Tenang"
+            />
+          </View>
+          {quietHours.enabled && (
+            <>
+              <TimeStepper
+                label="Mulai"
+                value={quietHours.start}
+                onChange={(v) => updateQuietHours({ start: v })}
+                disabled={saving === 'quiet'}
+              />
+              <TimeStepper
+                label="Selesai"
+                value={quietHours.end}
+                onChange={(v) => updateQuietHours({ end: v })}
+                disabled={saving === 'quiet'}
+              />
+            </>
+          )}
+          {saving === 'quiet' && (
+            <ActivityIndicator size="small" color="#0284c7" style={{ marginTop: 8 }} />
+          )}
+        </View>
       </View>
 
       {/* Batch Actions */}
@@ -174,71 +425,64 @@ export default function NotificationPreferencesScreen() {
           />
         </View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Channel Notifikasi</Text>
-        {types.length > 0 ? (
-          types.map((type) => {
-            const iconName = TYPE_ICONS[type.key] || 'notifications';
-            const p = preferences[type.key] || { inApp: true, email: true };
-            const anyEnabled = p.inApp || p.email;
-            return (
-              <View key={type.key} style={styles.prefCard}>
-                <View style={[styles.prefIcon, !anyEnabled && styles.prefIconDisabled]}>
-                  <Ionicons
-                    name={iconName as any}
-                    size={22}
-                    color={anyEnabled ? theme.colors.primary : theme.colors.textMuted}
-                  />
-                </View>
-                <View style={styles.prefInfo}>
-                  <Text style={[styles.prefLabel, !anyEnabled && styles.prefLabelDisabled]}>
-                    {type.label}
-                  </Text>
-                  <Text style={styles.prefDesc}>{type.description}</Text>
-                  {/* Channel toggles */}
-                  <View style={styles.channelRow}>
-                    <View style={styles.channelToggle}>
-                      <Ionicons
-                        name="phone-portrait"
-                        size={14}
-                        color={p.inApp ? theme.colors.primary : theme.colors.textMuted}
-                      />
-                      <Switch
-                        value={p.inApp}
-                        onValueChange={(val) => toggleChannel(type.key, 'inApp', val)}
-                        trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primaryLight }}
-                        thumbColor={p.inApp ? theme.colors.primary : theme.colors.textMuted}
-                        disabled={saving === `${type.key}:inApp`}
-                        style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
-                      />
-                    </View>
-                    <View style={styles.channelToggle}>
-                      <Ionicons name="mail" size={14} color={p.email ? theme.colors.success : theme.colors.textMuted} />
-                      <Switch
-                        value={p.email}
-                        onValueChange={(val) => toggleChannel(type.key, 'email', val)}
-                        trackColor={{ false: theme.colors.borderStrong, true: theme.colors.successLight }}
-                        thumbColor={p.email ? theme.colors.success : theme.colors.textMuted}
-                        disabled={saving === `${type.key}:email`}
-                        style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
-                      />
-                    </View>
-                    {saving === `${type.key}:inApp` || saving === `${type.key}:email` ? (
-                      <ActivityIndicator size="small" color={theme.colors.primary} />
-                    ) : null}
-                  </View>
+        <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Jenis Notifikasi</Text>
+        {types.map((type) => {
+          const iconName = TYPE_ICONS[type.key] || 'notifications';
+          const p = preferences[type.key] || { push: true, inApp: true, email: true };
+          const anyEnabled = global.push && global.inApp && global.email
+            ? p.push || p.inApp || p.email
+            : (global.push && p.push) || (global.inApp && p.inApp) || (global.email && p.email);
+          return (
+            <View key={type.key} style={styles.prefCard}>
+              <View style={[styles.prefIcon, !anyEnabled && styles.prefIconDisabled]}>
+                <Ionicons
+                  name={iconName as any}
+                  size={22}
+                  color={anyEnabled ? '#2563eb' : '#9ca3af'}
+                />
+              </View>
+              <View style={styles.prefInfo}>
+                <Text style={[styles.prefLabel, !anyEnabled && styles.prefLabelDisabled]}>
+                  {type.label}
+                </Text>
+                <Text style={styles.prefDesc}>{type.description}</Text>
+                <View style={styles.channelRow}>
+                  {CHANNELS.map((ch) => {
+                    const active = global[ch.key] && p[ch.key];
+                    const savingKey = `${type.key}:${ch.key}`;
+                    return (
+                      <View key={ch.key} style={styles.channelToggle}>
+                        <Ionicons
+                          name={ch.icon as any}
+                          size={14}
+                          color={active ? ch.color : '#9ca3af'}
+                        />
+                        <Switch
+                          value={p[ch.key]}
+                          onValueChange={(val) => toggleChannel(type.key, ch.key, val)}
+                          trackColor={{ false: '#d1d5db', true: ch.track }}
+                          thumbColor={p[ch.key] ? ch.color : '#9ca3af'}
+                          disabled={saving === savingKey}
+                          style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
+                          accessibilityLabel={`${type.key} ${ch.label}`}
+                        />
+                      </View>
+                    );
+                  })}
+                  {saving?.startsWith(`${type.key}:`) && (
+                    <ActivityIndicator size="small" color="#2563eb" />
+                  )}
                 </View>
               </View>
-            );
-          })
-        ) : (
-          <Text style={styles.emptyText}>Tidak ada jenis notifikasi</Text>
-        )}
+            </View>
+          );
+        })}
 
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={18} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            Atur channel per jenis notifikasi. Nonaktifkan email untuk hanya menerima notifikasi
-            in-app, atau nonaktifkan keduanya untuk berhenti menerima notifikasi jenis tersebut.
+            Atur channel per jenis notifikasi. Channel utama berlaku untuk semua jenis. Mode Tenang
+            hanya menyembunyikan notifikasi push pada rentang waktu yang dipilih.
           </Text>
         </View>
       </View>
@@ -248,8 +492,49 @@ export default function NotificationPreferencesScreen() {
   );
 }
 
+function TimeStepper({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const [h, m] = value.split(':').map(Number);
+  const shift = (delta: number) => {
+    const total = (h * 60 + m + delta + 1440) % 1440;
+    onChange(`${pad(Math.floor(total / 60))}:${pad(total % 60)}`);
+  };
+
+  return (
+    <View style={styles.timeRow}>
+      <Text style={styles.timeLabel}>{label}</Text>
+      <View style={styles.stepper}>
+        <TouchableOpacity
+          style={styles.stepperBtn}
+          onPress={() => shift(-1)}
+          disabled={disabled}
+        >
+          <Ionicons name="remove" size={16} color={disabled ? '#d1d5db' : '#0284c7'} />
+        </TouchableOpacity>
+        <Text style={styles.timeValue}>{value}</Text>
+        <TouchableOpacity
+          style={styles.stepperBtn}
+          onPress={() => shift(1)}
+          disabled={disabled}
+        >
+          <Ionicons name="add" size={16} color={disabled ? '#d1d5db' : '#0284c7'} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
   header: {
     backgroundColor: theme.colors.primary,
@@ -278,8 +563,53 @@ const styles = StyleSheet.create({
   },
   batchBtnText: { fontSize: 12, fontWeight: '500', color: theme.colors.textSecondary },
 
-  section: { paddingHorizontal: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 12 },
+section: { paddingHorizontal: 16, marginTop: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
+
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
+    marginBottom: 8,
+  },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  rowIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rowContent: { flex: 1 },
+  rowLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  rowDesc: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  timeLabel: { fontSize: 13, fontWeight: '500', color: '#374151' },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepperBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#e0f2fe',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeValue: { fontSize: 15, fontWeight: '600', color: '#0284c7', fontVariant: ['tabular-nums'] },
 
   prefCard: {
     flexDirection: 'row',
@@ -323,7 +653,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.headerSub,
   },
-  infoText: { flex: 1, fontSize: 12, color: theme.colors.primaryDark, lineHeight: 18 },
+infoText: { flex: 1, fontSize: 12, color: theme.colors.primaryDark, lineHeight: 18 },
 
   emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 });

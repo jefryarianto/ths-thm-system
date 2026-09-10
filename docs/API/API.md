@@ -351,6 +351,7 @@ Authorization: Bearer <access_token>
 | GET | `/notifications/:id` | Detail notifikasi | Auth |
 | PATCH | `/notifications/:id/read` | Tandai sudah dibaca | Auth |
 | PATCH | `/notifications/read-all` | Tandai semua sudah dibaca | Auth |
+| DELETE | `/notifications` | Hapus semua notifikasi user | Auth |
 | DELETE | `/notifications/:id` | Hapus notifikasi | Auth |
 | POST | `/notifications/send` | Kirim notifikasi ke user | Admin |
 | POST | `/notifications/broadcast` | Siarkan notifikasi ke semua user | Superadmin |
@@ -359,8 +360,8 @@ Authorization: Bearer <access_token>
 | GET | `/notifications/count` | Jumlah notifikasi belum dibaca | Auth |
 | GET | `/notifications/stats` | Statistik notifikasi (per tipe) | Auth |
 | GET | `/notifications/ws-stats` | Statistik koneksi WebSocket real-time | Admin |
-| GET | `/notifications/preferences` | Preferensi notifikasi user | Auth |
-| PATCH | `/notifications/preferences` | Update preferensi (inApp/email per tipe) | Auth |
+| GET | `/notifications/preferences` | Preferensi notifikasi user (per-tipe push/inApp/email, global, quiet hours) | Auth |
+| PATCH | `/notifications/preferences` | Update preferensi (push/inApp/email per tipe, global, quiet hours) | Auth |
 | POST | `/notifications/fcm-token` | Daftarkan device token FCM | Auth |
 | DELETE | `/notifications/fcm-token/:id` | Hapus device token | Auth |
 

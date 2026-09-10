@@ -18,6 +18,14 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly CACHE_PREFIX = 'notifications:';
 
+  private readonly DEFAULT_GLOBAL = { push: true, inApp: true, email: true };
+  private readonly DEFAULT_QUIET_HOURS = {
+    enabled: false,
+    start: '22:00',
+    end: '06:00',
+    timezoneOffset: 0,
+  };
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
@@ -43,7 +51,7 @@ export class NotificationsService {
     });
 
     this.sendEmailNotification(userId, dto.judul, dto.isi, tipe);
-    await this.pushFCM(userId, dto.judul, dto.isi);
+    await this.pushFCM(userId, dto.judul, dto.isi, tipe);
     this.eventsGateway?.sendNotification(userId, notification);
     const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
     this.eventsGateway?.sendUnreadCount(userId, count);
@@ -72,6 +80,7 @@ export class NotificationsService {
       dto.judul,
       dto.isi,
       allowedUsers.map((u) => u.id),
+      'umum',
     );
 
     const countResults = await this.prisma.notifikasi.groupBy({
@@ -120,6 +129,7 @@ export class NotificationsService {
       dto.judul,
       dto.isi,
       allowedUsers.map((u) => u.id),
+      tipe,
     );
 
     const countResults = await this.prisma.notifikasi.groupBy({
@@ -297,30 +307,47 @@ export class NotificationsService {
     return `notif_pref:${userId}`;
   }
 
-  private normalizePref(value: unknown): { inApp: boolean; email: boolean } {
+  private normalizePref(value: unknown): { inApp: boolean; email: boolean; push: boolean } {
     if (typeof value === 'boolean') {
-      return { inApp: value, email: value };
+      return { inApp: value, email: value, push: value };
     }
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, unknown>;
-      return { inApp: obj.inApp !== false, email: obj.email !== false };
+      return {
+        inApp: obj.inApp !== false,
+        email: obj.email !== false,
+        push: obj.push !== false,
+      };
     }
-    return { inApp: true, email: true };
+    return { inApp: true, email: true, push: true };
   }
 
   async getPreferences(userId: string) {
     const setting = await this.prisma.setting.findUnique({ where: { key: this.prefKey(userId) } });
     const saved = (setting?.value as Record<string, unknown>) || {};
 
-    const prefs: Record<string, { inApp: boolean; email: boolean }> = {};
+    const prefs: Record<string, { inApp: boolean; email: boolean; push: boolean }> = {};
     for (const t of NotificationsService.NOTIFICATION_TYPES) {
       prefs[t.key] =
         saved[t.key] !== undefined
           ? this.normalizePref(saved[t.key])
-          : { inApp: true, email: true };
+          : { inApp: true, email: true, push: true };
     }
 
-    return { prefs, types: NotificationsService.NOTIFICATION_TYPES };
+    const global = {
+      ...this.DEFAULT_GLOBAL,
+      ...(typeof saved.global === 'object' && saved.global !== null
+        ? (saved.global as Record<string, unknown>)
+        : {}),
+    };
+    const quietHours = {
+      ...this.DEFAULT_QUIET_HOURS,
+      ...(typeof saved.quietHours === 'object' && saved.quietHours !== null
+        ? (saved.quietHours as Record<string, unknown>)
+        : {}),
+    };
+
+    return { prefs, global, quietHours, types: NotificationsService.NOTIFICATION_TYPES };
   }
 
   async updatePreferences(userId: string, data: Record<string, unknown>) {
@@ -329,7 +356,7 @@ export class NotificationsService {
     });
     const existingData = (existingSetting?.value as Record<string, unknown>) || {};
 
-    const normalized: Record<string, { inApp: boolean; email: boolean }> = {};
+    const normalized: Record<string, unknown> = {};
     for (const t of NotificationsService.NOTIFICATION_TYPES) {
       if (data[t.key] !== undefined) {
         normalized[t.key] = this.normalizePref(data[t.key]);
@@ -337,9 +364,29 @@ export class NotificationsService {
         normalized[t.key] =
           existingData[t.key] !== undefined
             ? this.normalizePref(existingData[t.key])
-            : { inApp: true, email: true };
+            : { inApp: true, email: true, push: true };
       }
     }
+
+    normalized.global = {
+      ...this.DEFAULT_GLOBAL,
+      ...(typeof existingData.global === 'object' && existingData.global !== null
+        ? (existingData.global as Record<string, unknown>)
+        : {}),
+      ...(typeof data.global === 'object' && data.global !== null
+        ? (data.global as Record<string, unknown>)
+        : {}),
+    };
+
+    normalized.quietHours = {
+      ...this.DEFAULT_QUIET_HOURS,
+      ...(typeof existingData.quietHours === 'object' && existingData.quietHours !== null
+        ? (existingData.quietHours as Record<string, unknown>)
+        : {}),
+      ...(typeof data.quietHours === 'object' && data.quietHours !== null
+        ? (data.quietHours as Record<string, unknown>)
+        : {}),
+    };
 
     await this.prisma.setting.upsert({
       where: { key: this.prefKey(userId) },
@@ -348,11 +395,42 @@ export class NotificationsService {
     });
   }
 
-  private async isChannelEnabled(userId: string, tipe: string, channel: 'inApp' | 'email'): Promise<boolean> {
-    const prefs = await this.getPreferences(userId);
-    const p = prefs.prefs as Record<string, { inApp: boolean; email: boolean }>;
+  private async isChannelEnabled(
+    userId: string,
+    tipe: string,
+    channel: 'push' | 'inApp' | 'email',
+  ): Promise<boolean> {
+    const { prefs, global, quietHours } = await this.getPreferences(userId);
+    if (global[channel] === false) return false;
+
+    const p = prefs as Record<string, { push: boolean; inApp: boolean; email: boolean }>;
     const pref = p[tipe];
-    return pref?.[channel] !== false;
+    if (pref?.[channel] === false) return false;
+
+    if (channel === 'push' && this.isInQuietHours(quietHours)) return false;
+
+    return true;
+  }
+
+  private isInQuietHours(quietHours: Record<string, unknown>): boolean {
+    const qh = { ...this.DEFAULT_QUIET_HOURS, ...quietHours };
+    if (!qh.enabled) return false;
+    const start = this.toMinutes(qh.start as string);
+    const end = this.toMinutes(qh.end as string);
+    if (isNaN(start) || isNaN(end) || start === end) return false;
+
+    const offset = typeof qh.timezoneOffset === 'number' ? qh.timezoneOffset : 0;
+    const now = new Date(Date.now() - offset * 60000);
+    const current = now.getUTCHours() * 60 + now.getUTCMinutes();
+
+    if (start < end) return current >= start && current < end;
+    return current >= start || current < end;
+  }
+
+  private toMinutes(hhmm: string): number {
+    const [h, m] = hhmm.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return NaN;
+    return h * 60 + m;
   }
 
   private async isPreferenceEnabled(userId: string, tipe: string): Promise<boolean> {
@@ -366,7 +444,7 @@ export class NotificationsService {
   private async batchCheckPreference(userIds: string[], tipe: string): Promise<Set<string>> {
     const keys = userIds.map((id) => this.prefKey(id));
     const settings = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
-    const prefMap = new Map<string, Record<string, { inApp: boolean; email: boolean }>>();
+    const prefMap = new Map<string, Record<string, unknown>>();
     for (const s of settings) {
       const userId = s.key.replace('notif_pref:', '');
       prefMap.set(userId, this.normalizeSavedPrefs(s.value as Record<string, unknown>));
@@ -375,16 +453,55 @@ export class NotificationsService {
     const allowed = new Set<string>();
     for (const id of userIds) {
       const saved = prefMap.get(id);
-      if (!saved || saved[tipe]?.inApp !== false) {
+      if (!saved) {
         allowed.add(id);
+        continue;
+      }
+      const typePref = saved[tipe] as { inApp: boolean } | undefined;
+      const globalInApp = (saved.global as { inApp?: boolean } | undefined)?.inApp !== false;
+      if (typePref?.inApp !== false && globalInApp) allowed.add(id);
+    }
+    return allowed;
+  }
+
+  private async batchCheckPushPreference(
+    userIds: string[],
+    tipe?: string,
+  ): Promise<Set<string>> {
+    const keys = userIds.map((id) => this.prefKey(id));
+    const settings = await this.prisma.setting.findMany({ where: { key: { in: keys } } });
+    const prefMap = new Map<string, Record<string, unknown>>();
+    for (const s of settings) {
+      const userId = s.key.replace('notif_pref:', '');
+      prefMap.set(userId, this.normalizeSavedPrefs(s.value as Record<string, unknown>));
+    }
+
+    const allowed = new Set<string>();
+    for (const id of userIds) {
+      const saved = prefMap.get(id);
+      if (!saved) {
+        allowed.add(id);
+        continue;
+      }
+      const typePref = saved[tipe as string] as { push: boolean } | undefined;
+      const globalPush = (saved.global as { push?: boolean } | undefined)?.push !== false;
+      if (globalPush && typePref?.push !== false) {
+        const quietHours = (saved.quietHours as Record<string, unknown>) || {};
+        if (!this.isInQuietHours(quietHours)) allowed.add(id);
       }
     }
     return allowed;
   }
 
-  private normalizeSavedPrefs(saved: Record<string, unknown>): Record<string, { inApp: boolean; email: boolean }> {
-    const result: Record<string, { inApp: boolean; email: boolean }> = {};
+  private normalizeSavedPrefs(
+    saved: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
     for (const key of Object.keys(saved)) {
+      if (key === 'global' || key === 'quietHours') {
+        result[key] = saved[key];
+        continue;
+      }
       result[key] = this.normalizePref(saved[key]);
     }
     return result;
@@ -525,7 +642,7 @@ export class NotificationsService {
     }
   }
 
-  /**
+/**
    * Send a test push notification to a specific user (or all users).
    * Returns delivery results with success/failure counts.
    */
@@ -650,8 +767,16 @@ export class NotificationsService {
     };
   }
 
-  private async pushFCM(userId: string, title: string, body: string) {
-    await this.pushBroadcast(title, body, [userId]);
+  async deleteAll(userId: string) {
+    await this.prisma.notifikasi.deleteMany({ where: { userId } });
+    this.cache?.invalidatePrefix(this.CACHE_PREFIX + userId);
+    const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
+    this.eventsGateway?.sendUnreadCount(userId, count);
+    return { deleted: true, unreadCount: count };
+  }
+
+  private async pushFCM(userId: string, title: string, body: string, tipe?: string) {
+    await this.pushBroadcast(title, body, [userId], tipe);
   }
 
   /**
@@ -719,17 +844,21 @@ export class NotificationsService {
     }
   }
 
-  private async pushBroadcast(title: string, body: string, userIds: string[]) {
+  private async pushBroadcast(title: string, body: string, userIds: string[], tipe?: string) {
     try {
       if (userIds.length === 0) return;
 
+      const enabledIds = await this.batchCheckPushPreference(userIds, tipe);
+      const targetIds = userIds.filter((id) => enabledIds.has(id));
+      if (targetIds.length === 0) return;
+
       const tokens = await this.prisma.deviceToken.findMany({
-        where: { userId: { in: userIds }, isActive: true },
+        where: { userId: { in: targetIds }, isActive: true },
       });
 
       if (tokens.length === 0) return;
 
-      // Pisahkan token Expo vs. token FCM asli (ditangani oleh service yang berbeda).
+// Pisahkan token Expo vs. token FCM asli (ditangani oleh service yang berbeda).
       const expoTokens = tokens.filter((t) => this.isExpoToken(t.token));
       const fcmTokens = tokens.filter((t) => !this.isExpoToken(t.token));
 
@@ -739,7 +868,7 @@ export class NotificationsService {
 
       if (fcmTokens.length === 0) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
       const admin = require('firebase-admin');
       if (!admin.apps.length) {
         admin.initializeApp({

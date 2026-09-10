@@ -19,6 +19,7 @@ describe('NotificationsService', () => {
       update: jest.fn(),
       updateMany: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
       groupBy: jest.fn(),
     },
     user: {
@@ -351,26 +352,124 @@ describe('NotificationsService', () => {
     it('should return default preferences when none saved', async () => {
       mockPrisma.setting.findUnique.mockResolvedValue(null);
       const result = await service.getPreferences('u1');
-      // All default to { inApp: true, email: true }
-      expect(result.prefs.welcome).toEqual({ inApp: true, email: true });
-      expect(result.prefs.umum).toEqual({ inApp: true, email: true });
+      // All default to { inApp: true, email: true, push: true }
+      expect(result.prefs.welcome).toEqual({ inApp: true, email: true, push: true });
+      expect(result.prefs.umum).toEqual({ inApp: true, email: true, push: true });
+      // Global master switches + quiet hours defaults
+      expect(result.global).toEqual({ push: true, inApp: true, email: true });
+      expect(result.quietHours.enabled).toBe(false);
     });
 
     it('should return saved preferences', async () => {
       mockPrisma.setting.findUnique.mockResolvedValue({
-        value: { umum: { inApp: false, email: true }, welcome: { inApp: true, email: true } },
+        value: {
+          umum: { inApp: false, email: true },
+          welcome: { inApp: true, email: true },
+          global: { push: false, inApp: true, email: true },
+          quietHours: { enabled: true, start: '22:00', end: '06:00', timezoneOffset: 420 },
+        },
       });
       const result = await service.getPreferences('u1');
-      expect(result.prefs.umum).toEqual({ inApp: false, email: true });
-      expect(result.prefs.welcome).toEqual({ inApp: true, email: true });
+      // Missing push defaults to true for backward-compatible prefs
+      expect(result.prefs.umum).toEqual({ inApp: false, email: true, push: true });
+      expect(result.prefs.welcome).toEqual({ inApp: true, email: true, push: true });
+      expect(result.global.push).toBe(false);
+      expect(result.quietHours.enabled).toBe(true);
+    });
+
+    it('should respect global master switch in channel check', async () => {
+      mockPrisma.setting.findUnique.mockResolvedValue({
+        value: { global: { push: false, inApp: true, email: true } },
+      });
+      mockPrisma.setting.findMany.mockResolvedValue([
+        {
+          key: 'notif_pref:u1',
+          value: { global: { push: false, inApp: true, email: true } },
+        },
+      ]);
+      mockPrisma.notifikasi.create.mockResolvedValue({ id: 'n1', userId: 'u1', judul: 'Hi' });
+      mockPrisma.notifikasi.count.mockResolvedValue(0);
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      // in-app still allowed (global.inApp true)
+      const result = await service.send('u1', {
+        userId: 'u1',
+        judul: 'Hi',
+        isi: 'Hello',
+        tipe: 'umum',
+      });
+      expect(result).not.toBeNull();
+      // push master off → no device token lookup for push should happen
+      expect(mockPrisma.deviceToken.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should suppress push during quiet hours when enabled', async () => {
+      // quiet hours active window covers now (offset scale: compute a window around now)
+      const offset = new Date().getTimezoneOffset();
+      mockPrisma.setting.findUnique.mockResolvedValue(null);
+      mockPrisma.notifikasi.create.mockResolvedValue({ id: 'n1', userId: 'u1', judul: 'Hi' });
+      mockPrisma.notifikasi.count.mockResolvedValue(0);
+      mockPrisma.setting.findMany.mockResolvedValue([
+        {
+          key: 'notif_pref:u1',
+          value: {
+            quietHours: { enabled: true, start: '00:00', end: '23:59', timezoneOffset: offset },
+          },
+        },
+      ]);
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      await service.send('u1', {
+        userId: 'u1',
+        judul: 'Hi',
+        isi: 'Hello',
+        tipe: 'umum',
+      });
+
+      // batchCheckPushPreference fetched settings (quiet hours filter applied)
+      expect(mockPrisma.setting.findMany).toHaveBeenCalled();
+      // Push suppressed → no FCM token lookup
+      expect(mockPrisma.deviceToken.findMany).not.toHaveBeenCalled();
     });
   });
 
   describe('updatePreferences', () => {
     it('should upsert preferences', async () => {
+      mockPrisma.setting.findUnique.mockResolvedValue(null);
       mockPrisma.setting.upsert.mockResolvedValue({});
       const result = await service.updatePreferences('u1', { umum: false });
       expect(mockPrisma.setting.upsert).toHaveBeenCalled();
+    });
+
+    it('should persist global switches and quiet hours', async () => {
+      mockPrisma.setting.findUnique.mockResolvedValue(null);
+      mockPrisma.setting.upsert.mockResolvedValue({});
+      await service.updatePreferences('u1', {
+        reminder_iuran: { inApp: true, email: false, push: true },
+        global: { push: true, inApp: true, email: false },
+        quietHours: { enabled: true, start: '22:00', end: '06:00', timezoneOffset: 420 },
+      });
+      const value = mockPrisma.setting.upsert.mock.calls[0][0];
+      expect(value.update.value).toEqual(
+        expect.objectContaining({
+          reminder_iuran: { inApp: true, email: false, push: true },
+          global: expect.objectContaining({ email: false }),
+          quietHours: expect.objectContaining({ enabled: true, start: '22:00', end: '06:00' }),
+        }),
+      );
+    });
+  });
+
+  describe('deleteAll', () => {
+    it('should delete all notifications and broadcast unread count', async () => {
+      mockPrisma.notifikasi.deleteMany.mockResolvedValue({ count: 3 });
+      mockPrisma.notifikasi.count.mockResolvedValue(0);
+      const result = await service.deleteAll('u1');
+      expect(mockPrisma.notifikasi.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+      });
+      expect(mockGateway.sendUnreadCount).toHaveBeenCalledWith('u1', 0);
+      expect(result.deleted).toBe(true);
     });
   });
 

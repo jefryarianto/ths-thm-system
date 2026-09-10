@@ -1,15 +1,57 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from './api-client';
 import { logError, logWarning } from './error-logger';
 
+const SOUND_KEY = 'notif_sound';
+const VIBRATE_KEY = 'notif_vibrate';
+
+export interface NotificationDeviceSettings {
+  sound: boolean;
+  vibrate: boolean;
+}
+
+export async function getNotificationDeviceSettings(): Promise<NotificationDeviceSettings> {
+  const [[, soundRaw], [, vibrateRaw]] = await AsyncStorage.multiGet([SOUND_KEY, VIBRATE_KEY]);
+  return {
+    sound: soundRaw ? soundRaw !== 'false' : true,
+    vibrate: vibrateRaw ? vibrateRaw !== 'false' : true,
+  };
+}
+
+export async function setNotificationDeviceSettings(
+  settings: NotificationDeviceSettings,
+): Promise<NotificationDeviceSettings> {
+  await AsyncStorage.multiSet([
+    [SOUND_KEY, String(settings.sound)],
+    [VIBRATE_KEY, String(settings.vibrate)],
+  ]);
+  await applyAndroidChannel(settings);
+  return settings;
+}
+
+async function applyAndroidChannel(settings: NotificationDeviceSettings) {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'Default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: settings.vibrate ? [0, 250, 250, 250] : null,
+    sound: settings.sound ? 'default' : null,
+    lightColor: '#2563eb',
+  });
+}
+
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
+  handleNotification: async () => {
+    const settings = await getNotificationDeviceSettings();
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: settings.sound,
+      shouldSetBadge: true,
+    };
+  },
 });
 
 export async function registerForPushNotifications(): Promise<string | null> {
@@ -48,15 +90,9 @@ export async function registerForPushNotifications(): Promise<string | null> {
     logError(error, { module: 'FCM', action: 'register' });
   }
 
-  // Android-specific: create notification channel
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'Default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#2563eb',
-    });
-  }
+  // Apply user's local sound/vibration settings to the Android channel
+  const deviceSettings = await getNotificationDeviceSettings();
+  await applyAndroidChannel(deviceSettings);
 
   return pushToken;
 }
