@@ -6,7 +6,7 @@ import { PersistentAuditService } from '../../common/services/persistent-audit.s
 import { RevisionService } from '../../common/services/revision.service';
 import { MailService } from '../../mail/mail.service';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
-import { claimStatusEmail } from '../../mail/email-templates';
+import { claimStatusEmail, credentialEmail } from '../../mail/email-templates';
 import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { NraService } from '../../common/services/nra.service';
@@ -167,6 +167,12 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
         });
 
         this.logger.log(`User account created for ${claim.email} with temporary password`);
+        // Kirim kredensial sementara ke pemohon supaya bisa langsung login
+        // dan mengganti password saat pertama kali masuk.
+        this.sendCredentialEmail(
+          { namaLengkap: claim.namaLengkap, email: claim.email },
+          temporaryPassword,
+        );
       }
 
       // Update klaim dengan anggotaId
@@ -231,6 +237,32 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
   }
 
   // ── Email Helper ──────────────────────────────────────
+
+  private sendCredentialEmail(
+    anggota: { namaLengkap?: string; email?: string } | null | undefined,
+    password: string,
+  ): void {
+    if (!anggota || !anggota.email) return;
+    const email = anggota.email;
+    const nama = anggota.namaLengkap || 'Anggota';
+    (async () => {
+      try {
+        const tpl = await this.mailService.renderWithOverride(
+          'credentialEmail',
+          () => credentialEmail(nama, email, password),
+          { nama },
+        );
+        await this.mailService.sendMail({
+          to: email,
+          subject: tpl.subject,
+          html: tpl.html,
+          metadata: { module: 'claims', template: 'credentialEmail' },
+        });
+      } catch (err) {
+        this.logger.error(`Credential email failed for ${email}: ${(err as Error).message}`);
+      }
+    })();
+  }
 
   private sendClaimStatusEmail(
     anggota: { namaLengkap?: string; email?: string } | null | undefined,

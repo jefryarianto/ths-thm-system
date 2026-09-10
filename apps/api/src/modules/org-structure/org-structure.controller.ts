@@ -10,6 +10,7 @@ import {
   UpdateRantingDto,
 } from './dto/org-structure.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Organization Structure')
 @Controller('org-structure')
@@ -117,6 +118,12 @@ export class OrgStructureController {
   @CrudAuth('superadmin', { summary: 'Pohon organisasi (distrik → wilayah → ranting)' })
   getOrgTree() {
     return this.service.getOrgTree();
+  }
+
+  @Get('public-tree')
+  @Public()
+  getPublicTree() {
+    return this.service.getPublicTree();
   }
 
   @Post('import')

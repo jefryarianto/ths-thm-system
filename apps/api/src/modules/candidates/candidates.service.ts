@@ -6,7 +6,7 @@ import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 import { RevisionService } from '../../common/services/revision.service';
-import { approvedMemberEmail, candidateRejectedEmail } from '../../mail/email-templates';
+import { approvedMemberEmail, candidateRejectedEmail, credentialEmail } from '../../mail/email-templates';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { CsvImportService } from '../../common/services/csv-import.service';
@@ -336,6 +336,40 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
         'candidates',
         { nomorAnggota: member.nomorAnggota },
       );
+    }
+
+    // Buat akun login untuk anggota baru (mengikuti pola klaim keanggotaan),
+    // lalu kirim kredensial sementara via email.
+    if (candidate.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: candidate.email },
+        select: { id: true },
+      });
+      if (!existingUser) {
+        const temporaryPassword = Math.random().toString(36).slice(-8);
+        const bcrypt = await import('bcryptjs');
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+        await this.prisma.user.create({
+          data: {
+            email: candidate.email,
+            passwordHash: hashedPassword,
+            namaLengkap: candidate.namaLengkap,
+            role: 'anggota',
+            isActive: true,
+            mustChangePassword: true,
+          },
+        });
+
+        this.logger.log(`User account created for ${candidate.email} with temporary password`);
+        this.memberMailService.sendToMemberWithArgs(
+          member.id,
+          credentialEmail,
+          [candidate.email, temporaryPassword],
+          { template: 'credentialEmail', email: candidate.email },
+          'candidates',
+        );
+      }
     }
 
     this.invalidateCache();

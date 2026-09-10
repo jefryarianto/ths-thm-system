@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  ScrollView,
   StyleSheet,
   Alert,
   Image,
@@ -14,7 +15,6 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../lib/api-client';
 import { useAuthStore, AuthState } from '../../store/auth-store';
-import { useMobileOAuth } from '../../hooks/useMobileOAuth';
 import { registerForPushNotifications } from '../../lib/fcm';
 import { LoadingSpinner } from '../../components/ui/shared';
 import { theme } from '../../theme';
@@ -29,21 +29,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(true);
   const login = useAuthStore((s: AuthState) => s.login);
-  const { handleGoogleLogin, loading: oauthLoading } = useMobileOAuth();
-
-  useEffect(() => {
-    // Cek apakah Google OAuth diaktifkan oleh admin.
-    apiClient
-      .get('/auth/providers')
-      .then(({ data }) => {
-        if (typeof data?.googleOAuthEnabled === 'boolean') {
-          setGoogleOAuthEnabled(data.googleOAuthEnabled);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Pre-fill email yang disimpan dari sesi sebelumnya ("Ingat Saya")
   useEffect(() => {
@@ -99,7 +85,12 @@ export default function LoginScreen() {
     <View style={styles.container}>
       {/* Aksen gradasi halus di bagian atas (efek cahaya modern) */}
       <View style={styles.topGlow} pointerEvents="none" />
-      <View style={styles.header}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
         {/* Logo organisasi — langsung tampil tanpa lingkaran putih, biar muat penuh */}
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>THS-THM</Text>
@@ -171,32 +162,6 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        {/* OAuth Divider & Button */}
-        {googleOAuthEnabled && (
-          <>
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Atau login dengan</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.oauthButton, oauthLoading === 'google' && styles.oauthButtonDisabled]}
-              onPress={handleGoogleLogin}
-              disabled={!!oauthLoading}
-            >
-              {oauthLoading === 'google' ? (
-                <LoadingSpinner color={theme.colors.textSecondary} />
-              ) : (
-                <>
-                  <Text style={styles.oauthIcon}>G</Text>
-                  <Text style={styles.oauthButtonText}> Login dengan Google</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </>
-        )}
-
         <TouchableOpacity
           style={styles.forgotPassword}
           onPress={() => router.push('/forgot-password' as any)}
@@ -205,12 +170,53 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Onboarding — anggota belum terdaftar / calon anggota */}
+      <View style={styles.onboardSection}>
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>Belum punya akun?</Text>
+          <View style={styles.dividerLine} />
+        </View>
+        <View style={styles.onboardButtons}>
+          <TouchableOpacity
+            style={styles.onboardButton}
+            activeOpacity={0.8}
+            onPress={() => router.push('/claim' as any)}
+          >
+            <View style={[styles.onboardIconWrap, { backgroundColor: theme.colors.primaryLight }]}>
+              <Ionicons name="id-card-outline" size={18} color={theme.colors.primaryDark} />
+            </View>
+            <View style={styles.onboardTextWrap}>
+              <Text style={styles.onboardTitle}>Klaim Keanggotaan</Text>
+              <Text style={styles.onboardSub}>Sudah menjadi anggota tapi belum terdaftar di sistem</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.onboardButton}
+            activeOpacity={0.8}
+            onPress={() => router.push('/register-candidate' as any)}
+          >
+            <View style={[styles.onboardIconWrap, { backgroundColor: theme.colors.warningLight }]}>
+              <Ionicons name="person-add-outline" size={18} color={theme.colors.warning} />
+            </View>
+            <View style={styles.onboardTextWrap}>
+              <Text style={styles.onboardTitle}>Daftar Calon Anggota</Text>
+              <Text style={styles.onboardSub}>Belum menjadi anggota — isi formulir pendaftaran calon</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 16 },
+  container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24 },
   topGlow: {
     position: 'absolute',
     top: -120,
@@ -296,31 +302,30 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: theme.colors.border },
   dividerText: { marginHorizontal: 12, fontSize: 13, color: theme.colors.textMuted },
-  oauthButton: {
+  onboardSection: {
+    marginTop: 20,
+  },
+  onboardButtons: { gap: 10, marginTop: 4 },
+  onboardButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
-    borderRadius: 12,
+    gap: 12,
+    padding: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
-    marginBottom: 8,
   },
-  oauthButtonDisabled: { opacity: 0.5 },
-  oauthIcon: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.colors.text,
-    width: 24,
-    height: 24,
-    textAlign: 'center',
-    lineHeight: 24,
-    backgroundColor: theme.colors.surfaceMuted,
-    borderRadius: 6,
-    overflow: 'hidden',
+  onboardIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  oauthButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  onboardTextWrap: { flex: 1 },
+  onboardTitle: { fontSize: 14, fontWeight: '700', color: theme.colors.text },
+  onboardSub: { fontSize: 12, color: theme.colors.textMuted, marginTop: 1, lineHeight: 16 },
   forgotPassword: {
     marginTop: 8,
     alignItems: 'center',

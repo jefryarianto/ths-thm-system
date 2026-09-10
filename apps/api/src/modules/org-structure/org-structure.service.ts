@@ -367,4 +367,27 @@ export class OrgStructureService {
     });
     return { success: true, data };
   }
+
+  /**
+   * Pohon organisasi ringan untuk keperluan publik (mis. formulir pendaftaran/
+   * klaim keanggotaan di aplikasi mobile sebelum login). Hanya id + nama.
+   */
+  async getPublicTree() {
+    const data = await this.prisma.distrik.findMany({
+      orderBy: { nama: 'asc' },
+      select: {
+        id: true,
+        nama: true,
+        wilayahs: {
+          orderBy: { nama: 'asc' },
+          select: {
+            id: true,
+            nama: true,
+            rantings: { orderBy: { nama: 'asc' }, select: { id: true, nama: true } },
+          },
+        },
+      },
+    });
+    return { success: true, data };
+  }
 }

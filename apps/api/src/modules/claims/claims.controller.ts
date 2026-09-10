@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ClaimsService } from './claims.service';
 import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto, RejectClaimDto } from './dto/claim.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 
 @ApiTags('Claims')
@@ -24,7 +25,8 @@ export class ClaimsController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { summary: 'Tambah klaim baru' })
+  @Public()
+  @ApiOperation({ summary: 'Tambah klaim baru (publik — pendaftaran mandiri anggota belum terdaftar)' })
   create(@Body() dto: CreateClaimDto) {
     return this.service.create(dto);
   }

@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CandidatesService } from './candidates.service';
 import { CreateCandidateDto, UpdateCandidateDto, CandidateFilterDto } from './dto/candidate.dto';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { Response } from 'express';
 
@@ -25,9 +26,10 @@ export class CandidatesController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah kandidat baru' })
+  @Public()
+  @ApiOperation({ summary: 'Tambah kandidat baru (publik — pendaftaran mandiri calon anggota)' })
   create(@Body() dto: CreateCandidateDto, @Req() req: ScopedRequest) {
-    return this.candidatesService.create(dto, req.scope, req.user.id);
+    return this.candidatesService.create(dto, req.scope, req.user?.id);
   }
 
   @Patch(':id')
