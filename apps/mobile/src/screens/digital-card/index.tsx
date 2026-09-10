@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, Animated, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -234,11 +234,14 @@ export default function DigitalCardScreen() {
       }
     } catch (err) {
       await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+      const msg = (err as Error)?.message || '';
       Alert.alert(
         'Gagal',
-        (err as Error)?.message === 'EMPTY_FILE'
+        msg === 'EMPTY_FILE'
           ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
-          : 'Gagal mengunduh PDF kartu. Periksa koneksi internet lalu coba lagi.',
+          : msg === 'NOT_PDF'
+            ? 'File yang diunduh bukan PDF (ada galat server). Coba lagi nanti.'
+            : 'Gagal mengunduh PDF kartu. Periksa koneksi internet lalu coba lagi.',
       );
     } finally {
       setSaving(null);
@@ -258,33 +261,58 @@ export default function DigitalCardScreen() {
 
       const perm = await MediaLibrary.requestPermissionsAsync();
       if (!perm.granted) {
-        await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
-        Alert.alert('Izin Diperlukan', 'Aktifkan izin akses media untuk menyimpan ke galeri.');
+        if ('canAskAgain' in perm && perm.canAskAgain === false) {
+          await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+          Alert.alert(
+            'Izin Pemutusan',
+            'Akses media tidak dapat diminta lagi. Buka pengaturan aplikasi lalu aktifkan izin Penyimpanan, kemudian coba lagi.',
+            [
+              { text: 'Buka Pengaturan', onPress: () => Linking.openSettings() },
+              { text: 'Nanti', style: 'cancel' },
+            ],
+          );
+        } else {
+          await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+          Alert.alert('Izin Diperlukan', 'Aktifkan izin akses media untuk menyimpan ke galeri.');
+        }
         return;
       }
 
-      // Simpan ke MediaStore lalu pindahkan ke album "THS-THM" di folder Pictures/
-      // (saveToLibraryAsync menaruh file di root DCIM yang tidak selalu muncul di galeri).
-      const asset = await MediaLibrary.createAssetAsync(dest);
+      // MediaStore + album "THS-THM" di folder Pictures/. Bila jalur ini gagal
+      // (sering terjadi di emulator seperti LDPlayer), pakai fallback langsung
+      // ke galeri sistem — dijamin muncul walau tanpa album kustom.
+      let savedViaAlbum = true;
       try {
+        const asset = await MediaLibrary.createAssetAsync(dest);
         const album = await MediaLibrary.getAlbumAsync('THS-THM');
         if (album) {
           await MediaLibrary.addAssetsToAlbumAsync(asset.id, album.id, false);
         } else {
           await MediaLibrary.createAlbumAsync('THS-THM', asset.id, false);
         }
-      } catch {
-        // Album opsional — file tetap tersimpan di MediaStore
+      } catch (e) {
+        savedViaAlbum = false;
+        console.warn('MediaStore/album gagal, pakai saveToLibraryAsync:', (e as Error)?.message);
+        await MediaLibrary.saveToLibraryAsync(dest);
       }
-      Alert.alert('Tersimpan', 'Kartu PNG berhasil disimpan ke galeri (folder THS-THM).');
-    } catch (err) {
+      // Berhasil → hapus temp (kartu sudah di galeri sistem).
       await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
       Alert.alert(
-        'Gagal',
-        (err as Error)?.message === 'EMPTY_FILE'
-          ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
-          : 'Gagal menyimpan kartu ke galeri. Periksa koneksi internet lalu coba lagi.',
+        'Tersimpan',
+        savedViaAlbum ? 'Kartu PNG berhasil disimpan ke galeri (folder THS-THM).' : 'Kartu PNG berhasil disimpan ke galeri.',
       );
+    } catch (err) {
+      await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+      const msg = (err as Error)?.message || '';
+      const friendly =
+        msg === 'EMPTY_FILE'
+          ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
+          : msg === 'NOT_PNG'
+            ? 'File yang diunduh bukan PNG (ada galat server). Coba lagi nanti.'
+            : msg === 'UNREADABLE' || msg === 'FILE_MISSING'
+              ? 'File kartu tidak terbaca di perangkat. Coba lagi nanti.'
+              : `Gagal menyimpan ke galeri (${msg || 'error tidak dikenal'}). Periksa izin Penyimpanan di Pengaturan, lalu coba lagi.`;
+      Alert.alert('Gagal', friendly);
     } finally {
       setSaving(null);
     }
