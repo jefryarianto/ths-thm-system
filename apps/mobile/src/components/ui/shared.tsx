@@ -39,14 +39,32 @@ export function BackButton({ color = theme.colors.textOnPrimary, bg = theme.colo
   );
 }
 
-interface LoadingViewProps {
+interface LoadingSpinnerProps {
+  size?: 'small' | 'large';
+  color?: string;
+}
+
+/** Spinner standar untuk proses singkat, misalnya pada tombol yang sedang diproses. */
+export function LoadingSpinner({
+  size = 'small',
+  color = theme.colors.primary,
+}: LoadingSpinnerProps) {
+  return <ActivityIndicator size={size} color={color} accessibilityLabel="Memuat" />;
+}
+
+interface LoadingViewProps extends LoadingSpinnerProps {
   message?: string;
 }
 
-export function LoadingView({ message = 'Memuat...' }: LoadingViewProps) {
+/** Tampilan loading layar penuh yang konsisten dengan indikator loading aplikasi. */
+export function LoadingView({
+  message = 'Memuat...',
+  size = 'large',
+  color = theme.colors.primary,
+}: LoadingViewProps) {
   return (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color={theme.colors.primary} />
+    <View style={styles.center} accessibilityRole="progressbar" accessibilityLabel={message}>
+      <LoadingSpinner size={size} color={color} />
       <Text style={styles.message}>{message}</Text>
     </View>
   );

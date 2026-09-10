@@ -25,7 +25,6 @@
     },
     "plugins": [
       "expo-router",
-      "./plugins/with-bundled-video",
       [
         "expo-font",
         {

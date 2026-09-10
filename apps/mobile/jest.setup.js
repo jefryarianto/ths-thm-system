@@ -33,17 +33,13 @@ jest.mock('expo-router', () => ({
   Tabs: 'Tabs',
 }));
 
-// Mock expo-av (login screen video / splash)
-jest.mock('expo-av', () => {
-  const React = require('react');
-  const MockVideo = React.forwardRef((props: any, ref: any) => React.createElement('Video', { ...props, ref }));
-  MockVideo.displayName = 'Video';
-  return {
-    Video: MockVideo,
-    ResizeMode: { CONTAIN: 'contain', COVER: 'cover', STRETCH: 'stretch' },
-    Audio: { setAudioModeAsync: jest.fn() },
-  };
-});
+// Mock expo-av (notification alert sound).
+jest.mock('expo-av', () => ({
+  Audio: {
+    setAudioModeAsync: jest.fn(),
+    Sound: { createAsync: jest.fn() },
+  },
+}));
 
 // Mock expo-image-picker
 jest.mock('expo-image-picker', () => ({

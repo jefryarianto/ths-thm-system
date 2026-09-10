@@ -5,15 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Animated,
   Easing,
-  Linking,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiClient from '../src/lib/api-client';
+import { LoadingView } from '../src/components/ui/shared';
 import { theme } from '../src/theme';
 
 interface LeaderboardEntry {
@@ -69,14 +68,7 @@ export default function PublicLeaderboardScreen() {
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Memuat leaderboard...</Text>
-      </View>
-    );
-  }
+  if (loading) return <LoadingView message="Memuat leaderboard..." />;
 
   return (
     <View style={styles.container}>
@@ -172,8 +164,6 @@ export default function PublicLeaderboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
-  loadingText: { marginTop: 12, fontSize: 14, color: theme.colors.textSecondary },
   scrollView: { flex: 1 },
 
   // Header
