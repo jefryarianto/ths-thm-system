@@ -9,13 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import apiClient from '../../lib/api-client';
 import { OrgCascader } from '../../components/ui/org-cascader';
+import { LoadingSpinner } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 interface BuktiItem {
@@ -321,7 +321,7 @@ export default function ClaimScreen() {
             disabled={saving}
           >
             {saving ? (
-              <ActivityIndicator color={theme.colors.surface} />
+              <LoadingSpinner color={theme.colors.surface} />
             ) : (
               <>
                 <Ionicons name="send" size={18} color={theme.colors.surface} />

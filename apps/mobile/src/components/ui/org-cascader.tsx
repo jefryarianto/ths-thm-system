@@ -6,10 +6,10 @@ import {
   StyleSheet,
   Modal,
   FlatList,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import apiClient, { unwrap } from '../../lib/api-client';
+import { LoadingSpinner } from './shared';
 import { theme } from '../../theme';
 
 interface RantingNode {
@@ -135,7 +135,7 @@ export function OrgCascader({ rantingId, onChange, error }: OrgCascaderProps) {
         activeOpacity={0.7}
       >
         {loadingTree ? (
-          <ActivityIndicator size="small" color={theme.colors.primary} />
+          <LoadingSpinner size="small" color={theme.colors.primary} />
         ) : (
           <>
             <Text style={[styles.fieldText, !label && styles.fieldPlaceholder]}>

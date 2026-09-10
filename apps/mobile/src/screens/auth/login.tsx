@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../lib/api-client';
 import { useAuthStore, AuthState } from '../../store/auth-store';
 import { registerForPushNotifications } from '../../lib/fcm';
-import { LoadingSpinner } from '../../components/ui/shared';
+import { LoadingSpinner, LoadingView } from '../../components/ui/shared';
 import { theme } from '../../theme';
 
 // Logo resmi THS-THM (di-bundle bersama app)
@@ -210,6 +210,13 @@ export default function LoginScreen() {
         </View>
       </View>
       </ScrollView>
+
+      {/* Overlay loading login — ring ganda + logo + teks berdenyut, meniru web login */}
+      {loading && (
+        <View style={styles.loginOverlay}>
+          <LoadingView message="Memverifikasi kredensial..." />
+        </View>
+      )}
     </View>
   );
 }
@@ -217,6 +224,16 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 24 },
+  loginOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
   topGlow: {
     position: 'absolute',
     top: -120,

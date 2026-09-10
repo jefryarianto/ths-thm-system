@@ -10,7 +10,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { theme } from '../../theme';
 import { FlipCard, type MemberInfo, type CardData } from './card';
 import apiClient, { API_URL, unwrap } from '../../lib/api-client';
-import { LoadingView, ErrorView } from '../../components/ui/shared';
+import { LoadingView, ErrorView, LoadingSpinner } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 
 // ─── Pendukung simpan kartu ───
@@ -361,11 +361,11 @@ export default function DigitalCardScreen() {
       {/* Simpan / unduh kartu */}
       <View style={styles.saveRow}>
         <TouchableOpacity style={[styles.saveBtn, styles.saveBtnPdf]} onPress={savePdf} disabled={!!saving} activeOpacity={0.8}>
-          <Ionicons name="download-outline" size={18} color={theme.colors.surface} />
+          {saving === 'pdf' ? <LoadingSpinner color={theme.colors.surface} /> : <Ionicons name="download-outline" size={18} color={theme.colors.surface} />}
           <Text style={styles.saveBtnText}>{saving === 'pdf' ? 'Menyimpan…' : 'Simpan PDF'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.saveBtn, styles.saveBtnPng]} onPress={saveToGallery} disabled={!!saving} activeOpacity={0.8}>
-          <Ionicons name="image-outline" size={18} color={theme.colors.surface} />
+          {saving === 'png' ? <LoadingSpinner color={theme.colors.surface} /> : <Ionicons name="image-outline" size={18} color={theme.colors.surface} />}
           <Text style={styles.saveBtnText}>{saving === 'png' ? 'Menyimpan…' : 'Simpan ke Galeri'}</Text>
         </TouchableOpacity>
       </View>
