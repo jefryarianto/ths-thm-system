@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { MembersDigitalCardService } from './members-digital-card.service';
@@ -12,6 +12,8 @@ import { Response } from 'express';
 @Controller('members')
 @ApiBearerAuth()
 export class MembersController {
+  private readonly logger = new Logger(MembersController.name);
+
   constructor(
     private readonly membersService: MembersService,
     private readonly digitalCardService: MembersDigitalCardService,
@@ -144,18 +146,30 @@ export class MembersController {
   @Get(':id/digital-card/pdf')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Download Kartu Anggota Digital (PDF)' })
   async getDigitalCardPdf(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
-    const pdfBuffer = await this.digitalCardService.getDigitalCardPdf(id, req.scope, req.user);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="kartu-anggota-${id}.pdf"`);
-    res.send(pdfBuffer);
+    try {
+      const pdfBuffer = await this.digitalCardService.getDigitalCardPdf(id, req.scope, req.user);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="kartu-anggota-${id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(`Gagal membuat PDF kartu anggota ${id}: ${(err as Error).message}`, (err as Error).stack);
+      throw new HttpException(`Gagal membuat PDF kartu anggota: ${(err as Error).message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id/digital-card/image')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Preview Kartu Anggota Digital (PNG)' })
   async getDigitalCardImage(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
-    const pngBuffer = await this.digitalCardService.getDigitalCardImage(id, req.scope, req.user);
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Disposition', `inline; filename="kartu-anggota-${id}.png"`);
-    res.send(pngBuffer);
+    try {
+      const pngBuffer = await this.digitalCardService.getDigitalCardImage(id, req.scope, req.user);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Disposition', `inline; filename="kartu-anggota-${id}.png"`);
+      res.send(pngBuffer);
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(`Gagal membuat PNG kartu anggota ${id}: ${(err as Error).message}`, (err as Error).stack);
+      throw new HttpException(`Gagal membuat PNG kartu anggota: ${(err as Error).message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

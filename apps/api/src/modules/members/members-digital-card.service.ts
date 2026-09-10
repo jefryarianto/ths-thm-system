@@ -24,8 +24,14 @@ export class MembersDigitalCardService {
   /**
    * Baca foto anggota dari disk sebagai data URL base64 untuk ditanam di PDF.
    * Fallback ke null bila file tidak ada / gagal dibaca (placeholder 'FOTO' dipakai).
+   * Bila `maxDim` diberikan, gambar diperkecil via sharp (tanpa melebar) agar SVG
+   * yang disisipkan tidak membengkak/login librsvg/sharp kehabisan memori.
    */
-  private async resolvePhotoDataUrl(fotoPath?: string | null, preferBg = false): Promise<string | null> {
+  private async resolvePhotoDataUrl(
+    fotoPath?: string | null,
+    preferBg = false,
+    maxDim?: number,
+  ): Promise<string | null> {
     if (!fotoPath) return null;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -57,9 +63,35 @@ export class MembersDigitalCardService {
       }
 
       const ext = path.extname(targetPath).toLowerCase();
-      const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
-      const base64 = fs.readFileSync(targetPath).toString('base64');
-      return `data:${mime};base64,${base64}`;
+      const isPngOrWebp = ext === '.png' || ext === '.webp';
+      const mime = isPngOrWebp ? 'image/png' : ext === '.jpeg' || ext === '.jpg' ? 'image/jpeg' : 'image/jpeg';
+      let buffer: Buffer = fs.readFileSync(targetPath);
+
+      // Perkecil gambar bila melebihi budget — dikecualikan pakai JPEG kecuali aslinya
+      // PNG/WebP (transparansi stempel/ttd harus dipertahankan).
+      if (maxDim) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const sharpApi = require('sharp');
+          const meta = await sharpApi(buffer).metadata();
+          const longest = Math.max(meta.width || 0, meta.height || 0);
+          if (longest > maxDim) {
+            buffer = await sharpApi(buffer)
+              .resize({
+                width: (meta.width || 0) >= (meta.height || 0) ? maxDim : undefined,
+                height: (meta.width || 0) >= (meta.height || 0) ? undefined : maxDim,
+                fit: 'inside',
+                withoutEnlargement: true,
+              })
+              .toFormat(isPngOrWebp ? 'png' : 'jpeg', isPngOrWebp ? {} : { quality: 85 })
+              .toBuffer();
+          }
+        } catch {
+          // Bila downscale gagal, pakai buffer asli
+        }
+      }
+
+      return `data:${mime};base64,${buffer.toString('base64')}`;
     } catch {
       return null;
     }
@@ -210,11 +242,11 @@ export class MembersDigitalCardService {
           signers: card.signers,
           signerName: card.signerName,
           signerTitle: card.signerTitle,
-          photoDataUrl: minimal ? null : await this.resolvePhotoDataUrl(memberData.fotoPath, true),
-          signatureDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.signatureImage),
-          stampDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.stampImage),
-          frontImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.frontImage || null),
-          backImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.backImage || null),
+          photoDataUrl: minimal ? null : await this.resolvePhotoDataUrl(memberData.fotoPath, true, 700),
+          signatureDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.signatureImage, false, 320),
+          stampDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.stampImage, false, 320),
+          frontImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.frontImage || null, false, 1800),
+          backImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.backImage || null, false, 1800),
           levelVisual,
           template: minimal ? null : template || null,
         });
@@ -293,13 +325,13 @@ export class MembersDigitalCardService {
             signerTitle: data.card.signerTitle,
             template: data.template || null,
           },
-          photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true),
-          signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage),
-          stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage),
+          photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true, 700),
+          signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage, false, 320),
+          stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage, false, 320),
           levelVisual: data.levelVisual,
           // Latar desain upload dari template kartu aktif (bila ada)
-          frontImageDataUrl: await this.resolvePhotoDataUrl(data.template?.frontImage || null),
-          backImageDataUrl: await this.resolvePhotoDataUrl(data.template?.backImage || null),
+          frontImageDataUrl: await this.resolvePhotoDataUrl(data.template?.frontImage || null, false, 1800),
+          backImageDataUrl: await this.resolvePhotoDataUrl(data.template?.backImage || null, false, 1800),
         },
         opts,
       );
