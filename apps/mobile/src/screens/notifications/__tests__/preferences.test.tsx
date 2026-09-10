@@ -48,13 +48,17 @@ describe('NotificationPreferencesScreen', () => {
     mockApi().patch.mockResolvedValue({ data: { success: true, data: PREFS_PAYLOAD } });
   });
 
-  it('renders master switches, quiet hours and per-type settings', async () => {
+  it('renders compact header, read-status sub-header, master switches and quiet hours', async () => {
     render(<NotificationPreferencesScreen />);
 
     await waitFor(() => {
       expect(screen.getByText('Pengaturan Notifikasi')).toBeTruthy();
     });
 
+    // Ringkasan channel aktif (sub-header ramping)
+    expect(screen.getByText('1/2 Push')).toBeTruthy();
+    expect(screen.getByText('2/2 In-App')).toBeTruthy();
+    expect(screen.getByText('1/2 Email')).toBeTruthy();
     // Master channel section
     expect(screen.getByText('Notifikasi Push')).toBeTruthy();
     expect(screen.getByText('In-App')).toBeTruthy();
@@ -65,33 +69,6 @@ describe('NotificationPreferencesScreen', () => {
     // Quiet hours
     expect(screen.getByText('Jangan Ganggu')).toBeTruthy();
     expect(screen.getByText('Mode Tenang')).toBeTruthy();
-    // Per-type list uses API types (no fallback)
-    expect(screen.getByText('Pengingat Iuran')).toBeTruthy();
-    expect(screen.getByText('Umum')).toBeTruthy();
-  });
-
-  it('persists a per-type channel toggle via PATCH', async () => {
-    render(<NotificationPreferencesScreen />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Pengaturan Notifikasi')).toBeTruthy();
-    });
-
-    const umumEmailSwitch = screen.getByLabelText('umum Email');
-    expect(umumEmailSwitch.props.value).toBe(false);
-
-    fireEvent(umumEmailSwitch, 'valueChange', true);
-
-    await waitFor(() => {
-      expect(mockApi().patch).toHaveBeenCalled();
-    });
-    const body = mockApi().patch.mock.calls[0][1];
-    expect(body).toEqual(
-      expect.objectContaining({
-        umum: expect.objectContaining({ email: true }),
-        global: expect.objectContaining({ push: true, inApp: true, email: true }),
-      }),
-    );
   });
 
   it('persists a master channel toggle via PATCH', async () => {

@@ -46,21 +46,6 @@ interface QuietHours {
   timezoneOffset: number;
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  welcome: 'hand-left',
-  data_incomplete: 'alert-circle',
-  reminder_latihan: 'fitness',
-  reminder_pendadaran: 'school',
-  reminder_iuran: 'cash',
-  status_klaim: 'document-text',
-  dokumen_ready: 'checkmark-done',
-  badge_earned: 'medal',
-  approval_request: 'checkmark-circle',
-  forum_reply: 'chatbubble-ellipses',
-  forum_solution: 'checkmark-done-circle',
-  umum: 'megaphone',
-};
-
 const FALLBACK_TYPES: NotificationType[] = [
   { key: 'welcome', label: 'Selamat Datang', description: 'Notifikasi saat pertama kali mendaftar' },
   { key: 'data_incomplete', label: 'Data Tidak Lengkap', description: 'Pengingat untuk melengkapi data diri' },
@@ -166,27 +151,6 @@ export default function NotificationPreferencesScreen() {
     }
   };
 
-  const toggleChannel = async (key: string, channel: 'push' | 'inApp' | 'email', value: boolean) => {
-    const snapshot = { preferences, global, quietHours };
-    const newPrefs = {
-      ...preferences,
-      [key]: {
-        push: preferences[key]?.push ?? true,
-        inApp: preferences[key]?.inApp ?? true,
-        email: preferences[key]?.email ?? true,
-        [channel]: value,
-      },
-    };
-    setPreferences(newPrefs);
-    setSaving(`${key}:${channel}`);
-    const ok = await saveState({ prefs: newPrefs, global, quietHours });
-    if (!ok) {
-      setPreferences(snapshot.preferences);
-      Alert.alert('Gagal', 'Gagal menyimpan pengaturan');
-    }
-    setSaving(null);
-  };
-
   const toggleGlobal = async (channel: 'push' | 'inApp' | 'email', value: boolean) => {
     const snapshot = { preferences, global, quietHours };
     const newGlobal = { ...global, [channel]: value };
@@ -223,22 +187,6 @@ export default function NotificationPreferencesScreen() {
     }
   };
 
-  const batchToggle = async (value: boolean) => {
-    const snapshot = { preferences, global, quietHours };
-    const updated = types.reduce(
-      (acc, t) => ({ ...acc, [t.key]: { push: value, inApp: value, email: value } }),
-      {} as Record<string, ChannelPrefs>,
-    );
-    setPreferences(updated);
-    setSaving('all');
-    const ok = await saveState({ prefs: updated, global, quietHours });
-    if (!ok) {
-      setPreferences(snapshot.preferences);
-      Alert.alert('Gagal', 'Gagal menyimpan pengaturan');
-    }
-    setSaving(null);
-  };
-
   const insets = useSafeAreaInsets();
 
   if (loading) return <LoadingView message="Memuat pengaturan..." />;
@@ -256,9 +204,17 @@ export default function NotificationPreferencesScreen() {
           <Ionicons name="arrow-back" size={22} color={theme.colors.surface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pengaturan Notifikasi</Text>
-        <Text style={styles.headerSub}>
-          {countOn('push')}/{types.length} push, {countOn('inApp')}/{types.length} in-app,{' '}
-          {countOn('email')}/{types.length} email
+      </View>
+
+      <View style={styles.subHeader}>
+        <Text style={styles.subHeaderItem}>
+          {countOn('push')}/{types.length} Push
+        </Text>
+        <Text style={styles.subHeaderItem}>
+          {countOn('inApp')}/{types.length} In-App
+        </Text>
+        <Text style={styles.subHeaderItem}>
+          {countOn('email')}/{types.length} Email
         </Text>
       </View>
 
@@ -377,26 +333,6 @@ export default function NotificationPreferencesScreen() {
         </View>
       </View>
 
-      {/* Batch Actions */}
-      <View style={styles.batchRow}>
-        <TouchableOpacity
-          style={styles.batchBtn}
-          onPress={() => batchToggle(true)}
-          disabled={saving === 'all'}
-        >
-          <Ionicons name="checkmark-circle" size={16} color={theme.colors.success} />
-          <Text style={styles.batchBtnText}>Aktifkan Semua</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.batchBtn}
-          onPress={() => batchToggle(false)}
-          disabled={saving === 'all'}
-        >
-          <Ionicons name="close-circle" size={16} color={theme.colors.danger} />
-          <Text style={styles.batchBtnText}>Nonaktifkan Semua</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.section}>
         {/* Sound Preference */}
         <Text style={styles.sectionTitle}>Suara Notifikasi</Text>
@@ -425,64 +361,11 @@ export default function NotificationPreferencesScreen() {
           />
         </View>
 
-        <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Jenis Notifikasi</Text>
-        {types.map((type) => {
-          const iconName = TYPE_ICONS[type.key] || 'notifications';
-          const p = preferences[type.key] || { push: true, inApp: true, email: true };
-          const anyEnabled = global.push && global.inApp && global.email
-            ? p.push || p.inApp || p.email
-            : (global.push && p.push) || (global.inApp && p.inApp) || (global.email && p.email);
-          return (
-            <View key={type.key} style={styles.prefCard}>
-              <View style={[styles.prefIcon, !anyEnabled && styles.prefIconDisabled]}>
-                <Ionicons
-                  name={iconName as any}
-                  size={22}
-                  color={anyEnabled ? '#2563eb' : '#9ca3af'}
-                />
-              </View>
-              <View style={styles.prefInfo}>
-                <Text style={[styles.prefLabel, !anyEnabled && styles.prefLabelDisabled]}>
-                  {type.label}
-                </Text>
-                <Text style={styles.prefDesc}>{type.description}</Text>
-                <View style={styles.channelRow}>
-                  {CHANNELS.map((ch) => {
-                    const active = global[ch.key] && p[ch.key];
-                    const savingKey = `${type.key}:${ch.key}`;
-                    return (
-                      <View key={ch.key} style={styles.channelToggle}>
-                        <Ionicons
-                          name={ch.icon as any}
-                          size={14}
-                          color={active ? ch.color : '#9ca3af'}
-                        />
-                        <Switch
-                          value={p[ch.key]}
-                          onValueChange={(val) => toggleChannel(type.key, ch.key, val)}
-                          trackColor={{ false: '#d1d5db', true: ch.track }}
-                          thumbColor={p[ch.key] ? ch.color : '#9ca3af'}
-                          disabled={saving === savingKey}
-                          style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
-                          accessibilityLabel={`${type.key} ${ch.label}`}
-                        />
-                      </View>
-                    );
-                  })}
-                  {saving?.startsWith(`${type.key}:`) && (
-                    <ActivityIndicator size="small" color="#2563eb" />
-                  )}
-                </View>
-              </View>
-            </View>
-          );
-        })}
-
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={18} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            Atur channel per jenis notifikasi. Channel utama berlaku untuk semua jenis. Mode Tenang
-            hanya menyembunyikan notifikasi push pada rentang waktu yang dipilih.
+            Channel utama berlaku untuk semua jenis notifikasi. Mode Tenang hanya menyembunyikan
+            notifikasi push pada rentang waktu yang dipilih.
           </Text>
         </View>
       </View>
@@ -538,30 +421,25 @@ container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surfaceMuted },
   header: {
     backgroundColor: theme.colors.primary,
-    padding: 24,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    flexWrap: 'wrap',
   },
   backBtn: { padding: 4 },
   headerTitle: { color: theme.colors.surface, fontSize: 18, fontWeight: '700', flex: 1 },
-  headerSub: { color: theme.colors.headerSub, fontSize: 13 },
 
-  batchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 12 },
-  batchBtn: {
+  subHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: theme.colors.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.surfaceMuted,
   },
-  batchBtnText: { fontSize: 12, fontWeight: '500', color: theme.colors.textSecondary },
+  subHeaderItem: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: '500' },
 
 section: { paddingHorizontal: 16, marginTop: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', marginBottom: 12 },
@@ -640,9 +518,6 @@ section: { paddingHorizontal: 16, marginTop: 16 },
   prefLabelDisabled: { color: theme.colors.textMuted },
   prefDesc: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
 
-  channelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  channelToggle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-
   infoBox: {
     flexDirection: 'row',
     gap: 10,
@@ -654,6 +529,4 @@ section: { paddingHorizontal: 16, marginTop: 16 },
     borderColor: theme.colors.headerSub,
   },
 infoText: { flex: 1, fontSize: 12, color: theme.colors.primaryDark, lineHeight: 18 },
-
-  emptyText: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 30 },
 });

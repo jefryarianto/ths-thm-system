@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -32,32 +32,15 @@ function navigateToNotification(notif: NotificationItem) {
   }
 }
 
-interface NotifType {
-  key: string;
-  label: string;
-}
-
 export default function NotificationsScreen() {
-  const [filter, setFilter] = useState<string | null>(null);
-  const [types, setTypes] = useState<NotifType[]>([]);
-  const { data: notifs, loading, refetch } = useNotifications(filter ? { tipe: filter } : undefined);
+  const [filter, setFilter] = useState<'all' | 'read' | 'unread'>('all');
+  const { data: notifs, loading, refetch } = useNotifications();
   const { refreshing, onRefresh } = useRefresh(refetch);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await apiClient.get('/notifications/stats');
-        const stats = res.data?.data;
-        if (stats?.types?.length > 0) {
-          setTypes(stats.types.map((t: NotifType) => ({ key: t.key, label: t.label })));
-        }
-      } catch {
-        /* ignore */
-      }
-    })();
-  }, []);
-
   const notifsArray = Array.isArray(notifs) ? notifs : (notifs as any)?.data ?? [];
+  const filtered = notifsArray.filter((n: { isRead: boolean }) =>
+    filter === 'unread' ? !n.isRead : filter === 'read' ? n.isRead : true,
+  );
   const unreadCount = notifsArray.filter((n: { isRead: boolean }) => !n.isRead).length;
 
   const markAllAsRead = async () => {
@@ -129,39 +112,28 @@ export default function NotificationsScreen() {
         </View>
       </View>
 
-      {/* Filter by type */}
-      {types.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterBar}
-          contentContainerStyle={styles.filterContent}
-        >
+      {/* Filter status dibaca */}
+      <View style={styles.filterBar}>
+        <View style={styles.filterContent}>
+          <FilterChip label="Semua" active={filter === 'all'} onPress={() => setFilter('all')} />
+          <FilterChip label="Dibaca" active={filter === 'read'} onPress={() => setFilter('read')} />
           <FilterChip
-            label="Semua"
-            active={filter === null}
-            onPress={() => setFilter(null)}
+            label="Belum Dibaca"
+            active={filter === 'unread'}
+            onPress={() => setFilter('unread')}
           />
-          {types.map((t) => (
-            <FilterChip
-              key={t.key}
-              label={t.label}
-              active={filter === t.key}
-              onPress={() => setFilter(filter === t.key ? null : t.key)}
-            />
-          ))}
-        </ScrollView>
-      )}
+        </View>
+      </View>
 
       <FlatList
-        data={notifsArray}
+        data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={
           <Text style={{ textAlign: 'center', color: theme.colors.textSecondary, marginTop: 40 }}>
-            {filter ? 'Tidak ada notifikasi untuk filter ini' : 'Belum ada notifikasi'}
+            {filter !== 'all' ? 'Tidak ada notifikasi untuk filter ini' : 'Belum ada notifikasi'}
           </Text>
         }
         renderItem={({ item }) => {
@@ -234,17 +206,17 @@ const styles = StyleSheet.create({
   markAllRead: { fontSize: 13, color: theme.colors.primary, fontWeight: theme.typography.weight.medium },
   deleteAll: { padding: 2 },
   filterBar: { backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
-  filterContent: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 10 },
+  filterContent: { flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 8 },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
   },
   chipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  chipText: { fontSize: 12, color: theme.colors.textSecondary, fontWeight: '500' },
+  chipText: { fontSize: 11, color: theme.colors.textSecondary, fontWeight: '500' },
   chipTextActive: { color: '#fff' },
   card: {
     flexDirection: 'row',

@@ -23,13 +23,6 @@ type MockFn = jest.Mock<(...args: unknown[]) => Promise<unknown>>;
 
 const mockApi = () => apiClient as unknown as { get: MockFn; patch: MockFn; delete: MockFn };
 
-const STATS_PAYLOAD = {
-  types: [
-    { key: 'umum', label: 'Umum', description: 'Notifikasi umum' },
-    { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat iuran' },
-  ],
-};
-
 const LIST_PAYLOAD = {
   data: [
     {
@@ -40,25 +33,26 @@ const LIST_PAYLOAD = {
       isRead: false,
       createdAt: new Date().toISOString(),
     },
+    {
+      id: 'n2',
+      judul: 'Judul 2',
+      isi: 'Isi 2',
+      tipe: 'umum',
+      isRead: true,
+      createdAt: new Date().toISOString(),
+    },
   ],
-  meta: { total: 1, totalPages: 1, unreadCount: 1 },
+  meta: { total: 2, totalPages: 1, unreadCount: 1 },
 };
 
 describe('NotificationsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockApi().get.mockImplementation(
-      ((url: string) => {
-        if (url === '/notifications/stats') {
-          return Promise.resolve({ data: { success: true, data: STATS_PAYLOAD } });
-        }
-        return Promise.resolve({ data: { success: true, data: LIST_PAYLOAD } });
-      }) as MockFn,
-    );
+    mockApi().get.mockResolvedValue({ data: { success: true, data: LIST_PAYLOAD } });
     mockApi().delete.mockResolvedValue({ data: { success: true, data: { deleted: true } } });
   });
 
-  it('renders notification items and type filter chips', async () => {
+  it('renders notification items and read-status filter chips', async () => {
     render(<NotificationsScreen />);
 
     await waitFor(() => {
@@ -67,24 +61,26 @@ describe('NotificationsScreen', () => {
 
     expect(screen.getByText('Notifikasi')).toBeTruthy();
     expect(screen.getByText('Semua')).toBeTruthy();
-    expect(screen.getByText('Pengingat Iuran')).toBeTruthy();
+    expect(screen.getByText('Dibaca')).toBeTruthy();
+    expect(screen.getByText('Belum Dibaca')).toBeTruthy();
   });
 
-  it('refetches with selected type filter', async () => {
+  it('filters list by read status client-side', async () => {
     render(<NotificationsScreen />);
 
     await waitFor(() => {
       expect(screen.getByText('Judul 1')).toBeTruthy();
     });
 
-    fireEvent.press(screen.getByText('Pengingat Iuran'));
+    expect(screen.getByText('Judul 2')).toBeTruthy();
 
-    await waitFor(() => {
-      const listCalls = mockApi().get.mock.calls.filter((c) => c[0] === '/notifications');
-      expect(listCalls.length).toBeGreaterThan(0);
-      const last = listCalls[listCalls.length - 1];
-      expect((last![1] as { params?: { tipe?: string } }).params?.tipe).toBe('reminder_iuran');
-    });
+    fireEvent.press(screen.getByText('Belum Dibaca'));
+    expect(screen.getByText('Judul 1')).toBeTruthy();
+    expect(screen.queryByText('Judul 2')).toBeNull();
+
+    fireEvent.press(screen.getByText('Dibaca'));
+    expect(screen.getByText('Judul 2')).toBeTruthy();
+    expect(screen.queryByText('Judul 1')).toBeNull();
   });
 
   it('confirms and deletes all notifications', async () => {

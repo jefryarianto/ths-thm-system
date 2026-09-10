@@ -78,30 +78,27 @@ const EVENT_ICONS: Record<string, string> = {
 
 type TabType = 'profile' | 'leaderboard' | 'badges' | 'rewards';
 
-function AnimatedTabContent({ active, children }: { active: boolean; children: React.ReactNode }) {
-  const opacity = useRef(new Animated.Value(active ? 1 : 0)).current;
-  const translateY = useRef(new Animated.Value(active ? 0 : 20)).current;
-  const wasEverActive = useRef(active);
+function AnimatedTabContent({ children }: { children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
-    if (active) wasEverActive.current = true;
     Animated.parallel([
       Animated.timing(opacity, {
-        toValue: active ? 1 : 0,
+        toValue: 1,
         duration: 250,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
-        toValue: active ? 0 : 20,
+        toValue: 0,
         duration: 250,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
-  }, [active]);
+  }, []);
 
-  if (!active && !wasEverActive.current) return null;
   return <Animated.View style={{ opacity, transform: [{ translateY }] }}>{children}</Animated.View>;
 }
 
@@ -312,6 +309,12 @@ export default function GamificationScreen() {
     setActiveTab(tab);
   };
 
+  // Hanya tab aktif yang di-render — reset scroll agar tidak menyisakan jarak kosong
+  const scrollRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [activeTab]);
+
   const loading = loadingUser || badgesLoading;
   const error = null; // Handled by individual hooks
 
@@ -335,6 +338,7 @@ export default function GamificationScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
@@ -364,7 +368,7 @@ export default function GamificationScreen() {
       </View>
 
       {/* Profile Tab */}
-      <AnimatedTabContent active={activeTab === 'profile'}>
+      {activeTab === 'profile' && <AnimatedTabContent>
         <View style={styles.section}>
           {profile ? (
             <>
@@ -476,10 +480,10 @@ export default function GamificationScreen() {
             <Text style={styles.emptyText}>Login untuk melihat profil gamifikasi Anda</Text>
           )}
         </View>
-      </AnimatedTabContent>
+      </AnimatedTabContent>}
 
       {/* Leaderboard Tab */}
-      <AnimatedTabContent active={activeTab === 'leaderboard'}>
+      {activeTab === 'leaderboard' && <AnimatedTabContent>
         <View style={styles.section}>
           <View style={styles.leaderboardHeader}>
             <Ionicons name="trophy" size={24} color={theme.colors.warning} />
@@ -647,10 +651,10 @@ export default function GamificationScreen() {
             <Text style={styles.emptyText}>Belum ada data leaderboard</Text>
           )}
         </View>
-      </AnimatedTabContent>
+      </AnimatedTabContent>}
 
       {/* Rewards Tab */}
-      <AnimatedTabContent active={activeTab === 'rewards'}>
+      {activeTab === 'rewards' && <AnimatedTabContent>
         <View style={styles.section}>
           <Text style={styles.subTitle}>
             Reward ({(rewards || []).filter((r) => r.isActive).length})
@@ -718,10 +722,10 @@ export default function GamificationScreen() {
             <Text style={styles.emptyText}>Belum ada reward tersedia</Text>
           )}
         </View>
-      </AnimatedTabContent>
+      </AnimatedTabContent>}
 
       {/* Badges Tab */}
-      <AnimatedTabContent active={activeTab === 'badges'}>
+      {activeTab === 'badges' && <AnimatedTabContent>
         <View style={styles.section}>
           <Text style={styles.subTitle}>Semua Badge ({(allBadges || []).length})</Text>
           {(allBadges || []).map((badge) => {
@@ -753,7 +757,7 @@ export default function GamificationScreen() {
             );
           })}
         </View>
-      </AnimatedTabContent>
+      </AnimatedTabContent>}
 
       <Confetti visible={showConfetti} onFinish={() => setShowConfetti(false)} />
       {isAdminRole && (
