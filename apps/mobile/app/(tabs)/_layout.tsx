@@ -1,59 +1,31 @@
 import { Tabs } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import apiClient from '../../src/lib/api-client';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../src/theme';
 
-function Badge({ count }: { count: number }) {
-  if (count <= 0) return null;
+/** Tombol Digital ID di tengah tab bar — dinaikkan (raised) dengan lingkaran berisi ikon kartu. */
+function DigitalIdButton({
+  onPress,
+}: {
+  onPress?: (e: import('react-native').GestureResponderEvent | import('react').MouseEvent<HTMLAnchorElement>) => void;
+}) {
   return (
-    <View style={badgeStyles.badge}>
-      <Text style={badgeStyles.text}>{count > 99 ? '99+' : count}</Text>
+    <View style={styles.digitalIdWrap}>
+      <TouchableOpacity
+        style={styles.digitalIdBtn}
+        onPress={onPress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Digital ID"
+      >
+        <Ionicons name="card" size={26} color={theme.colors.surface} />
+      </TouchableOpacity>
+      <Text style={styles.digitalIdLabel}>Digital ID</Text>
     </View>
   );
 }
 
-const badgeStyles = StyleSheet.create({
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -8,
-    backgroundColor: theme.colors.danger,
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  text: { color: theme.colors.surface, fontSize: 10, fontWeight: '700' },
-});
-
 export default function TabLayout() {
-  const [activeKegiatanCount, setActiveKegiatanCount] = useState(0);
-
-  useEffect(() => {
-    const fetchActiveKegiatan = async () => {
-      try {
-        // Fetch active (published) activities — trainings don't have status field
-        const actRes = await apiClient.get('/activities', { params: { status: 'published', limit: 5 } });
-        const actCount = Array.isArray(actRes.data?.data) ? actRes.data.data.length : 0;
-        setActiveKegiatanCount(actCount);
-      } catch {
-        /* ignore */
-      }
-    };
-
-    fetchActiveKegiatan();
-
-    // Poll setiap 30 detik
-    const interval = setInterval(() => {
-      fetchActiveKegiatan();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <Tabs
       screenOptions={{
@@ -77,10 +49,11 @@ export default function TabLayout() {
         tabBarItemStyle: { paddingVertical: 2 },
       }}
     >
-      {/* Halaman ini tetap ada tapi tidak tampil di tab bar (diakses dari shortcut Beranda) */}
+      {/* Layar tetap ada tapi tidak tampil di tab bar (diakses dari menu kapsul/shortcut lain) */}
       <Tabs.Screen name="documents" options={{ href: null }} />
-      <Tabs.Screen name="dues" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="qr-scan" options={{ href: null }} />
+      <Tabs.Screen name="gamification" options={{ href: null }} />
 
       <Tabs.Screen
         name="home"
@@ -92,32 +65,28 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="dues"
+        options={{
+          tabBarLabel: 'Iuran',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'cash' : 'cash-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+      {/* Digital ID — tombol tengah yang dinaikkan (raised center button) */}
+      <Tabs.Screen
         name="digital-card"
         options={{
-          tabBarLabel: 'Kartu',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'card' : 'card-outline'} size={size} color={color} />
-          ),
+          tabBarLabel: '',
+          tabBarButton: (props) => <DigitalIdButton onPress={props.onPress} />,
         }}
       />
       <Tabs.Screen
-        name="qr-scan"
+        name="forum"
         options={{
-          tabBarLabel: 'Scan QR',
+          tabBarLabel: 'Forum',
           tabBarIcon: ({ color, size, focused }) => (
-            <View>
-              <Ionicons name={focused ? 'qr-code' : 'qr-code-outline'} size={size} color={color} />
-              <Badge count={activeKegiatanCount} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="gamification"
-        options={{
-          tabBarLabel: 'Poin',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'trophy' : 'trophy-outline'} size={size} color={color} />
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -137,3 +106,23 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  digitalIdWrap: { alignItems: 'center', marginTop: -24 },
+  digitalIdBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.surface,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  digitalIdLabel: { fontSize: 11, fontWeight: '600', color: theme.colors.primary, marginTop: 2 },
+});

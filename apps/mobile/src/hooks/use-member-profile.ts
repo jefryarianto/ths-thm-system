@@ -15,6 +15,14 @@ export interface MemberProfile {
   tempatLahir?: string;
   tanggalLahir?: string;
   alamat?: string;
+  fotoPath?: string | null;
+  jenisKelamin?: string | null;
+  tempatDadar?: string | null;
+  tahunDadar?: string | null;
+  ranting?: {
+    nama?: string;
+    wilayah?: { nama?: string; distrik?: { nama?: string; alamat?: string | null } };
+  } | null;
 }
 
 export function useMemberProfile() {

@@ -1,27 +1,27 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LoadingView } from '../../components/ui/shared';
 import { useRefresh } from '../../hooks/use-refresh';
 import { useMemberProfile } from '../../hooks/use-member-profile';
+import { useKtaCardData } from '../../hooks/use-kta-card';
 import { useRole } from '../../hooks/use-role';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import { useAuthStore } from '../../store/auth-store';
-import apiClient, { unwrap } from '../../lib/api-client';
+import { API_URL } from '../../lib/api-client';
 import { theme } from '../../theme';
+import { MemberCardFront } from '../digital-card/card';
 
-const memberItems = [
-  { icon: 'chatbubbles', label: 'Forum', route: '/forum' },
-  { icon: 'person', label: 'Profil Saya', route: '/(tabs)/settings' },
-  { icon: 'card', label: 'Kartu Digital', route: '/digital-card' },
+// Menu yang sudah jadi tab di bottom nav (Forum, Iuran, Digital ID, Profil) tidak diulang di kapsul.
+const quickItems = [
   { icon: 'qr-code', label: 'Scan QR', route: '/qr-scan' },
   { icon: 'document-text', label: 'Dokumen', route: '/documents' },
-  { icon: 'cash', label: 'Iuran', route: '/dues' },
   { icon: 'mail-open', label: 'Undangan Pendadaran', route: '/graduations/invitations' },
   { icon: 'notifications', label: 'Notifikasi', route: '/notifications' },
   { icon: 'settings', label: 'Set. Notifikasi', route: '/notification-preferences' },
+  { icon: 'trophy', label: 'Poin', route: '/gamification' },
 ];
 
 // minRole = minimum role level to see the menu (same hierarchy as web layout.tsx):
@@ -56,23 +56,7 @@ export default function HomeScreen() {
   const { role, isAnggota, hasMinRole } = useRole();
   const { data: member, loading, refetch } = useMemberProfile();
   const { refreshing, onRefresh } = useRefresh(refetch);
-
-  // Jumlah notifikasi belum dibaca — refresh setiap home difokuskan (kembali dari tab lain)
-  const [unreadCount, setUnreadCount] = useState(0);
-  const loadUnread = useCallback(async () => {
-    try {
-      const res = await apiClient.get('/notifications/count');
-      const d = unwrap<{ count: number }>(res);
-      setUnreadCount(d?.count ?? 0);
-    } catch {
-      // abaikan — badge hanya tidak tampil
-    }
-  }, []);
-  useFocusEffect(
-    useCallback(() => {
-      loadUnread();
-    }, [loadUnread]),
-  );
+  const { cardData } = useKtaCardData(member?.id);
 
   // Anggota murni hanya melihat menu anggota; role lain melihat menu sesuai minRole
   // (admin_kegiatan kini melihat Calon & Pendadaran, sama seperti web).
@@ -81,9 +65,23 @@ export default function HomeScreen() {
     : adminItems.filter(
         (item) => hasMinRole(item.minRole) || !!item.extraRoles?.includes(role),
       );
-  const menuItems = [...memberItems, ...visibleAdminItems];
+  const menuItems = [...quickItems, ...visibleAdminItems];
 
   const insets = useSafeAreaInsets();
+
+  const initials = (member?.namaLengkap || user?.namaLengkap || 'A')
+    .split(' ')
+    .filter((w) => w)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+
+  const fotoUri = member?.fotoPath ? `${API_URL}/api/uploads/${encodeURIComponent(member.fotoPath)}` : null;
+
+  const validUntil = new Date();
+  validUntil.setFullYear(validUntil.getFullYear() + 5);
+  const validUntilText = validUntil.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
     <ScrollView
@@ -93,42 +91,75 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         {/* Aksen dekoratif lembut di header */}
         <View style={styles.headerGlow} pointerEvents="none" />
-        <Text style={styles.greeting}>Selamat Datang,</Text>
-        <Text style={styles.name}>
-          {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
-        </Text>
-        <Text style={styles.roleHint}>
-          {isAnggota ? 'Anggota' : role ? role.replace(/_/g, ' ') : 'Anggota'}
-        </Text>
-        {/* Lonceng notifikasi + badge jumlah belum dibaca (kanan atas) */}
         <TouchableOpacity
-          style={[styles.bellBtn, { top: insets.top + 8 }]}
-          onPress={() => router.push('/notifications')}
-          activeOpacity={0.7}
-          accessibilityLabel="Notifikasi"
+          style={styles.avatarBtn}
+          onPress={() => router.navigate('/(tabs)/settings' as never)}
+          activeOpacity={0.8}
+          accessibilityLabel="Profil saya"
         >
-          <Ionicons name="notifications" size={24} color={theme.colors.surface} />
-          {unreadCount > 0 && (
-            <View style={styles.bellBadge}>
-              <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+          {fotoUri ? (
+            <Image source={{ uri: fotoUri }} style={styles.avatar} resizeMode="cover" />
+          ) : (
+            <View style={styles.avatarFallback}>
+              <Text style={styles.avatarInitials}>{initials}</Text>
             </View>
           )}
         </TouchableOpacity>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.greeting}>Selamat Datang,</Text>
+          <Text style={styles.name}>
+            {member?.namaLengkap || user?.namaLengkap || 'Anggota THS-THM'}
+          </Text>
+          <Text style={styles.roleHint}>
+            {isAnggota ? 'Anggota' : role ? role.replace(/_/g, ' ') : 'Anggota'}
+          </Text>
+        </View>
       </View>
 
-      <View style={styles.cardContainer}>
+      {/* Menu kapsul — geser horizontal untuk melihat semua menu */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipScroller}
+        contentContainerStyle={styles.chipScrollerContent}
+      >
         {menuItems.map((item, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.card}
+            style={styles.chip}
             onPress={() => router.push(item.route as any)}
+            activeOpacity={0.7}
           >
-            <View style={styles.iconChip}>
-              <Ionicons name={safeIconName(item.icon)} size={24} color={theme.colors.primary} />
-            </View>
-            <Text style={styles.cardLabel}>{item.label}</Text>
+            <Ionicons name={safeIconName(item.icon)} size={16} color={theme.colors.primary} />
+            <Text style={styles.chipLabel} numberOfLines={1}>
+              {item.label}
+            </Text>
           </TouchableOpacity>
         ))}
+      </ScrollView>
+
+      {/* KTA sisi depan */}
+      <View style={styles.ktaSection}>
+        <View style={styles.ktaHeader}>
+          <Text style={styles.sectionTitle}>Kartu Anggota (KTA)</Text>
+          <TouchableOpacity onPress={() => router.navigate('/(tabs)/digital-card' as never)} activeOpacity={0.7}>
+            <Text style={styles.ktaSeeAll}>Lihat Detail</Text>
+          </TouchableOpacity>
+        </View>
+        {loading ? (
+          <LoadingView message="Memuat data anggota..." />
+        ) : member ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.navigate('/(tabs)/digital-card' as never)}
+          >
+            <MemberCardFront member={member} cardData={cardData} validUntilText={validUntilText} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.ktaEmpty}>
+            <Text style={styles.ktaEmptyText}>Data kartu belum tersedia.</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.infoSection}>
@@ -180,7 +211,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
-  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 36, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 36, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, flexDirection: 'row', alignItems: 'center' },
   headerGlow: {
     position: 'absolute',
     top: -40,
@@ -191,60 +222,55 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryLight,
     opacity: 0.18,
   },
-  bellBtn: { position: 'absolute', right: 20, padding: 6, zIndex: 10 },
-  bellBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: theme.colors.danger,
+  avatarBtn: { width: 44, height: 44, borderRadius: 22, marginRight: 14, overflow: 'hidden' },
+  avatar: { width: 44, height: 44, borderRadius: 22 },
+  avatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: theme.colors.primary,
-  },
-  bellBadgeText: { color: theme.colors.surface, fontSize: 10, fontWeight: '800' },
-  greeting: { color: theme.colors.headerSub, fontSize: 14 },
-  name: { color: theme.colors.surface, fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  roleHint: { color: theme.colors.primaryLight, fontSize: 13, marginTop: 4, fontWeight: '500' },
-  cardContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: -10, paddingHorizontal: 12 },
-  iconChip: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: theme.colors.primarySofter,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: theme.colors.primaryLight,
   },
-  card: {
-    width: '30%',
+  avatarInitials: { fontSize: 15, fontWeight: '800', color: theme.colors.primary },
+  headerTextWrap: { flex: 1 },
+  greeting: { color: theme.colors.headerSub, fontSize: 14 },
+  name: { color: theme.colors.surface, fontSize: 20, fontWeight: 'bold', marginTop: 2, marginRight: 12 },
+  roleHint: { color: theme.colors.primaryLight, fontSize: 13, marginTop: 2, fontWeight: '500' },
+  chipScroller: { marginTop: -14, flexGrow: 0 },
+  chipScrollerContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.surfaceMuted,
+    shadowColor: theme.colors.text,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  chipLabel: { fontSize: 12, fontWeight: '600', color: theme.colors.text },
+  ktaSection: { padding: 16, paddingTop: 12 },
+  ktaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  ktaSeeAll: { fontSize: 13, fontWeight: '700', color: theme.colors.primary },
+  ktaEmpty: {
     backgroundColor: theme.colors.surface,
     borderRadius: 16,
-    padding: 14,
-    margin: '1.5%',
+    padding: 24,
     alignItems: 'center',
-    shadowColor: theme.colors.text,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
     borderWidth: 1,
     borderColor: theme.colors.surfaceMuted,
   },
-  cardLabel: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 8,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  infoSection: { padding: 16, paddingTop: 20 },
+  ktaEmptyText: { fontSize: 14, color: theme.colors.textMuted },
+  infoSection: { padding: 16, paddingTop: 4 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.text, marginBottom: 12 },
   statusCard: {
     backgroundColor: theme.colors.surface,
