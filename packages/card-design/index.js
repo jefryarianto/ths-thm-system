@@ -100,9 +100,10 @@ const FRONT = Object.freeze({
   }),
   // Grup penandatangan: teks RATA-KIRI — batas kanan ditentukan baris terpanjang.
   // Kotak di-anchor kanan (right:-8 ≈ tepi kanan kartu); judul/stempel/nama sejajar
-  // kiri agar baris terpanjang menjulur ke kanan menuju tepi kartu.
+  // kiri. Lebar 340 menempatkan baris terpanjang (jabatan panjang ≈318px @12px)
+  // berakhir ≈842 → padding ±14px dari tepi kanan kartu.
   signer: Object.freeze({
-    right: -8, bottom: 14, w: 400, h: 146,
+    right: -8, bottom: 14, w: 340, h: 146,
     title1: Object.freeze({ left: 0, top: 35, fontSize: 13 }),
     title2: Object.freeze({ left: 0, top: 52, fontSize: 12 }),
     wrap: Object.freeze({ left: 0, top: 35, w: 175, h: 96 }),

@@ -187,36 +187,46 @@ export class MembersDigitalCardService {
       const sharp = require('sharp');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildCardSvg } = require('../documents/pdf-templates/card-svg');
-      const svg = buildCardSvg({
-        member: {
-          namaLengkap: memberData.namaLengkap,
-          nomorAnggota: memberData.nomorAnggota,
-          jenisKelamin: memberData.jenisKelamin || 'L',
-          tempatLahir: memberData.tempatLahir,
-          tanggalLahir: memberData.tanggalLahir,
-          tingkat: memberData.tingkat,
-          tempatDadar: memberData.tempatDadar,
-          tahunDadar: memberData.tahunDadar,
-          ranting: memberData.ranting,
-          wilayah: memberData.wilayah,
-          distrik: memberData.distrik,
-          alamatDistrik: memberData.alamatDistrik,
-          statusKeanggotaan: memberData.statusKeanggotaan,
-        },
-        nomorDokumen: card.nomorDokumen,
-        qrDataUrl,
-        verificationUrl: card.verificationUrl,
-        signers: card.signers,
-        signerName: card.signerName,
-        signerTitle: card.signerTitle,
-        photoDataUrl: await this.resolvePhotoDataUrl(memberData.fotoPath, true),
-        signatureDataUrl: await this.resolvePhotoDataUrl(card.signatureImage),
-        stampDataUrl: await this.resolvePhotoDataUrl(card.stampImage),
-        frontImageDataUrl: await this.resolvePhotoDataUrl(template?.frontImage || null),
-        backImageDataUrl: await this.resolvePhotoDataUrl(template?.backImage || null),
-        levelVisual,
-        template: template || null,
-      });
+      const buildSvg = async (minimal: boolean) =>
+        buildCardSvg({
+          member: {
+            namaLengkap: memberData.namaLengkap,
+            nomorAnggota: memberData.nomorAnggota,
+            jenisKelamin: memberData.jenisKelamin || 'L',
+            tempatLahir: memberData.tempatLahir,
+            tanggalLahir: memberData.tanggalLahir,
+            tingkat: memberData.tingkat,
+            tempatDadar: memberData.tempatDadar,
+            tahunDadar: memberData.tahunDadar,
+            ranting: memberData.ranting,
+            wilayah: memberData.wilayah,
+            distrik: memberData.distrik,
+            alamatDistrik: memberData.alamatDistrik,
+            statusKeanggotaan: memberData.statusKeanggotaan,
+          },
+          nomorDokumen: card.nomorDokumen,
+          qrDataUrl: minimal ? '' : qrDataUrl,
+          verificationUrl: card.verificationUrl,
+          signers: card.signers,
+          signerName: card.signerName,
+          signerTitle: card.signerTitle,
+          photoDataUrl: minimal ? null : await this.resolvePhotoDataUrl(memberData.fotoPath, true),
+          signatureDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.signatureImage),
+          stampDataUrl: minimal ? null : await this.resolvePhotoDataUrl(card.stampImage),
+          frontImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.frontImage || null),
+          backImageDataUrl: minimal ? null : await this.resolvePhotoDataUrl(template?.backImage || null),
+          levelVisual,
+          template: minimal ? null : template || null,
+        });
+      let svg: string;
+      try {
+        svg = await buildSvg(false);
+      } catch (firstErr) {
+        // Bila build SVG lengkap gagal (mis. data foto/template bermasalah), ulangi
+        // tanpa gambar opsional — kartu tetap jadi PNG valid, bukan respons error.
+        this.logger.warn(`buildCardSvg lengkap gagal (${(firstErr as Error).message}), pakai SVG minimal tanpa foto/template/stempel`);
+        svg = await buildSvg(true);
+      }
       // density 300 → PNG ±3566×4500 (resolusi setara pdftoppm -r 300)
       return await sharp(Buffer.from(svg), { density: 300 }).png().toBuffer();
     } catch (svgErr) {

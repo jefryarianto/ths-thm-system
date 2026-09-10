@@ -36,6 +36,16 @@ async function assertDownloadedFile(path: string, kind: 'pdf' | 'png'): Promise<
   if (kind === 'png' && !sig.startsWith('iVBORw0KGgo')) throw new Error('NOT_PNG');
 }
 
+/** Unduh kartu dengan cek status HTTP. Galat server (4xx/5xx) dilempar sebagai
+ *  `SERVER_ERROR:<status>` supaya pesan tidak keliru jadi "bukan PNG/PDF". */
+async function downloadFile(url: string, dest: string, token: string | null): Promise<void> {
+  const res = await FileSystem.downloadAsync(url, dest, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (res && typeof res.status === 'number' && res.status >= 400) {
+    await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
+    throw new Error(`SERVER_ERROR:${res.status}`);
+  }
+}
+
 /** Bungkus FlipCard dengan zoom (pinch 2 jari → 1–3,5×), pan (geser 2 jari),
  *  dan ketuk untuk membalik (tunggal) / double-tap untuk zoom. */
 function ZoomableCard({
@@ -223,9 +233,7 @@ export default function DigitalCardScreen() {
     const dest = `${FileSystem.cacheDirectory}kartu-anggota-${memberId}.pdf`;
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      await FileSystem.downloadAsync(`${API_URL}/api/members/${memberId}/digital-card/pdf`, dest, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await downloadFile(`${API_URL}/api/members/${memberId}/digital-card/pdf`, dest, token);
       await assertDownloadedFile(dest, 'pdf');
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(dest, { mimeType: 'application/pdf', dialogTitle: 'Simpan Kartu Anggota' });
@@ -237,11 +245,13 @@ export default function DigitalCardScreen() {
       const msg = (err as Error)?.message || '';
       Alert.alert(
         'Gagal',
-        msg === 'EMPTY_FILE'
-          ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
-          : msg === 'NOT_PDF'
-            ? 'File yang diunduh bukan PDF (ada galat server). Coba lagi nanti.'
-            : 'Gagal mengunduh PDF kartu. Periksa koneksi internet lalu coba lagi.',
+        msg.startsWith('SERVER_ERROR:')
+          ? `Server mengembalikan galat (HTTP ${msg.split(':')[1]}). Coba lagi nanti.`
+          : msg === 'EMPTY_FILE'
+            ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
+            : msg === 'NOT_PDF'
+              ? 'File yang diunduh bukan PDF (ada galat server). Coba lagi nanti.'
+              : 'Gagal mengunduh PDF kartu. Periksa koneksi internet lalu coba lagi.',
       );
     } finally {
       setSaving(null);
@@ -254,9 +264,7 @@ export default function DigitalCardScreen() {
     const dest = `${FileSystem.documentDirectory}kartu-anggota-${memberId}.png`;
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      await FileSystem.downloadAsync(`${API_URL}/api/members/${memberId}/digital-card/image`, dest, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await downloadFile(`${API_URL}/api/members/${memberId}/digital-card/image`, dest, token);
       await assertDownloadedFile(dest, 'png');
 
       const perm = await MediaLibrary.requestPermissionsAsync();
@@ -305,13 +313,15 @@ export default function DigitalCardScreen() {
       await FileSystem.deleteAsync(dest, { idempotent: true }).catch(() => {});
       const msg = (err as Error)?.message || '';
       const friendly =
-        msg === 'EMPTY_FILE'
-          ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
-          : msg === 'NOT_PNG'
-            ? 'File yang diunduh bukan PNG (ada galat server). Coba lagi nanti.'
-            : msg === 'UNREADABLE' || msg === 'FILE_MISSING'
-              ? 'File kartu tidak terbaca di perangkat. Coba lagi nanti.'
-              : `Gagal menyimpan ke galeri (${msg || 'error tidak dikenal'}). Periksa izin Penyimpanan di Pengaturan, lalu coba lagi.`;
+        msg.startsWith('SERVER_ERROR:')
+          ? `Server mengembalikan galat (HTTP ${msg.split(':')[1]}). Coba lagi nanti.`
+          : msg === 'EMPTY_FILE'
+            ? 'Server mengirim kartu kosong (0 byte). Coba lagi nanti.'
+            : msg === 'NOT_PNG'
+              ? 'File yang diunduh bukan PNG (ada galat server). Coba lagi nanti.'
+              : msg === 'UNREADABLE' || msg === 'FILE_MISSING'
+                ? 'File kartu tidak terbaca di perangkat. Coba lagi nanti.'
+                : `Gagal menyimpan ke galeri (${msg || 'error tidak dikenal'}). Periksa izin Penyimpanan di Pengaturan, lalu coba lagi.`;
       Alert.alert('Gagal', friendly);
     } finally {
       setSaving(null);
