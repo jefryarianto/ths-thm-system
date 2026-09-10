@@ -49,16 +49,19 @@ type RingSize = 'sm' | 'md' | 'lg' | 'xl' | 'small' | 'large';
 
 const RING_SIZE: Record<string, { box: number; ring: number; inner: number; border: number; logo: number }> = {
   sm: { box: 22, ring: 22, inner: 16, border: 3, logo: 0 },
-  md: { box: 44, ring: 44, inner: 32, border: 4, logo: 0 },
-  lg: { box: 64, ring: 64, inner: 48, border: 4, logo: 26 },
-  xl: { box: 96, ring: 96, inner: 72, border: 6, logo: 44 },
+  md: { box: 46, ring: 46, inner: 34, border: 4, logo: 0 },
+  lg: { box: 64, ring: 64, inner: 48, border: 5, logo: 26 },
+  xl: { box: 96, ring: 96, inner: 72, border: 7, logo: 44 },
   small: { box: 22, ring: 22, inner: 16, border: 3, logo: 0 },
-  large: { box: 64, ring: 64, inner: 48, border: 4, logo: 26 },
+  large: { box: 64, ring: 64, inner: 48, border: 5, logo: 26 },
 };
+
+// Warna biru sekunder lebih tengah agar ring dalam terlihat tegas (ala border-b-blue-500 di web).
+const RING_INNER_ALT = '#93c5fd';
 
 /** Spinner ring ganda (ala login web) — dua lingkaran berputar berlawanan
  *  arah, opsional logo di tengah. Bisa dipakai untuk tombol (sm) maupun
- *  tampilan loading penuh (lg/xl + logo). */
+ *  tampilan loading penuh (md/lg/xl + logo). */
 export function LoadingRing({
   size = 'md',
   color = theme.colors.primary,
@@ -69,7 +72,7 @@ export function LoadingRing({
   size?: RingSize;
   color?: string;
   colorAlt?: string;
-  /** Ring dalam memakai warna kontras (biru muda) seperti overload login web */
+  /** Ring dalam memakai warna kontras (biru muda terang) seperti overlay login web */
   twoTone?: boolean;
   showLogo?: boolean;
 }) {
@@ -104,15 +107,43 @@ export function LoadingRing({
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   const rotateReverse = spinReverse.interpolate({ inputRange: [0, 1], outputRange: ['360deg', '0deg'] });
 
+  // Posisi ring di tengah kotak (absolute tanpa top/left membuat ring meleset ke kiri-atas).
+  const outerOff = Math.round((s.box - s.ring) / 2);
+  const innerOff = Math.round((s.box - s.inner) / 2);
+
   return (
     <View
       style={{ width: s.box, height: s.box, alignItems: 'center', justifyContent: 'center' }}
       accessibilityLabel="Memuat"
     >
-      {/* Ring luar — berputar searah jarum jam */}
+      {/* Disc latar lembut agar busur ring kontras di semua background */}
+      {s.box >= 40 && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: s.box,
+            height: s.box,
+            borderRadius: s.box / 2,
+            backgroundColor: theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            shadowColor: theme.colors.text,
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 2,
+          }}
+        />
+      )}
+
+      {/* Ring luar — berputar searah jarum jam; 3 sisi penuh warna agar tegas */}
       <Animated.View
         style={{
           position: 'absolute',
+          top: outerOff,
+          left: outerOff,
           width: s.ring,
           height: s.ring,
           borderRadius: s.ring / 2,
@@ -120,6 +151,7 @@ export function LoadingRing({
           borderColor: 'transparent',
           borderTopColor: color,
           borderRightColor: colorAlt || color,
+          borderBottomColor: color,
           transform: [{ rotate }],
         }}
       />
@@ -127,14 +159,15 @@ export function LoadingRing({
       <Animated.View
         style={{
           position: 'absolute',
+          top: innerOff,
+          left: innerOff,
           width: s.inner,
           height: s.inner,
           borderRadius: s.inner / 2,
           borderWidth: Math.max(2, s.border - 1),
           borderColor: 'transparent',
-          borderBottomColor: twoTone ? theme.colors.headerSub : color,
-          borderLeftColor: twoTone ? color : color,
-          opacity: twoTone ? 0.85 : 0.65,
+          borderBottomColor: twoTone ? RING_INNER_ALT : color,
+          borderLeftColor: twoTone ? RING_INNER_ALT : color,
           transform: [{ rotate: rotateReverse }],
         }}
       />

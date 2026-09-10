@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LoadingView } from '../../components/ui/shared';
@@ -7,10 +7,10 @@ import { useMemberProfile } from '../../hooks/use-member-profile';
 import { useKtaCardData } from '../../hooks/use-kta-card';
 import { useRole } from '../../hooks/use-role';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import { useAuthStore } from '../../store/auth-store';
-import { API_URL } from '../../lib/api-client';
+import apiClient, { API_URL, unwrap } from '../../lib/api-client';
 import { theme } from '../../theme';
 import { MemberCardFront } from '../digital-card/card';
 
@@ -57,6 +57,24 @@ export default function HomeScreen() {
   const { data: member, loading, refetch } = useMemberProfile();
   const { refreshing, onRefresh } = useRefresh(refetch);
   const { cardData } = useKtaCardData(member?.id);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Jumlah notifikasi belum dibaca untuk badge bell (di-refetch tiap layar difokuskan).
+  const loadUnread = useCallback(() => {
+    apiClient
+      .get('/notifications/count')
+      .then((r) => {
+        const d = unwrap<{ count?: number }>(r) as { count?: number };
+        setUnreadCount(Number(d?.count ?? d ?? 0) || 0);
+      })
+      .catch(() => setUnreadCount(0));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadUnread();
+    }, [loadUnread]),
+  );
 
   // Anggota murni hanya melihat menu anggota; role lain melihat menu sesuai minRole
   // (admin_kegiatan kini melihat Calon & Pendadaran, sama seperti web).
@@ -114,6 +132,19 @@ export default function HomeScreen() {
             {isAnggota ? 'Anggota' : role ? role.replace(/_/g, ' ') : 'Anggota'}
           </Text>
         </View>
+        <TouchableOpacity
+          style={[styles.bellBtn, { top: insets.top + 6 }]}
+          onPress={() => router.navigate('/(tabs)/notifications' as never)}
+          activeOpacity={0.75}
+          accessibilityLabel="Notifikasi"
+        >
+          <Ionicons name="notifications-outline" size={24} color={theme.colors.surface} />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Menu kapsul — geser horizontal untuk melihat semua menu */}
@@ -239,6 +270,32 @@ const styles = StyleSheet.create({
   greeting: { color: theme.colors.headerSub, fontSize: 14 },
   name: { color: theme.colors.surface, fontSize: 20, fontWeight: 'bold', marginTop: 2, marginRight: 12 },
   roleHint: { color: theme.colors.primaryLight, fontSize: 13, marginTop: 2, fontWeight: '500' },
+  bellBtn: {
+    position: 'absolute',
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    zIndex: 10,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: theme.colors.danger,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellBadgeText: { color: theme.colors.surface, fontSize: 10, fontWeight: '800' },
   chipScroller: { marginTop: -14, flexGrow: 0 },
   chipScrollerContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 8 },
   chip: {
