@@ -357,7 +357,7 @@ function cardCss() {
 .card .header-row { position: absolute; top: 0; left: 0; right: 0; padding: ${f.header.padTop}px ${f.header.padH}px; display: flex; gap: ${f.header.gap}px; align-items: flex-start; }
 .card .logo { width: ${f.logo.size}px; height: ${f.logo.size}px; border-radius: ${f.logo.radius}px; background: ${f.logo.bg}; border: ${f.logo.border}px solid ${f.logo.borderColor}; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; }
 .card .logo img { width: ${f.logo.img}px; height: ${f.logo.img}px; }
-.card .header-text { flex: 1; font-size: ${f.header.row.fontSize}px; font-weight: 900; color: ${COLORS.headerText}; line-height: ${f.header.row.lineHeight}px; }
+.card .header-text { flex: 1; font-size: ${f.header.row.fontSize}px; font-family: 'Open Sans'; font-weight: 900; color: ${COLORS.headerText}; line-height: ${f.header.row.lineHeight}px; }
 .card .header-text div { margin-top: ${f.header.row.rowGap}px; }
 .card .header-text div:first-child { margin-top: 0; }
 .card .header-text .r1 { letter-spacing: ${f.header.row.spacing[0]}px; }
@@ -386,7 +386,7 @@ function cardCss() {
 .card .sig-title1 { position: absolute; left: ${f.signer.title1.left}px; top: ${f.signer.title1.top}px; font-size: ${f.signer.title1.fontSize}px; font-weight: 900; color: ${COLORS.value}; white-space: nowrap; }
 .card .sig-title2 { position: absolute; left: ${f.signer.title2.left}px; top: ${f.signer.title2.top}px; font-size: ${f.signer.title2.fontSize}px; font-weight: 700; color: ${COLORS.value}; white-space: nowrap; }
 .card .sig-wrap { position: absolute; left: ${f.signer.wrap.left}px; top: ${f.signer.wrap.top}px; width: ${f.signer.wrap.w}px; height: ${f.signer.wrap.h}px; }
-.card .sig-text { position: absolute; left: ${f.signer.sig.left}px; top: ${f.signer.sig.top}px; width: ${f.signer.sig.w}px; height: ${f.signer.sig.h}px; font-size: ${f.signer.sig.fontSize}px; font-style: italic; color: ${f.signer.sig.color}; transform: rotate(${f.signer.sig.rotate}deg); }
+.card .sig-text { position: absolute; left: ${f.signer.sig.left}px; top: ${f.signer.sig.top}px; width: ${f.signer.sig.w}px; height: ${f.signer.sig.h}px; font-size: ${f.signer.sig.fontSize}px; font-family: 'Roboto'; font-style: italic; color: ${f.signer.sig.color}; transform: rotate(${f.signer.sig.rotate}deg); }
 .card .stamp { position: absolute; left: ${f.signer.stamp.left}px; top: ${f.signer.stamp.top}px; width: ${f.signer.stamp.size}px; height: ${f.signer.stamp.size}px; border-radius: ${f.signer.stamp.radius}px; border: ${f.signer.stamp.border}px solid ${COLORS.stampBorder}; display: flex; align-items: center; justify-content: center; transform: rotate(${f.signer.stamp.rotate}deg); overflow: hidden; font-size: ${f.signer.stamp.text.fontSize}px; font-weight: 900; color: ${COLORS.stampText}; }
 .card .stamp img { width: 100%; height: 100%; object-fit: cover; }
 .card .signer-row { position: absolute; left: 0; bottom: 0; z-index: 5; width: 100%; display: flex; flex-direction: column; align-items: flex-start; }
