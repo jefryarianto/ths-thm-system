@@ -73,7 +73,7 @@ function svgInner(str: string): string {
   return str.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
 }
 
-/** Teks SVG dengan font/bobot sesuai spec. */
+/** Teks SVG dengan font/bobot sesuai spec (family default = Roboto-Bold). */
 function txt(
   x: number,
   y: number,
@@ -88,13 +88,14 @@ function txt(
     transform?: string;
     decoration?: string;
     opacity?: number;
+    family?: string;
   } = {},
 ) {
   const a: string[] = [];
   a.push(`x="${x}"`);
   a.push(`y="${y}"`);
   a.push(`text-anchor="${o.anchor || 'start'}"`);
-  a.push(`font-family="${FONTS.robotoBold}, sans-serif"`);
+  a.push(`font-family="${o.family || FONTS.robotoBold}, sans-serif"`);
   a.push(`font-size="${o.size ?? 14}"`);
   a.push(`font-weight="${o.weight ?? 400}"`);
   a.push(`fill="${o.fill || '#111827'}"`);
@@ -198,7 +199,7 @@ function frontSide(d: CardSvgData): string {
   ];
   let rowY = logoY + FRONT.header.row.fontSize;
   rows.forEach(([t, sp]) => {
-    s += txt(textX, rowY, t, { size: FRONT.header.row.fontSize, weight: 900, fill: COLORS.headerText, spacing: sp });
+    s += txt(textX, rowY, t, { size: FRONT.header.row.fontSize, weight: 900, fill: COLORS.headerText, spacing: sp, family: FONTS.openSansBold });
     rowY += FRONT.header.row.lineHeight + FRONT.header.row.rowGap;
   });
   s += `</g>`;
@@ -251,12 +252,14 @@ function frontSide(d: CardSvgData): string {
         weight: 900,
         fill: FRONT.info.valueStrong.color,
         spacing: FRONT.info.valueStrong.letterSpacing,
+        family: FONTS.ocrA,
       });
     } else {
       s += txt(infoX, labelBaseline + FRONT.info.value.marginTop + FRONT.info.value.fontSize, r.value, {
         size: FRONT.info.value.fontSize,
         weight: 700,
         fill: FRONT.info.value.color,
+        family: FONTS.ocrA,
       });
     }
     infoY = labelBaseline + FRONT.info.value.fontSize + FRONT.info.value.marginTop + FRONT.info.rowMarginBottom + FRONT.info.label.fontSize * 0.2;
@@ -267,6 +270,7 @@ function frontSide(d: CardSvgData): string {
     size: FRONT.info.value.fontSize,
     weight: 900,
     fill: FRONT.info.value.color,
+    family: FONTS.ocrA,
   });
   s += `</g>`;
 
@@ -325,6 +329,7 @@ function frontSide(d: CardSvgData): string {
       style: 'italic',
       fill: sg.sig.color,
       anchor: 'middle',
+      family: FONTS.robotoRegular,
       transform: `rotate(${sg.sig.rotate} ${sigX + sg.sig.w / 2} ${sigY + sg.sig.h / 2})`,
     });
   }
@@ -393,6 +398,7 @@ function backSide(d: CardSvgData): string {
     size: bh.subtitle.fontSize,
     fill: COLORS.white,
     opacity: bh.subtitle.opacity,
+    family: FONTS.robotoRegular,
   });
   s += `</g>`;
   s += `<rect x="0" y="${bh.height - bh.hairline.height}" width="856" height="${bh.hairline.height}" fill="${bh.hairline.color}"/>`;
@@ -417,6 +423,7 @@ function backSide(d: CardSvgData): string {
     size: info.desc.fontSize,
     fill: COLORS.white,
     opacity: info.desc.opacity,
+    family: FONTS.robotoRegular,
   });
   y += info.desc.lineHeight + info.desc.marginBottom + info.row.label.fontSize;
   const rowsBack: Array<[string, string]> = [
@@ -430,7 +437,7 @@ function backSide(d: CardSvgData): string {
     s += `<g>`;
     s += txt(infoX, y, label, { size: info.row.label.fontSize, weight: 700, fill: COLORS.white });
     s += txt(infoX + info.row.label.w + 2, y, ':', { size: info.row.label.fontSize, weight: 700, fill: COLORS.white, opacity: 0.9 });
-    s += txt(infoX + info.row.label.w + info.row.colon.w, y, value, { size: info.row.value.fontSize, weight: 600, fill: COLORS.white });
+    s += txt(infoX + info.row.label.w + info.row.colon.w, y, value, { size: info.row.value.fontSize, weight: 600, fill: COLORS.white, family: FONTS.robotoRegular });
     s += `</g>`;
     y += info.row.label.fontSize + info.row.marginBottom + 4;
   });
@@ -441,12 +448,14 @@ function backSide(d: CardSvgData): string {
     size: ft.text.fontSize,
     fill: '#f0f9ff',
     opacity: ft.text.opacity,
+    family: FONTS.robotoRegular,
   });
   s += txt(CARD.W - ft.right, CARD.H - ft.bottom - ft.urlValue.fontSize - ft.urlValue.marginTop - ft.urlLabel.fontSize - 4, 'URL VERIFIKASI', {
     size: ft.urlLabel.fontSize,
     fill: '#f0f9ff',
     opacity: ft.urlLabel.opacity,
     anchor: 'end',
+    family: FONTS.robotoRegular,
   });
   s += txt(CARD.W - ft.right, CARD.H - ft.bottom, d.verificationUrl, {
     size: ft.urlValue.fontSize,

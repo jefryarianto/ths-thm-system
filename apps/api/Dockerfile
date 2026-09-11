@@ -48,7 +48,16 @@ RUN find apps/api/dist -name '*.d.ts' -delete && \
 # ── Production Stage ──────────────────────────────────────────────
 FROM node:22-alpine AS production
 
-RUN apk add --no-cache openssl libc6-compat dumb-init poppler-utils
+RUN apk add --no-cache openssl libc6-compat dumb-init poppler-utils fontconfig
+
+# Font kartu untuk render SVG→PNG (librsvg mengikuti fontconfig/family).
+# Tanpa font ini PNG memakai fallback sistem; dengan ini teks header (OpenSans-Bold),
+# data (OCR A Extended), tanda tangan (Roboto), dst. sama persis dengan mobile/web.
+COPY apps/web/public/fonts/Roboto-Regular.ttf /usr/share/fonts/ths/
+COPY apps/web/public/fonts/Roboto-Bold.ttf /usr/share/fonts/ths/
+COPY apps/web/public/fonts/open-sans-bold.ttf /usr/share/fonts/ths/
+COPY apps/web/public/fonts/ocr-a-extended.ttf /usr/share/fonts/ths/
+RUN fc-cache -f /usr/share/fonts/ths
 
 WORKDIR /app
 
