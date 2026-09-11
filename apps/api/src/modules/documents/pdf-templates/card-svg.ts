@@ -26,6 +26,17 @@ const {
 } = require('../../../common/utils/card-design');
 const { KTA_LOGO_DATA_URL } = require('./kta-logo');
 
+// Family yang dikenali fontconfig di container (nama internal TTF dari
+// packages/card-design → nama family sistem). Wajah bold/regular dipilih
+// lewat atribut font-weight pada SVG.
+const FAM: Record<string, string> = {
+  [FONTS.robotoBold]: 'Roboto',
+  [FONTS.robotoRegular]: 'Roboto',
+  [FONTS.openSansBold]: 'Open Sans',
+  [FONTS.ocrA]: 'OCR A Extended',
+};
+const fam = (name: string) => FAM[name] ?? name;
+
 export interface CardSvgData {
   member: {
     namaLengkap: string;
@@ -95,7 +106,7 @@ function txt(
   a.push(`x="${x}"`);
   a.push(`y="${y}"`);
   a.push(`text-anchor="${o.anchor || 'start'}"`);
-  a.push(`font-family="${o.family || FONTS.robotoBold}, sans-serif"`);
+  a.push(`font-family="${fam(o.family || FONTS.robotoBold)}, sans-serif"`);
   a.push(`font-size="${o.size ?? 14}"`);
   a.push(`font-weight="${o.weight ?? 400}"`);
   a.push(`fill="${o.fill || '#111827'}"`);
@@ -139,7 +150,7 @@ function patternGroup(name: string, side: 'front' | 'back') {
       const texts = row
         .map((w: string, j: number) => {
           const x = -80 + j * colW;
-          return `<text x="${x.toFixed(1)}" y="${top + cfg.fontSize * 0.78}" font-family="${FONTS.robotoBold}, sans-serif" font-size="${cfg.fontSize}" font-weight="900" letter-spacing="${cfg.letterSpacing}" fill="${cfg.color}">${esc(w)}</text>`;
+          return `<text x="${x.toFixed(1)}" y="${top + cfg.fontSize * 0.78}" font-family="${fam(FONTS.robotoBold)}, sans-serif" font-size="${cfg.fontSize}" font-weight="900" letter-spacing="${cfg.letterSpacing}" fill="${cfg.color}">${esc(w)}</text>`;
         })
         .join('');
       return (
@@ -437,7 +448,7 @@ function backSide(d: CardSvgData): string {
     s += `<g>`;
     s += txt(infoX, y, label, { size: info.row.label.fontSize, weight: 700, fill: COLORS.white });
     s += txt(infoX + info.row.label.w + 2, y, ':', { size: info.row.label.fontSize, weight: 700, fill: COLORS.white, opacity: 0.9 });
-    s += txt(infoX + info.row.label.w + info.row.colon.w, y, value, { size: info.row.value.fontSize, weight: 600, fill: COLORS.white, family: FONTS.robotoRegular });
+    s += txt(infoX + info.row.label.w + info.row.colon.w, y, value, { size: info.row.value.fontSize, weight: 400, fill: COLORS.white, family: FONTS.robotoRegular });
     s += `</g>`;
     y += info.row.label.fontSize + info.row.marginBottom + 4;
   });

@@ -8,6 +8,7 @@ packages/templates/node_modules/
 # ─── Build output (root + nested) ────────────────────────────
 dist/
 **/dist/
+!apps/api/dist/
 .next/
 **/.next/
 coverage/
