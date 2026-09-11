@@ -26,6 +26,7 @@ ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 COPY apps/api/ ./apps/api/
 COPY packages/shared-types/ ./packages/shared-types/
 COPY packages/templates/ ./packages/templates/
+COPY packages/card-design/ ./packages/card-design/
 
 # Build shared-types before building API
 RUN cd packages/shared-types && pnpm run build
@@ -63,6 +64,10 @@ COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/package.json
 
 # ── Fix workspace package resolution ────────────────────────────────
+# card-design di-refer relatif `../../../../../packages/card-design` dari dist
+# (`/app/dist/...`), yang mendarat di container ROOT (`/packages`) karena dist
+# di-flatten ke `/app/dist` (tanpa prefix apps/api). Salin ke root container.
+COPY --from=builder /app/packages/card-design /packages/card-design
 RUN rm -rf node_modules/@ths-thm/shared-types && \
     mkdir -p node_modules/@ths-thm/shared-types/dist && \
     cp packages/shared-types/package.json node_modules/@ths-thm/shared-types/ && \
