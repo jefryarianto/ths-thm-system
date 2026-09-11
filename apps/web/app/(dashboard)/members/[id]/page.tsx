@@ -354,6 +354,7 @@ export default function MemberDetailPage() {
     qrCode: string;
     signerName?: string;
     signerTitle?: string;
+    signers?: Array<{ signerName?: string; signerTitle?: string }>;
     signatureImage?: string | null;
     stampImage?: string | null;
     levelVisual?: { stripCount: number; color: string; label?: string } | null;
@@ -398,6 +399,7 @@ export default function MemberDetailPage() {
           qrCode: data.data.qrCode,
           signerName: data.data.card?.signerName,
           signerTitle: data.data.card?.signerTitle,
+          signers: data.data.card?.signers || undefined,
           signatureImage: data.data.signatureImage || null,
           stampImage: data.data.stampImage || null,
           levelVisual: data.data.levelVisual || null,
@@ -587,12 +589,9 @@ export default function MemberDetailPage() {
     <div class="sig-title2">KEUSKUPAN ${distrik}</div>
     <div class="sig-wrap">
       <div class="stamp">${data.data.stampImage ? `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.stampImage)}" alt="stempel"/>` : 'STEMPEL'}</div>
-      ${data.data.signatureImage ? `<div style="position:absolute;left:${sig.sig.left}px;top:${sig.sig.top}px;width:${sig.sig.w}px;height:${sig.sig.h}px">` + [0, 1, 2].map(() => `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.signatureImage)}" alt="ttd" style="position:absolute;left:0;top:0;width:${sig.sig.w}px;height:${sig.sig.h}px;object-fit:contain;opacity:0.7;filter:brightness(0.6) contrast(1.4);transform:rotate(${sig.sig.rotate}deg)"/>`).join('') + `</div>` : `<div class="sig-text">ttd</div>`}
+      ${data.data.signatureImage ? `<div style="position:absolute;left:${sig.sig.left}px;top:${sig.sig.top}px;width:${sig.sig.w}px;height:${sig.sig.h}px">` + [0, 1, 2].map(() => `<img src="${window.location.origin}/api/uploads/${encodeURIComponent(data.data.signatureImage)}" alt="ttd" style="position:absolute;left:0;top:0;width:${sig.sig.w}px;height:${sig.sig.h}px;object-fit:contain;opacity:0.7;transform:rotate(${sig.sig.rotate}deg)"/>`).join('') + `</div>` : `<div class="sig-text">ttd</div>`}
     </div>
-    <div class="signer-row">
-      <div class="signer-name">${(signerName || 'Koordinator Distrik').toUpperCase()}</div>
-      ${signerTitle ? `<div class="signer-title">${signerTitle.toUpperCase()}</div>` : ''}
-    </div>
+    ${(data.data.card?.signers && data.data.card.signers.length > 0 ? data.data.card.signers : [{ signerName, signerTitle }]).map((s: { signerName?: string; signerTitle?: string }, i: number) => `<div class="signer-row" style="bottom:${i * 34}px"><div class="signer-name">${(s.signerName || 'Koordinator Distrik').toUpperCase()}</div>${s.signerTitle ? `<div class="signer-title">${s.signerTitle.toUpperCase()}</div>` : ''}</div>`).join('')}
   </div>
 </div>
 <div class="card back page-break">
@@ -1194,20 +1193,40 @@ export default function MemberDetailPage() {
                         />
                       ) : (
                         /* Dekorasi kanon - ombak + header + gradien bawah (SVG dari spec) */
+                        <>
                         <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: decorFrontSvg().replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
+                        {/* Lingkaran dekorasi (sinkron dgn mobile & API SVG) */}
+                        <div className="absolute inset-0 pointer-events-none">
+                          <div className="absolute rounded-full" style={{ left: 776 - 160, top: 80 - 160, width: 320, height: 320, backgroundColor: 'rgba(6,182,212,0.15)' }} />
+                          <div className="absolute rounded-full" style={{ left: 80 - 190, top: 270 - 190, width: 380, height: 380, backgroundColor: 'rgba(29,78,216,0.08)' }} />
+                        </div>
+                        </>
                       )}
                       {/* Guilloche / microprint border (dari spec — warna & on/off dari template) */}
                       {cardSpec.guilloche.front && (
                         <div className="absolute inset-0 pointer-events-none" dangerouslySetInnerHTML={{ __html: guillocheSvg('front', cardSpec.guilloche.strokeFront).replace('<svg ', '<svg style="width:100%;height:100%" ') }} />
                       )}
 
-                      {/* Watermark - peta indonesia.png washout, posisi dari spec */}
+                      {/* Watermark - peta indonesia.png tint biru navy (sama dgn mobile), opacity dari spec (default 0.35) */}
                       {cardSpec.watermark.front && (
                         <div
-                          className="absolute pointer-events-none opacity-[0.08]"
-                          style={{ left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h }}
+                          className="absolute pointer-events-none"
+                          style={{ left: FRONT.watermark.left, top: FRONT.watermark.top, width: FRONT.watermark.w, height: FRONT.watermark.h, opacity: cardSpec.watermark.opacity ?? 0.35 }}
                         >
-                          <img src="/peta-indonesia.png" alt="" className="w-full h-full object-contain" />
+                          <div
+                            className="w-full h-full"
+                            style={{
+                              backgroundColor: '#1A2E40',
+                              WebkitMaskImage: 'url(/peta-indonesia.png)',
+                              maskImage: 'url(/peta-indonesia.png)',
+                              WebkitMaskSize: 'contain',
+                              maskSize: 'contain',
+                              WebkitMaskRepeat: 'no-repeat',
+                              maskRepeat: 'no-repeat',
+                              WebkitMaskPosition: 'center',
+                              maskPosition: 'center',
+                            }}
+                          />
                         </div>
                       )}
 
@@ -1231,7 +1250,7 @@ export default function MemberDetailPage() {
                               { t: 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA', sp: FRONT.header.row.spacing[2] },
                               { t: `DISTRIK KEUSKUPAN ${(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}`, sp: FRONT.header.row.spacing[3] },
                             ].map((row, i) => (
-                              <div key={i} className="font-bold" style={{ fontSize: FRONT.header.row.fontSize, letterSpacing: row.sp, marginTop: i > 0 ? FRONT.header.row.rowGap : 0 }}>
+                              <div key={i} className="font-bold" style={{ fontSize: FRONT.header.row.fontSize, fontFamily: 'Open Sans', fontWeight: 700, letterSpacing: row.sp, marginTop: i > 0 ? FRONT.header.row.rowGap : 0 }}>
                                 {row.t}
                               </div>
                             ))}
@@ -1353,7 +1372,6 @@ export default function MemberDetailPage() {
                                       height: '100%',
                                       objectFit: 'contain',
                                       opacity: 0.7,
-                                      filter: 'brightness(0.6) contrast(1.4)',
                                       transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
                                     }}
                                   />
@@ -1368,7 +1386,8 @@ export default function MemberDetailPage() {
                                   width: FRONT.signer.sig.w,
                                   height: FRONT.signer.sig.h,
                                   fontSize: FRONT.signer.sig.fontSize,
-                                  fontFamily: 'cursive',
+                                  fontFamily: 'Roboto',
+                                  fontStyle: 'italic',
                                   transform: `rotate(${FRONT.signer.sig.rotate}deg)`,
                                   color: FRONT.signer.sig.color,
                                 }}
@@ -1378,14 +1397,21 @@ export default function MemberDetailPage() {
                             )}
                           </div>
                           <div className="absolute w-full text-left" style={{ left: 0, bottom: 0 }}>
-                            <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'left' }}>
-                              {(cardData?.signerName || 'Koordinator Distrik').toUpperCase()}
-                            </div>
-                            {cardData?.signerTitle ? (
-                              <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'left' }}>
-                                {cardData.signerTitle.toUpperCase()}
+                            {(cardData?.signers && cardData.signers.length > 0
+                              ? cardData.signers
+                              : [{ signerName: cardData?.signerName || 'Koordinator Distrik', signerTitle: cardData?.signerTitle || 'THS-THM' }]
+                            ).map((s, i) => (
+                              <div key={i} className="absolute w-full text-left" style={{ left: 0, bottom: i * 34 }}>
+                                <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'left' }}>
+                                  {(s.signerName || 'Koordinator Distrik').toUpperCase()}
+                                </div>
+                                {s.signerTitle ? (
+                                  <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'left' }}>
+                                    {s.signerTitle.toUpperCase()}
+                                  </div>
+                                ) : null}
                               </div>
-                            ) : null}
+                            ))}
                           </div>
                         </div>
                       </div>
