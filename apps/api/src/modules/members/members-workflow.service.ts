@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+import { calculateMissingFields } from '../../common/utils/member-completeness';
 
 @Injectable()
 export class MembersWorkflowService {
@@ -53,16 +54,8 @@ export class MembersWorkflowService {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
 
-    const missingFields: string[] = [];
-    // Only check fields the user can edit from the mobile app.
-    // Admin-set fields (jenisKelamin, tempatDadar, tahunDadar, tingkat) are excluded
-    // because the user has no way to fill them, so they shouldn't trigger "incomplete".
-    if (!member.namaLengkap) missingFields.push('nama_lengkap');
-    if (!member.tempatLahir) missingFields.push('tempat_lahir');
-    if (!member.tanggalLahir) missingFields.push('tanggal_lahir');
-    if (!member.alamat) missingFields.push('alamat');
-    if (!member.noHp) missingFields.push('no_hp');
-    if (!member.email) missingFields.push('email');
+    // Use shared utility — only checks fields the user can edit from the mobile app.
+    const missingFields = calculateMissingFields(member as Record<string, unknown>);
 
     if (missingFields.length > 0) {
       await this.prisma.anggota.update({

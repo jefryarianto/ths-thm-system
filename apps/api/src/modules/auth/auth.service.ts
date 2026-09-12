@@ -36,6 +36,7 @@ import {
   buildOtpauthUrl,
   totpQrDataUrl,
 } from '../../common/utils/totp.util';
+import { calculateMissingFields } from '../../common/utils/member-completeness';
 
 interface UserPayload {
   id: string;
@@ -853,30 +854,18 @@ export class AuthService {
         where: { id: anggotaId },
         select: {
           namaLengkap: true,
-          jenisKelamin: true,
           tempatLahir: true,
           tanggalLahir: true,
-          tempatDadar: true,
-          tahunDadar: true,
           alamat: true,
           noHp: true,
           email: true,
-          tingkat: true,
         },
       });
 
       if (!member) return;
 
-      // Calculate missing fields — only check fields the user can edit from the mobile app.
-      // Admin-set fields (jenisKelamin, tempatDadar, tahunDadar, tingkat) are excluded
-      // because the user has no way to fill them, so they shouldn't trigger "incomplete".
-      const missingFields: string[] = [];
-      if (!member.namaLengkap) missingFields.push('nama_lengkap');
-      if (!member.tempatLahir) missingFields.push('tempat_lahir');
-      if (!member.tanggalLahir) missingFields.push('tanggal_lahir');
-      if (!member.alamat) missingFields.push('alamat');
-      if (!member.noHp) missingFields.push('no_hp');
-      if (!member.email) missingFields.push('email');
+      // Use shared utility — only checks mobile-editable fields
+      const missingFields = calculateMissingFields(member as Record<string, unknown>);
 
       const statusData = missingFields.length > 0 ? 'incomplete' : 'complete';
 
@@ -893,9 +882,13 @@ export class AuthService {
 
       if (statusData === 'complete') {
         // Data is complete → clear stale 'data_incomplete' notifications
+        // (notifikasi are stored under User.id — both legacy anggotaId and userId keys)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (this.prisma as any).notifikasi.deleteMany({
-          where: { userId: anggotaId, tipe: 'data_incomplete' },
+          where: {
+            tipe: 'data_incomplete',
+            OR: [{ userId }, { userId: anggotaId }],
+          },
         });
 
         // Set statusValidasi to pending
@@ -918,7 +911,12 @@ export class AuthService {
         const missingList = missingFields.map((f) => f.replace(/_/g, ' ')).join(', ');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const existing = await (this.prisma as any).notifikasi.findFirst({
-          where: { userId: anggotaId, tipe: 'data_incomplete', isRead: false },
+          // notifikasi are stored under User.id — check both userId and legacy anggotaId keys
+          where: {
+            tipe: 'data_incomplete',
+            isRead: false,
+            OR: [{ userId }, { userId: anggotaId }],
+          },
           orderBy: { createdAt: 'desc' },
         });
         if (existing) {

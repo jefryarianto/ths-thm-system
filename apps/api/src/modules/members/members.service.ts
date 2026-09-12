@@ -18,6 +18,7 @@ import { NraService } from '../../common/services/nra.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ApprovalService } from '../approvals/approval.service';
 import { ImportBatchService } from '../imports/import-batch.service';
+import { calculateMissingFields } from '../../common/utils/member-completeness';
 import bcrypt from 'bcryptjs';
 
 /**
@@ -772,31 +773,18 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       where: { id: anggotaId },
       select: {
         namaLengkap: true,
-        jenisKelamin: true,
         tempatLahir: true,
         tanggalLahir: true,
-        tempatDadar: true,
-        tahunDadar: true,
         alamat: true,
         noHp: true,
         email: true,
-        tingkat: true,
       },
     });
 
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
 
-    const missingFields: string[] = [];
-    if (!member.namaLengkap) missingFields.push('nama_lengkap');
-    if (!member.jenisKelamin) missingFields.push('jenis_kelamin');
-    if (!member.tempatLahir) missingFields.push('tempat_lahir');
-    if (!member.tanggalLahir) missingFields.push('tanggal_lahir');
-    if (!member.tempatDadar) missingFields.push('tempat_dadar');
-    if (!member.tahunDadar) missingFields.push('tahun_dadar');
-    if (!member.alamat) missingFields.push('alamat');
-    if (!member.noHp) missingFields.push('no_hp');
-    if (!member.email) missingFields.push('email');
-    if (!member.tingkat) missingFields.push('tingkat');
+    // Use shared utility — only checks mobile-editable fields
+    const missingFields = calculateMissingFields(member as Record<string, unknown>);
 
     const statusData = missingFields.length > 0 ? 'incomplete' : 'complete';
 

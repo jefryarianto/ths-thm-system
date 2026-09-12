@@ -12,6 +12,7 @@ import {
 } from './dto/notification.dto';
 import { Role } from '@prisma/client';
 import { paginate } from '../../common/utils/pagination';
+import { calculateMissingFields } from '../../common/utils/member-completeness';
 
 @Injectable()
 export class NotificationsService {
@@ -586,7 +587,8 @@ export class NotificationsService {
 
     const completeAnggotaIds = new Set<string>();
     for (const m of members) {
-      if (m.namaLengkap && m.tempatLahir && m.tanggalLahir && m.alamat && m.noHp && m.email) {
+      // Use shared utility — only checks mobile-editable fields
+      if (calculateMissingFields(m as unknown as Record<string, unknown>).length === 0) {
         completeAnggotaIds.add(m.id);
       }
     }

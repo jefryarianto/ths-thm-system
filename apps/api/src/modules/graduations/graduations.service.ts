@@ -2313,21 +2313,30 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     const judul = '📩 Undangan Pendadaran';
     const isi = `Anda diundang mengikuti pendadaran "${grad.nama}" pada ${tanggal} di ${lokasi}. Konfirmasi kehadiran Anda melalui menu Pendadaran di aplikasi.`;
 
-    // In-app notification (fallback ke direct create jika service error)
+    // Resolve anggota → user (FCM tokens & notifikasi are keyed by userId, not anggotaId)
+    const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
+
+    // In-app + FCM push notification
     try {
-      await this.notificationsService.send(member.id, {
-        userId: member.id,
-        judul,
-        isi,
-        tipe: 'umum',
-      });
+      if (!userId) {
+        this.logger.warn(`No user account for member ${member.id}; skip in-app notification`);
+      } else {
+        await this.notificationsService.send(userId, {
+          userId,
+          judul,
+          isi,
+          tipe: 'umum',
+        });
+      }
     } catch (error) {
       this.logger.warn(`Invitation in-app notif failed for ${member.id}: ${(error as Error).message}`);
-      try {
-        await this.prisma.notifikasi.create({
-          data: { userId: member.id, tipe: 'umum', judul, isi },
-        });
-      } catch { /* ignore */ }
+      if (userId) {
+        try {
+          await this.prisma.notifikasi.create({
+            data: { userId, tipe: 'umum', judul, isi },
+          });
+        } catch { /* ignore */ }
+      }
     }
 
     // Email undangan
@@ -2337,6 +2346,67 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       } catch (error) {
         this.logger.warn(`Invitation email failed for ${member.email}: ${(error as Error).message}`);
       }
+    }
+  }
+
+  /**
+   * Resolve an anggota (member) ID to the corresponding User ID.
+   *
+   * FCM tokens, device_tokens, notifikasi, and socket.io sessions are all
+   * keyed by User.id. Queries often act on the Anggota table, so we must
+   * bridge the gap the same way kepengurusan.service.ts:resolveUserFromMember does.
+   *
+   * @returns The User.id, or null if resolution fails.
+   */
+  private async resolveUserIdFromAnggotaId(
+    anggotaId: string,
+    anggotaEmail?: string | null,
+  ): Promise<string | null> {
+    try {
+      const anggota = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { id: true, email: true, noHp: true, namaLengkap: true, rantingId: true },
+      });
+      if (!anggota) return null;
+
+      const email = anggotaEmail || anggota.email;
+
+      // 1. Try by email
+      let user = null;
+      if (email) {
+        user = await this.prisma.user.findUnique({ where: { email } });
+      }
+      // 2. Try by phone
+      if (!user && anggota.noHp) {
+        user = await this.prisma.user.findFirst({ where: { phone: anggota.noHp } });
+      }
+      // 3. Try by synthetic email
+      if (!user) {
+        const syntheticEmail = `${anggota.id}@noemail.ths-thm.org`;
+        user = await this.prisma.user.findUnique({ where: { email: syntheticEmail } });
+      }
+      // 4. Create user if not found (auto-provision account so push/in-app still work)
+      if (!user) {
+        const fallbackEmail = email || (anggota.noHp ? `${anggota.noHp}@noemail.ths-thm.org` : `${anggota.id}@noemail.ths-thm.org`);
+        const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+        user = await this.prisma.user.create({
+          data: {
+            email: fallbackEmail,
+            passwordHash,
+            namaLengkap: anggota.namaLengkap,
+            role: 'anggota',
+            rantingId: anggota.rantingId,
+            isActive: true,
+            phone: anggota.noHp || null,
+            mustChangePassword: true,
+          },
+        });
+      }
+
+      return user.id;
+    } catch (error) {
+      this.logger.warn(`resolveUserIdFromAnggotaId failed for ${anggotaId}: ${(error as Error).message}`);
+      return null;
     }
   }
 

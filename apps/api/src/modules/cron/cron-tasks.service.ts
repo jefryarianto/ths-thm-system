@@ -136,10 +136,14 @@ export class CronTasksService {
     for (const rec of recurrings) {
       if (rec.anggota.statusKeanggotaan !== 'aktif') continue;
 
+      // Resolve anggota → user (FCM tokens are keyed by userId, not anggotaId)
+      const userId = await this.resolveUserIdFromAnggotaId(rec.anggota.id, rec.anggota.email);
+      if (!userId) continue;
+
       // Create in-app notification + email + FCM via NotificationsService
       try {
-        await this.notificationsService.send(rec.anggota.id, {
-          userId: rec.anggota.id,
+        await this.notificationsService.send(userId, {
+          userId,
           judul: title,
           isi: message,
           tipe: 'reminder_iuran',
@@ -147,7 +151,7 @@ export class CronTasksService {
       } catch {
         // Fallback: direct in-app notification
         await this.createNotification(
-          rec.anggota.id, 'reminder_iuran', title, message,
+          userId, 'reminder_iuran', title, message,
         );
       }
       sent++;
@@ -181,16 +185,20 @@ export class CronTasksService {
         data: { status: 'menunggak' },
       });
 
+      // Resolve anggota → user
+      const userId = await this.resolveUserIdFromAnggotaId(due.anggota.id, due.anggota.email);
+      if (!userId) continue;
+
       try {
-        await this.notificationsService.send(due.anggota.id, {
-          userId: due.anggota.id,
+        await this.notificationsService.send(userId, {
+          userId,
           judul: '⚠️ Iuran Menunggak — Segera Bayar!',
           isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} sudah menunggak lebih dari 7 hari. Segera lakukan pembayaran untuk menghindari sanksi.`,
           tipe: 'reminder_iuran',
         });
       } catch {
         await this.createNotification(
-          due.anggota.id, 'reminder_iuran',
+          userId, 'reminder_iuran',
           '⚠️ Iuran Menunggak — Segera Bayar!',
           `Iuran periode ${due.periode} sudah menunggak lebih dari 7 hari. Segera lakukan pembayaran.`,
         );
@@ -238,16 +246,21 @@ export class CronTasksService {
         data: { iuranId: due.id, channel: 'system', status: 'sent' },
       });
 
+      // Resolve anggota → user
+      const userId = await this.resolveUserIdFromAnggotaId(due.anggota.id, due.anggota.email);
+      if (!userId) continue;
+
       try {
-        await this.notificationsService.send(due.anggota.id, {
-          userId: due.anggota.id,
+        await this.notificationsService.send(userId, {
+          userId,
           judul: '💳 Iuran Bulan Ini Belum Dibayar',
           isi: `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} belum dibayar. Segera lakukan pembayaran.`,
           tipe: 'reminder_iuran',
         });
       } catch {
+        // Fallback: direct in-app notification
         await this.createNotification(
-          due.anggota.id, 'reminder_iuran',
+          userId, 'reminder_iuran',
           '💳 Iuran Bulan Ini Belum Dibayar',
           `Iuran periode ${due.periode} sebesar Rp ${Number(due.jumlah).toLocaleString('id-ID')} belum dibayar.`,
         );
@@ -289,7 +302,7 @@ export class CronTasksService {
     for (const training of upcomingTrainings) {
       const members = await this.prisma.anggota.findMany({
         where: { rantingId: training.rantingId, statusKeanggotaan: 'aktif' },
-        select: { id: true, namaLengkap: true },
+        select: { id: true, namaLengkap: true, email: true },
         take: 200,
       });
 
@@ -300,20 +313,24 @@ export class CronTasksService {
       const materi = training.jenisMateri ? ` (${training.jenisMateri})` : '';
 
       for (const member of members) {
-      try {
-        await this.notificationsService.send(member.id, {
-          userId: member.id,
-          judul: '🏋️ Latihan Besok!',
-          isi: `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir tepat waktu!`,
-          tipe: 'reminder_latihan',
-        });
-      } catch {
-        await this.createNotification(
-          member.id, 'reminder_latihan',
-          '🏋️ Latihan Besok!',
-          `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir!`,
-        );
-      }
+        // Resolve anggota → user
+        const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
+        if (!userId) continue;
+
+        try {
+          await this.notificationsService.send(userId, {
+            userId,
+            judul: '🏋️ Latihan Besok!',
+            isi: `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir tepat waktu!`,
+            tipe: 'reminder_latihan',
+          });
+        } catch {
+          await this.createNotification(
+            userId, 'reminder_latihan',
+            '🏋️ Latihan Besok!',
+            `Latihan${materi} besok, ${dateStr} di ${lokasi}. Jangan lupa hadir!`,
+          );
+        }
         remindersSent++;
       }
     }
@@ -367,9 +384,13 @@ export class CronTasksService {
       const missing = (member.missingFields as string[]) || ['data diri'];
       const missingList = missing.map((f: string) => f.replace(/_/g, ' ')).join(', ');
 
+      // Resolve anggota → user for in-app notification
+      const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
+      if (!userId) continue;
+
       // In-app notification only (emails handled by batch above)
       await this.createNotification(
-        member.id, 'data_incomplete',
+        userId, 'data_incomplete',
         '📋 Data Anggota Belum Lengkap',
         `Data keanggotaan Anda masih belum lengkap. Segera lengkapi: ${missingList}.`,
       );
@@ -391,8 +412,8 @@ export class CronTasksService {
     const todayMonth = today.getMonth() + 1;
     const todayDay = today.getDate();
 
-    const members = await this.prisma.$queryRawUnsafe<Array<{ id: string; namaLengkap: string }>>(
-      `SELECT id, "nama_lengkap" FROM anggota 
+    const members = await this.prisma.$queryRawUnsafe<Array<{ id: string; namaLengkap: string; email: string | null }>>(
+      `SELECT id, "nama_lengkap", "email" FROM anggota 
        WHERE EXTRACT(MONTH FROM "tanggal_lahir") = $1 
        AND EXTRACT(DAY FROM "tanggal_lahir") = $2
        AND "status_keanggotaan" = 'aktif'
@@ -403,16 +424,20 @@ export class CronTasksService {
 
     let greetingsSent = 0;
     for (const member of members) {
+      // Resolve anggota → user
+      const userId = await this.resolveUserIdFromAnggotaId(member.id, member.email);
+      if (!userId) continue;
+
       try {
-        await this.notificationsService.send(member.id, {
-          userId: member.id,
+        await this.notificationsService.send(userId, {
+          userId,
           judul: '🎂 Selamat Ulang Tahun!',
           isi: `Selamat ulang tahun, ${member.namaLengkap}! Semoga selalu diberkati dan semakin bersemangat dalam berlatih. 🎉`,
           tipe: 'umum',
         });
       } catch {
         await this.createNotification(
-          member.id, 'umum',
+          userId, 'umum',
           '🎂 Selamat Ulang Tahun!',
           `Selamat ulang tahun, ${member.namaLengkap}! Semoga selalu diberkati.`,
         );
@@ -506,6 +531,74 @@ export class CronTasksService {
       });
     } catch (error) {
       this.logger.error(`Failed to create notification for user ${userId}: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Resolve an anggota (member) ID to the corresponding User ID.
+   *
+   * FCM tokens, device_tokens, notifikasi, and socket.io sessions are all
+   * keyed by User.id. Cron tasks query by anggota.id, so we must bridge the gap.
+   *
+   * Lookup strategy:
+   *   1. Find User by anggota.email (primary link)
+   *   2. Find User by anggota.noHp (phone fallback)
+   *   3. Find User by synthetic email ${anggota.id}@noemail.ths-thm.org
+   *   4. Create a new User if none exists (mirrors kepengurusan.service.ts:resolveUserFromMember)
+   *
+   * @returns The User.id, or null if resolution fails unexpectedly.
+   */
+  private async resolveUserIdFromAnggotaId(
+    anggotaId: string,
+    anggotaEmail?: string | null,
+  ): Promise<string | null> {
+    try {
+      const anggota = await this.prisma.anggota.findUnique({
+        where: { id: anggotaId },
+        select: { id: true, email: true, noHp: true, namaLengkap: true, rantingId: true },
+      });
+      if (!anggota) return null;
+
+      // Use the passed email or the one from DB
+      const email = anggotaEmail || anggota.email;
+
+      // 1. Try by email
+      let user = null;
+      if (email) {
+        user = await this.prisma.user.findUnique({ where: { email } });
+      }
+      // 2. Try by phone
+      if (!user && anggota.noHp) {
+        user = await this.prisma.user.findFirst({ where: { phone: anggota.noHp } });
+      }
+      // 3. Try by synthetic email
+      if (!user) {
+        const syntheticEmail = `${anggota.id}@noemail.ths-thm.org`;
+        user = await this.prisma.user.findUnique({ where: { email: syntheticEmail } });
+      }
+      // 4. Create user if not found
+      if (!user) {
+        const fallbackEmail = email || (anggota.noHp ? `${anggota.noHp}@noemail.ths-thm.org` : `${anggota.id}@noemail.ths-thm.org`);
+        const bcrypt = await import('bcryptjs');
+        const passwordHash = await bcrypt.hash('thsthm123456', 12);
+        user = await this.prisma.user.create({
+          data: {
+            email: fallbackEmail,
+            passwordHash,
+            namaLengkap: anggota.namaLengkap,
+            role: 'anggota',
+            rantingId: anggota.rantingId,
+            isActive: true,
+            phone: anggota.noHp || null,
+            mustChangePassword: true,
+          },
+        });
+      }
+
+      return user.id;
+    } catch (error) {
+      this.logger.error(`resolveUserIdFromAnggotaId failed for ${anggotaId}: ${(error as Error).message}`);
+      return null;
     }
   }
 }
