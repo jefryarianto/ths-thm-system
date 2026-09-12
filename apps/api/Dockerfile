@@ -15,7 +15,7 @@ COPY packages/shared-types/package.json ./packages/shared-types/package.json
 COPY packages/templates/package.json ./packages/templates/package.json
 
 # Install all dependencies
-RUN pnpm install --no-frozen-lockfile --ignore-scripts --fetch-timeout 1200000
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store,id=api-pnpm-store pnpm install --no-frozen-lockfile --ignore-scripts --fetch-timeout 1200000
 
 # Skip unnecessary downloads for faster build
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true

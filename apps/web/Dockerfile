@@ -13,7 +13,7 @@ COPY packages/ ./packages/
 
 # Install ALL dependencies (incl. devDeps) + run prepare scripts (prisma generate) once.
 # supportedArchitectures + retries MUST live in pnpm-workspace.yaml (pnpm v11 ignores them in .npmrc).
-RUN printf "\nsupportedArchitectures:\n  os:\n    - linux\n  cpu:\n    - x64\npreferOffline: true\nfetchRetries: 10\nfetchRetryFactor: 2\nfetchRetryMinTimeout: 5000\nfetchRetryMaxTimeout: 60000\nnetworkConcurrency: 4\n" >> pnpm-workspace.yaml && \
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store,id=web-pnpm-store printf "\nsupportedArchitectures:\n  os:\n    - linux\n  cpu:\n    - x64\npreferOffline: true\nfetchRetries: 10\nfetchRetryFactor: 2\nfetchRetryMinTimeout: 5000\nfetchRetryMaxTimeout: 60000\nnetworkConcurrency: 4\n" >> pnpm-workspace.yaml && \
     pnpm install --frozen-lockfile --fetch-timeout 1200000
 
 # Build with realtime features enabled for production
