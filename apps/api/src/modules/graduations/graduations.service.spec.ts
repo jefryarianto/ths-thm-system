@@ -990,6 +990,8 @@ describe('GraduationsService', () => {
         status: 'published',
       });
       mockPrisma.anggota.findMany.mockReset();
+      mockPrisma.anggota.findUnique.mockReset();
+      mockPrisma.user.findUnique.mockReset();
       mockPrisma.undanganPendadaran.create.mockReset();
       mockNotificationsService.send.mockClear();
     });
@@ -1003,6 +1005,20 @@ describe('GraduationsService', () => {
         // Baru & bukan pratama → tidak memenuhi kriteria
         { id: 'a3', namaLengkap: 'Baru', email: 'baru@test.com', tingkat: 'Anggota', tahunDadar: '2025' },
       ]);
+      // anggota.findUnique → member for userId resolution
+      mockPrisma.anggota.findUnique.mockImplementation((args: { where: { id: string } }) =>
+        Promise.resolve({
+          id: args.where.id,
+          email: args.where.id === 'a1' ? 'senior@test.com' : 'pratama@test.com',
+          noHp: '0812',
+          namaLengkap: args.where.id === 'a1' ? 'Senior' : 'Pratama',
+          rantingId: 'r1',
+        }),
+      );
+      // user.findUnique → existing user account (by email)
+      mockPrisma.user.findUnique.mockImplementation((args: { where: { email: string } }) =>
+        Promise.resolve({ id: `uid-${args.where.email}` }),
+      );
       mockPrisma.undanganPendadaran.create.mockResolvedValue({ id: 'inv1' });
 
       const result = await service.generateInvitations('g1');
@@ -1460,6 +1476,30 @@ describe('GraduationsService', () => {
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 'u1' }, data: { role: 'anggota' } }),
       );
+    });
+  });
+
+  describe('tenant isolation on create (regression)', () => {
+    it('menolak pendadaran ranting di luar cakupan admin distrik', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.beforeCreate(
+          { nama: 'Pendadaran Lain', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r-other' } as any,
+          { distrikId: 'd1' } as any,
+          'u0',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.kegiatan.create).not.toHaveBeenCalled();
+    });
+
+    it('mengizinkan pendadaran ranting di dalam distrik admin', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+      const data = await service.beforeCreate(
+        { nama: 'Pendadaran D1', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r1' } as any,
+        { distrikId: 'd1' } as any,
+        'u0',
+      );
+      expect(data.scopeId).toBe('r1');
     });
   });
 });

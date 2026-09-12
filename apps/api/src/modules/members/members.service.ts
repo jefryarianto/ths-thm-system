@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException, Optional, OnModuleInit } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException, Optional, OnModuleInit } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import * as crypto from 'crypto';
 import { welcomeMemberEmail, credentialEmail, dataIncompleteEmail, escapeHtml } from '../../mail/email-templates';
@@ -68,6 +68,13 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     dto: CreateMemberDto,
     scope?: UserScope,
   ): Promise<Record<string, unknown>> {
+    // Tenant safety: rantingId dari client harus berada dalam cakupan admin.
+    if (dto.rantingId && scope) {
+      const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, dto.rantingId);
+      if (!ok) {
+        throw new ForbiddenException('Anda hanya dapat menambah anggota dalam cakupan Anda');
+      }
+    }
     const rantingId = dto.rantingId || scope?.rantingId;
 
     return {
@@ -136,7 +143,12 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // Override for custom caching key + search/filter + deletedAt + hierarchical filters.
 
   async findAll(filter: MemberFilterDto, scope?: UserScope) {
-    const cacheKey = `members:list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}:${filter.statusData || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}:${filter.tanpaFoto || ''}`;
+    // Cache bucket harus membedakan SEMUA level scope — rantingId saja cukup
+    // untuk ranting/wilayah, tetapi admin ter-scope penuh (mis. admin_distrik
+    // tanpa rantingId) dan superadmin sama-sama punya rantingId undefined;
+    // tanpa fallback wilayah/distrik mereka berbagi bucket 'all' (bocor lintas tenant).
+    const scopeBucket = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
+    const cacheKey = `members:list:${scopeBucket}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.statusKeanggotaan || ''}:${filter.statusValidasi || ''}:${filter.statusData || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}:${filter.tanpaFoto || ''}`;
 
     return this.baseFindAll(
       cacheKey,
@@ -161,17 +173,28 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;
         if (filter.statusData) where.statusData = filter.statusData;
 
-        // Hierarchical filters: distrikId → wilayahId → rantingId
-        if (filter.distrikId) {
-          where.ranting = { wilayah: { distrikId: filter.distrikId } };
-        }
-        if (filter.wilayahId) {
-          // If distrikId is also set, merge both
-          const rantingWhere: any = { wilayahId: filter.wilayahId };
-          if (filter.distrikId) {
-            rantingWhere.wilayah = { distrikId: filter.distrikId };
+        // Hierarchical filters: distrikId → wilayahId → rantingId.
+        // Tenant safety: scope pengguna adalah batas atas (buildScopeFilter sudah
+        // mengikat level terkecil yang berlaku). Filter hierarkis klien hanya
+        // boleh MEMPERSEMPIT dalam cakupan itu — tidak boleh menimpanya.
+        if (scope?.rantingId) {
+          // Terikat ranting persis — filter distrik/wilayah klien diabaikan.
+          // (filter.rantingId tetap aman: irisan dengan ranting yang sama.)
+        } else if (scope?.wilayahId) {
+          if (filter.rantingId) where.rantingId = filter.rantingId;
+        } else if (scope?.distrikId) {
+          if (filter.rantingId) where.rantingId = filter.rantingId;
+          if (filter.wilayahId) {
+            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
           }
-          where.ranting = rantingWhere;
+        } else {
+          // Tanpa scope (nasional/superadmin): filter klien berlaku penuh.
+          if (filter.distrikId) {
+            where.ranting = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+          }
+          if (filter.wilayahId) {
+            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+          }
         }
 
         return where;
@@ -633,7 +656,8 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // ── Domain: get incomplete members ─────────────────────────
 
   async getIncompleteMembers(filter: MemberFilterDto, scope?: UserScope) {
-    const cacheKey = `members:incomplete:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.rantingId || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}`;
+    const incompleteScopeBucket = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
+    const cacheKey = `members:incomplete:${incompleteScopeBucket}:${filter.page || 1}:${filter.limit || 10}:${filter.rantingId || ''}:${filter.wilayahId || ''}:${filter.distrikId || ''}`;
 
     return this.baseFindAll(
       cacheKey,
@@ -642,12 +666,25 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const where: any = { deletedAt: null, statusData: 'incomplete', ...scopeFilter };
 
-        if (filter.rantingId) where.rantingId = filter.rantingId;
-        if (filter.distrikId) where.ranting = { wilayah: { distrikId: filter.distrikId } };
-        if (filter.wilayahId) {
-          const rantingWhere: any = { wilayahId: filter.wilayahId };
-          if (filter.distrikId) rantingWhere.wilayah = { distrikId: filter.distrikId };
-          where.ranting = rantingWhere;
+        // Tenant safety: sama dengan findAll — scope mengikat batas atas,
+        // filter hierarkis klien hanya boleh mempersempit di dalamnya.
+        if (scope?.rantingId) {
+          // Terikat ranting persis — filter klien diabaikan.
+        } else if (scope?.wilayahId) {
+          if (filter.rantingId) where.rantingId = filter.rantingId;
+        } else if (scope?.distrikId) {
+          if (filter.rantingId) where.rantingId = filter.rantingId;
+          if (filter.wilayahId) {
+            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+          }
+        } else {
+          if (filter.rantingId) where.rantingId = filter.rantingId;
+          if (filter.distrikId) {
+            where.ranting = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+          }
+          if (filter.wilayahId) {
+            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+          }
         }
 
         return where;

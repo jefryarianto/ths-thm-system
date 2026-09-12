@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ActivitiesService } from './activities.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -33,6 +33,9 @@ describe('ActivitiesService', () => {
       create: jest.fn(),
     },
     anggota: {
+      findUnique: jest.fn(),
+    },
+    wilayah: {
       findUnique: jest.fn(),
     },
   };
@@ -181,6 +184,48 @@ describe('ActivitiesService', () => {
     it('should upload a document', async () => {
       mockPrisma.dokumenKegiatan.create.mockResolvedValue({ id: 'd1', nama: 'file.pdf' });
       const result = await service.uploadDocument('k1', { nama: 'file.pdf', filePath: '/path' });
+    });
+  });
+
+  describe('tenant isolation on create (regression)', () => {
+    it('should reject an activity scoped to a ranting outside the admin scope', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.create(
+          { nama: 'Kegiatan Lain', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r-other' } as any,
+          { distrikId: 'd1' },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.kegiatan.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow an activity scoped inside the admin scope', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+      mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k1' });
+      const result = await service.create(
+        { nama: 'Kegiatan Distrik', tanggalMulai: '2026-09-20', scopeType: 'ranting', scopeId: 'r1' } as any,
+        { distrikId: 'd1' },
+      );
+      expect(result.data).toBeDefined();
+    });
+
+    it('should reject a wilayah-scoped activity outside the admin district', async () => {
+      mockPrisma.wilayah.findUnique.mockResolvedValue({ distrikId: 'd-other' });
+      await expect(
+        service.create(
+          { nama: 'Kegiatan Wilayah Lain', tanggalMulai: '2026-09-20', scopeType: 'wilayah', scopeId: 'w-other' } as any,
+          { distrikId: 'd1' },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.kegiatan.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow superadmin (no scope) to create with any scope', async () => {
+      mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k2' });
+      const result = await service.create(
+        { nama: 'Kegiatan Nasional', tanggalMulai: '2026-09-20', scopeType: 'wilayah', scopeId: 'w-anything' } as any,
+      );
+      expect(result.data).toBeDefined();
     });
   });
 });

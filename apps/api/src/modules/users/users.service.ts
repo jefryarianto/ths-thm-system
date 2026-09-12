@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { ForbiddenException, Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -14,6 +14,13 @@ import {
 } from './dto/user.dto';
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import bcrypt from 'bcryptjs';
+
+/** Role yang boleh ditetapkan oleh admin per-level (superadmin bebas). */
+const ASSIGNABLE_BY_LEVEL: Record<string, string[]> = {
+  district: ['admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'],
+  region: ['admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'],
+  branch: ['admin_ranting', 'admin_kegiatan', 'penguji', 'anggota'],
+};
 
 @Injectable()
 export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> {
@@ -33,27 +40,68 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   }
 
   // ═══════════════════════════════════════════════════════════
+  //  TENANT GUARDS
+  // ═══════════════════════════════════════════════════════════
+
+  /** Level scope dominan (lintas ranting = wilayah/distrik). */
+  private static scopeLevel(scope: UserScope): 'district' | 'region' | 'branch' {
+    if (scope.distrikId) return 'district';
+    if (scope.wilayahId) return 'region';
+    return 'branch';
+  }
+
+  /**
+   * Non-superadmin hanya boleh menetapkan role pada/di bawah levelnya sendiri.
+   * Superadmin (scope kosong) bebas menetapkan role apa pun.
+   */
+  private resolveAssignableRole(role: string | undefined, scope?: UserScope): string | undefined {
+    if (role === undefined) return undefined;
+    if (!scope) return role; // superadmin — scope kosong
+    const assignable = ASSIGNABLE_BY_LEVEL[UsersService.scopeLevel(scope)];
+    if (!assignable || !assignable.includes(role)) {
+      throw new ForbiddenException('Anda tidak dapat menetapkan role tersebut');
+    }
+    return role;
+  }
+
+  /**
+   * Non-superadmin: rantingId dari client harus berada dalam cakupannya.
+   * Superadmin bebas menempatkan user di ranting mana pun.
+   */
+  private async resolveRantingId(
+    rantingId: string | undefined | null,
+    scope?: UserScope,
+  ): Promise<string | undefined | null> {
+    if (!rantingId || !scope) return rantingId;
+    const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rantingId);
+    if (!ok) {
+      throw new ForbiddenException('Anda hanya dapat mengelola pengguna dalam cakupan Anda');
+    }
+    return rantingId;
+  }
+
+  // ═══════════════════════════════════════════════════════════
   //  HOOKS
   // ═══════════════════════════════════════════════════════════
 
   /**
-   * Before create: hash password, auto-assign rantingId from scope.
-   * Eliminates the `as never` cast on `role` — Prisma accepts
-   * `Record<string, unknown>` so no cast is needed.
+   * Before create: hash password, auto-assign rantingId from scope,
+   * enforce tenant rules on role + rantingId.
    */
   protected async beforeCreate(
     dto: CreateUserDto,
     scope?: UserScope,
     _userId?: string,
   ): Promise<Record<string, unknown>> {
-    const rantingId = dto.rantingId || scope?.rantingId;
+    const role = this.resolveAssignableRole(dto.role, scope);
+    const rantingId = (await this.resolveRantingId(dto.rantingId, scope)) || scope?.rantingId;
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
 
     return {
       email: dto.email,
       namaLengkap: dto.namaLengkap,
-      role: dto.role,                    // ← no more `as never`
+      role,
       rantingId,
       passwordHash,
     };
@@ -82,7 +130,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     const data: Record<string, unknown> = {};
     if (dto.email !== undefined) data.email = dto.email;
     if (dto.namaLengkap !== undefined) data.namaLengkap = dto.namaLengkap;
-    if (dto.role !== undefined) data.role = dto.role;              // ← no more `as never`
+    if (dto.role !== undefined) data.role = dto.role;
     if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
@@ -145,6 +193,10 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   }
 
   async update(id: string, dto: UpdateUserDto, scope?: UserScope) {
+    // Tenant guard — baseUpdate tidak meneruskan scope ke beforeUpdate,
+    // jadi role/rantingId dari client divalidasi di sini sebelum update.
+    this.resolveAssignableRole(dto.role, scope);
+    await this.resolveRantingId(dto.rantingId, scope);
     return this.baseUpdate(id, dto, scope, 'User berhasil diperbarui');
   }
 

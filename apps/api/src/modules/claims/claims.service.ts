@@ -54,8 +54,11 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
   // ── CRUD overrides ─────────────────────────────────────
 
   async findAll(query: ClaimFilterDto, scope?: UserScope) {
+    // Tenant safety: bucket cache per scope — tanpa ini respons 'all' milik
+    // superadmin yang ter-cache akan disajikan ke admin ranting/distrik.
+    const scopeBucket = scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all';
     return this.baseFindAll(
-      `claims:${JSON.stringify(query)}`,
+      `claims:${scopeBucket}:${JSON.stringify(query)}`,
       async () => {
         const where: Record<string, unknown> = {};
         if (query.status) where.status = query.status;

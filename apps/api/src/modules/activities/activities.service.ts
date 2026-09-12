@@ -39,6 +39,8 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     scope?: UserScope,
     userId?: string,
   ): Promise<Record<string, unknown>> {
+    // Tenant safety: scopeType/scopeId dari klien tidak boleh melampaui cakupan.
+    await this.assertKegiatanCreateScope(scope, dto.scopeType, dto.scopeId);
     const data: Record<string, unknown> = {
       nama: dto.nama,
       tipe: dto.tipe,
@@ -80,7 +82,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
 
         // Use base class's buildKegiatanScopeFilter — identical to original OR logic
         if (scope) {
-          const scopeFilter = this.buildKegiatanScopeFilter(scope);
+          const scopeFilter = await this.buildKegiatanScopeFilter(scope);
           if (Object.keys(scopeFilter).length > 0) {
             Object.assign(where, scopeFilter);
           }

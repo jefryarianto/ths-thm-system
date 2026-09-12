@@ -90,6 +90,8 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     scope?: UserScope,
     userId?: string,
   ): Promise<Record<string, unknown>> {
+    // Tenant safety: scopeType/scopeId dari klien tidak boleh melampaui cakupan.
+    await this.assertKegiatanCreateScope(scope, dto.scopeType, dto.scopeId);
     const resolvedScopeType =
       dto.scopeType ||
       (scope?.rantingId
@@ -524,7 +526,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
         const where: Record<string, unknown> = { tipe: 'pendadaran' };
 
         // Apply kegiatan-based scope filter
-        Object.assign(where, this.buildKegiatanScopeFilter(scope));
+        Object.assign(where, await this.buildKegiatanScopeFilter(scope));
 
         // Activity-scoped roles: filter by assignments
         if (role === 'admin_kegiatan' && userId) {
@@ -2529,7 +2531,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       where: { id },
     });
     if (!grad) throw new NotFoundException('Pendadaran tidak ditemukan');
-    this.scopeHelper.verifyKegiatanScope(scope, grad.scopeType, grad.scopeId);
+    await this.scopeHelper.verifyKegiatanScope(this.prisma, scope, grad.scopeType, grad.scopeId);
     return grad;
   }
 

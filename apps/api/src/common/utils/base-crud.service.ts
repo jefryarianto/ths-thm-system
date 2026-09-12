@@ -170,7 +170,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       if (!entity) {
         throw new NotFoundException(this.config.notFound || 'Data tidak ditemukan');
       }
-      this.scopeHelper.verifyKegiatanScope(scope, entity.scopeType, entity.scopeId);
+      await this.scopeHelper.verifyKegiatanScope(this.prisma, scope, entity.scopeType, entity.scopeId);
       return;
     }
 
@@ -244,7 +244,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
    * - User at distrik level sees: their distrik + all wilayah + all ranting
    * - National level: no filter
    */
-  protected buildKegiatanScopeFilter(scope?: UserScope): Record<string, unknown> {
+  protected async buildKegiatanScopeFilter(scope?: UserScope): Promise<Record<string, unknown>> {
     if (!scope) return {};
 
     if (scope.rantingId) {
@@ -256,23 +256,95 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       };
     }
     if (scope.wilayahId) {
+      // Tenant safety: arm ranting dibatasi ke ranting dalam wilayah ini —
+      // bukan seluruh ranting se-nasional.
+      const rantings = await this.prisma.ranting.findMany({
+        where: { wilayahId: scope.wilayahId },
+        select: { id: true },
+      });
       return {
         OR: [
           { scopeType: 'wilayah', scopeId: scope.wilayahId },
-          { scopeType: 'ranting' },
+          { scopeType: 'ranting', scopeId: { in: rantings.map((r) => r.id) } },
         ],
       };
     }
     if (scope.distrikId) {
+      // Tenant safety: arm wilayah/ranting dibatasi ke entitas dalam distrik ini —
+      // bukan seluruh wilayah/ranting se-nasional.
+      const wilayahs = await this.prisma.wilayah.findMany({
+        where: { distrikId: scope.distrikId },
+        select: { id: true },
+      });
+      const wilayahIds = wilayahs.map((w) => w.id);
+      const rantings = await this.prisma.ranting.findMany({
+        where: { wilayahId: { in: wilayahIds } },
+        select: { id: true },
+      });
       return {
         OR: [
           { scopeType: 'distrik', scopeId: scope.distrikId },
-          { scopeType: 'wilayah' },
-          { scopeType: 'ranting' },
+          { scopeType: 'wilayah', scopeId: { in: wilayahIds } },
+          { scopeType: 'ranting', scopeId: { in: rantings.map((r) => r.id) } },
         ],
       };
     }
     return {};
+  }
+
+  /**
+   * Validasi scopeType/scopeId yang dikirim klien saat MEMBUAT kegiatan/pendadaran.
+   * Hierarkis (kebalikan dari verifyKegiatanScope yang hanya mengecek exact match):
+   * - ranting admin      → scope ranting itu saja
+   * - admin wilayah      → wilayahnya + ranting dalam wilayahnya
+   * - admin distrik      → distriknya + semua wilayah/ranting dalam distriknya
+   * - superadmin         → bebas
+   * scopeType yang dikenali: ranting | wilayah | distrik | unit_latihan | nasional.
+   * Melempar ForbiddenException bila klien mencoba membuat kegiatan di luar cakupan.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async assertKegiatanCreateScope(scope: UserScope | undefined, scopeType?: string, scopeId?: string): Promise<void> {
+    if (!scope || !scopeType || !scopeId) return; // superadmin atau kegiatan tanpa scope eksplisit
+
+    if (scopeType === 'nasional') return; // khusus superadmin — divalidasi di bawah
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const inScope = async (resourceRantingId?: string | null): Promise<boolean> =>
+      this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, resourceRantingId ?? undefined);
+
+    if (scopeType === 'ranting' || scopeType === 'unit_latihan') {
+      if (!(await inScope(scopeId))) {
+        throw new ForbiddenException('Anda hanya dapat membuat kegiatan dalam cakupan Anda');
+      }
+      return;
+    }
+
+    if (scopeType === 'wilayah') {
+      if (scope.wilayahId) {
+        if (scopeId !== scope.wilayahId) {
+          throw new ForbiddenException('Anda hanya dapat membuat kegiatan dalam cakupan Anda');
+        }
+        return;
+      }
+      if (scope.distrikId) {
+        const wilayah = await this.prisma.wilayah.findUnique({
+          where: { id: scopeId },
+          select: { distrikId: true },
+        });
+        if (wilayah?.distrikId !== scope.distrikId) {
+          throw new ForbiddenException('Anda hanya dapat membuat kegiatan dalam cakupan Anda');
+        }
+        return;
+      }
+      throw new ForbiddenException('Anda hanya dapat membuat kegiatan dalam cakupan Anda');
+    }
+
+    if (scopeType === 'distrik') {
+      if (scopeId !== scope.distrikId) {
+        throw new ForbiddenException('Anda hanya dapat membuat kegiatan dalam cakupan Anda');
+      }
+      return;
+    }
   }
 
   // ── Cache helpers ───────────────────────────────────────

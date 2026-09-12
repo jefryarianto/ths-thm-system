@@ -211,6 +211,7 @@ describe('ExaminersService', () => {
 
       await service.assign('u1', { kegiatanId: 'k1' }, { rantingId: 'r1' });
       expect(mockScopeHelper.verifyKegiatanScope).toHaveBeenCalledWith(
+        mockPrisma,
         { rantingId: 'r1' },
         'ranting',
         'r1',

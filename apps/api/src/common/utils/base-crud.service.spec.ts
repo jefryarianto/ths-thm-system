@@ -245,3 +245,172 @@ describe('BaseCrudService optimistic locking', () => {
     });
   });
 });
+
+describe('BaseCrudService buildKegiatanScopeFilter (district tenant safety)', () => {
+  function makeService(prisma: any) {
+    const scopeHelper = {
+      verifyResourceAccess: jest.fn(),
+      hasAccessToResourceAsync: jest.fn(),
+    };
+    const cache = {
+      getOrSet: jest.fn((_k: string, f: () => unknown) => f()),
+      invalidatePrefix: jest.fn(),
+    };
+    class TestKegiatanService extends BaseCrudService<Record<string, unknown>, Record<string, unknown>> {
+      constructor() {
+        super(prisma as never, scopeHelper as never, cache as never, {
+          model: 'kegiatan',
+          prefix: 'test:',
+          scopeStrategy: 'kegiatan',
+        });
+      }
+      async doFilter(scope?: any) {
+        return this.buildKegiatanScopeFilter(scope);
+      }
+    }
+    return new TestKegiatanService();
+  }
+
+  it('should scope wilayah/ranting arms to the district of the admin', async () => {
+    const prisma = {
+      wilayah: { findMany: jest.fn().mockResolvedValue([{ id: 'w1' }, { id: 'w2' }]) },
+      ranting: { findMany: jest.fn().mockResolvedValue([{ id: 'r1' }, { id: 'r2' }]) },
+    };
+    const filter = await makeService(prisma).doFilter({ distrikId: 'd1' });
+    expect(prisma.wilayah.findMany).toHaveBeenCalledWith({ where: { distrikId: 'd1' }, select: { id: true } });
+    expect(filter.OR).toEqual([
+      { scopeType: 'distrik', scopeId: 'd1' },
+      { scopeType: 'wilayah', scopeId: { in: ['w1', 'w2'] } },
+      { scopeType: 'ranting', scopeId: { in: ['r1', 'r2'] } },
+    ]);
+  });
+
+  it('should keep ranting-level filter unchanged and skip lookups', async () => {
+    const prisma = {
+      wilayah: { findMany: jest.fn() },
+      ranting: { findMany: jest.fn() },
+    };
+    const filter = await makeService(prisma).doFilter({ rantingId: 'r9' });
+    expect(filter).toEqual({
+      OR: [
+        { scopeType: 'ranting', scopeId: 'r9' },
+        { scopeType: 'unit_latihan', scopeId: 'r9' },
+      ],
+    });
+    expect(prisma.wilayah.findMany).not.toHaveBeenCalled();
+  });
+
+  it('should scope ranting arm to the wilayah of a region admin', async () => {
+    const prisma = {
+      ranting: { findMany: jest.fn().mockResolvedValue([{ id: 'r1' }]) },
+    };
+    const filter = await makeService(prisma).doFilter({ wilayahId: 'w1' });
+    expect(prisma.ranting.findMany).toHaveBeenCalledWith({ where: { wilayahId: 'w1' }, select: { id: true } });
+    expect(filter.OR).toEqual([
+      { scopeType: 'wilayah', scopeId: 'w1' },
+      { scopeType: 'ranting', scopeId: { in: ['r1'] } },
+    ]);
+  });
+});
+
+describe('BaseCrudService assertKegiatanCreateScope', () => {
+  function makeService(prisma: any, scopeHelper: any) {
+    const cache = {
+      getOrSet: jest.fn((_k: string, f: () => unknown) => f()),
+      invalidatePrefix: jest.fn(),
+    };
+    class TestKegiatanService extends BaseCrudService<Record<string, unknown>, Record<string, unknown>> {
+      constructor() {
+        super(prisma as never, scopeHelper as never, cache as never, {
+          model: 'kegiatan',
+          prefix: 'test:',
+          scopeStrategy: 'kegiatan',
+        });
+      }
+      async doAssert(scope: any, scopeType?: string, scopeId?: string) {
+        return this.assertKegiatanCreateScope(scope, scopeType, scopeId);
+      }
+    }
+    return new TestKegiatanService();
+  }
+
+  it('should no-op for superadmin (no scope) or missing scope fields', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await makeService(prisma, helper).doAssert(undefined, 'ranting', 'r-any');
+    await makeService(prisma, helper).doAssert({ distrikId: 'd1' });
+    expect(prisma.ranting.findUnique).not.toHaveBeenCalled();
+    expect(helper.hasAccessToResourceAsync).not.toHaveBeenCalled();
+  });
+
+  it('should allow nasional for anyone passing it (superadmin path)', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'nasional', 'national'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('should reject a scoped admin creating a ranting-scoped kegiatan outside their scope', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn().mockResolvedValue(false) };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'ranting', 'r-other'),
+    ).rejects.toThrow(ForbiddenException);
+    expect(helper.hasAccessToResourceAsync).toHaveBeenCalledWith(prisma, { distrikId: 'd1' }, 'r-other');
+  });
+
+  it('should allow a district admin to create a ranting-scoped kegiatan inside their district', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn().mockResolvedValue(true) };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'ranting', 'r1'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('should allow a region admin to create a wilayah-scoped kegiatan in their own wilayah', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await expect(
+      makeService(prisma, helper).doAssert({ wilayahId: 'w1' }, 'wilayah', 'w1'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('should allow a district admin to create a wilayah-scoped kegiatan inside their district', async () => {
+    const prisma = {
+      ranting: { findUnique: jest.fn() },
+      wilayah: { findUnique: jest.fn().mockResolvedValue({ distrikId: 'd1' }) },
+    };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'wilayah', 'w1'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('should reject a district admin creating a wilayah-scoped kegiatan in another district', async () => {
+    const prisma = {
+      ranting: { findUnique: jest.fn() },
+      wilayah: { findUnique: jest.fn().mockResolvedValue({ distrikId: 'd-other' }) },
+    };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'wilayah', 'w-other'),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('should reject a district admin creating a distrik-scoped kegiatan for another district', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'distrik', 'd-other'),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('should allow a district admin creating a distrik-scoped kegiatan for their own district', async () => {
+    const prisma = { ranting: { findUnique: jest.fn() }, wilayah: { findUnique: jest.fn() } };
+    const helper = { hasAccessToResourceAsync: jest.fn() };
+    await expect(
+      makeService(prisma, helper).doAssert({ distrikId: 'd1' }, 'distrik', 'd1'),
+    ).resolves.toBeUndefined();
+  });
+});

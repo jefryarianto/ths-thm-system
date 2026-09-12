@@ -196,4 +196,51 @@ describe('UsersService', () => {
       });
     });
   });
+
+  describe('tenant isolation (regression)', () => {
+    it('should reject creating a superadmin by a scoped admin', async () => {
+      mockPrisma.user.create.mockResolvedValue({ id: 'u1' });
+      await expect(
+        service.create(
+          { email: 'x@y.com', namaLengkap: 'X', role: 'superadmin' },
+          { distrikId: 'd1' },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow a scoped admin to create a role at or below their level', async () => {
+      mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'admin_ranting' });
+      const result = await service.create(
+        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_ranting' },
+        { distrikId: 'd1' },
+      );
+      expect(result.data.role).toBe('admin_ranting');
+    });
+
+    it('should reject assigning a ranting outside scope on create', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.create(
+          { email: 'x@y.com', namaLengkap: 'X', role: 'anggota', rantingId: 'r-other' },
+          { distrikId: 'd1' },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject updating a user into a superadmin role when scoped', async () => {
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1' });
+      await expect(
+        service.update('u1', { role: 'superadmin' }, { distrikId: 'd1' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow superadmin (no scope) to assign any role', async () => {
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'superadmin' });
+      const result = await service.update('u1', { role: 'superadmin' });
+      expect(result.data.role).toBe('superadmin');
+    });
+  });
 });

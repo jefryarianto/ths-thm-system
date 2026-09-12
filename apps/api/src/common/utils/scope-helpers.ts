@@ -65,7 +65,15 @@ export class ScopeHelper {
    * Checks ranting, wilayah, and distrik level.
    * Throws ForbiddenException if access is denied.
    */
-  verifyKegiatanScope(scope: UserScope | undefined, scopeType?: string, scopeId?: string): void {
+  async verifyKegiatanScope(
+    prisma: {
+      wilayah: { findUnique: (args: { where: { id: string }; select?: { distrikId?: boolean } }) => Promise<{ distrikId: string | null } | null> };
+      ranting: { findUnique: (args: { where: { id: string }; include?: { wilayah?: boolean } }) => Promise<{ wilayahId: string; wilayah?: { distrikId: string | null } | null } | null> };
+    },
+    scope: UserScope | undefined,
+    scopeType?: string,
+    scopeId?: string,
+  ): Promise<void> {
     if (!scope || !scopeType || !scopeId) return;
 
     if (scope.rantingId && scopeType === 'ranting' && scopeId !== scope.rantingId) {
@@ -76,6 +84,30 @@ export class ScopeHelper {
     }
     if (scope.distrikId && scopeType === 'distrik' && scopeId !== scope.distrikId) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+    // Tenant safety: level wilayah/ranting harus benar-benar berada dalam
+    // cakupan (hierarkis) — sebelumnya hanya exact-match, sehingga admin
+    // ter-scope penuh (mis. admin_distrik tanpa rantingId) dapat melihat atau
+    // memodifikasi kegiatan milik distrik/wilayah/ranting lain.
+    if (scope.distrikId && (scopeType === 'wilayah' || scopeType === 'ranting')) {
+      const ok =
+        scopeType === 'wilayah'
+          ? (
+              await prisma.wilayah.findUnique({
+                where: { id: scopeId },
+                select: { distrikId: true },
+              })
+            )?.distrikId === scope.distrikId
+          : await this.hasAccessToResourceAsync(prisma, scope, scopeId);
+      if (!ok) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+    if (scope.wilayahId && scopeType === 'ranting') {
+      const ok = await this.hasAccessToResourceAsync(prisma, scope, scopeId);
+      if (!ok) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
     }
   }
 
@@ -136,6 +168,11 @@ export class ScopeHelper {
     });
 
     if (!ranting) return false;
+
+    // Tenant safety: ranting-less (national-level) resources are NOT
+    // accessible to scoped admins — otherwise a district/region admin
+    // could read or modify national accounts (e.g. superadmin without ranting).
+    if (!ranting.wilayahId) return false;
 
     if (scope.wilayahId) {
       return ranting.wilayahId === scope.wilayahId;

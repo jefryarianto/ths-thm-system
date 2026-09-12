@@ -68,7 +68,7 @@ export class DocumentsService {
   }
 
   async findAll(query: DocumentFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.tipe || ''}:${query.anggotaId || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.tipe || ''}:${query.anggotaId || ''}`;
 
     return this.cache.getOrSet(
       cacheKey,

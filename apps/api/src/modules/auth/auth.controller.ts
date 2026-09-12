@@ -26,6 +26,7 @@ import { Request, Response } from 'express';
 import { env } from '../../config/env.validation';
 import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
+import { RequireScope } from '../../common/decorators/scope.decorator';
 
 function parseCookie(cookieHeader: string, name: string): string | undefined {
   const cookies = cookieHeader.split(';').map((c) => c.trim().split('='));
@@ -215,6 +216,10 @@ export class AuthController {
 
   @Get('scope')
   @ApiBearerAuth()
+  // Tenant safety: tanpa decorator ini ScopeGuard tidak mengisi req.scope,
+  // sehingga endpoint selalu melaporkan distrik/wilayah/ranting = null —
+  // fitur "lock" admin distrik pada halaman settings jadi tidak berfungsi.
+  @RequireScope('self')
   @ApiOperation({ summary: 'Ambil scope pengguna (distrik, wilayah, ranting)' })
   async getScope(@Req() req: ScopedRequest) {
     return {

@@ -536,4 +536,39 @@ describe('MembersService', () => {
       );
     });
   });
+
+  describe('tenant isolation (regression)', () => {
+    it('should ignore client distrikId filter outside the admin scope', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockPrisma.anggota.count.mockResolvedValue(0);
+      mockScopeHelper.buildScopeFilter.mockReturnValue({ ranting: { wilayah: { distrikId: 'd1' } } });
+
+      await service.findAll({ distrikId: 'd-other' } as any, { distrikId: 'd1' });
+
+      const call = mockPrisma.anggota.findMany.mock.calls[0][0];
+      expect(call.where.ranting).toEqual({ wilayah: { distrikId: 'd1' } });
+    });
+
+    it('should honor client distrikId filter for national (no scope)', async () => {
+      mockPrisma.anggota.findMany.mockResolvedValue([]);
+      mockPrisma.anggota.count.mockResolvedValue(0);
+
+      await service.findAll({ distrikId: 'd2' } as any);
+
+      const call = mockPrisma.anggota.findMany.mock.calls[0][0];
+      expect(call.where.ranting).toEqual({ wilayah: { distrikId: 'd2' } });
+    });
+
+    it('should reject creating a member in a ranting outside scope', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      mockScopeHelper.buildScopeFilter.mockReturnValue({});
+      mockNraService.generateMemberNumber.mockResolvedValue('0114-0101-001-2026');
+      mockPrisma.anggota.create.mockResolvedValue({ id: 'm1' });
+
+      await expect(
+        service.create({ namaLengkap: 'X', rantingId: 'r-other' }, { distrikId: 'd1' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
+    });
+  });
 });

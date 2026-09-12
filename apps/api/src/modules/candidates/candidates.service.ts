@@ -157,7 +157,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
   // ═══════════════════════════════════════════════════════════
 
   async findAll(filter: CandidateFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.status || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${filter.page || 1}:${filter.limit || 10}:${filter.search || ''}:${filter.rantingId || ''}:${filter.status || ''}`;
 
     return this.baseFindAll(
       cacheKey,
@@ -171,7 +171,11 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
             { email: { contains: filter.search, mode: 'insensitive' } },
           ];
         }
-        if (filter.rantingId) where.rantingId = filter.rantingId;
+        // Tenant safety: scope mengikat batas atas; filter rantingId klien
+        // hanya boleh mempersempit (irisan), bukan menimpa.
+        if (!scope?.rantingId && filter.rantingId) {
+          where.rantingId = filter.rantingId;
+        }
         if (filter.status) where.status = filter.status;
 
         return where;

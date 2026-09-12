@@ -230,7 +230,8 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
 
     // Scope verification: verify kegiatan is within scope
     if (scope) {
-      this.scopeHelper.verifyKegiatanScope(
+      await this.scopeHelper.verifyKegiatanScope(
+        this.prisma,
         scope,
         kegiatan.scopeType ?? undefined,
         kegiatan.scopeId ?? undefined,

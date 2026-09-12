@@ -123,7 +123,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
   // ── CRUD Overrides ──────────────────────────────────────
 
   async findAll(query: DueFilterDto, scope?: UserScope) {
-    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
+    const cacheKey = `${this.CACHE_PREFIX}list:${scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'all'}:${query.page || 1}:${query.limit || 10}:${query.status || ''}:${query.periode || ''}`;
 
     return this.baseFindAll(
       cacheKey,

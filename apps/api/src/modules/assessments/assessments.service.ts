@@ -452,7 +452,8 @@ export class AssessmentsService {
     if (query.kegiatanId) {
       const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: query.kegiatanId } });
       if (kegiatan) {
-        this.scopeHelper.verifyKegiatanScope(
+        await this.scopeHelper.verifyKegiatanScope(
+          this.prisma,
           scope,
           kegiatan.scopeType ?? undefined,
           kegiatan.scopeId ?? undefined,
@@ -493,7 +494,8 @@ export class AssessmentsService {
     if (dto.kegiatanId && scope) {
       const kegiatan = await this.prisma.kegiatan.findUnique({ where: { id: dto.kegiatanId } });
       if (kegiatan) {
-        this.scopeHelper.verifyKegiatanScope(
+        await this.scopeHelper.verifyKegiatanScope(
+          this.prisma,
           scope,
           kegiatan.scopeType ?? undefined,
           kegiatan.scopeId ?? undefined,

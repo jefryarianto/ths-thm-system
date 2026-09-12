@@ -6,6 +6,9 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!uuid)"
+  ],
   "setupFiles": ["./test/jest-e2e.setup.js"],
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/src/$1"
