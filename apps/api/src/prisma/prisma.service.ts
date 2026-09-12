@@ -3,6 +3,25 @@ import { PrismaClient } from '@prisma/client';
 import { getRequestContext } from '../common/utils/request-context';
 import { applyMiddlewares } from './prisma-middleware';
 
+/**
+ * Model yang benar-benar memiliki kolom distrikId (tenant-aware).
+ * Hanya model dalam daftar ini yang boleh difilter tenant — menambahkan
+ * `distrikId` ke model lain (mis. Iuran, Notifikasi, Anggota, Dokumen) akan
+ * membuat Prisma melempar PrismaClientValidationError sehingga anggota/admin
+ * non-superadmin mendapat HTTP 500 ketika memanggil findMany.
+ */
+const TENANT_SCOPED_MODELS: ReadonlySet<string> = new Set([
+  'Wilayah',
+  'UnitLatihan',
+  'TandaTangan',
+  'Stempel',
+  'Jabatan',
+  'Kepengurusan',
+  'Penandatangan',
+  'DokumenPenandatangan',
+  'CardTemplate',
+]);
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
@@ -16,7 +35,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         $allModels: {
           async findMany({ args, query, model }) {
             const ctx = getRequestContext();
-            if (ctx?.distrikId) {
+            if (ctx?.distrikId && TENANT_SCOPED_MODELS.has(model)) {
               // Apply tenant isolation for tenant-aware models
               // Add distrikId filter dynamically
               args.where = {
