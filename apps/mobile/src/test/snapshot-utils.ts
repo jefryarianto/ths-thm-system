@@ -9,19 +9,25 @@
 
 import { jest } from '@jest/globals';
 
+type MockHandler = (...args: unknown[]) => Promise<unknown>;
+
 /**
  * A fully mocked `lib/api-client` module. Screens import `apiClient` (default)
  * and named exports `unwrap`/`toAbsoluteUrl`/`setTokens`/`clearTokens`.
  *
  * `unwrap(r)` simply returns `r.data.data` (mirrors the real implementation).
  */
-export function mockApiClient(overrides: Partial<Record<'get' | 'post' | 'patch' | 'put' | 'delete', jest.Mock>> = {}) {
-  const handlers = {
-    get: overrides.get ?? jest.fn().mockResolvedValue({ data: { data: null } }),
-    post: overrides.post ?? jest.fn().mockResolvedValue({ data: { data: null } }),
-    patch: overrides.patch ?? jest.fn().mockResolvedValue({ data: { data: null } }),
-    put: overrides.put ?? jest.fn().mockResolvedValue({ data: { data: null } }),
-    delete: overrides.delete ?? jest.fn().mockResolvedValue({ data: { data: null } }),
+export function mockApiClient(
+  overrides: Partial<Record<'get' | 'post' | 'patch' | 'put' | 'delete', MockHandler>> = {},
+) {
+  // Implementation-style jest.fn(() => Promise...) — avoids `never` inference
+  // from chaining .mockResolvedValue on an untyped jest.fn().
+  const handlers: Record<'get' | 'post' | 'patch' | 'put' | 'delete', MockHandler> = {
+    get: overrides.get ?? jest.fn(() => Promise.resolve({ data: { data: null } })),
+    post: overrides.post ?? jest.fn(() => Promise.resolve({ data: { data: null } })),
+    patch: overrides.patch ?? jest.fn(() => Promise.resolve({ data: { data: null } })),
+    put: overrides.put ?? jest.fn(() => Promise.resolve({ data: { data: null } })),
+    delete: overrides.delete ?? jest.fn(() => Promise.resolve({ data: { data: null } })),
   };
 
   jest.doMock('../lib/api-client', () => ({

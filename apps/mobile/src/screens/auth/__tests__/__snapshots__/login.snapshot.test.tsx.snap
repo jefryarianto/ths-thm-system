@@ -1,0 +1,712 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LoginScreen snapshot matches snapshot with theme tokens resolved 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#f3f4f6",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    pointerEvents="none"
+    style={
+      {
+        "backgroundColor": "#2563eb",
+        "borderRadius": 160,
+        "height": 280,
+        "left": -80,
+        "opacity": 0.1,
+        "position": "absolute",
+        "right": -80,
+        "top": -120,
+      }
+    }
+  />
+  <RCTScrollView
+    contentContainerStyle={
+      {
+        "flexGrow": 1,
+        "justifyContent": "center",
+        "paddingHorizontal": 24,
+        "paddingVertical": 24,
+      }
+    }
+    keyboardShouldPersistTaps="handled"
+    showsVerticalScrollIndicator={false}
+  >
+    <View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "marginBottom": 24,
+          }
+        }
+      >
+        <Image
+          resizeMode="contain"
+          source={
+            {
+              "testUri": "../../../assets/images/logo.png",
+            }
+          }
+          style={
+            {
+              "backgroundColor": "#ffffff",
+              "borderRadius": 24,
+              "height": 116,
+              "marginBottom": 14,
+              "padding": 8,
+              "width": 116,
+            }
+          }
+        />
+        <Text
+          style={
+            {
+              "color": "#0f172a",
+              "fontSize": 32,
+              "fontWeight": "bold",
+              "letterSpacing": 0.5,
+              "textAlign": "center",
+            }
+          }
+        >
+          THS-THM
+        </Text>
+        <Text
+          style={
+            {
+              "color": "#94a3b8",
+              "fontSize": 15,
+              "marginTop": 2,
+              "textAlign": "center",
+            }
+          }
+        >
+          Sistem Manajemen
+        </Text>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#1d4ed8",
+              "borderRadius": 999,
+              "flexDirection": "row",
+              "gap": 6,
+              "marginTop": 14,
+              "paddingHorizontal": 14,
+              "paddingVertical": 6,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "backgroundColor": "#dbeafe",
+                "borderRadius": 4,
+                "height": 7,
+                "width": 7,
+              }
+            }
+          />
+          <Text
+            style={
+              {
+                "color": "#ffffff",
+                "fontSize": 12,
+                "fontWeight": "600",
+                "letterSpacing": 0.3,
+              }
+            }
+          >
+            Organisasi Profesional
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "backgroundColor": "#ffffff",
+            "borderColor": "#f3f4f6",
+            "borderRadius": 20,
+            "borderWidth": 1,
+            "elevation": 6,
+            "padding": 24,
+            "shadowColor": "#0f172a",
+            "shadowOffset": {
+              "height": 8,
+              "width": 0,
+            },
+            "shadowOpacity": 0.08,
+            "shadowRadius": 24,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#475569",
+              "fontSize": 13,
+              "fontWeight": "600",
+              "marginBottom": 6,
+              "marginTop": 14,
+            }
+          }
+        >
+          Email / No. HP
+        </Text>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#f3f4f6",
+              "borderColor": "#e5e7eb",
+              "borderRadius": 12,
+              "borderWidth": 1,
+              "flexDirection": "row",
+              "paddingHorizontal": 14,
+            }
+          }
+        >
+          <Ionicons
+            color="#94a3b8"
+            name="mail-outline"
+            size={20}
+            style={
+              {
+                "marginRight": 10,
+              }
+            }
+          />
+          <TextInput
+            autoCapitalize="none"
+            keyboardType="default"
+            onChangeText={[Function]}
+            placeholder="email@ths-thm.org atau 08xxx"
+            placeholderTextColor="#94a3b8"
+            style={
+              {
+                "color": "#0f172a",
+                "flex": 1,
+                "fontSize": 16,
+                "paddingVertical": 13,
+              }
+            }
+            value=""
+          />
+        </View>
+        <Text
+          style={
+            {
+              "color": "#475569",
+              "fontSize": 13,
+              "fontWeight": "600",
+              "marginBottom": 6,
+              "marginTop": 14,
+            }
+          }
+        >
+          Password
+        </Text>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#f3f4f6",
+              "borderColor": "#e5e7eb",
+              "borderRadius": 12,
+              "borderWidth": 1,
+              "flexDirection": "row",
+              "paddingHorizontal": 14,
+            }
+          }
+        >
+          <Ionicons
+            color="#94a3b8"
+            name="lock-closed-outline"
+            size={20}
+            style={
+              {
+                "marginRight": 10,
+              }
+            }
+          />
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="Password"
+            placeholderTextColor="#94a3b8"
+            secureTextEntry={true}
+            style={
+              {
+                "color": "#0f172a",
+                "flex": 1,
+                "fontSize": 16,
+                "paddingVertical": 13,
+              }
+            }
+            value=""
+          />
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            hitSlop={
+              {
+                "bottom": 10,
+                "left": 10,
+                "right": 10,
+                "top": 10,
+              }
+            }
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "justifyContent": "center",
+                "opacity": 1,
+                "paddingLeft": 12,
+              }
+            }
+          >
+            <Ionicons
+              color="#94a3b8"
+              name="eye-outline"
+              size={22}
+            />
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 8,
+              "marginTop": 14,
+            }
+          }
+        >
+          <RCTSwitch
+            accessibilityRole="switch"
+            onChange={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            onTintColor="#2563eb"
+            style={
+              {
+                "height": 31,
+                "width": 51,
+              }
+            }
+            thumbTintColor="#f3f4f6"
+            tintColor="#d1d5db"
+            value={false}
+          />
+          <Text
+            style={
+              {
+                "color": "#475569",
+                "fontSize": 14,
+                "fontWeight": "500",
+              }
+            }
+          >
+            Ingat saya
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": false,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#2563eb",
+              "borderRadius": 12,
+              "elevation": 4,
+              "marginTop": 20,
+              "opacity": 1,
+              "padding": 15,
+              "shadowColor": "#2563eb",
+              "shadowOffset": {
+                "height": 4,
+                "width": 0,
+              },
+              "shadowOpacity": 0.3,
+              "shadowRadius": 10,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#ffffff",
+                "fontSize": 16,
+                "fontWeight": "700",
+                "letterSpacing": 0.3,
+              }
+            }
+          >
+            Masuk
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "alignItems": "center",
+              "marginTop": 8,
+              "opacity": 1,
+              "padding": 6,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#2563eb",
+                "fontSize": 13,
+                "fontWeight": "600",
+              }
+            }
+          >
+            Lupa password?
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "marginTop": 20,
+          }
+        }
+      >
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "marginVertical": 16,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "backgroundColor": "#e5e7eb",
+                "flex": 1,
+                "height": 1,
+              }
+            }
+          />
+          <Text
+            style={
+              {
+                "color": "#94a3b8",
+                "fontSize": 13,
+                "marginHorizontal": 12,
+              }
+            }
+          >
+            Belum punya akun?
+          </Text>
+          <View
+            style={
+              {
+                "backgroundColor": "#e5e7eb",
+                "flex": 1,
+                "height": 1,
+              }
+            }
+          />
+        </View>
+        <View
+          style={
+            {
+              "gap": 10,
+              "marginTop": 4,
+            }
+          }
+        >
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "backgroundColor": "#ffffff",
+                "borderColor": "#e5e7eb",
+                "borderRadius": 14,
+                "borderWidth": 1,
+                "flexDirection": "row",
+                "gap": 12,
+                "opacity": 1,
+                "padding": 12,
+              }
+            }
+          >
+            <View
+              style={
+                [
+                  {
+                    "alignItems": "center",
+                    "borderRadius": 10,
+                    "height": 36,
+                    "justifyContent": "center",
+                    "width": 36,
+                  },
+                  {
+                    "backgroundColor": "#dbeafe",
+                  },
+                ]
+              }
+            >
+              <Ionicons
+                color="#1d4ed8"
+                name="id-card-outline"
+                size={18}
+              />
+            </View>
+            <View
+              style={
+                {
+                  "flex": 1,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#0f172a",
+                    "fontSize": 14,
+                    "fontWeight": "700",
+                  }
+                }
+              >
+                Klaim Keanggotaan
+              </Text>
+              <Text
+                style={
+                  {
+                    "color": "#94a3b8",
+                    "fontSize": 12,
+                    "lineHeight": 16,
+                    "marginTop": 1,
+                  }
+                }
+              >
+                Sudah menjadi anggota tapi belum terdaftar di sistem
+              </Text>
+            </View>
+            <Ionicons
+              color="#94a3b8"
+              name="chevron-forward"
+              size={18}
+            />
+          </View>
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "backgroundColor": "#ffffff",
+                "borderColor": "#e5e7eb",
+                "borderRadius": 14,
+                "borderWidth": 1,
+                "flexDirection": "row",
+                "gap": 12,
+                "opacity": 1,
+                "padding": 12,
+              }
+            }
+          >
+            <View
+              style={
+                [
+                  {
+                    "alignItems": "center",
+                    "borderRadius": 10,
+                    "height": 36,
+                    "justifyContent": "center",
+                    "width": 36,
+                  },
+                  {
+                    "backgroundColor": "#fef3c7",
+                  },
+                ]
+              }
+            >
+              <Ionicons
+                color="#d97706"
+                name="person-add-outline"
+                size={18}
+              />
+            </View>
+            <View
+              style={
+                {
+                  "flex": 1,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#0f172a",
+                    "fontSize": 14,
+                    "fontWeight": "700",
+                  }
+                }
+              >
+                Daftar Calon Anggota
+              </Text>
+              <Text
+                style={
+                  {
+                    "color": "#94a3b8",
+                    "fontSize": 12,
+                    "lineHeight": 16,
+                    "marginTop": 1,
+                  }
+                }
+              >
+                Belum menjadi anggota — isi formulir pendaftaran calon
+              </Text>
+            </View>
+            <Ionicons
+              color="#94a3b8"
+              name="chevron-forward"
+              size={18}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  </RCTScrollView>
+</View>
+`;

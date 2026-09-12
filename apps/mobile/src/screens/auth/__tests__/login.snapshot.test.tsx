@@ -9,7 +9,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { jest } from '@jest/globals';
-import { mockApiClient } from '../../test/snapshot-utils';
+import { mockApiClient } from '../../../test/snapshot-utils';
 
 jest.mock('../../../lib/api-client');
 jest.mock('../../../store/auth-store', () => ({
@@ -18,7 +18,7 @@ jest.mock('../../../store/auth-store', () => ({
       user: null,
       isLoading: false,
       isAuthenticated: false,
-      login: jest.fn().mockResolvedValue({}),
+      login: jest.fn(() => Promise.resolve({})),
       logout: jest.fn(),
       loadUser: jest.fn(),
     }),
@@ -33,8 +33,6 @@ jest.mock('../../../lib/fcm', () => ({
   registerForPushNotifications: jest.fn(),
 }));
 
-// Ensure the splash video is disabled for a stable snapshot (only login UI).
-let mockProviders = { googleOAuthEnabled: true };
 beforeEach(() => {
   mockApiClient({});
 });

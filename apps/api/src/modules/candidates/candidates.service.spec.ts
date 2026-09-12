@@ -46,6 +46,13 @@ describe('CandidatesService', () => {
     ranting: {
       findUnique: jest.fn().mockResolvedValue(mockRanting),
     },
+    // approve() membuat akun user untuk kandidat ber-email (aliran remote);
+    // findUnique mengembalikan user existing supaya jalur kredensial sementara
+    // tidak aktif dan asersi email lama tetap valid.
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ id: 'u1' }),
+      create: jest.fn().mockResolvedValue({ id: 'u1' }),
+    },
     importLog: {
       create: jest.fn().mockResolvedValue(undefined),
     },
