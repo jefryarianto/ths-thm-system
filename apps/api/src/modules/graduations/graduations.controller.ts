@@ -285,13 +285,13 @@ export class GraduationsController {
   }
 
   @Post(':id/checkin')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'QR absensi pendadaran — catat kehadiran anggota yang login (self check-in)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'QR absensi pendadaran — catat kehadiran anggota yang login (self check-in)' })
   checkInByQr(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.checkInByQr(id, req.user?.id || '', req.scope);
   }
 
   @Get('invitations/me')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Daftar undangan pendadaran untuk user yang login' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Daftar undangan pendadaran untuk user yang login' })
   getMyInvitations(@Req() req: ScopedRequest) {
     return this.service.getMyInvitations(req.user.id);
   }
@@ -311,7 +311,7 @@ export class GraduationsController {
 
   /** Konfirmasi kehadiran — anggota sendiri (self) ATAU pencatatan manual oleh admin. */
   @Post(':id/invitations/:invitationId/confirm')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { summary: 'Konfirmasi kehadiran undangan (anggota self / admin manual)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Konfirmasi kehadiran undangan (anggota self / admin manual)' })
   confirmInvitation(
     @Param('id') id: string,
     @Param('invitationId') invitationId: string,

@@ -118,3 +118,17 @@ apps/mobile/android/ths-thm-release.keystore
 
 # Base64 keystore utk setup GitHub Actions secret (lokal saja)
 *.keystore.b64
+
+# Artefak debug/local — jangan di-commit
+/*.xml
+/*.png
+/*.py
+*.bat
+api_dev_out.txt
+api_test_out*.txt
+tmp_*.json
+tmp_*.txt
+local_dues.json
+prod_swagger.json
+apps/mobile_flutter/
+apps/api/Dockerfile.font
