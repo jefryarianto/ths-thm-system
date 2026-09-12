@@ -34,6 +34,7 @@ import {
   Image,
   Printer,
   Pencil,
+  AlertTriangle,
   RefreshCw,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
@@ -361,6 +362,7 @@ export default function MemberDetailPage() {
     template?: { frontImage?: string | null; backImage?: string | null; overlayConfig?: Record<string, unknown> } | null;
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
 
   const fetchMember = useCallback(async () => {
     if (!id) return;
@@ -388,13 +390,14 @@ export default function MemberDetailPage() {
   const fetchCardData = useCallback(async () => {
     if (!member) return;
     setCardLoading(true);
+    setCardError(null);
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`${window.location.origin}/api/members/${member.id}/digital-card`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      if (data.success) {
+      if (response.ok && data.success) {
         setCardData({
           qrCode: data.data.qrCode,
           signerName: data.data.card?.signerName,
@@ -405,9 +408,19 @@ export default function MemberDetailPage() {
           levelVisual: data.data.levelVisual || null,
           template: data.data.template || null,
         });
+        setCardError(null);
+      } else {
+        setCardData(null);
+        setCardError(
+          response.status === 403
+            ? 'Kartu tidak dapat diakses untuk anggota ini: berada di luar cakupan data Anda.'
+            : (data?.message as string) || 'Gagal memuat data kartu.'
+        );
       }
-    } catch {
-      // Silently fail - card will show with default values
+    } catch (err) {
+      // Jaringan/parse error
+      setCardData(null);
+      setCardError('Gagal memuat data kartu. Periksa koneksi lalu coba lagi.');
     } finally {
       setCardLoading(false);
     }
@@ -1175,6 +1188,29 @@ export default function MemberDetailPage() {
                         <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
                         <p className="text-sm text-gray-500 dark:text-gray-400">Memuat data kartu anggota...</p>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Error banner - data kartu gagal dimuat (jgn diam-diam tampilkan placeholder) */}
+                  {cardError && (
+                    <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle size={20} className="text-red-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-red-800 dark:text-red-200">{cardError}</p>
+                          <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                            Pratinjau di bawah menampilkan desain generik dan bukan cap/isi kartu sebenarnya.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={fetchCardData}
+                        disabled={cardLoading}
+                        className="shrink-0 flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition disabled:opacity-50"
+                      >
+                        <RefreshCw size={14} className={cardLoading ? 'animate-spin' : ''} />
+                        Coba lagi
+                      </button>
                     </div>
                   )}
 
