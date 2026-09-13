@@ -38,6 +38,7 @@ Kumpulan dokumen perencanaan, spesifikasi, dan referensi pengembangan.
 | `PRD-MOBILE-*.md`            | PRD fitur mobile (approvals, push, scoring, reference)     |
 | `THM_SYSTEM_ANALYSIS.md`     | Analisis sistem THM                                        |
 | `COMPLIANCE.md`              | Catatan kepatuhan                                          |
+| `SECURITY.md`                | Keamanan repo: secret scanning gitleaks (hook + CI)        |
 
 ## Arsip
 
