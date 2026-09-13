@@ -10,6 +10,7 @@
 # ── Scans performed ────────────────────────────────────────────────────
 #
 #   audit      — pnpm audit (dependency vulnerabilities)
+#   gitleaks   — secret scanning (pre-commit lokal + full history di CI)
 #   snyk       — Snyk open-source + container scan (needs SNYK_TOKEN)
 #   trivy      — Trivy filesystem + Docker image scan (SARIF output)
 #
@@ -412,10 +413,89 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "SARIF results uploaded to **GitHub Security tab** → https://github.com/${{ github.repository }}/security/code-scanning" >> $GITHUB_STEP_SUMMARY
 
+  # ─── 4. Secret Scanning (gitleaks) ───────────────────────────────
+  # Konfigurasi: .gitleaks.toml (extends default rules + aturan kustom proyek).
+  # Hook lokal: scripts/pre-commit.sh → gitleaks protect --staged.
+  gitleaks:
+    name: 🔐 Secret Scanning (gitleaks)
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write   # Required for SARIF upload
+      contents: read
+
+    env:
+      GITLEAKS_VERSION: '8.30.1'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # Full history untuk `gitleaks git`
+
+      - name: Install gitleaks
+        shell: bash
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan — git history (full)
+        id: gitleaks-git
+        continue-on-error: true
+        shell: bash
+        run: |
+          gitleaks git . --config .gitleaks.toml --redact --no-banner \
+            --report-format sarif --report-path gitleaks-git.sarif
+
+      - name: Scan — working tree
+        id: gitleaks-dir
+        continue-on-error: true
+        shell: bash
+        run: |
+          gitleaks dir . --config .gitleaks.toml --redact --no-banner \
+            --report-format sarif --report-path gitleaks-dir.sarif
+
+      - name: Upload SARIF (git history)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: gitleaks-git.sarif
+          category: gitleaks-git-history
+
+      - name: Upload SARIF (working tree)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: gitleaks-dir.sarif
+          category: gitleaks-working-tree
+
+      - name: Upload raw artifacts
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-results
+          path: |
+            gitleaks-*.sarif
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce (fail on findings)
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.gitleaks-git.outcome }}" = "failure" ] || [ "${{ steps.gitleaks-dir.outcome }}" = "failure" ]; then
+            echo "::error::gitleaks mendeteksi secret — lihat log di atas atau GitHub Security tab. Rotasi kredensial lalu hapus dari history (git filter-repo / BFG)."
+            exit 1
+          fi
+          echo "✅ Tidak ada secret terdeteksi."
+
   # ─── Summary + Slack notification ─────────────────────────────────
   summary:
     name: 📋 Security Scan Summary
-    needs: [audit, snyk, trivy]
+    needs: [audit, snyk, trivy, gitleaks]
     if: always()
     runs-on: ubuntu-latest
 
@@ -427,6 +507,7 @@ jobs:
           AUDIT_STATUS="${{ needs.audit.result }}"
           SNYK_STATUS="${{ needs.snyk.result }}"
           TRIVY_STATUS="${{ needs.trivy.result }}"
+          GITLEAKS_STATUS="${{ needs.gitleaks.result }}"
 
           ALL_PASSED=true
 
@@ -441,6 +522,15 @@ jobs:
             echo "| 📦 Dependency Audit | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| 📦 Dependency Audit | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
+            ALL_PASSED=false
+          fi
+
+          if [ "$GITLEAKS_STATUS" = "success" ]; then
+            echo "| 🔐 Secret Scanning (gitleaks) | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$GITLEAKS_STATUS" = "skipped" ]; then
+            echo "| 🔐 Secret Scanning (gitleaks) | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🔐 Secret Scanning (gitleaks) | ❌ Failed |" >> $GITHUB_STEP_SUMMARY
             ALL_PASSED=false
           fi
 
@@ -486,6 +576,7 @@ jobs:
           AUDIT_STATUS="${{ needs.audit.result }}"
           SNYK_STATUS="${{ needs.snyk.result }}"
           TRIVY_STATUS="${{ needs.trivy.result }}"
+          GITLEAKS_STATUS="${{ needs.gitleaks.result }}"
 
           # Emoji for each scan
           audit_emoji=""
@@ -495,6 +586,14 @@ jobs:
             *)         audit_emoji="❌" ;;
           esac
           echo "audit_emoji=$audit_emoji" >> "$GITHUB_OUTPUT"
+
+          gitleaks_emoji=""
+          case "$GITLEAKS_STATUS" in
+            success)   gitleaks_emoji="✅" ;;
+            skipped)   gitleaks_emoji="⏭️" ;;
+            *)         gitleaks_emoji="❌" ;;
+          esac
+          echo "gitleaks_emoji=$gitleaks_emoji" >> "$GITHUB_OUTPUT"
 
           snyk_emoji=""
           case "$SNYK_STATUS" in
@@ -513,9 +612,9 @@ jobs:
           echo "trivy_emoji=$trivy_emoji" >> "$GITHUB_OUTPUT"
 
           # Overall emoji
-          if [ "$AUDIT_STATUS" = "success" ] && [ "$SNYK_STATUS" = "success" ] && [ "$TRIVY_STATUS" = "success" ]; then
+          if [ "$AUDIT_STATUS" = "success" ] && [ "$GITLEAKS_STATUS" = "success" ] && [ "$SNYK_STATUS" = "success" ] && [ "$TRIVY_STATUS" = "success" ]; then
             echo "overall_emoji=✅" >> "$GITHUB_OUTPUT"
-          elif [ "$AUDIT_STATUS" = "skipped" ] && [ "$SNYK_STATUS" = "skipped" ] && [ "$TRIVY_STATUS" = "skipped" ]; then
+          elif [ "$AUDIT_STATUS" = "skipped" ] && [ "$GITLEAKS_STATUS" = "skipped" ] && [ "$SNYK_STATUS" = "skipped" ] && [ "$TRIVY_STATUS" = "skipped" ]; then
             echo "overall_emoji=⏭️" >> "$GITHUB_OUTPUT"
           else
             echo "overall_emoji=⚠️" >> "$GITHUB_OUTPUT"
@@ -563,6 +662,10 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Trivy:*\n${{ steps.status.outputs.trivy_emoji }} ${{ needs.trivy.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Gitleaks:*\n${{ steps.status.outputs.gitleaks_emoji }} ${{ needs.gitleaks.result }}"
                     },
                     {
                       "type": "mrkdwn",

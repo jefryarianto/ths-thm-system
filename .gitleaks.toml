@@ -1,0 +1,90 @@
+# Konfigurasi gitleaks — secret scanning untuk THS-THM System
+# Dipakai oleh:
+#   - scripts/pre-commit.sh               (gitleaks protect --staged, hook lokal)
+#   - .github/workflows/security-scan.yml (job gitleaks, full history)
+#
+# Menumpuk aturan bawaan gitleaks (AWS, Stripe, Slack, generic API keys, ...)
+# dengan aturan kustom proyek di bawah. Untuk mematikan aturan bawaan,
+# ganti `useDefault = true` menjadi `false`.
+
+title = "THS-THM Secret Scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "firebase-admin-sdk-private-key"
+description = "Firebase Admin SDK service-account private key"
+regex = '''(?i)["']?private_key["']?\s*[:=]\s*["']?-----BEGIN[ A-Z]*PRIVATE KEY-----[A-Za-z0-9+/=\s\\-]{20,}'''
+keywords = ["private"]
+
+[[rules]]
+id = "firebase-service-account-json"
+description = "Service account JSON (firebase-adminsdk) — jangan pernah commit"
+regex = '''(?i)"(?:client_email|private_key_id|universe_domain)"\s*:\s*"[^"]{8,}"'''
+keywords = ["firebase", "serviceaccount", "iam.gserviceaccount.com"]
+
+[[rules]]
+id = "google-oauth-client-secret"
+description = "Google OAuth client secret (GOCSPX-...)"
+regex = '''(?i)["']?client_secret["']?\s*[:=]\s*["']?GOCSPX-[A-Za-z0-9_-]{10,}'''
+keywords = ["gocspx"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google/Firebase API key (AIza...)"
+regex = '''AIza[0-9A-Za-z_\-]{30,}'''
+keywords = ["aiza"]
+
+[[rules]]
+id = "resend-api-key"
+description = "Resend API key (re_...) untuk email service"
+regex = '''(?i)["']?(?:re_)?api[_-]?key["']?\s*[:=]\s*["']?re_[A-Za-z0-9]{20,}'''
+keywords = ["re_"]
+
+[[rules]]
+id = "jwt-hardcoded-secret"
+description = "JWT secret hardcoded yang bukan placeholder"
+regex = '''(?i)(?:JWT_SECRET|JWT_REFRESH_SECRET)["']?\s*[:=]\s*["']([A-Za-z0-9+/=_\-]{32,})["']'''
+secretGroup = 1
+keywords = ["jwt_secret", "jwt_refresh_secret"]
+
+# ── Izin yang disengaja (false positive) — berlaku utk semua rules ──
+[[allowlists]]
+description = "Fixture test di unit test (*.spec.ts / *.test.ts) — nilai dummy, bukan kredensial asli"
+paths = ['(?i)\.(spec|test)\.(ts|tsx|js|jsx)$']
+
+[[allowlists]]
+description = "Firebase/iOS config publik (identifier client, bukan secret)"
+paths = [
+  '(?i)GoogleService-Info\.plist$',
+  '(?i)google-services\.json$',
+]
+
+[[allowlists]]
+description = "Placeholder & contoh di docs, env example, dan CSV template"
+paths = [
+  '(?i)\.env\.example$',
+  '(?i)^docs/',
+  '(?i)^packages/csv_templates/',
+  '(?i)CHANGELOG\.md$',
+]
+regexes = [
+  '(?i)change-?me|your-?[a-z-]*(key|secret|password)|xxx+|placeholder',
+]
+
+[[allowlists]]
+description = "JWT dummy khusus CI di workflow"
+paths = ['(?i)^\.github/workflows/']
+regexes = ['ci-test-jwt-']
+
+[[allowlists]]
+description = "Kredensial database lokal dev (docker-compose / setup lokal)"
+paths = [
+  '(?i)docker-compose[\.-].*\.ya?ml$',
+  '(?i)^docs/(QUICK_START|DOCKER_DEV_SETUP)\.md$',
+  '(?i)^scripts/',
+]
+regexes = [
+  '(?i)postgres|ths_thm_password|localhost|127\.0\.0\.1',
+]
