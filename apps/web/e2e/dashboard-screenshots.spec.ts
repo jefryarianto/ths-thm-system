@@ -56,6 +56,9 @@ test.describe('Dashboard Page Screenshots', () => {
   }
 
   test('screenshots all dashboard pages in sequence', async ({ page }) => {
+    // Tur ~30 halaman dalam SATU test: dev server meng-compile tiap halaman saat
+    // kunjungan pertama, sehingga cold run mendekati/melampaui timeout 30s.
+    test.slow(); // timeout x3
     // This test verifies sidebar navigation works across all pages
     // Visit pages in order through the sidebar
     const sidebarLinks = [
