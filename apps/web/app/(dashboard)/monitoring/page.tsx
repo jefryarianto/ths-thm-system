@@ -220,7 +220,7 @@ export default function MonitoringPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [sseConnected, setSseConnected] = useState<boolean | null>(null); // null=connecting, true=connected, false=disconnected
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   /**
    * Fallback: fetch health data via REST polling (used when SSE fails).

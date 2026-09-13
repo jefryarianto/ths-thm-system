@@ -51,7 +51,7 @@ export default function MemberSearchPicker({
   const [selected, setSelected] = useState<MemberResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

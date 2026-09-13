@@ -37,7 +37,7 @@ export function useSSE(
   const { token, getToken, onEvent, onConnected, enabled = true, maxRetries = 5 } = options;
   const eventSourceRef = useRef<EventSource | null>(null);
   const [connected, setConnected] = useState(false);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const retryCountRef = useRef(0);
   const shouldReconnectRef = useRef(true);
   // Penghitung percobaan re-auth setelah UNAUTHORIZED — dibatasi agar sebuah

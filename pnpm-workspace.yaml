@@ -4,10 +4,10 @@ packages:
 
 nodeLinker: hoisted
 
+# React TIDAK dioverride: tiap app pin versinya sendiri (web ^19 untuk Next 16,
+# mobile 18.2.0 utk Expo SDK 51, api "18" utk @react-pdf/renderer 3.x).
+# Override global React 18.2.0 membuat web Next 16 jalan di atas React 18 + @types 19.
 overrides:
-  react: 18.2.0
-  react-dom: 18.2.0
-  '@types/react': 18.2.0
   axios: 1.19.0
   form-data: 4.0.6
   fast-uri: 3.1.5

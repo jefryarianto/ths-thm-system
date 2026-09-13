@@ -212,7 +212,7 @@ export default function QueueMonitorPage() {
   const [healthEventLog, setHealthEventLog] = useState<
     { timestamp: Date; status: string; error?: string }[]
   >([]);
-  const fetchStatsRef = useRef<() => Promise<void>>();
+  const fetchStatsRef = useRef<(() => Promise<void>) | undefined>(undefined);
   const prevHealthStatusRef = useRef<string | null>(null);
   const disconnectTimeRef = useRef<number | null>(null);
   const healthEventLogRef = useRef<{ timestamp: Date; status: string; error?: string }[]>([]);
