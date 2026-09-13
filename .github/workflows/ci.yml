@@ -115,7 +115,7 @@ jobs:
   e2e-web:
     name: 🎭 E2E Web (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40 # install+build ~4m, suite 2-worker di runner CI ~20m
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
