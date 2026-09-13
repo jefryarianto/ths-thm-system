@@ -8,12 +8,12 @@ Baris pertama harus header kolom; delimiter koma (`,`); encoding UTF-8.
 
 ## Kolom
 
-| Kolom   | Tipe   | Required | Deskripsi                                            |
-| ------- | ------ | -------- | ---------------------------------------------------- |
-| distrik | string | ✅       | Nama distrik (mis. `Keuskupan Larantuka`)            |
-| wilayah | string |          | Nama wilayah di bawah distrik                        |
-| ranting | string |          | Nama ranting di bawah wilayah                        |
-| lokasiLatihan | string |     | Lokasi latihan ranting (opsional)                    |
+| Kolom         | Tipe   | Required | Deskripsi                                 |
+| ------------- | ------ | -------- | ----------------------------------------- |
+| distrik       | string | ✅       | Nama distrik (mis. `Keuskupan Larantuka`) |
+| wilayah       | string |          | Nama wilayah di bawah distrik             |
+| ranting       | string |          | Nama ranting di bawah wilayah             |
+| lokasiLatihan | string |          | Lokasi latihan ranting (opsional)         |
 
 `distrik` wajib diisi; `wilayah`/`ranting` opsional per baris — baris dengan
 hanya distrik cukup untuk membuat distrik baru. Import berjalan sebagai

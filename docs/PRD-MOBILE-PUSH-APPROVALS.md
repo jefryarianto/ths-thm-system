@@ -8,9 +8,10 @@
 
 ## 1. Latar Belakang
 
-BRD alur #2 *(registrasi → approval berjenjang)* dan #7 *(klaim → approval → pembayaran)*: Admin perlu segera tahu ketika ada pengajuan baru yang perlu ditindaklanjuti.
+BRD alur #2 _(registrasi → approval berjenjang)_ dan #7 _(klaim → approval → pembayaran)_: Admin perlu segera tahu ketika ada pengajuan baru yang perlu ditindaklanjuti.
 
 **Masalah saat ini:**
+
 1. **Backend** — `notifyApprovers()` di approval.service.ts **hanya membuat in-app notification** (record di tabel `notifikasi`), **tidak mengirim FCM push notification**. Admin tidak dapat notifikasi di HP.
 2. **Mobile** — `fcm.ts` sudah punya listener untuk `onNotificationTapped`, tapi **tidak ada handler untuk deep link** ke screen approval detail.
 3. **Admin harus polling** — buka app → cek notifikasi → lihat daftar → tap → approval detail. Tidak ada trigger real-time.
@@ -47,14 +48,14 @@ flowchart LR
 
 ## 2. User Stories
 
-| ID | Sebagai… | Saya ingin… | Sehingga… |
-|:---|:----------|:------------|:----------|
-| US-01 | Admin | Menerima push notification ketika ada approval baru | Saya langsung tahu tanpa buka app |
-| US-02 | Admin | Tap push notification → langsung ke detail approval | Saya tidak perlu mencari di menu |
-| US-03 | Admin | Push notification menampilkan tipe + level approval | Saya bisa prioritaskan dari lock screen |
-| US-04 | Admin | Notifikasi juga muncul sebagai in-app notification | Saya bisa lihat riwayat di app |
-| US-05 | Admin | Bisa atur preferensi notifikasi approval (on/off) | Saya tidak terganggu di luar jam kerja |
-| US-06 | Admin | Notifikasi ketika level saya yang berikutnya | Saya hanya dapat notifikasi relevan |
+| ID    | Sebagai… | Saya ingin…                                         | Sehingga…                               |
+| :---- | :------- | :-------------------------------------------------- | :-------------------------------------- |
+| US-01 | Admin    | Menerima push notification ketika ada approval baru | Saya langsung tahu tanpa buka app       |
+| US-02 | Admin    | Tap push notification → langsung ke detail approval | Saya tidak perlu mencari di menu        |
+| US-03 | Admin    | Push notification menampilkan tipe + level approval | Saya bisa prioritaskan dari lock screen |
+| US-04 | Admin    | Notifikasi juga muncul sebagai in-app notification  | Saya bisa lihat riwayat di app          |
+| US-05 | Admin    | Bisa atur preferensi notifikasi approval (on/off)   | Saya tidak terganggu di luar jam kerja  |
+| US-06 | Admin    | Notifikasi ketika level saya yang berikutnya        | Saya hanya dapat notifikasi relevan     |
 
 ---
 
@@ -90,21 +91,21 @@ await this.notificationsService?.send(approver.id, {
 
 Tambahkan tipe notifikasi baru `approval_request` ke:
 
-| Lokasi | Perubahan |
-|:-------|:----------|
+| Lokasi                                           | Perubahan                                                                                                                          |
+| :----------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
 | `NOTIFICATION_TYPES` di notifications.service.ts | Tambah `{ key: 'approval_request', label: 'Persetujuan', description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui' }` |
-| `TYPE_ICONS` di mobile `use-notifications.ts` | Tambah `approval_request: '✅'` |
+| `TYPE_ICONS` di mobile `use-notifications.ts`    | Tambah `approval_request: '✅'`                                                                                                    |
 
 ### 3.3 API Perubahan
 
 **Tidak ada endpoint baru** — semua perubahan di backend bersifat internal:
 
-| Change | File | Deskripsi |
-|:-------|:-----|:----------|
-| Inject NotificationService | `approval.service.ts` | Tambah constructor injection |
-| Call pushFCM after in-app notif | `approval.service.ts` | `notifyApprovers()` → `this.notificationsService.send()` |
-| Add notif type constant | `notifications.service.ts` | `approval_request` ke NOTIFICATION_TYPES |
-| Add data payload | `approval.service.ts` | `{ approvalId, screen: 'approvals', screenId: requestId }` untuk deep link |
+| Change                          | File                       | Deskripsi                                                                  |
+| :------------------------------ | :------------------------- | :------------------------------------------------------------------------- |
+| Inject NotificationService      | `approval.service.ts`      | Tambah constructor injection                                               |
+| Call pushFCM after in-app notif | `approval.service.ts`      | `notifyApprovers()` → `this.notificationsService.send()`                   |
+| Add notif type constant         | `notifications.service.ts` | `approval_request` ke NOTIFICATION_TYPES                                   |
+| Add data payload                | `approval.service.ts`      | `{ approvalId, screen: 'approvals', screenId: requestId }` untuk deep link |
 
 ---
 
@@ -157,18 +158,18 @@ Badge count **sudah ada** di tab notifikasi (via WebSocket `notification:count` 
 
 ### Backend (2 files modified)
 
-| File | Action | Perubahan |
-|:-----|:-------|:----------|
+| File                                                 | Action         | Perubahan                                                                    |
+| :--------------------------------------------------- | :------------- | :--------------------------------------------------------------------------- |
 | `apps/api/src/modules/approvals/approval.service.ts` | **MODIFIKASI** | Inject NotificationsService, tambah panggilan `.send()` setelah in-app notif |
-| `apps/api/src/modules/approvals/approvals.module.ts` | **MODIFIKASI** | Import NotificationsModule atau provider |
+| `apps/api/src/modules/approvals/approvals.module.ts` | **MODIFIKASI** | Import NotificationsModule atau provider                                     |
 
 ### Frontend Mobile (3 files modified)
 
-| File | Action | Perubahan |
-|:-----|:-------|:----------|
-| `app/_layout.tsx` | **MODIFIKASI** | Tambah deep link handler di `setupNotificationListeners` onNotificationTapped |
-| `hooks/use-notifications.ts` | **MODIFIKASI** | Tambah `approval_request: '✅'` ke TYPE_ICONS |
-| `app/(tabs)/notifications.tsx` | **Tidak perlu** | Badge count sudah ada via WebSocket |
+| File                           | Action          | Perubahan                                                                     |
+| :----------------------------- | :-------------- | :---------------------------------------------------------------------------- |
+| `app/_layout.tsx`              | **MODIFIKASI**  | Tambah deep link handler di `setupNotificationListeners` onNotificationTapped |
+| `hooks/use-notifications.ts`   | **MODIFIKASI**  | Tambah `approval_request: '✅'` ke TYPE_ICONS                                 |
+| `app/(tabs)/notifications.tsx` | **Tidak perlu** | Badge count sudah ada via WebSocket                                           |
 
 **Total: 5 files modified, 0 files created.**
 
@@ -176,14 +177,14 @@ Badge count **sudah ada** di tab notifikasi (via WebSocket `notification:count` 
 
 ## 6. Dependencies
 
-| Dep | Untuk | Status |
-|:----|:------|:------|
-| `expo-notifications` | FCM push token & notification handler | ✅ Existing |
-| `expo-device` | Detect physical device | ✅ Existing |
-| Backend: NotificationsService.send() | Trigger FCM push | ✅ Existing |
-| Backend: firebase-admin | Send FCM via Firebase Cloud Messaging | ✅ Existing |
-| Backend: EventsGateway | Real-time badge count | ✅ Existing |
-| Socket.io | Real-time notification count update | ✅ Existing |
+| Dep                                  | Untuk                                 | Status      |
+| :----------------------------------- | :------------------------------------ | :---------- |
+| `expo-notifications`                 | FCM push token & notification handler | ✅ Existing |
+| `expo-device`                        | Detect physical device                | ✅ Existing |
+| Backend: NotificationsService.send() | Trigger FCM push                      | ✅ Existing |
+| Backend: firebase-admin              | Send FCM via Firebase Cloud Messaging | ✅ Existing |
+| Backend: EventsGateway               | Real-time badge count                 | ✅ Existing |
+| Socket.io                            | Real-time notification count update   | ✅ Existing |
 
 **Tidak ada dependencies baru yang perlu diinstall.**
 
@@ -229,8 +230,8 @@ notificationsService.send(userId, dto)
 ```typescript
 // Payload dari FCM push
 interface NotificationData {
-  screen?: string;     // 'approvals'
-  screenId?: string;   // approval request UUID
+  screen?: string; // 'approvals'
+  screenId?: string; // approval request UUID
   approvalId?: string; // same as screenId
 }
 
@@ -274,14 +275,14 @@ Approval Detail Screen (existing)
 
 ## 9. Validasi & Error States
 
-| Skenario | Validasi | Penanganan |
-|:---------|:---------|:-----------|
-| Device token expired | FCM error `NotRegistered` | `pushBroadcast()` auto-mark token inactive ✅ |
-| User menonaktifkan notif approval | Preference check | Notifikasi tidak dikirim ✅ |
-| App di background | Expo-notifications handle `shouldShowAlert: true` | Notif muncul di notification tray ✅ |
-| App di foreground | `addNotificationReceivedListener` | Notif diterima tapi tidak ditampilkan sebagai push (hanya badge count update via socket) ✅ |
-| Deep link screen tidak dikenal | Fallback: router ke halaman approvals list | ✅ |
-| Multiple level approvers | Loop `notifyApprovers()` → kirim ke semua user dengan role sesuai | ✅ (existing pattern) |
+| Skenario                          | Validasi                                                          | Penanganan                                                                                  |
+| :-------------------------------- | :---------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| Device token expired              | FCM error `NotRegistered`                                         | `pushBroadcast()` auto-mark token inactive ✅                                               |
+| User menonaktifkan notif approval | Preference check                                                  | Notifikasi tidak dikirim ✅                                                                 |
+| App di background                 | Expo-notifications handle `shouldShowAlert: true`                 | Notif muncul di notification tray ✅                                                        |
+| App di foreground                 | `addNotificationReceivedListener`                                 | Notif diterima tapi tidak ditampilkan sebagai push (hanya badge count update via socket) ✅ |
+| Deep link screen tidak dikenal    | Fallback: router ke halaman approvals list                        | ✅                                                                                          |
+| Multiple level approvers          | Loop `notifyApprovers()` → kirim ke semua user dengan role sesuai | ✅ (existing pattern)                                                                       |
 
 ---
 
@@ -329,21 +330,21 @@ App opens → onNotificationTapped handler
 
 ## 12. Current Status
 
-| Komponen | Status | Keterangan |
-|:---------|:-------|:-----------|
-| FCM token registration | ✅ Existing | `fcm.ts:registerForPushNotifications()` |
-| Notification channel (Android) | ✅ Existing | `fcm.ts:setNotificationChannelAsync()` |
-| Notification handler | ✅ Existing | `fcm.ts:Notifications.setNotificationHandler()` |
-| Notification listeners | ✅ Existing | `fcm.ts:setupNotificationListeners()` |
-| FCM push backend | ✅ Existing | `notifications.service.ts:pushFCM()` |
-| Socket.io real-time | ✅ Existing | Badge count update on new notif |
-| **Notify approvers → in-app notif** | ✅ Existing | Hanya in-app, belum push |
-| **Notify approvers → FCM push** | ❌ **Perlu ditambah** | Inject + call `notificationsService.send()` |
-| **Deep link handler** | ❌ **Perlu ditambah** | `onNotificationTapped` → router.push |
-| **Approval notif type icon** | ❌ **Perlu ditambah** | `approval_request: '✅'` di use-notifications.ts |
+| Komponen                            | Status                | Keterangan                                       |
+| :---------------------------------- | :-------------------- | :----------------------------------------------- |
+| FCM token registration              | ✅ Existing           | `fcm.ts:registerForPushNotifications()`          |
+| Notification channel (Android)      | ✅ Existing           | `fcm.ts:setNotificationChannelAsync()`           |
+| Notification handler                | ✅ Existing           | `fcm.ts:Notifications.setNotificationHandler()`  |
+| Notification listeners              | ✅ Existing           | `fcm.ts:setupNotificationListeners()`            |
+| FCM push backend                    | ✅ Existing           | `notifications.service.ts:pushFCM()`             |
+| Socket.io real-time                 | ✅ Existing           | Badge count update on new notif                  |
+| **Notify approvers → in-app notif** | ✅ Existing           | Hanya in-app, belum push                         |
+| **Notify approvers → FCM push**     | ❌ **Perlu ditambah** | Inject + call `notificationsService.send()`      |
+| **Deep link handler**               | ❌ **Perlu ditambah** | `onNotificationTapped` → router.push             |
+| **Approval notif type icon**        | ❌ **Perlu ditambah** | `approval_request: '✅'` di use-notifications.ts |
 
 ---
 
-*Dokumen ini dapat dijadikan acuan untuk implementasi Sprint 4. Backend infrastructure (FCM, firebase-admin, socket.io) sudah siap — hanya perlu menghubungkan approval.service dengan notificationsService.send(). Mobile hanya perlu menambah deep link handler.*
+_Dokumen ini dapat dijadikan acuan untuk implementasi Sprint 4. Backend infrastructure (FCM, firebase-admin, socket.io) sudah siap — hanya perlu menghubungkan approval.service dengan notificationsService.send(). Mobile hanya perlu menambah deep link handler._
 
-*Perubahan minimal: 5 files (3 mobile, 2 backend). Tidak ada dependencies baru.*
+_Perubahan minimal: 5 files (3 mobile, 2 backend). Tidak ada dependencies baru._

@@ -37,15 +37,15 @@ Nasional
 
 Peran (dari `apps/api/src/common/constants/roles.constant.ts`):
 
-| Role             | Level scope minimum | Keterangan |
-|:-----------------|:--------------------|:-----------|
+| Role             | Level scope minimum | Keterangan                                 |
+| :--------------- | :------------------ | :----------------------------------------- |
 | `superadmin`     | `national`          | Tidak terikat tenant, bebas lintas distrik |
-| `admin_distrik`  | `district`          | Admin satu distrik |
-| `admin_wilayah`  | `region`            | Admin satu wilayah |
-| `admin_ranting`  | `branch`            | Admin satu ranting |
-| `admin_kegiatan` | `branch`            | Pengelola kegiatan (level ranting) |
-| `penguji`        | `branch`            | Penguji pendadaran (level ranting) |
-| `anggota`        | `self`              | Hanya data sendiri |
+| `admin_distrik`  | `district`          | Admin satu distrik                         |
+| `admin_wilayah`  | `region`            | Admin satu wilayah                         |
+| `admin_ranting`  | `branch`            | Admin satu ranting                         |
+| `admin_kegiatan` | `branch`            | Pengelola kegiatan (level ranting)         |
+| `penguji`        | `branch`            | Penguji pendadaran (level ranting)         |
+| `anggota`        | `self`              | Hanya data sendiri                         |
 
 Urutan level: `national > district > region > branch > self`. `ScopeGuard` memakai
 urutan ini untuk keputusan otorisasi; **isolasi data** ditegakkan di lapisan service
@@ -62,13 +62,13 @@ secara default) akan melewati dua langkah:
 1. **Otorisasi** — role pengguna harus punya level ≥ level yang diminta endpoint.
 2. **Resolusi scope** — `req.scope` diisi dari akun pengguna (bukan dari klien):
 
-| Kondisi akun | `req.scope` yang dihasilkan |
-|:-------------|:----------------------------|
-| `superadmin` | `{}` (kosong = nasional) |
-| `admin_distrik` dengan `rantingId` | `{ rantingId, wilayahId, distrikId }` — ranting di-resolve ke atas via DB |
-| `admin_wilayah` dengan `rantingId` | `{ rantingId, wilayahId }` |
-| Peran lain dengan `rantingId` | `{ rantingId }` |
-| **Peran apa pun tanpa `rantingId`** | `{}` (kosong = nasional) ⚠️ |
+| Kondisi akun                        | `req.scope` yang dihasilkan                                               |
+| :---------------------------------- | :------------------------------------------------------------------------ |
+| `superadmin`                        | `{}` (kosong = nasional)                                                  |
+| `admin_distrik` dengan `rantingId`  | `{ rantingId, wilayahId, distrikId }` — ranting di-resolve ke atas via DB |
+| `admin_wilayah` dengan `rantingId`  | `{ rantingId, wilayahId }`                                                |
+| Peran lain dengan `rantingId`       | `{ rantingId }`                                                           |
+| **Peran apa pun tanpa `rantingId`** | `{}` (kosong = nasional) ⚠️                                               |
 
 > ⚠️ **Konsekuensi penting:** `req.scope` selalu berakar pada `rantingId`. Akun admin
 > **tanpa `rantingId` mendapat scope kosong** = visibilitas nasional pada modul
@@ -103,11 +103,11 @@ Distrik A dan B boleh punya preset dengan kode yang sama. `admin_distrik` mengel
 **seluruh distriknya** di modul ini (bukan hanya rantingnya), dan membaca gabungan
 miliknya + global.
 
-| Modul | Endpoint | Helper |
-|:------|:---------|:-------|
-| Penandatangan / TTD / Stempel | `settings.controller.ts`, `penandatangan.controller.ts` | `resolveWriteDistrikId`, `resolveReadDistrikId` |
-| Template kartu | `card-templates.*` | `resolveWriteDistrikId` + `assertCanManage` (service) |
-| Preset jabatan | `jabatan.*` | `resolveWriteDistrikId` + `assertCanManage`; read terbuka untuk semua admin (dipakai `JabatanSelect` di form mana pun) |
+| Modul                         | Endpoint                                                | Helper                                                                                                                 |
+| :---------------------------- | :------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------- |
+| Penandatangan / TTD / Stempel | `settings.controller.ts`, `penandatangan.controller.ts` | `resolveWriteDistrikId`, `resolveReadDistrikId`                                                                        |
+| Template kartu                | `card-templates.*`                                      | `resolveWriteDistrikId` + `assertCanManage` (service)                                                                  |
+| Preset jabatan                | `jabatan.*`                                             | `resolveWriteDistrikId` + `assertCanManage`; read terbuka untuk semua admin (dipakai `JabatanSelect` di form mana pun) |
 
 ### c. Kegiatan & pendadaran — model `scopeType`/`scopeId`
 
@@ -120,23 +120,23 @@ Tabel `kegiatan` tidak berakar pada kolom ranting, melainkan `scopeType`
 
 ### a. `ScopeHelper` — `src/common/utils/scope-helpers.ts`
 
-| Method | Fungsi |
-|:-------|:-------|
-| `buildScopeFilter(scope, basePath)` | Prisma `where` per scope. Precedensi: `rantingId` → `wilayahId` → `distrikId` (**yang terkecil/terketat selalu menang**). |
-| `buildIndirectScopeFilter(scope, relPath)` | Sama, untuk model yang berakar ke anggota (iuran → anggota → ranting). |
-| `hasAccessToResourceAsync(prisma, scope, rantingId)` | Cek kepemilikan ranting: exact-match di level branch; lookup hierarki ranting → wilayah → distrik untuk wilayah/distrik. **Resource tanpa ranting (level nasional) TIDAK dianggap bisa diakses** admin ter-scope. |
+| Method                                                   | Fungsi                                                                                                                                                                                                                                          |
+| :------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buildScopeFilter(scope, basePath)`                      | Prisma `where` per scope. Precedensi: `rantingId` → `wilayahId` → `distrikId` (**yang terkecil/terketat selalu menang**).                                                                                                                       |
+| `buildIndirectScopeFilter(scope, relPath)`               | Sama, untuk model yang berakar ke anggota (iuran → anggota → ranting).                                                                                                                                                                          |
+| `hasAccessToResourceAsync(prisma, scope, rantingId)`     | Cek kepemilikan ranting: exact-match di level branch; lookup hierarki ranting → wilayah → distrik untuk wilayah/distrik. **Resource tanpa ranting (level nasional) TIDAK dianggap bisa diakses** admin ter-scope.                               |
 | `verifyKegiatanScope(prisma, scope, scopeType, scopeId)` | Verifikasi akses kegiatan yang sudah ada — exact-match untuk level yang dimiliki scope + **pemeriksaan hierarkis** untuk arm `wilayah`/`ranting` (lookup DB), sehingga admin ter-scope penuh tidak bisa menyentuh kegiatan distrik lain. Async. |
-| `verifyResourceAccess(...)` | Pola umum "find or 404 + verify ranting" untuk resource ber-rantingId. |
+| `verifyResourceAccess(...)`                              | Pola umum "find or 404 + verify ranting" untuk resource ber-rantingId.                                                                                                                                                                          |
 
 ### b. `BaseCrudService` — `src/common/utils/base-crud.service.ts`
 
 Opsi `scopeStrategy` menentukan cara verify + filter:
 
-| Strategy | Dipakai oleh | Mekanisme |
-|:---------|:-------------|:----------|
+| Strategy              | Dipakai oleh                                                  | Mekanisme                                                                                                  |
+| :-------------------- | :------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------- |
 | `'ranting'` (default) | members, users, trainings, candidates, aspect, forum-category | `buildScopeFilter` untuk list; `verifyScope` → `hasAccessToResourceAsync` untuk read/update/delete per ID. |
-| `'anggota_indirect'` | dues, claims | `buildIndirectScopeFilter` (filter via relasi anggota). |
-| `'kegiatan'` | activities, graduations | Model `scopeType`/`scopeId`; lihat di bawah. |
+| `'anggota_indirect'`  | dues, claims                                                  | `buildIndirectScopeFilter` (filter via relasi anggota).                                                    |
+| `'kegiatan'`          | activities, graduations                                       | Model `scopeType`/`scopeId`; lihat di bawah.                                                               |
 
 Untuk strategy `'kegiatan'`:
 
@@ -145,7 +145,7 @@ Untuk strategy `'kegiatan'`:
   `scopeId: { in: [ids dalam distrik] }` (bukan `scopeType: 'ranting'` polos tanpa
   `scopeId` = seluruh nasional — itu bug historis, jangan dikembalikan).
 - **Create** — `assertKegiatanCreateScope(scope, scopeType, scopeId)`: guard hierarkis
-  untuk scope yang *dikirim klien* (kebalikan verify: ranting admin → hanya ranting itu;
+  untuk scope yang _dikirim klien_ (kebalikan verify: ranting admin → hanya ranting itu;
   admin wilayah → wilayahnya + ranting di dalamnya; admin distrik → distriknya + semua
   wilayah/ranting di dalamnya; `nasional` dan klien tanpa scope eksplisit lolos).
 - **Read/Update/Delete per ID** — `verifyKegiatanScope` (§4a).
@@ -233,12 +233,12 @@ Bug historis yang dicegah aturan ini: `?distrikId=<distrik-lain>` yang dulu
 
 Ringkasan matriks (detail §4d):
 
-| Aksi | admin_distrik/wilayah/ranting | superadmin |
-|:-----|:------------------------------|:-----------|
-| Assign role ≤ levelnya sendiri | ✅ | ✅ (bebas) |
-| Assign `superadmin` (create/PATCH) | ❌ 403 | ✅ |
-| `rantingId` milik distrik lain | ❌ 403 | ✅ |
-| Modifikasi akun tanpa ranting (nasional) | ❌ 403 | ✅ |
+| Aksi                                     | admin_distrik/wilayah/ranting | superadmin |
+| :--------------------------------------- | :---------------------------- | :--------- |
+| Assign role ≤ levelnya sendiri           | ✅                            | ✅ (bebas) |
+| Assign `superadmin` (create/PATCH)       | ❌ 403                        | ✅         |
+| `rantingId` milik distrik lain           | ❌ 403                        | ✅         |
+| Modifikasi akun tanpa ranting (nasional) | ❌ 403                        | ✅         |
 
 Yang terakhir ditangani oleh hardening `hasAccessToResourceAsync`: resource tanpa
 `rantingId` **tidak** lagi dianggap bisa diakses admin ter-scope (dulu `return true`
@@ -248,11 +248,11 @@ untuk `rantingId == null` — jalur eskalasi vertikal).
 
 ## 8. Referensi Uji & Cara Menjalankan
 
-| Suite | Cakupan |
-|:------|:--------|
-| `test/admin-distrik-tenant.e2e-spec.ts` (33) | Dua distrik nyata: login, resolusi scope, isolasi list anggota/user/kegiatan, matriks 403 lintas distrik (GET/PATCH/DELETE/POST), guard eskalasi role & penempatan, superadmin bebas. |
-| `test/scope-filtering.e2e-spec.ts` (59) | Matriks peran × modul (members, candidates, trainings, dues, activities, claims, documents, users, reports). |
-| `src/modules/users/users.service.spec.ts`, `members.service.spec.ts`, `common/utils/base-crud.service.spec.ts` | Regresi unit guard eskalasi, precedensi filter, arm per-distrik, `assertKegiatanCreateScope`. |
+| Suite                                                                                                          | Cakupan                                                                                                                                                                               |
+| :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `test/admin-distrik-tenant.e2e-spec.ts` (33)                                                                   | Dua distrik nyata: login, resolusi scope, isolasi list anggota/user/kegiatan, matriks 403 lintas distrik (GET/PATCH/DELETE/POST), guard eskalasi role & penempatan, superadmin bebas. |
+| `test/scope-filtering.e2e-spec.ts` (59)                                                                        | Matriks peran × modul (members, candidates, trainings, dues, activities, claims, documents, users, reports).                                                                          |
+| `src/modules/users/users.service.spec.ts`, `members.service.spec.ts`, `common/utils/base-crud.service.spec.ts` | Regresi unit guard eskalasi, precedensi filter, arm per-distrik, `assertKegiatanCreateScope`.                                                                                         |
 
 Prasyarat: Postgres terisolasi + migrasi terpasang. Lokal, DB test dapat dibuat di
 dalam container Postgres dev (port 5433) tanpa menyentuh DB dev:

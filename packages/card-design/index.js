@@ -53,14 +53,29 @@ const COLORS = Object.freeze({
 // ─── Palet UI (Design Tokens) ────────────────────────────────────────────────
 const PALETTES = Object.freeze({
   navy: {
-    50: '#f0f4f8', 100: '#d9e2ec', 200: '#b6c5d8', 300: '#8da2b9',
-    400: '#627d98', 500: '#486581', 600: '#334e68', 700: '#243b53',
-    800: '#1A2E40', 900: '#102a43', 950: '#0a1929',
+    50: '#f0f4f8',
+    100: '#d9e2ec',
+    200: '#b6c5d8',
+    300: '#8da2b9',
+    400: '#627d98',
+    500: '#486581',
+    600: '#334e68',
+    700: '#243b53',
+    800: '#1A2E40',
+    900: '#102a43',
+    950: '#0a1929',
   },
   gold: {
-    50: '#fdf9ef', 100: '#f9f0d4', 200: '#f0dda5', 300: '#e5c76e',
-    400: '#D4AF37', 500: '#c9a22e', 600: '#a67c1e', 700: '#7d5e17',
-    800: '#5a4312', 900: '#3d2e0d',
+    50: '#fdf9ef',
+    100: '#f9f0d4',
+    200: '#f0dda5',
+    300: '#e5c76e',
+    400: '#D4AF37',
+    500: '#c9a22e',
+    600: '#a67c1e',
+    700: '#7d5e17',
+    800: '#5a4312',
+    900: '#3d2e0d',
   },
 });
 
@@ -74,27 +89,44 @@ const FRONT = Object.freeze({
     gap: 14,
     row: Object.freeze({ fontSize: 16, lineHeight: 19, spacing: [2, 1.1, 0.5, 0], rowGap: 1 }),
   }),
-  logo: Object.freeze({ size: 150, radius: 75, bg: 'rgba(255,255,255,0.95)', border: 2, borderColor: '#ffffff', img: 143 }),
+  logo: Object.freeze({
+    size: 150,
+    radius: 75,
+    bg: 'rgba(255,255,255,0.95)',
+    border: 2,
+    borderColor: '#ffffff',
+    img: 143,
+  }),
   photo: Object.freeze({
     big: Object.freeze({ left: 40, top: 164, w: 185, h: 235 }),
     small: Object.freeze({ right: 40, top: 154, w: 130, h: 150 }),
     crop: Object.freeze({ faceCrop: 0.6, pasfotoAspect: 0.786 }),
   }),
   rank: Object.freeze({
-    right: 40, top: 316, w: 130,
+    right: 40,
+    top: 316,
+    w: 130,
     name: Object.freeze({ fontSize: 12, letterSpacing: 1, marginBottom: 3 }),
     strip: Object.freeze({ h: 9, gap: 3, radius: 3 }),
   }),
   info: Object.freeze({
-    left: 250, top: 164, right: 176,
+    left: 250,
+    top: 164,
+    right: 176,
     rowMarginBottom: 13,
     label: Object.freeze({ fontSize: 12, color: COLORS.label, letterSpacing: 0.5 }),
     value: Object.freeze({ fontSize: 15, color: COLORS.value, marginTop: 3, lineHeight: 20 }),
-    valueStrong: Object.freeze({ fontSize: 19, color: COLORS.valueStrong, letterSpacing: 1.2, marginTop: 3 }),
+    valueStrong: Object.freeze({
+      fontSize: 19,
+      color: COLORS.valueStrong,
+      letterSpacing: 1.2,
+      marginTop: 3,
+    }),
     jk: Object.freeze({ w: 44, marginLeft: 40 }),
   }),
   bottom: Object.freeze({
-    left: 40, bottom: 14,
+    left: 40,
+    bottom: 14,
     label: Object.freeze({ fontSize: 13, color: COLORS.label, marginBottom: 2 }),
     value: Object.freeze({ fontSize: 16, color: COLORS.value, marginTop: 2 }),
   }),
@@ -103,16 +135,42 @@ const FRONT = Object.freeze({
   // kiri. Lebar 340 menempatkan baris terpanjang (jabatan panjang ≈318px @12px)
   // berakhir ≈842 → padding ±14px dari tepi kanan kartu.
   signer: Object.freeze({
-    right: -8, bottom: 14, w: 340, h: 146,
+    right: -8,
+    bottom: 14,
+    w: 340,
+    h: 146,
     title1: Object.freeze({ left: 0, top: 35, fontSize: 13 }),
     title2: Object.freeze({ left: 0, top: 52, fontSize: 12 }),
     wrap: Object.freeze({ left: 0, top: 35, w: 175, h: 96 }),
-    sig: Object.freeze({ left: -68, top: 28, w: 175, h: 60, fontSize: 26, rotate: -8, color: COLORS.ttd }),
-    stamp: Object.freeze({ left: -55, top: 0, size: 110, radius: 55, border: 2, rotate: -8, text: Object.freeze({ fontSize: 11 }) }),
+    sig: Object.freeze({
+      left: -68,
+      top: 28,
+      w: 175,
+      h: 60,
+      fontSize: 26,
+      rotate: -8,
+      color: COLORS.ttd,
+    }),
+    stamp: Object.freeze({
+      left: -55,
+      top: 0,
+      size: 110,
+      radius: 55,
+      border: 2,
+      rotate: -8,
+      text: Object.freeze({ fontSize: 11 }),
+    }),
     name: Object.freeze({ fontSize: 14, underline: true }),
     title: Object.freeze({ fontSize: 12, marginTop: 1 }),
   }),
-  watermark: Object.freeze({ left: 128, top: 166, w: 600, h: 207, color: '#1d4ed8', opacity: 0.35 }),
+  watermark: Object.freeze({
+    left: 128,
+    top: 166,
+    w: 600,
+    h: 207,
+    color: '#1d4ed8',
+    opacity: 0.35,
+  }),
   bgCircle1: Object.freeze({ top: -80, right: -80, size: 320 }),
   bgCircle2: Object.freeze({ bottom: -110, left: -80, size: 380 }),
 });
@@ -125,20 +183,51 @@ const BACK = Object.freeze({
     height: 104,
     padH: 28,
     gap: 16,
-    logo: Object.freeze({ size: 68, radius: 34, bg: 'rgba(255,255,255,0.14)', border: 1, borderColor: 'rgba(255,255,255,0.45)', img: 62 }),
+    logo: Object.freeze({
+      size: 68,
+      radius: 34,
+      bg: 'rgba(255,255,255,0.14)',
+      border: 1,
+      borderColor: 'rgba(255,255,255,0.45)',
+      img: 62,
+    }),
     title: Object.freeze({ fontSize: 22, letterSpacing: 3 }),
     subtitle: Object.freeze({ fontSize: 13, marginTop: 2, opacity: 0.88 }),
     hairline: Object.freeze({ height: 1, color: 'rgba(255,255,255,0.30)' }),
   }),
-  title: Object.freeze({ top: 28, fontSize: 28, letterSpacing: 3, subtitle: Object.freeze({ fontSize: 15, marginTop: 4 }) }),
-  qr: Object.freeze({ left: 48, top: 145, size: 210, radius: 16, border: 4, borderColor: '#1e3a5f', bg: '#ffffff', padding: 16 }),
+  title: Object.freeze({
+    top: 28,
+    fontSize: 28,
+    letterSpacing: 3,
+    subtitle: Object.freeze({ fontSize: 15, marginTop: 4 }),
+  }),
+  qr: Object.freeze({
+    left: 48,
+    top: 145,
+    size: 210,
+    radius: 16,
+    border: 4,
+    borderColor: '#1e3a5f',
+    bg: '#ffffff',
+    padding: 16,
+  }),
   info: Object.freeze({
-    left: 300, top: 145, right: 48, padding: 24,
+    left: 300,
+    top: 145,
+    right: 48,
+    padding: 24,
     desc: Object.freeze({ fontSize: 18, lineHeight: 27, marginBottom: 16, opacity: 0.95 }),
-    row: Object.freeze({ marginBottom: 12, label: Object.freeze({ w: 115, fontSize: 18 }), colon: Object.freeze({ w: 18 }), value: Object.freeze({ fontSize: 17 }) }),
+    row: Object.freeze({
+      marginBottom: 12,
+      label: Object.freeze({ w: 115, fontSize: 18 }),
+      colon: Object.freeze({ w: 18 }),
+      value: Object.freeze({ fontSize: 17 }),
+    }),
   }),
   footer: Object.freeze({
-    left: 48, right: 48, bottom: 32,
+    left: 48,
+    right: 48,
+    bottom: 32,
     text: Object.freeze({ fontSize: 15, lineHeight: 22, opacity: 0.95 }),
     urlLabel: Object.freeze({ fontSize: 13, opacity: 0.8 }),
     urlValue: Object.freeze({ fontSize: 16, marginTop: 2 }),
@@ -148,13 +237,35 @@ const BACK = Object.freeze({
 
 // ─── Watermark nama (pattern diagonal berulang) — sisi depan & belakang ────
 const PATTERN = Object.freeze({
-  front: Object.freeze({ angle: -24, fontSize: 18, letterSpacing: 2, gapX: 16, cols: 6, rows: 9, top: 76, stepY: 40, color: '#1d4ed8', opacity: 0.05 }),
-  back: Object.freeze({ angle: -24, fontSize: 18, letterSpacing: 2, gapX: 16, cols: 6, rows: 9, top: 76, stepY: 40, color: '#ffffff', opacity: 0.06 }),
+  front: Object.freeze({
+    angle: -24,
+    fontSize: 18,
+    letterSpacing: 2,
+    gapX: 16,
+    cols: 6,
+    rows: 9,
+    top: 76,
+    stepY: 40,
+    color: '#1d4ed8',
+    opacity: 0.05,
+  }),
+  back: Object.freeze({
+    angle: -24,
+    fontSize: 18,
+    letterSpacing: 2,
+    gapX: 16,
+    cols: 6,
+    rows: 9,
+    top: 76,
+    stepY: 40,
+    color: '#ffffff',
+    opacity: 0.06,
+  }),
 });
 
 /** Baris-baris nama untuk watermark diagonal: rows × cols repetisi nama. */
 function patternRows(name, side) {
-  const cfg = (side === 'back' ? PATTERN.back : PATTERN.front);
+  const cfg = side === 'back' ? PATTERN.back : PATTERN.front;
   const n = (name && String(name).trim()) || 'THS-THM';
   return Array.from({ length: cfg.rows }).map(() => Array.from({ length: cfg.cols }).map(() => n));
 }
@@ -203,10 +314,7 @@ function decorFrontSvg() {
 /** SVG dekorasi sisi belakang (gradien + ombak putih) — satu <svg> utuh. */
 function decorBackSvg() {
   const stops = COLORS.backGradient
-    .map(
-      (c, i) =>
-        `<stop offset="${i === 0 ? '0' : i === 1 ? '0.5' : '1'}" stop-color="${c}"/>`,
-    )
+    .map((c, i) => `<stop offset="${i === 0 ? '0' : i === 1 ? '0.5' : '1'}" stop-color="${c}"/>`)
     .join('');
   return (
     `<svg class="decor" width="${CARD.W}" height="${CARD.H}" viewBox="0 0 ${CARD.W} ${CARD.H}" aria-hidden="true"><defs>` +
@@ -290,7 +398,12 @@ const LEVELS = Object.freeze({
 
 /** Resolve visual tingkat: prioritas dari API (tabel pengaturan), fallback ke LEVELS. */
 function getLevelVisual(tingkat, fromApi) {
-  if (fromApi) return { stripCount: fromApi.stripCount, color: fromApi.color, label: fromApi.label || 'Strip' };
+  if (fromApi)
+    return {
+      stripCount: fromApi.stripCount,
+      color: fromApi.color,
+      label: fromApi.label || 'Strip',
+    };
   return (tingkat && LEVELS[tingkat]) || { stripCount: 0, color: '#94a3b8', label: 'Tanpa strip' };
 }
 
@@ -307,7 +420,9 @@ function photoCrop(boxW, boxH) {
 // ─── Helper format data (sama di semua renderer) ───────────────────────────
 const fmt = {
   ttl(tempatLahir, tanggalLahir) {
-    return [tempatLahir || '-', tanggalLahir ? fmt.dateId(tanggalLahir) : '-'].filter(Boolean).join(', ');
+    return [tempatLahir || '-', tanggalLahir ? fmt.dateId(tanggalLahir) : '-']
+      .filter(Boolean)
+      .join(', ');
   },
   dadar(tempatDadar, tahunDadar) {
     return [tempatDadar, tahunDadar].filter(Boolean).join(', ') || '-';
@@ -488,8 +603,10 @@ function resolveCardSpec(activeTemplate) {
     guilloche: {
       front: g.enabledFront !== false,
       back: g.enabledBack !== false,
-      strokeFront: typeof g.strokeFront === 'string' && g.strokeFront ? g.strokeFront : COLORS.guillocheFront,
-      strokeBack: typeof g.strokeBack === 'string' && g.strokeBack ? g.strokeBack : COLORS.guillocheBack,
+      strokeFront:
+        typeof g.strokeFront === 'string' && g.strokeFront ? g.strokeFront : COLORS.guillocheFront,
+      strokeBack:
+        typeof g.strokeBack === 'string' && g.strokeBack ? g.strokeBack : COLORS.guillocheBack,
     },
     watermark: {
       front: wm.enabledFront !== false,

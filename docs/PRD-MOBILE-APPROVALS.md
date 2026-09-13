@@ -8,9 +8,10 @@
 
 ## 1. Latar Belakang
 
-BRD alur #2: *"Pendaftaran anggota baru → approval berjenjang → aktivasi anggota"* dan alur #7: *"Klaim → approval → pembayaran"*.
+BRD alur #2: _"Pendaftaran anggota baru → approval berjenjang → aktivasi anggota"_ dan alur #7: _"Klaim → approval → pembayaran"_.
 
 Saat ini mobile app sudah bisa:
+
 - ✅ Melihat daftar pending approvals (list page)
 - ✅ Melihat detail approval dengan level timeline (detail page)
 - ✅ Approve/reject dengan catatan (inline di list + di detail)
@@ -24,16 +25,16 @@ Dampak: Admin harus bolak-balik cek halaman approvals secara manual untuk lihat 
 
 ## 2. User Stories
 
-| ID | Sebagai… | Saya ingin… | Sehingga… |
-|:---|:----------|:------------|:----------|
-| US-01 | Admin | Melihat daftar semua pengajuan yang menunggu persetujuan | Saya tahu apa yang perlu ditindaklanjuti |
-| US-02 | Admin | Melihat tipe pengajuan (registrasi anggota, klaim, surat, sertifikat) | Saya bisa prioritaskan tindakan |
-| US-03 | Admin | Melihat level persetujuan yang sudah/belum diproses | Saya tahu posisi saya dalam alur approval |
-| US-04 | Admin | Menyetujui pengajuan dengan catatan opsional | Saya bisa memberi feedback |
-| US-05 | Admin | Menolak pengajuan dengan alasan wajib jika ditolak | Pemohon tahu kenapa ditolak |
-| US-06 | Admin | Melihat detail item yang diajukan (data anggota, detail klaim) dari screen approval | Saya tidak perlu buka web untuk verifikasi |
-| US-07 | Admin | Menerima notifikasi push ketika ada approval baru | Saya tidak perlu polling manual |
-| US-08 | Admin | Filter approvals by tipe (member, claim, letter, certificate) | Saya bisa fokus pada satu jenis |
+| ID    | Sebagai… | Saya ingin…                                                                         | Sehingga…                                  |
+| :---- | :------- | :---------------------------------------------------------------------------------- | :----------------------------------------- |
+| US-01 | Admin    | Melihat daftar semua pengajuan yang menunggu persetujuan                            | Saya tahu apa yang perlu ditindaklanjuti   |
+| US-02 | Admin    | Melihat tipe pengajuan (registrasi anggota, klaim, surat, sertifikat)               | Saya bisa prioritaskan tindakan            |
+| US-03 | Admin    | Melihat level persetujuan yang sudah/belum diproses                                 | Saya tahu posisi saya dalam alur approval  |
+| US-04 | Admin    | Menyetujui pengajuan dengan catatan opsional                                        | Saya bisa memberi feedback                 |
+| US-05 | Admin    | Menolak pengajuan dengan alasan wajib jika ditolak                                  | Pemohon tahu kenapa ditolak                |
+| US-06 | Admin    | Melihat detail item yang diajukan (data anggota, detail klaim) dari screen approval | Saya tidak perlu buka web untuk verifikasi |
+| US-07 | Admin    | Menerima notifikasi push ketika ada approval baru                                   | Saya tidak perlu polling manual            |
+| US-08 | Admin    | Filter approvals by tipe (member, claim, letter, certificate)                       | Saya bisa fokus pada satu jenis            |
 
 ---
 
@@ -41,13 +42,13 @@ Dampak: Admin harus bolak-balik cek halaman approvals secara manual untuk lihat 
 
 Semua endpoint sudah siap di backend — **tidak perlu perubahan backend**.
 
-| Method | Endpoint | Fungsi | Body / Params |
-|:-------|:---------|:-------|:--------------|
-| `GET` | `/approvals/pending` | Daftar pengajuan menunggu | — |
-| `GET` | `/approvals/:id` | Detail pengajuan + levels | — |
-| `POST` | `/approvals/:id/approve` | Setujui level saat ini | `{ note?: string }` |
-| `POST` | `/approvals/:id/reject` | Tolak seluruh pengajuan | `{ note?: string }` |
-| `POST` | `/approvals/submit` | Ajukan persetujuan baru | `{ requestType, itemId, note? }` |
+| Method | Endpoint                 | Fungsi                    | Body / Params                    |
+| :----- | :----------------------- | :------------------------ | :------------------------------- |
+| `GET`  | `/approvals/pending`     | Daftar pengajuan menunggu | —                                |
+| `GET`  | `/approvals/:id`         | Detail pengajuan + levels | —                                |
+| `POST` | `/approvals/:id/approve` | Setujui level saat ini    | `{ note?: string }`              |
+| `POST` | `/approvals/:id/reject`  | Tolak seluruh pengajuan   | `{ note?: string }`              |
+| `POST` | `/approvals/submit`      | Ajukan persetujuan baru   | `{ requestType, itemId, note? }` |
 
 ### Request Body `POST /approvals/:id/approve`
 
@@ -216,43 +217,43 @@ Akses dari tap "Item ID" atau tombol "Lihat Detail".
 
 ## 5. Validasi & Error States
 
-| Skenario | Validasi | Error Message |
-|:---------|:---------|:--------------|
-| Approve pengajuan yang sudah diproses | Check status | "Pengajuan sudah diproses" |
-| Reject tanpa alasan | Optional (tapi disarankan) | — (warning toast saja) |
-| Koneksi terputus saat action | Network retry (3×) | "Koneksi terputus. Coba lagi." |
-| Double tap approve/reject | Prevent double-click | "Memproses…" (button disabled + spinner) |
-| Token expired | Auto-refresh → retry | — (silent refresh) |
-| Server error (500) | Catch → user message | "Gagal memproses. Silakan coba lagi." |
-| Tidak ada level persetujuan | Check length | "Tidak ada level persetujuan. Hubungi admin." |
-| Bukan role approver | Role check API | "Anda tidak memiliki wewenang untuk level ini." |
+| Skenario                              | Validasi                   | Error Message                                   |
+| :------------------------------------ | :------------------------- | :---------------------------------------------- |
+| Approve pengajuan yang sudah diproses | Check status               | "Pengajuan sudah diproses"                      |
+| Reject tanpa alasan                   | Optional (tapi disarankan) | — (warning toast saja)                          |
+| Koneksi terputus saat action          | Network retry (3×)         | "Koneksi terputus. Coba lagi."                  |
+| Double tap approve/reject             | Prevent double-click       | "Memproses…" (button disabled + spinner)        |
+| Token expired                         | Auto-refresh → retry       | — (silent refresh)                              |
+| Server error (500)                    | Catch → user message       | "Gagal memproses. Silakan coba lagi."           |
+| Tidak ada level persetujuan           | Check length               | "Tidak ada level persetujuan. Hubungi admin."   |
+| Bukan role approver                   | Role check API             | "Anda tidak memiliki wewenang untuk level ini." |
 
 ---
 
 ## 6. Files to Create/Modify
 
-| File | Action | Deskripsi |
-|:-----|:-------|:----------|
-| `hooks/use-approvals.ts` | **SUDAH ADA** ✅ | Hook, types, API functions sudah siap dari implementasi sebelumnya |
-| `screens/approvals/index.tsx` | **SUDAH ADA** ✅ | List page dengan inline approve/reject, level dots |
-| `screens/approvals/[id].tsx` | **SUDAH ADA** ✅ | Detail page dengan timeline + action section |
-| `app/_layout.tsx` | **SUDAH ADA** ✅ | Route `approvals` dan `approvals/[id]` sudah register |
-| `screens/approvals/filter.tsx` | **BARU** (opsional) | Komponen filter chips by requestType |
-| `screens/approvals/reference-detail.tsx` | **BARU** (opsional) | Screen untuk melihat detail item yang direferensi |
-| `hooks/use-approval-notifications.ts` | **BARU** (opsional) | Hook untuk real-time badge count on approvals tab |
+| File                                     | Action              | Deskripsi                                                          |
+| :--------------------------------------- | :------------------ | :----------------------------------------------------------------- |
+| `hooks/use-approvals.ts`                 | **SUDAH ADA** ✅    | Hook, types, API functions sudah siap dari implementasi sebelumnya |
+| `screens/approvals/index.tsx`            | **SUDAH ADA** ✅    | List page dengan inline approve/reject, level dots                 |
+| `screens/approvals/[id].tsx`             | **SUDAH ADA** ✅    | Detail page dengan timeline + action section                       |
+| `app/_layout.tsx`                        | **SUDAH ADA** ✅    | Route `approvals` dan `approvals/[id]` sudah register              |
+| `screens/approvals/filter.tsx`           | **BARU** (opsional) | Komponen filter chips by requestType                               |
+| `screens/approvals/reference-detail.tsx` | **BARU** (opsional) | Screen untuk melihat detail item yang direferensi                  |
+| `hooks/use-approval-notifications.ts`    | **BARU** (opsional) | Hook untuk real-time badge count on approvals tab                  |
 
-**Core screens sudah jadi di Sprint 3.** Opsi tambahan di atas bersifat *enhancement*.
+**Core screens sudah jadi di Sprint 3.** Opsi tambahan di atas bersifat _enhancement_.
 
 ---
 
 ## 7. Dependencies
 
-| Dep | Untuk | Status |
-|:----|:------|:------|
-| Backend: Approvals API | List, detail, approve, reject | ✅ Existing |
-| Backend: Players API | (opsional) Detail anggota dari itemId | ✅ Existing |
-| Backend: Klaim API | (opsional) Detail klaim dari itemId | ✅ Existing |
-| Backend: Surat API | (opsional) Detail surat dari itemId | ✅ Existing |
+| Dep                    | Untuk                                 | Status      |
+| :--------------------- | :------------------------------------ | :---------- |
+| Backend: Approvals API | List, detail, approve, reject         | ✅ Existing |
+| Backend: Players API   | (opsional) Detail anggota dari itemId | ✅ Existing |
+| Backend: Klaim API     | (opsional) Detail klaim dari itemId   | ✅ Existing |
+| Backend: Surat API     | (opsional) Detail surat dari itemId   | ✅ Existing |
 
 **Tidak ada dependencies baru yang perlu diinstall.**
 
@@ -299,25 +300,25 @@ Admin buka halaman Persetujuan (dari tab atau quick action)
 
 Semua core screens **sudah diimplementasikan** di Sprint 3:
 
-| Screen | Status | File |
-|:-------|:-------|:-----|
-| **List Page** | ✅ Selesai | `src/screens/approvals/index.tsx` |
-| **Detail Page** | ✅ Selesai | `src/screens/approvals/[id].tsx` |
-| **API Hook** | ✅ Selesai | `src/hooks/use-approvals.ts` |
-| **Route** | ✅ Selesai | `app/approvals.tsx` + `app/approvals/[id].tsx` |
+| Screen           | Status     | File                                              |
+| :--------------- | :--------- | :------------------------------------------------ |
+| **List Page**    | ✅ Selesai | `src/screens/approvals/index.tsx`                 |
+| **Detail Page**  | ✅ Selesai | `src/screens/approvals/[id].tsx`                  |
+| **API Hook**     | ✅ Selesai | `src/hooks/use-approvals.ts`                      |
+| **Route**        | ✅ Selesai | `app/approvals.tsx` + `app/approvals/[id].tsx`    |
 | **Quick Action** | ✅ Selesai | `src/screens/members/home.tsx` (Persetujuan card) |
 
 ### Enhancement untuk Sprint Berikutnya
 
-| Enhancement | Effort | Prioritas |
-|:------------|:-------|:----------|
-| Filter chips by requestType | 1 hari | Tinggi |
-| Notifikasi push approval baru | 2 hari | Tinggi |
-| Reference detail screen (lihat data anggota/klaim dari approval) | 2–3 hari | Sedang |
-| Badge count on quick action card | 0.5 hari | Rendah |
+| Enhancement                                                      | Effort   | Prioritas |
+| :--------------------------------------------------------------- | :------- | :-------- |
+| Filter chips by requestType                                      | 1 hari   | Tinggi    |
+| Notifikasi push approval baru                                    | 2 hari   | Tinggi    |
+| Reference detail screen (lihat data anggota/klaim dari approval) | 2–3 hari | Sedang    |
+| Badge count on quick action card                                 | 0.5 hari | Rendah    |
 
 ---
 
-*Dokumen ini mendokumentasikan fitur approval workflow mobile yang sudah diimplementasikan. API endpoints sudah siap sejak awal, tidak ada perubahan backend yang diperlukan.*
+_Dokumen ini mendokumentasikan fitur approval workflow mobile yang sudah diimplementasikan. API endpoints sudah siap sejak awal, tidak ada perubahan backend yang diperlukan._
 
-*Referensi implementasi: `apps/mobile/src/hooks/use-approvals.ts`, `apps/mobile/src/screens/approvals/index.tsx`, `apps/mobile/src/screens/approvals/[id].tsx`*
+_Referensi implementasi: `apps/mobile/src/hooks/use-approvals.ts`, `apps/mobile/src/screens/approvals/index.tsx`, `apps/mobile/src/screens/approvals/[id].tsx`_

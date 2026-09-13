@@ -3,11 +3,11 @@
 Sistem THS-THM memakai [gitleaks](https://github.com/gitleaks/gitleaks) untuk
 mencegah kredensial masuk ke git history. Penegakan berlapis:
 
-| Lapis | Kapan | Alat |
-| ----- | ----- | ---- |
-| 1. Pre-commit hook | Saat `git commit`, sebelum commit terbentuk | `scripts/pre-commit.sh` → `gitleaks protect --staged` |
-| 2. CI | Setiap push & PR | Job `gitleaks` di `.github/workflows/security-scan.yml` |
-| 3. Konfigurasi bersama | Keduanya | `.gitleaks.toml` |
+| Lapis                  | Kapan                                       | Alat                                                    |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------------- |
+| 1. Pre-commit hook     | Saat `git commit`, sebelum commit terbentuk | `scripts/pre-commit.sh` → `gitleaks protect --staged`   |
+| 2. CI                  | Setiap push & PR                            | Job `gitleaks` di `.github/workflows/security-scan.yml` |
+| 3. Konfigurasi bersama | Keduanya                                    | `.gitleaks.toml`                                        |
 
 ## 1. Instalasi (wajib untuk semua kontributor)
 
@@ -72,27 +72,27 @@ Job `gitleaks` di `security-scan.yml` (ruting: push/PR master + mingguan):
 
 ### Aturan kustom proyek
 
-| ID Rule | Deteksi |
-| ------- | ------- |
-| `firebase-admin-sdk-private-key` | Private key service account (`-----BEGIN PRIVATE KEY-----`) |
-| `firebase-service-account-json` | Isi JSON service account (`client_email`, `private_key_id`, ...) |
-| `google-oauth-client-secret` | Google OAuth `GOCSPX-...` |
-| `google-api-key` | API key Google/Firebase `AIza...` |
-| `resend-api-key` | API key Resend `re_...` |
-| `jwt-hardcoded-secret` | `JWT_SECRET`/`JWT_REFRESH_SECRET` hardcoded (bukan placeholder) |
+| ID Rule                          | Deteksi                                                          |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `firebase-admin-sdk-private-key` | Private key service account (`-----BEGIN PRIVATE KEY-----`)      |
+| `firebase-service-account-json`  | Isi JSON service account (`client_email`, `private_key_id`, ...) |
+| `google-oauth-client-secret`     | Google OAuth `GOCSPX-...`                                        |
+| `google-api-key`                 | API key Google/Firebase `AIza...`                                |
+| `resend-api-key`                 | API key Resend `re_...`                                          |
+| `jwt-hardcoded-secret`           | `JWT_SECRET`/`JWT_REFRESH_SECRET` hardcoded (bukan placeholder)  |
 
 Di atas itu, `[extend] useDefault = true` menambahkan **ratusan aturan
 bawaan** gitleaks (AWS, Stripe, Slack, generic API key, private key, dst.).
 
 ### Allowlist (false positive yang disengaja)
 
-| Kelompok | Alasan |
-| -------- | ------ |
-| `*.spec.ts` / `*.test.ts` | Fixture test — nilai dummy (`test-key-...`, base64 "newsecret"), bukan kredensial asli |
-| `GoogleService-Info.plist`, `google-services.json` | Config client Firebase — identifier publik, di-restrict via Firebase Console |
-| `.env.example`, `docs/`, `packages/csv_templates/`, `CHANGELOG.md` | Placeholder & contoh (`change-me`, `your-api-key`, `xxx`) |
-| `.github/workflows/` | JWT dummy khusus CI (`ci-test-jwt-...`) |
-| `docker-compose*.yml`, `docs/QUICK_START.md`, `docs/DOCKER_DEV_SETUP.md`, `scripts/` | Kredensial DB lokal dev (`postgres`, `ths_thm_password`, `localhost`) |
+| Kelompok                                                                             | Alasan                                                                                 |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `*.spec.ts` / `*.test.ts`                                                            | Fixture test — nilai dummy (`test-key-...`, base64 "newsecret"), bukan kredensial asli |
+| `GoogleService-Info.plist`, `google-services.json`                                   | Config client Firebase — identifier publik, di-restrict via Firebase Console           |
+| `.env.example`, `docs/`, `packages/csv_templates/`, `CHANGELOG.md`                   | Placeholder & contoh (`change-me`, `your-api-key`, `xxx`)                              |
+| `.github/workflows/`                                                                 | JWT dummy khusus CI (`ci-test-jwt-...`)                                                |
+| `docker-compose*.yml`, `docs/QUICK_START.md`, `docs/DOCKER_DEV_SETUP.md`, `scripts/` | Kredensial DB lokal dev (`postgres`, `ths_thm_password`, `localhost`)                  |
 
 > ⚠️ Aturan `docs/` hanya mengizinkan pola **placeholder** — kredensial asli
 > di `docs/` tetap terdeteksi. Jangan menaruh kredensial di dokumentasi
@@ -123,18 +123,16 @@ git filter-repo --path path/ke/file-secret.json --invert-paths
 git filter-repo --replace-text <(echo "GOCSPX-xxxx==>REDACTED")
 ```
 
-   Alternatif: [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/).
-3. Koordinasikan force-push dengan tim (`git push --force-with-lease`).
-4. Catat insiden di issue; pertimbangkan audit akses layanan terkait.
+Alternatif: [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/). 3. Koordinasikan force-push dengan tim (`git push --force-with-lease`). 4. Catat insiden di issue; pertimbangkan audit akses layanan terkait.
 
 ## 6. Referensi cepat
 
-| Perintah | Fungsi |
-| -------- | ------ |
-| `gitleaks protect --staged --config .gitleaks.toml` | Simulasi scan yang dijalankan hook |
-| `gitleaks git . --config .gitleaks.toml` | Scan full history |
-| `gitleaks dir . --config .gitleaks.toml` | Scan working tree |
-| `bash scripts/install-hooks.sh` | (Re)pasang pre-commit & pre-push hook |
+| Perintah                                            | Fungsi                                |
+| --------------------------------------------------- | ------------------------------------- |
+| `gitleaks protect --staged --config .gitleaks.toml` | Simulasi scan yang dijalankan hook    |
+| `gitleaks git . --config .gitleaks.toml`            | Scan full history                     |
+| `gitleaks dir . --config .gitleaks.toml`            | Scan working tree                     |
+| `bash scripts/install-hooks.sh`                     | (Re)pasang pre-commit & pre-push hook |
 
 > ℹ️ `gitleaks dir` memindai **semua** file, termasuk yang di-`.gitignore`
 > (`.env`, `node_modules`, build cache). Di mesin lokal ini akan berisik &

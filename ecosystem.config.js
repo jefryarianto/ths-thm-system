@@ -55,7 +55,8 @@ module.exports = {
       repo: 'git@github.com:your-org/ths-thm-system.git',
       path: '/var/www/ths-thm-system',
       'pre-deploy-local': '',
-      'post-deploy': 'pnpm install && pnpm build && pnpm db:deploy && pm2 reload ecosystem.config.js --env production',
+      'post-deploy':
+        'pnpm install && pnpm build && pnpm db:deploy && pm2 reload ecosystem.config.js --env production',
       'pre-setup': '',
     },
   },

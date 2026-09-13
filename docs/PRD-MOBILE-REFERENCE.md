@@ -8,9 +8,10 @@
 
 ## 1. Latar Belakang
 
-BRD alur #2 *(registrasi anggota → approval berjenjang)* dan #7 *(klaim → approval → pembayaran)*: Admin perlu memverifikasi data yang diajukan sebelum menyetujui atau menolak.
+BRD alur #2 _(registrasi anggota → approval berjenjang)_ dan #7 _(klaim → approval → pembayaran)_: Admin perlu memverifikasi data yang diajukan sebelum menyetujui atau menolak.
 
 **Masalah saat ini:** Admin di halaman approval detail hanya melihat ID item (`itemId: "uuid-xxx"`) tanpa konteks data apa yang direferensi. Untuk verifikasi, admin harus:
+
 1. Buka web
 2. Cari menu terkait (Anggota / Klaim / Surat)
 3. Cari ID yang sama
@@ -21,27 +22,27 @@ BRD alur #2 *(registrasi anggota → approval berjenjang)* dan #7 *(klaim → ap
 
 ### Referensi API per Request Type
 
-| requestType | itemId merujuk ke | API Endpoint | Screen Mobile Ada? |
-|:------------|:------------------|:-------------|:------------------:|
-| `member_create` | `Anggota.id` | `GET /members/:id` | ✅ `members/[id]` |
-| `member_update` | `Anggota.id` | `GET /members/:id` | ✅ `members/[id]` |
-| `claim` | `Klaim.id` | `GET /claims/:id` | ❌ Belum ada |
-| `letter` | `SuratKeluar.id` | `GET /letters/outgoing/:id` | ✅ `letters/[id]` |
-| `certificate` | `Dokumen.id` | `GET /documents/:id` | ✅ `documents/[id]` |
+| requestType     | itemId merujuk ke | API Endpoint                | Screen Mobile Ada?  |
+| :-------------- | :---------------- | :-------------------------- | :-----------------: |
+| `member_create` | `Anggota.id`      | `GET /members/:id`          |  ✅ `members/[id]`  |
+| `member_update` | `Anggota.id`      | `GET /members/:id`          |  ✅ `members/[id]`  |
+| `claim`         | `Klaim.id`        | `GET /claims/:id`           |    ❌ Belum ada     |
+| `letter`        | `SuratKeluar.id`  | `GET /letters/outgoing/:id` |  ✅ `letters/[id]`  |
+| `certificate`   | `Dokumen.id`      | `GET /documents/:id`        | ✅ `documents/[id]` |
 
 ---
 
 ## 2. User Stories
 
-| ID | Sebagai… | Saya ingin… | Sehingga… |
-|:---|:----------|:------------|:----------|
-| US-01 | Admin | Tap item ID atau tombol "Lihat Detail Anggota" dari approval member_create/member_update | Saya bisa verifikasi data anggota tanpa buka web |
-| US-02 | Admin | Melihat data lengkap anggota (nama, nomor, tingkat, status, alamat, kontak, ranting) | Saya yakin data sudah benar sebelum approve |
-| US-03 | Admin | Tap tombol "Lihat Detail Klaim" dari approval claim | Saya bisa lihat detail klaim sebelum approve/reject |
-| US-04 | Admin | Melihat detail klaim (nilai, keterangan, bukti) | Saya bisa verifikasi validitas klaim |
-| US-05 | Admin | Tap tombol "Lihat Detail Surat" dari approval letter | Saya bisa lihat perihal/tujuan surat |
-| US-06 | Admin | Tap tombol "Lihat Sertifikat" dari approval certificate | Saya bisa lihat dokumen yang akan digenerate |
-| US-07 | Admin | Setelah melihat referensi, mudah kembali ke approval detail | Saya bisa langsung approve/reject setelah verifikasi |
+| ID    | Sebagai… | Saya ingin…                                                                              | Sehingga…                                            |
+| :---- | :------- | :--------------------------------------------------------------------------------------- | :--------------------------------------------------- |
+| US-01 | Admin    | Tap item ID atau tombol "Lihat Detail Anggota" dari approval member_create/member_update | Saya bisa verifikasi data anggota tanpa buka web     |
+| US-02 | Admin    | Melihat data lengkap anggota (nama, nomor, tingkat, status, alamat, kontak, ranting)     | Saya yakin data sudah benar sebelum approve          |
+| US-03 | Admin    | Tap tombol "Lihat Detail Klaim" dari approval claim                                      | Saya bisa lihat detail klaim sebelum approve/reject  |
+| US-04 | Admin    | Melihat detail klaim (nilai, keterangan, bukti)                                          | Saya bisa verifikasi validitas klaim                 |
+| US-05 | Admin    | Tap tombol "Lihat Detail Surat" dari approval letter                                     | Saya bisa lihat perihal/tujuan surat                 |
+| US-06 | Admin    | Tap tombol "Lihat Sertifikat" dari approval certificate                                  | Saya bisa lihat dokumen yang akan digenerate         |
+| US-07 | Admin    | Setelah melihat referensi, mudah kembali ke approval detail                              | Saya bisa langsung approve/reject setelah verifikasi |
 
 ---
 
@@ -49,12 +50,12 @@ BRD alur #2 *(registrasi anggota → approval berjenjang)* dan #7 *(klaim → ap
 
 Semua endpoint sudah siap di backend — **tidak perlu perubahan backend**.
 
-| Method | Endpoint | Fungsi | Dipakai Untuk |
-|:-------|:---------|:-------|:--------------|
-| `GET` | `/members/:id` | Detail anggota | `member_create`, `member_update` |
-| `GET` | `/claims/:id` | Detail klaim | `claim` |
-| `GET` | `/letters/outgoing/:id` | Detail surat keluar | `letter` |
-| `GET` | `/documents/:id` | Detail dokumen | `certificate` |
+| Method | Endpoint                | Fungsi              | Dipakai Untuk                    |
+| :----- | :---------------------- | :------------------ | :------------------------------- |
+| `GET`  | `/members/:id`          | Detail anggota      | `member_create`, `member_update` |
+| `GET`  | `/claims/:id`           | Detail klaim        | `claim`                          |
+| `GET`  | `/letters/outgoing/:id` | Detail surat keluar | `letter`                         |
+| `GET`  | `/documents/:id`        | Detail dokumen      | `certificate`                    |
 
 ### Response `GET /members/:id`
 
@@ -184,29 +185,29 @@ Untuk klaim, belum ada screen detail di mobile, sehingga perlu screen baru:
 
 ### Type A: member_create / member_update → reuse `members/[id]` ✅
 
-| Field | Sumber | Cara Akses |
-|:------|:-------|:-----------|
-| Nama Lengkap | `anggota.namaLengkap` | `GET /members/:itemId` |
-| No. Anggota | `anggota.nomorAnggota` | via unwrap |
-| Tingkat | `anggota.tingkat` | via unwrap |
-| Status | `anggota.statusKeanggotaan` | via unwrap |
-| Ranting | `anggota.ranting.nama` | via unwrap |
-| Kontak | `anggota.noHp`, `anggota.email` | via unwrap |
+| Field        | Sumber                          | Cara Akses             |
+| :----------- | :------------------------------ | :--------------------- |
+| Nama Lengkap | `anggota.namaLengkap`           | `GET /members/:itemId` |
+| No. Anggota  | `anggota.nomorAnggota`          | via unwrap             |
+| Tingkat      | `anggota.tingkat`               | via unwrap             |
+| Status       | `anggota.statusKeanggotaan`     | via unwrap             |
+| Ranting      | `anggota.ranting.nama`          | via unwrap             |
+| Kontak       | `anggota.noHp`, `anggota.email` | via unwrap             |
 
 **Navigasi:** `router.push({ pathname: '/members/[id]', params: { id: itemId } })`
 
 ### Type B: claim → perlu build screen baru ❌
 
-| Field | Sumber | Tampilan |
-|:------|:-------|:---------|
-| Nama Pengaju | `claim.anggota.namaLengkap` | Header |
-| Jenis Klaim | `claim.jenisKlaim` | Info row |
-| Nilai Klaim | `claim.nilaiKlaim` | Info row (format Rp) |
-| Tanggal Kejadian | `claim.tanggalKejadian` | Info row (format date) |
-| Deskripsi | `claim.deskripsi` | Content card |
-| Status | `claim.status` | Badge |
-| Bukti | `claim.buktiPendukung[]` | List downloadable files |
-| Catatan | `claim.catatanTambahan` | Optional text |
+| Field            | Sumber                      | Tampilan                |
+| :--------------- | :-------------------------- | :---------------------- |
+| Nama Pengaju     | `claim.anggota.namaLengkap` | Header                  |
+| Jenis Klaim      | `claim.jenisKlaim`          | Info row                |
+| Nilai Klaim      | `claim.nilaiKlaim`          | Info row (format Rp)    |
+| Tanggal Kejadian | `claim.tanggalKejadian`     | Info row (format date)  |
+| Deskripsi        | `claim.deskripsi`           | Content card            |
+| Status           | `claim.status`              | Badge                   |
+| Bukti            | `claim.buktiPendukung[]`    | List downloadable files |
+| Catatan          | `claim.catatanTambahan`     | Optional text           |
 
 **Navigasi:** Buat screen baru → `screens/approvals/reference-claim.tsx`
 
@@ -222,13 +223,13 @@ Untuk klaim, belum ada screen detail di mobile, sehingga perlu screen baru:
 
 ## 6. Files to Create/Modify
 
-| File | Action | Deskripsi |
-|:-----|:-------|:----------|
-| `screens/approvals/[id].tsx` | **MODIFIKASI** | Tambah tombol navigasi referensi di Info section + handler per requestType |
-| `hooks/use-approvals.ts` | **MODIFIKASI** | Tambah helper function `getReferenceRoute(requestType, itemId)` |
-| `screens/approvals/reference-claim.tsx` | **BARU** | Screen detail klaim (karena tidak ada screen klaim existing di mobile) |
-| `app/approvals/reference-claim.tsx` | **BARU** | Expo Router route untuk detail klaim |
-| `app/_layout.tsx` | **MODIFIKASI** | Register route `approvals/reference-claim` |
+| File                                    | Action         | Deskripsi                                                                  |
+| :-------------------------------------- | :------------- | :------------------------------------------------------------------------- |
+| `screens/approvals/[id].tsx`            | **MODIFIKASI** | Tambah tombol navigasi referensi di Info section + handler per requestType |
+| `hooks/use-approvals.ts`                | **MODIFIKASI** | Tambah helper function `getReferenceRoute(requestType, itemId)`            |
+| `screens/approvals/reference-claim.tsx` | **BARU**       | Screen detail klaim (karena tidak ada screen klaim existing di mobile)     |
+| `app/approvals/reference-claim.tsx`     | **BARU**       | Expo Router route untuk detail klaim                                       |
+| `app/_layout.tsx`                       | **MODIFIKASI** | Register route `approvals/reference-claim`                                 |
 
 **Tidak perlu membuat screen baru untuk member, letter, atau certificate** — cukup reuse screen yang sudah ada via `router.push()`.
 
@@ -236,15 +237,15 @@ Untuk klaim, belum ada screen detail di mobile, sehingga perlu screen baru:
 
 ## 7. Dependencies
 
-| Dep | Untuk | Status |
-|:----|:------|:------|
-| Backend: Members API | `GET /members/:id` | ✅ Existing |
-| Backend: Claims API | `GET /claims/:id` | ✅ Existing |
-| Backend: Letters API | `GET /letters/outgoing/:id` | ✅ Existing |
-| Backend: Documents API | `GET /documents/:id` | ✅ Existing |
-| Screen: `members/[id]` | View detail anggota | ✅ Existing |
-| Screen: `letters/[id]` | View detail surat | ✅ Existing |
-| Screen: `documents/[id]` | View detail dokumen | ✅ Existing |
+| Dep                      | Untuk                       | Status      |
+| :----------------------- | :-------------------------- | :---------- |
+| Backend: Members API     | `GET /members/:id`          | ✅ Existing |
+| Backend: Claims API      | `GET /claims/:id`           | ✅ Existing |
+| Backend: Letters API     | `GET /letters/outgoing/:id` | ✅ Existing |
+| Backend: Documents API   | `GET /documents/:id`        | ✅ Existing |
+| Screen: `members/[id]`   | View detail anggota         | ✅ Existing |
+| Screen: `letters/[id]`   | View detail surat           | ✅ Existing |
+| Screen: `documents/[id]` | View detail dokumen         | ✅ Existing |
 
 **Hanya perlu 2 file baru** (screen klaim + route).
 
@@ -357,30 +358,29 @@ function getReferenceRoute(approval: ApprovalRequest): ReferenceRoute | null {
 
 ```tsx
 // Di bagian Informasi Pengajuan, tambah:
-{referenceRoute && (
-  <TouchableOpacity
-    style={styles.referenceBtn}
-    onPress={() => router.push(referenceRoute)}
-  >
-    <Ionicons name={referenceRoute.icon as any} size={18} color="#2563eb" />
-    <Text style={styles.referenceBtnText}>{referenceRoute.label}</Text>
-    <Ionicons name="chevron-forward" size={18} color="#93c5fd" />
-  </TouchableOpacity>
-)}
+{
+  referenceRoute && (
+    <TouchableOpacity style={styles.referenceBtn} onPress={() => router.push(referenceRoute)}>
+      <Ionicons name={referenceRoute.icon as any} size={18} color="#2563eb" />
+      <Text style={styles.referenceBtnText}>{referenceRoute.label}</Text>
+      <Ionicons name="chevron-forward" size={18} color="#93c5fd" />
+    </TouchableOpacity>
+  );
+}
 ```
 
 ---
 
 ## 11. Current Status
 
-| Komponen | Status | File |
-|:---------|:-------|:-----|
-| Core approvals screens | ✅ Selesai | `approvals/index.tsx` + `[id].tsx` |
-| Filter chips enhancement | ✅ Selesai | Diimplementasikan |
-| Reference navigation logic | ❌ **Belum** | Perlu tambah helper + UI di `[id].tsx` |
-| Reference-claim screen | ❌ **Belum** | Perlu screen baru |
-| Reuse members/letters/documents | ✅ Screen sudah ada | Tinggal navigasi |
+| Komponen                        | Status              | File                                   |
+| :------------------------------ | :------------------ | :------------------------------------- |
+| Core approvals screens          | ✅ Selesai          | `approvals/index.tsx` + `[id].tsx`     |
+| Filter chips enhancement        | ✅ Selesai          | Diimplementasikan                      |
+| Reference navigation logic      | ❌ **Belum**        | Perlu tambah helper + UI di `[id].tsx` |
+| Reference-claim screen          | ❌ **Belum**        | Perlu screen baru                      |
+| Reuse members/letters/documents | ✅ Screen sudah ada | Tinggal navigasi                       |
 
 ---
 
-*Dokumen ini dapat dijadikan acuan untuk implementasi enhancement Approval Reference Detail. Strategi utama: reuse 3 screen existing + build 1 screen baru (claim). API endpoints sudah siap semua.*
+_Dokumen ini dapat dijadikan acuan untuk implementasi enhancement Approval Reference Detail. Strategi utama: reuse 3 screen existing + build 1 screen baru (claim). API endpoints sudah siap semua._

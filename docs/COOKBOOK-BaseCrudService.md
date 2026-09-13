@@ -32,13 +32,13 @@
 
 `BaseCrudService<TCreateDto, TUpdateDto>` adalah abstract class generik yang menyediakan 5 operasi CRUD standar dan mengelola otomatis:
 
-| Method | Fungsi | Otomatis Dikelola |
-|:-------|:-------|:------------------|
-| `baseFindAll` | Paginated list + cache | Scope filter, pagination, TTL-based caching, response formatting |
-| `baseFindOne` | Single entity by ID | `NotFoundException`, scope verification, include/select support |
-| `baseCreate` | Create entity | Hook `beforeCreate` (transform DTO) + `afterCreate` (side effects), cache invalidation |
-| `baseUpdate` | Update entity | Scope verification, hook `beforeUpdate` + `afterUpdate`, P2025 → NotFoundException, cache invalidation |
-| `baseRemove` | Hard/soft delete | Scope verification, P2025 → NotFoundException, cache invalidation, `afterRemove` hook |
+| Method        | Fungsi                 | Otomatis Dikelola                                                                                      |
+| :------------ | :--------------------- | :----------------------------------------------------------------------------------------------------- |
+| `baseFindAll` | Paginated list + cache | Scope filter, pagination, TTL-based caching, response formatting                                       |
+| `baseFindOne` | Single entity by ID    | `NotFoundException`, scope verification, include/select support                                        |
+| `baseCreate`  | Create entity          | Hook `beforeCreate` (transform DTO) + `afterCreate` (side effects), cache invalidation                 |
+| `baseUpdate`  | Update entity          | Scope verification, hook `beforeUpdate` + `afterUpdate`, P2025 → NotFoundException, cache invalidation |
+| `baseRemove`  | Hard/soft delete       | Scope verification, P2025 → NotFoundException, cache invalidation, `afterRemove` hook                  |
 
 ### Otomatis Dikelola Oleh Base
 
@@ -52,17 +52,17 @@ Remove:       verifyScope() → beforeRemove() → prisma.delete()/update() → 
 
 ### Yang Dieliminasi Per Service (~40-110 lines)
 
-| Boilerplate | Sebelum | Sesudah |
-|:------------|:--------|:--------|
-| `private readonly logger` | 3 lines | Inherited |
-| `new Logger(...)` | 1 line | `this.logger` from base |
-| `if (!entity) throw NotFoundException(...)` | 2-3× | Base throws otomatis |
-| `{ success: true, data }` | 8-10× | TransformInterceptor |
-| `as never` / `as any` casts | 1-4× | `Record<string, unknown>` via hooks |
-| Manual `paginate()` | 5 lines | `baseFindAll` |
-| Manual scope verification | 6-10 lines | `verifyScope` |
-| Cache invalidation | 3 lines | `this.invalidateCache()` |
-| `catch (P2025)` manual | 4 lines | Base handles otomatis |
+| Boilerplate                                 | Sebelum    | Sesudah                             |
+| :------------------------------------------ | :--------- | :---------------------------------- |
+| `private readonly logger`                   | 3 lines    | Inherited                           |
+| `new Logger(...)`                           | 1 line     | `this.logger` from base             |
+| `if (!entity) throw NotFoundException(...)` | 2-3×       | Base throws otomatis                |
+| `{ success: true, data }`                   | 8-10×      | TransformInterceptor                |
+| `as never` / `as any` casts                 | 1-4×       | `Record<string, unknown>` via hooks |
+| Manual `paginate()`                         | 5 lines    | `baseFindAll`                       |
+| Manual scope verification                   | 6-10 lines | `verifyScope`                       |
+| Cache invalidation                          | 3 lines    | `this.invalidateCache()`            |
+| `catch (P2025)` manual                      | 4 lines    | Base handles otomatis               |
 
 ---
 
@@ -72,12 +72,12 @@ Remove:       verifyScope() → beforeRemove() → prisma.delete()/update() → 
 
 Service dengan **satu Prisma model** dan **5 CRUD method standar** (findAll, findOne, create, update, remove).
 
-| Ciri | Contoh Service |
-|:-----|:---------------|
-| Tanpa scope (public/global) | `ExaminersService`, `RegistrationsService`, `ForumCategoryService` |
-| Scope `ranting` langsung | `TrainingsService`, `MembersService`, `CandidatesService`, `UsersService` |
-| Scope `kegiatan` (scopeType/scopeId) | `ActivitiesService`, `GraduationsService` |
-| Scope `anggota_indirect` | `DuesService`, `ClaimsService` |
+| Ciri                                 | Contoh Service                                                            |
+| :----------------------------------- | :------------------------------------------------------------------------ |
+| Tanpa scope (public/global)          | `ExaminersService`, `RegistrationsService`, `ForumCategoryService`        |
+| Scope `ranting` langsung             | `TrainingsService`, `MembersService`, `CandidatesService`, `UsersService` |
+| Scope `kegiatan` (scopeType/scopeId) | `ActivitiesService`, `GraduationsService`                                 |
+| Scope `anggota_indirect`             | `DuesService`, `ClaimsService`                                            |
 
 **Siap:** 14 dari 16 service yang sudah direfactor masuk kategori ini.
 
@@ -88,27 +88,27 @@ Service dengan CRUD standar **plus beberapa domain method**:
 - CRUD methods → refactor ke BaseCrudService
 - Domain methods → tetap manual, panggil `baseXxx` secara internal
 
-| Service | CRUD Direfactor | Domain Methods Tetap |
-|:--------|:----------------|:---------------------|
-| `MembersService` | ✅ standar + soft delete | importCsv, exportCsv, getByRanting |
-| `CandidatesService` | ✅ standar | approve, reject, validate |
-| `ActivitiesService` | ✅ kegiatan scope | addParticipant, importParticipants, recordPresence |
-| `UsersService` | ✅ standar | (login-related helpers) |
+| Service             | CRUD Direfactor          | Domain Methods Tetap                               |
+| :------------------ | :----------------------- | :------------------------------------------------- |
+| `MembersService`    | ✅ standar + soft delete | importCsv, exportCsv, getByRanting                 |
+| `CandidatesService` | ✅ standar               | approve, reject, validate                          |
+| `ActivitiesService` | ✅ kegiatan scope        | addParticipant, importParticipants, recordPresence |
+| `UsersService`      | ✅ standar               | (login-related helpers)                            |
 
 ### ❌ Category C — Tidak Cocok
 
 Service yang **tidak memiliki 5 CRUD method standar** atau **mengelola >1 model**:
 
-| Service | Alasan |
-|:--------|:-------|
-| `ChatService` | No CRUD — hanya findOrCreateRoom, saveMessage, getMessages |
-| `CronTasksService` | No CRUD — hanya `@Cron()` scheduled jobs |
-| `NotificationsService` | Multi-channel (in-app, email, FCM) + preferences |
-| `DocumentsService` | File generation, QR codes, batch processing |
-| `ApprovalsService` | Multi-step workflow engine (submit → level1 → level2 → finalize) |
-| `PaymentsService` | BankInfo CRUD + iuran domain (model berbeda) |
-| `MembersWorkflowService` | No CRUD — hanya workflow (validate, approve, suspend) |
-| `ForumService` | Multi-model (categories, threads, posts) — tapi categories diekstrak |
+| Service                  | Alasan                                                               |
+| :----------------------- | :------------------------------------------------------------------- |
+| `ChatService`            | No CRUD — hanya findOrCreateRoom, saveMessage, getMessages           |
+| `CronTasksService`       | No CRUD — hanya `@Cron()` scheduled jobs                             |
+| `NotificationsService`   | Multi-channel (in-app, email, FCM) + preferences                     |
+| `DocumentsService`       | File generation, QR codes, batch processing                          |
+| `ApprovalsService`       | Multi-step workflow engine (submit → level1 → level2 → finalize)     |
+| `PaymentsService`        | BankInfo CRUD + iuran domain (model berbeda)                         |
+| `MembersWorkflowService` | No CRUD — hanya workflow (validate, approve, suspend)                |
+| `ForumService`           | Multi-model (categories, threads, posts) — tapi categories diekstrak |
 
 ---
 
@@ -136,8 +136,8 @@ export class XxxService extends BaseCrudService<CreateXxxDto, UpdateXxxDto> {
     // private readonly mailService: MailService,
   ) {
     super(prisma, scopeHelper, cache, {
-      model: 'xxx',        // Prisma model name (lowercase!)
-      prefix: 'xxx:',      // Cache prefix
+      model: 'xxx', // Prisma model name (lowercase!)
+      prefix: 'xxx:', // Cache prefix
       notFound: 'Xxx tidak ditemukan',
       // scopeStrategy: 'ranting',  // default
       // softDelete: true,
@@ -183,7 +183,7 @@ Pastikan module meng-import `ScopeModule`:
 ```ts
 // xxx.module.ts
 @Module({
-  imports: [ScopeModule],  // ← menyediakan ScopeHelper + CacheService
+  imports: [ScopeModule], // ← menyediakan ScopeHelper + CacheService
   controllers: [XxxController],
   providers: [XxxService],
   exports: [XxxService],
@@ -430,10 +430,10 @@ async remove(id: string) {
 
 ```ts
 interface CrudConfig {
-  model: string;                    // Prisma model name (lowercase): 'anggota', 'user', 'kegiatan'
-  prefix: string;                   // Cache prefix untuk invalidate: 'members:', 'trainings:'
-  notFound?: string;                // Custom not-found message  (default: 'Data tidak ditemukan')
-  softDelete?: boolean;             // true → remove() sets deletedAt (default: false)
+  model: string; // Prisma model name (lowercase): 'anggota', 'user', 'kegiatan'
+  prefix: string; // Cache prefix untuk invalidate: 'members:', 'trainings:'
+  notFound?: string; // Custom not-found message  (default: 'Data tidak ditemukan')
+  softDelete?: boolean; // true → remove() sets deletedAt (default: false)
   scopeStrategy?: CrudScopeStrategy; // 'ranting' | 'kegiatan' | 'anggota_indirect' (default: 'ranting')
 }
 
@@ -442,24 +442,24 @@ type CrudScopeStrategy = 'ranting' | 'kegiatan' | 'anggota_indirect';
 
 ### Contoh Config Per Service
 
-| Service | `model` | `scopeStrategy` | `softDelete` | Notes |
-|:--------|:--------|:----------------|:-------------|:------|
-| `MembersService` | `anggota` | `ranting` | ✅ true | Soft delete via deletedAt |
-| `TrainingsService` | `latihan` | `ranting` | false | Hard delete |
-| `CandidatesService` | `calonAnggota` | `ranting` | false | Hard delete |
-| `ExaminersService` | `user` | default | false | No scope |
-| `DuesService` | `iuran` | `anggota_indirect` | false | Via anggota.rantingId |
-| `ActivitiesService` | `kegiatan` | `kegiatan` | false | scopeType/scopeId |
-| `ClaimsService` | `klaim` | `anggota_indirect` | false | Via anggota.rantingId |
-| `RegistrationsService` | `pendaftaran` | default | false | Public, no scope |
-| `UsersService` | `user` | `ranting` | false | Custom: isActive |
-| `GraduationsService` | `kegiatan` | `kegiatan` | false | Filter tipe='pendadaran' |
-| `OrgDocumentsService` | `dokumenOrganisasi` | default | false | No scope |
-| `RewardsService` | `reward` | default | false | No scope |
-| `MonitoringService` | `monitoringAlert` | default | false | No scope |
-| `LettersService` | `suratKeluar` | default | false | No scope |
-| `AspectService` | `aspekPenilaian` | default | false | Custom: isActive via override |
-| `ForumCategoryService` | `forumCategory` | default | false | No scope |
+| Service                | `model`             | `scopeStrategy`    | `softDelete` | Notes                         |
+| :--------------------- | :------------------ | :----------------- | :----------- | :---------------------------- |
+| `MembersService`       | `anggota`           | `ranting`          | ✅ true      | Soft delete via deletedAt     |
+| `TrainingsService`     | `latihan`           | `ranting`          | false        | Hard delete                   |
+| `CandidatesService`    | `calonAnggota`      | `ranting`          | false        | Hard delete                   |
+| `ExaminersService`     | `user`              | default            | false        | No scope                      |
+| `DuesService`          | `iuran`             | `anggota_indirect` | false        | Via anggota.rantingId         |
+| `ActivitiesService`    | `kegiatan`          | `kegiatan`         | false        | scopeType/scopeId             |
+| `ClaimsService`        | `klaim`             | `anggota_indirect` | false        | Via anggota.rantingId         |
+| `RegistrationsService` | `pendaftaran`       | default            | false        | Public, no scope              |
+| `UsersService`         | `user`              | `ranting`          | false        | Custom: isActive              |
+| `GraduationsService`   | `kegiatan`          | `kegiatan`         | false        | Filter tipe='pendadaran'      |
+| `OrgDocumentsService`  | `dokumenOrganisasi` | default            | false        | No scope                      |
+| `RewardsService`       | `reward`            | default            | false        | No scope                      |
+| `MonitoringService`    | `monitoringAlert`   | default            | false        | No scope                      |
+| `LettersService`       | `suratKeluar`       | default            | false        | No scope                      |
+| `AspectService`        | `aspekPenilaian`    | default            | false        | Custom: isActive via override |
+| `ForumCategoryService` | `forumCategory`     | default            | false        | No scope                      |
 
 ---
 
@@ -476,6 +476,7 @@ protected async beforeCreate(
 ```
 
 **Use cases:**
+
 - Hash password (bcrypt) → `UsersService`, `ExaminersService`
 - Auto-assign rantingId dari scope → `MembersService`, `CandidatesService`
 - Generate nomor anggota (NRA) → `MembersService`, `CandidatesService`
@@ -512,6 +513,7 @@ protected async afterCreate(
 ```
 
 **Use cases:**
+
 - Send welcome/confirmation email → `MembersService`, `CandidatesService`, `RegistrationsService`
 - Award gamification points → `DuesService`
 - Send in-app notification
@@ -544,6 +546,7 @@ protected async beforeUpdate(
 ```
 
 **Use cases:**
+
 - Sparse update — hanya include field yang didefinisikan
 - Hash password baru jika ada
 - Parse dates
@@ -594,6 +597,7 @@ scopeStrategy: 'ranting',  // default
 ```
 
 **Cara kerja:**
+
 - **findAll:** `buildScopeFilter(scope)` → `{ ranting: { id: scope.rantingId } }`
 - **findOne/update/remove:** `verifyScope(id, scope)` → fetch entity, verify `entity.rantingId`
 
@@ -608,10 +612,12 @@ scopeStrategy: 'kegiatan',
 ```
 
 **Cara kerja:**
+
 - **findAll:** `buildKegiatanScopeFilter(scope)` → OR conditions per level
 - **findOne/update/remove:** fetch entity, verify via `verifyKegiatanScope`
 
 **Scope inheritance** (semakin tinggi level, semakin luas akses):
+
 ```
 Ranting → hanya kegiatan di rantingnya
 Wilayah → kegiatan di wilayahnya + semua ranting di bawahnya
@@ -630,6 +636,7 @@ scopeStrategy: 'anggota_indirect',
 ```
 
 **Cara kerja:**
+
 - **findAll:** `buildIndirectScopeFilter(scope, 'anggota')`
 - **findOne/update/remove:** fetch entity with `anggota.rantingId`
 
@@ -676,16 +683,16 @@ throw new NotFoundException('User tidak ditemukan');
 
 ### Format Response yang Diterima Interceptor
 
-| Return dari Service | Response ke Client |
-|:--------------------|:-------------------|
-| `{ data }` | `{ success: true, data }` |
-| `{ data, message }` | `{ success: true, data, message }` |
-| `{ data, meta }` | `{ success: true, data, meta }` |
+| Return dari Service       | Response ke Client                       |
+| :------------------------ | :--------------------------------------- |
+| `{ data }`                | `{ success: true, data }`                |
+| `{ data, message }`       | `{ success: true, data, message }`       |
+| `{ data, meta }`          | `{ success: true, data, meta }`          |
 | `{ data, meta, message }` | `{ success: true, data, meta, message }` |
-| `{ message }` | `{ success: true, message }` |
-| `string` | `{ success: true, data: string }` |
-| `number` | `{ success: true, data: number }` |
-| `T[]` | `{ success: true, data: T[] }` |
+| `{ message }`             | `{ success: true, message }`             |
+| `string`                  | `{ success: true, data: string }`        |
+| `number`                  | `{ success: true, data: number }`        |
+| `T[]`                     | `{ success: true, data: T[] }`           |
 
 ### Yang TIDAK Perlu Dilakukan Service
 
@@ -795,17 +802,21 @@ Members, Candidates, Trainings, Activities, Dues, Examiners, Claims, Registratio
 
 ### Paling Sederhana: ExaminersService
 
-**Scope:** None  **Hooks:** `beforeCreate` → hash password, `afterCreate` → send email
+**Scope:** None **Hooks:** `beforeCreate` → hash password, `afterCreate` → send email
 
 ```ts
 @Injectable()
 export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateExaminerDto> {
   constructor(
-    prisma: PrismaService, scopeHelper: ScopeHelper, cache: CacheService,
+    prisma: PrismaService,
+    scopeHelper: ScopeHelper,
+    cache: CacheService,
     @Optional() private readonly mailService?: MailService,
   ) {
     super(prisma, scopeHelper, cache, {
-      model: 'user', prefix: 'examiners:', notFound: 'Penguji tidak ditemukan',
+      model: 'user',
+      prefix: 'examiners:',
+      notFound: 'Penguji tidak ditemukan',
     });
   }
 
@@ -830,7 +841,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
 
 ### Indirect Scope: DuesService
 
-**Scope:** `anggota_indirect`  **Hooks:** Gamification + email + reports cache invalidation
+**Scope:** `anggota_indirect` **Hooks:** Gamification + email + reports cache invalidation
 
 ```ts
 @Injectable()
@@ -855,7 +866,7 @@ export class DuesService extends BaseCrudService<CreateDuesDto, UpdateDuesDto> {
 
 ### Kegiatan Scope: ActivitiesService
 
-**Scope:** `kegiatan`  **Filter tambahan:** exclude pendadaran (hanya kegiatan non-pendadaran)
+**Scope:** `kegiatan` **Filter tambahan:** exclude pendadaran (hanya kegiatan non-pendadaran)
 
 ```ts
 @Injectable()
@@ -876,7 +887,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
 
 ### Paling Kompleks: MembersService
 
-**Scope:** `ranting`  **Soft delete:** ✅  **Hooks:** NRA generation + email
+**Scope:** `ranting` **Soft delete:** ✅ **Hooks:** NRA generation + email
 
 ```ts
 @Injectable()
@@ -916,14 +927,15 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
 ### New-Style: AspectService (BaseCrudService + Custom Remove)
 
-**Scope:** None  **Custom:** Override remove to set `isActive: false` instead of hard delete
+**Scope:** None **Custom:** Override remove to set `isActive: false` instead of hard delete
 
 ```ts
 @Injectable()
 export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspectDto> {
   constructor(prisma: PrismaService, scopeHelper: ScopeHelper, cache: CacheService) {
     super(prisma, scopeHelper, cache, {
-      model: 'aspekPenilaian', prefix: 'aspects:',
+      model: 'aspekPenilaian',
+      prefix: 'aspects:',
       notFound: 'Aspek tidak ditemukan',
       scopeStrategy: 'ranting', // tidak dipakai (no scope), tapi harmless
     });
@@ -956,7 +968,8 @@ export class AspectService extends BaseCrudService<CreateAspectDto, UpdateAspect
 export class ForumCategoryService extends BaseCrudService<CreateCategoryDto, UpdateCategoryDto> {
   constructor(prisma: PrismaService, scopeHelper: ScopeHelper, cache: CacheService) {
     super(prisma, scopeHelper, cache, {
-      model: 'forumCategory', prefix: 'forum:categories:',
+      model: 'forumCategory',
+      prefix: 'forum:categories:',
       notFound: 'Kategori tidak ditemukan',
     });
   }
@@ -984,7 +997,10 @@ Gunakan parameter `select` ke-4:
 
 ```ts
 return this.baseFindOne(id, scope, undefined, {
-  id: true, email: true, namaLengkap: true, role: true,
+  id: true,
+  email: true,
+  namaLengkap: true,
+  role: true,
   // passwordHash tidak di-select → otomatis di-exclude dari response
 });
 ```
@@ -1113,38 +1129,38 @@ constructor(
 
 ### Status Refactor (16 Selesai, 8 Tidak Cocok)
 
-| Service | Status | Scope | Savings | `as never` Removed |
-|:--------|:------:|:------|:-------:|:------------------:|
-| `TrainingsService` | ✅ | `ranting` | ~90 | 1 |
-| `CandidatesService` | ✅ | `ranting` | ~110 | 3 |
-| `MembersService` | ✅ | `ranting` | ~115 | 3 |
-| `ExaminersService` | ✅ | none | ~90 | 0 |
-| `UsersService` | ✅ | `ranting` | ~110 | 1 |
-| `DuesService` | ✅ | `anggota_indirect` | ~140 | 1 |
-| `ActivitiesService` | ✅ | `kegiatan` | ~110 | 3 |
-| `ClaimsService` | ✅ | `anggota_indirect` | ~70 | 2 |
-| `RegistrationsService` | ✅ | none | ~70 | 3 |
-| `GraduationsService` | ✅ | `kegiatan` | ~75 | 1 |
-| `OrgDocumentsService` | ✅ | none | ~50 | 0 |
-| `MonitoringService` | ✅ | none | ~65 | 4 |
-| `RewardsService` | ✅ | none | ~85 | 0 |
-| `LettersService` | ✅ | none | ~10 | 0 |
-| `AspectService` | ✅ | none (new) | ~60 | 1 |
-| `ForumCategoryService` | ✅ | none (new) | ~50 | 1 |
-| **Total** | **16** | | **~1.740** | **25** |
+| Service                | Status | Scope              |  Savings   | `as never` Removed |
+| :--------------------- | :----: | :----------------- | :--------: | :----------------: |
+| `TrainingsService`     |   ✅   | `ranting`          |    ~90     |         1          |
+| `CandidatesService`    |   ✅   | `ranting`          |    ~110    |         3          |
+| `MembersService`       |   ✅   | `ranting`          |    ~115    |         3          |
+| `ExaminersService`     |   ✅   | none               |    ~90     |         0          |
+| `UsersService`         |   ✅   | `ranting`          |    ~110    |         1          |
+| `DuesService`          |   ✅   | `anggota_indirect` |    ~140    |         1          |
+| `ActivitiesService`    |   ✅   | `kegiatan`         |    ~110    |         3          |
+| `ClaimsService`        |   ✅   | `anggota_indirect` |    ~70     |         2          |
+| `RegistrationsService` |   ✅   | none               |    ~70     |         3          |
+| `GraduationsService`   |   ✅   | `kegiatan`         |    ~75     |         1          |
+| `OrgDocumentsService`  |   ✅   | none               |    ~50     |         0          |
+| `MonitoringService`    |   ✅   | none               |    ~65     |         4          |
+| `RewardsService`       |   ✅   | none               |    ~85     |         0          |
+| `LettersService`       |   ✅   | none               |    ~10     |         0          |
+| `AspectService`        |   ✅   | none (new)         |    ~60     |         1          |
+| `ForumCategoryService` |   ✅   | none (new)         |    ~50     |         1          |
+| **Total**              | **16** |                    | **~1.740** |       **25**       |
 
-| Service | Status | Alasan |
-|:--------|:------:|:-------|
-| `ChatService` | ❌ | No CRUD — hanya messaging methods |
-| `CronTasksService` | ❌ | No CRUD — hanya `@Cron()` scheduled jobs |
-| `NotificationsService` | ❌ | Multi-channel: in-app, email, FCM, preferences |
-| `DocumentsService` | ❌ | File generation, QR codes, batch processing |
-| `ApprovalsService` | ❌ | Multi-step workflow engine |
-| `PaymentsService` | ❌ | BankInfo (model berbeda) + iuran domain |
-| `UjianPraktekService` | ❌ | Complex domain: exam management, scoring |
-| `MembersWorkflowService` | ❌ | No CRUD — hanya workflow actions |
-| `ForumService` | ❌ | Multi-model (category extracted ✅) |
+| Service                  | Status | Alasan                                         |
+| :----------------------- | :----: | :--------------------------------------------- |
+| `ChatService`            |   ❌   | No CRUD — hanya messaging methods              |
+| `CronTasksService`       |   ❌   | No CRUD — hanya `@Cron()` scheduled jobs       |
+| `NotificationsService`   |   ❌   | Multi-channel: in-app, email, FCM, preferences |
+| `DocumentsService`       |   ❌   | File generation, QR codes, batch processing    |
+| `ApprovalsService`       |   ❌   | Multi-step workflow engine                     |
+| `PaymentsService`        |   ❌   | BankInfo (model berbeda) + iuran domain        |
+| `UjianPraktekService`    |   ❌   | Complex domain: exam management, scoring       |
+| `MembersWorkflowService` |   ❌   | No CRUD — hanya workflow actions               |
+| `ForumService`           |   ❌   | Multi-model (category extracted ✅)            |
 
 ---
 
-*Generated with assistance from Codebuff. For questions about BaseCrudService internals, see `apps/api/src/common/utils/base-crud.service.ts`.*
+_Generated with assistance from Codebuff. For questions about BaseCrudService internals, see `apps/api/src/common/utils/base-crud.service.ts`._

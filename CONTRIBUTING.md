@@ -136,11 +136,11 @@ docs/             # SEMUA dokumentasi & panduan
 
 Semua dokumentasi hidup di `docs/` — **bukan di root**. Struktur:
 
-| Lokasi                  | Isi                                                        |
-| ----------------------- | ---------------------------------------------------------- |
-| `docs/SPEC/`, `PRD/`, `BRD/`, `ERD/`, `DFD/`, `QA/`, `API/`, `Roadmap/`, `Roles/`, `Prompt_AI/` | Dokumen perencanaan & spesifikasi (lihat `docs/README.md`) |
-| `docs/*.md` (root folder docs) | Panduan operasional: `QUICK_START`, `DOCKER_DEV_SETUP`, `DEPLOY-ths-thm`, `EMAIL_TEMPLATES`, `TESTING`, `TENANT-ISOLATION`, `DEPLOYMENT_SAFETY`, `COOKBOOK-BaseCrudService`, dst. |
-| `docs/archive/`         | Dokumen usang/snapshot sesi — disimpan sebagai referensi, tidak lagi dirawat |
+| Lokasi                                                                                          | Isi                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/SPEC/`, `PRD/`, `BRD/`, `ERD/`, `DFD/`, `QA/`, `API/`, `Roadmap/`, `Roles/`, `Prompt_AI/` | Dokumen perencanaan & spesifikasi (lihat `docs/README.md`)                                                                                                                        |
+| `docs/*.md` (root folder docs)                                                                  | Panduan operasional: `QUICK_START`, `DOCKER_DEV_SETUP`, `DEPLOY-ths-thm`, `EMAIL_TEMPLATES`, `TESTING`, `TENANT-ISOLATION`, `DEPLOYMENT_SAFETY`, `COOKBOOK-BaseCrudService`, dst. |
+| `docs/archive/`                                                                                 | Dokumen usang/snapshot sesi — disimpan sebagai referensi, tidak lagi dirawat                                                                                                      |
 
 Aturan:
 
@@ -159,15 +159,15 @@ Root hanya untuk file konfigurasi proyek. Inventaris root yang **diperbolehkan**
 
 **Tidak boleh commit ke root** (atau mana pun di repo):
 
-| Kategori | Contoh | Harus ke mana |
-| -------- | ------ | ------------- |
-| Log & output debug | `api-server.log`, `api-error.txt`, `migrate-out.log` | Jangan commit — jalur lokal sudah di-`.gitignore`; tempel potongan relevan ke issue/PR |
-| Artefak build | `.apk`, `.ipa`, `.zip` hasil build | Store/release (Play Console, TestFlight), bukan repo |
-| Media mentah | video demo, hasil rekaman, gambar satu kali | Drive/storage tim; aset aplikasi resmi ke `apps/*/public` atau `apps/*/assets` |
-| Skrip sekali pakai | helper encode/decode, script eksperimen | Hapus setelah selesai, atau masuk `scripts/` jika layak dirawat |
-| Data berisi PII | CSV/XLSX anggota asli | Jangan pernah masuk repo — simpan di drive terbatas akses |
-| Kredensial | `*firebase-adminsdk*.json`, `*client_secret*.json`, `.env*`, keystore | Secret manager / penyimpanan aman; jalurnya sudah di-`.gitignore` |
-| Dokumen MD ad-hoc | `START_HERE.md`, `SETUP_STATUS.md` | `docs/` (aktif) atau `docs/archive/` (usang) |
+| Kategori           | Contoh                                                                | Harus ke mana                                                                          |
+| ------------------ | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Log & output debug | `api-server.log`, `api-error.txt`, `migrate-out.log`                  | Jangan commit — jalur lokal sudah di-`.gitignore`; tempel potongan relevan ke issue/PR |
+| Artefak build      | `.apk`, `.ipa`, `.zip` hasil build                                    | Store/release (Play Console, TestFlight), bukan repo                                   |
+| Media mentah       | video demo, hasil rekaman, gambar satu kali                           | Drive/storage tim; aset aplikasi resmi ke `apps/*/public` atau `apps/*/assets`         |
+| Skrip sekali pakai | helper encode/decode, script eksperimen                               | Hapus setelah selesai, atau masuk `scripts/` jika layak dirawat                        |
+| Data berisi PII    | CSV/XLSX anggota asli                                                 | Jangan pernah masuk repo — simpan di drive terbatas akses                              |
+| Kredensial         | `*firebase-adminsdk*.json`, `*client_secret*.json`, `.env*`, keystore | Secret manager / penyimpanan aman; jalurnya sudah di-`.gitignore`                      |
+| Dokumen MD ad-hoc  | `START_HERE.md`, `SETUP_STATUS.md`                                    | `docs/` (aktif) atau `docs/archive/` (usang)                                           |
 
 Penegakan otomatis:
 

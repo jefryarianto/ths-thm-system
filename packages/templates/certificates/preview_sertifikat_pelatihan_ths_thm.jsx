@@ -176,11 +176,7 @@ export default function SertifikatPelatihanA4LandscapeTemplate({
             textAlign: 'center',
           }}
         >
-          <img
-            src={qrCodeUrl}
-            alt="QR"
-            style={{ width: '22mm', height: '22mm' }}
-          />
+          <img src={qrCodeUrl} alt="QR" style={{ width: '22mm', height: '22mm' }} />
           <p style={{ fontSize: '7pt', color: '#888', margin: '1mm 0 0 0' }}>
             Scan untuk verifikasi
           </p>
@@ -213,12 +209,8 @@ export default function SertifikatPelatihanA4LandscapeTemplate({
               paddingTop: '1mm',
             }}
           >
-            <p style={{ fontSize: '9pt', fontWeight: 'bold', margin: 0 }}>
-              {koordinatorDistrik}
-            </p>
-            <p style={{ fontSize: '8pt', color: '#666', margin: 0 }}>
-              Koordinator Distrik
-            </p>
+            <p style={{ fontSize: '9pt', fontWeight: 'bold', margin: 0 }}>{koordinatorDistrik}</p>
+            <p style={{ fontSize: '8pt', color: '#666', margin: 0 }}>Koordinator Distrik</p>
           </div>
         </div>
 
@@ -237,12 +229,8 @@ export default function SertifikatPelatihanA4LandscapeTemplate({
               paddingTop: '1mm',
             }}
           >
-            <p style={{ fontSize: '9pt', fontWeight: 'bold', margin: 0 }}>
-              {pelatih}
-            </p>
-            <p style={{ fontSize: '8pt', color: '#666', margin: 0 }}>
-              Pelatih
-            </p>
+            <p style={{ fontSize: '9pt', fontWeight: 'bold', margin: 0 }}>{pelatih}</p>
+            <p style={{ fontSize: '8pt', color: '#666', margin: 0 }}>Pelatih</p>
           </div>
         </div>
       </div>
@@ -274,9 +262,7 @@ export default function SertifikatPelatihanA4LandscapeTemplate({
           textAlign: 'center',
         }}
       >
-        <p style={{ fontSize: '9pt', color: '#666', margin: 0 }}>
-          {tanggalTandaTangan}
-        </p>
+        <p style={{ fontSize: '9pt', color: '#666', margin: 0 }}>{tanggalTandaTangan}</p>
       </div>
     </div>
   );

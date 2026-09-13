@@ -40,7 +40,7 @@ const client = createClient<paths>({ baseUrl: '/api' });
 
 // Fully typed request/response
 const { data, error } = await client.GET('/users', {
-  params: { query: { page: 1, limit: 10 } }
+  params: { query: { page: 1, limit: 10 } },
 });
 ```
 
@@ -53,7 +53,7 @@ import type { paths } from '@ths-thm/api-client';
 const client = createClient<paths>({ baseUrl: 'http://localhost:3001/api' });
 
 const { data } = await client.POST('/auth/login', {
-  body: { identifier: 'user@example.com', password: 'secret' }
+  body: { identifier: 'user@example.com', password: 'secret' },
 });
 ```
 

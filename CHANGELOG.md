@@ -72,10 +72,10 @@ Email methods consolidated to `MemberMailService`:
 
 ### 📊 Metrics
 
-| Metric         | Value                       |
-| -------------- | --------------------------- |
-| Files changed  | ~50 files (refactoring) + 10 files (cleanup) |
+| Metric         | Value                                         |
+| -------------- | --------------------------------------------- |
+| Files changed  | ~50 files (refactoring) + 10 files (cleanup)  |
 | Lines removed  | ~250+ duplicated code + ~50 lines unused deps |
-| API TypeScript | ✅ Zero errors              |
-| Web TypeScript | ✅ Zero errors              |
-| API Tests      | ✅ 482/482 pass (37 suites) |
+| API TypeScript | ✅ Zero errors                                |
+| Web TypeScript | ✅ Zero errors                                |
+| API Tests      | ✅ 482/482 pass (37 suites)                   |

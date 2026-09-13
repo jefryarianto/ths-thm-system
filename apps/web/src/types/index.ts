@@ -1,5 +1,5 @@
-import { 
-  Role as SharedRole, 
+import {
+  Role as SharedRole,
   User as SharedUser,
   Tokens as SharedTokens,
   AuthResponse as SharedAuthResponse,
@@ -10,7 +10,7 @@ import {
   Candidate as SharedCandidate,
   Ranting as SharedRanting,
   Wilayah as SharedWilayah,
-  Distrik as SharedDistrik
+  Distrik as SharedDistrik,
 } from '@ths-thm/shared-types';
 
 export type Role = SharedRole;

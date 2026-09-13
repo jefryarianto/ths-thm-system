@@ -142,9 +142,7 @@ export default function SuratKeputusanA4PortraitTemplate({
           marginBottom: '6mm',
         }}
       >
-        <p style={{ fontSize: '11pt', fontWeight: 'bold', margin: '0 0 2mm 0' }}>
-          Memutuskan:
-        </p>
+        <p style={{ fontSize: '11pt', fontWeight: 'bold', margin: '0 0 2mm 0' }}>Memutuskan:</p>
         {isi.map((poin, idx) => (
           <p
             key={idx}
@@ -166,9 +164,7 @@ export default function SuratKeputusanA4PortraitTemplate({
           marginBottom: '10mm',
         }}
       >
-        <p style={{ fontSize: '11pt', margin: 0, textAlign: 'justify' }}>
-          {penutup}
-        </p>
+        <p style={{ fontSize: '11pt', margin: 0, textAlign: 'justify' }}>{penutup}</p>
       </div>
 
       {/* Tanda Tangan */}
@@ -194,9 +190,7 @@ export default function SuratKeputusanA4PortraitTemplate({
               paddingTop: '1mm',
             }}
           >
-            <p style={{ fontSize: '10pt', fontWeight: 'bold', margin: 0 }}>
-              {penggunaSatu}
-            </p>
+            <p style={{ fontSize: '10pt', fontWeight: 'bold', margin: 0 }}>{penggunaSatu}</p>
           </div>
         </div>
 
@@ -215,9 +209,7 @@ export default function SuratKeputusanA4PortraitTemplate({
               paddingTop: '1mm',
             }}
           >
-            <p style={{ fontSize: '10pt', fontWeight: 'bold', margin: 0 }}>
-              {penggunaDua}
-            </p>
+            <p style={{ fontSize: '10pt', fontWeight: 'bold', margin: 0 }}>{penggunaDua}</p>
           </div>
         </div>
       </div>

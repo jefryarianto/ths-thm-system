@@ -10,6 +10,7 @@ npm install -g pnpm@latest
 ```
 
 Verify:
+
 ```bash
 pnpm --version
 ```
@@ -54,6 +55,7 @@ pnpm run dev
 ```
 
 Tunggu sampai muncul:
+
 ```
 [Nest] 12345 - 07/26/2026 4:30 PM   LOG [NestFactory] Starting Nest application...
 ```
@@ -68,6 +70,7 @@ pnpm run dev
 ```
 
 Tunggu sampai muncul:
+
 ```
 Ready in 2.1s
 ```
@@ -78,20 +81,22 @@ Buka: **http://localhost:3002**
 
 ## ✅ Selesai!
 
-| Service | URL |
-|---------|-----|
-| API | http://localhost:3001 |
-| Swagger Docs | http://localhost:3001/api/docs |
-| Web Dashboard | http://localhost:3002 |
-| Database | localhost:54321 |
-| Redis | localhost:6379 |
+| Service       | URL                            |
+| ------------- | ------------------------------ |
+| API           | http://localhost:3001          |
+| Swagger Docs  | http://localhost:3001/api/docs |
+| Web Dashboard | http://localhost:3002          |
+| Database      | localhost:54321                |
+| Redis         | localhost:6379                 |
 
 ---
 
 ## Troubleshooting
 
 ### pnpm masih error:
+
 Gunakan npm langsung:
+
 ```bash
 npm install
 cd apps/api
@@ -103,6 +108,7 @@ npm run dev
 ```
 
 ### Database error:
+
 ```bash
 docker-compose ps
 # Pastikan postgres dan redis healthy
@@ -111,6 +117,7 @@ docker-compose logs postgres
 ```
 
 ### Migration error:
+
 ```bash
 cd apps/api
 npx prisma db push  # Alternative to migrate

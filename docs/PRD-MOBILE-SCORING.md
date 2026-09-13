@@ -8,9 +8,10 @@
 
 ## 1. Latar Belakang
 
-BRD alur #4: *"Pendadaran → penguji input nilai → validasi → sertifikat"*.
+BRD alur #4: _"Pendadaran → penguji input nilai → validasi → sertifikat"_.
 
 Saat ini mobile app sudah bisa:
+
 - ✅ Melihat daftar & detail pendadaran
 - ✅ Melihat daftar peserta tab
 - ✅ Melihat nilai yang sudah diinput (tab Evaluasi — view-only)
@@ -22,15 +23,15 @@ Dampak: Penguji di lokasi ujian tidak bisa langsung menilai dari HP.
 
 ## 2. User Stories
 
-| ID | Sebagai… | Saya ingin… | Sehingga… |
-|:---|:----------|:------------|:----------|
-| US-01 | Penguji | Memilih peserta dari daftar yang akan dinilai | Saya bisa menilai satu per satu |
-| US-02 | Penguji | Melihat aspek & item penilaian yang berlaku | Saya tahu kriteria penilaian |
-| US-03 | Penguji | Mengisi nilai per item dalam rentang skor yang ditentukan | Nilai konsisten dengan ketentuan |
-| US-04 | Penguji | Menambahkan catatan pada setiap item | Saya bisa memberi feedback spesifik |
-| US-05 | Penguji | Melihat total skor sementara | Saya bisa evaluasi sebelum submit |
-| US-06 | Penguji | Submit semua nilai untuk peserta yang dinilai | Data tersimpan dan siap divalidasi admin |
-| US-07 | Admin | Melihat hasil penilaian di tab Evaluasi setelah diinput | Saya bisa validasi nilai |
+| ID    | Sebagai… | Saya ingin…                                               | Sehingga…                                |
+| :---- | :------- | :-------------------------------------------------------- | :--------------------------------------- |
+| US-01 | Penguji  | Memilih peserta dari daftar yang akan dinilai             | Saya bisa menilai satu per satu          |
+| US-02 | Penguji  | Melihat aspek & item penilaian yang berlaku               | Saya tahu kriteria penilaian             |
+| US-03 | Penguji  | Mengisi nilai per item dalam rentang skor yang ditentukan | Nilai konsisten dengan ketentuan         |
+| US-04 | Penguji  | Menambahkan catatan pada setiap item                      | Saya bisa memberi feedback spesifik      |
+| US-05 | Penguji  | Melihat total skor sementara                              | Saya bisa evaluasi sebelum submit        |
+| US-06 | Penguji  | Submit semua nilai untuk peserta yang dinilai             | Data tersimpan dan siap divalidasi admin |
+| US-07 | Admin    | Melihat hasil penilaian di tab Evaluasi setelah diinput   | Saya bisa validasi nilai                 |
 
 ---
 
@@ -38,15 +39,15 @@ Dampak: Penguji di lokasi ujian tidak bisa langsung menilai dari HP.
 
 Semua endpoint sudah siap di backend — **tidak perlu perubahan backend**.
 
-| Method | Endpoint | Fungsi | Body / Params |
-|:-------|:---------|:-------|:--------------|
-| `GET` | `/graduations/:id/participants` | Daftar peserta pendadaran | — |
-| `GET` | `/graduations/:kegiatanId/ujian-praktek` | Daftar ujian praktek dalam pendadaran | — |
-| `GET` | `/graduations/:kegiatanId/ujian-praktek/available-items` | Item penilaian tersedia | — |
-| `GET` | `/assessments/aspects` | Semua aspek penilaian | — |
-| `GET` | `/assessments/items?aspekId=xxx` | Item penilaian per aspek | Query: `aspekId` |
-| `POST` | `/graduations/:kegiatanId/ujian-praktek/:id/score` | Submit nilai (bulk per penguji) | `{ scores: [{ itemPenilaianId, calonAnggotaId, nilai, catatan }] }` |
-| `GET` | `/graduations/:id/evaluations` | Cek nilai yang sudah diinput | — |
+| Method | Endpoint                                                 | Fungsi                                | Body / Params                                                       |
+| :----- | :------------------------------------------------------- | :------------------------------------ | :------------------------------------------------------------------ |
+| `GET`  | `/graduations/:id/participants`                          | Daftar peserta pendadaran             | —                                                                   |
+| `GET`  | `/graduations/:kegiatanId/ujian-praktek`                 | Daftar ujian praktek dalam pendadaran | —                                                                   |
+| `GET`  | `/graduations/:kegiatanId/ujian-praktek/available-items` | Item penilaian tersedia               | —                                                                   |
+| `GET`  | `/assessments/aspects`                                   | Semua aspek penilaian                 | —                                                                   |
+| `GET`  | `/assessments/items?aspekId=xxx`                         | Item penilaian per aspek              | Query: `aspekId`                                                    |
+| `POST` | `/graduations/:kegiatanId/ujian-praktek/:id/score`       | Submit nilai (bulk per penguji)       | `{ scores: [{ itemPenilaianId, calonAnggotaId, nilai, catatan }] }` |
+| `GET`  | `/graduations/:id/evaluations`                           | Cek nilai yang sudah diinput          | —                                                                   |
 
 ### Request Body `POST /score`
 
@@ -176,39 +177,39 @@ Semua endpoint sudah siap di backend — **tidak perlu perubahan backend**.
 
 ## 5. Validasi & Error States
 
-| Skenario | Validasi | Error Message |
-|:---------|:---------|:--------------|
-| Nilai kosong | Required | "Harap isi semua item penilaian" |
-| Nilai di luar rentang | Min/Max (0–100) | "Nilai harus antara 0–100" |
-| Koneksi terputus saat submit | Network retry (3×) | "Koneksi terputus. Coba lagi." |
-| Submit duplikat | Prevent double-click | "Menyimpan…" (button disabled + spinner) |
-| Token expired saat submit | Auto-refresh → retry | — (silent refresh) |
-| Server error (500) | Catch → user message | "Gagal menyimpan nilai. Silakan coba lagi." |
-| Tidak ada item penilaian | Check length | "Belum ada item penilaian untuk ujian ini. Hubungi admin." |
-| Bukan penguji yang ditugaskan | Role check API | "Anda tidak ditugaskan sebagai penguji untuk ujian ini." |
+| Skenario                      | Validasi             | Error Message                                              |
+| :---------------------------- | :------------------- | :--------------------------------------------------------- |
+| Nilai kosong                  | Required             | "Harap isi semua item penilaian"                           |
+| Nilai di luar rentang         | Min/Max (0–100)      | "Nilai harus antara 0–100"                                 |
+| Koneksi terputus saat submit  | Network retry (3×)   | "Koneksi terputus. Coba lagi."                             |
+| Submit duplikat               | Prevent double-click | "Menyimpan…" (button disabled + spinner)                   |
+| Token expired saat submit     | Auto-refresh → retry | — (silent refresh)                                         |
+| Server error (500)            | Catch → user message | "Gagal menyimpan nilai. Silakan coba lagi."                |
+| Tidak ada item penilaian      | Check length         | "Belum ada item penilaian untuk ujian ini. Hubungi admin." |
+| Bukan penguji yang ditugaskan | Role check API       | "Anda tidak ditugaskan sebagai penguji untuk ujian ini."   |
 
 ---
 
 ## 6. File Yang Akan Dibuat / Dimodifikasi
 
-| File | Action | Deskripsi |
-|:-----|:-------|:----------|
-| `screens/graduations/input-score.tsx` | **BARU** | Form input nilai — pilih peserta, isi nilai per item, submit |
-| `screens/graduations/input-score-select.tsx` | **BARU** | (optional) Daftar peserta untuk dipilih sebelum input |
-| `screens/graduations/detail.tsx` | **MODIFIKASI** | Tambah tombol "Input Nilai" di tab Evaluasi (visible untuk penguji) |
-| `app/_layout.tsx` | **MODIFIKASI** | Register route `graduations/input-score` |
-| `hooks/use-scoring.ts` | **BARU** | Hook untuk fetch items + submit nilai |
+| File                                         | Action         | Deskripsi                                                           |
+| :------------------------------------------- | :------------- | :------------------------------------------------------------------ |
+| `screens/graduations/input-score.tsx`        | **BARU**       | Form input nilai — pilih peserta, isi nilai per item, submit        |
+| `screens/graduations/input-score-select.tsx` | **BARU**       | (optional) Daftar peserta untuk dipilih sebelum input               |
+| `screens/graduations/detail.tsx`             | **MODIFIKASI** | Tambah tombol "Input Nilai" di tab Evaluasi (visible untuk penguji) |
+| `app/_layout.tsx`                            | **MODIFIKASI** | Register route `graduations/input-score`                            |
+| `hooks/use-scoring.ts`                       | **BARU**       | Hook untuk fetch items + submit nilai                               |
 
 ---
 
 ## 7. Dependencies
 
-| Dep | Untuk | Status |
-|:----|:------|:------|
-| Backend: Graduations API | Data peserta & evaluasi | ✅ Existing |
-| Backend: Assessments API | Aspek & item penilaian | ✅ Existing |
-| Backend: Ujian Praktek API | Submit nilai bulk | ✅ Existing |
-| `react-native-qrcode-svg` | (opsional) scan peserta QR untuk auto-fill | ✅ Used in digital-card |
+| Dep                        | Untuk                                      | Status                  |
+| :------------------------- | :----------------------------------------- | :---------------------- |
+| Backend: Graduations API   | Data peserta & evaluasi                    | ✅ Existing             |
+| Backend: Assessments API   | Aspek & item penilaian                     | ✅ Existing             |
+| Backend: Ujian Praktek API | Submit nilai bulk                          | ✅ Existing             |
+| `react-native-qrcode-svg`  | (opsional) scan peserta QR untuk auto-fill | ✅ Used in digital-card |
 
 **Tidak ada dependencies baru yang perlu diinstall.**
 
@@ -247,4 +248,4 @@ Penguji buka detail pendadaran
 
 ---
 
-*Dokumen ini dapat dijadikan acuan untuk implementasi Sprint 2. API endpoints sudah siap, tidak perlu perubahan backend.*
+_Dokumen ini dapat dijadikan acuan untuk implementasi Sprint 2. API endpoints sudah siap, tidak perlu perubahan backend._

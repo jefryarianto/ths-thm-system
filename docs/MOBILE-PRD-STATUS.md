@@ -7,13 +7,13 @@
 
 ## 🏆 Ringkasan
 
-| PRD | Status | Files Changed | Backend | Mobile | Effort |
-|:----|:------:|:-------------:|:-------:|:------:|:------|
-| **QR Check-in + Multi-Kegiatan** | ✅ **Selesai** | 4 | 0 | 4 | Sprint 1 |
-| **Input Nilai Pendadaran** | ✅ **Selesai** | 6 | 0 | 6 | Sprint 2 |
-| **Approval Workflow** | ✅ **Selesai** | 7 | 0 | 7 | Sprint 3 |
-| **Push Notification Approval** | ✅ **Selesai** | 5 | 3 | 2 | Sprint 4 |
-| **Approval Reference Detail** | 📄 **PRD Only** | 4 | 0 | 4 | Enhancement |
+| PRD                              |     Status      | Files Changed | Backend | Mobile | Effort      |
+| :------------------------------- | :-------------: | :-----------: | :-----: | :----: | :---------- |
+| **QR Check-in + Multi-Kegiatan** | ✅ **Selesai**  |       4       |    0    |   4    | Sprint 1    |
+| **Input Nilai Pendadaran**       | ✅ **Selesai**  |       6       |    0    |   6    | Sprint 2    |
+| **Approval Workflow**            | ✅ **Selesai**  |       7       |    0    |   7    | Sprint 3    |
+| **Push Notification Approval**   | ✅ **Selesai**  |       5       |    3    |   2    | Sprint 4    |
+| **Approval Reference Detail**    | 📄 **PRD Only** |       4       |    0    |   4    | Enhancement |
 
 **Total: 4 PRDs → 4 implemented ✅, 1 documented 📄**
 
@@ -25,14 +25,15 @@
 
 ### File Mapping
 
-| File | Action | Backend | Mobile |
-|:-----|:------:|:-------:|:------:|
-| `app/(tabs)/_layout.tsx` | Modified | — | ✅ |
-| `src/screens/qr-scan/index.tsx` | Created | — | ✅ |
-| `src/screens/activities/detail.tsx` | Modified | — | ✅ |
-| `src/screens/trainings/detail.tsx` | Modified | — | ✅ |
+| File                                |  Action  | Backend | Mobile |
+| :---------------------------------- | :------: | :-----: | :----: |
+| `app/(tabs)/_layout.tsx`            | Modified |    —    |   ✅   |
+| `src/screens/qr-scan/index.tsx`     | Created  |    —    |   ✅   |
+| `src/screens/activities/detail.tsx` | Modified |    —    |   ✅   |
+| `src/screens/trainings/detail.tsx`  | Modified |    —    |   ✅   |
 
 ### Key Features
+
 - ✅ Badge kegiatan aktif di tab Scan QR
 - ✅ Dropdown + chips selector multi-kegiatan (activities + trainings)
 - ✅ Endpoint routing by type (`/trainings/:id/attendances` vs `/activities/:id/presence`)
@@ -40,6 +41,7 @@
 - ✅ Scan history with AsyncStorage
 
 ### API Dependencies (all existing)
+
 - `GET /activities?status=published`
 - `GET /trainings`
 - `POST /trainings/:id/attendances`
@@ -53,15 +55,16 @@
 
 ### File Mapping
 
-| File | Action | Backend | Mobile |
-|:-----|:------:|:-------:|:------:|
-| `src/hooks/use-scoring.ts` | **Created** | — | ✅ |
-| `src/screens/graduations/input-score.tsx` | **Created** | — | ✅ |
-| `app/graduations/input-score.tsx` | **Created** | — | ✅ |
-| `app/_layout.tsx` | Modified | — | ✅ |
-| `src/screens/graduations/detail.tsx` | Modified | — | ✅ |
+| File                                      |   Action    | Backend | Mobile |
+| :---------------------------------------- | :---------: | :-----: | :----: |
+| `src/hooks/use-scoring.ts`                | **Created** |    —    |   ✅   |
+| `src/screens/graduations/input-score.tsx` | **Created** |    —    |   ✅   |
+| `app/graduations/input-score.tsx`         | **Created** |    —    |   ✅   |
+| `app/_layout.tsx`                         |  Modified   |    —    |   ✅   |
+| `src/screens/graduations/detail.tsx`      |  Modified   |    —    |   ✅   |
 
 ### Key Features
+
 - ✅ 5-state machine: loading → select participant → input scores → submitting → confirm
 - ✅ Aspek cards with item-level scoring (+/- 5 buttons + TextInput)
 - ✅ Real-time progress bar (hijau ≥70%, kuning 40-69%, merah <40%)
@@ -71,6 +74,7 @@
 - ✅ Input Nilai button in evaluations tab (visible for penguji/admin/admin_kegiatan)
 
 ### API Dependencies (all existing)
+
 - `GET /graduations/:id/participants`
 - `GET /graduations/:kegiatanId/ujian-praktek`
 - `GET /assessments/aspects`
@@ -78,12 +82,13 @@
 - `POST /graduations/:kegiatanId/ujian-praktek/:id/score`
 
 ### Code Review Fixes
-| Issue | Fix |
-|:------|:----|
-| `admin_kegiatan` excluded from button | Added role check |
-| `FilterChips` unused import | Removed |
-| Score validation hardcoded `<= 100` | Made permissive, let backend validate |
-| Error banner + list shown simultaneously | Blocked list when error present |
+
+| Issue                                    | Fix                                   |
+| :--------------------------------------- | :------------------------------------ |
+| `admin_kegiatan` excluded from button    | Added role check                      |
+| `FilterChips` unused import              | Removed                               |
+| Score validation hardcoded `<= 100`      | Made permissive, let backend validate |
+| Error banner + list shown simultaneously | Blocked list when error present       |
 
 ---
 
@@ -93,24 +98,25 @@
 
 ### File Mapping
 
-| File | Action | Backend | Mobile |
-|:-----|:------:|:-------:|:------:|
-| `src/hooks/use-approvals.ts` | **Created** | — | ✅ |
-| `src/screens/approvals/index.tsx` | **Created** | — | ✅ |
-| `src/screens/approvals/[id].tsx` | **Created** | — | ✅ |
-| `app/approvals.tsx` | **Created** | — | ✅ |
-| `app/approvals/[id].tsx` | **Created** | — | ✅ |
-| `app/_layout.tsx` | Modified | — | ✅ |
-| `src/screens/members/home.tsx` | Modified | — | ✅ |
+| File                              |   Action    | Backend | Mobile |
+| :-------------------------------- | :---------: | :-----: | :----: |
+| `src/hooks/use-approvals.ts`      | **Created** |    —    |   ✅   |
+| `src/screens/approvals/index.tsx` | **Created** |    —    |   ✅   |
+| `src/screens/approvals/[id].tsx`  | **Created** |    —    |   ✅   |
+| `app/approvals.tsx`               | **Created** |    —    |   ✅   |
+| `app/approvals/[id].tsx`          | **Created** |    —    |   ✅   |
+| `app/_layout.tsx`                 |  Modified   |    —    |   ✅   |
+| `src/screens/members/home.tsx`    |  Modified   |    —    |   ✅   |
 
 ### Enhancement: Filter Chips by RequestType ✅
 
-| File | Action | Backend | Mobile |
-|:-----|:------:|:-------:|:------:|
-| `src/hooks/use-approvals.ts` | Modified | — | ✅ |
-| `src/screens/approvals/index.tsx` | Modified | — | ✅ |
+| File                              |  Action  | Backend | Mobile |
+| :-------------------------------- | :------: | :-----: | :----: |
+| `src/hooks/use-approvals.ts`      | Modified |    —    |   ✅   |
+| `src/screens/approvals/index.tsx` | Modified |    —    |   ✅   |
 
 ### Key Features
+
 - ✅ List page with inline approve/reject + level dots
 - ✅ Detail page with timeline (vertical) + level cards
 - ✅ Approve/reject with optional note (Alert confirmation)
@@ -120,6 +126,7 @@
 - ✅ `member_update` grouped under "Anggota" filter
 
 ### API Dependencies (all existing)
+
 - `GET /approvals/pending`
 - `GET /approvals/:id`
 - `POST /approvals/:id/approve`
@@ -133,15 +140,16 @@
 
 ### File Mapping
 
-| File | Action | Backend | Mobile |
-|:-----|:------:|:-------:|:------:|
-| `src/modules/approvals/approval.service.ts` | Modified | ✅ | — |
-| `src/modules/approvals/approval.module.ts` | Modified | ✅ | — |
-| `src/modules/notifications/notifications.service.ts` | Modified | ✅ | — |
-| `app/_layout.tsx` | Modified | — | ✅ |
-| `src/hooks/use-notifications.ts` | Modified | — | ✅ |
+| File                                                 |  Action  | Backend | Mobile |
+| :--------------------------------------------------- | :------: | :-----: | :----: |
+| `src/modules/approvals/approval.service.ts`          | Modified |   ✅    |   —    |
+| `src/modules/approvals/approval.module.ts`           | Modified |   ✅    |   —    |
+| `src/modules/notifications/notifications.service.ts` | Modified |   ✅    |   —    |
+| `app/_layout.tsx`                                    | Modified |    —    |   ✅   |
+| `src/hooks/use-notifications.ts`                     | Modified |    —    |   ✅   |
 
 ### Key Features
+
 - ✅ `ApprovalService` now calls `NotificationsService.send()` — not just in-app notif
 - ✅ One call handles: in-app notif + FCM push + socket.io + email + preference check + cache
 - ✅ Deep link from FCM push → `/approvals/{screenId}`
@@ -150,11 +158,12 @@
 - ✅ Graceful degradation (`.catch()` + `@Optional()`)
 
 ### Code Review Fixes
-| Issue | Fix |
-|:------|:----|
-| 🔴 Double in-app notification | Removed direct `prisma.notifikasi.create()`, let `send()` handle |
-| 🟡 Dead import `Inject` | Removed from import |
-| 🟡 Unused `namaLengkap: true` in select | Changed to `select: { id: true }` |
+
+| Issue                                   | Fix                                                              |
+| :-------------------------------------- | :--------------------------------------------------------------- |
+| 🔴 Double in-app notification           | Removed direct `prisma.notifikasi.create()`, let `send()` handle |
+| 🟡 Dead import `Inject`                 | Removed from import                                              |
+| 🟡 Unused `namaLengkap: true` in select | Changed to `select: { id: true }`                                |
 
 ### Architecture
 
@@ -173,22 +182,22 @@ Approval submit
 
 ### File Mapping (planned)
 
-| File | Action | Backend | Mobile | Status |
-|:-----|:------:|:-------:|:------:|:------:|
-| `src/hooks/use-approvals.ts` | Modified | — | ✅ `getReferenceRoute()` | 📄 Planned |
-| `src/screens/approvals/[id].tsx` | Modified | — | ✅ Nav button | 📄 Planned |
-| `src/screens/approvals/reference-claim.tsx` | **Created** | — | ✅ New screen | 📄 Planned |
-| `app/approvals/reference-claim.tsx` | **Created** | — | ✅ Route | 📄 Planned |
-| `app/_layout.tsx` | Modified | — | ✅ Route registration | 📄 Planned |
+| File                                        |   Action    | Backend |          Mobile          |   Status   |
+| :------------------------------------------ | :---------: | :-----: | :----------------------: | :--------: |
+| `src/hooks/use-approvals.ts`                |  Modified   |    —    | ✅ `getReferenceRoute()` | 📄 Planned |
+| `src/screens/approvals/[id].tsx`            |  Modified   |    —    |      ✅ Nav button       | 📄 Planned |
+| `src/screens/approvals/reference-claim.tsx` | **Created** |    —    |      ✅ New screen       | 📄 Planned |
+| `app/approvals/reference-claim.tsx`         | **Created** |    —    |         ✅ Route         | 📄 Planned |
+| `app/_layout.tsx`                           |  Modified   |    —    |  ✅ Route registration   | 📄 Planned |
 
 ### Reference Navigation Strategy
 
-| requestType | itemId → | Reuse Screen | Status |
-|:------------|:---------|:------------:|:------|
-| `member_create` / `member_update` | `Anggota.id` | ✅ `members/[id]` | Existing |
-| `claim` | `Klaim.id` | ❌ **Need new screen** | 📄 Planned |
-| `letter` | `SuratKeluar.id` | ✅ `letters/[id]` | Existing |
-| `certificate` | `Dokumen.id` | ✅ `documents/[id]` | Existing |
+| requestType                       | itemId →         |      Reuse Screen      | Status     |
+| :-------------------------------- | :--------------- | :--------------------: | :--------- |
+| `member_create` / `member_update` | `Anggota.id`     |   ✅ `members/[id]`    | Existing   |
+| `claim`                           | `Klaim.id`       | ❌ **Need new screen** | 📄 Planned |
+| `letter`                          | `SuratKeluar.id` |   ✅ `letters/[id]`    | Existing   |
+| `certificate`                     | `Dokumen.id`     |  ✅ `documents/[id]`   | Existing   |
 
 **Effort estimate:** 2-3 hari (mostly building claim reference screen)
 
@@ -198,56 +207,56 @@ Approval submit
 
 ### Lines of Code
 
-| PRD | Files | Lines Added | Type |
-|:----|:-----:|:-----------:|:-----|
-| QR Check-in | 4 | ~300 | Mobile |
-| Input Nilai Pendadaran | 6 | ~650 | Mobile |
-| Approval Workflow | 7 | ~550 | Mobile |
-| Push Notification Approval | 5 | ~40 | Backend + Mobile |
-| **Total Implemented** | **22** | **~1,540** | — |
+| PRD                        | Files  | Lines Added | Type             |
+| :------------------------- | :----: | :---------: | :--------------- |
+| QR Check-in                |   4    |    ~300     | Mobile           |
+| Input Nilai Pendadaran     |   6    |    ~650     | Mobile           |
+| Approval Workflow          |   7    |    ~550     | Mobile           |
+| Push Notification Approval |   5    |     ~40     | Backend + Mobile |
+| **Total Implemented**      | **22** | **~1,540**  | —                |
 
 ### Backend vs Mobile Breakdown
 
-| Layer | Files Changed | Type |
-|:------|:------------:|:-----|
-| Backend (`apps/api/`) | 3 | `approval.service.ts`, `approval.module.ts`, `notifications.service.ts` |
-| Mobile (`apps/mobile/`) | 19 | hooks, screens, routes, layouts |
+| Layer                   | Files Changed | Type                                                                    |
+| :---------------------- | :-----------: | :---------------------------------------------------------------------- |
+| Backend (`apps/api/`)   |       3       | `approval.service.ts`, `approval.module.ts`, `notifications.service.ts` |
+| Mobile (`apps/mobile/`) |      19       | hooks, screens, routes, layouts                                         |
 
 ### API Dependencies
 
 **Total API endpoints used (all existing, no new):** 16
 
-| Endpoint | PRD |
-|:---------|:----|
-| `GET /activities` | QR Check-in |
-| `GET /trainings` | QR Check-in |
-| `POST /trainings/:id/attendances` | QR Check-in |
-| `POST /activities/:id/presence` | QR Check-in |
-| `GET /graduations/:id/participants` | Input Nilai |
-| `GET /graduations/:kegiatanId/ujian-praktek` | Input Nilai |
-| `GET /assessments/aspects` | Input Nilai |
-| `GET /assessments/items` | Input Nilai |
-| `POST /graduations/:kegiatanId/ujian-praktek/:id/score` | Input Nilai |
-| `GET /approvals/pending` | Approvals |
-| `GET /approvals/:id` | Approvals |
-| `POST /approvals/:id/approve` | Approvals |
-| `POST /approvals/:id/reject` | Approvals |
-| `GET /members/:id` | Reference Detail (planned) |
-| `GET /claims/:id` | Reference Detail (planned) |
-| `GET /letters/:id` | Reference Detail (planned) |
-| `GET /documents/:id` | Reference Detail (planned) |
+| Endpoint                                                | PRD                        |
+| :------------------------------------------------------ | :------------------------- |
+| `GET /activities`                                       | QR Check-in                |
+| `GET /trainings`                                        | QR Check-in                |
+| `POST /trainings/:id/attendances`                       | QR Check-in                |
+| `POST /activities/:id/presence`                         | QR Check-in                |
+| `GET /graduations/:id/participants`                     | Input Nilai                |
+| `GET /graduations/:kegiatanId/ujian-praktek`            | Input Nilai                |
+| `GET /assessments/aspects`                              | Input Nilai                |
+| `GET /assessments/items`                                | Input Nilai                |
+| `POST /graduations/:kegiatanId/ujian-praktek/:id/score` | Input Nilai                |
+| `GET /approvals/pending`                                | Approvals                  |
+| `GET /approvals/:id`                                    | Approvals                  |
+| `POST /approvals/:id/approve`                           | Approvals                  |
+| `POST /approvals/:id/reject`                            | Approvals                  |
+| `GET /members/:id`                                      | Reference Detail (planned) |
+| `GET /claims/:id`                                       | Reference Detail (planned) |
+| `GET /letters/:id`                                      | Reference Detail (planned) |
+| `GET /documents/:id`                                    | Reference Detail (planned) |
 
 ---
 
 ## 7. Rekomendasi Prioritas
 
-| Prioritas | Item | Reason |
-|:---------:|:-----|:-------|
-| 🥇 **Tinggi** | **Implement Reference Detail** | US-06 dari PRD Approvals — admin perlu verifikasi data tanpa buka web. 2-3 hari. |
-| 🥇 **Tinggi** | **Approval badge count on home** | Admin perlu tahu jumlah pending approval dari halaman utama. 0.5 hari. |
-| 🥈 **Sedang** | **Approval real-time via socket** | Badge count update real-time ketika approval baru masuk. 1 hari. |
-| 🥈 **Sedang** | **QR Scan — parse QR payload for Kegiatan** | Auto-verify kesesuaian QR dengan kegiatan yang dipilih. 1 hari. |
-| 🥉 **Rendah** | **Filter chips animation** | Animated transitions pada filter chips. 0.5 hari. |
+|   Prioritas   | Item                                        | Reason                                                                           |
+| :-----------: | :------------------------------------------ | :------------------------------------------------------------------------------- |
+| 🥇 **Tinggi** | **Implement Reference Detail**              | US-06 dari PRD Approvals — admin perlu verifikasi data tanpa buka web. 2-3 hari. |
+| 🥇 **Tinggi** | **Approval badge count on home**            | Admin perlu tahu jumlah pending approval dari halaman utama. 0.5 hari.           |
+| 🥈 **Sedang** | **Approval real-time via socket**           | Badge count update real-time ketika approval baru masuk. 1 hari.                 |
+| 🥈 **Sedang** | **QR Scan — parse QR payload for Kegiatan** | Auto-verify kesesuaian QR dengan kegiatan yang dipilih. 1 hari.                  |
+| 🥉 **Rendah** | **Filter chips animation**                  | Animated transitions pada filter chips. 0.5 hari.                                |
 
 ---
 
@@ -298,4 +307,4 @@ src/modules/
 
 ---
 
-*Dokumen ini dapat dijadikan referensi untuk tracking progress mobile implementation. 4 dari 5 PRD sudah fully implemented. Sisa: Reference Detail (2-3 hari effort).*
+_Dokumen ini dapat dijadikan referensi untuk tracking progress mobile implementation. 4 dari 5 PRD sudah fully implemented. Sisa: Reference Detail (2-3 hari effort)._

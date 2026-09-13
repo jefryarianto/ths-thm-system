@@ -13,6 +13,7 @@ docker-compose -f docker-compose.dev.yml up -d
 Ini akan start PostgreSQL dan Redis. Tunggu hingga keduanya healthy (~30 detik).
 
 Cek status:
+
 ```bash
 docker-compose -f docker-compose.dev.yml ps
 ```
@@ -20,6 +21,7 @@ docker-compose -f docker-compose.dev.yml ps
 ## Setup Dependencies (Local Machine)
 
 Pastikan sudah install:
+
 - **Node.js 20+** (download dari nodejs.org)
 - **pnpm 9.15+** (run `npm install -g pnpm@9.15.4`)
 
@@ -48,6 +50,7 @@ Ini akan membuat schema database di PostgreSQL.
 Buka 2 terminal terpisah:
 
 ### Terminal 1 - API (NestJS)
+
 ```bash
 cd apps/api
 pnpm run dev
@@ -56,6 +59,7 @@ pnpm run dev
 Tunggu sampai terbuka pada port 3001. Cek: http://localhost:3001/api/health
 
 ### Terminal 2 - Web (Next.js)
+
 ```bash
 cd apps/web
 pnpm run dev
@@ -74,6 +78,7 @@ Tunggu sampai terbuka pada port 3002. Cek: http://localhost:3002
 ## Database Management
 
 ### Prisma Studio (GUI Database)
+
 ```bash
 cd apps/api
 pnpm run db:studio
@@ -82,12 +87,14 @@ pnpm run db:studio
 Buka: http://localhost:5555
 
 ### Prisma Migrate
+
 ```bash
 cd apps/api
 npx prisma migrate dev
 ```
 
 ### Seed Database
+
 ```bash
 cd apps/api
 pnpm run db:seed
@@ -107,11 +114,13 @@ JWT_REFRESH_SECRET=your-dev-refresh-secret-here
 ## Useful Commands
 
 ### Stop Services
+
 ```bash
 docker-compose -f docker-compose.dev.yml down
 ```
 
 ### Reset Database
+
 ```bash
 docker-compose -f docker-compose.dev.yml down -v
 docker-compose -f docker-compose.dev.yml up -d
@@ -120,6 +129,7 @@ npx prisma migrate dev
 ```
 
 ### View Logs
+
 ```bash
 # PostgreSQL logs
 docker-compose -f docker-compose.dev.yml logs postgres
@@ -129,6 +139,7 @@ docker-compose -f docker-compose.dev.yml logs redis
 ```
 
 ### Run Tests
+
 ```bash
 cd apps/api
 pnpm test
@@ -137,6 +148,7 @@ pnpm test:e2e
 ```
 
 ### Format & Lint
+
 ```bash
 pnpm format
 pnpm lint
@@ -146,6 +158,7 @@ pnpm typecheck
 ## Troubleshooting
 
 ### Database connection refused
+
 ```bash
 # Make sure containers are running
 docker-compose -f docker-compose.dev.yml ps
@@ -155,7 +168,9 @@ docker-compose -f docker-compose.dev.yml up -d
 ```
 
 ### Port already in use
+
 Ganti port di `.env`:
+
 ```
 API port: change `3001` to `3005` when starting API
 Web port: change `3002` to `3006` when starting Web
@@ -163,6 +178,7 @@ DB port: change `54321` to `54322` in `docker-compose.dev.yml`
 ```
 
 ### Node modules issues
+
 ```bash
 # Clear and reinstall
 rm -r node_modules apps/api/node_modules apps/web/node_modules
@@ -170,6 +186,7 @@ pnpm install
 ```
 
 ### Migration stuck/error
+
 ```bash
 cd apps/api
 npx prisma migrate reset
@@ -186,6 +203,6 @@ npx prisma migrate dev
 
 ---
 
-**Selesai!** Anda sekarang sudah bisa develop THS-THM System secara lokal. 
+**Selesai!** Anda sekarang sudah bisa develop THS-THM System secara lokal.
 
 Untuk pertanyaan lebih lanjut, lihat [README.md](../README.md) atau [DOCKER_DEV_SETUP.md](DOCKER_DEV_SETUP.md).

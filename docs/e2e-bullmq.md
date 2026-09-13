@@ -65,6 +65,7 @@ USE_BULLMQ=true REDIS_HOST=localhost REDIS_PORT=6379 \
 ```
 
 Check that:
+
 - Jobs that were **processing** before the restart are re-attempted (BullMQ's visibility timeout kicks in)
 - Jobs that were **completed** are not re-processed
 - The batch eventually reaches `completed` (or `completed_with_errors`)
@@ -78,12 +79,12 @@ docker stop ths-redis && docker rm ths-redis
 
 ## Architecture notes
 
-| Component | Default (in-process) | BullMQ |
-|---|---|---|
-| Queue backend | In-memory Map | Redis |
-| Job durability | Lost on restart | Survives restart |
-| Horizontal scaling | Single process | Multiple workers |
-| Retry mechanism | setTimeout loop | BullMQ built-in (exponential backoff) |
-| Concurrency control | Semaphore | Worker.concurrency option |
+| Component           | Default (in-process) | BullMQ                                |
+| ------------------- | -------------------- | ------------------------------------- |
+| Queue backend       | In-memory Map        | Redis                                 |
+| Job durability      | Lost on restart      | Survives restart                      |
+| Horizontal scaling  | Single process       | Multiple workers                      |
+| Retry mechanism     | setTimeout loop      | BullMQ built-in (exponential backoff) |
+| Concurrency control | Semaphore            | Worker.concurrency option             |
 
 The adapter selection is determined once at service initialisation. To switch back to the in-process adapter, unset `USE_BULLMQ` or set it to anything other than `'true'`:

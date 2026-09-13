@@ -6,23 +6,23 @@ Template untuk import data anggota (termasuk import historis). Baris pertama har
 
 ## Kolom
 
-| Kolom            | Tipe   | Required | Deskripsi                                     |
-| ---------------- | ------ | -------- | --------------------------------------------- |
-| nia / nomor_anggota | string | opsional | Nomor lama (mis. `0103-001-1994` atau `001-1994`) |
-| nama_lengkap     | string | ✅       | Nama lengkap                                   |
-| jenis_kelamin    | enum   | ✅       | `L` / `P`                                      |
-| ttl              | string |          | Format: `"Tempat, Tanggal"` (mis. `"Oebafok, 06 Juli 1983"`) |
-| tempat_lahir     | string |          | Tempat lahir (jika kolom `ttl` kosong)         |
-| tanggal_lahir    | date   |          | Tanggal lahir (YYYY-MM-DD)                     |
-| tempat_dan_tahun_dadar | string |    | Format: `"Tempat - Tahun"` (mis. `"Lekunik - 1994"`) |
-| tempat_dadar     | string |          | Tempat pendadaran (jika kolom di atas kosong)  |
-| tahun_dadar      | number |          | Tahun pendadaran (4 digit)                     |
-| alamat           | string |          | Alamat                                         |
-| no_hp            | string |          | Nomor HP                                       |
-| email            | string |          | Email                                          |
-| foto             | string |          | Nama file foto                                 |
-| tingkat          | string |          | Tingkatan                                      |
-| ranting_id       | string | ✅       | ID ranting di sistem                           |
+| Kolom                  | Tipe   | Required | Deskripsi                                                    |
+| ---------------------- | ------ | -------- | ------------------------------------------------------------ |
+| nia / nomor_anggota    | string | opsional | Nomor lama (mis. `0103-001-1994` atau `001-1994`)            |
+| nama_lengkap           | string | ✅       | Nama lengkap                                                 |
+| jenis_kelamin          | enum   | ✅       | `L` / `P`                                                    |
+| ttl                    | string |          | Format: `"Tempat, Tanggal"` (mis. `"Oebafok, 06 Juli 1983"`) |
+| tempat_lahir           | string |          | Tempat lahir (jika kolom `ttl` kosong)                       |
+| tanggal_lahir          | date   |          | Tanggal lahir (YYYY-MM-DD)                                   |
+| tempat_dan_tahun_dadar | string |          | Format: `"Tempat - Tahun"` (mis. `"Lekunik - 1994"`)         |
+| tempat_dadar           | string |          | Tempat pendadaran (jika kolom di atas kosong)                |
+| tahun_dadar            | number |          | Tahun pendadaran (4 digit)                                   |
+| alamat                 | string |          | Alamat                                                       |
+| no_hp                  | string |          | Nomor HP                                                     |
+| email                  | string |          | Email                                                        |
+| foto                   | string |          | Nama file foto                                               |
+| tingkat                | string |          | Tingkatan                                                    |
+| ranting_id             | string | ✅       | ID ranting di sistem                                         |
 
 ## Fitur Import Cerdas (Logika Parser)
 

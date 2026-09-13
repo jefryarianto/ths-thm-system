@@ -113,15 +113,15 @@ This checklist outlines the verification steps that should be completed before m
 
 Backups run automatically via **systemd timer** (`ths-thm-backup.timer`) daily at 02:00 AM.
 
-| Component | Detail |
-|:----------|:-------|
-| **Script** | `scripts/backup-database.sh` |
-| **Schedule** | `systemd timer` — daily @ 02:00 + 10 min after boot |
-| **Format** | `pg_dump --format=custom --compress=9` (compressed, parallel-restore capable) |
-| **Location** | `/opt/backups/ths-thm/{production,staging}/` |
-| **Retention** | 30 days (auto-cleaned) |
-| **Offsite** | Optional rsync to remote host (`OFFSITE_HOST` env var) |
-| **Notification** | Optional Slack webhook on failure (`SLACK_WEBHOOK_URL`) |
+| Component        | Detail                                                                        |
+| :--------------- | :---------------------------------------------------------------------------- |
+| **Script**       | `scripts/backup-database.sh`                                                  |
+| **Schedule**     | `systemd timer` — daily @ 02:00 + 10 min after boot                           |
+| **Format**       | `pg_dump --format=custom --compress=9` (compressed, parallel-restore capable) |
+| **Location**     | `/opt/backups/ths-thm/{production,staging}/`                                  |
+| **Retention**    | 30 days (auto-cleaned)                                                        |
+| **Offsite**      | Optional rsync to remote host (`OFFSITE_HOST` env var)                        |
+| **Notification** | Optional Slack webhook on failure (`SLACK_WEBHOOK_URL`)                       |
 
 ### Restore Commands
 
@@ -181,26 +181,31 @@ sudo systemctl start ths-thm-backup.service
 **If database is corrupted or lost:**
 
 1. **Stop the API** to prevent further writes:
+
    ```bash
    docker compose -f docker-compose.production.yml stop api
    ```
 
 2. **Verify latest backup exists:**
+
    ```bash
    ./scripts/restore-database.sh --list
    ```
 
 3. **Restore the latest backup:**
+
    ```bash
    ./scripts/restore-database.sh --latest
    ```
 
 4. **Run database migrations** (if restore is from an older schema):
+
    ```bash
    docker compose -f docker-compose.production.yml run --rm api sh -c "cd apps/api && npx prisma migrate deploy"
    ```
 
 5. **Restart the API:**
+
    ```bash
    docker compose -f docker-compose.production.yml start api
    ```
