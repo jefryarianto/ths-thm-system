@@ -120,12 +120,6 @@ Salin `.env.example` ke `.env` dan sesuaikan:
 | `Roles/`     | Role definitions & permission matrix |
 | `Prompt_AI/` | Prompt untuk AI-assisted development |
 
-## Update Log
-- 07/30/2026 09:09:06: Trigger CI/CD for latest features (Ranking, Import, Logo)
+Panduan operasional: [docs/QUICK_START.md](docs/QUICK_START.md), [docs/DOCKER_DEV_SETUP.md](docs/DOCKER_DEV_SETUP.md), [docs/DEPLOY-ths-thm.md](docs/DEPLOY-ths-thm.md), [docs/EMAIL_TEMPLATES.md](docs/EMAIL_TEMPLATES.md).
 
-## Update Log
-- 07/30/2026 09:21:32: Trigger CI/CD for latest features (Ranking, Import, Logo)
-
-## Update Log
-- 07/30/2026 09:48:23: Trigger CI/CD for latest features (Ranking, Import, Logo)
-# Trigger CI/CD - 07/30/2026 10:05:30
+Catatan perubahan dicatat di [CHANGELOG.md](CHANGELOG.md).

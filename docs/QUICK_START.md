@@ -188,4 +188,4 @@ npx prisma migrate dev
 
 **Selesai!** Anda sekarang sudah bisa develop THS-THM System secara lokal. 
 
-Untuk pertanyaan lebih lanjut, lihat README.md atau DOCKER_DEV_SETUP.md.
+Untuk pertanyaan lebih lanjut, lihat [README.md](../README.md) atau [DOCKER_DEV_SETUP.md](DOCKER_DEV_SETUP.md).
