@@ -47,8 +47,6 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.5.0",
     "@types/papaparse": "^5.3.14",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.0",
     "cross-env": "^10.1.0",
