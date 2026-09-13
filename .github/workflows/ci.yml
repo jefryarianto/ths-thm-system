@@ -74,3 +74,33 @@ jobs:
           cache: pnpm
       - run: pnpm install
       - run: pnpm --filter @ths-thm/web build
+
+  # ─── Repo Hygiene: whitelist dokumen root ─────────────────────────
+  # Root hanya untuk README.md / CHANGELOG.md / CONTRIBUTING.md.
+  # Panduan & dokumentasi lain wajib hidup di docs/ (aktif) atau
+  # docs/archive/ (usang) — lihat CONTRIBUTING.md → Struktur Dokumentasi.
+  repo-hygiene:
+    name: 🧹 Repo Hygiene (root .md whitelist)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check root markdown whitelist
+        run: |
+          ALLOWED="README.md CHANGELOG.md CONTRIBUTING.md"
+          VIOLATIONS=""
+          for f in *.md; do
+            [ -e "$f" ] || continue
+            ok=0
+            for a in $ALLOWED; do
+              [ "$f" = "$a" ] && ok=1 && break
+            done
+            [ $ok -eq 0 ] && VIOLATIONS="$VIOLATIONS $f"
+          done
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Dokumen .md tidak diizinkan di root:$VIOLATIONS"
+            echo "Pindahkan ke docs/ (aktif) atau docs/archive/ (usang)."
+            echo "Lihat bagian 'Struktur Dokumentasi' di CONTRIBUTING.md."
+            exit 1
+          fi
+          echo "✅ Root markdown sesuai whitelist:$ALLOWED"
