@@ -121,9 +121,58 @@ pnpm typecheck
 apps/
 ├── api/          # NestJS backend
 ├── web/          # Next.js admin dashboard
-└── mobile/       # Expo React Native app
+├── mobile/       # Expo React Native app
+└── mobile-flutter/ # Flutter rewrite (scaffold)
 packages/
 ├── templates/    # Document templates
-└── csv_templates/ # CSV import templates
-docs/             # Documentation & wiki
+├── csv_templates/ # CSV import templates (+ contoh data)
+└── shared-types/ # Tipe TypeScript bersama
+docs/             # SEMUA dokumentasi & panduan
 ```
+
+---
+
+## 🗂️ Struktur Dokumentasi (`docs/`)
+
+Semua dokumentasi hidup di `docs/` — **bukan di root**. Struktur:
+
+| Lokasi                  | Isi                                                        |
+| ----------------------- | ---------------------------------------------------------- |
+| `docs/SPEC/`, `PRD/`, `BRD/`, `ERD/`, `DFD/`, `QA/`, `API/`, `Roadmap/`, `Roles/`, `Prompt_AI/` | Dokumen perencanaan & spesifikasi (lihat `docs/README.md`) |
+| `docs/*.md` (root folder docs) | Panduan operasional: `QUICK_START`, `DOCKER_DEV_SETUP`, `DEPLOY-ths-thm`, `EMAIL_TEMPLATES`, `TESTING`, `TENANT-ISOLATION`, `DEPLOYMENT_SAFETY`, `COOKBOOK-BaseCrudService`, dst. |
+| `docs/archive/`         | Dokumen usang/snapshot sesi — disimpan sebagai referensi, tidak lagi dirawat |
+
+Aturan:
+
+1. **Panduan baru → `docs/<NAMA>.md`**, lalu daftarkan di tabel `docs/README.md`.
+2. **Dokumen tidak lagi relevan → pindah ke `docs/archive/`**, jangan dibiarkan membingungkan di depan.
+3. README.md root hanya berisi overview + link ke `docs/` — tidak untuk log/append otomatis.
+4. **File kredensial (plist/JSON Firebase, client secret) tidak boleh disimpan di `docs/`** — dokumentasi berarti dibagikan; kredensial tidak.
+
+## 🧹 Kebersihan Repo: Artefak Tidak Boleh di Root
+
+Root hanya untuk file konfigurasi proyek. Inventaris root yang **diperbolehkan**:
+
+- Konfigurasi toolchain: `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `.env.example`, `.gitignore`, `.gitattributes`, konfigurasi lint/format
+- Docker & deploy: `docker-compose*.yml`, `Dockerfile.dev*`, `render.yaml`, `ecosystem.config.js`, `setup.ps1`, `deploy-to-vps.ps1`
+- Dokumen repo: `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`
+
+**Tidak boleh commit ke root** (atau mana pun di repo):
+
+| Kategori | Contoh | Harus ke mana |
+| -------- | ------ | ------------- |
+| Log & output debug | `api-server.log`, `api-error.txt`, `migrate-out.log` | Jangan commit — jalur lokal sudah di-`.gitignore`; tempel potongan relevan ke issue/PR |
+| Artefak build | `.apk`, `.ipa`, `.zip` hasil build | Store/release (Play Console, TestFlight), bukan repo |
+| Media mentah | video demo, hasil rekaman, gambar satu kali | Drive/storage tim; aset aplikasi resmi ke `apps/*/public` atau `apps/*/assets` |
+| Skrip sekali pakai | helper encode/decode, script eksperimen | Hapus setelah selesai, atau masuk `scripts/` jika layak dirawat |
+| Data berisi PII | CSV/XLSX anggota asli | Jangan pernah masuk repo — simpan di drive terbatas akses |
+| Kredensial | `*firebase-adminsdk*.json`, `*client_secret*.json`, `.env*`, keystore | Secret manager / penyimpanan aman; jalurnya sudah di-`.gitignore` |
+| Dokumen MD ad-hoc | `START_HERE.md`, `SETUP_STATUS.md` | `docs/` (aktif) atau `docs/archive/` (usang) |
+
+Penegakan otomatis:
+
+1. **`.gitignore`** mencegah pola umum (`.env`, `*client_secret*`, `*firebase-adminsdk*`, keystore, dll.) ter-track.
+2. **Pre-commit hook gitleaks** (`bash scripts/install-hooks.sh`) memindai staged changes — commit berisi secret **ditolak**. Konfigurasi: `.gitleaks.toml`.
+3. **CI `security-scan.yml`** menjalankan gitleaks atas full history + working tree pada setiap push/PR.
+
+Jika hook memblokir commit Anda: bukan bug — kemungkinan ada kredensial di staged changes. Rotasi/hapus, lalu commit ulang. (Bypass darurat: `git commit --no-verify` — gunakan dengan sangat hemat.)
