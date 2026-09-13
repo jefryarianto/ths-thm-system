@@ -4,6 +4,9 @@ const isWindows = process.platform === 'win32';
 const nextConfig = {
   output:
     process.env.NEXT_PHASE === 'phase-production-build' && !isWindows ? 'standalone' : undefined,
+  // Matikan indikator dev (badge pojok kiri bawah) agar render dev identik
+  // dengan produksi — penting untuk baseline screenshot E2E visual.
+  devIndicators: false,
   images: {
     remotePatterns: [
       {

@@ -57,6 +57,11 @@ test.describe('Style Guide — Visual Regression', () => {
     await expect(page.locator('h1').first()).toContainText('Style Guide');
     // Wait for all fonts and images to load
     await page.waitForLoadState('networkidle');
+    // Hapus chrome khusus-dev Next.js (tombol DevTools <nextjs-portal>, pojok
+    // kiri bawah) sebelum screenshot — elemen ini hanya ada di dev server dan
+    // TIDAK bisa dimatikan via config (dipakai juga untuk error overlay),
+    // sehingga tanpa ini baseline dev ≠ render produksi.
+    await page.evaluate(() => document.querySelector('nextjs-portal')?.remove());
   });
 
   // ─── Full Page Screenshot ─────────────────────────

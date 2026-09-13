@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint app/ src/ --ext .ts,.tsx --ignore-pattern .next --ignore-pattern node_modules -c ./.eslintrc.json",
     "typecheck": "tsc --noEmit",
-    "test:e2e:web": "playwright test"
+    "test:e2e:web": "playwright test",
+    "test:e2e:web:ci": "playwright test --grep-invert \"Visual Regression\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
