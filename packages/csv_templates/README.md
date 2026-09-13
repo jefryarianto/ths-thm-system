@@ -5,12 +5,13 @@ Gunakan file template ini sebagai acuan format kolom saat melakukan import data.
 
 ## Daftar Template
 
-| Folder         | Deskripsi                       |
-| -------------- | ------------------------------- |
-| `members/`     | Template import anggota         |
-| `candidates/`  | Template import calon anggota   |
-| `aspects/`     | Template import aspek penilaian |
-| `assessments/` | Template import item penilaian  |
+| Folder         | Deskripsi                                   |
+| -------------- | ------------------------------------------- |
+| `members/`     | Template import anggota + contoh historis   |
+| `candidates/`  | Template import calon anggota               |
+| `aspects/`     | Template import aspek penilaian             |
+| `assessments/` | Template import item penilaian              |
+| `organization/`| Template & contoh import struktur organisasi|
 
 ## Penanganan Data Tidak Lengkap
 
