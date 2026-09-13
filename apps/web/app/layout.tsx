@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ToastProvider } from '@/components/ui/toast';
@@ -9,21 +9,23 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'THS-THM System Manajemen',
   description: 'Sistem Manajemen THS-THM - Tunggal Hati Seminari & Tunggal Hati Maria',
-  themeColor: '#1B2A4A',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'THS-THM',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
   icons: {
     icon: '/favicon.png',
     apple: '/apple-icon.png',
   },
+};
+
+// Next 14+: viewport & themeColor harus di export `viewport`, bukan di `metadata`.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#1B2A4A',
 };
 
 
