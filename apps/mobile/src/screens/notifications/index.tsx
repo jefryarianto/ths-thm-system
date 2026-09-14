@@ -35,7 +35,8 @@ function navigateToNotification(notif: NotificationItem) {
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState<'all' | 'read' | 'unread'>('all');
   const { data: notifs, loading, refetch } = useNotifications();
-  useRealtimeNotifications(refetch);
+  // Sinkron realtime: daftar & badge diperbarui otomatis saat ada notif baru / status dibaca berubah.
+  useRealtimeNotifications({ onNew: refetch, onCount: refetch });
   const { refreshing, onRefresh } = useRefresh(refetch);
 
   const notifsArray = Array.isArray(notifs) ? notifs : (notifs as any)?.data ?? [];

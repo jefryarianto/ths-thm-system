@@ -10,6 +10,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import { useAuthStore } from '../../store/auth-store';
+import { useRealtimeNotifications } from '../../hooks/use-notifications';
 import apiClient, { API_URL, unwrap } from '../../lib/api-client';
 import { theme } from '../../theme';
 import { MemberCardFront } from '../digital-card/card';
@@ -75,6 +76,9 @@ export default function HomeScreen() {
       loadUnread();
     }, [loadUnread]),
   );
+
+  // Badge bell diperbarui realtime via WebSocket (notification:count) — tidak perlu refetch.
+  useRealtimeNotifications({ onCount: (count) => setUnreadCount(count) });
 
   // Anggota murni hanya melihat menu anggota; role lain melihat menu sesuai minRole
   // (admin_kegiatan kini melihat Calon & Pendadaran, sama seperti web).

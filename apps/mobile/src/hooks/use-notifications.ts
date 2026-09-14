@@ -65,12 +65,18 @@ export function useNotifications(options?: { tipe?: string }) {
 
 /**
  * Langganan realtime (WebSocket) untuk event notifikasi dari server.
- * Menerima `notification:new` / `notification:count` lalu memanggil callback
- * (mis. refetch daftar). Sinkron hanya untuk pengguna terautentikasi.
+ * - `onNew`: dipanggil saat ada notifikasi baru (`notification:new`) — mis. refetch daftar.
+ * - `onCount`: dipanggil saat jumlah belum-dibaca berubah (`notification:count`) dengan angka terbaru.
+ * Sinkron hanya untuk pengguna terautentikasi.
  */
-export function useRealtimeNotifications(onEvent: () => void, enabled = true) {
-  const cbRef = useRef(onEvent);
-  cbRef.current = onEvent;
+export function useRealtimeNotifications(
+  options?: { onNew?: () => void; onCount?: (count: number) => void; enabled?: boolean },
+) {
+  const { onNew, onCount, enabled = true } = options ?? {};
+  const onNewRef = useRef(onNew);
+  const onCountRef = useRef(onCount);
+  onNewRef.current = onNew;
+  onCountRef.current = onCount;
 
   useEffect(() => {
     if (!enabled) return;
@@ -80,8 +86,11 @@ export function useRealtimeNotifications(onEvent: () => void, enabled = true) {
       .then((s) => {
         if (cancelled) return;
         socket = s;
-        socket.on('notification:new', () => cbRef.current());
-        socket.on('notification:count', () => cbRef.current());
+        socket.on('notification:new', () => onNewRef.current?.());
+        socket.on('notification:count', (payload: unknown) => {
+          const count = (payload as { count?: number } | undefined)?.count;
+          onCountRef.current?.(typeof count === 'number' ? count : 0);
+        });
       })
       .catch(() => {
         // Realtime tidak aktif (WS mati / tanpa token) — polling manual tetap berjalan.
