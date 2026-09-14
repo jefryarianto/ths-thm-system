@@ -14,7 +14,11 @@ Mendukung integrasi tanda tangan digital, cap/stempel, dan QR code untuk validas
 | DELETE | /api/documents/:id           | Hapus dokumen                   |
 | GET    | /api/documents/types         | List jenis template             |
 | GET    | /api/documents/:id/verify-qr | Validasi QR code dokumen        |
+| GET    | /api/documents/verify/:token | Validasi QR publik (tanpa login) — dipakai web/Mobile `/verify/<token>` |
 | POST   | /api/documents/batch         | Generate massal                 |
+
+> `GET /api/documents/verify/:token` menerima token QR `digital` maupun kartu fisik `printed`.
+> Setiap pemindaian dicatat di `qr_scan` (`ipAddress` disamarkan, `userAgent`); abus melampaui `QR_SCAN_LIMIT` (default 25) membuat QR tidak berlaku lagi. Anggota/admin dapat melihat `GET /api/members/:id/digital-card/security` (statistik + 10 log terbaru).
 
 ## Template Konfigurasi
 
