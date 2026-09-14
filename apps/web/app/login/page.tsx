@@ -502,20 +502,63 @@ export default function LoginPage() {
                   </>
                 )}
 
-                {/* Register Link */}
+                {/* Public CTA - Klaim & Daftar */}
                 <div
-                  className="mt-8 text-center animate-fade-in-up"
+                  className="mt-8 space-y-3 animate-fade-in-up"
                   style={{ animationDelay: '500ms', animationFillMode: 'both' }}
                 >
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Belum punya akun?{' '}
-                    <Link
-                      href="/daftar"
-                      className="font-semibold text-navy-600 transition-colors hover:text-navy-800 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      Daftar Anggota Baru
-                    </Link>
-                  </p>
+                  <div className="relative flex items-center">
+                    <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+                    <span className="mx-4 text-xs font-medium text-gray-400 dark:text-gray-500">
+                      Belum punya akun?
+                    </span>
+                    <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+                  </div>
+
+                  <Link
+                    href="/klaim"
+                    className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white/50 px-4 py-3 backdrop-blur-sm transition-all duration-200 hover:border-navy-300 hover:bg-navy-50/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-blue-500 dark:hover:bg-blue-900/20"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-navy-100 text-navy-700 dark:bg-blue-950 dark:text-blue-300">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="16" height="19" x="4" y="2" rx="2" />
+                        <circle cx="12" cy="10" r="3" />
+                        <path d="M8 17.5c0-1.7 1.8-3 4-3s4 1.3 4 3" />
+                      </svg>
+                    </span>
+                    <span className="flex-1">
+                      <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                        Klaim Keanggotaan
+                      </span>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
+                        Sudah menjadi anggota tapi belum terdaftar di sistem
+                      </span>
+                    </span>
+                    <ArrowRight size={16} className="text-gray-400 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+
+                  <Link
+                    href="/daftar"
+                    className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white/50 px-4 py-3 backdrop-blur-sm transition-all duration-200 hover:border-amber-300 hover:bg-amber-50/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-amber-400 dark:hover:bg-amber-900/20"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M19 8v6" />
+                        <path d="M22 11h-6" />
+                      </svg>
+                    </span>
+                    <span className="flex-1">
+                      <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                        Daftar Calon Anggota
+                      </span>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
+                        Belum menjadi anggota — isi formulir pendaftaran calon
+                      </span>
+                    </span>
+                    <ArrowRight size={16} className="text-gray-400 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
                 </div>
 
                 {/* Dev credentials (only show in development) */}
