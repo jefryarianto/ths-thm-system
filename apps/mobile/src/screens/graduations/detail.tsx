@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
 import apiClient, { unwrap } from '../../lib/api-client';
-import { LoadingView, ScreenShell, TabBar } from '../../components/ui/shared';
+import { LoadingView, ScreenShell, TabBar, LoadingSpinner } from '../../components/ui/shared';
 import { useRole } from '../../hooks/use-role';
 import type { Graduation, GraduationParticipant, GraduationEvaluation, GraduationResult } from '../../types';
 import { theme } from '../../theme';
@@ -22,7 +22,8 @@ export default function GraduationDetailScreen() {
   const [graduation, setGraduation] = useState<Graduation | null>(null);
   const [participants, setParticipants] = useState<GraduationParticipant[]>([]);
   const [evaluations, setEvaluations] = useState<GraduationEvaluation[]>([]);
-  const [activeTab, setActiveTab] = useState<'info' | 'participants' | 'ujian' | 'evaluations' | 'penguji' | 'validasi'>('info');
+  const activeTabState = useState<'info' | 'participants' | 'ujian' | 'evaluations' | 'penguji' | 'validasi' | 'absensi'>('info');
+  const [activeTab, setActiveTab] = activeTabState;
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<GraduationResult[]>([]);
   const [validating, setValidating] = useState(false);
@@ -41,6 +42,11 @@ export default function GraduationDetailScreen() {
   const [availableExaminers, setAvailableExaminers] = useState<any[]>([]);
   // Score progress state
   const [scoreProgress, setScoreProgress] = useState<any>(null);
+  // Absensi (undangan) state
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [genInvLoading, setGenInvLoading] = useState(false);
+  const [confirmingInv, setConfirmingInv] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -91,6 +97,21 @@ export default function GraduationDetailScreen() {
     })();
   }, [activeTab, id]);
 
+  // Fetch invitations when tab is absensi
+  const fetchInvitations = async () => {
+    setInvitationsLoading(true);
+    try {
+      const res = await apiClient.get(`/graduations/${id}/invitations`);
+      setInvitations(res.data?.data || []);
+    } catch { /* ignore */ }
+    setInvitationsLoading(false);
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'absensi' || !id) return;
+    fetchInvitations();
+  }, [activeTab, id]);
+
   if (loading) return <LoadingView message="Memuat detail pendadaran..." />;
   if (!graduation)
     return (
@@ -133,6 +154,9 @@ export default function GraduationDetailScreen() {
   const tabs = [
     { key: 'info', label: 'Info', icon: 'information-circle' as const },
     { key: 'participants', label: `Peserta (${participants.length})`, icon: 'people' as const },
+    ...(isKegiatanLevel
+      ? [{ key: 'absensi', label: `Absensi (${invitations.length})`, icon: 'today' as const }]
+      : []),
     ...(isKegiatanLevel
       ? [{ key: 'ujian', label: `Ujian (${ujianList.length})`, icon: 'clipboard' as const }]
       : []),
@@ -301,6 +325,55 @@ export default function GraduationDetailScreen() {
     } catch { /* ignore */ }
   };
 
+  // ─── Absensi manual ─────────────────────────────────
+  const ATTENDANCE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
+    dikirim: { label: 'Belum Konfirmasi', color: theme.colors.warning, bg: theme.colors.warningLight },
+    hadir: { label: 'Hadir', color: theme.colors.success, bg: theme.colors.successLight },
+    tidak_hadir: { label: 'Tidak Hadir', color: theme.colors.danger, bg: theme.colors.dangerLight },
+  };
+
+  const generateInvitations = async () => {
+    setGenInvLoading(true);
+    try {
+      const res = await apiClient.post(`/graduations/${id}/invitations/generate`, {});
+      const d = res.data?.data ?? { generated: 0, skipped: 0 };
+      Alert.alert(
+        'Undangan Dibuat',
+        `${d.generated} undangan baru · ${d.skipped} dilewati (sudah diundang / tidak memenuhi syarat)`,
+        [{ text: 'OK', onPress: () => fetchInvitations() }],
+      );
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.message || 'Gagal membuat undangan');
+    }
+    setGenInvLoading(false);
+  };
+
+  const markAttendance = (invitationId: string, hadir: boolean) => {
+    const inv = invitations.find((i) => i.id === invitationId);
+    const label = hadir ? 'Hadir' : 'Tidak Hadir';
+    Alert.alert(
+      'Catat Kehadiran',
+      `Tandai ${inv?.anggota?.namaLengkap || 'anggota'} sebagai "${label}"?`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: label,
+          style: hadir ? 'default' : 'destructive',
+          onPress: async () => {
+            setConfirmingInv(invitationId);
+            try {
+              await apiClient.post(`/graduations/${id}/invitations/${invitationId}/confirm`, { hadir });
+              await fetchInvitations();
+            } catch (error: any) {
+              Alert.alert('Error', error?.response?.data?.message || 'Gagal mencatat kehadiran');
+            }
+            setConfirmingInv(null);
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <ScreenShell title={graduation.nama} variant="detail" badgeLabel={ss.label} badgeColor={ss.color} badgeBg={ss.bg}>
 
@@ -422,6 +495,113 @@ export default function GraduationDetailScreen() {
             ))
           ) : (
             <Text style={styles.emptyText}>Belum ada peserta</Text>
+          )}
+        </View>
+      )}
+
+      {activeTab === 'absensi' && isKegiatanLevel && (
+        <View style={styles.section}>
+          <View style={styles.absSummary}>
+            <View style={styles.absSummaryItem}>
+              <Text style={styles.absSummaryNum}>{invitations.filter((i) => i.status === 'hadir').length}</Text>
+              <Text style={styles.absSummaryLabel}>Hadir</Text>
+            </View>
+            <View style={styles.absSummaryItem}>
+              <Text style={styles.absSummaryNum}>{invitations.filter((i) => i.status === 'tidak_hadir').length}</Text>
+              <Text style={styles.absSummaryLabel}>Tidak Hadir</Text>
+            </View>
+            <View style={styles.absSummaryItem}>
+              <Text style={styles.absSummaryNum}>{invitations.filter((i) => i.status === 'dikirim').length}</Text>
+              <Text style={styles.absSummaryLabel}>Belum</Text>
+            </View>
+            <View style={styles.absSummaryItem}>
+              <Text style={[styles.absSummaryNum, { color: theme.colors.primary }]}>{invitations.length}</Text>
+              <Text style={styles.absSummaryLabel}>Total</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.genInvBtn}
+            activeOpacity={0.7}
+            onPress={generateInvitations}
+            disabled={genInvLoading}
+          >
+            <Ionicons name="mail" size={18} color={theme.colors.surface} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.genInvTitle}>
+                {genInvLoading ? 'Membuat undangan...' : 'Generate Undangan'}
+              </Text>
+              <Text style={styles.genInvSub}>
+                Kirim undangan ke anggota memenuhi syarat (tingkat Pratama / masa anggota &gt; 2 tahun)
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {invitationsLoading ? (
+            <LoadingView message="Memuat absensi..." />
+          ) : invitations.length > 0 ? (
+            invitations.map((inv) => {
+              const st = ATTENDANCE_STATUS[inv.status] || ATTENDANCE_STATUS.dikirim;
+              const confirming = confirmingInv === inv.id;
+              return (
+                <View key={inv.id} style={styles.absCard}>
+                  <View style={styles.absLeft}>
+                    <View style={styles.absAvatar}>
+                      <Text style={styles.absAvatarText}>{inv.anggota?.namaLengkap?.charAt(0) || '?'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.absName}>{inv.anggota?.namaLengkap || 'Unknown'}</Text>
+                      <Text style={styles.absMeta}>
+                        {inv.anggota?.nomorAnggota ? `${inv.anggota.nomorAnggota} · ` : ''}
+                        {inv.anggota?.tingkat || '-'}
+                      </Text>
+                      <View style={styles.absStatusRow}>
+                        <View style={[styles.absStatus, { backgroundColor: st.bg }]}>
+                          <Text style={[styles.absStatusText, { color: st.color }]}>{st.label}</Text>
+                        </View>
+                        {inv.konfirmasiOleh ? (
+                          <Text style={styles.absBy} numberOfLines={1}>
+                            oleh {inv.konfirmasiOleh}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.absActions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.absBtn,
+                        styles.absBtnHadir,
+                        inv.status === 'hadir' && styles.absBtnActive,
+                      ]}
+                      disabled={confirming}
+                      onPress={() => markAttendance(inv.id, true)}
+                    >
+                      {confirming ? <LoadingSpinner color={theme.colors.surface} /> : (
+                        <Ionicons name="checkmark" size={14} color={inv.status === 'hadir' ? theme.colors.surface : theme.colors.success} />
+                      )}
+                      <Text style={[styles.absBtnText, inv.status === 'hadir' && styles.absBtnTextActive]}>Hadir</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.absBtn,
+                        styles.absBtnTidak,
+                        inv.status === 'tidak_hadir' && styles.absBtnTidakActive,
+                      ]}
+                      disabled={confirming}
+                      onPress={() => markAttendance(inv.id, false)}
+                    >
+                      <Ionicons name="close" size={14} color={inv.status === 'tidak_hadir' ? theme.colors.surface : theme.colors.danger} />
+                      <Text style={[styles.absBtnTidakText, inv.status === 'tidak_hadir' && styles.absBtnTextActive]}>Tidak</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={styles.emptyText}>
+              Belum ada undangan. Jalankan "Generate Undangan" untuk mengundang anggota.
+            </Text>
           )}
         </View>
       )}
@@ -1194,4 +1374,78 @@ const styles = StyleSheet.create({
   rejectBtn: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.dangerLight },
   approveText: { fontSize: 12, fontWeight: '600', color: theme.colors.surface },
   rejectText: { fontSize: 12, fontWeight: '600', color: theme.colors.danger },
+
+  // Absensi (undangan)
+  absSummary: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.surface,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  absSummaryItem: { flex: 1, alignItems: 'center' },
+  absSummaryNum: { fontSize: 18, fontWeight: '700', color: theme.colors.success },
+  absSummaryLabel: { fontSize: 11, color: theme.colors.textMuted, marginTop: 2 },
+  genInvBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  genInvTitle: { color: theme.colors.surface, fontSize: 15, fontWeight: '700' },
+  genInvSub: { color: theme.colors.headerSub, fontSize: 12, marginTop: 2 },
+  absCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.surfaceMuted,
+    gap: 8,
+  },
+  absLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 },
+  absAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.primarySofter,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  absAvatarText: { fontSize: 14, fontWeight: '700', color: theme.colors.primary },
+  absName: { fontSize: 14, fontWeight: '500', color: theme.colors.text },
+  absMeta: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  absStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, minWidth: 0 },
+  absStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  absStatusText: { fontSize: 10, fontWeight: '600' },
+  absBy: { fontSize: 10, color: theme.colors.textMuted, flexShrink: 1 },
+  absActions: { flexDirection: 'row', gap: 6, flexShrink: 0 },
+  absBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    minHeight: 32,
+  },
+  absBtnHadir: { backgroundColor: theme.colors.successLight },
+  absBtnActive: { backgroundColor: theme.colors.success },
+  absBtnTidak: { backgroundColor: theme.colors.dangerLight },
+  absBtnTidakActive: { backgroundColor: theme.colors.danger },
+  absBtnText: { fontSize: 11, fontWeight: '600', color: theme.colors.success },
+  absBtnTidakText: { fontSize: 11, fontWeight: '600', color: theme.colors.danger },
+  absBtnTextActive: { color: theme.colors.surface },
 });
