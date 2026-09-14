@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, Modal, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, router } from 'expo-router';
 import QRCode from 'react-native-qrcode-svg';
@@ -47,6 +47,17 @@ export default function GraduationDetailScreen() {
   const [invitationsLoading, setInvitationsLoading] = useState(false);
   const [genInvLoading, setGenInvLoading] = useState(false);
   const [confirmingInv, setConfirmingInv] = useState<string | null>(null);
+  // Pengajuan penguji (admin_kegiatan) state
+  const [candidates, setCandidates] = useState<{
+    manajemenPenguji: any[];
+    daftarHadir: any[];
+    anggotaKegiatan: any[];
+  }>({ manajemenPenguji: [], daftarHadir: [], anggotaKegiatan: [] });
+  const [showProposeModal, setShowProposeModal] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const [proposalCatatan, setProposalCatatan] = useState('');
+  const [proposing, setProposing] = useState(false);
+  const [candidateSearch, setCandidateSearch] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -161,7 +172,7 @@ export default function GraduationDetailScreen() {
       ? [{ key: 'ujian', label: `Ujian (${ujianList.length})`, icon: 'clipboard' as const }]
       : []),
     { key: 'evaluations', label: `Nilai (${evaluations.length})`, icon: 'school' as const },
-    ...(isDistrikLevel
+    ...(isKegiatanLevel
       ? [{ key: 'penguji', label: `Penguji (${pendingExaminers})`, icon: 'shield-checkmark' as const }]
       : []),
     ...(canValidate
@@ -372,6 +383,49 @@ export default function GraduationDetailScreen() {
         },
       ],
     );
+  };
+
+  // ─── Pengajuan penguji (admin_kegiatan) ─────────────
+  const CAND_SOURCE: Record<string, { label: string; bg: string; color: string }> = {
+    manajemen_penguji: { label: 'Penguji Terdaftar', bg: theme.colors.primarySofter, color: theme.colors.primary },
+    daftar_hadir: { label: 'Daftar Hadir', bg: theme.colors.successLight, color: theme.colors.success },
+    anggota_kegiatan: { label: 'Peserta Kegiatan', bg: theme.colors.warningLight, color: theme.colors.warning },
+  };
+
+  const fetchCandidates = async () => {
+    try {
+      const res = await apiClient.get(`/graduations/${id}/examiner-candidates`);
+      setCandidates(res.data?.data || { manajemenPenguji: [], daftarHadir: [], anggotaKegiatan: [] });
+    } catch { /* ignore */ }
+  };
+
+  const openProposeModal = () => {
+    setCandidateSearch('');
+    setSelectedCandidate(null);
+    setProposalCatatan('');
+    setShowProposeModal(true);
+    fetchCandidates();
+  };
+
+  const submitProposal = async () => {
+    if (!selectedCandidate) {
+      Alert.alert('Error', 'Pilih calon penguji terlebih dahulu');
+      return;
+    }
+    setProposing(true);
+    try {
+      await apiClient.post(`/graduations/${id}/examiners`, {
+        pengujiUserId: selectedCandidate.id,
+        ...(proposalCatatan.trim() ? { catatan: proposalCatatan.trim() } : {}),
+      });
+      setShowProposeModal(false);
+      Alert.alert('Penguji Diajukan', 'Pengajuan dikirim ke admin distrik untuk disetujui.');
+      const res = await apiClient.get(`/graduations/${id}/examiners`);
+      setExaminers(res.data?.data || []);
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.message || 'Gagal mengajukan penguji');
+    }
+    setProposing(false);
   };
 
   return (
@@ -879,8 +933,22 @@ export default function GraduationDetailScreen() {
         </View>
       )}
 
-      {activeTab === 'penguji' && isDistrikLevel && (
+      {activeTab === 'penguji' && isKegiatanLevel && (
         <View style={styles.section}>
+          {role === 'admin_kegiatan' && (
+            <TouchableOpacity
+              style={styles.proposeBtn}
+              activeOpacity={0.7}
+              onPress={openProposeModal}
+            >
+              <Ionicons name="add-circle" size={20} color={theme.colors.surface} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.proposeTitle}>Ajukan Penguji</Text>
+                <Text style={styles.proposeSub}>Usul penguji dari penguji terdaftar / daftar hadir</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.colors.primaryLight} />
+            </TouchableOpacity>
+          )}
           {examinersLoading ? (
             <LoadingView message="Memuat penguji..." />
           ) : examiners.length > 0 ? (
@@ -1031,6 +1099,173 @@ export default function GraduationDetailScreen() {
           )}
         </View>
       )}
+
+      {/* Modal — Ajukan Penguji (admin_kegiatan) */}
+      <Modal
+        visible={showProposeModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowProposeModal(false)}
+      >
+        <View style={styles.proposeModalOverlay}>
+          <KeyboardAvoidingView
+            style={styles.proposeModalCard}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View style={styles.proposeModalHeader}>
+              <Text style={styles.proposeModalTitle}>Ajukan Penguji</Text>
+              <TouchableOpacity onPress={() => setShowProposeModal(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={22} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.proposeModalHint}>
+              Pilih calon penguji, lalu ajukan untuk disetujui admin distrik.
+            </Text>
+
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Cari nama / email..."
+              placeholderTextColor={theme.colors.textMuted}
+              value={candidateSearch}
+              onChangeText={setCandidateSearch}
+            />
+
+            <ScrollView
+              style={styles.candidateList}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {candidates.manajemenPenguji.length > 0 && (
+                <View style={styles.candSection}>
+                  <Text style={styles.candSectionTitle}>Penguji Terdaftar</Text>
+                  {candidates.manajemenPenguji
+                    .filter((c) => !candidateSearch || `${c.namaLengkap} ${c.email}`.toLowerCase().includes(candidateSearch.toLowerCase()))
+                    .map((c) => (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[styles.candRow, selectedCandidate?.id === c.id && styles.candRowSelected]}
+                        onPress={() => setSelectedCandidate(c)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.candInfo}>
+                          <Text style={styles.candName}>{c.namaLengkap}</Text>
+                          <Text style={styles.candEmail}>{c.email}</Text>
+                        </View>
+                        <Ionicons
+                          name={selectedCandidate?.id === c.id ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={22}
+                          color={selectedCandidate?.id === c.id ? theme.colors.primary : theme.colors.borderStrong}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
+
+              {candidates.daftarHadir.length > 0 && (
+                <View style={styles.candSection}>
+                  <Text style={styles.candSectionTitle}>Daftar Hadir</Text>
+                  {candidates.daftarHadir
+                    .filter((c) => !candidateSearch || `${c.namaLengkap} ${c.email || ''}`.toLowerCase().includes(candidateSearch.toLowerCase()))
+                    .map((c) => (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[styles.candRow, selectedCandidate?.id === c.id && styles.candRowSelected]}
+                        onPress={() => setSelectedCandidate(c)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.candInfo}>
+                          <Text style={styles.candName}>{c.namaLengkap}</Text>
+                          <Text style={styles.candEmail}>
+                            {c.nomorAnggota ? `${c.nomorAnggota} · ` : ''}
+                            {c.email || 'hadir (scan QR)'}
+                          </Text>
+                        </View>
+                        <Ionicons
+                          name={selectedCandidate?.id === c.id ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={22}
+                          color={selectedCandidate?.id === c.id ? theme.colors.primary : theme.colors.borderStrong}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
+
+              {candidates.anggotaKegiatan.length > 0 && (
+                <View style={styles.candSection}>
+                  <Text style={styles.candSectionTitle}>Peserta Kegiatan</Text>
+                  {candidates.anggotaKegiatan
+                    .filter((c) => !candidateSearch || `${c.namaLengkap} ${c.email || ''}`.toLowerCase().includes(candidateSearch.toLowerCase()))
+                    .map((c) => (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[styles.candRow, selectedCandidate?.id === c.id && styles.candRowSelected]}
+                        onPress={() => setSelectedCandidate(c)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.candInfo}>
+                          <Text style={styles.candName}>{c.namaLengkap}</Text>
+                          <Text style={styles.candEmail}>
+                            {c.nomorAnggota ? `${c.nomorAnggota} · ` : ''}
+                            {c.email || '-'}
+                          </Text>
+                        </View>
+                        <Ionicons
+                          name={selectedCandidate?.id === c.id ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={22}
+                          color={selectedCandidate?.id === c.id ? theme.colors.primary : theme.colors.borderStrong}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
+
+              {candidates.manajemenPenguji.length === 0 &&
+                candidates.daftarHadir.length === 0 &&
+                candidates.anggotaKegiatan.length === 0 && (
+                  <Text style={styles.candEmpty}>
+                    Belum ada kandidat. Pastikan peserta telah konfirmasi hadir (scan QR / absensi manual).
+                  </Text>
+                )}
+            </ScrollView>
+
+            <View style={styles.proposeFooter}>
+              <TextInput
+                style={[styles.searchInput, { marginBottom: 10 }]}
+                placeholder="Catatan untuk admin distrik (opsional)"
+                placeholderTextColor={theme.colors.textMuted}
+                value={proposalCatatan}
+                onChangeText={setProposalCatatan}
+                multiline
+              />
+              <View style={styles.proposeActions}>
+                <TouchableOpacity
+                  style={[styles.proposeActionBtn, styles.proposeCancelBtn]}
+                  onPress={() => setShowProposeModal(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.proposeCancelText}>Batal</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.proposeActionBtn,
+                    styles.proposeSubmitBtn,
+                    (!selectedCandidate || proposing) && { opacity: 0.6 },
+                  ]}
+                  onPress={submitProposal}
+                  disabled={!selectedCandidate || proposing}
+                  activeOpacity={0.7}
+                >
+                  {proposing ? (
+                    <LoadingSpinner color={theme.colors.surface} />
+                  ) : (
+                    <Text style={styles.proposeSubmitText}>Ajukan</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
     </ScreenShell>
   );
@@ -1448,4 +1683,87 @@ const styles = StyleSheet.create({
   absBtnText: { fontSize: 11, fontWeight: '600', color: theme.colors.success },
   absBtnTidakText: { fontSize: 11, fontWeight: '600', color: theme.colors.danger },
   absBtnTextActive: { color: theme.colors.surface },
+
+  // Pengajuan Penguji
+  proposeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  proposeTitle: { color: theme.colors.surface, fontSize: 15, fontWeight: '700' },
+  proposeSub: { color: theme.colors.headerSub, fontSize: 12, marginTop: 2 },
+  proposeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.55)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  proposeModalCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 18,
+    padding: 16,
+    maxHeight: '85%',
+  },
+  proposeModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  proposeModalTitle: { fontSize: 17, fontWeight: '700', color: theme.colors.text },
+  proposeModalHint: { fontSize: 12, color: theme.colors.textSecondary, marginBottom: 12 },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.borderStrong,
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 14,
+    backgroundColor: theme.colors.surfaceMuted,
+    color: theme.colors.text,
+  },
+  candidateList: { marginTop: 12, flexShrink: 1 },
+  candSection: { marginBottom: 8 },
+  candSectionTitle: { fontSize: 12, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 6 },
+  candRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.surfaceMuted,
+  },
+  candRowSelected: {
+    backgroundColor: theme.colors.primarySofter,
+    borderColor: theme.colors.primary,
+  },
+  candInfo: { flex: 1, minWidth: 0 },
+  candName: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+  candEmail: { fontSize: 11, color: theme.colors.textSecondary, marginTop: 2 },
+  candEmpty: { fontSize: 12, color: theme.colors.textMuted, textAlign: 'center', paddingVertical: 24 },
+  proposeFooter: { marginTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: 12 },
+  proposeActions: { flexDirection: 'row', gap: 10 },
+  proposeActionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    minHeight: 44,
+  },
+  proposeCancelBtn: { backgroundColor: theme.colors.surfaceMuted },
+  proposeCancelText: { fontSize: 14, fontWeight: '600', color: theme.colors.textSecondary },
+  proposeSubmitBtn: { backgroundColor: theme.colors.primary },
+  proposeSubmitText: { fontSize: 14, fontWeight: '700', color: theme.colors.surface },
 });
