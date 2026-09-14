@@ -36,6 +36,12 @@ import {
   Pencil,
   AlertTriangle,
   RefreshCw,
+  ShieldAlert,
+  History,
+  Lock,
+  Unlock,
+  ShieldCheck,
+  Smartphone,
 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 import EditMemberModal from '@/components/members/EditMemberModal';
@@ -123,6 +129,17 @@ const DOKUMEN_STATUS_META: Record<string, { label: string; className: string }> 
 
 function docStatusMeta(status: string) {
   return DOKUMEN_STATUS_META[status] || { label: status, className: '' };
+}
+
+function formatDateTime(iso?: string | null) {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 /** Ambil token verifikasi dari verificationUrl (/verify/<token> atau /api/documents/verify/<token>). */
@@ -353,6 +370,7 @@ export default function MemberDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [cardData, setCardData] = useState<{
     qrCode: string;
+    verificationUrl?: string | null;
     signerName?: string;
     signerTitle?: string;
     signers?: Array<{ signerName?: string; signerTitle?: string }>;
@@ -363,6 +381,24 @@ export default function MemberDetailPage() {
   } | null>(null);
   const [cardLoading, setCardLoading] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
+  const [cardSecurity, setCardSecurity] = useState<{
+    dokumen: { id: string; nomorDokumen: string; status: string };
+    qr: { isValid: boolean; scanCount: number; scannedAt: string | null; createdAt: string };
+    scanLimit: number;
+    scanLeft: number;
+    scanLog: Array<{ id: string; scannedAt: string; ipAddress: string | null; userAgent: string | null }>;
+  } | null>(null);
+  const [cardIssuances, setCardIssuances] = useState<Array<{
+    id: string;
+    source: 'digital' | 'printed';
+    reason: string | null;
+    edisi: number;
+    isValid: boolean;
+    scanCount: number;
+    scannedAt: string | null;
+    verificationUrl: string | null;
+    createdAt: string;
+  }> | null>(null);
 
   const fetchMember = useCallback(async () => {
     if (!id) return;
@@ -400,6 +436,7 @@ export default function MemberDetailPage() {
       if (response.ok && data.success) {
         setCardData({
           qrCode: data.data.qrCode,
+          verificationUrl: data.data.card?.verificationUrl || null,
           signerName: data.data.card?.signerName,
           signerTitle: data.data.card?.signerTitle,
           signers: data.data.card?.signers || undefined,
@@ -425,6 +462,71 @@ export default function MemberDetailPage() {
       setCardLoading(false);
     }
   }, [member]);
+
+  // Status keamanan QR & riwayat pemindaian (panel di tab Kartu Digital)
+  const fetchCardSecurity = useCallback(async () => {
+    if (!member) return;
+    try {
+      const { data: res } = await apiClient.get(`/members/${member.id}/digital-card/security`);
+      setCardSecurity(res?.data ?? null);
+    } catch {
+      setCardSecurity(null);
+    }
+  }, [member]);
+
+  useEffect(() => {
+    if (activeTab === 'card' && member) {
+      fetchCardSecurity();
+    }
+  }, [activeTab, member, fetchCardSecurity]);
+
+  // Riwayat penerbitan kartu (digital & fisik)
+  const fetchCardIssuances = useCallback(async () => {
+    if (!member) return;
+    try {
+      const { data: res } = await apiClient.get(`/members/${member.id}/digital-card/issuances`);
+      setCardIssuances(res?.data?.issuances ?? []);
+    } catch {
+      setCardIssuances(null);
+    }
+  }, [member]);
+
+  useEffect(() => {
+    if (activeTab === 'card' && member) {
+      fetchCardIssuances();
+    }
+  }, [activeTab, member, fetchCardIssuances]);
+
+  /** Terbitkan kartu fisik — alasan hilang/rusak akan mencabut kartu fisik lama. */
+  const issuePrintedCard = async (reason: string | null = null) => {
+    if (!member) return;
+    setActionLoading('card-print');
+    try {
+      const { data: res } = await apiClient.post(`/members/${member.id}/digital-card/printed`, { reason });
+      toast('success', 'Kartu fisik diterbitkan');
+      await Promise.all([fetchCardIssuances(), fetchCardSecurity(), fetchCardData()]);
+      if (res?.data?.pdfUrl) {
+        window.open(`${window.location.origin}${res.data.pdfUrl}`, '_blank');
+      }
+    } catch {
+      toast('error', 'Gagal menerbitkan kartu fisik');
+    }
+    setActionLoading(null);
+  };
+
+  /** Cabut / aktifkan kembali kartu digital (per-penerbitan). */
+  const toggleCardActive = async (activate: boolean) => {
+    if (!member) return;
+    setActionLoading(activate ? 'card-activate' : 'card-revoke');
+    try {
+      await apiClient.patch(`/members/${member.id}/digital-card/${activate ? 'activate' : 'revoke'}`, {});
+      toast('success', activate ? 'Kartu diaktifkan kembali' : 'Kartu dicabut — QR tidak lagi berlaku');
+      await Promise.all([fetchCardSecurity(), fetchCardData()]);
+    } catch {
+      toast('error', 'Gagal memperbarui status kartu');
+    }
+    setActionLoading(null);
+  };
 
   useEffect(() => {
     if (activeTab === 'card' && member) {
@@ -475,7 +577,8 @@ export default function MemberDetailPage() {
       const endpoint =
         format === 'pdf'
           ? `${window.location.origin}/api/members/${memberId}/digital-card/pdf`
-          : `${window.location.origin}/api/members/${memberId}/digital-card/image`;
+          // PNG digital diberi watermark anti-fotokopi (nama + nomor anggota).
+          : `${window.location.origin}/api/members/${memberId}/digital-card/image?watermark=1`;
       const response = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -514,6 +617,7 @@ export default function MemberDetailPage() {
 
       const m = data.data.member;
       const qr = data.data.qrCode;
+      const verificationUrl = data.data.card?.verificationUrl || '';
       const distrik = (m.distrik || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase();
       const expiry = fmt.validUntilText();
       const ttl = fmt.ttl(m.tempatLahir, m.tanggalLahir);
@@ -632,7 +736,7 @@ export default function MemberDetailPage() {
   </div>
   <div class="back-footer">
     <div class="footer-text">Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.</div>
-    <div class="footer-url"><div class="u">URL Verifikasi</div><div class="v">/verify/member/token</div></div>
+    ${verificationUrl ? `<div class="footer-url"><div class="u">URL Verifikasi</div><div class="v">${verificationUrl}</div></div>` : ''}
   </div>
 </div>
 <script>window.print();</script>
@@ -1533,14 +1637,16 @@ export default function MemberDetailPage() {
                           <div className="opacity-95" style={{ flex: 1, fontSize: BACK.footer.text.fontSize, lineHeight: `${BACK.footer.text.lineHeight}px` }}>
                             Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.
                           </div>
-                          <div className="text-right">
-                            <div className="uppercase opacity-80" style={{ fontSize: BACK.footer.urlLabel.fontSize }}>
-                              URL Verifikasi
+                          {cardData?.verificationUrl && (
+                            <div className="text-right">
+                              <div className="uppercase opacity-80" style={{ fontSize: BACK.footer.urlLabel.fontSize }}>
+                                URL Verifikasi
+                              </div>
+                              <div className="font-bold" style={{ fontSize: BACK.footer.urlValue.fontSize, marginTop: BACK.footer.urlValue.marginTop }}>
+                                {cardData.verificationUrl}
+                              </div>
                             </div>
-                            <div className="font-bold" style={{ fontSize: BACK.footer.urlValue.fontSize, marginTop: BACK.footer.urlValue.marginTop }}>
-                              /verify/member/token
-                            </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     </ScaledCardCanvas>
@@ -1575,6 +1681,262 @@ export default function MemberDetailPage() {
                         Preview & Cetak (HTML)
                       </button>
                     </div>
+                  </div>
+
+                  {/* Keamanan QR & Riwayat Pemindaian */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <ShieldAlert size={18} className="text-amber-500" />
+                        Keamanan QR &amp; Riwayat Pemindaian
+                      </h4>
+                      <button
+                        onClick={fetchCardSecurity}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 bg-gray-50 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg transition"
+                      >
+                        <RefreshCw size={13} />
+                        Muat Ulang
+                      </button>
+                    </div>
+
+                    {cardSecurity ? (
+                      <>
+                        {/* Status QR + aksi cabut/aktifkan */}
+                        <div
+                          className={`flex items-center justify-between flex-wrap gap-4 p-4 rounded-2xl border ${
+                            cardSecurity.qr.isValid
+                              ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800'
+                              : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {cardSecurity.qr.isValid ? (
+                              <ShieldCheck size={26} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            ) : (
+                              <Lock size={26} className="text-red-500 shrink-0" />
+                            )}
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Status QR</p>
+                              <p className={`text-sm font-bold ${cardSecurity.qr.isValid ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                                {cardSecurity.qr.isValid ? 'AKTIF — QR dapat diverifikasi' : 'DICABUT — QR tidak berlaku'}
+                              </p>
+                              {cardSecurity.dokumen.status === 'revoked' && !cardSecurity.qr.isValid && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  Dokumen {cardSecurity.dokumen.nomorDokumen} telah dicabut
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {cardSecurity.qr.isValid ? (
+                            <button
+                              onClick={() => {
+                                if (window.confirm('Cabut kartu ini? QR pada kartu tidak akan berlaku lagi.')) {
+                                  toggleCardActive(false);
+                                }
+                              }}
+                              disabled={actionLoading === 'card-revoke'}
+                              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition disabled:opacity-50"
+                            >
+                              <Lock size={14} />
+                              {actionLoading === 'card-revoke' ? 'Mencabut...' : 'Cabut Kartu'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => toggleCardActive(true)}
+                              disabled={actionLoading === 'card-activate'}
+                              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
+                            >
+                              <Unlock size={14} />
+                              {actionLoading === 'card-activate' ? 'Mengaktifkan...' : 'Aktifkan Kembali'}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Statistik scan */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Pemindaian</p>
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">{cardSecurity.qr.scanCount}x</p>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Sisa Scan</p>
+                            <p className={`text-lg font-bold ${cardSecurity.scanLeft <= 5 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
+                              {cardSecurity.scanLeft}
+                            </p>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">Terakhir Dipindai</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDateTime(cardSecurity.qr.scannedAt)}</p>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-3">
+                            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase">QR Dibuat</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDateTime(cardSecurity.qr.createdAt)}</p>
+                          </div>
+                        </div>
+
+                        {/* Peringatan bila sisa scan menipis / terduga difotokopi */}
+                        {cardSecurity.scanLeft <= 5 && cardSecurity.qr.isValid && (
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 mt-4">
+                            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                              QR sudah dipindai {cardSecurity.qr.scanCount} dari batas {cardSecurity.scanLimit}. Bila
+                              mencapai batas, kartu otomatis dinonaktifkan karena terduga difotokopi/digandakan.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Riwayat pemindaian */}
+                        <div className="mt-5">
+                          <h5 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2 flex items-center gap-1.5">
+                            <History size={13} />
+                            Riwayat Pemindaian Terbaru
+                          </h5>
+                          {cardSecurity.scanLog.length > 0 ? (
+                            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+                              <table className="w-full text-xs">
+                                <thead className="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
+                                  <tr>
+                                    <th className="px-3 py-2 font-medium">Waktu</th>
+                                    <th className="px-3 py-2 font-medium">IP</th>
+                                    <th className="px-3 py-2 font-medium hidden sm:table-cell">Perangkat</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                  {cardSecurity.scanLog.slice(0, 10).map((s) => (
+                                    <tr key={s.id}>
+                                      <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">
+                                        {formatDateTime(s.scannedAt)}
+                                      </td>
+                                      <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">{s.ipAddress || '-'}</td>
+                                      <td className="px-3 py-2 hidden sm:table-cell text-gray-500 dark:text-gray-400 max-w-[220px] truncate">
+                                        {s.userAgent || '-'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Belum ada pemindaian. QR akan tercatat di sini setiap kali dipindai.
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Kartu belum dibuat atau status keamanan tidak dapat dimuat. Generate kartu digital terlebih dahulu.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Kartu Fisik & Riwayat Penerbitan */}
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <IdCard size={18} className="text-blue-500" />
+                        Kartu Fisik &amp; Riwayat Penerbitan
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Cetak kartu fisik baru? QR baru dengan source "printed" akan dibuat.')) {
+                              issuePrintedCard(null);
+                            }
+                          }}
+                          disabled={actionLoading === 'card-print'}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
+                        >
+                          <Printer size={13} />
+                          {actionLoading === 'card-print' ? 'Mencetak...' : 'Cetak Kartu Fisik'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Penggantian kartu hilang/rusak? Kartu fisik lama akan dicabut.')) {
+                              issuePrintedCard('hilang');
+                            }
+                          }}
+                          disabled={actionLoading === 'card-print'}
+                          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition disabled:opacity-50"
+                        >
+                          <AlertTriangle size={13} />
+                          Ganti Hilang/Rusak
+                        </button>
+                      </div>
+                    </div>
+
+                    {cardIssuances !== null && cardIssuances.length > 0 ? (
+                      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+                        <table className="w-full text-xs">
+                          <thead className="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 dark:text-gray-400">
+                            <tr>
+                              <th className="px-3 py-2 font-medium">Edisi</th>
+                              <th className="px-3 py-2 font-medium">Jenis</th>
+                              <th className="px-3 py-2 font-medium">Alasan</th>
+                              <th className="px-3 py-2 font-medium">Status</th>
+                              <th className="px-3 py-2 font-medium hidden sm:table-cell">Scan</th>
+                              <th className="px-3 py-2 font-medium hidden md:table-cell">Waktu</th>
+                              <th className="px-3 py-2 font-medium">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {cardIssuances.map((iss) => (
+                              <tr key={iss.id}>
+                                <td className="px-3 py-2 font-mono text-gray-700 dark:text-gray-300">#{iss.edisi}</td>
+                                <td className="px-3 py-2">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                      iss.source === 'printed'
+                                        ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                                        : 'bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                    }`}
+                                  >
+                                    {iss.source === 'printed' ? <Printer size={10} /> : <Smartphone size={10} />}
+                                    {iss.source === 'printed' ? 'Fisik' : 'Digital'}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                                  {iss.reason ? toProperCase(iss.reason.replace('replacement', 'Penggantian')) : '-'}
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span
+                                    className={`font-semibold ${
+                                      iss.isValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                                    }`}
+                                  >
+                                    {iss.isValid ? 'Berlaku' : 'Dicabut'}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 hidden sm:table-cell text-gray-600 dark:text-gray-300">{iss.scanCount}×</td>
+                                <td className="px-3 py-2 hidden md:table-cell text-gray-600 dark:text-gray-300">
+                                  {formatDateTime(iss.createdAt)}
+                                </td>
+                                <td className="px-3 py-2">
+                                  {iss.source === 'printed' && (
+                                    <button
+                                      onClick={() =>
+                                        window.open(
+                                          `${window.location.origin}/api/members/${member?.id}/digital-card/printed/pdf?issuanceId=${iss.id}`,
+                                          '_blank',
+                                        )
+                                      }
+                                      className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                    >
+                                      <Download size={12} />
+                                      PDF
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Belum ada penerbitan kartu fisik. Klik "Cetak Kartu Fisik" untuk membuat QR statis per-penerbitan.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

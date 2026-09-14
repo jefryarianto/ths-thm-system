@@ -130,5 +130,7 @@ tmp_*.json
 tmp_*.txt
 local_dues.json
 prod_swagger.json
+dc.json
+login.json
 apps/mobile_flutter/
 apps/api/Dockerfile.font

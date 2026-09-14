@@ -1056,3 +1056,40 @@ export function buildMemberCardPdf(props: MemberCardPdfProps, opts?: { combined?
     h(Page, { size: [856, 540], style: styles.pageBack, key: 'back' }, backSide),
   ]);
 }
+
+/**
+ * Lembar cetak batch: satu halaman 856×1080 (depan+bawah belakang) per kartu,
+ * semua kartu digabung dalam satu dokumen PDF.
+ */
+export function buildMemberCardBatchPdf(propsArray: MemberCardPdfProps[]) {
+  return h(
+    Document,
+    null,
+    propsArray.map((props, i) =>
+      h(
+        Page,
+        {
+          key: `batch-${i}`,
+          size: [856, 1080],
+          style: { width: 856, height: 1080, padding: 0, position: 'relative', backgroundColor: WHITE },
+        },
+        h(
+          View,
+          {
+            key: `batch-f${i}`,
+            style: { position: 'absolute', top: 0, left: 0, width: 856, height: 540, backgroundColor: WHITE },
+          },
+          buildFrontSide(props),
+        ),
+        h(
+          View,
+          {
+            key: `batch-b${i}`,
+            style: { position: 'absolute', top: 540, left: 0, width: 856, height: 540 },
+          },
+          buildBackSide(props),
+        ),
+      ),
+    ),
+  );
+}

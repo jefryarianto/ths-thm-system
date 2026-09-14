@@ -49,7 +49,8 @@ describe('MembersDigitalCardService', () => {
     { signerName: 'Yoseph Pehan Betan', signerTitle: 'Koordinator Distrik' },
   ];
 
-  const mockPrisma = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockPrisma: any = {
     anggota: {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
@@ -57,10 +58,23 @@ describe('MembersDigitalCardService', () => {
     },
     dokumen: {
       create: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     qRValidation: {
       create: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
+    qrScan: {
+      findMany: jest.fn(),
+    },
+    $transaction: jest.fn((arg: any) =>
+      Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma),
+    ),
   };
 
   const mockScopeHelper = {
@@ -242,6 +256,238 @@ describe('MembersDigitalCardService', () => {
         expect.objectContaining({ rantingId: 'r-sanjuan' }),
         'r-sanjuan',
       );
+    });
+  });
+
+  describe('watermark SVG', () => {
+    it('buildCardWatermarkSvg mengembalikan tile diagonal berisi teks kartu', () => {
+      // @ts-ignore
+      const { buildCardWatermarkSvg } = require('./members-digital-card.service');
+      const svg = buildCardWatermarkSvg(3566, 4500, 'KARTU DIGITAL - Jefry Arianto Baba - LRT-0103-001-1994');
+
+      expect(svg).toContain('width="3566"');
+      expect(svg).toContain('height="4500"');
+      expect(svg).toContain('rotate(-28');
+      expect(svg).toContain('KARTU DIGITAL - Jefry Arianto Baba - LRT-0103-001-1994');
+    });
+
+    it('xmlEscape mengamankan tanda kutip pada nama anggota', () => {
+      // @ts-ignore
+      const { xmlEscape } = require('./members-digital-card.service');
+      expect(xmlEscape(`O'Brien & "Co"`)).toBe('O&apos;Brien &amp; &quot;Co&quot;');
+    });
+  });
+
+  describe('getCardSecurity', () => {
+    const ktaDoc = (overrides: any = {}) => ({
+      id: 'doc-1',
+      nomorDokumen: 'KTA-LRT-0103-001-1994',
+      status: 'generated',
+      qrValidations: [
+        {
+          id: 'qr-1',
+          isValid: true,
+          scanCount: 3,
+          scannedAt: new Date('2026-02-01T10:00:00Z'),
+          createdAt: new Date('2026-01-01T00:00:00Z'),
+        },
+      ],
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        id: 'm-lrt-1',
+        rantingId: 'r-sanjuan',
+      } as any);
+      mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc());
+      mockPrisma.qrScan.findMany.mockResolvedValue([
+        {
+          id: 'scan-1',
+          scannedAt: new Date('2026-02-01T10:00:00Z'),
+          ipAddress: '203.0.113.9',
+          userAgent: 'Mozilla/5.0 (KTA-Scanner) very long',
+        },
+      ]);
+    });
+
+    it('mengembalikan status QR + riwayat scan dengan IP tersamarkan', async () => {
+      const result = await service.getCardSecurity('m-lrt-1');
+
+      expect(result.data.qr.isValid).toBe(true);
+      expect(result.data.qr.scanCount).toBe(3);
+      expect(result.data.scanLimit).toBe(25);
+      expect(result.data.scanLeft).toBe(22);
+      expect(result.data.scanLog[0].ipAddress).toBe('203.0.113.x');
+      expect(result.data.scanLog[0].userAgent).toBe('Mozilla/5.0 (KTA-Scanner) very long');
+    });
+
+    it('mengambil 100 riwayat scan terbaru (desc)', async () => {
+      await service.getCardSecurity('m-lrt-1');
+      expect(mockPrisma.qrScan.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 100, orderBy: { scannedAt: 'desc' } }),
+      );
+    });
+
+    it('melempar NotFound bila QR belum terdaftar', async () => {
+      mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc({ qrValidations: [] }));
+      await expect(service.getCardSecurity('m-lrt-1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('setCardActive', () => {
+    const ktaDoc = (overrides: any = {}) => ({
+      id: 'doc-1',
+      nomorDokumen: 'KTA-LRT-0103-001-1994',
+      status: 'revoked',
+      qrValidations: [{ id: 'qr-1', isValid: false }],
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'm-lrt-1', rantingId: 'r-sanjuan' } as any);
+      mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc());
+    });
+
+    it('cabut kartu: status revoked + semua QR nonaktif (transaksi)', async () => {
+      const result = await service.setCardActive('m-lrt-1', false);
+
+      expect(result.data.status).toBe('revoked');
+      expect(result.data.isValid).toBe(false);
+      expect(mockPrisma.dokumen.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'revoked' }) }),
+      );
+      expect(mockPrisma.qRValidation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ isValid: false }) }),
+      );
+    });
+
+    it('aktifkan kembali: status generated + QR aktif', async () => {
+      mockPrisma.dokumen.findFirst.mockResolvedValue(ktaDoc({ status: 'generated', qrValidations: [{ id: 'qr-1', isValid: true }] }));
+      const result = await service.setCardActive('m-lrt-1', true);
+
+      expect(result.data.status).toBe('generated');
+      expect(result.data.isValid).toBe(true);
+      expect(mockPrisma.dokumen.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'generated' }) }),
+      );
+      expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ isValid: true }) }),
+      );
+    });
+  });
+
+  describe('issuePrintedCard', () => {
+    beforeEach(() => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] } as any);
+      mockPrisma.dokumen.findFirst.mockResolvedValue(null);
+      mockPrisma.dokumen.create.mockResolvedValue({
+        id: 'doc-1',
+        status: 'generated',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+      } as any);
+      mockPrisma.qRValidation.create.mockResolvedValue({
+        id: 'qr-p1',
+        source: 'printed',
+        reason: null,
+        isValid: true,
+        verificationUrl: 'http://localhost:3000/verify/printed-token',
+        createdAt: new Date('2026-03-01T00:00:00Z'),
+      } as any);
+    });
+
+    it('membuat QR printed baru saat belum ada dokumen (buat dokumen dulu)', async () => {
+      const result = await service.issuePrintedCard('m-lrt-1');
+
+      expect(mockPrisma.dokumen.create).toHaveBeenCalled();
+      expect(mockPrisma.qRValidation.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ source: 'printed', isValid: true }) }),
+      );
+      expect(result.data.pdfUrl).toContain('printed/pdf?issuanceId=qr-p1');
+    });
+
+    it('alasan hilang/rusak mencabut QR fisik lama yang masih aktif', async () => {
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        status: 'generated',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+      } as any);
+
+      await service.issuePrintedCard('m-lrt-1', { reason: 'hilang' });
+
+      expect(mockPrisma.qRValidation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ dokumenId: 'doc-1', source: 'printed', isValid: true }),
+          data: expect.objectContaining({ isValid: false }),
+        }),
+      );
+      expect(mockPrisma.qRValidation.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ reason: 'hilang', source: 'printed' }) }),
+      );
+    });
+
+    it('dokumen status revoked ikut diaktifkan kembali saat terbit kartu fisik', async () => {
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        status: 'revoked',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+      } as any);
+      mockPrisma.dokumen.update.mockResolvedValue({ id: 'doc-1', status: 'generated' } as any);
+
+      await service.issuePrintedCard('m-lrt-1');
+
+      expect(mockPrisma.dokumen.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: 'generated' }) }),
+      );
+    });
+  });
+
+  describe('getCardIssuances', () => {
+    it('mengembalikan riwayat penerbitan digital & fisik (terbaru dulu)', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] } as any);
+      mockPrisma.dokumen.findFirst.mockResolvedValue({
+        id: 'doc-1',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        qrValidations: [
+          {
+            id: 'qr-p2',
+            source: 'printed',
+            reason: 'hilang',
+            isValid: true,
+            scanCount: 0,
+            scannedAt: null,
+            verificationUrl: 'http://localhost:3000/verify/p2',
+            createdAt: new Date('2026-03-05T00:00:00Z'),
+          },
+          {
+            id: 'qr-d1',
+            source: 'digital',
+            reason: null,
+            isValid: true,
+            scanCount: 7,
+            scannedAt: new Date('2026-02-01T10:00:00Z'),
+            verificationUrl: 'http://localhost:3000/verify/d1',
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+          },
+        ],
+      } as any);
+
+      const result = await service.getCardIssuances('m-lrt-1');
+
+      expect(result.data.issuances).toHaveLength(2);
+      expect(result.data.issuances[0].source).toBe('printed');
+      expect(result.data.issuances[0].edisi).toBe(2);
+      expect(result.data.issuances[1].edisi).toBe(1);
+      expect(result.data.issuances[1].scanCount).toBe(7);
+    });
+
+    it('anggota tanpa dokumen: issuances kosong (bukan error)', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [] } as any);
+      mockPrisma.dokumen.findFirst.mockResolvedValue(null);
+
+      const result = await service.getCardIssuances('m-lrt-1');
+
+      expect(result.data.issuances).toEqual([]);
     });
   });
 });

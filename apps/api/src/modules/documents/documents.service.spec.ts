@@ -36,11 +36,17 @@ describe('DocumentsService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    qrScan: {
+      create: jest.fn(),
     },
     anggota: {
       findUnique: jest.fn(),
     },
-    $transaction: jest.fn((fn) => fn(mockPrisma)),
+    $transaction: jest.fn((arg: any) =>
+      Array.isArray(arg) ? Promise.all(arg) : arg(mockPrisma),
+    ),
   };
 
   const mockScopeHelper = {
@@ -124,6 +130,9 @@ describe('DocumentsService', () => {
     it('should revoke a document', async () => {
       await service.remove('d1');
       expect(mockPrisma.dokumen.update).toHaveBeenCalled();
+      expect(mockPrisma.qRValidation.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ isValid: false }) }),
+      );
     });
   });
 
@@ -145,6 +154,153 @@ describe('DocumentsService', () => {
 
       const result = await service.generate({ memberId: 'm1', type: 'kartu_anggota' });
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('verifyByToken', () => {
+    const ktaQr = (statusKeanggotaan = 'aktif') => ({
+      id: 'qr1',
+      dokumenId: 'd1',
+      token: 't1',
+      isValid: true,
+      scanCount: 0,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      dokumen: {
+        id: 'd1',
+        tipe: 'kartu_anggota',
+        nomorDokumen: 'KTA-LRT-0103-001-1994',
+        status: 'generated',
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+        anggota: {
+          nomorAnggota: 'LRT-0103-001-1994',
+          namaLengkap: 'Budi Santoso',
+          fotoPath: 'foto/lrt-0103-001.png',
+          jenisKelamin: 'L',
+          tempatLahir: 'Kupang',
+          tanggalLahir: new Date('1994-01-01T00:00:00Z'),
+          statusKeanggotaan,
+          ranting: {
+            nama: 'Ranting A',
+            wilayah: { nama: 'Wilayah B', distrik: { nama: 'Distrik C' } },
+          },
+        },
+      },
+    });
+
+    it('should return member identity for a valid KTA card', async () => {
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(ktaQr());
+      const result = await service.verifyByToken('t1');
+
+      expect(result.data.valid).toBe(true);
+      expect(result.data.tipe).toBe('kartu_anggota');
+      expect(result.data.member.namaLengkap).toBe('Budi Santoso');
+      expect(result.data.member.nomorAnggota).toBe('LRT-0103-001-1994');
+      expect(result.data.member.statusKeanggotaan).toBe('aktif');
+      expect(result.data.member.ranting).toBe('Ranting A');
+      expect(result.data.member.distrik).toBe('Distrik C');
+      expect(result.data.scanCount).toBe(1);
+      expect(result.data.firstScanned).toBe(true);
+      expect(result.data.lastScannedAt).toBeNull();
+      expect(result.data.scanLimit).toBe(25);
+      expect(result.data.scanLeft).toBe(24);
+      // setiap verifikasi tercatat ke riwayat pemindaian (scan log)
+      expect(mockPrisma.qrScan.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ qrValidationId: 'qr1', ipAddress: null, userAgent: null }),
+        }),
+      );
+      expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ scanCount: { increment: 1 } }),
+        }),
+      );
+    });
+
+    it('should log scan metadata (IP & user-agent) when present', async () => {
+      mockPrisma.qRValidation.findUnique.mockResolvedValue({ ...ktaQr(), scannedAt: new Date('2026-02-01T00:00:00Z') });
+      const result = await service.verifyByToken('t1', {
+        ip: '203.0.113.9',
+        userAgent: 'Mozilla/5.0 (KTA-Scanner)',
+      });
+
+      expect(result.data.lastScannedAt).toBe('2026-02-01T00:00:00.000Z');
+      expect(mockPrisma.qrScan.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            qrValidationId: 'qr1',
+            ipAddress: '203.0.113.9',
+            userAgent: 'Mozilla/5.0 (KTA-Scanner)',
+          }),
+        }),
+      );
+    });
+
+    it('should not include member block for non-KTA documents', async () => {
+      const qr = ktaQr();
+      qr.dokumen.tipe = 'sertifikat_pendadaran';
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(qr);
+      const result = await service.verifyByToken('t1');
+      expect(result.data.tipe).toBe('sertifikat_pendadaran');
+      expect(result.data.member).toBeUndefined();
+    });
+
+    it('should throw NotFound when token is unknown', async () => {
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(null);
+      await expect(service.verifyByToken('unknown')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFound when QR is invalidated', async () => {
+      mockPrisma.qRValidation.findUnique.mockResolvedValue({ ...ktaQr(), isValid: false });
+      await expect(service.verifyByToken('t1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFound when document is revoked', async () => {
+      const qr = ktaQr();
+      qr.dokumen.status = 'revoked';
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(qr);
+      await expect(service.verifyByToken('t1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFound when member is no longer a member', async () => {
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(ktaQr('keluar'));
+      await expect(service.verifyByToken('t1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should resolve JWT-signed token to its underlying QR token', async () => {
+      // @ts-ignore
+      const { signQrToken } = require('../../common/utils/qr-token.util');
+      const signed = signQrToken({ ref: 't1', typ: 'kta', src: 'digital' });
+
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(ktaQr());
+      const result = await service.verifyByToken(signed);
+
+      expect(mockPrisma.qRValidation.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { token: 't1' } }),
+      );
+      expect(result.data.valid).toBe(true);
+    });
+
+    it('should auto-invalidate the QR when scan limit is exceeded', async () => {
+      const qr = { ...ktaQr(), scanCount: 25 };
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(qr);
+
+      await expect(service.verifyByToken('t1')).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.qRValidation.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ isValid: false }) }),
+      );
+      // pemindaian yang memicu auto-invalidasi tetap tercatat
+      expect(mockPrisma.qrScan.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ qrValidationId: 'qr1' }) }),
+      );
+    });
+
+    it('should count scan before limit', async () => {
+      const qr = { ...ktaQr(), scanCount: 24 };
+      mockPrisma.qRValidation.findUnique.mockResolvedValue(qr);
+
+      const result = await service.verifyByToken('t1');
+      expect(result.data.valid).toBe(true);
+      expect(result.data.scanCount).toBe(25);
     });
   });
 });

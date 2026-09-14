@@ -8,7 +8,7 @@ import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Member } from '@/types';
-import { Plus, Upload, Users } from 'lucide-react';
+import { Plus, Upload, Users, Printer } from 'lucide-react';
 import ExportMenu from '@/components/ui/export-menu';
 import { CanCreate, CanExport } from '@/components/auth/can';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -34,6 +34,34 @@ export default function MembersPage() {
   const { isAdmin } = useAuth();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [mutasiMember, setMutasiMember] = useState<Member | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchPrinting, setBatchPrinting] = useState(false);
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const toggleSelectAll = () =>
+    setSelectedIds((prev) =>
+      prev.length === members.length ? [] : members.map((m) => m.id),
+    );
+
+  const handleBatchPrint = async () => {
+    if (selectedIds.length === 0) return;
+    setBatchPrinting(true);
+    try {
+      const { data: res } = await apiClient.post('/members/print-batch', {
+        memberIds: selectedIds,
+        reason: 'baru',
+      });
+      toast('success', `${res?.data?.issued?.length ?? 0} kartu fisik diterbitkan`);
+      if (res?.data?.pdfUrl) {
+        window.open(`${window.location.origin}${res.data.pdfUrl}`, '_blank');
+      }
+      setSelectedIds([]);
+    } catch {
+      toast('error', 'Gagal mencetak batch kartu fisik');
+    }
+    setBatchPrinting(false);
+  };
 
   // Stats
   const [stats, setStats] = useState({ total: 0, aktif: 0, pendingValidasi: 0, incomplete: 0 });
@@ -208,6 +236,28 @@ export default function MembersPage() {
 
   const columns = [
     {
+      key: '__select',
+      label: '',
+      header: () => (
+        <input
+          type="checkbox"
+          className="accent-indigo-600"
+          checked={members.length > 0 && selectedIds.length === members.length}
+          onChange={toggleSelectAll}
+          aria-label="Pilih semua di halaman ini"
+        />
+      ),
+      render: (m: Member) => (
+        <input
+          type="checkbox"
+          className="accent-indigo-600"
+          checked={selectedIds.includes(m.id)}
+          onChange={() => toggleSelect(m.id)}
+          aria-label={`Pilih ${m.namaLengkap}`}
+        />
+      ),
+    },
+    {
       key: 'namaLengkap',
       label: 'Nama',
       render: (m: Member) => (
@@ -378,6 +428,23 @@ export default function MembersPage() {
           <span>{error}</span>
           <button onClick={refetch} className="underline hover:no-underline text-xs">
             Coba lagi
+          </button>
+        </div>
+      )}
+
+      {/* Cetak batch kartu fisik */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-xl mb-4">
+          <p className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">
+            {selectedIds.length} anggota dipilih untuk cetak kartu fisik
+          </p>
+          <button
+            onClick={handleBatchPrint}
+            disabled={batchPrinting}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
+          >
+            <Printer size={14} />
+            {batchPrinting ? 'Menerbitkan...' : 'Terbitkan & Cetak Kartu Fisik (Batch)'}
           </button>
         </div>
       )}

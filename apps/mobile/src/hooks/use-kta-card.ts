@@ -24,10 +24,11 @@ export function useKtaCardData(anggotaId: string | null | undefined) {
           backImage?: string | null;
           overlayConfig?: Record<string, unknown>;
         } | null;
-        card?: { signerName?: string; signerTitle?: string; signers?: { signerName?: string; signerTitle?: string }[] };
+        card?: { signerName?: string; signerTitle?: string; verificationUrl?: string | null; signers?: { signerName?: string; signerTitle?: string }[] };
       }>(res);
       setCardData({
         qrCode: data.qrCode || null,
+        verificationUrl: data.card?.verificationUrl || null,
         signerName: data.card?.signerName || 'Koordinator Distrik',
         signerTitle: data.card?.signerTitle || 'THS-THM',
         signers: data.card?.signers || [],

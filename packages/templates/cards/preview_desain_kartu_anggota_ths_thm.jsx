@@ -192,7 +192,7 @@ function CardBack() {
         </div>
         <div className="text-right">
           <div className="text-[13px] opacity-80">URL Verifikasi</div>
-          <div className="text-[16px] font-bold">/verify/member/token</div>
+          <div className="text-[16px] font-bold">https://ths-thm.cloud/verify/&lt;token&gt;</div>
         </div>
       </div>
     </CardShell>

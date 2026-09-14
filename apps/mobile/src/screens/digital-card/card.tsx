@@ -241,6 +241,8 @@ export interface CardData {
   qrCode: string | null;
   signerName: string;
   signerTitle: string;
+  /** URL verifikasi publik (FRONTEND_URL/verify/<token>) — dipakai QR & teks footer. */
+  verificationUrl?: string | null;
   /** Penandatangan ganda (1-3) dari API — tampil berurutan. */
   signers?: { signerName?: string; signerTitle?: string }[];
   levelVisual?: { stripCount: number; color: string; label?: string } | null;
@@ -602,10 +604,14 @@ export function MemberCardBack({ member, cardData, ttl, dadar, validUntilText }:
           <Text style={styles.footerText}>
             Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.
           </Text>
-          <View style={styles.footerUrl}>
-            <Text style={styles.footerUrlLabel}>URL Verifikasi</Text>
-            <Text style={styles.footerUrlValue}>/verify/member/token</Text>
-          </View>
+          {!!cardData?.verificationUrl && (
+            <View style={styles.footerUrl}>
+              <Text style={styles.footerUrlLabel}>URL Verifikasi</Text>
+              <Text style={styles.footerUrlValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+                {cardData.verificationUrl}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </CardShell>

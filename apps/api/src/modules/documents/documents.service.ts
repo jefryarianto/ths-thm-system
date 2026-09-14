@@ -14,6 +14,7 @@ import { paginate } from '../../common/utils/pagination';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { DocumentBatchService } from './document-batch.service';
 import { JobPayload, JobResult } from '../../common/queue/queue.interface';
+import { resolveQrToken } from '../../common/utils/qr-token.util';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -93,7 +94,7 @@ export class DocumentsService {
     const doc = await this.prisma.dokumen.findUnique({
       where: { id },
       include: {
-        qrValidation: true,
+        qrValidations: { orderBy: { createdAt: 'desc' } },
         anggota: {
           select: {
             id: true,
@@ -358,7 +359,14 @@ export class DocumentsService {
       }
     }
 
-    await this.prisma.dokumen.update({ where: { id }, data: { status: 'revoked' } });
+    // Pencabutan per-penerbitan: set status dokumen revoked + nonaktifkan QR-nya.
+    await this.prisma.$transaction([
+      this.prisma.dokumen.update({ where: { id }, data: { status: 'revoked' } }),
+      this.prisma.qRValidation.updateMany({
+        where: { dokumenId: id },
+        data: { isValid: false },
+      }),
+    ]);
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
   }
 
@@ -402,8 +410,9 @@ export class DocumentsService {
   }
 
   async verifyQR(dokumenId: string) {
-    const qr = await this.prisma.qRValidation.findUnique({
+    const qr = await this.prisma.qRValidation.findFirst({
       where: { dokumenId },
+      orderBy: { createdAt: 'desc' },
       include: {
         dokumen: { include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } } },
       },
@@ -693,22 +702,95 @@ export class DocumentsService {
     return doc;
   }
 
-  async verifyByToken(token: string) {
+  /**
+   * Catat satu pemindaian ke riwayat (audit anti-fotokopi).
+   * Gagal mencatat tidak boleh menggagalkan verifikasi.
+   */
+  private async logScan(
+    qrValidationId: string,
+    scanMeta?: { ip?: string; userAgent?: string },
+  ): Promise<void> {
+    try {
+      await this.prisma.qrScan.create({
+        data: {
+          qrValidationId,
+          ipAddress: scanMeta?.ip ? scanMeta.ip.slice(0, 64) : null,
+          userAgent: scanMeta?.userAgent ? scanMeta.userAgent.slice(0, 500) : null,
+          scannedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Gagal mencatat riwayat pemindaian: ${(error as Error).message}`);
+    }
+  }
+
+  async verifyByToken(rawToken: string, scanMeta?: { ip?: string; userAgent?: string }) {
+    // Token QR kini ditandatangani (JWT). Resolve ke token asli (uuid) dari `sub`;
+    // token legacy (UUID polos cetakan lama) tetap didukung.
+    const resolved = resolveQrToken(rawToken);
+    const token = resolved?.ref ?? rawToken;
+
     const qr = await this.prisma.qRValidation.findUnique({
       where: { token },
       include: {
-        dokumen: { include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } } },
+        dokumen: {
+          include: {
+            anggota: {
+              select: {
+                nomorAnggota: true,
+                namaLengkap: true,
+                fotoPath: true,
+                jenisKelamin: true,
+                tempatLahir: true,
+                tanggalLahir: true,
+                statusKeanggotaan: true,
+                ranting: {
+                  select: {
+                    nama: true,
+                    wilayah: { select: { nama: true, distrik: { select: { nama: true } } } },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
     if (!qr) throw new NotFoundException('Token QR tidak valid');
     if (!qr.isValid) throw new NotFoundException('Dokumen sudah tidak berlaku');
+    if (qr.dokumen.status === 'revoked') throw new NotFoundException('Dokumen sudah dicabut');
 
+    const isKta = qr.dokumen.tipe === 'kartu_anggota';
+    if (
+      isKta &&
+      (qr.dokumen.anggota?.statusKeanggotaan === 'keluar' ||
+        qr.dokumen.anggota?.statusKeanggotaan === 'meninggal')
+    ) {
+      throw new NotFoundException('Keanggotaan sudah tidak berlaku');
+    }
+
+    // Abuse detection: terlalu sering dipindai → terduga difotokopi/digandakan.
+    const scanLimit = Number(process.env.QR_SCAN_LIMIT || 25);
+    if (qr.scanCount >= scanLimit) {
+      await this.logScan(qr.id, scanMeta);
+      await this.prisma.qRValidation.update({
+        where: { id: qr.id },
+        data: { isValid: false, scannedAt: new Date(), scanCount: { increment: 1 } },
+      });
+      throw new NotFoundException(
+        'QR terlalu sering dipindai — terduga difotokopi/digandakan. Kartu otomatis dinonaktifkan.',
+      );
+    }
+
+    const lastScannedAt = qr.scannedAt;
+    await this.logScan(qr.id, scanMeta);
     await this.prisma.qRValidation.update({
       where: { id: qr.id },
       data: { scannedAt: new Date(), scanCount: { increment: 1 } },
     });
 
+    const anggota = qr.dokumen.anggota;
     return {
       success: true,
       data: {
@@ -716,9 +798,31 @@ export class DocumentsService {
         dokumenId: qr.dokumenId,
         tipe: qr.dokumen.tipe,
         nomorDokumen: qr.dokumen.nomorDokumen,
-        nomorAnggota: qr.dokumen.anggota?.nomorAnggota,
-        namaAnggota: qr.dokumen.anggota?.namaLengkap,
+        status: qr.dokumen.status,
+        createdAt: qr.dokumen.createdAt,
+        nomorAnggota: anggota?.nomorAnggota,
+        namaAnggota: anggota?.namaLengkap,
         firstScanned: qr.scanCount === 0,
+        scanCount: qr.scanCount + 1,
+        lastScannedAt: lastScannedAt?.toISOString() ?? null,
+        scanLimit,
+        scanLeft: Math.max(0, scanLimit - qr.scanCount - 1),
+        ...(isKta
+          ? {
+              member: {
+                nomorAnggota: anggota?.nomorAnggota,
+                namaLengkap: anggota?.namaLengkap,
+                fotoPath: anggota?.fotoPath,
+                jenisKelamin: anggota?.jenisKelamin,
+                tempatLahir: anggota?.tempatLahir,
+                tanggalLahir: anggota?.tanggalLahir,
+                statusKeanggotaan: anggota?.statusKeanggotaan,
+                ranting: anggota?.ranting?.nama,
+                wilayah: anggota?.ranting?.wilayah?.nama,
+                distrik: anggota?.ranting?.wilayah?.distrik?.nama,
+              },
+            }
+          : {}),
       },
     };
   }

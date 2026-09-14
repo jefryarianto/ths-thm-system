@@ -9,6 +9,8 @@ export interface Column<TRow = Record<string, unknown>> {
   /** Unique key for the column. Falls back to label if not provided. */
   key?: string;
   label: string;
+  /** Optional custom header cell content (e.g. select-all checkbox). */
+  header?: () => React.ReactNode;
   render?: (item: TRow) => React.ReactNode;
   /** Responsive visibility class e.g. 'hidden sm:table-cell' */
   hidden?: string;
@@ -102,7 +104,7 @@ export default function DataTable<T>({
                         : 'text-left'
                   }`}
                 >
-                  {col.label}
+                  {col.header ? col.header() : col.label}
                 </th>
               ))}
               {actions && (

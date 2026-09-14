@@ -992,24 +992,50 @@ model Dokumen {
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
   anggota      Anggota       @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
-  qrValidation QRValidation?
+  qrValidations QRValidation[]
 
   @@index([anggotaId])
   @@map("dokumen")
 }
 
+/// Sumber penerbitan QR kartu: digital (aplikasi) atau printed (fisik).
+enum QrSource {
+  digital
+  printed
+}
+
 model QRValidation {
-  id        String    @id @default(uuid())
-  dokumenId String    @unique @map("dokumen_id")
-  token     String    @unique
-  isValid   Boolean   @default(true) @map("is_valid")
-  scannedAt DateTime? @map("scanned_at")
-  scanCount Int       @default(0) @map("scan_count")
-  createdAt DateTime  @default(now()) @map("created_at")
+  id               String    @id @default(uuid())
+  dokumenId        String    @map("dokumen_id")
+  token            String    @unique
+  isValid          Boolean   @default(true) @map("is_valid")
+  scannedAt        DateTime? @map("scanned_at")
+  scanCount        Int       @default(0) @map("scan_count")
+  source           QrSource  @default(digital)
+  verificationUrl  String?   @map("verification_url")
+  reason           String?   @map("reason")
+  createdAt        DateTime  @default(now()) @map("created_at")
 
   dokumen Dokumen @relation(fields: [dokumenId], references: [id], onDelete: Cascade)
+  qrScans QrScan[]
 
+  @@index([dokumenId])
   @@map("qr_validation")
+}
+
+/// Riwayat pemindaian QR per penerbitan kartu/dokumen (audit anti-fotokopi).
+model QrScan {
+  id             String     @id @default(uuid())
+  qrValidationId String     @map("qr_validation_id")
+  scannedAt      DateTime   @default(now()) @map("scanned_at")
+  ipAddress      String?    @map("ip_address")
+  userAgent      String?    @map("user_agent")
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  qrValidation QRValidation @relation(fields: [qrValidationId], references: [id], onDelete: Cascade)
+
+  @@index([qrValidationId, scannedAt(sort: Desc)])
+  @@map("qr_scan")
 }
 
 model TandaTangan {

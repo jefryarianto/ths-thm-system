@@ -71,6 +71,31 @@ export class MembersController {
     return this.membersService.create(dto, req.scope);
   }
 
+  @Post('print-batch')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Terbitkan kartu fisik untuk banyak anggota (cetak batch)' })
+  printBatch(@Body() body: { memberIds: string[]; reason?: string }, @Req() req: ScopedRequest) {
+    return this.digitalCardService.issueCardsBatch(body.memberIds ?? [], { reason: body.reason }, req.scope, req.user);
+  }
+
+  @Get('printed/batch/pdf')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'PDF cetak batch kartu fisik (banyak anggota)' })
+  async getPrintedBatchPdf(@Query('issuanceIds') issuanceIds: string, @Req() req: ScopedRequest, @Res() res: Response) {
+    try {
+      const ids = (issuanceIds || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const pdfBuffer = await this.digitalCardService.getBatchCardPdf(ids, req.scope);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="kartu-fisik-batch.pdf"`);
+      res.send(pdfBuffer);
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(`Gagal membuat PDF batch kartu fisik: ${(err as Error).message}`, (err as Error).stack);
+      throw new HttpException(`Gagal membuat PDF batch: ${(err as Error).message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Patch(':id')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Perbarui anggota' })
   update(@Param('id') id: string, @Body() dto: UpdateMemberDto, @Req() req: ScopedRequest) {
@@ -160,9 +185,21 @@ export class MembersController {
 
   @Get(':id/digital-card/image')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Preview Kartu Anggota Digital (PNG)' })
-  async getDigitalCardImage(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
+  async getDigitalCardImage(
+    @Param('id') id: string,
+    @Req() req: ScopedRequest,
+    @Res() res: Response,
+    @Query('watermark') watermark?: string,
+  ) {
     try {
-      const pngBuffer = await this.digitalCardService.getDigitalCardImage(id, req.scope, req.user);
+      // ?watermark=1 → beri watermark anti-fotokopi (untuk artefak yang disimpan/unduh).
+      // Default tanpa watermark → preview bersih.
+      const pngBuffer = await this.digitalCardService.getDigitalCardImage(
+        id,
+        req.scope,
+        req.user,
+        watermark === '1' || watermark === 'true',
+      );
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Content-Disposition', `inline; filename="kartu-anggota-${id}.png"`);
       res.send(pngBuffer);
@@ -171,5 +208,59 @@ export class MembersController {
       this.logger.error(`Gagal membuat PNG kartu anggota ${id}: ${(err as Error).message}`, (err as Error).stack);
       throw new HttpException(`Gagal membuat PNG kartu anggota: ${(err as Error).message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  @Get(':id/digital-card/security')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Status keamanan QR & riwayat pemindaian kartu digital' })
+  getCardSecurity(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.digitalCardService.getCardSecurity(id, req.scope, req.user);
+  }
+
+  @Patch(':id/digital-card/revoke')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Cabut kartu anggota digital (nonaktifkan QR)' })
+  revokeCard(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.digitalCardService.setCardActive(id, false, req.scope, req.user);
+  }
+
+  @Patch(':id/digital-card/activate')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Aktifkan kembali kartu anggota digital' })
+  activateCard(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.digitalCardService.setCardActive(id, true, req.scope, req.user);
+  }
+
+  @Post(':id/digital-card/printed')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Terbitkan kartu fisik (QR statis per-penerbitan)' })
+  issuePrintedCard(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @Req() req: ScopedRequest,
+  ) {
+    return this.digitalCardService.issuePrintedCard(id, { reason: body?.reason }, req.scope, req.user);
+  }
+
+  @Get(':id/digital-card/printed/pdf')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'PDF cetak kartu fisik (per penerbitan)' })
+  async getPrintedCardPdf(
+    @Param('id') id: string,
+    @Query('issuanceId') issuanceId: string,
+    @Req() req: ScopedRequest,
+    @Res() res: Response,
+  ) {
+    try {
+      const pdfBuffer = await this.digitalCardService.getPrintedCardPdf(id, issuanceId, req.scope, req.user);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="kartu-fisik-${id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(`Gagal membuat PDF kartu fisik ${id}: ${(err as Error).message}`, (err as Error).stack);
+      throw new HttpException(`Gagal membuat PDF kartu fisik: ${(err as Error).message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get(':id/digital-card/issuances')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Riwayat penerbitan kartu (digital & fisik)' })
+  getCardIssuances(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.digitalCardService.getCardIssuances(id, req.scope, req.user);
   }
 }

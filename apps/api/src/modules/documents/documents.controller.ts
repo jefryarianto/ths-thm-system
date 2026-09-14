@@ -14,7 +14,7 @@ import {
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireScope } from '../../common/decorators/scope.decorator';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @ApiTags('Documents')
 @Controller('documents')
@@ -27,8 +27,11 @@ export class DocumentsController {
   @Get('verify/:token')
   @Public()
   @ApiOperation({ summary: 'Verifikasi dokumen dengan token' })
-  verifyByToken(@Param('token') token: string) {
-    return this.service.verifyByToken(token);
+  verifyByToken(@Param('token') token: string, @Req() req: Request) {
+    return this.service.verifyByToken(token, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
   }
 
   @Get(':id/file')

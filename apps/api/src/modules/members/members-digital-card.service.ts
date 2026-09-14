@@ -8,6 +8,46 @@ import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.h
 import { CacheService } from '../../common/services/cache.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
+import { signQrToken } from '../../common/utils/qr-token.util';
+
+export function xmlEscape(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/** Samarkan alamat IP pada log (privasi) — hanya tampilkan 3 oktet pertama. */
+function maskIp(ip?: string | null): string | null {
+  if (!ip) return null;
+  const parts = ip.split('.');
+  if (parts.length === 4) return `${parts[0]}.${parts[1]}.${parts[2]}.x`;
+  return ip.length > 24 ? `${ip.slice(0, 24)}...` : ip;
+}
+
+/**
+ * SVG watermark diagonal (anti-fotokopi digital): teks diulang miring -28°
+ * menutupi seluruh kanvas, semi-transparan. Dipakai pada PNG hasil simpan,
+ * bukan pada preview di layar.
+ */
+export function buildCardWatermarkSvg(width: number, height: number, text: string): string {
+  const fontSize = Math.max(22, Math.round(width / 34));
+  const lineHeight = fontSize * 2.4;
+  const approxCharWidth = fontSize * 0.62;
+  const repeats = Math.ceil((width + height * 1.4) / Math.max(1, text.length * approxCharWidth)) + 1;
+  const full = Array.from({ length: repeats }, () => xmlEscape(text)).join('      ');
+  const lines: string[] = [];
+  for (let y = -height; y < height + lineHeight; y += lineHeight) {
+    lines.push(`<text x="-${Math.round(width)}" y="${Math.round(y)}">${full}</text>`);
+  }
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
+    `<g fill="rgba(26,54,93,0.08)" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="${fontSize}">` +
+    `<g transform="rotate(-28 ${width / 2} ${height / 2})">${lines.join('')}</g></g></svg>`
+  );
+}
 
 @Injectable()
 export class MembersDigitalCardService {
@@ -186,6 +226,155 @@ export class MembersDigitalCardService {
     }
   }
 
+  /**
+   * Temukan dokumen kartu anggota (termasuk yang telah dicabut) untuk anggota.
+   * Guard scope: anggota hanya kartu sendiri; admin dicakup wilayah.
+   */
+  private async findKtaDocument(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    await assertSelfMember(this.prisma as any, user, memberId);
+    const member = await this.prisma.anggota.findUnique({
+      where: { id: memberId, deletedAt: null },
+      select: { id: true, rantingId: true },
+    });
+    if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
+    ) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+    const doc = await this.prisma.dokumen.findFirst({
+      where: { anggotaId: memberId, tipe: 'kartu_anggota' },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        qrValidations: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    });
+    if (!doc) throw new NotFoundException('Kartu anggota belum dibuat');
+    const qr = doc.qrValidations[0];
+    if (!qr) throw new NotFoundException('QR kartu belum terdaftar');
+    return { doc, qr };
+  }
+
+  /** Ringkasan keamanan QR & riwayat pemindaian untuk dashboard admin/anggota. */
+  async getCardSecurity(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    const { doc, qr } = await this.findKtaDocument(memberId, scope, user);
+    const scans = await this.prisma.qrScan.findMany({
+      where: { qrValidationId: qr.id },
+      orderBy: { scannedAt: 'desc' },
+      take: 100,
+      select: { id: true, scannedAt: true, ipAddress: true, userAgent: true },
+    });
+    const scanLimit = Number(process.env.QR_SCAN_LIMIT || 25);
+    return {
+      success: true,
+      data: {
+        dokumen: {
+          id: doc.id,
+          nomorDokumen: doc.nomorDokumen,
+          status: doc.status,
+        },
+        qr: {
+          isValid: qr.isValid,
+          scanCount: qr.scanCount,
+          scannedAt: qr.scannedAt?.toISOString() ?? null,
+          createdAt: qr.createdAt.toISOString(),
+        },
+        scanLimit,
+        scanLeft: Math.max(0, scanLimit - qr.scanCount),
+        scanLog: scans.map((s) => ({
+          id: s.id,
+          scannedAt: s.scannedAt.toISOString(),
+          ipAddress: maskIp(s.ipAddress),
+          userAgent: s.userAgent ? s.userAgent.slice(0, 120) : null,
+        })),
+      },
+    };
+  }
+
+  /**
+   * Cabut / aktifkan kembali kartu (termasuk fisik) per anggota.
+   * Cabut → semua QR (digital & fisik) dinonaktifkan + dokumen revoked.
+   * Aktifkan → dokumen generated kembali + QR penerbitan terbaru diaktifkan.
+   */
+  async setCardActive(
+    memberId: string,
+    active: boolean,
+    scope?: UserScope,
+    user?: SelfScopeUser,
+  ) {
+    const { doc, qr } = await this.findKtaDocument(memberId, scope, user);
+    const newStatus: 'generated' | 'revoked' = active ? 'generated' : 'revoked';
+    if (active) {
+      await this.prisma.$transaction([
+        this.prisma.dokumen.update({ where: { id: doc.id }, data: { status: newStatus } }),
+        this.prisma.qRValidation.update({ where: { id: qr.id }, data: { isValid: true } }),
+      ]);
+    } else {
+      await this.prisma.$transaction([
+        this.prisma.dokumen.update({ where: { id: doc.id }, data: { status: newStatus } }),
+        this.prisma.qRValidation.updateMany({
+          where: { dokumenId: doc.id, isValid: true },
+          data: { isValid: false },
+        }),
+      ]);
+    }
+    return {
+      success: true,
+      data: {
+        dokumenId: doc.id,
+        status: newStatus,
+        isValid: active,
+      },
+    };
+  }
+
+  /** Riwayat penerbitan kartu (semua QR: digital + fisik). */
+  async getCardIssuances(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    await assertSelfMember(this.prisma as any, user, memberId);
+    const member = await this.prisma.anggota.findUnique({
+      where: { id: memberId, deletedAt: null },
+      select: { rantingId: true },
+    });
+    if (!member) throw new NotFoundException('Anggota tidak ditemukan');
+    if (
+      scope &&
+      !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
+    ) {
+      throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+    }
+    const doc = await this.prisma.dokumen.findFirst({
+      where: { anggotaId: memberId, tipe: 'kartu_anggota' },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        anggota: { select: { nomorAnggota: true, namaLengkap: true } },
+        qrValidations: { orderBy: { createdAt: 'desc' } },
+      },
+    });
+    const issuances = (doc?.qrValidations ?? []).map((qr, idx, all) => ({
+      id: qr.id,
+      source: qr.source,
+      reason: qr.reason,
+      edisi: all.length - idx,
+      isValid: qr.isValid,
+      scanCount: qr.scanCount,
+      scannedAt: qr.scannedAt?.toISOString() ?? null,
+      verificationUrl: qr.verificationUrl,
+      createdAt: qr.createdAt.toISOString(),
+    }));
+    return {
+      success: true,
+      data: {
+        dokumenId: doc?.id ?? null,
+        nomorDokumen: doc?.nomorDokumen ?? null,
+        member: doc?.anggota
+          ? { nomorAnggota: doc.anggota.nomorAnggota, namaLengkap: doc.anggota.namaLengkap }
+          : null,
+        issuances,
+      },
+    };
+  }
+
   async getDigitalCard(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
     const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
@@ -207,12 +396,34 @@ export class MembersDigitalCardService {
     };
   }
 
-  async getDigitalCardImage(memberId: string, scope?: UserScope, user?: SelfScopeUser): Promise<Buffer> {
+  /**
+   * Timpa watermark diagonal (nama + nomor anggota) pada PNG digital.
+   * Preview bersih di layar; watermark hanya pada artefak yang disimpan/diunduh.
+   */
+  private async applyDownloadWatermark(pngBuffer: Buffer, text: string): Promise<Buffer> {
+    const sharp = require('sharp');
+    const meta = await sharp(pngBuffer).metadata();
+    const width = meta.width || 3566;
+    const height = meta.height || 4500;
+    const svg = buildCardWatermarkSvg(width, height, text);
+    return sharp(pngBuffer)
+      .composite([{ input: Buffer.from(svg), blend: 'over' }])
+      .png()
+      .toBuffer();
+  }
+
+  async getDigitalCardImage(
+    memberId: string,
+    scope?: UserScope,
+    user?: SelfScopeUser,
+    watermark = false,
+  ): Promise<Buffer> {
     // PNG 2 sisi: render SVG (murni node) → sharp. SVG→PNG tak butuh binary eksternal
     // (poppler/pdf-poppler), jadi hasilnya selalu PNG valid — tidak pernah kosong.
     const { card, memberData, verificationUrl, levelVisual, distrikId } = await this.prepareDigitalCardData(memberId, scope, user);
     const qrDataUrl = await this.buildQr(verificationUrl);
     const template = await this.resolveActiveTemplate(distrikId);
+    const watermarkText = `KARTU DIGITAL - ${memberData.namaLengkap} - ${memberData.nomorAnggota}`;
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -260,7 +471,9 @@ export class MembersDigitalCardService {
         svg = await buildSvg(true);
       }
       // density 300 → PNG ±3566×4500 (resolusi setara pdftoppm -r 300)
-      return await sharp(Buffer.from(svg), { density: 300 }).png().toBuffer();
+      let png = await sharp(Buffer.from(svg), { density: 300 }).png().toBuffer();
+      if (watermark) png = await this.applyDownloadWatermark(png, watermarkText);
+      return png;
     } catch (svgErr) {
       this.logger.warn(`SVG→PNG gagal (${(svgErr as Error).message}), fallback ke PDF→poppler`);
     }
@@ -268,7 +481,9 @@ export class MembersDigitalCardService {
     // Fallback lama (dipakai bila sharp bermasalah di deployment tertentu)
     const pdfBuffer = await this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template }, { combined: true });
     const { pdfToPng } = require('../documents/pdf-templates/pdf-to-image');
-    return pdfToPng(pdfBuffer);
+    let fallbackPng = await pdfToPng(pdfBuffer);
+    if (watermark) fallbackPng = await this.applyDownloadWatermark(fallbackPng, watermarkText);
+    return fallbackPng;
   }
 
   private async buildQr(verificationUrl: string): Promise<string> {
@@ -277,6 +492,53 @@ export class MembersDigitalCardService {
       margin: 2,
       color: { dark: '#1a365d', light: '#ffffff' },
     });
+  }
+
+  /** Bangun object props untuk renderer PDF kartu (dipakai digital & cetak fisik/batch). */
+  private async cardPdfProps(data: {
+    card: any;
+    memberData: any;
+    verificationUrl: string;
+    levelVisual: any;
+    qrDataUrl: string;
+    template?: {
+      frontImage?: string | null;
+      backImage?: string | null;
+      overlayConfig?: unknown;
+    } | null;
+  }) {
+    return {
+      member: {
+        namaLengkap: data.memberData.namaLengkap,
+        nomorAnggota: data.memberData.nomorAnggota,
+        tempatLahir: data.memberData.tempatLahir,
+        tanggalLahir: data.memberData.tanggalLahir,
+        jenisKelamin: data.memberData.jenisKelamin || 'L',
+        tingkat: data.memberData.tingkat,
+        tempatDadar: data.memberData.tempatDadar,
+        tahunDadar: data.memberData.tahunDadar,
+        ranting: data.memberData.ranting,
+        wilayah: data.memberData.wilayah,
+        distrik: data.memberData.distrik,
+        alamatDistrik: data.memberData.alamatDistrik,
+        statusKeanggotaan: data.memberData.statusKeanggotaan,
+      },
+      cardConfig: {
+        nomorDokumen: data.card.nomorDokumen,
+        qrDataUrl: data.qrDataUrl,
+        verificationUrl: data.card.verificationUrl,
+        signers: data.card.signers,
+        signerName: data.card.signerName,
+        signerTitle: data.card.signerTitle,
+        template: data.template || null,
+      },
+      photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true, 700),
+      signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage, false, 320),
+      stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage, false, 320),
+      levelVisual: data.levelVisual,
+      frontImageDataUrl: await this.resolvePhotoDataUrl(data.template?.frontImage || null, false, 1800),
+      backImageDataUrl: await this.resolvePhotoDataUrl(data.template?.backImage || null, false, 1800),
+    };
   }
 
   private async renderCardPdf(
@@ -300,41 +562,7 @@ export class MembersDigitalCardService {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { buildMemberCardPdf } = require('../documents/pdf-templates/member-card');
 
-      const pdfDoc = buildMemberCardPdf(
-        {
-          member: {
-            namaLengkap: data.memberData.namaLengkap,
-            nomorAnggota: data.memberData.nomorAnggota,
-            tempatLahir: data.memberData.tempatLahir,
-            tanggalLahir: data.memberData.tanggalLahir,
-            jenisKelamin: data.memberData.jenisKelamin || 'L',
-            tingkat: data.memberData.tingkat,
-            tempatDadar: data.memberData.tempatDadar,
-            tahunDadar: data.memberData.tahunDadar,
-            ranting: data.memberData.ranting,
-            wilayah: data.memberData.wilayah,
-            distrik: data.memberData.distrik,
-            statusKeanggotaan: data.memberData.statusKeanggotaan,
-          },
-          cardConfig: {
-            nomorDokumen: data.card.nomorDokumen,
-            qrDataUrl: data.qrDataUrl,
-            verificationUrl: data.card.verificationUrl,
-            signers: data.card.signers,
-            signerName: data.card.signerName,
-            signerTitle: data.card.signerTitle,
-            template: data.template || null,
-          },
-          photoDataUrl: await this.resolvePhotoDataUrl(data.memberData.fotoPath, true, 700),
-          signatureDataUrl: await this.resolvePhotoDataUrl(data.card.signatureImage, false, 320),
-          stampDataUrl: await this.resolvePhotoDataUrl(data.card.stampImage, false, 320),
-          levelVisual: data.levelVisual,
-          // Latar desain upload dari template kartu aktif (bila ada)
-          frontImageDataUrl: await this.resolvePhotoDataUrl(data.template?.frontImage || null, false, 1800),
-          backImageDataUrl: await this.resolvePhotoDataUrl(data.template?.backImage || null, false, 1800),
-        },
-        opts,
-      );
+      const pdfDoc = buildMemberCardPdf(await this.cardPdfProps(data), opts);
 
       return await ReactPDF.renderToBuffer(pdfDoc);
     } catch (error) {
@@ -350,10 +578,11 @@ export class MembersDigitalCardService {
     return this.renderCardPdf({ card, memberData, verificationUrl, levelVisual, qrDataUrl, template });
   }
 
-  private async prepareDigitalCardData(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
-    // Anggota hanya boleh ambil kartu miliknya sendiri (admin dicakup oleh scope)
-    await assertSelfMember(this.prisma as any, user, memberId);
+  // ── Cetak Fisik (Tahap 4) ─────────────────────────────────────────────────
 
+  /** Guard umum: self-member + akses scope. Load anggota lengkap ranting→wilayah→distrik. */
+  private async loadMemberForScope(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    await assertSelfMember(this.prisma as any, user, memberId);
     const member = await this.prisma.anggota.findUnique({
       where: { id: memberId, deletedAt: null },
       include: {
@@ -361,39 +590,19 @@ export class MembersDigitalCardService {
         dokumen: { where: { tipe: 'kartu_anggota', status: { not: 'revoked' } }, take: 1 },
       },
     });
-
     if (!member) throw new NotFoundException('Anggota tidak ditemukan');
-
     if (
       scope &&
       !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
     ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
+    return member;
+  }
 
-    // Generate or reuse existing card token
-    let existingCard = member.dokumen[0];
-    if (!existingCard) {
-      const token = uuidv4();
-      const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${token}`;
-      const nomorDokumen = `KTA-${member.nomorAnggota}`;
-
-      existingCard = await this.prisma.dokumen.create({
-        data: {
-          anggotaId: member.id,
-          tipe: 'kartu_anggota',
-          nomorDokumen,
-          verificationUrl,
-          status: 'generated',
-        },
-      });
-
-      await this.prisma.qRValidation.create({
-        data: { dokumenId: existingCard.id, token, isValid: true },
-      });
-    }
-
-    const memberData = {
+  /** Data anggota untuk render kartu (konsisten antar digital & fisik). */
+  private buildMemberData(member: any) {
+    return {
       id: member.id,
       nomorAnggota: member.nomorAnggota,
       namaLengkap: member.namaLengkap,
@@ -413,6 +622,273 @@ export class MembersDigitalCardService {
       distrik: member.ranting?.wilayah?.distrik?.nama,
       alamatDistrik: member.ranting?.wilayah?.distrik?.alamat,
     };
+  }
+
+  /** Pastikan dokumen KTA ada (buat bila belum pernah ada, lengkap dgn QR digital). */
+  private async ensureKtaDokumen(member: any) {
+    const existing = await this.prisma.dokumen.findFirst({
+      where: { anggotaId: member.id, tipe: 'kartu_anggota' },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) return existing;
+
+    const token = uuidv4();
+    const signedToken = signQrToken({ ref: token, typ: 'kta', src: 'digital' });
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${signedToken}`;
+    const doc = await this.prisma.dokumen.create({
+      data: {
+        anggotaId: member.id,
+        tipe: 'kartu_anggota',
+        nomorDokumen: `KTA-${member.nomorAnggota}`,
+        verificationUrl,
+        status: 'generated',
+      },
+    });
+    await this.prisma.qRValidation.create({
+      data: { dokumenId: doc.id, token, isValid: true, source: 'digital', verificationUrl },
+    });
+    return doc;
+  }
+
+  /**
+   * Terbitkan kartu fisik: QR statis baru per penerbitan (src='printed').
+   * Alasan hilang/rusak/replacement → QR fisik lama otomatis dicabut.
+   * Dokumen yang sedang revoked ikut diaktifkan kembali.
+   */
+  async issuePrintedCard(
+    memberId: string,
+    opts: { reason?: string } = {},
+    scope?: UserScope,
+    user?: SelfScopeUser,
+  ) {
+    const member = await this.loadMemberForScope(memberId, scope, user);
+    let doc = await this.ensureKtaDokumen(member);
+    if (doc.status === 'revoked') {
+      doc = await this.prisma.dokumen.update({ where: { id: doc.id }, data: { status: 'generated' } });
+    }
+
+    const replaceReason = ['replacement', 'hilang', 'rusak'].includes(opts.reason || '');
+    if (replaceReason) {
+      await this.prisma.qRValidation.updateMany({
+        where: { dokumenId: doc.id, source: 'printed', isValid: true },
+        data: { isValid: false },
+      });
+    }
+
+    const token = uuidv4();
+    const signedToken = signQrToken({ ref: token, typ: 'kta', src: 'printed' });
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${signedToken}`;
+    const issuance = await this.prisma.qRValidation.create({
+      data: {
+        dokumenId: doc.id,
+        token,
+        isValid: true,
+        source: 'printed',
+        verificationUrl,
+        reason: opts.reason || null,
+      },
+      select: {
+        id: true,
+        source: true,
+        reason: true,
+        isValid: true,
+        verificationUrl: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        issuance,
+        pdfUrl: `/api/members/${memberId}/digital-card/printed/pdf?issuanceId=${issuance.id}`,
+      },
+    };
+  }
+
+  /** PDF cetak kartu fisik untuk penerbitan tertentu (default: penerbitan fisik terbaru). */
+  async getPrintedCardPdf(
+    memberId: string,
+    issuanceId?: string,
+    scope?: UserScope,
+    user?: SelfScopeUser,
+  ): Promise<Buffer> {
+    const member = await this.loadMemberForScope(memberId, scope, user);
+    const doc = await this.ensureKtaDokumen(member);
+
+    let qr: any;
+    if (issuanceId) {
+      qr = await this.prisma.qRValidation.findUnique({ where: { id: issuanceId } });
+    } else {
+      qr = await this.prisma.qRValidation.findFirst({
+        where: { dokumenId: doc.id, source: 'printed' },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+    if (!qr || qr.dokumenId !== doc.id || qr.source !== 'printed' || !qr.verificationUrl) {
+      throw new NotFoundException('Penerbitan kartu fisik tidak ditemukan');
+    }
+
+    const distrikId = member.ranting?.wilayah?.distrik?.id || undefined;
+    const signers = await this.penandatanganService.resolveSigners('kartu_anggota', distrikId);
+    const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
+    const template = await this.resolveActiveTemplate(distrikId);
+    const levelVisual = await this.tingkatanService.resolveLevelVisual(member.tingkat);
+    const card = {
+      id: doc.id,
+      nomorDokumen: doc.nomorDokumen,
+      verificationUrl: qr.verificationUrl,
+      status: doc.status,
+      signers,
+      signerName: signers[0]?.signerName,
+      signerTitle: signers[0]?.signerTitle,
+      signatureImage,
+      stampImage,
+    };
+    return this.renderCardPdf(
+      {
+        card,
+        memberData: this.buildMemberData(member),
+        verificationUrl: qr.verificationUrl,
+        levelVisual,
+        qrDataUrl: await this.buildQr(qr.verificationUrl),
+        template,
+      },
+      { combined: true },
+    );
+  }
+
+  /** Terbitkan kartu fisik untuk banyak anggota sekaligus (cetak batch). */
+  async issueCardsBatch(
+    memberIds: string[],
+    opts: { reason?: string } = {},
+    scope?: UserScope,
+    user?: SelfScopeUser,
+  ) {
+    const issued: Array<{ memberId: string; issuanceId: string }> = [];
+    for (const memberId of memberIds) {
+      try {
+        const r = await this.issuePrintedCard(memberId, opts, scope, user);
+        issued.push({ memberId, issuanceId: r.data.issuance.id });
+      } catch (error) {
+        this.logger.warn(`Batch cetak melewati anggota ${memberId}: ${(error as Error).message}`);
+      }
+    }
+    if (issued.length === 0) {
+      throw new NotFoundException('Tidak ada anggota yang berhasil diproses untuk cetak');
+    }
+    const issuanceIds = issued.map((x) => x.issuanceId);
+    return {
+      success: true,
+      data: {
+        issued,
+        pdfUrl: `/api/members/printed/batch/pdf?issuanceIds=${encodeURIComponent(issuanceIds.join(','))}`,
+      },
+    };
+  }
+
+  /** PDF gabungan multi-kartu (satu halaman 856×1080 per kartu fisik). */
+  async getBatchCardPdf(issuanceIds: string[], scope?: UserScope): Promise<Buffer> {
+    const qrs = await this.prisma.qRValidation.findMany({
+      where: { id: { in: issuanceIds }, source: 'printed' },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        dokumen: {
+          include: {
+            anggota: { include: { ranting: { include: { wilayah: { include: { distrik: true } } } } } },
+          },
+        },
+      },
+    });
+    if (qrs.length === 0) throw new NotFoundException('Penerbitan kartu fisik tidak ditemukan');
+
+    for (const qr of qrs) {
+      const member = qr.dokumen.anggota;
+      if (!member || !qr.verificationUrl) {
+        throw new NotFoundException('Data penerbitan kartu fisik tidak lengkap');
+      }
+      if (
+        scope &&
+        !(await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, member.rantingId))
+      ) {
+        throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
+      }
+    }
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const ReactPDF = require('@react-pdf/renderer');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { buildMemberCardBatchPdf } = require('../documents/pdf-templates/member-card');
+
+      const propsArray: any[] = [];
+      for (const qr of qrs) {
+        if (!qr.verificationUrl) throw new NotFoundException('Penerbitan kartu fisik tidak lengkap');
+        const member = qr.dokumen.anggota!;
+        const distrikId = member.ranting?.wilayah?.distrik?.id || undefined;
+        const signers = await this.penandatanganService.resolveSigners('kartu_anggota', distrikId);
+        const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
+        const template = await this.resolveActiveTemplate(distrikId);
+        const levelVisual = await this.tingkatanService.resolveLevelVisual(member.tingkat);
+        const contributor = qr.verificationUrl;
+        const card = {
+          id: qr.dokumen.id,
+          nomorDokumen: qr.dokumen.nomorDokumen,
+          verificationUrl: contributor,
+          status: qr.dokumen.status,
+          signers,
+          signerName: signers[0]?.signerName,
+          signerTitle: signers[0]?.signerTitle,
+          signatureImage,
+          stampImage,
+        };
+        const props = await this.cardPdfProps({
+          card,
+          memberData: this.buildMemberData(member),
+          verificationUrl: contributor,
+          levelVisual,
+          qrDataUrl: await this.buildQr(contributor),
+          template,
+        });
+        propsArray.push(props);
+      }
+
+      const pdfDoc = buildMemberCardBatchPdf(propsArray);
+      return await ReactPDF.renderToBuffer(pdfDoc);
+    } catch (error) {
+      this.logger.error('Batch PDF generation failed:', (error as Error).message);
+      throw new Error('PDF generation requires react-pdf setup.');
+    }
+  }
+
+  private async prepareDigitalCardData(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
+    // Anggota hanya boleh ambil kartu miliknya sendiri (admin dicakup oleh scope)
+    const member = await this.loadMemberForScope(memberId, scope, user);
+
+    // Generate or reuse existing card token
+    let existingCard = member.dokumen[0];
+    if (!existingCard) {
+      const token = uuidv4();
+      const signedToken = signQrToken({ ref: token, typ: 'kta', src: 'digital' });
+      const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${signedToken}`;
+      const nomorDokumen = `KTA-${member.nomorAnggota}`;
+
+      existingCard = await this.prisma.dokumen.create({
+        data: {
+          anggotaId: member.id,
+          tipe: 'kartu_anggota',
+          nomorDokumen,
+          verificationUrl,
+          status: 'generated',
+        },
+      });
+
+      await this.prisma.qRValidation.create({
+        data: { dokumenId: existingCard.id, token, isValid: true },
+      });
+    }
+
+    const memberData = this.buildMemberData(member);
 
     // Distrik anggota → scope resolusi penandatangan/ttd/stempel
     const distrikId = member.ranting?.wilayah?.distrik?.id || undefined;

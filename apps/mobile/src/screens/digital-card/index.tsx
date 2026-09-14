@@ -177,10 +177,11 @@ export default function DigitalCardScreen() {
               backImage?: string | null;
               overlayConfig?: Record<string, unknown>;
             } | null;
-            card?: { signerName?: string; signerTitle?: string; signers?: { signerName?: string; signerTitle?: string }[] };
+            card?: { signerName?: string; signerTitle?: string; verificationUrl?: string | null; signers?: { signerName?: string; signerTitle?: string }[] };
           }>(res);
           setCardData({
             qrCode: data.qrCode || null,
+            verificationUrl: data.card?.verificationUrl || null,
             signerName: data.card?.signerName || 'Koordinator Distrik',
             signerTitle: data.card?.signerTitle || 'THS-THM',
             signers: data.card?.signers || [],
@@ -264,7 +265,11 @@ export default function DigitalCardScreen() {
     const dest = `${FileSystem.documentDirectory}kartu-anggota-${memberId}.png`;
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      await downloadFile(`${API_URL}/api/members/${memberId}/digital-card/image`, dest, token);
+      await downloadFile(
+        `${API_URL}/api/members/${memberId}/digital-card/image?watermark=1`,
+        dest,
+        token,
+      );
       await assertDownloadedFile(dest, 'png');
 
       const perm = await MediaLibrary.requestPermissionsAsync();
