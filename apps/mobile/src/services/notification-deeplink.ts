@@ -9,6 +9,9 @@ export type NotificationType =
   | 'forum_reply'
   | 'reminder_latihan'
   | 'reminder_iuran'
+  | 'kartu_dipindai'
+  | 'anggota_disetujui'
+  | 'pembayaran_terverifikasi'
   | 'umum';
 
 export interface NotificationDeepLinkData {
@@ -25,6 +28,9 @@ const TYPE_TO_ROUTE: Record<NotificationType, (data: NotificationDeepLinkData) =
   forum_reply: (data) => `/forum/thread/${data.id}`,
   reminder_latihan: (data) => `/trainings/${data.id}`,
   reminder_iuran: (data) => '/dues',
+  kartu_dipindai: () => '/members',
+  anggota_disetujui: () => '/members',
+  pembayaran_terverifikasi: () => '/dues',
   umum: (data) => '/notifications',
 };
 

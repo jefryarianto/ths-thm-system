@@ -162,6 +162,9 @@ enum TipeNotifikasi {
   dokumen_ready
   forum_reply
   forum_solution
+  kartu_dipindai
+  anggota_disetujui
+  pembayaran_terverifikasi
   umum
 }
 

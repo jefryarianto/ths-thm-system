@@ -25,12 +25,19 @@ export class SendNotificationDto {
       'reminder_iuran',
       'status_klaim',
       'dokumen_ready',
+      'kartu_dipindai',
+      'anggota_disetujui',
+      'pembayaran_terverifikasi',
       'umum',
     ],
   })
   @IsOptional()
   @IsString()
   tipe?: string;
+
+  @ApiPropertyOptional({ description: 'Lewati pengiriman email (untuk event tinggi frekuensi seperti scan kartu)' })
+  @IsOptional()
+  skipEmail?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -56,6 +63,9 @@ export class BroadcastNotificationDto {
       'reminder_iuran',
       'status_klaim',
       'dokumen_ready',
+      'kartu_dipindai',
+      'anggota_disetujui',
+      'pembayaran_terverifikasi',
       'umum',
     ],
   })
@@ -100,6 +110,9 @@ export class SendToRoleDto {
       'reminder_iuran',
       'status_klaim',
       'dokumen_ready',
+      'kartu_dipindai',
+      'anggota_disetujui',
+      'pembayaran_terverifikasi',
       'umum',
     ],
   })

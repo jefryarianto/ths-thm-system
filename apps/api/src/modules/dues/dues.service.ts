@@ -24,6 +24,7 @@ import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.helper';
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
@@ -38,6 +39,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     private readonly gamificationService: GamificationService,
     @Optional() protected readonly persistentAudit?: PersistentAuditService,
     @Optional() protected readonly revisions?: RevisionService,
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {
     super(prisma, scopeHelper, cache, {
       model: 'iuran',
@@ -79,6 +81,11 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       this.sendPaymentEmail(dto.anggotaId, dto.jumlah, dto.periode, dto.status);
     }
 
+    // Realtime: notifikasi pembayaran terverifikasi (WS/FCM/in-app, tanpa email)
+    if (dto.status === 'lunas' && dto.anggotaId) {
+      this.notifyPaymentVerified(dto.anggotaId, dto.jumlah, dto.periode);
+    }
+
     this.cache.invalidatePrefix('reports:');
   }
 
@@ -105,6 +112,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       try {
         await this.gamificationService.recordDuesPayment(result.anggotaId, true);
         this.sendPaymentEmail(result.anggotaId, dto.jumlah, dto.periode, 'lunas');
+        this.notifyPaymentVerified(result.anggotaId, result.jumlah, result.periode);
       } catch (error) {
         this.logger.warn(
           'Failed to award gamification points for dues update:',
@@ -421,5 +429,31 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         periode: periode || '',
       },
     );
+  }
+
+  private notifyPaymentVerified(anggotaId: string, jumlah?: number, periode?: string): void {
+    void (async () => {
+      try {
+        const member = await this.prisma.anggota.findUnique({
+          where: { id: anggotaId },
+          select: { email: true, namaLengkap: true },
+        });
+        if (!member?.email) return;
+        const user = await this.prisma.user.findUnique({
+          where: { email: member.email },
+          select: { id: true },
+        });
+        if (!user || !this.notificationsService) return;
+        await this.notificationsService.send(user.id, {
+          judul: '✅ Pembayaran Iuran Terverifikasi',
+          isi: `Pembayaran iuran periode ${periode || ''} sebesar Rp ${Number(jumlah || 0).toLocaleString('id-ID')} telah tercatat.`,
+          tipe: 'pembayaran_terverifikasi',
+          skipEmail: true,
+          data: { screen: 'dues' },
+        });
+      } catch (error) {
+        this.logger.warn(`Gagal kirim notifikasi pembayaran terverifikasi: ${(error as Error).message}`);
+      }
+    })();
   }
 }

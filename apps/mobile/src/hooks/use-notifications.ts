@@ -1,5 +1,8 @@
+import { useEffect, useRef } from 'react';
+import type { Socket } from 'socket.io-client';
 import apiClient, { unwrap } from '../lib/api-client';
 import { useApi } from './use-api';
+import { getSocket } from '../lib/socket';
 
 export interface NotificationItem {
   id: string;
@@ -38,6 +41,9 @@ export const TYPE_ICONS: Record<string, string> = {
   dokumen_ready: '✅',
   badge_earned: '🏅',
   approval_request: '✅',
+  kartu_dipindai: '🔍',
+  anggota_disetujui: '✅',
+  pembayaran_terverifikasi: '💰',
   umum: '📢',
 };
 
@@ -55,4 +61,36 @@ export function useNotifications(options?: { tipe?: string }) {
         }),
     [tipe],
   );
+}
+
+/**
+ * Langganan realtime (WebSocket) untuk event notifikasi dari server.
+ * Menerima `notification:new` / `notification:count` lalu memanggil callback
+ * (mis. refetch daftar). Sinkron hanya untuk pengguna terautentikasi.
+ */
+export function useRealtimeNotifications(onEvent: () => void, enabled = true) {
+  const cbRef = useRef(onEvent);
+  cbRef.current = onEvent;
+
+  useEffect(() => {
+    if (!enabled) return;
+    let socket: Socket | null = null;
+    let cancelled = false;
+    getSocket()
+      .then((s) => {
+        if (cancelled) return;
+        socket = s;
+        socket.on('notification:new', () => cbRef.current());
+        socket.on('notification:count', () => cbRef.current());
+      })
+      .catch(() => {
+        // Realtime tidak aktif (WS mati / tanpa token) — polling manual tetap berjalan.
+      });
+    return () => {
+      cancelled = true;
+      socket?.off('notification:new');
+      socket?.off('notification:count');
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 }

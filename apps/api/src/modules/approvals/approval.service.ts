@@ -249,6 +249,8 @@ export class ApprovalService {
           where: { id: request.itemId },
           data: { statusValidasi: 'approved', statusKeanggotaan: 'aktif' },
         });
+        // Notify the member that their account has been approved
+        await this.notifyMemberApproved(request.itemId);
         break;
       case 'member_update':
         // Approve data update — set statusValidasi to approved

@@ -51,7 +51,9 @@ export class NotificationsService {
       },
     });
 
-    this.sendEmailNotification(userId, dto.judul, dto.isi, tipe);
+    if (!dto.skipEmail) {
+      this.sendEmailNotification(userId, dto.judul, dto.isi, tipe);
+    }
     await this.pushFCM(userId, dto.judul, dto.isi, tipe);
     this.eventsGateway?.sendNotification(userId, notification);
     const count = await this.prisma.notifikasi.count({ where: { userId, isRead: false } });
@@ -297,6 +299,9 @@ export class NotificationsService {
     { key: 'reminder_iuran', label: 'Pengingat Iuran', description: 'Pengingat pembayaran iuran' },
     { key: 'status_klaim', label: 'Status Klaim', description: 'Update status pengajuan klaim dokumen' },
     { key: 'dokumen_ready', label: 'Dokumen Siap', description: 'Notifikasi dokumen telah selesai diproses' },
+    { key: 'kartu_dipindai', label: 'Kartu Dipindai', description: 'Notifikasi saat kartu keanggotaan Anda dipindai' },
+    { key: 'anggota_disetujui', label: 'Keanggotaan Disetujui', description: 'Notifikasi saat data keanggotaan Anda disetujui' },
+    { key: 'pembayaran_terverifikasi', label: 'Pembayaran Terverifikasi', description: 'Notifikasi saat pembayaran iuran Anda terverifikasi' },
     { key: 'badge_earned', label: 'Badge Gamifikasi', description: 'Notifikasi saat mendapat badge baru' },
     { key: 'approval_request', label: 'Persetujuan', description: 'Notifikasi saat ada pengajuan baru yang perlu disetujui' },
     { key: 'forum_reply', label: 'Balasan Forum', description: 'Notifikasi saat ada balasan baru di thread forum' },

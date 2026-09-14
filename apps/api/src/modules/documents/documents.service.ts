@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { documentReadyEmail } from '../../mail/email-templates';
 import {
@@ -15,6 +15,7 @@ import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { DocumentBatchService } from './document-batch.service';
 import { JobPayload, JobResult } from '../../common/queue/queue.interface';
 import { resolveQrToken } from '../../common/utils/qr-token.util';
+import { NotificationsService } from '../notifications/notifications.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -60,6 +61,7 @@ export class DocumentsService {
     private readonly memberMailService: MemberMailService,
     private readonly batchService: DocumentBatchService,
     private readonly penandatanganService: PenandatanganService,
+    @Optional() private readonly notificationsService?: NotificationsService,
   ) {
     this.outputDir = path.resolve('storage', 'documents');
     fs.mkdirSync(this.outputDir, { recursive: true });
@@ -724,6 +726,22 @@ export class DocumentsService {
     }
   }
 
+  private async notifyMemberScanned(email: string, namaLengkap?: string | null): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+      if (!user || !this.notificationsService) return;
+      await this.notificationsService.send(user.id, {
+        judul: '🔍 Kartu Anda Dipindai',
+        isi: `Kartu keanggotaan Anda baru saja dipindai untuk verifikasi keaslian.`,
+        tipe: 'kartu_dipindai',
+        skipEmail: true,
+        data: { screen: 'digital-card' },
+      });
+    } catch (error) {
+      this.logger.debug(`Notifikasi scan kartu ke ${email} gagal: ${(error as Error).message}`);
+    }
+  }
+
   async verifyByToken(rawToken: string, scanMeta?: { ip?: string; userAgent?: string }) {
     // Token QR kini ditandatangani (JWT). Resolve ke token asli (uuid) dari `sub`;
     // token legacy (UUID polos cetakan lama) tetap didukung.
@@ -739,6 +757,7 @@ export class DocumentsService {
               select: {
                 nomorAnggota: true,
                 namaLengkap: true,
+                email: true,
                 fotoPath: true,
                 jenisKelamin: true,
                 tempatLahir: true,
@@ -783,6 +802,7 @@ export class DocumentsService {
       );
     }
 
+    const anggota = qr.dokumen.anggota;
     const lastScannedAt = qr.scannedAt;
     await this.logScan(qr.id, scanMeta);
     await this.prisma.qRValidation.update({
@@ -790,7 +810,11 @@ export class DocumentsService {
       data: { scannedAt: new Date(), scanCount: { increment: 1 } },
     });
 
-    const anggota = qr.dokumen.anggota;
+    // Realtime: beri tahu pemilik kartu bahwa kartu-nya dipindai (WS/FCM/in-app, tanpa email).
+    if (isKta && anggota?.email) {
+      void this.notifyMemberScanned(anggota.email, anggota.namaLengkap);
+    }
+
     return {
       success: true,
       data: {

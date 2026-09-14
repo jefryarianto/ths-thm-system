@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import apiClient from '../../lib/api-client';
-import { useNotifications, formatTime, TYPE_ICONS, NotificationItem } from '../../hooks/use-notifications';
+import { useNotifications, useRealtimeNotifications, formatTime, TYPE_ICONS, NotificationItem } from '../../hooks/use-notifications';
 import { useRefresh } from '../../hooks/use-refresh';
 import { LoadingView } from '../../components/ui/shared';
 import { theme } from '../../theme';
@@ -35,6 +35,7 @@ function navigateToNotification(notif: NotificationItem) {
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState<'all' | 'read' | 'unread'>('all');
   const { data: notifs, loading, refetch } = useNotifications();
+  useRealtimeNotifications(refetch);
   const { refreshing, onRefresh } = useRefresh(refetch);
 
   const notifsArray = Array.isArray(notifs) ? notifs : (notifs as any)?.data ?? [];
