@@ -189,12 +189,38 @@ describe('useApi', () => {
     });
   });
 
-  it('handles errors correctly', async () => {
-    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+  it('handles permanent (4xx) errors immediately', async () => {
+    const err = new Error('Network error') as Error & { status?: number };
+    err.status = 400; // 4xx bukan transient -> tidak retry, error tampil langsung
+    const fetcher = vi.fn().mockRejectedValue(err);
     const { result } = renderHook(() => useApi(fetcher, []));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe('Network error');
     expect(result.current.data).toBeNull();
+  });
+
+  it('retries transient (network) errors silently then surfaces error after retries exhausted', async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+    const { result } = renderHook(() => useApi(fetcher, []));
+    // Transient -> retry senyap dulu, error belum tampil agar data lama tetap terlihat
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBeNull();
+
+    // Auto-retry bertahap (2000, 4000, 8000ms) lalu error muncul setelah upaya habis
+    await act(async () => {
+      await Promise.resolve(); // flush rejection -> jadwalkan retry pertama
+      vi.advanceTimersByTime(2000);
+      await Promise.resolve(); // retry1 -> jadwalkan retry berikutnya
+      vi.advanceTimersByTime(4000);
+      await Promise.resolve(); // retry2 -> jadwalkan retry berikutnya
+      vi.advanceTimersByTime(8000);
+      await Promise.resolve(); // retry3 -> error permanen
+    });
+    expect(fetcher).toHaveBeenCalledTimes(4); // 1 initial + 3 retry
+    expect(result.current.error).toBe('Network error');
+    expect(result.current.data).toBeNull();
+    vi.useRealTimers();
   });
 });
 
@@ -278,12 +304,38 @@ describe('usePaginatedList', () => {
     });
   });
 
-  it('handles errors by setting empty data', async () => {
-    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+  it('handles permanent (4xx) errors by setting empty data', async () => {
+    const err = new Error('Network error') as Error & { status?: number };
+    err.status = 400; // 4xx bukan transient -> tidak retry, error tampil langsung
+    const fetcher = vi.fn().mockRejectedValue(err);
     const { result } = renderHook(() => usePaginatedList(fetcher, []));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe('Gagal memuat data');
     expect(result.current.data).toEqual([]);
     expect(result.current.meta.total).toBe(0);
+  });
+
+  it('retries transient (network) errors silently then surfaces error after retries exhausted', async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+    const { result } = renderHook(() => usePaginatedList(fetcher, []));
+    // Transient -> retry senyap dulu, error belum tampil agar data lama tetap terlihat
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      await Promise.resolve(); // flush rejection -> jadwalkan retry pertama
+      vi.advanceTimersByTime(2000);
+      await Promise.resolve(); // retry1 -> jadwalkan retry berikutnya
+      vi.advanceTimersByTime(4000);
+      await Promise.resolve(); // retry2 -> jadwalkan retry berikutnya
+      vi.advanceTimersByTime(8000);
+      await Promise.resolve(); // retry3 -> error permanen
+    });
+    expect(fetcher).toHaveBeenCalledTimes(4); // 1 initial + 3 retry
+    expect(result.current.error).toBe('Gagal memuat data');
+    expect(result.current.data).toEqual([]);
+    expect(result.current.meta.total).toBe(0);
+    vi.useRealTimers();
   });
 });

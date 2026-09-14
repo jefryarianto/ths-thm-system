@@ -21,7 +21,7 @@ describe('DetailStats', () => {
 
   it('renders formatted date', () => {
     render(<DetailStats {...mockProps} />);
-    expect(screen.getByText('15 Jan 2025')).toBeInTheDocument();
+    expect(screen.getByText('15 Januari 2025')).toBeInTheDocument();
   });
 
   it('renders dokumen count', () => {

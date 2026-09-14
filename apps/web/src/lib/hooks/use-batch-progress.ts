@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 
 // ─── Types ───
 
@@ -231,10 +231,10 @@ export function useBatchHistory() {
     setLoading(true);
     setError(null);
     try {
-      const { data: res } = await apiClient.get('/documents/batch', {
+      const res = await apiClient.get('/documents/batch', {
         params: { page: p, limit: 10 },
       });
-      setBatches(res.data?.data || []);
+      setBatches(unwrap<BatchDetail[]>(res) || []);
       setTotalPages(res.data?.meta?.totalPages || 0);
       setTotal(res.data?.meta?.total || 0);
     } catch (err) {
