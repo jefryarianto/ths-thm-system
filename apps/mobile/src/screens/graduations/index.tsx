@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { safeIconName } from '../../lib/icons';
 import { useGraduations, STATUS_STYLES, FILTERS } from '../../hooks/use-graduations';
 import { useRefresh } from '../../hooks/use-refresh';
+import { useRole } from '../../hooks/use-role';
 import { LoadingView, FilterChips, SearchBar } from '../../components/ui/shared';
 import { BackButton } from '../../components/ui/shared';
 import { theme } from '../../theme';
@@ -18,6 +19,7 @@ export default function GraduationsScreen() {
 
   const { data, loading, refetch } = useGraduations(search, filterStatus);
   const { refreshing, onRefresh } = useRefresh(refetch);
+  const { hasMinRole } = useRole();
 
   const insets = useSafeAreaInsets();
 
@@ -32,7 +34,20 @@ export default function GraduationsScreen() {
             <Text style={styles.headerTitle}>Pendadaran</Text>
             <Text style={styles.headerSub}>{(data ?? []).length} ujian</Text>
           </View>
-          <Ionicons name="school" size={28} color={theme.colors.headerSub} />
+          <View style={styles.headerActions}>
+            {hasMinRole('admin_distrik') && (
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={() => router.push('/graduations/create' as any)}
+                activeOpacity={0.8}
+                accessibilityLabel="Buat pendadaran"
+              >
+                <Ionicons name="add" size={20} color={theme.colors.surface} />
+                <Text style={styles.addText}>Buat</Text>
+              </TouchableOpacity>
+            )}
+            <Ionicons name="school" size={28} color={theme.colors.headerSub} />
+          </View>
         </View>
       </View>
 
@@ -107,6 +122,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.surfaceMuted },
   header: { backgroundColor: theme.colors.primary, padding: 24, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  addText: { color: theme.colors.surface, fontSize: 13, fontWeight: '700' },
   headerTitle: { color: theme.colors.surface, fontSize: 22, fontWeight: '700' },
   headerSub: { color: theme.colors.headerSub, fontSize: 13, marginTop: 4 },
   card: {

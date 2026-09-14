@@ -152,6 +152,7 @@ export default function RootLayout() {
           <Stack.Screen name="assessments/[id]" />
           <Stack.Screen name="graduations" />
           <Stack.Screen name="graduations/[id]" />
+          <Stack.Screen name="graduations/create" />
           <Stack.Screen name="graduations/input-score" />
           <Stack.Screen name="graduations/invitations" />
           <Stack.Screen name="dues/[id]" />
