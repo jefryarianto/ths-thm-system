@@ -150,6 +150,7 @@ export default function RootLayout() {
           <Stack.Screen name="letters/[id]" />
           <Stack.Screen name="assessments" />
           <Stack.Screen name="assessments/[id]" />
+          <Stack.Screen name="assessments/create" />
           <Stack.Screen name="graduations" />
           <Stack.Screen name="graduations/[id]" />
           <Stack.Screen name="graduations/create" />

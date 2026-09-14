@@ -1,32 +1,42 @@
 export interface AssessmentsAspect {
   id: string;
-  nama: string;
+  kodeAspek: string;
+  namaAspek: string;
   deskripsi?: string;
-  status: string;
-  itemCount?: number;
+  bobot: number | string;
+  isActive?: boolean;
+  kegiatanId?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  itemPenilaian?: AssessmentsItem[];
 }
 
 export interface AssessmentsItem {
   id: string;
   aspekId: string;
-  nama: string;
-  bobot: number;
-  tipe: string;
-  aspek?: { nama: string };
+  kodeItem: string;
+  namaItem: string;
+  skorMaksimal: number | string;
+  bobot: number | string;
+  urutan?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  aspek?: { kodeAspek: string; namaAspek: string; bobot: number | string };
 }
 
 export interface AssessmentsScore {
   id: string;
   aspekId: string;
   itemId: string;
-  anggotaId: string;
+  kegiatanId?: string;
+  calonAnggotaId?: string;
   nilai: number;
   catatan?: string;
   tanggal?: string;
-  anggota?: { namaLengkap: string };
-  item?: { nama: string; bobot: number };
+  calonAnggota?: { namaLengkap: string };
+  penguji?: { id: string; namaLengkap: string };
+  itemPenilaian?: AssessmentsItem;
 }
 
 export interface Graduation {
