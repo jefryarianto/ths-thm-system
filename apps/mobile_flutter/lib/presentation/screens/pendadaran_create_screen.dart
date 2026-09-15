@@ -23,7 +23,6 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
   final _lokasiCtrl = TextEditingController();
   DateTime? _tanggalMulai;
   DateTime? _tanggalSelesai;
-  bool _submitting = false;
 
   @override
   void dispose() {
@@ -73,7 +72,6 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
           const SnackBar(content: Text('Tanggal mulai wajib diisi')));
       return;
     }
-    setState(() => _submitting = true);
     context.read<PendadaranBloc>().add(PendadaranCreateRequested(
           nama: nama,
           lokasi: _lokasiCtrl.text.trim().isEmpty
@@ -98,7 +96,6 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
       body: BlocConsumer<PendadaranBloc, PendadaranState>(
         listener: (context, state) {
           if (state is PendadaranError) {
-            setState(() => _submitting = false);
             ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message)));
           } else if (state is PendadaranLoaded && state.justCreated) {

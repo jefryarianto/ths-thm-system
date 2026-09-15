@@ -165,6 +165,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context.go('/forgot-password'),
                               child: const Text('Lupa Password?'),
                             ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TextButton(
+                                  onPressed: () => context.push('/register'),
+                                  child: const Text('Daftar Calon Anggota',
+                                      style: TextStyle(fontSize: 12)),
+                                ),
+                                Text('|', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                                TextButton(
+                                  onPressed: () => context.push('/claim-account'),
+                                  child: const Text('Klaim Akun Anggota',
+                                      style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),

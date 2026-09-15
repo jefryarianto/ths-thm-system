@@ -96,19 +96,26 @@ class _ShortcutChips extends StatelessWidget {
     final authState = context.watch<AuthBloc>().state;
     final role = authState is AuthAuthenticated ? authState.user.role : null;
     final items = [
-      _ChipItem(Icons.account_balance_wallet_outlined, 'Iuran', '/dues'),
-      _ChipItem(Icons.credit_card, 'KTA Digital', '/kta'),
-      _ChipItem(Icons.folder_outlined, 'Dokumen', '/documents'),
-      _ChipItem(Icons.qr_code_scanner, 'Scan QR', '/qr-scan'),
-      _ChipItem(Icons.forum_outlined, 'Forum', '/forum'),
-      _ChipItem(Icons.emoji_events_outlined, 'Poin', '/gamification'),
+      const _ChipItem(Icons.account_balance_wallet_outlined, 'Iuran', '/dues'),
+      const _ChipItem(Icons.credit_card, 'KTA Digital', '/kta'),
+      const _ChipItem(Icons.folder_outlined, 'Dokumen', '/documents'),
+      const _ChipItem(Icons.qr_code_scanner, 'Scan QR', '/qr-scan'),
+      const _ChipItem(Icons.forum_outlined, 'Forum', '/forum'),
+      const _ChipItem(Icons.emoji_events_outlined, 'Poin', '/gamification'),
       if (role == 'penguji' ||
           role == 'admin_kegiatan' ||
           role == 'admin_ranting' ||
           role == 'admin_wilayah' ||
           role == 'admin_distrik' ||
           role == 'superadmin')
-        _ChipItem(Icons.school_outlined, 'Pendadaran', '/pendadaran'),
+        const _ChipItem(Icons.school_outlined, 'Pendadaran', '/pendadaran'),
+      if (role == 'admin_ranting' ||
+          role == 'admin_wilayah' ||
+          role == 'admin_distrik' ||
+          role == 'superadmin') ...[
+        const _ChipItem(Icons.how_to_reg_outlined, 'Pendaftaran', '/admin/registrations'),
+        const _ChipItem(Icons.verified_user_outlined, 'Klaim', '/admin/claims'),
+      ],
     ];
     return SizedBox(
       height: 44,

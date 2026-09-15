@@ -1,10 +1,8 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../../data/models/graduation.dart';
 import '../../logic/assessments/assessment_bloc.dart';
 import '../../logic/assessments/assessment_event.dart';
@@ -23,10 +21,6 @@ class AssessmentScoreScreen extends StatefulWidget {
 }
 
 class _AssessmentScoreScreenState extends State<AssessmentScoreScreen> {
-  String? _aktifAspekId;
-  String? _aktifCalonId1;
-  String? _aktifCalonId2;
-
   String? get _pengujiUserId {
     final auth = context.read<AuthBloc>().state;
     return auth is AuthAuthenticated ? auth.user.id : null;

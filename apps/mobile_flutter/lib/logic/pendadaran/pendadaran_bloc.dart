@@ -22,7 +22,7 @@ part 'pendadaran_event.dart';
 part 'pendadaran_state.dart';
 
 class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
-  PendadaranBloc() : super(PendadaranInitial()) {
+  PendadaranBloc() : super(const PendadaranInitial()) {
     on<PendadaranLoadRequested>(_onLoadRequested);
     on<PendadaranCreateRequested>(_onCreateRequested);
     on<PendadaranLogoutRequested>(_onLogoutRequested);
@@ -36,11 +36,11 @@ class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
   ) async {
     final token = await _apiClient.getAccessToken();
     if (token == null || token.isEmpty) {
-      emit(PendadaranInitial());
+      emit(const PendadaranInitial());
       return;
     }
 
-    emit(PendadaranLoading());
+    emit(const PendadaranLoading());
     try {
       // Penguji & admin_kegiatan hanya melihat kegiatan yang ditugaskan
       // melalui GET /graduations/my (role-scoped server-side).
@@ -58,7 +58,7 @@ class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
       emit(PendadaranLoaded(graduations: graduations));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        emit(PendadaranInitial());
+        emit(const PendadaranInitial());
       } else {
         emit(PendadaranError(message: _messageFromError(e)));
       }
@@ -73,10 +73,10 @@ class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
   ) async {
     final token = await _apiClient.getAccessToken();
     if (token == null || token.isEmpty) {
-      emit(PendadaranInitial());
+      emit(const PendadaranInitial());
       return;
     }
-    emit(PendadaranSubmitting());
+    emit(const PendadaranSubmitting());
     try {
       final body = <String, dynamic>{
         'nama': event.nama,
@@ -98,7 +98,7 @@ class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
       emit(PendadaranLoaded(graduations: graduations, justCreated: true));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        emit(PendadaranInitial());
+        emit(const PendadaranInitial());
       } else {
         emit(PendadaranError(message: _messageFromError(e)));
       }
@@ -111,7 +111,7 @@ class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
     PendadaranLogoutRequested event,
     Emitter<PendadaranState> emit,
   ) async {
-    emit(PendadaranInitial());
+    emit(const PendadaranInitial());
   }
 
   String _messageFromError(DioException error) {

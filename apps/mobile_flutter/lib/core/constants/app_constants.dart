@@ -30,6 +30,26 @@ class AppConstants {
       '$baseUrl/auth/force-change-password';
   static const String authChangePassword = '$baseUrl/auth/change-password';
 
+  // ── Registrasi Calon Anggota (publik) ──
+  static const String registrations = '$baseUrl/registrations';
+  static String registrationById(String id) => '$baseUrl/registrations/$id';
+  static String registrationApprove(String id) =>
+      '$baseUrl/registrations/$id/approve';
+  static String registrationReject(String id) =>
+      '$baseUrl/registrations/$id/reject';
+  static String registrationVerify(String id) =>
+      '$baseUrl/registrations/$id/verify';
+
+  // ── Klaim Akun Anggota ──
+  static const String claims = '$baseUrl/claims';
+  static String claimById(String id) => '$baseUrl/claims/$id';
+  static String claimApprove(String id) => '$baseUrl/claims/$id/approve';
+  static String claimReject(String id) => '$baseUrl/claims/$id/reject';
+  static String claimProcess(String id) => '$baseUrl/claims/$id/process';
+
+  // ── Struktur Organisasi (publik — dropdown ranting) ──
+  static const String publicRanting = '$baseUrl/public/struktur/ranting';
+
   // Member
   static const String memberMe = '$baseUrl/members/me';
   static const String members = '$baseUrl/members';

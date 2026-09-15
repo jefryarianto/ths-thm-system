@@ -38,9 +38,15 @@ import 'presentation/screens/notifications_screen.dart';
 import 'presentation/screens/profile_edit_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/qr_scan_screen.dart';
+import 'presentation/screens/registration_form_screen.dart';
+import 'presentation/screens/claim_account_form_screen.dart';
+import 'presentation/screens/registrations_admin_screen.dart';
+import 'presentation/screens/claims_admin_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/kta_viewer_screen.dart';
+import 'logic/registration/registration_bloc.dart';
+import 'logic/claim/claim_bloc.dart';
 
 /// Sinyal untuk melaporkan perubahan status autentikasi ke router agar
 /// redirect di-evaluasi ulang (go_router `refreshListenable`).
@@ -71,6 +77,8 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => AssessmentBloc()),
         BlocProvider(create: (_) => GamificationBloc()),
         BlocProvider(create: (_) => ForumBloc()),
+        BlocProvider(create: (_) => RegistrationBloc()),
+        BlocProvider(create: (_) => ClaimBloc()),
       ],
       child: ChangeNotifierProvider.value(
         value: themeController,
@@ -235,6 +243,24 @@ class AppRouter {
         path: '/gamification',
         builder: (context, state) => const GamificationScreen(),
       ),
+      // ── Publik: Registrasi & Klaim ──
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegistrationFormScreen(),
+      ),
+      GoRoute(
+        path: '/claim-account',
+        builder: (context, state) => const ClaimAccountFormScreen(),
+      ),
+      // ── Admin: Verifikasi Pendaftaran & Klaim ──
+      GoRoute(
+        path: '/admin/registrations',
+        builder: (context, state) => const RegistrationsAdminScreen(),
+      ),
+      GoRoute(
+        path: '/admin/claims',
+        builder: (context, state) => const ClaimsAdminScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
@@ -282,6 +308,8 @@ class AppRouter {
   static bool _isPublicPath(String location) {
     return location == '/' ||
         location == '/login' ||
-        location == '/forgot-password';
+        location == '/forgot-password' ||
+        location == '/register' ||
+        location == '/claim-account';
   }
 }

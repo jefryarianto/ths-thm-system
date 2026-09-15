@@ -40,13 +40,12 @@ class PendadaranSubmitting extends PendadaranState {
 
 /// Daftar pendadaran berhasil dimuat.
 class PendadaranLoaded extends PendadaranState {
-  final List<Graduation> graduations;
   final bool justCreated;
 
   const PendadaranLoaded({
-    required this.graduations,
+    required super.graduations,
     this.justCreated = false,
-  }) : super(graduations: graduations);
+  });
 
   @override
   List<Object?> get props => [graduations, justCreated];
@@ -54,9 +53,11 @@ class PendadaranLoaded extends PendadaranState {
 
 /// Terjadi kesalahan jaringan / server.
 class PendadaranError extends PendadaranState {
-  final String message;
+  const PendadaranError({required String message}) : super(message: message);
 
-  const PendadaranError({required this.message}) : super(message: message);
+  /// Pesan selalu terisi (konstanta non-null dari konstruktor).
+  @override
+  String get message => super.message ?? '';
 
   @override
   List<Object?> get props => [message];

@@ -120,7 +120,7 @@ class _KtaCardFront extends StatelessWidget {
               child: _bgCircle(FrontLayout.circle1Size, const Color(0x2606B6D4))),
           Positioned(bottom: -FrontLayout.circle2Bottom.abs(), left: FrontLayout.circle2Left,
               child: _bgCircle(FrontLayout.circle2Size, const Color(0x141D4ED8))),
-          Positioned.fill(child: CustomPaint(painter: _GuillochePainter(CardColors.guillocheFront))),
+          const Positioned.fill(child: CustomPaint(painter: _GuillochePainter(CardColors.guillocheFront))),
           Positioned(left: FrontLayout.wmLeft, top: FrontLayout.wmTop,
               child: _wm('assets/images/peta-indonesia.png', FrontLayout.wmW, FrontLayout.wmH, FrontLayout.wmOpacity, CardColors.watermarkMap)),
           _NamePattern(name: member.namaLengkap, color: CardColors.watermarkMap, opacity: Pat.frontOpacity),
@@ -143,9 +143,9 @@ class _KtaCardFront extends StatelessWidget {
           Positioned(left: FrontLayout.infoLeft, top: FrontLayout.infoTop, right: FrontLayout.infoRight, child: _info(member)),
           Positioned(left: FrontLayout.bottomLeft, bottom: FrontLayout.bottomBottom,
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Berlaku sampai', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: CardColors.label)),
+                const Text('Berlaku sampai', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: CardColors.label)),
                 const SizedBox(height: 2),
-                Text(validUntilText(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: CardColors.value)),
+                Text(validUntilText(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: CardColors.value)),
               ])),
           Positioned(right: FrontLayout.signerRight, bottom: FrontLayout.signerBottom,
               width: FrontLayout.signerW, height: FrontLayout.signerH, child: _signer(distrik, cardData: cardData)),
@@ -168,7 +168,7 @@ class _KtaCardBack extends StatelessWidget {
         decoration: const BoxDecoration(color: CardColors.backBg),
         child: Stack(children: [
           Positioned.fill(child: CustomPaint(painter: _BackDecorPainter())),
-          Positioned.fill(child: CustomPaint(painter: _GuillochePainter(CardColors.guillocheBack))),
+          const Positioned.fill(child: CustomPaint(painter: _GuillochePainter(CardColors.guillocheBack))),
           Positioned(left: (CardSpec.w - BackLayout.wmW) / 2, top: (CardSpec.h - BackLayout.wmH) / 2,
               child: _wm('assets/images/peta-indonesia.png', BackLayout.wmW, BackLayout.wmH, BackLayout.wmOpacity, Colors.white)),
           _NamePattern(name: member.namaLengkap, color: Colors.white, opacity: Pat.backOpacity),
@@ -230,7 +230,7 @@ Widget _logo(double sz, double img, double bw) =>
 Widget _hdr(String distrik) {
   final rows = [('KARTU TANDA ANGGOTA', 2.0), ('ORGANISASI PENCAK SILAT PENDIDIKAN', 1.1),
     ('TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA', 0.5),
-    ('DISTRIK KEUSKUPAN ' + distrik.replaceFirst(RegExp(r'^keuskupan\s*', caseSensitive: false), '').toUpperCase(), 0.0)];
+    ('DISTRIK KEUSKUPAN ${distrik.replaceFirst(RegExp(r'^keuskupan\s*', caseSensitive: false), '').toUpperCase()}', 0.0)];
   return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min,
       children: rows.map((r) => Padding(padding: const EdgeInsets.only(bottom: 1),
           child: Text(r.$1, maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -270,7 +270,7 @@ Widget _fbIcon(String jk, double sz) => Center(child: Image.asset(
 Widget _rank(LevelVisual lv, String t) => SizedBox(width: FrontLayout.rankW,
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Text(t.toUpperCase(), maxLines: 1,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: CardColors.rankText, letterSpacing: 1)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: CardColors.rankText, letterSpacing: 1)),
       const SizedBox(height: 3),
       Column(children: List.generate(lv.stripCount, (_) => Container(margin: const EdgeInsets.only(bottom: 3),
           height: FrontLayout.rankStripH, width: FrontLayout.rankW,
@@ -282,7 +282,7 @@ Widget _info(Member m) {
   Widget row(String label, String value, {bool strong = false}) => Padding(
       padding: const EdgeInsets.only(bottom: FrontLayout.rowMarginBottom),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        Text(label.toUpperCase(), style: TextStyle(fontSize: FrontLayout.labelFont, fontWeight: FontWeight.w800, color: CardColors.label, letterSpacing: 0.5)),
+        Text(label.toUpperCase(), style: const TextStyle(fontSize: FrontLayout.labelFont, fontWeight: FontWeight.w800, color: CardColors.label, letterSpacing: 0.5)),
         const SizedBox(height: 3),
         Text(value.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: strong ? FrontLayout.valueStrongFont : FrontLayout.valueFont,
@@ -294,9 +294,9 @@ Widget _info(Member m) {
     Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Expanded(child: row('Nama', m.namaLengkap)),
       SizedBox(width: 40, child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        Text('JK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: CardColors.label, letterSpacing: 0.5)),
+        const Text('JK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: CardColors.label, letterSpacing: 0.5)),
         const SizedBox(height: 3),
-        Text(m.jenisKelamin == 'P' ? 'P' : 'L', style: TextStyle(fontSize: FrontLayout.valueFont, fontWeight: FontWeight.w700, color: CardColors.value, fontFamily: CardFonts.ocrA, shadows: [Shadow(color: CardColors.value, blurRadius: 1.5)])),
+        Text(m.jenisKelamin == 'P' ? 'P' : 'L', style: const TextStyle(fontSize: FrontLayout.valueFont, fontWeight: FontWeight.w700, color: CardColors.value, fontFamily: CardFonts.ocrA, shadows: [Shadow(color: CardColors.value, blurRadius: 1.5)])),
       ])),
     ]),
     row('Tempat, Tanggal Lahir', ttl),
@@ -316,10 +316,10 @@ Widget _signer(String distrik, {CardData? cardData}) {
     // Teks KOORDINATORAT DISTRIK THS-THM + KEUSKUPAN <distrik>
     Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
       const SizedBox(height: 35),
-      Text('KOORDINATORAT DISTRIK THS-THM', maxLines: 1, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: CardColors.ttd)),
+      const Text('KOORDINATORAT DISTRIK THS-THM', maxLines: 1, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: CardColors.ttd)),
       const SizedBox(height: 1),
-      Text('KEUSKUPAN ' + distrik.replaceFirst(RegExp(r'^keuskupan\s*', caseSensitive: false), '').toUpperCase(),
-          maxLines: 1, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: CardColors.ttd)),
+      Text('KEUSKUPAN ${distrik.replaceFirst(RegExp(r'^keuskupan\s*', caseSensitive: false), '').toUpperCase()}',
+          maxLines: 1, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: CardColors.ttd)),
     ]),
     // Tanda tangan — gambar dari server bila ada; DITARUH DI BAWAH stempel
     // (stempel dicetak menutupi bagian tengah tanda tangan, sesuai kartu resmi)
@@ -344,11 +344,11 @@ Widget _signer(String distrik, {CardData? cardData}) {
             padding: EdgeInsets.only(bottom: i < signers.length - 1 ? 34 : 0),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
               if (signers[i].signerName.isNotEmpty) Text(signers[i].signerName.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: CardColors.value, decoration: TextDecoration.underline)),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: CardColors.value, decoration: TextDecoration.underline)),
               if (signers[i].signerTitle.isNotEmpty) ...[
                 const SizedBox(height: 1),
                 Text(signers[i].signerTitle.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: CardColors.value)),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: CardColors.value)),
               ],
             ]))))),
   ]);
@@ -397,7 +397,7 @@ class _NamePattern extends StatelessWidget {
             child: Column(mainAxisSize: MainAxisSize.min,
                 children: List.generate(Pat.rows, (_) => Padding(padding: const EdgeInsets.only(bottom: Pat.stepY),
                     child: Row(mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(Pat.cols, (_) => Padding(padding: EdgeInsets.only(right: Pat.gapX),
+                        children: List.generate(Pat.cols, (_) => Padding(padding: const EdgeInsets.only(right: Pat.gapX),
                             child: Text(n, style: TextStyle(fontSize: Pat.fontSize, fontWeight: FontWeight.w900, color: color, letterSpacing: 2))))))))))));
   }
 }
@@ -405,7 +405,7 @@ class _NamePattern extends StatelessWidget {
 class _HeaderGradientPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size s) {
-    c.drawRect(Offset.zero & s, Paint()..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+    c.drawRect(Offset.zero & s, Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
         colors: [CardColors.headerFrom, CardColors.headerTo]).createShader(Offset.zero & s));
   }
   @override bool shouldRepaint(covariant CustomPainter o) => false;
@@ -421,7 +421,7 @@ class _FrontDecorPainter extends CustomPainter {
         const Alignment(1, -1), const Alignment(-0.2, 1), 'M-40 300 C180 200,380 380,560 300 C740 220,780 220,900 290 L900 560 L-40 560Z');
     _w(c, s, const Color(0xFF7DD3FC), 0.45, const Color(0xFFF0F9FF), 0.0,
         const Alignment(-1, 1), const Alignment(1, -1), 'M-60 440 C150 350,340 530,540 440 C740 350,790 370,916 440 L916 560 L-60 560Z');
-    c.drawRect(Rect.fromLTWH(0, 0, s.width, 104), Paint()..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+    c.drawRect(Rect.fromLTWH(0, 0, s.width, 104), Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
         colors: [CardColors.headerFrom, CardColors.headerTo]).createShader(b));
     final bp = Paint()..shader = LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft,
         colors: [CardColors.bottomFrom.withValues(alpha: 0.8), CardColors.bottomTo.withValues(alpha: 0.2)]).createShader(b);
@@ -437,8 +437,8 @@ class _FrontDecorPainter extends CustomPainter {
 class _BackDecorPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size s) {
-    c.drawRect(Offset.zero & s, Paint()..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-        colors: [CardColors.backGradStart, CardColors.backGradMid, CardColors.backGradEnd], stops: const [0.0, 0.5, 1.0]).createShader(Offset.zero & s));
+    c.drawRect(Offset.zero & s, Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+        colors: [CardColors.backGradStart, CardColors.backGradMid, CardColors.backGradEnd], stops: [0.0, 0.5, 1.0]).createShader(Offset.zero & s));
     c.drawPath(_p('M-40 170 C160 90,340 240,520 170 C780 90,790 90,920 170 L920 540 L-40 540Z', s),
         Paint()..color = Colors.white.withValues(alpha: 0.06));
   }
@@ -476,7 +476,9 @@ Path _p(String d, Size s) {
       final x2 = nums[i++], y2 = nums[i++];
       x = nums[i++]; y = nums[i++]; path.cubicTo(x, y, x2, y2, x, y);
     }
-    else if (c == 'Z' || c == 'z') path.close();
+    else if (c == 'Z' || c == 'z') {
+      path.close();
+    }
   }
   return path;
 }

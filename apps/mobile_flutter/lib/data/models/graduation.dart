@@ -3,6 +3,7 @@
 /// Konvensi sama seperti model lain di folder ini: class manual + `fromJson`
 /// defensif (helper `_str`/`_num`) karena backend Prisma bisa mengirim
 /// `Decimal` sebagai String dan relasi yang `null`.
+library;
 
 class Graduation {
   final String id;
@@ -394,7 +395,7 @@ class AssessmentScore {
               id: '', namaLengkap: 'Calon', nomorAnggota: ''),
       itemPenilaian: rawItem is Map<String, dynamic>
           ? AssessmentItem.fromJson(rawItem)
-          : AssessmentItem(
+          : const AssessmentItem(
               id: '', kodeItem: '', namaItem: 'Item', skorMaksimal: 0, urutan: 0, isActive: true),
       penguji: rawPenguji is Map<String, dynamic>
           ? ExaminerUser.fromJson(rawPenguji)
