@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { RegistrationsService } from './registrations.service';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -13,12 +13,19 @@ describe('RegistrationsService', () => {
       findMany: jest.fn(),
       count: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
     },
     calonAnggota: {
       create: jest.fn(),
+    },
+    user: {
+      findFirst: jest.fn(),
+    },
+    anggota: {
+      findFirst: jest.fn(),
     },
   };
 
@@ -42,6 +49,19 @@ describe('RegistrationsService', () => {
   };
 
   beforeEach(async () => {
+    jest.resetAllMocks();
+
+    // Re-apply base implementations that persist across tests
+    mockCache.getOrSet.mockImplementation((_key: unknown, factory: () => unknown) => factory());
+    mockMailService.sendMail.mockResolvedValue(true);
+    mockMailService.renderWithOverride.mockResolvedValue({
+      subject: 'Registrasi - THS-THM',
+      html: '<p>Registration info</p>',
+    });
+    mockScopeHelper.buildScopeFilter.mockReturnValue({});
+    mockScopeHelper.buildIndirectScopeFilter.mockReturnValue({});
+    mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RegistrationsService,
@@ -53,7 +73,6 @@ describe('RegistrationsService', () => {
     }).compile();
 
     service = module.get<RegistrationsService>(RegistrationsService);
-    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -98,12 +117,29 @@ describe('RegistrationsService', () => {
   describe('create', () => {
     it('should create a registration with pending status', async () => {
       const dto = { namaLengkap: 'Budi' };
+      mockPrisma.pendaftaran.findFirst.mockResolvedValue(null);
       mockPrisma.pendaftaran.create.mockResolvedValue({ id: '1', ...dto, status: 'pending' });
 
       const result = await service.create(dto);
       expect(mockPrisma.pendaftaran.create).toHaveBeenCalledWith({
         data: { namaLengkap: 'Budi', status: 'pending' },
       });
+    });
+
+    it('should throw ConflictException when email is already registered as user', async () => {
+      const dto = { namaLengkap: 'Budi', email: 'budi@test.com' };
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'user1' });
+
+      await expect(service.create(dto)).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw ConflictException when email already pending', async () => {
+      const dto = { namaLengkap: 'Budi', email: 'budi@test.com' };
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.anggota.findFirst.mockResolvedValue(null);
+      mockPrisma.pendaftaran.findFirst.mockResolvedValue({ id: 'pending1' });
+
+      await expect(service.create(dto)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -166,14 +202,20 @@ describe('RegistrationsService', () => {
         alamat: 'Jl. Merdeka',
         noHp: '081234567',
         email: 'budi@test.com',
-        sumberInfo: 'ranting1',
+        sumberInfo: 'sosmed',
+        rantingId: 'ranting1',
       });
       mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'ca1', namaLengkap: 'Budi' });
       mockPrisma.pendaftaran.update.mockResolvedValue({});
 
       const result = await service.approve('1', 'user1');
       expect(result.id).toBe('ca1');
-      expect(mockPrisma.calonAnggota.create).toHaveBeenCalled();
+      expect(mockPrisma.calonAnggota.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          rantingId: 'ranting1',
+          usulOlehUserId: 'user1',
+        }),
+      });
       expect(mockPrisma.pendaftaran.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: { status: 'approved' },
@@ -182,6 +224,14 @@ describe('RegistrationsService', () => {
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'budi@test.com' }),
       );
+    });
+
+    it('should throw BadRequestException when auth user id is missing', async () => {
+      mockPrisma.pendaftaran.findUnique.mockResolvedValue({
+        id: '1',
+        rantingId: 'ranting1',
+      });
+      await expect(service.approve('1')).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when registration not found', async () => {

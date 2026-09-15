@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CrudAuth } from '../../common/decorators/crud-auth.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { RegistrationsService } from './registrations.service';
 import {
   CreateRegistrationDto,
@@ -59,8 +60,8 @@ export class RegistrationsController {
   @Post(':id/approve')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Setujui registrasi' })
   @ApiBearerAuth()
-  approve(@Param('id') id: string) {
-    return this.service.approve(id);
+  approve(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.approve(id, req.user?.id);
   }
 
   @Post(':id/reject')

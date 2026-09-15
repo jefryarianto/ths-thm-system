@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
 import { registrationApprovedEmail, registrationRejectedEmail } from '../../mail/email-templates';
@@ -48,6 +48,7 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
     if (dto.noHp !== undefined) data.noHp = dto.noHp;
     if (dto.email !== undefined) data.email = dto.email;
     if (dto.sumberInfo !== undefined) data.sumberInfo = dto.sumberInfo;
+    if (dto.rantingId !== undefined) data.rantingId = dto.rantingId;
     return data;
   }
 
@@ -74,6 +75,51 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
   }
 
   async create(dto: CreateRegistrationDto) {
+    // ── Cegah duplikat: tolak jika email/noHp sudah ada di User / Anggota / CalonAnggota aktif ──
+    if (dto.email) {
+      const existingUser = await this.prisma.user.findFirst({
+        where: { email: dto.email },
+        select: { id: true },
+      });
+      if (existingUser) {
+        throw new ConflictException('Email sudah terdaftar sebagai akun pengguna');
+      }
+
+      const existingAnggota = await this.prisma.anggota.findFirst({
+        where: { email: dto.email, deletedAt: null },
+        select: { id: true },
+      });
+      if (existingAnggota) {
+        throw new ConflictException('Email sudah terdaftar sebagai anggota');
+      }
+    }
+
+    if (dto.noHp) {
+      const normalized = dto.noHp.replace(/[\s\-()]/g, '');
+      const existingAnggotaByNoHp = await this.prisma.anggota.findFirst({
+        where: { noHpNormalized: normalized, deletedAt: null },
+        select: { id: true },
+      });
+      if (existingAnggotaByNoHp) {
+        throw new ConflictException('Nomor HP sudah terdaftar sebagai anggota');
+      }
+    }
+
+    // Cek pendaftaran sebelumnya yang masih pending dengan email/noHp sama
+    const existingPending = await this.prisma.pendaftaran.findFirst({
+      where: {
+        status: 'pending',
+        OR: [
+          ...(dto.email ? [{ email: dto.email }] : []),
+          ...(dto.noHp ? [{ noHp: dto.noHp }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    if (existingPending) {
+      throw new ConflictException('Anda sudah memiliki pendaftaran yang sedang diproses');
+    }
+
     return this.baseCreate(dto, undefined, undefined, 'Pendaftaran berhasil dibuat');
   }
 
@@ -104,9 +150,22 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
     const reg = await this.prismaDelegate.findUnique({ where: { id } });
     if (!reg) throw new NotFoundException('Pendaftaran tidak ditemukan');
 
+    const rantingId = (reg as Record<string, unknown>).rantingId as string | null | undefined;
+    if (!rantingId || rantingId.trim() === '') {
+      throw new BadRequestException(
+        'Pendaftaran belum memiliki ranting asal — lengkapi data ranting sebelum menyetujui',
+      );
+    }
+
+    // `usulOlehUserId` wajib (FK ke User). JANGAN fallback ke reg.id —
+    // reg.id adalah ID pendaftaran, bukan ID user (akan melanggar FK).
+    if (!userId) {
+      throw new BadRequestException('Sesi admin tidak valid — silakan login ulang');
+    }
+
     const candidate = await this.prisma.calonAnggota.create({
       data: {
-        rantingId: (reg.sumberInfo as string) || '',
+        rantingId: rantingId,
         namaLengkap: reg.namaLengkap,
         jenisKelamin: reg.jenisKelamin,
         tempatLahir: reg.tempatLahir,
@@ -115,7 +174,7 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
         noHp: reg.noHp,
         email: reg.email,
         status: 'diusulkan',
-        usulOlehUserId: userId || reg.id,
+        usulOlehUserId: userId,
       },
     });
 

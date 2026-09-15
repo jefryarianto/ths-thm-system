@@ -42,6 +42,11 @@ export class CreateRegistrationDto {
   @IsOptional()
   @IsString()
   sumberInfo?: string;
+
+  @ApiProperty({ description: 'ID ranting asal calon anggota (wajib untuk approve)' })
+  @IsString()
+  @IsNotEmpty()
+  rantingId: string;
 }
 
 export class UpdateRegistrationDto {
@@ -84,6 +89,11 @@ export class UpdateRegistrationDto {
   @IsOptional()
   @IsString()
   sumberInfo?: string;
+
+  @ApiPropertyOptional({ description: 'ID ranting asal calon anggota' })
+  @IsOptional()
+  @IsString()
+  rantingId?: string;
 }
 
 export class RegistrationFilterDto {

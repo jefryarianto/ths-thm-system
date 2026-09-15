@@ -331,6 +331,7 @@ model Ranting {
   transferTo    TransferRequest[] @relation("TransferTo")
   auditLogs     AuditLog[]
   klaims        Klaim[]
+  pendaftarans  Pendaftaran[]
 
   @@unique([wilayahId, kodeRanting])
   @@map("ranting")
@@ -518,13 +519,17 @@ model Pendaftaran {
   noHp         String?        @map("no_hp")
   email        String?
   sumberInfo   String?        @map("sumber_info")
+  rantingId    String?        @map("ranting_id") // Ranting asal calon anggota
   status       StatusValidasi @default(pending)
   catatan      String?
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
 
+  ranting Ranting? @relation(fields: [rantingId], references: [id])
+
   @@index([status])
   @@index([createdAt])
+  @@index([rantingId])
   @@map("pendaftaran")
 }
 
