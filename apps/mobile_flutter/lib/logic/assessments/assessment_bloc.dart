@@ -236,8 +236,13 @@ class AssessmentBloc
   Future<void> _onScoresRequested(
       AssessmentScoresRequested event, Emitter<AssessmentState> emit) async {
     try {
-      final res = await _client.get(
-          Uri.parse(AppConstants.assessmentScoresByGraduation(event.kegiatanId)));
+      final uri = Uri.parse(AppConstants.assessmentsScores).replace(
+        queryParameters: <String, String>{
+          'kegiatanId': event.kegiatanId,
+          'calonAnggotaId': event.calonAnggotaId,
+        },
+      );
+      final res = await _client.get(uri);
       if (res.statusCode != 200) {
         emit(AssessmentError("Gagal memuat nilai: ${res.statusCode}"));
         return;
@@ -270,7 +275,7 @@ class AssessmentBloc
           "itemPenilaianId": event.itemPenilaianId,
           "pengujiUserId": event.pengujiUserId,
           "skor": event.skor,
-          if (event.catatan != null) "catatan": event.catatan,
+          if (event.catatan != null) "komentar": event.catatan,
         }),
       );
       if (res.statusCode != 201) {
