@@ -144,14 +144,42 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
+      # Cache inkremental Next.js antar-run: build berikutnya hanya
+      # mengompilasi ulang halaman yang berubah (webpack/turbopack cache).
+      # save terpisah karena 4 shard paralel — semua restore, yang pertama
+      # selesai yang menyimpan.
+      - name: Restore Next.js incremental cache
+        uses: actions/cache/restore@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-web-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next-web-
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
       - name: Build shared-types
         run: pnpm --filter @ths-thm/shared-types build
 
+      - name: Get Playwright version
+        id: pw-version
+        working-directory: apps/web
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      # Browser cukup di-cache per versi Playwright (bukan per lockfile):
+      # isi cache hanya berubah saat versi bertambah. Install dilewati
+      # sepenuhnya pada cache hit (hemat ±2 menit per shard).
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
+
       - name: Install Playwright browsers (Chromium only)
         working-directory: apps/web
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --with-deps
 
       - name: Build Next.js app (production)
@@ -161,6 +189,12 @@ jobs:
           # Samakan dengan build di apps/web/Dockerfile (deploy produksi)
           NEXT_PUBLIC_ENABLE_REALTIME: 'true'
           NODE_ENV: production
+
+      - name: Save Next.js incremental cache
+        uses: actions/cache/save@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-web-${{ github.sha }}
 
       # Server is started automatically by Playwright's webServer
       # (`next start -p 3002`, branch isCI of playwright.config.ts).
@@ -357,6 +391,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
+      - name: Restore Next.js incremental cache
+        uses: actions/cache/restore@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-web-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next-web-
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
         # devDependencies required for build — NODE_ENV must NOT be production here
@@ -394,6 +436,12 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001
           NEXT_PUBLIC_ENABLE_REALTIME: false
+
+      - name: Save Next.js incremental cache
+        uses: actions/cache/save@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-web-${{ github.sha }}
 
       - name: Start API server (retry on crash)
         shell: bash
