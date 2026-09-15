@@ -7,13 +7,20 @@ test.describe('Sidebar Collapse', () => {
 
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { mockMembers: true });
-    // Clear sidebar state via addInitScript (runs before page JS on every navigation)
-    // This avoids the need to visit '/' first, which now redirects to /login or /dashboard.
-    await page.addInitScript(() => {
-      localStorage.removeItem('sidebarCollapsed');
-      localStorage.removeItem('sidebarCollapsedGroups');
-    });
+    // Tidak perlu inisialisasi storage: setiap test Playwright mendapat
+    // context baru dengan localStorage kosong, dan layout memakai default
+    // TERKEMBANG bila kunci 'sidebarCollapsed' tidak ada. JANGAN tambahkan
+    // addInitScript removeItem/setItem untuk kunci sidebar di sini — init
+    // script berjalan pada SETIAP navigasi (termasuk page.reload() di tengah
+    // test persistence) dan akan menghapus state yang baru saja dipersist.
     await page.goto('/members');
+
+    // Tunggu hidrasi React selesai sebelum interaksi apa pun: grup menu
+    // sidebar hanya dirender SETELAH mount ({mounted && menuGroups.map(...)}),
+    // dan listener resize ikut digerbangi `mounted`. Tanpa sinyal ini, resize
+    // atau klik di awal test bisa terjadi sebelum listener/handler React
+    // terpasang → event hilang tanpa error → assertion flaky.
+    await expect(page.locator('aside').getByText('Keanggotaan')).toBeVisible();
   });
 
   test('sidebar starts expanded by default on desktop', async ({ page }) => {
@@ -46,9 +53,7 @@ test.describe('Sidebar Collapse', () => {
     await expect(page.locator('button[aria-label="Perluas sidebar"]')).toBeVisible();
 
     // localStorage should have the collapsed state
-    const collapsedState = await page.evaluate(() =>
-      localStorage.getItem('sidebarCollapsed'),
-    );
+    const collapsedState = await page.evaluate(() => localStorage.getItem('sidebarCollapsed'));
     expect(collapsedState).toBe('true');
 
     // Collapse button should exist (aria changes)
@@ -71,9 +76,7 @@ test.describe('Sidebar Collapse', () => {
     await expect(page.locator('button[aria-label="Perluas sidebar"]')).toBeVisible();
 
     // localStorage should still be 'true'
-    const collapsedState = await page.evaluate(() =>
-      localStorage.getItem('sidebarCollapsed'),
-    );
+    const collapsedState = await page.evaluate(() => localStorage.getItem('sidebarCollapsed'));
     expect(collapsedState).toBe('true');
   });
 
@@ -90,9 +93,7 @@ test.describe('Sidebar Collapse', () => {
     await expect(page.locator('button[aria-label="Ciutkan sidebar"]')).toBeVisible();
 
     // localStorage should now be 'false'
-    const collapsedState = await page.evaluate(() =>
-      localStorage.getItem('sidebarCollapsed'),
-    );
+    const collapsedState = await page.evaluate(() => localStorage.getItem('sidebarCollapsed'));
     expect(collapsedState).toBe('false');
   });
 
@@ -133,7 +134,10 @@ test.describe('Sidebar Collapse', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Find profile trigger button in the header (top-right — moved from sidebar bottom)
-    const profileTrigger = page.locator('header').locator('button').filter({ has: page.locator('text=Super Admin') });
+    const profileTrigger = page
+      .locator('header')
+      .locator('button')
+      .filter({ has: page.locator('text=Super Admin') });
     if (await profileTrigger.isVisible().catch(() => false)) {
       await expect(profileTrigger).toBeVisible();
 
@@ -142,15 +146,27 @@ test.describe('Sidebar Collapse', () => {
       await page.waitForTimeout(500);
 
       // Dropdown should appear with menu items
-      const profilVisible = await page.getByText('Profil Saya').first().isVisible().catch(() => false);
+      const profilVisible = await page
+        .getByText('Profil Saya')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (profilVisible) {
         await expect(page.getByText('Profil Saya').first()).toBeVisible({ timeout: 5000 });
       }
-      const ubahVisible = await page.getByText('Ubah Password').first().isVisible().catch(() => false);
+      const ubahVisible = await page
+        .getByText('Ubah Password')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (ubahVisible) {
         await expect(page.getByText('Ubah Password').first()).toBeVisible({ timeout: 5000 });
       }
-      const keluarVisible = await page.getByText('Keluar').first().isVisible().catch(() => false);
+      const keluarVisible = await page
+        .getByText('Keluar')
+        .first()
+        .isVisible()
+        .catch(() => false);
       if (keluarVisible) {
         await expect(page.getByText('Keluar').first()).toBeVisible({ timeout: 5000 });
       }
@@ -160,7 +176,11 @@ test.describe('Sidebar Collapse', () => {
       if (await headerH2.isVisible().catch(() => false)) {
         await headerH2.click();
         await page.waitForTimeout(300);
-        const profilAfterClose = await page.getByText('Profil Saya').first().isVisible().catch(() => false);
+        const profilAfterClose = await page
+          .getByText('Profil Saya')
+          .first()
+          .isVisible()
+          .catch(() => false);
         if (!profilAfterClose) {
           await expect(page.getByText('Profil Saya').first()).not.toBeVisible();
         }
@@ -172,7 +192,10 @@ test.describe('Sidebar Collapse', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Open profile dropdown (header, top-right)
-    const profileTrigger = page.locator('header').locator('button').filter({ has: page.locator('text=Super Admin') });
+    const profileTrigger = page
+      .locator('header')
+      .locator('button')
+      .filter({ has: page.locator('text=Super Admin') });
     await profileTrigger.click();
 
     // Click "Profil Saya" — should navigate to /profile
@@ -195,7 +218,11 @@ test.describe('Sidebar Collapse', () => {
 
     // Labels (spans inside nav links) should be hidden
     // The spans with truncate class are only rendered when not collapsed
-    const anggotaAfter = await page.getByText('Anggota').first().isVisible().catch(() => false);
+    const anggotaAfter = await page
+      .getByText('Anggota')
+      .first()
+      .isVisible()
+      .catch(() => false);
     if (!anggotaAfter) {
       await expect(page.getByText('Anggota').first()).not.toBeVisible();
     }

@@ -24,8 +24,14 @@ const E2E_BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3002';
 
 /** Seed an authenticated state: cookies (for SSR middleware) + localStorage (for client). */
 async function seedAuth(page: import('@playwright/test').Page) {
+  // Init script HARUS one-shot: tanpa guard, script ini berjalan ulang pada
+  // setiap navigasi — termasuk redirect ke '/' setelah sesi benar-benar
+  // expired (test kedua) — sehingga token yang sudah dihapus sessionManager
+  // bangkit kembali dan halaman '/' menganggap user masih login.
   await page.addInitScript(
     (tokens: { access: string; refresh: string }) => {
+      if (localStorage.getItem('e2e-seeded') === '1') return;
+      localStorage.setItem('e2e-seeded', '1');
       localStorage.setItem('accessToken', tokens.access);
       localStorage.setItem('refreshToken', tokens.refresh);
       document.cookie = `accessToken=${tokens.access}; path=/; SameSite=Lax`;
@@ -42,13 +48,19 @@ async function seedAuth(page: import('@playwright/test').Page) {
 }
 
 test.describe('Session token refresh', () => {
-  test('refreshes token exactly once for concurrent 401s and keeps user on page', async ({ page }) => {
+  test('refreshes token exactly once for concurrent 401s and keeps user on page', async ({
+    page,
+  }) => {
     await seedAuth(page);
 
     const refreshCalls = { count: 0 };
     const attempts = new Map<string, number>();
 
-    // Broad API mock: first attempt of any endpoint returns 401, subsequent ones 200.
+    // Broad API mock. Model rotasi token sungguhan: backend MENOLAK token
+    // lama (401 pada percobaan pertama per endpoint) tetapi MENERIMA token
+    // baru hasil refresh. Tanpa ini, request yang kebetulan terkirim SETELAH
+    // refresh selesai (sudah membawa token baru dari localStorage) tetap
+    // ke-401 dan memicu refresh kedua yang sah — false positive.
     await page.route(/\/api\/.*/, async (route) => {
       const url = route.request().url();
 
@@ -59,7 +71,22 @@ test.describe('Session token refresh', () => {
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ success: true, data: { accessToken: NEW_ACCESS, refreshToken: NEW_REFRESH } }),
+          body: JSON.stringify({
+            success: true,
+            data: { accessToken: NEW_ACCESS, refreshToken: NEW_REFRESH },
+          }),
+        });
+      }
+
+      // Request dengan token BARU selalu diterima (backend sudah rotate).
+      // Request tanpa header auth (panggilan aux) dilewatkan langsung —
+      // keduanya bukan bagian dari skenario single-flight.
+      const authHeader = route.request().headers()['authorization'] ?? '';
+      if (authHeader.includes(NEW_ACCESS) || !authHeader) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: { ok: true } }),
         });
       }
 
@@ -90,9 +117,7 @@ test.describe('Session token refresh', () => {
     // lolos sebelum XHR 401→refresh (mock berlatensi 150ms) sempat terjadi.
     // Tunggu hingga refresh muncul, beri jeda agar refresh ganda (bila race)
     // sempat terlihat, lalu pastikan TEPAT SATU panggilan (single-flight).
-    await expect
-      .poll(() => refreshCalls.count, { timeout: 15000 })
-      .toBeGreaterThan(0);
+    await expect.poll(() => refreshCalls.count, { timeout: 15000 }).toBeGreaterThan(0);
     await page.waitForTimeout(750);
     expect(refreshCalls.count).toBe(1);
   });
