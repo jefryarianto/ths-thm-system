@@ -132,5 +132,5 @@ local_dues.json
 prod_swagger.json
 dc.json
 login.json
-apps/mobile_flutter/
+# unused; mobile_flutter kini track-able (flutter masuk monorepo)
 apps/api/Dockerfile.font
