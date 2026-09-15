@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Exact-match public paths. JANGAN masukkan '/' ke daftar startsWith di
+// bawah — startsWith('/') mencocokkan SEMUA route dan mematikan proteksi auth.
+const publicExactPaths = ['/'];
+
 const publicPaths = [
   '/login',
   '/public',
@@ -12,6 +16,7 @@ const publicPaths = [
   '/sejarah',
   '/organisasi',
   '/kepengurusan',
+  '/struktur-organisasi',
   '/berita',
   '/galeri',
   '/donasi',
@@ -20,7 +25,10 @@ const publicPaths = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (publicPaths.some((path) => pathname.startsWith(path))) {
+  if (
+    publicExactPaths.includes(pathname) ||
+    publicPaths.some((path) => pathname.startsWith(path))
+  ) {
     return NextResponse.next();
   }
 
