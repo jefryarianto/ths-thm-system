@@ -26,6 +26,10 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        # Google menghapus paket "tools" dari repositori SDK (obsolete) —
+        # default action masih mencoba meng-install-nya dan gagal exit 1.
+        with:
+          packages: platform-tools
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
