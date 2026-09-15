@@ -45,9 +45,9 @@ name: 🧪 E2E Tests
 
 on:
   push:
-    branches: [master, develop]
+    branches: [main, master, develop]
   pull_request:
-    branches: [master]
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       shards:
@@ -158,7 +158,8 @@ jobs:
         run: pnpm --filter @ths-thm/web build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001
-          NEXT_PUBLIC_ENABLE_REALTIME: false
+          # Samakan dengan build di apps/web/Dockerfile (deploy produksi)
+          NEXT_PUBLIC_ENABLE_REALTIME: 'true'
           NODE_ENV: production
 
       # Server is started automatically by Playwright's webServer

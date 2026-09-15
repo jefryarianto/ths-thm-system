@@ -105,40 +105,8 @@ jobs:
           fi
           echo "✅ Root markdown sesuai whitelist:$ALLOWED"
 
-  # ─── E2E Web: suite Playwright (291 test non-visual) ─────────────────────────
-  # Auth suite di-mock via e2e/helpers/auth.ts → tidak butuh API/DB nyata.
-  # Server web dijalankan dari hasil `next build` (`next start`) sesuai
-  # branch isCI di playwright.config.ts — produksi, tanpa cold-compile dev.
-  # Test "Visual Regression" dikecualikan di CI: baseline screenshot
-  # ber-suffix platform (win32) dan rendering font/AA lintas-OS tidak identik
-  # — jalankan via `pnpm test:e2e:web` di lokal.
-  e2e-web:
-    name: 🎭 E2E Web (Playwright)
-    runs-on: ubuntu-latest
-    timeout-minutes: 40 # install+build ~4m, suite 2-worker di runner CI ~20m
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install
-      - name: Install Playwright browser (chromium + OS deps)
-        run: pnpm --filter @ths-thm/web exec playwright install --with-deps chromium
-      - name: Build web (production)
-        run: pnpm --filter @ths-thm/web build
-        env:
-          # Samakan dengan build di apps/web/Dockerfile (deploy produksi)
-          NEXT_PUBLIC_ENABLE_REALTIME: 'true'
-      - name: Run Playwright suite
-        run: pnpm --filter @ths-thm/web test:e2e:web:ci
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: |
-            apps/web/blob-report/
-            apps/web/test-results/
-          retention-days: 7
+  # ─── E2E Web ──────────────────────────────────────────────────────
+  # Dikonsolidasikan ke .github/workflows/e2e.yml (4 shard Playwright +
+  # blob report + Smoke Test + Slack). Job e2e-web lama di sini menjalankan
+  # suite yang sama untuk kedua kalinya pada setiap push — lihat
+  # docs/CONTRIBUTING bila perlu menambah pemicu E2E baru.
