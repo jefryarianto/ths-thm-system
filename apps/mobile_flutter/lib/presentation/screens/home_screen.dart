@@ -93,13 +93,22 @@ class _ChipItem {
 class _ShortcutChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    const items = [
+    final authState = context.watch<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.user.role : null;
+    final items = [
       _ChipItem(Icons.account_balance_wallet_outlined, 'Iuran', '/dues'),
       _ChipItem(Icons.credit_card, 'KTA Digital', '/kta'),
       _ChipItem(Icons.folder_outlined, 'Dokumen', '/documents'),
       _ChipItem(Icons.qr_code_scanner, 'Scan QR', '/qr-scan'),
       _ChipItem(Icons.forum_outlined, 'Forum', '/forum'),
       _ChipItem(Icons.emoji_events_outlined, 'Poin', '/gamification'),
+      if (role == 'penguji' ||
+          role == 'admin_kegiatan' ||
+          role == 'admin_ranting' ||
+          role == 'admin_wilayah' ||
+          role == 'admin_distrik' ||
+          role == 'superadmin')
+        _ChipItem(Icons.school_outlined, 'Pendadaran', '/pendadaran'),
     ];
     return SizedBox(
       height: 44,
