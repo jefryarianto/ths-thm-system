@@ -46,6 +46,7 @@ const PUBLIC_PAGES: PublicPage[] = [
   { path: '/donasi', heading: /Donasi/i },
   { path: '/login', heading: /^THS-THM$/ },
   { path: '/daftar', heading: /Pendaftaran Anggota Baru/i },
+  { path: '/klaim', heading: /Klaim Keanggotaan/i },
   { path: '/forgot-password', heading: /^THS-THM$/ },
   { path: '/reset-password', heading: /^THS-THM$/ },
   { path: '/public/leaderboard', heading: /Leaderboard/i },
