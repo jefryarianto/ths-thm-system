@@ -10,7 +10,6 @@ import '../../logic/assessments/assessment_bloc.dart';
 import '../../logic/assessments/assessment_event.dart';
 import '../../logic/assessments/assessment_state.dart';
 import '../../logic/auth/auth_bloc.dart';
-import '../../logic/auth/auth_state.dart';
 import '../widgets/app_loading_spinner.dart';
 
 /// F3 - Input nilai pendadaran oleh penguji: pilih peserta (calon anggota),
