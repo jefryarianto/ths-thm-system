@@ -45,3 +45,28 @@ class AssessmentError extends AssessmentState {
   @override
   List<Object?> get props => <Object?>[message];
 }
+
+/// F3 - Daftar peserta pendadaran (utk dipilih penguji).
+class AssessmentParticipantsLoaded extends AssessmentState {
+  final List<GraduationParticipant> participants;
+  const AssessmentParticipantsLoaded(this.participants);
+  @override
+  List<Object?> get props => <Object?>[participants];
+}
+
+/// F3 - Nilai yg sudah diinput utk satu calon (deteksi duplikat / lihat
+/// progres; key = itemPenilaianId).
+class AssessmentScoresLoaded extends AssessmentState {
+  final Map<String, AssessmentScore> scoresByItem;
+  const AssessmentScoresLoaded(this.scoresByItem);
+  @override
+  List<Object?> get props => <Object?>[scoresByItem];
+}
+
+/// F3 - Nilai utk satu item berhasil disimpan.
+class AssessmentScoreSaved extends AssessmentState {
+  final String message;
+  const AssessmentScoreSaved(this.message);
+  @override
+  List<Object?> get props => <Object?>[message];
+}

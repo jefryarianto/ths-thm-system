@@ -64,7 +64,7 @@ class AssessmentItemsRequested extends AssessmentEvent {
   List<Object?> get props => <Object?>[aspekId];
 }
 
-/// F2 - Tambah item penilaian baru pada aspek.
+/// F2 - Tambah item penilaian baru.
 class AssessmentItemCreateRequested extends AssessmentEvent {
   final String aspekId;
   final String kodeItem;
@@ -109,4 +109,50 @@ class AssessmentItemDeleteRequested extends AssessmentEvent {
   const AssessmentItemDeleteRequested({required this.aspekId, required this.itemId});
   @override
   List<Object?> get props => <Object?>[aspekId, itemId];
+}
+
+/// F3 - Muat daftar peserta (calon anggota) suatu pendadaran utk diinput
+/// nilainya oleh penguji.
+class AssessmentParticipantsRequested extends AssessmentEvent {
+  final String kegiatanId;
+  const AssessmentParticipantsRequested(this.kegiatanId);
+  @override
+  List<Object?> get props => <Object?>[kegiatanId];
+}
+
+/// F3 - Muat nilai yg sudah disimpan utk satu calon (cek status "sudah
+/// dinilai" & cegah duplikat). Kuncinya adalah itemPenilaianId.
+class AssessmentScoresRequested extends AssessmentEvent {
+  final String kegiatanId;
+  final String calonAnggotaId;
+  const AssessmentScoresRequested(this.kegiatanId, this.calonAnggotaId);
+  @override
+  List<Object?> get props => <Object?>[kegiatanId, calonAnggotaId];
+}
+
+/// F3 - Submit satu nilai utk satu item penilaian milik seorang calon.
+class AssessmentScoreSubmitRequested extends AssessmentEvent {
+  final String kegiatanId;
+  final String calonAnggotaId;
+  final String itemPenilaianId;
+  final String pengujiUserId;
+  final double skor;
+  final String? catatan;
+  const AssessmentScoreSubmitRequested({
+    required this.kegiatanId,
+    required this.calonAnggotaId,
+    required this.itemPenilaianId,
+    required this.pengujiUserId,
+    required this.skor,
+    this.catatan,
+  });
+  @override
+  List<Object?> get props => <Object?>[
+        kegiatanId,
+        calonAnggotaId,
+        itemPenilaianId,
+        pengujiUserId,
+        skor,
+        catatan,
+      ];
 }

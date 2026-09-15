@@ -24,6 +24,9 @@ class AssessmentBloc
     on<AssessmentItemCreateRequested>(_onItemCreate);
     on<AssessmentItemUpdateRequested>(_onItemUpdate);
     on<AssessmentItemDeleteRequested>(_onItemDelete);
+    on<AssessmentParticipantsRequested>(_onParticipantsRequested);
+    on<AssessmentScoresRequested>(_onScoresRequested);
+    on<AssessmentScoreSubmitRequested>(_onScoreSubmit);
   }
 
   Future<void> _onAspectsRequested(
@@ -202,6 +205,81 @@ class AssessmentBloc
       }
       emit(const AssessmentItemSaved("Item berhasil dihapus"));
       _onItemsRequested(AssessmentItemsRequested(_aktifAspekId!), emit);
+    } catch (_) {
+      emit(const AssessmentError("Terjadi kesalahan koneksi"));
+    }
+  }
+
+  /// F3 - Muat daftar peserta (calon anggota) pendadaran utk diinput nilai.
+  Future<void> _onParticipantsRequested(
+      AssessmentParticipantsRequested event, Emitter<AssessmentState> emit) async {
+    try {
+      final res = await _client.get(
+          Uri.parse(AppConstants.graduationParticipants(event.kegiatanId)));
+      if (res.statusCode != 200) {
+        emit(AssessmentError("Gagal memuat peserta: ${res.statusCode}"));
+        return;
+      }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final raw = data["data"] as List<dynamic>? ?? const <dynamic>[];
+      final participants = raw
+          .map((e) => GraduationParticipant.fromJson(e as Map<String, dynamic>))
+          .toList();
+      emit(AssessmentParticipantsLoaded(participants));
+    } catch (_) {
+      emit(const AssessmentError("Terjadi kesalahan koneksi"));
+    }
+  }
+
+  /// F3 - Muat nilai yg sudah tersimpan utk satu calon (cegah duplikat,
+  /// tampilkan status "sudah dinilai").
+  Future<void> _onScoresRequested(
+      AssessmentScoresRequested event, Emitter<AssessmentState> emit) async {
+    try {
+      final res = await _client.get(
+          Uri.parse(AppConstants.assessmentScoresByGraduation(event.kegiatanId)));
+      if (res.statusCode != 200) {
+        emit(AssessmentError("Gagal memuat nilai: ${res.statusCode}"));
+        return;
+      }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final raw = data["data"] as List<dynamic>? ?? const <dynamic>[];
+      final scoresByItem = <String, AssessmentScore>{};
+      for (final e in raw) {
+        if (e is! Map<String, dynamic>) continue;
+        final score = AssessmentScore.fromJson(e);
+        if (score.calonAnggotaId != event.calonAnggotaId) continue;
+        scoresByItem[score.itemPenilaianId] = score;
+      }
+      emit(AssessmentScoresLoaded(scoresByItem));
+    } catch (_) {
+      emit(const AssessmentError("Terjadi kesalahan koneksi"));
+    }
+  }
+
+  /// F3 - Simpan satu nilai utk satu item milik seorang peserta.
+  Future<void> _onScoreSubmit(
+      AssessmentScoreSubmitRequested event, Emitter<AssessmentState> emit) async {
+    try {
+      final res = await _client.post(
+        Uri.parse(AppConstants.assessmentsScores),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "kegiatanId": event.kegiatanId,
+          "calonAnggotaId": event.calonAnggotaId,
+          "itemPenilaianId": event.itemPenilaianId,
+          "pengujiUserId": event.pengujiUserId,
+          "skor": event.skor,
+          if (event.catatan != null) "catatan": event.catatan,
+        }),
+      );
+      if (res.statusCode != 201) {
+        emit(AssessmentError("Gagal simpan nilai: ${res.statusCode}"));
+        return;
+      }
+      emit(const AssessmentScoreSaved("Nilai berhasil disimpan"));
+      _onScoresRequested(
+          AssessmentScoresRequested(event.kegiatanId, event.calonAnggotaId), emit);
     } catch (_) {
       emit(const AssessmentError("Terjadi kesalahan koneksi"));
     }
