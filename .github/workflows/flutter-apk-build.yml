@@ -43,21 +43,25 @@ jobs:
         run: yes | flutter doctor --android-licenses
 
       # ── Signing (keystore dari GitHub Secret) ────────────────
-      # key.properties hanya dibuat di CI — di mesin lokal,
-      # build.gradle.kts otomatis fallback ke debug signing.
-      - name: Decode keystore
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/upload-keystore.jks
-
-      - name: Write key.properties
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      # Catatan: `secrets` TIDAK boleh dipakai dalam if: (expression)
+      # GitHub Actions — hanya diizinkan di dalam run: script dan env:.
+      # Maka cek ketersediaan secret dilakukan di level shell.
+      # key.properties hanya dibuat bila secret ada — di mesin lokal
+      # maupun CI tanpa secret, build.gradle.kts fallback ke debug.
+      - name: Setup release keystore (skip bila secret belum ada)
         run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/upload-keystore.jks
           cat > apps/mobile_flutter/android/key.properties <<EOF
           storePassword=${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
           keyAlias=${{ secrets.KEY_ALIAS }}
           storeFile=/tmp/upload-keystore.jks
           EOF
+          echo "Release keystore terkonfigurasi - APK akan ditandatangani"
+          else
+          echo "Secret keystore belum di-set - memakai debug signing"
+          fi
 
       # ── Quality gates ────────────────────────────────────────
       - name: Flutter pub get
