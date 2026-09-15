@@ -9,6 +9,7 @@ const publicPaths = [
   '/login',
   '/public',
   '/verify',
+  '/klaim',
   '/daftar',
   '/reset-password',
   '/forgot-password',
