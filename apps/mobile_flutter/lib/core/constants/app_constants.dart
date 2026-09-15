@@ -50,7 +50,9 @@ class AppConstants {
       '$baseUrl/graduations/$id/checkin';
 
   // ── Pendadaran (Graduations) ──
-  // Daftar & detail (admin + anggota; CBDA /api/graduations).
+  // Daftar kegiatan yang ditugaskan untuk user login (penguji / admin_kegiatan).
+  static const String graduationsMy = '$baseUrl/graduations/my';
+  // Daftar semua pendadaran dalam scope (admin_distrik / admin_ranting / dst).
   static const String graduations = '$baseUrl/graduations';
   static String graduationById(String id) => '$baseUrl/graduations/$id';
   static String graduationParticipants(String id) =>

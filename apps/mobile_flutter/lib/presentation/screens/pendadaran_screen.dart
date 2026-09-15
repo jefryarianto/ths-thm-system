@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/models/graduation.dart';
+import '../../logic/auth/auth_bloc.dart';
 import '../../logic/pendadaran/pendadaran_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
@@ -35,6 +36,10 @@ class _PendadaranScreenState extends State<PendadaranScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.user.role : null;
+    final canCreate = role != 'penguji';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pendadaran'),
@@ -58,7 +63,7 @@ class _PendadaranScreenState extends State<PendadaranScreen> {
             );
           }
           if (state is PendadaranLoaded && state.graduations.isEmpty) {
-            return _EmptyView(onCreate: _goCreate);
+            return _EmptyView(onCreate: canCreate ? _goCreate : null);
           }
           final graduations = state.graduations;
           return RefreshIndicator(
@@ -83,11 +88,13 @@ class _PendadaranScreenState extends State<PendadaranScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _goCreate,
-        icon: const Icon(Icons.add),
-        label: const Text('Buat Pendadaran'),
-      ),
+      floatingActionButton: canCreate
+          ? FloatingActionButton.extended(
+              onPressed: _goCreate,
+              icon: const Icon(Icons.add),
+              label: const Text('Buat Pendadaran'),
+            )
+          : null,
     );
   }
 }
@@ -256,8 +263,8 @@ class _ErrorView extends StatelessWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  final VoidCallback onCreate;
-  const _EmptyView({required this.onCreate});
+  final VoidCallback? onCreate;
+  const _EmptyView({this.onCreate});
 
   @override
   Widget build(BuildContext context) {
@@ -282,11 +289,12 @@ class _EmptyView extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onCreate,
-              icon: const Icon(Icons.add),
-              label: const Text('Buat Pendadaran'),
-            ),
+            if (onCreate != null)
+              FilledButton.icon(
+                onPressed: onCreate,
+                icon: const Icon(Icons.add),
+                label: const Text('Buat Pendadaran'),
+              ),
           ],
         ),
       ),

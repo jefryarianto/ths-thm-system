@@ -42,7 +42,13 @@ class PendadaranBloc extends Bloc<PendadaranEvent, PendadaranState> {
 
     emit(PendadaranLoading());
     try {
-      final response = await _apiClient.dio.get(AppConstants.graduations);
+      // Penguji & admin_kegiatan hanya melihat kegiatan yang ditugaskan
+      // melalui GET /graduations/my (role-scoped server-side).
+      final userJson = await _apiClient.loadUser();
+      final role = userJson?['role'] as String?;
+      final isMyKegiatan = role == 'penguji' || role == 'admin_kegiatan';
+      final url = isMyKegiatan ? AppConstants.graduationsMy : AppConstants.graduations;
+      final response = await _apiClient.dio.get(url);
       final dynamic raw = response.data['data'];
       final List<dynamic> list = raw is List ? raw : [];
       final graduations = list
