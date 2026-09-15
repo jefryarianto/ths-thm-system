@@ -39,6 +39,7 @@ Kumpulan dokumen perencanaan, spesifikasi, dan referensi pengembangan.
 | `THM_SYSTEM_ANALYSIS.md`      | Analisis sistem THM                                      |
 | `COMPLIANCE.md`               | Catatan kepatuhan                                        |
 | `SECURITY.md`                 | Keamanan repo: secret scanning gitleaks (hook + CI)      |
+| `CI_WORKFLOW_AUDIT.md`        | Audit redundansi & efisiensi workflow CI (.github)        |
 
 ## Arsip
 
