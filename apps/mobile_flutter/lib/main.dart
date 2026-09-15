@@ -17,6 +17,7 @@ import 'logic/notification/notification_bloc.dart';
 import 'presentation/screens/document_detail_screen.dart';
 import 'presentation/screens/assessment_aspect_screen.dart';
 import 'presentation/screens/assessment_item_screen.dart';
+import 'presentation/screens/assessment_score_screen.dart';
 import 'presentation/screens/documents_screen.dart';
 import 'presentation/screens/dues_screen.dart';
 import 'presentation/screens/force_change_password_screen.dart';
@@ -224,6 +225,11 @@ class AppRouter {
             kegiatanId: state.pathParameters['id']!,
             aspekId: state.pathParameters['aspekId']!,
             namaAspek: state.uri.queryParameters['nama'] ?? ''),
+      ),
+      GoRoute(
+        path: '/pendadaran/:id/penilaian',
+        builder: (context, state) =>
+            AssessmentScoreScreen(kegiatanId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/gamification',

@@ -74,6 +74,13 @@ class PendadaranDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
+                onPressed: () =>
+                    context.push('/pendadaran/$graduationId/penilaian'),
+                icon: const Icon(Icons.edit_note_outlined),
+                label: const Text('Input Nilai Penguji'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Kembali ke Daftar'),
