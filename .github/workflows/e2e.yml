@@ -170,7 +170,7 @@ jobs:
   # ─── E2E Tests (Matrix — one job per shard) ────────────────────
   test:
     name: E2E — Shard ${{ matrix.shard }}/${{ strategy.job-total }}
-    needs: build-web
+    needs: [plan, build-web] # plan: matrix shard_list; build-web: artifact .next
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false  # let all shards report independently
