@@ -1,15 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../data/models/ranting.dart';
 import '../../logic/registration/registration_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/org_structure_fields.dart';
 
 /// Form publik pendaftaran calon anggota baru.
 class RegistrationFormScreen extends StatefulWidget {
@@ -30,14 +26,6 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
   final _emailCtrl = TextEditingController();
   final _sumberInfoCtrl = TextEditingController();
   String? _selectedRantingId;
-  List<Ranting> _rantings = [];
-  bool _rantingsLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRantings();
-  }
 
   @override
   void dispose() {
@@ -50,30 +38,12 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
     super.dispose();
   }
 
-  Future<void> _loadRantings() async {
-    try {
-      final res = await http.get(Uri.parse(AppConstants.publicRanting));
-      final body = jsonDecode(res.body);
-      final dynamic raw = body is Map ? body['data'] : body;
-      final list = (raw is List ? raw : []).whereType<Map<String, dynamic>>();
-      if (mounted) {
-        setState(() {
-          _rantings = list.map(Ranting.fromJson).toList();
-          _rantingsLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _rantingsLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat daftar ranting: $e')),
-        );
-      }
-    }
-  }
-
-  String _fmtDate(DateTime d) =>
+  String _fmtDateDisplay(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// ISO-8601 DateTime string for API — Prisma DateTime requires full
+  /// ISO-8601 format (with time component), not date-only `yyyy-MM-dd`.
+  String _fmtDateIso(DateTime d) => d.toUtc().toIso8601String();
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -100,7 +70,7 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
           tempatLahir: _tempatLahirCtrl.text.trim().isEmpty
               ? null
               : _tempatLahirCtrl.text.trim(),
-          tanggalLahir: _tanggalLahir != null ? _fmtDate(_tanggalLahir!) : null,
+          tanggalLahir: _tanggalLahir != null ? _fmtDateIso(_tanggalLahir!) : null,
           alamat: _alamatCtrl.text.trim().isEmpty ? null : _alamatCtrl.text.trim(),
           noHp: _noHpCtrl.text.trim().isEmpty ? null : _noHpCtrl.text.trim(),
           email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
@@ -160,7 +130,9 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
         },
       ),
       const SizedBox(height: 14),
-      _buildRantingDropdown(),
+      OrgStructureFields(
+        onRantingChanged: (v) => setState(() => _selectedRantingId = v),
+      ),
       const SizedBox(height: 14),
       TextFormField(
           controller: _tempatLahirCtrl,
@@ -174,7 +146,7 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
           decoration: const InputDecoration(
               labelText: 'Tanggal Lahir',
               prefixIcon: Icon(Icons.calendar_today_outlined)),
-          child: Text(_tanggalLahir != null ? _fmtDate(_tanggalLahir!) : 'Pilih',
+          child: Text(_tanggalLahir != null ? _fmtDateDisplay(_tanggalLahir!) : 'Pilih',
               style: TextStyle(
                   color: _tanggalLahir != null ? null : Colors.grey.shade500)),
         ),
@@ -216,25 +188,6 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
             : const Text('Kirim Pendaftaran'),
       ),
     ];
-  }
-
-  Widget _buildRantingDropdown() {
-    if (_rantingsLoading) {
-      return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: AppLoadingSpinner.small());
-    }
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedRantingId,
-      decoration: const InputDecoration(
-          labelText: 'Ranting Asal *',
-          prefixIcon: Icon(Icons.location_on_outlined)),
-      items: _rantings
-          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.nama)))
-          .toList(),
-      onChanged: (v) => setState(() => _selectedRantingId = v),
-      validator: (v) => (v == null || v.isEmpty) ? 'Pilih ranting' : null,
-    );
   }
 
   void _onStateChanged(BuildContext context, RegistrationState state) {

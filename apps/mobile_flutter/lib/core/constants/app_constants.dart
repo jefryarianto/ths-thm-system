@@ -47,7 +47,9 @@ class AppConstants {
   static String claimReject(String id) => '$baseUrl/claims/$id/reject';
   static String claimProcess(String id) => '$baseUrl/claims/$id/process';
 
-  // ── Struktur Organisasi (publik — dropdown ranting) ──
+  // ── Struktur Organisasi (publik — dropdown distrik → wilayah → ranting) ──
+  static const String publicDistrik = '$baseUrl/public/struktur/distrik';
+  static const String publicWilayah = '$baseUrl/public/struktur/wilayah';
   static const String publicRanting = '$baseUrl/public/struktur/ranting';
 
   // Member

@@ -11,6 +11,7 @@ import { CreateClaimDto, UpdateClaimDto, ClaimFilterDto } from './dto/claim.dto'
 import { UserScope } from '../../common/interfaces/user-scope.interface';
 import { NraService } from '../../common/services/nra.service';
 import { normalizePhone } from '../../common/utils/phone.util';
+import { normalizePrismaDate } from '../../common/utils/date.util';
 
 const CLAIM_INCLUDE = {
   anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, rantingId: true } },
@@ -41,6 +42,7 @@ export class ClaimsService extends BaseCrudService<CreateClaimDto, UpdateClaimDt
   protected async beforeCreate(dto: CreateClaimDto): Promise<Record<string, unknown>> {
     return {
       ...dto,
+      tanggalLahir: normalizePrismaDate(dto.tanggalLahir) ?? null,
       status: 'pending',
     };
   }

@@ -9,6 +9,7 @@ import {
 } from './dto/registration.dto';
 import { BaseCrudService } from '../../common/utils/base-crud.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
+import { normalizePrismaDate } from '../../common/utils/date.util';
 import { CacheService } from '../../common/services/cache.service';
 import { PersistentAuditService } from '../../common/services/persistent-audit.service';
 
@@ -34,6 +35,8 @@ export class RegistrationsService extends BaseCrudService<CreateRegistrationDto,
   protected async beforeCreate(dto: CreateRegistrationDto): Promise<Record<string, unknown>> {
     return {
       ...dto,
+      // Prisma DateTime butuh ISO-8601 penuh; normalkan date-only `yyyy-MM-dd`
+      tanggalLahir: normalizePrismaDate(dto.tanggalLahir) ?? null,
       status: 'pending',
     };
   }

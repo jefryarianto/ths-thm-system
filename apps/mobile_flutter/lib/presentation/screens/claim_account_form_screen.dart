@@ -1,15 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../data/models/ranting.dart';
 import '../../logic/claim/claim_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/org_structure_fields.dart';
 
 /// Form publik klaim akun anggota lama.
 class ClaimAccountFormScreen extends StatefulWidget {
@@ -30,11 +26,6 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
   final _noHpCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   String? _selectedRantingId;
-  List<Ranting> _rantings = [];
-  bool _rantingsLoading = true;
-
-  @override
-  void initState() { super.initState(); _loadRantings(); }
 
   @override
   void dispose() {
@@ -43,17 +34,11 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
     _noHpCtrl.dispose(); _emailCtrl.dispose(); super.dispose();
   }
 
-  Future<void> _loadRantings() async {
-    try {
-      final res = await http.get(Uri.parse(AppConstants.publicRanting));
-      final body = jsonDecode(res.body);
-      final raw = body is Map ? body['data'] : body;
-      final list = (raw is List ? raw : []).whereType<Map<String, dynamic>>();
-      if (mounted) setState(() { _rantings = list.map(Ranting.fromJson).toList(); _rantingsLoading = false; });
-    } catch (e) { if (mounted) setState(() => _rantingsLoading = false); }
-  }
+  String _fmtDateDisplay(DateTime d) => '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
 
-  String _fmtDate(DateTime d) => '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+  /// ISO-8601 DateTime string for API — Prisma DateTime requires full
+  /// ISO-8601 format (with time component), not date-only `yyyy-MM-dd`.
+  String _fmtDateIso(DateTime d) => d.toUtc().toIso8601String();
 
   Future<void> _pickDate() async {
     final p = await showDatePicker(context: context, initialDate: _tanggalLahir ?? DateTime(2000), firstDate: DateTime(1940), lastDate: DateTime.now());
@@ -71,7 +56,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
       namaLengkap: _tipe == 'keanggotaan' ? _namaCtrl.text.trim() : null,
       jenisKelamin: _tipe == 'keanggotaan' ? _jenisKelamin : null,
       tempatLahir: _tempatLahirCtrl.text.trim().isEmpty ? null : _tempatLahirCtrl.text.trim(),
-      tanggalLahir: _tanggalLahir != null ? _fmtDate(_tanggalLahir!) : null,
+      tanggalLahir: _tanggalLahir != null ? _fmtDateIso(_tanggalLahir!) : null,
       alamat: _alamatCtrl.text.trim().isEmpty ? null : _alamatCtrl.text.trim(),
       noHp: _noHpCtrl.text.trim().isEmpty ? null : _noHpCtrl.text.trim(),
       email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
@@ -128,13 +113,15 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
       items: const [DropdownMenuItem(value: 'L', child: Text('Laki-laki')), DropdownMenuItem(value: 'P', child: Text('Perempuan'))],
       onChanged: (v) { if (v != null) setState(() => _jenisKelamin = v); }),
     const SizedBox(height: 14),
-    _buildRantingDropdown(),
+    OrgStructureFields(
+      onRantingChanged: (v) => setState(() => _selectedRantingId = v),
+    ),
     const SizedBox(height: 14),
     TextFormField(controller: _tempatLahirCtrl, decoration: const InputDecoration(labelText: 'Tempat Lahir', prefixIcon: Icon(Icons.location_city_outlined))),
     const SizedBox(height: 14),
     InkWell(onTap: _pickDate, child: InputDecorator(
       decoration: const InputDecoration(labelText: 'Tanggal Lahir', prefixIcon: Icon(Icons.calendar_today_outlined)),
-      child: Text(_tanggalLahir != null ? _fmtDate(_tanggalLahir!) : 'Pilih',
+      child: Text(_tanggalLahir != null ? _fmtDateDisplay(_tanggalLahir!) : 'Pilih',
           style: TextStyle(color: _tanggalLahir != null ? null : Colors.grey.shade500)))),
     const SizedBox(height: 14),
     TextFormField(controller: _alamatCtrl, maxLines: 2, decoration: const InputDecoration(labelText: 'Alamat', prefixIcon: Icon(Icons.home_outlined), alignLabelWithHint: true)),
@@ -143,15 +130,6 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
     const SizedBox(height: 14),
     TextFormField(controller: _emailCtrl, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined))),
   ];
-
-  Widget _buildRantingDropdown() {
-    if (_rantingsLoading) return const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: AppLoadingSpinner.small());
-    return DropdownButtonFormField<String>(initialValue: _selectedRantingId,
-      decoration: const InputDecoration(labelText: 'Ranting Asal *', prefixIcon: Icon(Icons.location_on_outlined)),
-      items: _rantings.map((r) => DropdownMenuItem(value: r.id, child: Text(r.nama))).toList(),
-      onChanged: (v) => setState(() => _selectedRantingId = v),
-      validator: (v) => (v == null || v.isEmpty) ? 'Pilih ranting' : null);
-  }
 
   void _onStateChanged(BuildContext context, ClaimState state) {
     if (state is ClaimCreateSuccess) {
