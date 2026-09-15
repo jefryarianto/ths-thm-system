@@ -91,10 +91,86 @@ jobs:
           echo "shard_list=$JSON_ARRAY" >> "$GITHUB_OUTPUT"
           echo "   Running $COUNT shard(s): $JSON_ARRAY"
 
+  # ─── Build web (sekali, dibagikan ke semua shard) ───────────────
+  # Membangun Next.js production satu kali dan mengunggah .next sebagai
+  # artifact; keempat shard hanya men-download — tidak ada build &
+  # kompilasi berulang per shard.
+  build-web:
+    name: 🏗️ Build Web (once)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm (version from package.json packageManager)
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Restore Next.js incremental cache
+        uses: actions/cache/restore@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-web-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next-web-
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build shared-types
+        run: pnpm --filter @ths-thm/shared-types build
+
+      - name: Build Next.js app (production)
+        run: pnpm --filter @ths-thm/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
+          # Samakan dengan build di apps/web/Dockerfile (deploy produksi)
+          NEXT_PUBLIC_ENABLE_REALTIME: 'true'
+          NODE_ENV: production
+
+      - name: Save Next.js incremental cache
+        uses: actions/cache/save@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-web-${{ github.sha }}
+
+      - name: Pack .next artifact
+        shell: bash
+        # cache & standalone dikecualikan: cache hanya berguna saat build
+        # (disimpan lewat actions/cache), standalone membundel node_modules
+        # (ratusan MB) dan tidak dipakai `next start` langsung.
+        run: tar -czf web-next.tar.gz -C apps/web --exclude=.next/cache --exclude=.next/standalone .next
+
+      - name: Upload .next artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-next
+          path: web-next.tar.gz
+          retention-days: 1
+          compression-level: 0
+
   # ─── E2E Tests (Matrix — one job per shard) ────────────────────
   test:
     name: E2E — Shard ${{ matrix.shard }}/${{ strategy.job-total }}
-    needs: plan
+    needs: build-web
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false  # let all shards report independently
@@ -144,17 +220,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      # Cache inkremental Next.js antar-run: build berikutnya hanya
-      # mengompilasi ulang halaman yang berubah (webpack/turbopack cache).
-      # save terpisah karena 4 shard paralel — semua restore, yang pertama
-      # selesai yang menyimpan.
-      - name: Restore Next.js incremental cache
-        uses: actions/cache/restore@v4
+      - name: Download prebuilt .next
+        uses: actions/download-artifact@v4
         with:
-          path: apps/web/.next/cache
-          key: ${{ runner.os }}-next-web-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-next-web-
+          name: web-next
+
+      - name: Unpack .next
+        shell: bash
+        run: tar -xzf web-next.tar.gz -C apps/web && rm web-next.tar.gz
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -181,20 +254,6 @@ jobs:
         working-directory: apps/web
         if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --with-deps
-
-      - name: Build Next.js app (production)
-        run: pnpm --filter @ths-thm/web build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3001
-          # Samakan dengan build di apps/web/Dockerfile (deploy produksi)
-          NEXT_PUBLIC_ENABLE_REALTIME: 'true'
-          NODE_ENV: production
-
-      - name: Save Next.js incremental cache
-        uses: actions/cache/save@v4
-        with:
-          path: apps/web/.next/cache
-          key: ${{ runner.os }}-next-web-${{ github.sha }}
 
       # Server is started automatically by Playwright's webServer
       # (`next start -p 3002`, branch isCI of playwright.config.ts).
@@ -437,12 +496,8 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:3001
           NEXT_PUBLIC_ENABLE_REALTIME: false
 
-      - name: Save Next.js incremental cache
-        uses: actions/cache/save@v4
-        with:
-          path: apps/web/.next/cache
-          key: ${{ runner.os }}-next-web-${{ github.sha }}
-
+      # build-web sudah menyimpan cache inkremental dengan key yang sama;
+      # tidak disimpan ulang di sini (hanya akan menolak/menimpa).
       - name: Start API server (retry on crash)
         shell: bash
         timeout-minutes: 6
