@@ -76,4 +76,12 @@ class AppConstants {
   static String graduationCheckInById(String id) =>
       '$baseUrl/graduations/$id/checkin';
   static String graduationQr(String id) => '$baseUrl/graduations/$id/qr';
+  static String get assessmentsAspects => "$baseUrl/assessments/aspects";
+  static String assessmentAspectById(String id) =>
+      "$baseUrl/assessments/aspects/$id";
+
+  static String get assessmentsItems => "$baseUrl/assessments/items";
+  static String assessmentItemById(String id) => "$baseUrl/assessments/items/$id";
+  static String get assessmentsScores => "$baseUrl/assessments/scores";
+  static String assessmentScoresByGraduation(String id) => "$baseUrl/graduations/$id/scores";
 }

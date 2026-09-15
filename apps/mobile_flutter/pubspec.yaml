@@ -1,0 +1,57 @@
+name: mobile_flutter
+description: THS-THM Mobile App (Flutter version)
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^8.1.3
+  equatable: ^2.0.5
+  meta: ^1.9.1
+  dio: ^5.4.0
+  http: ^1.2.2
+  flutter_secure_storage: ^9.0.0
+  go_router: ^14.2.0
+  path_provider: ^2.1.4
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.7.0
+  mobile_scanner: ^5.0.0
+  flutter_pdfview: ^1.2.0
+  qr_flutter: ^4.1.0
+  intl: ^0.19.0
+  url_launcher: ^6.2.1
+  cached_network_image: ^3.3.0
+  video_player: ^2.9.2
+  image_picker: ^1.0.7
+  shared_preferences: ^2.5.5
+  provider: ^6.1.5+1
+  gal: ^2.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/videos/
+  fonts:
+    # Font kartu KTA — nama family mengikuti spec packages/card-design
+    - family: OCR A Extended
+      fonts:
+        - asset: assets/fonts/ocr-a-extended.ttf
+    - family: OpenSans-Bold
+      fonts:
+        - asset: assets/fonts/open-sans-bold.ttf
+          weight: 700
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700

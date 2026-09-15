@@ -189,7 +189,7 @@ Icon(Icons.place_outlined, //fix-const-grey
   String _range(Graduation g) {
     final mulai = _short(g.tanggalMulai);
     final selesai = g.tanggalSelesai;
-    if (selesai == null || selesai.isEmpty) return mulai;
+    if (selesai.isEmpty) return mulai;
     return '$mulai - ${_short(selesai)}';
   }
 

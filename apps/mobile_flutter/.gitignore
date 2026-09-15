@@ -1,0 +1,15 @@
+# Artefak uji/dev (jangan ikut commit)
+*.png
+run_out.txt
+emulator_out.txt
+screenshot_*.png
+shot_*.png
+*.png
+find_fields.py
+fix_card.py
+f2*.txt
+*.pyc
+__pycache__/
+
+# Akan di-track ulang secara eksplisit bila perlu
+apps/mobile_flutter/lib/core/api/

@@ -192,7 +192,7 @@ class _DateField extends StatelessWidget {
         ),
         child: Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             color: AppTheme.primary,
             fontWeight: FontWeight.w600,

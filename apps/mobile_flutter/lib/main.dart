@@ -12,13 +12,17 @@ import 'logic/forum/forum_bloc.dart';
 import 'logic/pendadaran/pendadaran_bloc.dart';
 import 'logic/gamification/gamification_bloc.dart';
 import 'logic/member/member_bloc.dart';
+import 'logic/assessments/assessment_bloc.dart';
 import 'logic/notification/notification_bloc.dart';
 import 'presentation/screens/document_detail_screen.dart';
+import 'presentation/screens/assessment_aspect_screen.dart';
+import 'presentation/screens/assessment_item_screen.dart';
 import 'presentation/screens/documents_screen.dart';
 import 'presentation/screens/dues_screen.dart';
 import 'presentation/screens/force_change_password_screen.dart';
 import 'presentation/screens/forgot_password_screen.dart';
 import 'presentation/screens/pendadaran_create_screen.dart';
+import 'presentation/screens/pendadaran_detail_screen.dart';
 import 'presentation/screens/forum_create_screen.dart';
 import 'presentation/screens/pendadaran_screen.dart';
 import 'presentation/screens/forum_screen.dart';
@@ -63,6 +67,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => DocumentBloc()),
         BlocProvider(create: (_) => NotificationBloc()),
         BlocProvider(create: (_) => PendadaranBloc()),
+        BlocProvider(create: (_) => AssessmentBloc()),
         BlocProvider(create: (_) => GamificationBloc()),
         BlocProvider(create: (_) => ForumBloc()),
       ],
@@ -202,6 +207,23 @@ class AppRouter {
       GoRoute(
         path: '/pendadaran/create',
         builder: (context, state) => const PendadaranCreateScreen(),
+      ),
+      GoRoute(
+        path: '/pendadaran/:id',
+        builder: (context, state) =>
+            PendadaranDetailScreen(graduationId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/pendadaran/:id/kriteria',
+        builder: (context, state) =>
+            AssessmentAspectScreen(kegiatanId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/pendadaran/:id/kriteria/:aspekId',
+        builder: (context, state) => AssessmentItemScreen(
+            kegiatanId: state.pathParameters['id']!,
+            aspekId: state.pathParameters['aspekId']!,
+            namaAspek: state.uri.queryParameters['nama'] ?? ''),
       ),
       GoRoute(
         path: '/gamification',
