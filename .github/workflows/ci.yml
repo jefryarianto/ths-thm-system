@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, master]
 
+# Push beruntun ke branch yang sama: batalkan run yang ter-supersede —
+# hanya hasil commit terakhir yang relevan untuk merge.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest

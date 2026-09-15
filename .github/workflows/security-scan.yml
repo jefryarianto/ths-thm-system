@@ -131,7 +131,12 @@ jobs:
   # ─── 2. Snyk Scan (open-source + container, optional) ───────────────
   # NOTE: GitHub Actions does not support secrets in job-level `if:`.
   # Instead the job always runs but every Snyk step has `continue-on-error: true`,
-  # so missing SNYK_TOKEN is harmless.
+  # Job tidak menyiapkan apa pun sebelum SNYK_TOKEN terkonfirmasi ada —
+  # tanpa token semua step skip dan job selesai hitungan detik (dulu
+  # membayar pnpm install + build API + 2 build Docker untuk hasil nihil).
+  # NOTE: GitHub Actions tidak mendukung secrets di job-level `if`;
+  # pengecekan token dilakukan step pertama, step berikutnya menengok
+  # output `check-snyk`.
   snyk:
     name: 🔍 Snyk Scan
     runs-on: ubuntu-latest
@@ -139,20 +144,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check if SNYK_TOKEN is set (before any setup)
+        id: check-snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ SNYK_TOKEN not set — job finishes here (nothing to set up)"
+          fi
+
       - name: Setup Node.js ${{ env.NODE_VERSION }}
+        if: steps.check-snyk.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install pnpm (version from package.json packageManager)
+        if: steps.check-snyk.outputs.skip != 'true'
         uses: pnpm/action-setup@v4
 
       - name: Get pnpm store directory
+        if: steps.check-snyk.outputs.skip != 'true'
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
+        if: steps.check-snyk.outputs.skip != 'true'
         uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
@@ -161,18 +181,8 @@ jobs:
             ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
+        if: steps.check-snyk.outputs.skip != 'true'
         run: pnpm install --no-frozen-lockfile
-
-      - name: Check if SNYK_TOKEN is set
-        id: check-snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        shell: bash
-        run: |
-          if [ -z "$SNYK_TOKEN" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "⚠️ SNYK_TOKEN not set — skipping all Snyk scans"
-          fi
 
       - name: Build API (for Snyk to analyse)
         if: steps.check-snyk.outputs.skip != 'true'
@@ -205,49 +215,9 @@ jobs:
             --severity-threshold=high
             --sarif-file-output=snyk-code-results.sarif
 
-      - name: Build Docker images for container scan
-        if: steps.check-snyk.outputs.skip != 'true'
-        shell: bash
-        run: |
-          # Build API image (minimal, for scanning only)
-          docker build -t ths-thm-api:scan \
-            --file apps/api/Dockerfile \
-            --build-arg NODE_ENV=production \
-            .
-
-          # Build Web image (minimal, for scanning only)
-          docker build -t ths-thm-web:scan \
-            --file apps/web/Dockerfile \
-            --build-arg NODE_ENV=production \
-            .
-
-      - name: Snyk Container scan (API)
-        id: snyk-container-api
-        if: steps.check-snyk.outputs.skip != 'true'
-        continue-on-error: true
-        uses: snyk/actions/docker@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: ths-thm-api:scan
-          args: >-
-            --severity-threshold=high
-            --json-file-output=snyk-container-api-results.json
-            --exclude-base-image-vulns
-
-      - name: Snyk Container scan (Web)
-        id: snyk-container-web
-        if: steps.check-snyk.outputs.skip != 'true'
-        continue-on-error: true
-        uses: snyk/actions/docker@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: ths-thm-web:scan
-          args: >-
-            --severity-threshold=high
-            --json-file-output=snyk-container-web-results.json
-            --exclude-base-image-vulns
+      # Container scan dihapus: membangun 2 image Docker per push hanya
+      # untuk Snyk adalah redundansi (lihat docs/CI_WORKFLOW_AUDIT.md R1/R2).
+      # Bila SNYK_TOKEN kelak dipasang, pindai image produksi dari GHCR.
 
       - name: Upload Snyk results
         if: always()
@@ -268,8 +238,7 @@ jobs:
           echo "|:-----|:-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Open Source | ${{ steps.snyk-oss.conclusion }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Code | ${{ steps.snyk-code.conclusion }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Container (API) | ${{ steps.snyk-container-api.conclusion }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Container (Web) | ${{ steps.snyk-container-web.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container (API/Web) | ⏭️ Dihapus — bila SNYK_TOKEN dipasang, pindai image produksi dari GHCR (R1/R2) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📁 **Snyk results** uploaded as the \\`snyk-results\\` artifact." >> $GITHUB_STEP_SUMMARY
 

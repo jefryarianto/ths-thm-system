@@ -4,6 +4,13 @@ on:
   push:
     branches: [master]
     tags: ['v*']
+    # Build APK lokal ±15 menit — hanya relevan saat kode native/paket
+    # berubah. Push docs/CI/workflow lain tidak perlu membangun APK.
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/eas-build.yml'
   workflow_dispatch:
 
 jobs:
