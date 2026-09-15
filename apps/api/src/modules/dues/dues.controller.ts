@@ -42,7 +42,7 @@ export class DuesController {
   }
 
   @Get('members/me')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Daftar iuran saya (anggota login)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Daftar iuran saya (anggota login)' })
   getMyDues(@Req() req: ScopedRequest) {
     return this.service.getMyDues(req.user);
   }
@@ -90,7 +90,7 @@ export class DuesController {
   }
 
   @Get(':id')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Detail iuran' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Detail iuran' })
   findOne(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.service.findOne(id, req.scope, req.user);
   }

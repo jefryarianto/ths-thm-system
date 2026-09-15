@@ -11,7 +11,7 @@ export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
   @Get('rewards')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Get all available rewards' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Get all available rewards' })
   async getRewards() {
     return this.rewardsService.getRewards();
   }
@@ -55,7 +55,7 @@ export class RewardsController {
   }
 
   @Post('rewards/:rewardId/redeem')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Redeem a reward with points' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Redeem a reward with points' })
   async redeemReward(
     @Param('rewardId') rewardId: string,
     @Body() body: { anggotaId: string },
@@ -66,7 +66,7 @@ export class RewardsController {
   }
 
   @Get('redemptions/:anggotaId')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Get member redemptions' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Get member redemptions' })
   async getMemberRedemptions(@Param('anggotaId') anggotaId: string, @Req() req: ScopedRequest) {
     return this.rewardsService.getMemberRedemptions(anggotaId, req.user);
   }

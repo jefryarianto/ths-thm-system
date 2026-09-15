@@ -1,8 +1,39 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_flutter/core/utils/formatters.dart';
 import 'package:mobile_flutter/data/models/due.dart';
+import 'package:mobile_flutter/presentation/widgets/app_loading_spinner.dart';
 
 void main() {
+  testWidgets('AppLoadingSpinner default merender dual-ring + logo dan beranimasi', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: AppLoadingSpinner()),
+      ),
+    );
+    await tester.pump();
+
+    // Kain canvas dua cincin + logo digambar tanpa error.
+    expect(find.byType(AppLoadingSpinner), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // Animasi kedua cincin berjalan.
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('AppLoadingSpinner.small menampilkan CircularProgressIndicator', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: AppLoadingSpinner.small()),
+      ),
+    );
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('Formatters.rupiah memformat ribuan', () {
     expect(Formatters.rupiah(1000000), 'Rp 1.000.000');
     expect(Formatters.rupiah(25000), 'Rp 25.000');

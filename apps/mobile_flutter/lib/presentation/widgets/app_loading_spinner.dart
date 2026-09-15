@@ -1,11 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
 /// Loading spinner konsisten untuk seluruh aplikasi.
 ///
-/// Konstruktor default meniru animasi login web: dua cincin berlawanan arah
-/// (navy di luar, biru di dalam) + logo THS-THM di tengah.
+/// Konstruktor default menampilkan dua cincin gradien yang berputar berlawanan
+/// arah (gradien navy di luar, gradien biru di dalam) + logo THS-THM di tengah.
 /// `.small` tetap satu cincin (untuk tombol).
 class AppLoadingSpinner extends StatelessWidget {
   final double size;
@@ -16,8 +18,8 @@ class AppLoadingSpinner extends StatelessWidget {
 
   const AppLoadingSpinner({
     super.key,
-    this.size = 32,
-    this.strokeWidth = 3,
+    this.size = 160,
+    this.strokeWidth = 15,
     this.color,
     this.message,
     this.small = false,
@@ -70,7 +72,7 @@ class AppLoadingSpinner extends StatelessWidget {
   }
 }
 
-/// Dua cincin berputar berlawanan arah + logo di tengah — ala login web.
+/// Dua cincin gradien berputar berlawanan arah + logo di tengah.
 class _DualRingSpinner extends StatefulWidget {
   final double size;
   const _DualRingSpinner({required this.size});
@@ -94,10 +96,12 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat();
+    // Berputar konstan berlawanan arah jarum jam (tanpa reverse agar tidak
+    // bolak-balik) sehingga terlihat saling berlawanan dengan cincin luar.
     _inner = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    )..repeat();
   }
 
   @override
@@ -112,7 +116,7 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
     final size = widget.size;
     final innerSize = size * 0.58;
     final innerPad = (size - innerSize) / 2;
-    final logoSize = innerSize * 0.62;
+    final logoSize = innerSize * 0.72;
 
     return SizedBox(
       width: size,
@@ -122,21 +126,33 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
         children: [
           Positioned.fill(
             child: RotationTransition(
+              // Animasi luar: clockwise (0 → 1).
               turns: _outer,
-              child: const CircularProgressIndicator(
-                strokeWidth: 3,
-                color: _navy,
+              child: SizedBox.expand(
+                child: CustomPaint(
+                  painter: _GradientArcPainter(
+                    gradientColors: const [_navy, Color(0xFF6AB7FF), _navy],
+                    strokeWidth: size * 0.094,
+                    startAngle: -math.pi / 2,
+                    sweepAngle: 4.7,
+                  ),
+                ),
               ),
             ),
           ),
           Padding(
             padding: EdgeInsets.all(innerPad),
             child: RotationTransition(
-              turns: _inner,
-              child: const SizedBox.expand(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: _blue,
+              // Animasi dalam: counter-clockwise (1 → 0).
+              turns: Tween<double>(begin: 1, end: 0).animate(_inner),
+              child: SizedBox.expand(
+                child: CustomPaint(
+                  painter: _GradientArcPainter(
+                    gradientColors: const [_blue, Color(0xFF93C5FD), _blue],
+                    strokeWidth: size * 0.078,
+                    startAngle: math.pi / 2,
+                    sweepAngle: 4.7,
+                  ),
                 ),
               ),
             ),
@@ -161,4 +177,52 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
       ),
     );
   }
+}
+
+/// Painter satu cincin gradien (efek "komet"): transparan → warna → transparan.
+///
+/// Memakai `SweepGradient` agar satu arc panjang dengan warna yang memudar di
+/// kedua ujungnya. Ujung transparan menghadap arah putaran sehingga cincin
+/// tampak seperti bercahaya dan berputar berkelanjutan (tanpa garis lompatan).
+class _GradientArcPainter extends CustomPainter {
+  final List<Color> gradientColors;
+  final double strokeWidth;
+  final double startAngle;
+  final double sweepAngle;
+
+  const _GradientArcPainter({
+    required this.gradientColors,
+    required this.strokeWidth,
+    this.startAngle = 0,
+    this.sweepAngle = math.pi * 2,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final arcRect = rect.deflate(strokeWidth / 2);
+    final gradient = SweepGradient(
+      colors: gradientColors,
+      startAngle: startAngle,
+      endAngle: startAngle + sweepAngle,
+    );
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    if (sweepAngle >= math.pi * 2) {
+      canvas.drawCircle(arcRect.center, arcRect.longestSide / 2, paint);
+      return;
+    }
+    canvas.drawArc(arcRect, startAngle, sweepAngle, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GradientArcPainter oldDelegate) =>
+      oldDelegate.gradientColors != gradientColors ||
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.startAngle != startAngle ||
+      oldDelegate.sweepAngle != sweepAngle;
 }

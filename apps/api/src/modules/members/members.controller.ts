@@ -21,7 +21,7 @@ export class MembersController {
   ) {}
 
   @Get('me')
-  @CrudAuth('anggota', 'penguji', 'admin_ranting', 'admin_wilayah', 'admin_distrik', 'superadmin', { scope: 'self', summary: 'Ambil data anggota untuk user yang login' })
+  @CrudAuth('anggota', 'penguji', 'admin_kegiatan', 'admin_ranting', 'admin_wilayah', 'admin_distrik', 'superadmin', { scope: 'self', summary: 'Ambil data anggota untuk user yang login' })
   async getMe(@Req() req: ScopedRequest) {
     const user = (req as any).user;
     if (!user?.email) {
@@ -151,25 +151,25 @@ export class MembersController {
   }
 
   @Get(':id/documents')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Ambil dokumen anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Ambil dokumen anggota' })
   getDocuments(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.getDocuments(id, req.user);
   }
 
   @Get(':id/dues')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Ambil iuran anggota' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Ambil iuran anggota' })
   getDues(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.membersService.getDues(id, req.user);
   }
 
   @Get(':id/digital-card')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Kartu Anggota Digital dengan QR Code' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Kartu Anggota Digital dengan QR Code' })
   getDigitalCard(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.digitalCardService.getDigitalCard(id, req.scope, req.user);
   }
 
   @Get(':id/digital-card/pdf')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Download Kartu Anggota Digital (PDF)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Download Kartu Anggota Digital (PDF)' })
   async getDigitalCardPdf(@Param('id') id: string, @Req() req: ScopedRequest, @Res() res: Response) {
     try {
       const pdfBuffer = await this.digitalCardService.getDigitalCardPdf(id, req.scope, req.user);
@@ -184,7 +184,7 @@ export class MembersController {
   }
 
   @Get(':id/digital-card/image')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Preview Kartu Anggota Digital (PNG)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Preview Kartu Anggota Digital (PNG)' })
   async getDigitalCardImage(
     @Param('id') id: string,
     @Req() req: ScopedRequest,
@@ -211,7 +211,7 @@ export class MembersController {
   }
 
   @Get(':id/digital-card/security')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Status keamanan QR & riwayat pemindaian kartu digital' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Status keamanan QR & riwayat pemindaian kartu digital' })
   getCardSecurity(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.digitalCardService.getCardSecurity(id, req.scope, req.user);
   }
@@ -259,7 +259,7 @@ export class MembersController {
   }
 
   @Get(':id/digital-card/issuances')
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'anggota', { scope: 'self', summary: 'Riwayat penerbitan kartu (digital & fisik)' })
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', 'anggota', { scope: 'self', summary: 'Riwayat penerbitan kartu (digital & fisik)' })
   getCardIssuances(@Param('id') id: string, @Req() req: ScopedRequest) {
     return this.digitalCardService.getCardIssuances(id, req.scope, req.user);
   }
