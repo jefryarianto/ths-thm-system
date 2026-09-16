@@ -72,18 +72,18 @@ class _HomeScreenState extends State<HomeScreen> {
               // Konten beranda diberi padding horizontal 16 agar chip, judul
               // section (mis. "Kartu Anggota (KTA)") dan kartu tidak menempel
               // ke tepi layar.
-              const SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _ShortcutChips()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
-              const SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _KtaSection()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              const SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _GamificationTip()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),

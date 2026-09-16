@@ -197,7 +197,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         todayBorder: const BorderSide(color: AppTheme.primary, width: 1.5),
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: primary,
         linearTrackColor: softLine,
       ),

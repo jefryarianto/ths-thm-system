@@ -138,7 +138,7 @@ class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen>
         fit: StackFit.expand,
         children: [
           if (ready)
-            CameraPreview(controller!)
+            CameraPreview(controller)
           else
             Center(
               child: _error != null
@@ -208,15 +208,15 @@ class _GuideFrameOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return const Stack(
       fit: StackFit.expand,
       children: [
-        const CustomPaint(painter: _GuideFramePainter()),
+        CustomPaint(painter: _GuideFramePainter()),
         Positioned(
           left: 32,
           right: 32,
           top: 36,
-          child: const Text(
+          child: Text(
             'Posisikan wajah di dalam bingkai\nPastikan pencahayaan cukup dan foto tajam',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -269,8 +269,8 @@ class _GuideFramePainter extends CustomPainter {
     );
 
     // Empat sudut tegas (bracket).
-    final bracket = 26.0;
-    final stroke = 4.0;
+    const bracket = 26.0;
+    const stroke = 4.0;
     final paint = Paint()
       ..color = Colors.white
       ..strokeWidth = stroke
