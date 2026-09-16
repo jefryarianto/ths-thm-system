@@ -200,6 +200,38 @@ describe('MembersDigitalCardService', () => {
       expect(result.data.card.nomorDokumen).toBe('KTA-LRT-0103-001-1994');
     });
 
+    it('should normalize verificationUrl legacy (/api/documents/verify/...) ke /verify/ agar dibuka di browser', async () => {
+      const prevFrontend = process.env.FRONTEND_URL;
+      process.env.FRONTEND_URL = 'https://ths-thm.cloud';
+      try {
+        const existing = {
+          id: 'doc-legacy',
+          nomorDokumen: 'KTA-LRT-0103-001-1994',
+          verificationUrl: 'https://ths-thm.cloud/api/documents/verify/legacy-uuid-123',
+          status: 'generated',
+        };
+        mockPrisma.anggota.findUnique.mockResolvedValue({ ...mockMember, dokumen: [existing] });
+
+        const result = await service.getDigitalCard('m-lrt-1');
+
+        const url = result.data.card.verificationUrl as string;
+        expect(url.startsWith('https://ths-thm.cloud/verify/')).toBe(true);
+        expect(url).not.toContain('/api/documents/verify/');
+        // Token pada URL adalah JWT QR bertanda tangan (3 segmen base64url)
+        expect(url.replace('https://ths-thm.cloud/verify/', '').split('.')).toHaveLength(3);
+
+        // QR juga digenerate dari URL publik, bukan endpoint JSON API
+        const { toDataURL } = jest.requireMock('qrcode');
+        expect(toDataURL).toHaveBeenCalledWith(
+          expect.stringContaining('https://ths-thm.cloud/verify/'),
+          expect.anything(),
+        );
+      } finally {
+        if (prevFrontend === undefined) delete process.env.FRONTEND_URL;
+        else process.env.FRONTEND_URL = prevFrontend;
+      }
+    });
+
     it('should generate QR dari verificationUrl', async () => {
       const { toDataURL } = jest.requireMock('qrcode');
       toDataURL.mockResolvedValue('data:image/png;base64,FAKEQR');

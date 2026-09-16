@@ -155,6 +155,35 @@ describe('DocumentsService', () => {
       const result = await service.generate({ memberId: 'm1', type: 'kartu_anggota' });
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
+
+    it('should write verificationUrl format publik (/verify/...) bukan endpoint JSON API', async () => {
+      mockPrisma.dokumen.create.mockResolvedValue({
+        id: 'd1',
+        nomorDokumen: 'DOC-2026-ABCD1234',
+        verificationUrl: 'http://localhost:3000/verify/signed',
+      });
+      mockPrisma.qRValidation.create.mockResolvedValue({});
+      mockPrisma.anggota.findUnique.mockResolvedValue({
+        email: 'anggota@test.com',
+        namaLengkap: 'Budi',
+      });
+
+      const prevFrontend = process.env.FRONTEND_URL;
+      process.env.FRONTEND_URL = 'http://localhost:3000';
+      try {
+        await service.generate({ memberId: 'm1', type: 'sertifikat_pelatihan' });
+
+        const data = mockPrisma.dokumen.create.mock.calls[0][0].data;
+        expect(data.verificationUrl.startsWith('http://localhost:3000/verify/')).toBe(true);
+        expect(data.verificationUrl).not.toContain('/api/documents/verify/');
+        // Token pada URL adalah JWT QR bertanda tangan (3 segmen base64url)
+        const qrToken = data.verificationUrl.replace('http://localhost:3000/verify/', '');
+        expect(qrToken.split('.')).toHaveLength(3);
+      } finally {
+        if (prevFrontend === undefined) delete process.env.FRONTEND_URL;
+        else process.env.FRONTEND_URL = prevFrontend;
+      }
+    });
   });
 
   describe('verifyByToken', () => {

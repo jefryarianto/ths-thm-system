@@ -14,7 +14,11 @@ import { paginate } from '../../common/utils/pagination';
 import { PenandatanganService } from '../penandatangan/penandatangan.service';
 import { DocumentBatchService } from './document-batch.service';
 import { JobPayload, JobResult } from '../../common/queue/queue.interface';
-import { resolveQrToken } from '../../common/utils/qr-token.util';
+import {
+  resolveQrToken,
+  buildPublicVerifyUrl,
+  normalizeVerificationUrl,
+} from '../../common/utils/qr-token.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
@@ -116,12 +120,20 @@ export class DocumentsService {
     ) {
       throw new ForbiddenException('Akses ditolak: diluar cakupan wilayah Anda');
     }
+    if (doc?.verificationUrl) {
+      // Normalisasi URL verifikasi lama (`/api/documents/verify/<token>`) ke format
+      // halaman publik `/verify/<token>` agar dibuka browser → UI HTML, bukan JSON mentah.
+      doc.verificationUrl = normalizeVerificationUrl(doc.verificationUrl, {
+        typ: doc.tipe || 'kta',
+        src: 'digital',
+      });
+    }
     return doc;
   }
 
   async generate(dto: GenerateDocumentDto) {
     const token = uuidv4();
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/documents/verify/${token}`;
+    const verificationUrl = buildPublicVerifyUrl(token, { typ: dto.type, src: 'digital' });
     const nomorDokumen = `DOC-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const doc = await (this.prisma as any).$transaction(async (tx: any) => {

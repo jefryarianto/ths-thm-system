@@ -8,7 +8,7 @@ import { assertSelfMember, SelfScopeUser } from '../../common/utils/self-scope.h
 import { CacheService } from '../../common/services/cache.service';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
-import { signQrToken } from '../../common/utils/qr-token.util';
+import { signQrToken, normalizeVerificationUrl } from '../../common/utils/qr-token.util';
 
 export function xmlEscape(value: string): string {
   return value
@@ -359,7 +359,10 @@ export class MembersDigitalCardService {
       isValid: qr.isValid,
       scanCount: qr.scanCount,
       scannedAt: qr.scannedAt?.toISOString() ?? null,
-      verificationUrl: qr.verificationUrl,
+      verificationUrl: normalizeVerificationUrl(qr.verificationUrl, {
+        typ: 'kta',
+        src: qr.source === 'printed' ? 'printed' : 'digital',
+      }),
       createdAt: qr.createdAt.toISOString(),
     }));
     return {
@@ -630,7 +633,15 @@ export class MembersDigitalCardService {
       where: { anggotaId: member.id, tipe: 'kartu_anggota' },
       orderBy: { createdAt: 'desc' },
     });
-    if (existing) return existing;
+    if (existing) {
+      return {
+        ...existing,
+        verificationUrl: normalizeVerificationUrl(existing.verificationUrl, {
+          typ: 'kta',
+          src: 'digital',
+        }),
+      };
+    }
 
     const token = uuidv4();
     const signedToken = signQrToken({ ref: token, typ: 'kta', src: 'digital' });
@@ -729,6 +740,12 @@ export class MembersDigitalCardService {
       throw new NotFoundException('Penerbitan kartu fisik tidak ditemukan');
     }
 
+    // Normalisasi URL QR lama → format `/verify/<token>` agar scan PDF fisik membuka UI.
+    const verificationUrl = normalizeVerificationUrl(qr.verificationUrl, {
+      typ: 'kta',
+      src: 'printed',
+    });
+
     const distrikId = member.ranting?.wilayah?.distrik?.id || undefined;
     const signers = await this.penandatanganService.resolveSigners('kartu_anggota', distrikId);
     const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
@@ -737,7 +754,7 @@ export class MembersDigitalCardService {
     const card = {
       id: doc.id,
       nomorDokumen: doc.nomorDokumen,
-      verificationUrl: qr.verificationUrl,
+      verificationUrl,
       status: doc.status,
       signers,
       signerName: signers[0]?.signerName,
@@ -749,9 +766,9 @@ export class MembersDigitalCardService {
       {
         card,
         memberData: this.buildMemberData(member),
-        verificationUrl: qr.verificationUrl,
+        verificationUrl,
         levelVisual,
-        qrDataUrl: await this.buildQr(qr.verificationUrl),
+        qrDataUrl: await this.buildQr(verificationUrl),
         template,
       },
       { combined: true },
@@ -830,7 +847,10 @@ export class MembersDigitalCardService {
         const { signatureImage, stampImage } = await this.resolveSignatureStamp(distrikId);
         const template = await this.resolveActiveTemplate(distrikId);
         const levelVisual = await this.tingkatanService.resolveLevelVisual(member.tingkat);
-        const contributor = qr.verificationUrl;
+        const contributor = normalizeVerificationUrl(qr.verificationUrl, {
+          typ: 'kta',
+          src: qr.source === 'printed' ? 'printed' : 'digital',
+        });
         const card = {
           id: qr.dokumen.id,
           nomorDokumen: qr.dokumen.nomorDokumen,
@@ -898,7 +918,12 @@ export class MembersDigitalCardService {
     const card = {
       id: existingCard.id,
       nomorDokumen: existingCard.nomorDokumen,
-      verificationUrl: existingCard.verificationUrl || '',
+      // Normalisasi URL lama (`/api/documents/verify/...`) → `/verify/<token>` agar
+      // QR & tombol "Verifikasi" membuka halaman HTML, bukan JSON mentah dari API.
+      verificationUrl: normalizeVerificationUrl(existingCard.verificationUrl, {
+        typ: 'kta',
+        src: 'digital',
+      }),
       status: existingCard.status,
       // Backward-compat: signer pertama tetap di `signerName`/`signerTitle`.
       signers,

@@ -56,3 +56,41 @@ export function resolveQrToken(
     return null;
   }
 }
+/**
+ * Bangun URL verifikasi publik `{FRONTEND_URL}/verify/<token>` — halaman HTML
+ * yang aman dibuka di browser, BUKAN endpoint JSON `/api/documents/verify/<token>`.
+ *
+ * Bila `refToken` sudah berupa JWT QR yang valid → dipakai apa adanya;
+ * bila UUID polos (format legacy) → ditandatangani dulu dengan `typ`/`src`.
+ */
+export function buildPublicVerifyUrl(
+  refToken: string,
+  opts: { typ?: string; src?: 'digital' | 'printed' } = {},
+): string {
+  const frontend = process.env.FRONTEND_URL || 'http://localhost:3000';
+  if (resolveQrToken(refToken)) {
+    return `${frontend}/verify/${refToken}`;
+  }
+  const signedToken = signQrToken({
+    ref: refToken,
+    typ: opts.typ || 'kta',
+    src: opts.src || 'digital',
+  });
+  return `${frontend}/verify/${signedToken}`;
+}
+
+/**
+ * Normalisasi on-read URL verifikasi legacy (format lama
+ * `/api/documents/verify/<token>`) ke format publik `/verify/<token>`.
+ * URL yang sudah berbentuk baru dikembalikan apa adanya — aman dipakai
+ * sebagai "migrasi tanpa menulis DB".
+ */
+export function normalizeVerificationUrl(
+  url: string | null | undefined,
+  opts: { typ?: string; src?: 'digital' | 'printed' } = {},
+): string {
+  if (!url) return '';
+  const match = /\/api\/documents\/verify\/([^/?#]+)/.exec(url);
+  if (!match) return url;
+  return buildPublicVerifyUrl(match[1], opts);
+}
