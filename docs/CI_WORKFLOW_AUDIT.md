@@ -58,11 +58,18 @@ dalam **satu push**; tetap ada jalur manual `workflow_dispatch`.
 
 ### R4 — Build Docker production tanpa cache
 
-`production.yml` build 2 image tanpa `cache-from/cache-to` (type=gha),
-sementara job trivy di `security-scan.yml` **sudah** memakai
-`type=gha,mode=max` — cache layer Docker yang dibangun scanner tidak
-pernah dipakai deployer. Fix: tambah `cache-from: type=gha` /
-`cache-to: type=gha,mode=max` di kedua build production (API & Web).
+`production.yml` build 2 image tanpa cache backend sama sekali.
+Fix (commit `7b539308`): `cache-from/cache-to type=registry,mode=max`
+tag `:buildcache` di kedua build, dengan `setup-buildx-action`
+dipertahankan (driver `docker-container` diperlukan untuk backend
+registry). Penelusuran menunjukkan step "use default driver" lama justru
+ilusi — `setup-buildx-action` tetap menarik `moby/buildkit` lalu
+buildernya dibuang, sehingga build selama ini jalan di driver default
+(Docker 28 + overlay2) tanpa dukungan cache. Usulan awal `type=gha`
+dipakai karena backend itu tak didukung driver default; registry cache
+(kedua image publik) gratis dan tidak memakan kuota cache GHA.
+Hasil terukur dua run pada sha sama: build API 3m05s → 4s, Web 3m45s →
+4s (job Build & Push 9m34s → 1m17s).
 
 ### R5 — Tidak ada `concurrency` di workflow non-E2E
 
@@ -110,14 +117,14 @@ retensi 30 hari untuk laporan shard yang sudah digabung bisa dipangkas
 
 ## Rekomendasi berurutan (dampak / effort)
 
-| #   | Aksi                                                                                                                          | Dampak                                    | Effort   |
-| --- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------- |
-| 1   | ✅ **DITERAPKAN** (`99ddf0a3`) — Path filter EAS (`apps/mobile/**`, packages, lockfile)                                       | −15 menit-runner per push non-mobile      | 5 menit  |
-| 2   | ✅ **DITERAPKAN** (`99ddf0a3`) — Hapus build Docker duplikat di job snyk; install setelah cek token (31s, dari ±10 menit)     | −2 build Docker + install                 | 10 menit || 3 | ✅ **DITERAPKAN** — Job `scan-images` di production.yml: Trivy memindai image produksi langsung dari GHCR, paralel dengan deploy; build Docker di job trivy security-scan dihapus. Sisa: rescan image mingguan (schedule) belum ada | −2 build Docker penuh per push (±17.5 menit) | 30 menit |
-| 4   | `cache-from/to type=gha` di production.yml                                                                                    | build Docker deploy −30-60%               | 10 menit |
-| 5   | ✅ **DITERAPKAN** (`99ddf0a3`) — `concurrency` di ci.yml                                                                      | hemat runner saat push beruntun           | 5 menit  |
-| 6   | ✅ **safety-check dipangkas** (guard `.only`/`.skip` murni grep, PR-only) — sisa: perbaiki probe `/login` di visual-baselines | PR lebih cepat, workflow manual berfungsi | 20 menit |
-| 7   | (Opsional) Kurangi retensi blob-report shard                                                                                  | storage                                   | 2 menit  |
+| #   | Aksi                                                                                                                                                                                                                                                                                                                                                                                                                                   | Dampak                                    | Effort   |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------- | --- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------- |
+| 1   | ✅ **DITERAPKAN** (`99ddf0a3`) — Path filter EAS (`apps/mobile/**`, packages, lockfile)                                                                                                                                                                                                                                                                                                                                                | −15 menit-runner per push non-mobile      | 5 menit  |
+| 2   | ✅ **DITERAPKAN** (`99ddf0a3`) — Hapus build Docker duplikat di job snyk; install setelah cek token (31s, dari ±10 menit)                                                                                                                                                                                                                                                                                                              | −2 build Docker + install                 | 10 menit |     | 3   | ✅ **DITERAPKAN** — Job `scan-images` di production.yml: Trivy memindai image produksi langsung dari GHCR, paralel dengan deploy; build Docker di job trivy security-scan dihapus. Sisa: rescan image mingguan (schedule) belum ada | −2 build Docker penuh per push (±17.5 menit) | 30 menit |
+| 4   | ✅ **DITERAPKAN** (`7b539308`) — cache registry BuildKit (`type=registry,mode=max`, tag `:buildcache`) di kedua build production, dengan builder `docker-container` dipertahankan. Catatan: usulan awal `type=gha` **tidak valid** — backend gha/registry tak didukung driver default (Docker 28 + overlay2 di runner); build run-2 terukur **API 3m05s → 4s, Web 3m45s → 4s**, blob cache gratis (image publik) & tak makan kuota GHA | build Docker deploy −30-60%               | 10 menit |
+| 5   | ✅ **DITERAPKAN** (`99ddf0a3`) — `concurrency` di ci.yml                                                                                                                                                                                                                                                                                                                                                                               | hemat runner saat push beruntun           | 5 menit  |
+| 6   | ✅ **safety-check dipangkas** (guard `.only`/`.skip` murni grep, PR-only) — sisa: perbaiki probe `/login` di visual-baselines                                                                                                                                                                                                                                                                                                          | PR lebih cepat, workflow manual berfungsi | 20 menit |
+| 7   | (Opsional) Kurangi retensi blob-report shard                                                                                                                                                                                                                                                                                                                                                                                           | storage                                   | 2 menit  |
 
 Estimasi total hemat bila 1-6 diterapkan: **±18-20 menit-runner per push
 master** (dari ±32), plus jalur PR yang jujur.
