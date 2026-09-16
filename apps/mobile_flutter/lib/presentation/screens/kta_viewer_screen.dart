@@ -15,7 +15,7 @@ import '../../data/models/member.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
-import '../widgets/secure_kta_wrapper.dart';
+import '../widgets/secure_kta_container.dart';
 
 /// Viewer kartu KTA: pinch-zoom (InteractiveViewer), flip depan/belakang,
 /// dan simpan kartu sebagai PNG ukuran asli 856×540 ke galeri.
@@ -219,7 +219,7 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
           ),
         ],
       ),
-      body: SecureKtaWrapper(
+      body: SecureKtaContainer(
         // Proteksi anti-screenshot juga aktif di viewer — tanpa jam verifikasi
         // agar tampilan kartu full-screen tidak terganggu (jam utama ada di
         // halaman KTA Digital).

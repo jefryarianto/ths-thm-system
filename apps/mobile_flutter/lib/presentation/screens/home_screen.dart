@@ -11,6 +11,7 @@ import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/home_app_bar.dart';
 import '../widgets/kta_card_widget.dart';
+import '../widgets/secure_kta_container.dart';
 import '../../data/models/member.dart';
 
 /// Beranda utama — chip shortcut scroll horizontal,
@@ -221,7 +222,14 @@ class _KtaSectionCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: KtaFlipCard(member: member, cardData: cardData),
+        // Kartu KTA lama dibungkus `SecureKtaContainer`: tata letak kartu TIDAK
+        // diubah — proteksi FLAG_SECURE aktif selama Halaman Beranda berada di
+        // layar (lihat `secure_window_channel.dart` — reference counting
+        // melindungi wrapper bertingkat dengan layar /kta maupun /kta/viewer).
+        // Banner jam verifikasi live disembunyikan (default showLiveClock false).
+        child: SecureKtaContainer(
+          childKtaExisting: KtaFlipCard(member: member, cardData: cardData),
+        ),
       ),
     );
   }

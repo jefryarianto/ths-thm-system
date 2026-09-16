@@ -36,6 +36,17 @@ class AppTheme {
   /// Biru rosario.
   static const Color info = Color(0xFF2B5AA6);
 
+  /// Bright Blue — teks link interaktif ("Lihat Detail", "Lihat Semua").
+  /// Kontras ≈5.9:1 di atas `#F8FAFC`/putih → lolos WCAG AA (≥4.5:1) untuk
+  /// ukuran teks normal, termasuk bagi pengguna low-vision.
+  static const Color linkBlue = Color(0xFF1E5BB2);
+
+  /// Bright Blue pekat — state link ditekan/hover (kontras lebih tinggi lagi).
+  static const Color linkBlueDark = Color(0xFF154A8F);
+
+  /// Bright Blue muda — teks link pada dark mode (kontras ≥≥4.5:1 di navy).
+  static const Color linkBlueLight = Color(0xFF9CC5F0);
+
   static const Color surface = Color(0xFFFFFFFF);
 
   /// Latar aplikasi — abu ultra-terang yang bersih (`#F8FAFC`) agar konten
@@ -189,17 +200,21 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 20),
         ),
       ),
+      // Teks link interaktif ("Lihat Detail", "Lihat Semua") memakai Bright
+      // Blue #1E5BB2 — bukan emas — agar terlihat sebagai aksi yang dapat
+      // ditekan dengan kontras kuat di atas latar terang.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryDark,
+          foregroundColor: linkBlue,
+          disabledForegroundColor: linkBlue.withValues(alpha: 0.4),
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryDark,
+          foregroundColor: linkBlue,
           minimumSize: const Size.fromHeight(48),
-          side: BorderSide(color: primary.withValues(alpha: 0.55)),
+          side: BorderSide(color: linkBlue.withValues(alpha: 0.55)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -315,6 +330,19 @@ class AppTheme {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         indicatorColor: primaryLight.withValues(alpha: 0.22),
+      ),
+      // Link interaktif pada dark mode memakai biru muda agar tetap ≥4.5:1.
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: linkBlueLight,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: linkBlueLight,
+          side: BorderSide(color: linkBlueLight.withValues(alpha: 0.55)),
+        ),
       ),
     );
   }

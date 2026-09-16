@@ -12,7 +12,7 @@ import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
-import '../widgets/secure_kta_wrapper.dart';
+import '../widgets/secure_kta_container.dart';
 
 class KtaScreen extends StatefulWidget {
   const KtaScreen({super.key});
@@ -48,7 +48,7 @@ class _KtaScreenState extends State<KtaScreen> {
           title: 'KTA Digital',
         ),
       ),
-      body: SecureKtaWrapper(
+      body: SecureKtaContainer(
         // ── TEMPATKAN widget KTA lama Anda di parameter childKtaExisting ──
         // Desain internal `KtaFlipCard` / kartu TIDAK diubah/dirombak.
         // Yang dilakukan hanya membungkus dengan keamanan + jam verifikasi.

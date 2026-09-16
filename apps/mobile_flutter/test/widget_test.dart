@@ -167,7 +167,12 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: SecureKtaWrapper(childKtaExisting: SizedBox())),
+        home: Scaffold(
+          body: SecureKtaWrapper(
+            showLiveClock: true,
+            childKtaExisting: SizedBox(),
+          ),
+        ),
       ),
     );
     await tester.pump();
@@ -200,6 +205,21 @@ void main() {
     );
     await tester.pump();
     expect(find.text('LIVE'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('SecureKtaWrapper default menyembunyikan banner verifikasi',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SecureKtaWrapper(childKtaExisting: SizedBox()),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('LIVE'), findsNothing);
+    expect(find.textContaining('VERIFIKASI '), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
