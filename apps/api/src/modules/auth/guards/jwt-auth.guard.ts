@@ -49,6 +49,9 @@ export class RolesGuard implements CanActivate {
 
     if (!user) return false;
 
+    // Superadmin always has full access to all endpoints
+    if (user.role === 'superadmin') return true;
+
     return requiredRoles.includes(user.role);
   }
 }
