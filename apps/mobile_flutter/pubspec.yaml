@@ -31,6 +31,10 @@ dependencies:
   provider: ^6.1.5+1
   gal: ^2.3.3
   camera: ^0.12.1
+  crypto: ^3.0.5
+  # Keamanan KTA: blokir screenshot & rekaman layar lewat platform channel
+  # aman `ths_thm/secure_window` (native Android FLAG_SECURE) — lihat
+  # lib/core/security/secure_window_channel.dart.
 
 dev_dependencies:
   flutter_test:

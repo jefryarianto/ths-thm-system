@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeController extends ChangeNotifier {
   static const _prefKey = 'theme_mode';
 
-  ThemeController([ThemeMode initial = ThemeMode.system]) : _mode = initial;
+  // Default mode LIGHT — tema kontras tinggi `#F8FAFC` dirancang untuk mode
+  // terang (dark mode pada perangkat tidak boleh menyembunyikan tema terang).
+  ThemeController([ThemeMode initial = ThemeMode.light]) : _mode = initial;
 
   ThemeMode _mode;
   ThemeMode get mode => _mode;
@@ -31,7 +33,7 @@ class ThemeController extends ChangeNotifier {
       case 'dark':
         return ThemeMode.dark;
       default:
-        return ThemeMode.system;
+        return ThemeMode.light;
     }
   }
 

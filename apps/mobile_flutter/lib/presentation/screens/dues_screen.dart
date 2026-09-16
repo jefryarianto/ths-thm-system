@@ -8,6 +8,7 @@ import '../../data/models/due.dart';
 import '../../logic/dues/dues_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/due_item_card.dart';
 
 class DuesScreen extends StatefulWidget {
   const DuesScreen({super.key});
@@ -67,7 +68,10 @@ class _DuesScreenState extends State<DuesScreen> {
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(12),
                           itemCount: dues.length,
-                          itemBuilder: (context, i) => _DueCard(due: dues[i]),
+                          itemBuilder: (context, i) => DueItemCard(
+                            due: dues[i],
+                            onTap: () => _showDueDetail(context, dues[i]),
+                          ),
                         ),
                 ),
               ),
@@ -82,113 +86,9 @@ class _DuesScreenState extends State<DuesScreen> {
     return status.toLowerCase().contains('lunas') ||
         status.toLowerCase() == 'paid';
   }
-}
 
-class _SummaryBar extends StatelessWidget {
-  final int total;
-  final int lunas;
-  const _SummaryBar({required this.total, required this.lunas});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primaryDark, AppTheme.primary],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _stat('Total Iuran', '$total'),
-          _stat('Lunas', '$lunas'),
-          _stat('Belum Lunas', '${total - lunas}'),
-        ],
-      ),
-    );
-  }
-
-  Widget _stat(String label, String value) {
-    return Column(
-      children: [
-        Text(value,
-            style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.onPrimary)),
-        Text(label,
-            style: TextStyle(
-                fontSize: 11,
-                color: AppTheme.onPrimary.withValues(alpha: 0.8))),
-      ],
-    );
-  }
-}
-
-class _DueCard extends StatelessWidget {
-  final Due due;
-  const _DueCard({required this.due});
-
-  @override
-  Widget build(BuildContext context) {
-    final paid = due.status.toLowerCase().contains('lunas') ||
-        due.status.toLowerCase() == 'paid';
-    final color = AppTheme.statusColor(due.status);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            paid ? Icons.check_circle : Icons.schedule,
-            color: color,
-          ),
-        ),
-        title: Text(
-          'Iuran ${due.periode}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Jumlah: ${Formatters.rupiah(due.jumlah)}'),
-            const SizedBox(height: 2),
-            Text(
-              due.status,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-            if (due.tanggalJatuhTempo != null)
-              Text(
-                'Jatuh tempo: ${Formatters.dateLong(due.tanggalJatuhTempo)}',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
-            if (due.tanggalBayar != null)
-              Text(
-                'Dibayar: ${Formatters.dateLong(due.tanggalBayar)}',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
-          ],
-        ),
-        isThreeLine: true,
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => _showDetail(context),
-      ),
-    );
-  }
-
-  void _showDetail(BuildContext context) {
+  /// Buka detail iuran (bottom sheet) — dipanggil dari `DueItemCard.onTap`.
+  void _showDueDetail(BuildContext context, Due due) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -238,6 +138,50 @@ class _DueCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SummaryBar extends StatelessWidget {
+  final int total;
+  final int lunas;
+  const _SummaryBar({required this.total, required this.lunas});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.primaryDark, AppTheme.primary],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _stat('Total Iuran', '$total'),
+          _stat('Lunas', '$lunas'),
+          _stat('Belum Lunas', '${total - lunas}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _stat(String label, String value) {
+    return Column(
+      children: [
+        Text(value,
+            style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.onPrimary)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 11,
+                color: AppTheme.onPrimary.withValues(alpha: 0.8))),
+      ],
     );
   }
 }

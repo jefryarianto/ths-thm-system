@@ -12,6 +12,7 @@ import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
+import '../widgets/secure_kta_wrapper.dart';
 
 class KtaScreen extends StatefulWidget {
   const KtaScreen({super.key});
@@ -47,27 +48,34 @@ class _KtaScreenState extends State<KtaScreen> {
           title: 'KTA Digital',
         ),
       ),
-      body: BlocBuilder<MemberBloc, MemberState>(
-        builder: (context, state) {
-          if (state is MemberLoading) {
-            return const AppLoadingSpinner();
-          }
-          if (state is MemberError) {
-            return _Error(message: state.message);
-          }
-          if (state is! MemberLoaded) {
-            return const Center(child: Text('Belum ada data anggota'));
-          }
-          // Fetch card data if not loaded yet
-          if (state.cardData == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                context.read<MemberBloc>().add(const MemberCardDataRequested());
-              }
-            });
-          }
-          return _KtaCard(member: state.member, cardData: state.cardData);
-        },
+      body: SecureKtaWrapper(
+        // ── TEMPATKAN widget KTA lama Anda di parameter childKtaExisting ──
+        // Desain internal `KtaFlipCard` / kartu TIDAK diubah/dirombak.
+        // Yang dilakukan hanya membungkus dengan keamanan + jam verifikasi.
+        childKtaExisting: BlocBuilder<MemberBloc, MemberState>(
+          builder: (context, state) {
+            if (state is MemberLoading) {
+              return const AppLoadingSpinner();
+            }
+            if (state is MemberError) {
+              return _Error(message: state.message);
+            }
+            if (state is! MemberLoaded) {
+              return const Center(child: Text('Belum ada data anggota'));
+            }
+            // Fetch card data if not loaded yet
+            if (state.cardData == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  context
+                      .read<MemberBloc>()
+                      .add(const MemberCardDataRequested());
+                }
+              });
+            }
+            return _KtaCard(member: state.member, cardData: state.cardData);
+          },
+        ),
       ),
     );
   }

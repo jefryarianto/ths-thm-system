@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile_flutter/core/theme/app_theme.dart';
 import 'package:mobile_flutter/core/utils/formatters.dart';
 import 'package:mobile_flutter/data/models/due.dart';
 import 'package:mobile_flutter/presentation/widgets/app_loading_spinner.dart';
+import 'package:mobile_flutter/presentation/widgets/due_item_card.dart';
+import 'package:mobile_flutter/presentation/widgets/secure_kta_wrapper.dart';
 
 void main() {
   testWidgets('AppLoadingSpinner default merender dual-ring + logo dan beranimasi', (tester) async {
@@ -92,5 +95,111 @@ void main() {
       expect(due.tanggalBayar, isNull);
       expect(due.createdAt, isEmpty);
     });
+  });
+
+  testWidgets('DueItemCard menampilkan badge lunas, nominal & tanggal bayar',
+      (tester) async {
+    final due = Due.fromJson({
+      'id': 'd1',
+      'periode': '2026-10',
+      'jumlah': 150000.0,
+      'status': 'lunas',
+      'tanggalBayar': '2026-10-12T07:00:00.000Z',
+      'createdAt': '2026-10-01T07:00:00.000Z',
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: DueItemCard(due: due),
+        ),
+      ),
+    );
+    expect(find.text('Iuran 2026-10'), findsOneWidget);
+    expect(find.text('Rp 150.000'), findsOneWidget);
+    expect(find.text('lunas'), findsOneWidget);
+    expect(find.textContaining('Dibayar 12 Oktober'), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+  });
+
+  testWidgets('DueItemCard non-lunas menampilkan badge status & ikon schedule',
+      (tester) async {
+    final due = Due.fromJson({
+      'id': 'd2',
+      'periode': '2026-11',
+      'jumlah': 150000.0,
+      'status': 'menunggu_verifikasi',
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: DueItemCard(due: due)),
+      ),
+    );
+    expect(find.text('lunas'), findsNothing);
+    // Status panjang (>14 karakter) dirapikan jadi badge pendek "Belum lunas".
+    expect(find.text('Belum lunas'), findsOneWidget);
+    expect(find.byIcon(Icons.schedule), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle), findsNothing);
+  });
+
+  test('Tema global: background #F8FAFC, teks kontras tinggi, card radius 16',
+      () {
+    final theme = AppTheme.light();
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFF8FAFC));
+    expect(AppTheme.navy, const Color(0xFF0F2E5A));
+    expect(AppTheme.textSlate, const Color(0xFF1E293B));
+    expect(AppTheme.textMuted, const Color(0xFF64748B));
+    expect(AppTheme.primary, const Color(0xFFB8860B));
+    expect(theme.textTheme.titleMedium?.color, AppTheme.navy);
+    expect(theme.textTheme.bodyMedium?.color, AppTheme.textSlate);
+    expect(theme.textTheme.bodySmall?.color, AppTheme.textMuted);
+    final shape = theme.cardTheme.shape;
+    expect(shape, isA<RoundedRectangleBorder>());
+    expect(
+      (shape as RoundedRectangleBorder).borderRadius,
+      BorderRadius.circular(16),
+    );
+  });
+
+  testWidgets('SecureKtaWrapper menampilkan jam live HH:mm:ss dan kode verifikasi',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: SecureKtaWrapper(childKtaExisting: SizedBox())),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('LIVE'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'^\d{2}:\d{2}:\d{2}$')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('VERIFIKASI '), findsOneWidget);
+
+    // Detik berjalan aktif — satu tick tidak boleh error.
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+
+    // Dispose wrapper: timer dihentikan tanpa error.
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('SecureKtaWrapper tanpa jam (viewer) tetap aman', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SecureKtaWrapper(
+            showLiveClock: false,
+            childKtaExisting: SizedBox(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('LIVE'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }

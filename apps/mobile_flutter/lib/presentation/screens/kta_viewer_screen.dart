@@ -15,6 +15,7 @@ import '../../data/models/member.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
+import '../widgets/secure_kta_wrapper.dart';
 
 /// Viewer kartu KTA: pinch-zoom (InteractiveViewer), flip depan/belakang,
 /// dan simpan kartu sebagai PNG ukuran asli 856×540 ke galeri.
@@ -218,28 +219,34 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<MemberBloc, MemberState>(
-        builder: (context, state) {
-          if (state is MemberLoading) {
-            return const AppLoadingSpinner();
-          }
-          if (state is MemberError) {
-            return Center(child: Text(state.message));
-          }
-          if (state is! MemberLoaded) {
-            return const Center(child: Text('Belum ada data anggota'));
-          }
-          if (state.cardData == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                context
-                    .read<MemberBloc>()
-                    .add(const MemberCardDataRequested());
-              }
-            });
-          }
-          return _buildViewer(state.member, state.cardData);
-        },
+      body: SecureKtaWrapper(
+        // Proteksi anti-screenshot juga aktif di viewer — tanpa jam verifikasi
+        // agar tampilan kartu full-screen tidak terganggu (jam utama ada di
+        // halaman KTA Digital).
+        showLiveClock: false,
+        childKtaExisting: BlocBuilder<MemberBloc, MemberState>(
+          builder: (context, state) {
+            if (state is MemberLoading) {
+              return const AppLoadingSpinner();
+            }
+            if (state is MemberError) {
+              return Center(child: Text(state.message));
+            }
+            if (state is! MemberLoaded) {
+              return const Center(child: Text('Belum ada data anggota'));
+            }
+            if (state.cardData == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  context
+                      .read<MemberBloc>()
+                      .add(const MemberCardDataRequested());
+                }
+              });
+            }
+            return _buildViewer(state.member, state.cardData);
+          },
+        ),
       ),
     );
   }

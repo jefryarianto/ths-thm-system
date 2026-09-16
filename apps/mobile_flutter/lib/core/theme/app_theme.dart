@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// Tema aplikasi THS-THM — desain modern & profesional:
-/// emas sebagai warna aksi (brand logo), latar biru langit `#E3F2FD` dengan
-/// kartu putih, aksen biru rosario, hitam teks, merah putih perisai.
+/// Tema aplikasi THS-THM — aksesibilitas & kontras tinggi:
+/// latar abu ultra-terang `#F8FAFC`, skema teks Navy/Slate/Muted, emas tua
+/// hanya sebagai aksen kecil (garis tepi aktif / badge).
+///
+/// Semua teks di aplikasi mewarisi skema warna ini melalui `Theme.of(context)`
+/// (lihat `textTheme` di `light()`), sehingga perubahan tema langsung
+/// diterapkan secara global tanpa menyentuh tiap widget.
 class AppTheme {
-  /// Emas tua — tombol & ikon di atas latar terang (kontras ≥3:1 utk ikon,
-  /// ≥ 3.25:1 umumnya). Dipasangkan dengan teks hitam `onPrimary`.
+  // ── Skema kontras tinggi ─────────────────────────────────────────────
+  /// Deep Navy Blue — judul utama & label penting (`#0F2E5A`).
+  static const Color navy = Color(0xFF0F2E5A);
+
+  /// Slate Grey gelap — teks konten / isi utama (`#1E293B`).
+  static const Color textSlate = Color(0xFF1E293B);
+
+  /// Muted Grey — teks sub-informasi / keterangan (`#64748B`).
+  static const Color textMuted = Color(0xFF64748B);
+
+  /// Emas tua — HANYA sebagai aksen kecil (garis tepi aktif, badge).
   static const Color primary = Color(0xFFB8860B);
 
   /// Emas pekat — teks/link kecil yang butuh kontras ≥4.5:1 di latar terang.
@@ -25,10 +38,13 @@ class AppTheme {
 
   static const Color surface = Color(0xFFFFFFFF);
 
-  /// Latar aplikasi (Material Blue-50 `#E3F2FD`) — kesan modern, segar,
-  /// dan profesional; kartu putih di atasnya menonjol dengan kontras halus.
-  static const Color background = Color(0xFFE3F2FD);
+  /// Latar aplikasi — abu ultra-terang yang bersih (`#F8FAFC`) agar konten
+  /// di atasnya menonjol dengan kontras lembut namun tetap tinggi.
+  static const Color background = Color(0xFFF8FAFC);
   static const Color success = Color(0xFF16A34A);
+
+  /// Hijau sukses gelap — teks badge "lunas" (kontras ≥ 4.5:1 di atas putih).
+  static const Color successDark = Color(0xFF15803D);
   static const Color warning = Color(0xFFB45309);
   static const Color danger = Color(0xFFB91C1C);
 
@@ -40,6 +56,8 @@ class AppTheme {
       secondary: accent,
       onSecondary: Colors.white,
       surface: surface,
+      onSurface: textSlate,
+      onSurfaceVariant: textMuted,
       error: danger,
     );
 
@@ -52,30 +70,78 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: background,
       splashFactory: InkSparkle.splashFactory,
+      // ── Skema teks kontras tinggi (diwariskan ke seluruh `Text`) ────────
+      textTheme: const TextTheme(
+        headlineSmall: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+          color: navy,
+          letterSpacing: -0.3,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w800,
+          color: navy,
+          letterSpacing: -0.5,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: navy,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: navy,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: navy,
+        ),
+        bodyLarge: TextStyle(fontSize: 16, height: 1.4, color: textSlate),
+        bodyMedium: TextStyle(fontSize: 14, height: 1.35, color: textSlate),
+        bodySmall: TextStyle(fontSize: 12, height: 1.3, color: textMuted),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: navy,
+        ),
+        labelMedium: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textMuted,
+        ),
+        labelSmall: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: textMuted,
+        ),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: primaryDark,
+        foregroundColor: navy,
         elevation: 0,
         scrolledUnderElevation: 0,
-        shadowColor: Color(0x1F2B5AA6),
+        shadowColor: Color(0x0A000000),
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontSize: 17,
           fontWeight: FontWeight.w700,
-          color: primaryDark,
+          color: navy,
         ),
-        iconTheme: IconThemeData(color: primaryDark),
-        actionsIconTheme: IconThemeData(color: primaryDark),
+        iconTheme: IconThemeData(color: navy),
+        actionsIconTheme: IconThemeData(color: navy),
       ),
+      // Template kartu default — radius 16, putih solid, bayangan sangat lembut.
       cardTheme: CardThemeData(
-        elevation: 0,
+        elevation: 1,
         color: Colors.white,
         surfaceTintColor: Colors.transparent,
-        shadowColor: const Color(0x1F2B5AA6),
+        shadowColor: Colors.black.withValues(alpha: 0.04),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: softLine),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -103,12 +169,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppTheme.danger, width: 1.6),
         ),
-        labelStyle: TextStyle(color: Colors.grey.shade700),
+        labelStyle: const TextStyle(color: AppTheme.textSlate),
         floatingLabelStyle: const TextStyle(
-          color: AppTheme.primaryDark,
+          color: AppTheme.navy,
           fontWeight: FontWeight.w600,
         ),
-        helperStyle: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        helperStyle: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -251,6 +317,19 @@ class AppTheme {
         indicatorColor: primaryLight.withValues(alpha: 0.22),
       ),
     );
+  }
+
+  /// Bayangan kartu sangat lembut (aksesibilitas): hitam 4% opacity,
+  /// blur 10pt. Dipakai sebagai dasar `CardTheme` & komponen Container
+  /// agar tampilan konsisten di seluruh aplikasi.
+  static List<BoxShadow> softShadow() {
+    return [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 10,
+        offset: const Offset(0, 2),
+      ),
+    ];
   }
 
   /// Warna pelengkap label status.
