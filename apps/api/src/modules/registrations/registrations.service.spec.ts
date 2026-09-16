@@ -67,8 +67,14 @@ describe('RegistrationsService', () => {
         RegistrationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: MailService, useValue: mockMailService },
-        { provide: require('../../common/services/cache.service').CacheService, useValue: mockCache },
-        { provide: require('../../common/utils/scope-helpers').ScopeHelper, useValue: mockScopeHelper },
+        {
+          provide: require('../../common/services/cache.service').CacheService,
+          useValue: mockCache,
+        },
+        {
+          provide: require('../../common/utils/scope-helpers').ScopeHelper,
+          useValue: mockScopeHelper,
+        },
       ],
     }).compile();
 
@@ -121,8 +127,10 @@ describe('RegistrationsService', () => {
       mockPrisma.pendaftaran.create.mockResolvedValue({ id: '1', ...dto, status: 'pending' });
 
       const result = await service.create(dto);
+      // beforeCreate selalu menyertakan tanggalLahir: null saat dto tidak
+      // mengirimnya (normalizePrismaDate(dto.tanggalLahir) ?? null).
       expect(mockPrisma.pendaftaran.create).toHaveBeenCalledWith({
-        data: { namaLengkap: 'Budi', status: 'pending' },
+        data: { namaLengkap: 'Budi', status: 'pending', tanggalLahir: null },
       });
     });
 
