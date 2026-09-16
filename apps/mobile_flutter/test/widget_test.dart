@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_flutter/core/theme/app_theme.dart';
 import 'package:mobile_flutter/core/utils/formatters.dart';
 import 'package:mobile_flutter/data/models/due.dart';
+import 'package:mobile_flutter/presentation/screens/verification_result_screen.dart';
 import 'package:mobile_flutter/presentation/widgets/app_loading_spinner.dart';
 import 'package:mobile_flutter/presentation/widgets/due_item_card.dart';
 import 'package:mobile_flutter/presentation/widgets/secure_kta_wrapper.dart';
@@ -221,5 +223,178 @@ void main() {
     expect(find.text('LIVE'), findsNothing);
     expect(find.textContaining('VERIFIKASI '), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  // ── Formatters.extractQrToken ───────────────────────────────────────
+
+  test('Formatters.extractQrToken mengekstrak dari URL normalized /verify/', () {
+    expect(
+      Formatters.extractQrToken('https://ths-thm.cloud/verify/abc123def'),
+      'abc123def',
+    );
+  });
+
+  test('Formatters.extractQrToken menangani URL lama /api/documents/verify/', () {
+    expect(
+      Formatters.extractQrToken(
+          'https://ths-thm.cloud/api/documents/verify/tok-legacy?tab=1'),
+      'tok-legacy',
+    );
+  });
+
+  test('Formatters.extractQrToken mengembalikan token mentah jika bukan URL', () {
+    expect(Formatters.extractQrToken('raw-token-xyz'), 'raw-token-xyz');
+  });
+
+  // ── VerificationResultScreen ────────────────────────────────────────
+
+  // Helper: buat Response palsu dari payload sesuai format TransformInterceptor.
+  Future<Response> fakeVerifyFetch(
+    Map<String, dynamic> doc, {
+    int statusCode = 200,
+    String? message,
+  }) async {
+    if (statusCode >= 400) {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/documents/verify/tok'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/documents/verify/tok'),
+          statusCode: statusCode,
+          data: {'message': message ?? 'Not Found'},
+        ),
+      );
+    }
+    return Response(
+      requestOptions: RequestOptions(path: '/documents/verify/tok'),
+      statusCode: 200,
+      data: <String, dynamic>{
+        'success': true,
+        'data': doc,
+        'timestamp': '2026-09-16T00:00:00.000Z',
+      },
+    );
+  }
+
+  const validDoc = <String, dynamic>{
+    'valid': true,
+    'tipe': 'kartu_anggota',
+    'nomorDokumen': 'KTA-2026-0001',
+    'status': 'generated',
+    'createdAt': '2026-01-10T07:00:00.000Z',
+    'nomorAnggota': 'THS-001',
+    'namaAnggota': 'John Doe',
+    'firstScanned': false,
+    'scanCount': 3,
+    'lastScannedAt': '2026-09-10T07:00:00.000Z',
+    'scanLimit': 25,
+    'scanLeft': 22,
+    'member': <String, dynamic>{
+      'nomorAnggota': 'THS-001',
+      'namaLengkap': 'John Doe',
+      'jenisKelamin': 'Laki-laki',
+      'tempatLahir': 'Jakarta',
+      'tanggalLahir': '1990-01-01T00:00:00.000Z',
+      'statusKeanggotaan': 'aktif',
+      'ranting': 'Ranting Harapan',
+      'wilayah': 'Wilayah Jakarta',
+      'distrik': 'Distrik DKI',
+    },
+  };
+
+  const invalidDoc = <String, dynamic>{
+    'valid': false,
+    'tipe': 'kartu_anggota',
+    'nomorDokumen': 'KTA-000',
+    'status': 'revoked',
+    'createdAt': '2026-01-01T00:00:00.000Z',
+    'nomorAnggota': '',
+    'namaAnggota': '',
+    'firstScanned': false,
+    'scanCount': 0,
+    'lastScannedAt': null,
+    'scanLimit': 25,
+    'scanLeft': 25,
+    'member': null,
+  };
+
+  group('VerificationResultScreen', () {
+    testWidgets('menampilkan kartu valid dengan data anggota',
+        (tester) async {
+      // Lebihkan viewport agar semua konten ListView muat.
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: VerificationResultScreen(
+            token: 'tok-valid',
+            fetch: (_) async => fakeVerifyFetch(validDoc),
+          ),
+        ),
+      ));
+
+      // Tunggu fetch selesai + rebuild.
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kartu Anggota Valid'), findsOneWidget);
+      expect(find.text('✓ TERVERIFIKASI'), findsOneWidget);
+      expect(find.text('KTA-2026-0001'), findsOneWidget);
+      expect(find.text('John Doe'), findsWidgets);
+      expect(find.text('Anggota Aktif'), findsOneWidget);
+      expect(find.text('3 kali'), findsOneWidget);
+      expect(find.textContaining('Ranting Harapan'), findsOneWidget);
+      expect(find.text('Verifikasi Ulang'), findsNothing);
+      expect(find.text('Dokumen Tidak Valid'), findsNothing);
+    });
+
+    testWidgets('menampilkan kartu tidak valid',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: VerificationResultScreen(
+            token: 'tok-invalid',
+            fetch: (_) async => fakeVerifyFetch(invalidDoc),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dokumen Tidak Valid'), findsOneWidget);
+      expect(find.text('✗ TIDAK VALID'), findsOneWidget);
+      expect(find.text('Peringatan'), findsOneWidget);
+      expect(find.textContaining('tidak tercatat'), findsOneWidget);
+      expect(find.text('Verifikasi Ulang'), findsOneWidget);
+      expect(find.text('Kartu Anggota Valid'), findsNothing);
+    });
+
+    testWidgets('menampilkan kartu error 404 dengan tombol coba lagi',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: VerificationResultScreen(
+            token: 'tok-404',
+            fetch: (_) async =>
+                fakeVerifyFetch({}, statusCode: 404, message: 'Token QR tidak valid'),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Token QR tidak valid'), findsOneWidget);
+      expect(find.text('Coba Lagi'), findsOneWidget);
+      expect(find.text('Verifikasi Ulang'), findsNothing);
+    });
   });
 }

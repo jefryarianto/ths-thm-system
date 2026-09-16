@@ -45,6 +45,7 @@ import 'presentation/screens/claims_admin_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'presentation/screens/kta_viewer_screen.dart';
+import 'presentation/screens/verification_result_screen.dart';
 import 'logic/registration/registration_bloc.dart';
 import 'logic/claim/claim_bloc.dart';
 
@@ -174,6 +175,12 @@ class AppRouter {
       GoRoute(
         path: '/kta/viewer',
         builder: (context, state) => const KtaViewerScreen(),
+      ),
+      GoRoute(
+        path: '/kta/verify/:token',
+        builder: (context, state) => VerificationResultScreen(
+          token: state.pathParameters['token']!,
+        ),
       ),
       GoRoute(
         path: '/notifications',

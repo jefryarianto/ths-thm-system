@@ -104,13 +104,31 @@ class _KtaCard extends StatelessWidget {
         ),
         if (cardData?.verificationUrl.isNotEmpty ?? false) ...[
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => launchUrl(
-              Uri.parse(ApiClient.resolveAbsolute(cardData!.verificationUrl)),
-              mode: LaunchMode.externalApplication,
-            ),
+          FilledButton.icon(
+            onPressed: () {
+              final token = Formatters.extractQrToken(cardData!.verificationUrl);
+              context.push<void>('/kta/verify/$token');
+            },
             icon: const Icon(Icons.verified_outlined),
             label: const Text('Verifikasi Kartu'),
+          ),
+          // Fallback opsional: hasil verifikasi juga dapat dilihat via browser
+          // (berguna untuk dibagikan ke pihak luar yang tidak memakai aplikasi).
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse(
+                    ApiClient.resolveAbsolute(cardData!.verificationUrl)),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Buka di Browser'),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                textStyle: const TextStyle(fontSize: 12),
+              ),
+            ),
           ),
         ],
         const SizedBox(height: 20),
