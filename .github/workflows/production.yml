@@ -339,3 +339,95 @@ jobs:
             echo "✅ Deployment complete!"
             echo "   URL: https://ths-thm.cloud"
             echo "   Backup: daily at 02:00 → /opt/backups/ths-thm/production/"
+
+  # ─── Scan image produksi dari GHCR (R1) ─────────────────────────
+  # Sebelumnya Trivy membangun ulang 2 image Docker per push di
+  # security-scan.yml hanya untuk dipindai (±17.5 menit — R1 di
+  # docs/CI_WORKFLOW_AUDIT.md). Kini image yang SUDAH di-push job
+  # build-and-push di atas ditarik dari GHCR dan dipindai di sini,
+  # paralel dengan deploy VPS — nol build tambahan per push.
+  # Tetap jalan walau deploy gagal (kualitas image tak tergantung deploy).
+  scan-images:
+    name: 🐳 Scan Production Images (GHCR)
+    needs: [build-and-push, deploy]
+    if: always() && needs.build-and-push.result == 'success'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read          # pull image GHCR privat
+      security-events: write  # upload SARIF ke Security tab
+
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull production images
+        run: |
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
+          docker pull ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
+
+      - name: Trivy — scan image API
+        id: trivy-api
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ env.IMAGE_NAME }}/api:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-api-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Trivy — scan image Web
+        id: trivy-web
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ env.IMAGE_NAME }}/web:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-web-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
+      - name: Upload Trivy SARIF (API)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-api-results.sarif
+          category: trivy-docker-api
+
+      - name: Upload Trivy SARIF (Web)
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-web-results.sarif
+          category: trivy-docker-web
+
+      - name: Upload Trivy raw artifacts
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-results
+          path: trivy-*.sarif
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Trivy summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## 🐳 Trivy — Image Produksi (GHCR)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|:------|:-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| api:${{ env.IMAGE_TAG }} | ${{ steps.trivy-api.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| web:${{ env.IMAGE_TAG }} | ${{ steps.trivy-web.conclusion }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "SARIF diunggah ke **GitHub Security tab** → https://github.com/${{ github.repository }}/security/code-scanning" >> $GITHUB_STEP_SUMMARY
