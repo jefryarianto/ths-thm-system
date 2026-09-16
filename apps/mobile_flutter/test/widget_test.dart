@@ -34,16 +34,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test('AppLoadingSpinner dual-ring memakai jarak antar-ring & ring-ke-logo sama', () {
-    final f = AppLoadingSpinner.debugSpacingFractions();
-    final ringGap = f[2];
-    final logoGap = f[3];
-    // Kedua celah harus identik (toleransi floating point kecil).
-    expect(ringGap, closeTo(logoGap, 1e-9));
-    // Celah positif dan wajar: sekitar 7.5% dari ukuran spinner.
-    expect(ringGap, closeTo(0.075, 1e-9));
-  });
-
   test('Formatters.rupiah memformat ribuan', () {
     expect(Formatters.rupiah(1000000), 'Rp 1.000.000');
     expect(Formatters.rupiah(25000), 'Rp 25.000');

@@ -69,142 +69,27 @@ class _HomeScreenState extends State<HomeScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              // Konten beranda diberi padding horizontal 20 agar chip, judul
-              // section (mis. "Kartu Tanda Anggota (KTA)") dan kartu memiliki
-              // jarak yang lega dari tepi layar.
-              const SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                sliver: SliverToBoxAdapter(child: _BrandHero()),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              // Konten beranda diberi padding horizontal 16 agar chip, judul
+              // section (mis. "Kartu Anggota (KTA)") dan kartu tidak menempel
+              // ke tepi layar.
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _ShortcutChips()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _KtaSection()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _GamificationTip()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Banner brand di atas beranda — kartu gradien emas modern & profesional:
-/// logo bulat, nama organisasi, tagline, dan status keanggotaan.
-class _BrandHero extends StatelessWidget {
-  const _BrandHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      decoration: BoxDecoration(
-        gradient: AppTheme.headerGradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryDark.withValues(alpha: 0.28),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            padding: const EdgeInsets.all(9),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: Color(0x1F000000), blurRadius: 8),
-              ],
-            ),
-            child: Image.asset(
-              'assets/images/logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'THS - THM',
-                  style: TextStyle(
-                    color: AppTheme.onPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Taruna Harapan Siluman • Tanda Harian Mulia',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Color(0xB31E1800), fontSize: 11.5),
-                ),
-                const SizedBox(height: 8),
-                BlocBuilder<MemberBloc, MemberState>(
-                  builder: (context, state) {
-                    if (state is! MemberLoaded) {
-                      return const SizedBox.shrink();
-                    }
-                    final member = state.member;
-                    return _statusPill(
-                        member.status.isEmpty ? 'Anggota' : member.status);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusPill(String status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.verified_user_outlined,
-              size: 14, color: AppTheme.primaryDark),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              status,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryDark,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -282,7 +167,7 @@ class _KtaSection extends StatelessWidget {
               Icon(Icons.credit_card_outlined,
                   size: 18, color: AppTheme.primaryDark),
               SizedBox(width: 6),
-              Text('Kartu Tanda Anggota (KTA)',
+              Text('Kartu Anggota (KTA)',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ]),
             TextButton(

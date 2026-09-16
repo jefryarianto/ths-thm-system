@@ -34,12 +34,6 @@ class _GamificationScreenState extends State<GamificationScreen> {
         );
   }
 
-  /// Muat ulang seluruh data gamification dari awal (untuk tombol "Coba Lagi").
-  void _reload() {
-    setState(() => _loaded = false);
-    _startLoading();
-  }
-
   @override
   void initState() {
     super.initState();
@@ -65,10 +59,7 @@ class _GamificationScreenState extends State<GamificationScreen> {
               return const AppLoadingSpinner(message: 'Memuat data...');
             }
             if (state is GamificationError) {
-              return _GamificationErrorView(
-                message: state.message,
-                onRetry: _reload,
-              );
+              return Center(child: Text(state.message));
             }
             return Column(children: [
               _TabBar(tab: _tab, onChanged: (i) => setState(() => _tab = i)),
@@ -226,135 +217,44 @@ class _ProfileTab extends StatelessWidget {
 
 class _LeaderboardTab extends StatelessWidget {
   const _LeaderboardTab();
-
-  static const _medals = {1: '\u{1F947}', 2: '\u{1F948}', 3: '\u{1F949}'};
-
-  void _reload(BuildContext context) {
-    context.read<GamificationBloc>().add(
-          const GamificationLeaderboardLoadRequested(),
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
         if (state is! GamificationLoaded || state.leaderboard == null) {
-          return const AppLoadingSpinner(message: 'Memuat leaderboard...');
+          return const AppLoadingSpinner();
         }
         final entries = state.leaderboard!;
         if (entries.isEmpty) {
-          return _EmptyLeaderboard(onRetry: () => _reload(context));
+          return const Center(child: Text('Belum ada data leaderboard'));
         }
-        return RefreshIndicator(
-          onRefresh: () async => _reload(context),
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            itemCount: entries.length,
-            itemBuilder: (context, i) {
-              final e = entries[i];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-                    child: Text(_medals[e.rank] ?? '${e.rank}',
-                        style: const TextStyle(fontSize: 14)),
-                  ),
-                  title: Text(e.namaLengkap,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text('${e.badges} lencana',
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600)),
-                  trailing: Text('${e.points}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 15)),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: entries.length,
+          itemBuilder: (context, i) {
+            final e = entries[i];
+            final medals = {1: '\u{1F947}', 2: '\u{1F948}', 3: '\u{1F949}'};
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                  child: Text(medals[e.rank] ?? '${e.rank}',
+                      style: const TextStyle(fontSize: 14)),
                 ),
-              );
-            },
-          ),
+                title: Text(e.namaLengkap,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text('${e.badges} lencana',
+                    style:
+                        TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                trailing: Text('${e.points}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 15)),
+              ),
+            );
+          },
         );
       },
-    );
-  }
-}
-
-/// State kosong leaderboard — info + tombol muat ulang, bukan teks polos.
-class _EmptyLeaderboard extends StatelessWidget {
-  final VoidCallback onRetry;
-  const _EmptyLeaderboard({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(24),
-      children: [
-        const SizedBox(height: 64),
-        Icon(Icons.leaderboard_outlined,
-            size: 56, color: AppTheme.primary.withValues(alpha: 0.6)),
-        const SizedBox(height: 12),
-        const Text(
-          'Belum ada data leaderboard',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'Poin anggota akan muncul di sini setelah presensi latihan\n'
-          'dan pembayaran iuran dicatat oleh pengurus.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12.5, color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: FilledButton.tonalIcon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Segarkan'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Error state pada layar gamification — pesan kesalahan + tombol "Coba Lagi".
-class _GamificationErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _GamificationErrorView({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(24),
-      children: [
-        const SizedBox(height: 80),
-        const Icon(Icons.error_outline, size: 52, color: AppTheme.danger),
-        const SizedBox(height: 12),
-        const Text(
-          'Gagal memuat data',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          message,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: FilledButton.tonalIcon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Coba Lagi'),
-          ),
-        ),
-      ],
     );
   }
 }

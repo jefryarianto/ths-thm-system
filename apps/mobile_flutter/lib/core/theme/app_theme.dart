@@ -32,20 +32,6 @@ class AppTheme {
   static const Color warning = Color(0xFFB45309);
   static const Color danger = Color(0xFFB91C1C);
 
-  /// Warna permukaan lembut untuk bar statistik / placeholder (biru rosario
-  /// dengan transparansi sangat rendah, di atas latar #E3F2FD).
-  static const Color surfaceMuted = Color(0xFFF0F7FE);
-
-  /// Gradien header beranda & layar utama — emas brand ke kuning logo:
-  /// dari `primaryDark` (emas tua) menuju `primaryLight` (kuning logo).
-  /// Dipakai pada kartu hero agar terasa modern & profesional.
-  static const LinearGradient headerGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [primaryDark, primary, primaryLight],
-    stops: [0.0, 0.55, 1.0],
-  );
-
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
       seedColor: primary,
