@@ -2544,6 +2544,33 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
   // ═══════════════════════════════════════════════════════════
+  //  ASPEK-COUNT — jumlah aspek penilaian yang TERKONFIGURASI
+  //  (independen dari skor; dipakai checklist kelengkapan pendadaran).
+  //  ═══════════════════════════════════════════════════════════
+
+  /**
+   * Hitung aspek penilaian aktif yang terkonfigurasi untuk pendadaran.
+   * Bila pendadaran sudah punya set aspek milik sendiri (cloned):
+   *   hitung aspek miliknya (kegiatanId = id).
+   * Bila belum (owned = 0, mengikuti resolveItemScope):
+   *   fallback ke aspek template global (kegiatanId = null).
+   * Tidak bergantung pada skor yang sudah diinput — jadi checklist
+   * "Aspek Penilaian" langsung hijau begitu aspek terkonfigurasi.
+   */
+  async getAspekCount(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const owned = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId: graduationId, isActive: true },
+    });
+    const scopeKegiatanId = owned > 0 ? graduationId : null;
+    const total = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId: scopeKegiatanId, isActive: true },
+    });
+    return { total };
+  }
+
+  // ═══════════════════════════════════════════════════════════
   //  EVALUATIONS (Nilai evaluasi pendadaran — didokumentasikan di API.md)
   // ═══════════════════════════════════════════════════════════
 

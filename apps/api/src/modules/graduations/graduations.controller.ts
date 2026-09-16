@@ -198,6 +198,12 @@ export class GraduationsController {
 
   // ── Score Progress ──
 
+  @Get(':id/aspek-count')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Jumlah aspek penilaian yang TERKONFIGURASI untuk pendadaran (independen skor; fallback ke template global)' })
+  getAspekCount(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.getAspekCount(id, req.scope);
+  }
+
   @Get(':id/score-progress')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Progress pengisian nilai penguji secara real-time' })
   getScoreProgress(@Param('id') id: string, @Req() req: ScopedRequest) {

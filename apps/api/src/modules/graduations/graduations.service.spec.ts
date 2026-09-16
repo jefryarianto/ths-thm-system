@@ -24,6 +24,9 @@ describe('GraduationsService', () => {
       create: jest.fn(),
       update: jest.fn(),
     },
+    aspekPenilaian: {
+      count: jest.fn(),
+    },
     calonAnggota: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -1243,6 +1246,44 @@ describe('GraduationsService', () => {
       expect(result.summary).toEqual({
         c1: { nama: 'Budi', skor: 150, items: 2 },
       });
+    });
+  });
+
+  describe('getAspekCount', () => {
+    it('mengembalikan jumlah aspek TERKONFIGURASI milik pendadaran (independen skor)', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      (mockPrisma.aspekPenilaian.count as jest.Mock)
+        .mockResolvedValueOnce(3) // owned
+        .mockResolvedValueOnce(3); // scope kegiatan
+      const result = await service.getAspekCount('g1');
+      expect(result).toEqual({ total: 3 });
+      expect(mockPrisma.aspekPenilaian.count).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { kegiatanId: 'g1', isActive: true } }),
+      );
+    });
+
+    it('fallback ke aspek template global ketika pendadaran belum punya aspek milik sendiri (owned = 0)', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      (mockPrisma.aspekPenilaian.count as jest.Mock)
+        .mockResolvedValueOnce(0) // owned
+        .mockResolvedValueOnce(5); // template global
+      const result = await service.getAspekCount('g1');
+      expect(result).toEqual({ total: 5 });
+      expect(mockPrisma.aspekPenilaian.count).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where: { kegiatanId: null, isActive: true } }),
+      );
+    });
+
+    it('mengabaikan aspek yang tidak aktif (isActive=false) dari hitungan', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      (mockPrisma.aspekPenilaian.count as jest.Mock)
+        .mockResolvedValueOnce(2) // owned
+        .mockResolvedValueOnce(2); // scope kegiatan
+      const result = await service.getAspekCount('g1');
+      expect(result).toEqual({ total: 2 });
+      expect(mockPrisma.aspekPenilaian.count).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { kegiatanId: 'g1', isActive: true } }),
+      );
     });
   });
 
