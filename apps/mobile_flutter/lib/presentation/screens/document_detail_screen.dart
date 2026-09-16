@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/document.dart';
@@ -110,9 +112,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _downloading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak bisa membuka dokumen')),
-      );
+      showCenteredSnackBar(context, 'Tidak bisa membuka dokumen');
     }
   }
 
@@ -223,22 +223,28 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         ],
         if (doc.verificationUrl != null) ...[
           const SizedBox(height: 8),
-          InkWell(
-            onTap: () => launchUrl(
-              Uri.parse(ApiClient.resolveAbsolute(doc.verificationUrl!)),
-              mode: LaunchMode.externalApplication,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Text(
-                'Cek keaslian: ${doc.verificationUrl}',
-                style: const TextStyle(
-                  color: AppTheme.primary,
-                  fontSize: 12,
-                  decoration: TextDecoration.underline,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+          FilledButton.icon(
+            onPressed: () {
+              final token = Formatters.extractQrToken(doc.verificationUrl!);
+              context.push<void>('/kta/verify/$token');
+            },
+            icon: const Icon(Icons.verified_outlined),
+            label: const Text('Cek Keaslian Dokumen'),
+          ),
+          // Fallback opsional: hasil verifikasi juga dapat dilihat via browser
+          // (berguna untuk dibagikan ke pihak luar yang tidak memakai aplikasi).
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse(ApiClient.resolveAbsolute(doc.verificationUrl!)),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Buka di Browser'),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                textStyle: const TextStyle(fontSize: 12),
               ),
             ),
           ),

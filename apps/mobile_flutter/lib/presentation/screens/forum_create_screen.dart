@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
@@ -31,8 +32,7 @@ class _ForumCreateScreenState extends State<ForumCreateScreen> {
     if (_categoryId == null ||
         _judulCtrl.text.trim().isEmpty ||
         _kontenCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Semua field harus diisi')));
+      showCenteredSnackBar(context, 'Semua field harus diisi');
       return;
     }
     setState(() => _submitting = true);
@@ -61,8 +61,7 @@ class _ForumCreateScreenState extends State<ForumCreateScreen> {
           if (_submitting && state is! ForumLoading) {
             setState(() => _submitting = false);
             if (state is! ForumError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Thread berhasil dibuat')));
+              showCenteredSnackBar(context, 'Thread berhasil dibuat');
               context.pop();
             }
           }

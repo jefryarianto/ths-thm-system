@@ -126,8 +126,10 @@ export default function NewTrainingPage() {
         router.push('/trainings');
       }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Gagal menyimpan jadwal latihan');
+      // apiClient menormalkan error ke { status, message, data } — baca .message
+      const msg = (err as { message?: string | string[] } | null)?.message;
+      const text = Array.isArray(msg) ? msg.join(', ') : msg;
+      setError(text || 'Gagal menyimpan jadwal latihan');
     }
     setSaving(false);
   };

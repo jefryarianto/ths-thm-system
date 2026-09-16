@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/registration/registration_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/org_structure_fields.dart';
@@ -58,9 +59,7 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedRantingId == null || _selectedRantingId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih ranting asal')),
-      );
+      showCenteredSnackBar(context, 'Silakan pilih ranting asal');
       return;
     }
     context.read<RegistrationBloc>().add(RegistrationCreateRequested(
@@ -70,8 +69,10 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
           tempatLahir: _tempatLahirCtrl.text.trim().isEmpty
               ? null
               : _tempatLahirCtrl.text.trim(),
-          tanggalLahir: _tanggalLahir != null ? _fmtDateIso(_tanggalLahir!) : null,
-          alamat: _alamatCtrl.text.trim().isEmpty ? null : _alamatCtrl.text.trim(),
+          tanggalLahir:
+              _tanggalLahir != null ? _fmtDateIso(_tanggalLahir!) : null,
+          alamat:
+              _alamatCtrl.text.trim().isEmpty ? null : _alamatCtrl.text.trim(),
           noHp: _noHpCtrl.text.trim().isEmpty ? null : _noHpCtrl.text.trim(),
           email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
           sumberInfo: _sumberInfoCtrl.text.trim().isEmpty
@@ -113,8 +114,10 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
       TextFormField(
         controller: _namaCtrl,
         decoration: const InputDecoration(
-            labelText: 'Nama Lengkap *', prefixIcon: Icon(Icons.person_outline)),
-        validator: (v) => (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
+            labelText: 'Nama Lengkap *',
+            prefixIcon: Icon(Icons.person_outline)),
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
       ),
       const SizedBox(height: 14),
       DropdownButtonFormField<String>(
@@ -146,7 +149,8 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
           decoration: const InputDecoration(
               labelText: 'Tanggal Lahir',
               prefixIcon: Icon(Icons.calendar_today_outlined)),
-          child: Text(_tanggalLahir != null ? _fmtDateDisplay(_tanggalLahir!) : 'Pilih',
+          child: Text(
+              _tanggalLahir != null ? _fmtDateDisplay(_tanggalLahir!) : 'Pilih',
               style: TextStyle(
                   color: _tanggalLahir != null ? null : Colors.grey.shade500)),
         ),
@@ -213,8 +217,7 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
         ),
       );
     } else if (state is RegistrationError) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(state.message)));
+      showCenteredSnackBar(context, state.message);
     }
   }
 }

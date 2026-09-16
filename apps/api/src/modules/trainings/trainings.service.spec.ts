@@ -147,6 +147,34 @@ describe('TrainingsService', () => {
       mockPrisma.latihan.update.mockResolvedValue({ id: '1', jenisMateri: 'Updated' });
       const result = await service.update('1', { jenisMateri: 'Updated' });
     });
+
+    it('should allow clearing optional nullable fields with empty string (regression: was silently ignored)', async () => {
+      mockPrisma.latihan.update.mockResolvedValue({ id: '1', lokasi: '', jenisMateri: '' });
+      await service.update('1', { lokasi: '', jenisMateri: '' });
+      expect(mockPrisma.latihan.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ lokasi: '', jenisMateri: '' }),
+        }),
+      );
+    });
+
+    it('should not touch fields that are not provided', async () => {
+      mockPrisma.latihan.update.mockResolvedValue({ id: '1' });
+      await service.update('1', { lokasi: 'Dojo A' });
+      const call = mockPrisma.latihan.update.mock.calls[0][0];
+      expect(call.data.lokasi).toBe('Dojo A');
+      expect(call.data).not.toHaveProperty('jenisMateri');
+      expect(call.data).not.toHaveProperty('hasilLatihanGlobal');
+      expect(call.data).not.toHaveProperty('hariTanggal');
+    });
+
+    it('should still pass through non-empty values and undefined-safe nullable fields', async () => {
+      mockPrisma.latihan.update.mockResolvedValue({ id: '1' });
+      await service.update('1', { hasilLatihanGlobal: undefined, rekomendasiBerikutnya: 'Fokus kuda-kuda' });
+      const call = mockPrisma.latihan.update.mock.calls[0][0];
+      expect(call.data).not.toHaveProperty('hasilLatihanGlobal');
+      expect(call.data.rekomendasiBerikutnya).toBe('Fokus kuda-kuda');
+    });
   });
 
   describe('remove', () => {

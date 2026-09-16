@@ -22,7 +22,11 @@ export default function NewActivityPage() {
     try {
       await apiClient.post('/activities', form);
       router.push('/activities');
-    } catch { toast('error', 'Gagal menyimpan'); }
+    } catch (err: unknown) {
+      const msg = (err as { message?: string | string[] } | null)?.message;
+      const text = Array.isArray(msg) ? msg.join(', ') : msg;
+      toast('error', text || 'Gagal menyimpan');
+    }
     setSaving(false);
   };
 

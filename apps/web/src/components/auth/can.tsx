@@ -42,11 +42,13 @@ export const MODULE_PERMISSIONS: Record<string, ModulePermission> = {
   // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
   candidates:       { ...DEFAULT_MODULE, create: 'admin_kegiatan' },
   registrations:    { ...DEFAULT_MODULE },
-  trainings:        { ...DEFAULT_MODULE, view: 'anggota' },
+  // API POST /trainings mengizinkan admin_kegiatan (hierarki: di bawah admin_ranting)
+  trainings:        { ...DEFAULT_MODULE, view: 'anggota', create: 'admin_kegiatan' },
   // Activity-scoped: admin_kegiatan can manage kegiatan they're assigned to
   graduations:      { ...DEFAULT_MODULE, view: 'admin_kegiatan', create: 'admin_kegiatan', edit: 'admin_kegiatan', delete: 'admin_kegiatan' },
   examiners:        { ...DEFAULT_MODULE, create: 'penguji', edit: 'penguji', delete: 'admin_ranting' },
-  activities:       { ...DEFAULT_MODULE, view: 'anggota' },
+  // API POST /activities mengizinkan admin_kegiatan (hierarki: di bawah admin_ranting)
+  activities:       { ...DEFAULT_MODULE, view: 'anggota', create: 'admin_kegiatan' },
   dues:             { ...DEFAULT_MODULE, view: 'anggota' },
   payments:         { ...DEFAULT_MODULE, admin: 'admin_distrik' },
   claims:           { ...DEFAULT_MODULE },

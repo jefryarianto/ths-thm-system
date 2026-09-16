@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
@@ -75,7 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         context.read<AuthBloc>().add(
-              const AuthLoginRequested(identifier: identifier, password: password),
+              const AuthLoginRequested(
+                  identifier: identifier, password: password),
             );
       });
     }
@@ -84,10 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     final id = _identifier.text.trim();
     if (id.isEmpty || _password.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Masukkan email/nomor anggota & password')),
-      );
+      showCenteredSnackBar(context, 'Masukkan email/nomor anggota & password');
       return;
     }
     context.read<AuthBloc>().add(
@@ -112,9 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _persistRemember();
                       context.go('/force-change-password');
                     } else if (state is AuthError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.message)),
-                      );
+                      showCenteredSnackBar(context, state.message);
                     }
                   },
                   child: Center(
@@ -187,8 +184,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Checkbox(
                                     value: _rememberMe,
                                     activeColor: AppTheme.primary,
-                                    onChanged: (v) =>
-                                        setState(() => _rememberMe = v ?? false),
+                                    onChanged: (v) => setState(
+                                        () => _rememberMe = v ?? false),
                                   ),
                                 ),
                                 const Text(
@@ -212,8 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             TextButton(
-                              onPressed: () =>
-                                  context.go('/forgot-password'),
+                              onPressed: () => context.go('/forgot-password'),
                               child: const Text('Lupa Password?'),
                             ),
                             const SizedBox(height: 8),
@@ -225,9 +221,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: const Text('Daftar Calon Anggota',
                                       style: TextStyle(fontSize: 12)),
                                 ),
-                                Text('|', style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                                Text('|',
+                                    style: TextStyle(
+                                        color: Colors.grey.shade400,
+                                        fontSize: 12)),
                                 TextButton(
-                                  onPressed: () => context.push('/claim-account'),
+                                  onPressed: () =>
+                                      context.push('/claim-account'),
                                   child: const Text('Klaim Akun Anggota',
                                       style: TextStyle(fontSize: 12)),
                                 ),
@@ -257,7 +257,8 @@ class _LoginLoadingOverlay extends StatelessWidget {
     return ColoredBox(
       color: Colors.white.withValues(alpha: 0.96),
       child: const Center(
-        child: AppLoadingSpinner(size: 88, message: 'Memverifikasi kredensial...'),
+        child:
+            AppLoadingSpinner(size: 88, message: 'Memverifikasi kredensial...'),
       ),
     );
   }

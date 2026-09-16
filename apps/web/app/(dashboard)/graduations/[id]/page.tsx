@@ -384,11 +384,14 @@ export default function GraduationDetailPage() {
   const fetchCompleteness = useCallback(async () => {
     if (!id) return;
     try {
-      const [pRes, eRes, aRes, rRes] = await Promise.allSettled([
+      const [pRes, eRes, aRes, rRes, kRes] = await Promise.allSettled([
         apiClient.get(`/graduations/${id}/participants`),
         apiClient.get(`/graduations/${id}/examiners`),
         apiClient.get(`/graduations/${id}/evaluations`),
         apiClient.get(`/graduations/${id}/results`),
+        // Jumlah aspek yang TERKONFIGURASI (independen skor; fallback ke template
+        // global) — jadi checklist langsung hijau begitu aspek terpasang.
+        apiClient.get(`/graduations/${id}/aspek-count`),
       ]);
       const participants =
         pRes.status === 'fulfilled' ? (pRes.value.data.data || []) : [];
@@ -401,6 +404,8 @@ export default function GraduationDetailPage() {
       for (const s of scoreRows) {
         if (s.itemPenilaian?.aspek?.id) aspekSet.add(s.itemPenilaian.aspek.id);
       }
+      const aspekTotal =
+        kRes.status === 'fulfilled' ? Number(kRes.value.data?.data?.total ?? 0) : aspekSet.size;
       // Sertifikat di-infer dari hasil lulus yang disetujui (dokumen dibuat
       // otomatis saat validasi disetujui - idempoten, satu per calon lulus).
       const hasilRows = rRes.status === 'fulfilled' ? (rRes.value.data.data || []) : [];
@@ -412,7 +417,7 @@ export default function GraduationDetailPage() {
         calonAnggota: participants.filter((p: { status: string }) => p.status === 'mengikuti_pendadaran').length,
         adminKegiatan: !!graduation?.adminKegiatanId,
         penguji: { total: ex.length, approved: ex.filter((x: ExaminerAssignment) => x.status === 'approved').length },
-        aspek: aspekSet.size,
+        aspek: aspekTotal,
         sertifikat: sertifikatCount,
       });
     } catch { /* ignore */ }

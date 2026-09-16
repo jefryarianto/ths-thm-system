@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -24,9 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _submit() async {
     final email = _email.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Masukkan email terlebih dahulu')),
-      );
+      showCenteredSnackBar(context, 'Masukkan email terlebih dahulu');
       return;
     }
     setState(() => _loading = true);
@@ -53,8 +52,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       final api = ApiClient();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(api.messageFromError(e))));
+      showCenteredSnackBar(context, api.messageFromError(e));
     }
   }
 

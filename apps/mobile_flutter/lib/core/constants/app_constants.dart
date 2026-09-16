@@ -52,6 +52,15 @@ class AppConstants {
   static const String publicWilayah = '$baseUrl/public/struktur/wilayah';
   static const String publicRanting = '$baseUrl/public/struktur/ranting';
 
+  // �� Feed publik beranda: berita + satuan beranda (public.controller) ��
+  static const String publicBeranda = '$baseUrl/public/beranda';
+  static const String publicBerita = '$baseUrl/public/berita';
+  static String publicBeritaBySlug(String slug) =>
+      '$baseUrl/public/berita/$slug';
+
+  // Kegiatan/Agenda (ActivitiesController, scope member) ��
+  static const String activities = '$baseUrl/activities';
+
   // Member
   static const String memberMe = '$baseUrl/members/me';
   static const String members = '$baseUrl/members';

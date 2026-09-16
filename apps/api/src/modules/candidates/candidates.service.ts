@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Optional, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, Optional, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { BaseCrudService, CrudConfig } from '../../common/utils/base-crud.service';
@@ -59,6 +59,16 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
   ): Promise<Record<string, unknown>> {
     // Auto-assign rantingId from user scope
     const rantingId = dto.rantingId || scope?.rantingId;
+
+    // Tenant safety: rantingId dari klien harus berada dalam cakupan admin
+    // (pola sama dengan members.service.beforeCreate). Create publik lolos
+    // karena tidak membawa scope.
+    if (dto.rantingId && scope) {
+      const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, dto.rantingId);
+      if (!ok) {
+        throw new ForbiddenException('Anda hanya dapat mengusulkan calon anggota dalam cakupan Anda');
+      }
+    }
 
     return {
       namaLengkap: dto.namaLengkap,
@@ -223,11 +233,11 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
   // ═══════════════════════════════════════════════════════════
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async importCsv(data: any[]) {
+  async importCsv(data: any[], scope?: UserScope) {
     const results = await this.csvImportService.importRows(data, {
       module: 'candidates',
       duplicateTables: { anggota: true, calonAnggota: true },
-      rowProcessor: async (row) => this.importCandidateRow(row),
+      rowProcessor: async (row) => this.importCandidateRow(row, scope),
     });
 
     this.invalidateCache();
@@ -238,7 +248,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
    * Proses satu baris import calon anggota. Dipakai oleh importCsv (sinkron)
    * maupun impor massal asinkron (ImportBatchService).
    */
-  async importCandidateRow(row: any) {
+  async importCandidateRow(row: any, scope?: UserScope) {
         // Server-side field validation
         const nameValue = (row.nama_lengkap || row.nama || row.name || '').trim();
         if (!nameValue) {
@@ -258,6 +268,16 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
         const hpVal = (row.no_hp || row.phone || '').replace(/[\s\-().]/g, '');
         if (hpVal && !/^(\+?62|0)\d{8,13}$/.test(hpVal)) {
           return { success: false, error: `Format nomor HP "${row.no_hp || row.phone}" tidak valid (mulai 0/+62, 9-14 digit)` };
+        }
+
+        // Tenant safety: ranting dari CSV harus dalam cakupan admin
+        // (pola sama dengan members.importMemberRow).
+        const rowRantingId = row.rantingId || row.ranting_id;
+        if (rowRantingId && scope) {
+          const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, rowRantingId);
+          if (!ok) {
+            return { success: false, error: 'Akses ditolak: ranting diluar cakupan wilayah Anda.' };
+          }
         }
 
         await this.prisma.calonAnggota.create({

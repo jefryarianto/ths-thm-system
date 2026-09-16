@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DuesService } from './dues.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -209,6 +209,53 @@ describe('DuesService', () => {
         jumlah: 100000,
       });
       expect(mockPrisma.iuran.create).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('tenant isolation on create (regression)', () => {
+    it('should reject create for a member outside the admin scope', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a-out', rantingId: 'r-other' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.create({ anggotaId: 'a-out', jumlah: 100000, periode: '2026-01' }, { rantingId: 'r1' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.iuran.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow create for a member inside the admin scope', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1', rantingId: 'r1', email: null, namaLengkap: 'Budi' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+      mockPrisma.iuran.create.mockResolvedValue({ id: 'd1' });
+      await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' }, { rantingId: 'r1' });
+      expect(mockPrisma.iuran.create).toHaveBeenCalled();
+    });
+
+    it('should reject batchPayment targeting members outside the admin scope', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a-out', rantingId: 'r-other' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.batchPayment({ memberIds: ['a-out'], periode: '2026-01', jumlah: 100000 }, { distrikId: 'd1' }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.iuran.create).not.toHaveBeenCalled();
+    });
+
+    it('should count out-of-scope rows as failed during importDues (no partial row created)', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a-out', rantingId: 'r-other' });
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      const result = await service.importDues(
+        [{ anggota_id: 'a-out', periode: '2026-01', jumlah: '100000' }],
+        { rantingId: 'r1' },
+      );
+      expect(result.imported).toBe(0);
+      expect(result.failed).toBe(1);
+      expect(mockPrisma.iuran.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow superadmin (empty scope) to create for any member', async () => {
+      mockPrisma.anggota.findUnique.mockClear();
+      mockPrisma.iuran.create.mockResolvedValue({ id: 'd1' });
+      await service.create({ anggotaId: 'a-any', jumlah: 100000, periode: '2026-01' }, {});
+      expect(mockPrisma.iuran.create).toHaveBeenCalled();
     });
   });
 });

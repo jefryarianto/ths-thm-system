@@ -146,10 +146,10 @@ void main() {
     expect(find.byIcon(Icons.check_circle), findsNothing);
   });
 
-  test('Tema global: background #F8FAFC, teks kontras tinggi, card radius 16',
+  test('Tema global: background #F9F8F6, teks kontras tinggi, card radius 16',
       () {
     final theme = AppTheme.light();
-    expect(theme.scaffoldBackgroundColor, const Color(0xFFF8FAFC));
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFF9F8F6));
     expect(AppTheme.navy, const Color(0xFF0F2E5A));
     expect(AppTheme.textSlate, const Color(0xFF1E293B));
     expect(AppTheme.textMuted, const Color(0xFF64748B));

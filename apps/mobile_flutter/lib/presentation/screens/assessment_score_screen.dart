@@ -1,8 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/graduation.dart';
 import '../../logic/assessments/assessment_bloc.dart';
 import '../../logic/assessments/assessment_event.dart';
@@ -47,11 +47,9 @@ class _AssessmentScoreScreenState extends State<AssessmentScoreScreen> {
       body: BlocConsumer<AssessmentBloc, AssessmentState>(
         listener: (context, state) {
           if (state is AssessmentError) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           } else if (state is AssessmentScoreSaved) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           }
         },
         builder: (context, state) {
@@ -121,9 +119,7 @@ class _AssessmentScoreScreenState extends State<AssessmentScoreScreen> {
     final pengujiId = _pengujiUserId;
 
     if (pengujiId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesi pengguna berakhir. Silakan login')),
-      );
+      showCenteredSnackBar(context, 'Sesi pengguna berakhir. Silakan login');
       return;
     }
     showDialog<void>(
@@ -193,8 +189,7 @@ class _AssessmentScoreScreenState extends State<AssessmentScoreScreen> {
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
               if (aspekId == null || itemId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Pilih aspek & item penilaian')));
+                showCenteredSnackBar(context, 'Pilih aspek & item penilaian');
                 return;
               }
               context.read<AssessmentBloc>().add(

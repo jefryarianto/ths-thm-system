@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_controller.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
@@ -142,8 +143,7 @@ class _ThemeSelector extends StatelessWidget {
       ],
       selected: {controller.mode},
       showSelectedIcon: false,
-      onSelectionChanged: (selection) =>
-          controller.mode = selection.first,
+      onSelectionChanged: (selection) => controller.mode = selection.first,
     );
   }
 }
@@ -212,16 +212,12 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   Future<void> _submit() async {
     if (_current.text.isEmpty || _new.text.isEmpty || _new.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Password baru minimal 6 karakter dan wajib diisi')),
-      );
+      showCenteredSnackBar(
+          context, 'Password baru minimal 6 karakter dan wajib diisi');
       return;
     }
     if (_new.text != _confirm.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Konfirmasi password tidak cocok')),
-      );
+      showCenteredSnackBar(context, 'Konfirmasi password tidak cocok');
       return;
     }
     setState(() => _loading = true);
@@ -233,15 +229,13 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       });
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password berhasil diubah')),
-      );
+      showCenteredSnackBar(context, 'Password berhasil diubah');
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
       final api = ApiClient();
       final msg = api.messageFromError(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      showCenteredSnackBar(context, msg);
     }
   }
 }

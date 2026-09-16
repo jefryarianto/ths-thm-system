@@ -11,6 +11,7 @@ import 'logic/dues/dues_bloc.dart';
 import 'logic/forum/forum_bloc.dart';
 import 'logic/pendadaran/pendadaran_bloc.dart';
 import 'logic/gamification/gamification_bloc.dart';
+import 'logic/home_feed/home_feed_bloc.dart';
 import 'logic/member/member_bloc.dart';
 import 'logic/assessments/assessment_bloc.dart';
 import 'logic/notification/notification_bloc.dart';
@@ -77,6 +78,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => PendadaranBloc()),
         BlocProvider(create: (_) => AssessmentBloc()),
         BlocProvider(create: (_) => GamificationBloc()),
+        BlocProvider(create: (_) => HomeFeedBloc()),
         BlocProvider(create: (_) => ForumBloc()),
         BlocProvider(create: (_) => RegistrationBloc()),
         BlocProvider(create: (_) => ClaimBloc()),

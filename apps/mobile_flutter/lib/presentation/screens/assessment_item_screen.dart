@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/graduation.dart';
 import '../../logic/assessments/assessment_bloc.dart';
 import '../../logic/assessments/assessment_event.dart';
@@ -133,7 +134,8 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                         aspekId: widget.aspekId,
                         kodeItem: kodeCtrl.text.trim(),
                         namaItem: namaCtrl.text.trim(),
-                        skorMaksimal: double.tryParse(skorCtrl.text.trim()) ?? 0,
+                        skorMaksimal:
+                            double.tryParse(skorCtrl.text.trim()) ?? 0,
                         bobot: double.tryParse(bobotCtrl.text.trim()) ?? 0,
                         urutan: int.tryParse(urutanCtrl.text.trim()),
                       ),
@@ -151,8 +153,8 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
   void _openEdit(AssessmentItem item) {
     final kodeCtrl = TextEditingController(text: item.kodeItem);
     final namaCtrl = TextEditingController(text: item.namaItem);
-    final skorCtrl = TextEditingController(
-        text: item.skorMaksimal.toStringAsFixed(0));
+    final skorCtrl =
+        TextEditingController(text: item.skorMaksimal.toStringAsFixed(0));
     final bobotCtrl = TextEditingController(text: '100');
     final urutanCtrl = TextEditingController(text: '${item.urutan}');
     final formKey = GlobalKey<FormState>();
@@ -238,7 +240,8 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                         aspekId: widget.aspekId,
                         itemId: item.id,
                         namaItem: namaCtrl.text.trim(),
-                        skorMaksimal: double.tryParse(skorCtrl.text.trim()) ?? 0,
+                        skorMaksimal:
+                            double.tryParse(skorCtrl.text.trim()) ?? 0,
                         bobot: double.tryParse(bobotCtrl.text.trim()) ?? 0,
                       ),
                     );
@@ -264,8 +267,7 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
             child: const Text('Batal'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.danger),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
             onPressed: () {
               context.read<AssessmentBloc>().add(
                     AssessmentItemDeleteRequested(
@@ -289,14 +291,11 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
       body: BlocConsumer<AssessmentBloc, AssessmentState>(
         listener: (context, state) {
           if (state is AssessmentError) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           } else if (state is AssessmentItemSaved) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           } else if (state is AssessmentAspectSaved) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           }
         },
         builder: (context, state) {
@@ -327,7 +326,9 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
               ),
             );
           }
-          final items = state is AssessmentLoaded ? state.items : const <AssessmentItem>[];
+          final items = state is AssessmentLoaded
+              ? state.items
+              : const <AssessmentItem>[];
           if (items.isEmpty) {
             return Center(
               child: Padding(
@@ -397,8 +398,8 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
                             fontSize: 15, fontWeight: FontWeight.w600)),
                     subtitle: Text(
                         '${item.kodeItem}  ·  skor maks: ${item.skorMaksimal.toStringAsFixed(0)}'
-                          "${item.kodeItem} · skor maks: ${item.skorMaksimal.toStringAsFixed(0)}"
-                          " · urutan: ${item.urutan}"),
+                        "${item.kodeItem} · skor maks: ${item.skorMaksimal.toStringAsFixed(0)}"
+                        " · urutan: ${item.urutan}"),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -424,5 +425,4 @@ class _AssessmentItemScreenState extends State<AssessmentItemScreen> {
       ),
     );
   }
-
 }

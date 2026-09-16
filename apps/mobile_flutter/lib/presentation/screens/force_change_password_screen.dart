@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
@@ -52,22 +53,19 @@ class _ForceChangePasswordScreenState extends State<ForceChangePasswordScreen> {
       setState(() => _loading = false);
       await api.clearTokens();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Password berhasil diubah. Silakan login ulang.')),
-      );
+      showCenteredSnackBar(
+          context, 'Password berhasil diubah. Silakan login ulang.');
       context.go('/login');
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
       final api = ApiClient();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(api.messageFromError(e))));
+      showCenteredSnackBar(context, api.messageFromError(e));
     }
   }
 
   void _msg(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    showCenteredSnackBar(context, text);
   }
 
   @override

@@ -96,8 +96,10 @@ export class TrainingsService extends BaseCrudService<CreateTrainingDto, UpdateT
     dto: UpdateTrainingDto,
   ): Promise<Record<string, unknown>> {
     const data: Record<string, unknown> = {};
-    if (dto.lokasi) data.lokasi = dto.lokasi;
-    if (dto.jenisMateri) data.jenisMateri = dto.jenisMateri;
+    // Kolom nullable: pass-through (bukan truthy-check) agar field opsional
+    // bisa DIKOSONGKAN — check lama membuat nilai '' tidak pernah tersimpan.
+    if (dto.lokasi !== undefined) data.lokasi = dto.lokasi;
+    if (dto.jenisMateri !== undefined) data.jenisMateri = dto.jenisMateri;
     if (dto.hasilLatihanGlobal !== undefined) data.hasilLatihanGlobal = dto.hasilLatihanGlobal;
     if (dto.rekomendasiBerikutnya !== undefined) data.rekomendasiBerikutnya = dto.rekomendasiBerikutnya;
     if (dto.hariTanggal) data.hariTanggal = new Date(dto.hariTanggal);

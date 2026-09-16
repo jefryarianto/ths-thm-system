@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'profile_camera_capture_screen.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/member.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
@@ -42,8 +43,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   bool _photoUploading = false;
 
   static const List<String> _bulan = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
 
   @override
@@ -127,14 +138,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppTheme.info),
+              leading:
+                  const Icon(Icons.photo_camera_outlined, color: AppTheme.info),
               title: const Text('Ambil Foto (Kamera)',
                   style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: const Text('Dengan bingkai panduan posisi wajah'),
               onTap: () => Navigator.of(context).pop('camera'),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.info),
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: AppTheme.info),
               title: const Text('Pilih dari Galeri',
                   style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: const Text('Penyimpanan internal perangkat'),
@@ -150,8 +163,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     String? path;
     if (source == 'camera') {
       path = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-            builder: (_) => const ProfileCameraCaptureScreen()),
+        MaterialPageRoute(builder: (_) => const ProfileCameraCaptureScreen()),
       );
     } else {
       try {
@@ -164,9 +176,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         path = result?.path;
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal memilih foto: $e')),
-          );
+          showCenteredSnackBar(context, 'Gagal memilih foto: $e');
         }
         return;
       }
@@ -210,20 +220,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             context.read<AuthBloc>().add(
                   AuthProfileSynced(namaLengkap: state.member.namaLengkap),
                 );
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            showCenteredSnackBar(context, state.message);
             context.pop();
           } else if (state is MemberPhotoUploadSuccess) {
             setState(() => _photoUploading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            showCenteredSnackBar(context, state.message);
           } else if (state is MemberError) {
             setState(() => _photoUploading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            showCenteredSnackBar(context, state.message);
           }
         },
         child: Form(
@@ -242,11 +246,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
-              _field(label: 'No. HP', controller: _noHp, keyboardType: TextInputType.phone),
+              _field(
+                  label: 'No. HP',
+                  controller: _noHp,
+                  keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
               _field(label: 'Alamat', controller: _alamat, maxLines: 3),
               const SizedBox(height: 16),
-              _field(label: 'Tempat Lahir', controller: _tempatLahir, textCapitalization: TextCapitalization.words),
+              _field(
+                  label: 'Tempat Lahir',
+                  controller: _tempatLahir,
+                  textCapitalization: TextCapitalization.words),
               const SizedBox(height: 16),
               GestureDetector(
                 onTap: _pickDate,
@@ -258,19 +268,28 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   ),
                   child: Text(
                     _tanggalLahir != null ? _displayDate(_tanggalLahir!) : '-',
-                    style: TextStyle(fontSize: 15, color: _tanggalLahir != null ? Colors.black87 : Colors.grey.shade600),
+                    style: TextStyle(
+                        fontSize: 15,
+                        color: _tanggalLahir != null
+                            ? Colors.black87
+                            : Colors.grey.shade600),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              _field(label: 'Email', controller: _email, enabled: false, keyboardType: TextInputType.emailAddress),
+              _field(
+                  label: 'Email',
+                  controller: _email,
+                  enabled: false,
+                  keyboardType: TextInputType.emailAddress),
               Container(
                 margin: const EdgeInsets.only(top: 10),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
+                  border: Border.all(
+                      color: AppTheme.primary.withValues(alpha: 0.25)),
                 ),
                 child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,8 +297,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     Icon(Icons.info_outline, size: 18, color: AppTheme.primary),
                     SizedBox(width: 8),
                     Expanded(
-                      child: Text('Email hanya dapat dibaca. Hubungi admin untuk perubahan email.',
-                        style: TextStyle(fontSize: 12, color: AppTheme.primaryDark, height: 1.4)),
+                      child: Text(
+                          'Email hanya dapat dibaca. Hubungi admin untuk perubahan email.',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.primaryDark,
+                              height: 1.4)),
                     ),
                   ],
                 ),
@@ -290,9 +313,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   final saving = state is MemberUpdating;
                   return FilledButton(
                     onPressed: saving ? null : _submit,
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48)),
                     child: saving
-                        ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
+                        ? const AppLoadingSpinner.small(
+                            color: AppTheme.onPrimary)
                         : const Text('Simpan Perubahan'),
                   );
                 },
@@ -322,24 +347,39 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 radius: 56,
                 backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
                 backgroundImage: backgroundImage,
-                child: backgroundImage == null ? const Icon(Icons.person, size: 64, color: AppTheme.primary) : null,
+                child: backgroundImage == null
+                    ? const Icon(Icons.person,
+                        size: 64, color: AppTheme.primary)
+                    : null,
               ),
               if (_photoUploading)
-                const Positioned.fill(child: CircleAvatar(radius: 56, backgroundColor: Colors.black45, child: AppLoadingSpinner.small(color: Colors.white))),
-              Positioned(bottom: 0, right: 0, child: GestureDetector(
-                onTap: _photoUploading ? null : _pickAndUploadPhoto,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
-                  child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                ),
-              )),
+                const Positioned.fill(
+                    child: CircleAvatar(
+                        radius: 56,
+                        backgroundColor: Colors.black45,
+                        child: AppLoadingSpinner.small(color: Colors.white))),
+              Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: _photoUploading ? null : _pickAndUploadPhoto,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                          color: AppTheme.primary, shape: BoxShape.circle),
+                      child: const Icon(Icons.camera_alt,
+                          size: 18, color: Colors.white),
+                    ),
+                  )),
             ]),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: _photoUploading ? null : _pickAndUploadPhoto,
               child: Text(_photoUploading ? 'Mengunggah...' : 'Ganti Foto',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _photoUploading ? Colors.grey : AppTheme.primary)),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _photoUploading ? Colors.grey : AppTheme.primary)),
             ),
           ]),
         );

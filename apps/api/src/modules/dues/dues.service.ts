@@ -52,12 +52,34 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
   protected async beforeCreate(
     dto: CreateDueDto,
+    scope?: UserScope,
   ): Promise<Record<string, unknown>> {
+    // Tenant safety: anggotaId dari klien harus berada dalam cakupan admin
+    // (pola sama dengan members.service.beforeCreate).
+    await this.assertMemberInScope(dto.anggotaId, scope);
     const data: Record<string, unknown> = { ...dto };
     if (dto.tanggalBayar) {
       data.tanggalBayar = new Date(dto.tanggalBayar);
     }
     return data;
+  }
+
+  /**
+   * Tenant safety: pastikan anggota target berada dalam cakupan admin
+   * (ranting langsung, atau ranting dalam wilayah/distrik admin).
+   * Superadmin (scope kosong) dilewati. Melempar Forbidden/NotFound.
+   */
+  private async assertMemberInScope(anggotaId: string, scope?: UserScope): Promise<void> {
+    if (!scope || (!scope.rantingId && !scope.wilayahId && !scope.distrikId)) return;
+    const anggota = await this.prisma.anggota.findUnique({
+      where: { id: anggotaId },
+      select: { rantingId: true },
+    });
+    if (!anggota) throw new NotFoundException('Anggota tidak ditemukan');
+    const ok = await this.scopeHelper.hasAccessToResourceAsync(this.prisma, scope, anggota.rantingId);
+    if (!ok) {
+      throw new ForbiddenException('Anda hanya dapat mencatat iuran untuk anggota dalam cakupan Anda');
+    }
   }
 
   protected async afterCreate(
@@ -175,8 +197,8 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     });
   }
 
-  async create(dto: CreateDueDto) {
-    return this.baseCreate(dto, undefined, undefined, 'Pembayaran iuran berhasil dicatat');
+  async create(dto: CreateDueDto, scope?: UserScope) {
+    return this.baseCreate(dto, scope, undefined, 'Pembayaran iuran berhasil dicatat');
   }
 
   async update(id: string, dto: UpdateDueDto, scope?: UserScope, userId?: string) {
@@ -336,10 +358,12 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return dues;
   }
 
-  async importDues(data: Record<string, unknown>[]) {
+  async importDues(data: Record<string, unknown>[], scope?: UserScope) {
     let success = 0;
     for (const row of data) {
       try {
+        // Tenant safety: anggota_id dari CSV harus dalam cakupan admin.
+        await this.assertMemberInScope(row.anggota_id as string, scope);
         await (this.prisma as any).iuran.create({
           data: {
             anggotaId: row.anggota_id as string,
@@ -363,9 +387,11 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
     return { imported: success, failed: data.length - success };
   }
 
-  async batchPayment(dto: BatchPaymentDto) {
+  async batchPayment(dto: BatchPaymentDto, scope?: UserScope) {
     const { memberIds, periode, jumlah } = dto;
     for (const memberId of memberIds) {
+      // Tenant safety: setiap anggota target harus dalam cakupan admin.
+      await this.assertMemberInScope(memberId, scope);
       await (this.prisma as any).iuran.create({
         data: {
           anggotaId: memberId,

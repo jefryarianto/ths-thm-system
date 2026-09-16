@@ -18,6 +18,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
       toolbarHeight: 76,
       titleSpacing: 16,
@@ -35,14 +36,16 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Gloria, selamat datang Kak',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xB31E1800),
+                        color: isDark
+                            ? const Color(0xB3FFFFFF)
+                            : const Color(0xB31E1800),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -50,10 +53,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       namaLengkap,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.onPrimary,
+                        color: isDark ? Colors.white : AppTheme.onPrimary,
                       ),
                     ),
                   ],
@@ -85,6 +88,10 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : AppTheme.onPrimary;
+    final bg = (isDark ? Colors.white : AppTheme.onPrimary)
+        .withValues(alpha: 0.14);
     return GestureDetector(
       onTap: () => context.push<void>('/profile'),
       child: BlocBuilder<MemberBloc, MemberState>(
@@ -92,16 +99,16 @@ class _Avatar extends StatelessWidget {
           if (state is MemberLoaded && state.member.fotoUrl.isNotEmpty) {
             return CircleAvatar(
               radius: 24,
-              backgroundColor: AppTheme.onPrimary.withValues(alpha: 0.14),
+              backgroundColor: bg,
               child: ClipOval(
                 child: CachedNetworkImage(
                   imageUrl: state.member.fotoUrl,
                   width: 46,
                   height: 46,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const Icon(
+                  errorWidget: (_, __, ___) => Icon(
                     Icons.person,
-                    color: AppTheme.onPrimary,
+                    color: fg,
                     size: 28,
                   ),
                 ),
@@ -121,11 +128,11 @@ class _Avatar extends StatelessWidget {
                   .join();
           return CircleAvatar(
             radius: 24,
-            backgroundColor: AppTheme.onPrimary.withValues(alpha: 0.14),
+            backgroundColor: bg,
             child: Text(
               inisial.toUpperCase(),
-              style: const TextStyle(
-                color: AppTheme.onPrimary,
+              style: TextStyle(
+                color: fg,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),

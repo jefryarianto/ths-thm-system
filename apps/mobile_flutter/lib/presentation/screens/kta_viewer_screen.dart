@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/card_data.dart';
 import '../../data/models/member.dart';
 import '../../logic/member/member_bloc.dart';
@@ -111,16 +112,18 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
       await Future<void>.delayed(const Duration(milliseconds: 350));
       await WidgetsBinding.instance.endOfFrame;
       if (!mounted) return;
-      final boundary =
-          _boundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _boundaryKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
       if (boundary == null) throw StateError('Target kartu belum siap');
       final image = await boundary.toImage(pixelRatio: 1.0);
-      final noAnggota = member.nomorAnggota.isEmpty ? 'KTA' : member.nomorAnggota;
+      final noAnggota =
+          member.nomorAnggota.isEmpty ? 'KTA' : member.nomorAnggota;
       final watermarked = await _applyDownloadWatermark(
         image,
         'KARTU DIGITAL · ${member.namaLengkap} · $noAnggota',
       );
-      final byteData = await watermarked.toByteData(format: ui.ImageByteFormat.png);
+      final byteData =
+          await watermarked.toByteData(format: ui.ImageByteFormat.png);
       watermarked.dispose();
       image.dispose();
       if (byteData == null) throw StateError('Gagal meng-encode PNG');
@@ -138,14 +141,10 @@ class _KtaViewerScreenState extends State<KtaViewerScreen> {
         name: fileName,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kartu berhasil disimpan ke galeri')),
-      );
+      showCenteredSnackBar(context, 'Kartu berhasil disimpan ke galeri');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: ${e.toString()}')),
-      );
+      showCenteredSnackBar(context, 'Gagal menyimpan: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _saving = false);
     }

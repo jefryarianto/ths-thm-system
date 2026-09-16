@@ -51,7 +51,7 @@ class AppTheme {
 
   /// Latar aplikasi — abu ultra-terang yang bersih (`#F8FAFC`) agar konten
   /// di atasnya menonjol dengan kontras lembut namun tetap tinggi.
-  static const Color background = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFF9F8F6);
   static const Color success = Color(0xFF16A34A);
 
   /// Hijau sukses gelap — teks badge "lunas" (kontras ≥ 4.5:1 di atas putih).

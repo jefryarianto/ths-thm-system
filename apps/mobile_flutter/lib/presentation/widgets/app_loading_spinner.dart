@@ -9,7 +9,7 @@ import '../../core/theme/app_theme.dart';
 /// Konstruktor default menampilkan dua cincin gradien yang berputar berlawanan
 /// arah (gradien hitam di luar, gradien biru di dalam) + logo THS-THM di tengah.
 /// Jarak antar-cincin dibuat sama dengan jarak cincin-dalam—logo (spacing
-/// seragam). `.small` tetap satu cincin (untuk tombol).
+/// seragam dan rapat). `.small` tetap satu cincin (untuk tombol).
 class AppLoadingSpinner extends StatelessWidget {
   final double size;
   final double strokeWidth;
@@ -116,13 +116,17 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
   @override
   Widget build(BuildContext context) {
     final size = widget.size;
-    // Geometri jarak seragam: celah antar-cincin dan celah cincin-dalam—logo
-    // dibuat sama ≈ 0.085×size (stroke luar 0.04×, dalam 0.03×, inner ring
-    // 0.76×, logo 0.56×). Verifikasi: (1 − 0.76 − 0.04 − 0.03)/2 = 0.085 dan
-    // (0.76 − 0.56 − 0.03)/2 = 0.085.
-    final innerSize = size * 0.76;
+    // Geometri jarak seragam tapi lebih rapat: celah antar-cincin dan celah
+    // cincin-dalam—logo sama ≈ 0.05×size (stroke luar 0.04×, dalam 0.03×,
+    // outer ring 0.69×, inner ring 0.55×, logo 0.42×). Logo 60% dari ukuran
+    // semula; diameter ring dalam & luar dikecilkan proporsional.
+    // Verifikasi: (0.69 − 0.55 − 0.04 − 0.03)/2 = 0.05 dan
+    // (0.55 − 0.42 − 0.03)/2 = 0.05.
+    final outerSize = size * 0.69;
+    final outerPad = (size - outerSize) / 2;
+    final innerSize = size * 0.55;
     final innerPad = (size - innerSize) / 2;
-    final logoSize = size * 0.56;
+    final logoSize = size * 0.42;
 
     return SizedBox(
       width: size,
@@ -130,7 +134,8 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned.fill(
+          Padding(
+            padding: EdgeInsets.all(outerPad),
             child: RotationTransition(
               // Animasi luar: clockwise (0 → 1).
               turns: _outer,
@@ -176,11 +181,13 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
             child: Container(
               width: logoSize,
               height: logoSize,
+              // Backdrop lingkaran putih tetap (logo.png transparan di tepi);
+              // tanpa padding sehingga tidak ada border/ruang putih berlebih
+              // di sekeliling logo.
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
               ),
-              padding: EdgeInsets.all(logoSize * 0.08),
               child: Image.asset(
                 'assets/images/logo.png',
                 fit: BoxFit.contain,

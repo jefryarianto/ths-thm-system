@@ -41,13 +41,27 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
   ): Promise<Record<string, unknown>> {
     // Tenant safety: scopeType/scopeId dari klien tidak boleh melampaui cakupan.
     await this.assertKegiatanCreateScope(scope, dto.scopeType, dto.scopeId);
+    // Fallback hierarkis lengkap (sama dengan graduations.service) — scopeType/
+    // scopeId wajib di schema. Tanpa ini, akun tanpa rantingId (superadmin,
+    // admin distrik/wilayah tanpa ranting) membuat kegiatan → Prisma error 500.
+    const resolvedScopeType =
+      dto.scopeType ||
+      (scope?.rantingId
+        ? 'ranting'
+        : scope?.wilayahId
+          ? 'wilayah'
+          : scope?.distrikId
+            ? 'distrik'
+            : 'nasional');
+    const resolvedScopeId =
+      dto.scopeId || scope?.rantingId || scope?.wilayahId || scope?.distrikId || 'national';
     const data: Record<string, unknown> = {
       nama: dto.nama,
       tipe: dto.tipe,
       lokasi: dto.lokasi,
       tanggalMulai: new Date(dto.tanggalMulai),
-      scopeType: dto.scopeType || (scope?.rantingId ? 'ranting' : undefined),
-      scopeId: dto.scopeId || scope?.rantingId,
+      scopeType: resolvedScopeType,
+      scopeId: resolvedScopeId,
       status: dto.status || 'draft',
       createdBy: userId,
     };

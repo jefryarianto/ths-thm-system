@@ -1,6 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/utils/snack_bar_helper.dart';
+
 /// Layar kamera untuk foto profil (item 8) — frame panduan pas foto di tengah
 /// (sudut tegas + area luar digelapkan) agar wajah terposisi benar.
 /// Saat rana ditekan, foto disimpan ke cache lalu `Navigator.pop(String?)`
@@ -13,7 +15,8 @@ class ProfileCameraCaptureScreen extends StatefulWidget {
       _ProfileCameraCaptureScreenState();
 }
 
-class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen> {
+class _ProfileCameraCaptureScreenState
+    extends State<ProfileCameraCaptureScreen> {
   CameraController? _controller;
   List<CameraDescription> _cameras = const [];
   int _cameraIndex = 0;
@@ -88,9 +91,7 @@ class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen>
 
   Future<void> _capture() async {
     final controller = _controller;
-    if (controller == null ||
-        !controller.value.isInitialized ||
-        _capturing) {
+    if (controller == null || !controller.value.isInitialized || _capturing) {
       return;
     }
     _capturing = true;
@@ -101,15 +102,11 @@ class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen>
         return;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal mengambil foto. Coba lagi.')),
-        );
+        showCenteredSnackBar(context, 'Gagal mengambil foto. Coba lagi.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil foto: $e')),
-        );
+        showCenteredSnackBar(context, 'Gagal mengambil foto: $e');
       }
     } finally {
       _capturing = false;
@@ -122,7 +119,7 @@ class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen>
     super.dispose();
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     final controller = _controller;
     final ready = controller != null && controller.value.isInitialized;
@@ -163,9 +160,8 @@ class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 IconButton(
-                  onPressed: _cameras.length > 1 && ready
-                      ? _switchCamera
-                      : null,
+                  onPressed:
+                      _cameras.length > 1 && ready ? _switchCamera : null,
                   icon: const Icon(Icons.cameraswitch_outlined,
                       color: Colors.white, size: 28),
                   tooltip: 'Ganti kamera',
@@ -246,7 +242,8 @@ class _GuideFramePainter extends CustomPainter {
     final frameW = w * 0.78;
     final frameH = frameW * 1.25; // proporsi pas foto (dekat 4:5)
     final left = (w - frameW) / 2;
-    final top = ((h - frameH) / 2) - 30; // geser ke atas agar tak tertutup tombol
+    final top =
+        ((h - frameH) / 2) - 30; // geser ke atas agar tak tertutup tombol
     final frame = Rect.fromLTWH(left, top, frameW, frameH);
 
     // Masker gelap di luar bingkai (bingkai dibiarkan transparan).
@@ -257,7 +254,8 @@ class _GuideFramePainter extends CustomPainter {
       Path()..addRect(Offset.zero & size),
       hole,
     );
-    canvas.drawPath(mask, Paint()..color = Colors.black.withValues(alpha: 0.45));
+    canvas.drawPath(
+        mask, Paint()..color = Colors.black.withValues(alpha: 0.45));
 
     // Garis tipis mengelilingi bingkai.
     canvas.drawRRect(
@@ -276,8 +274,8 @@ class _GuideFramePainter extends CustomPainter {
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round;
     // kiri-atas
-    canvas.drawLine(Offset(frame.left, frame.top + bracket), frame.topLeft,
-        paint);
+    canvas.drawLine(
+        Offset(frame.left, frame.top + bracket), frame.topLeft, paint);
     canvas.drawLine(
         Offset(frame.left + bracket, frame.top), frame.topLeft, paint);
     // kanan-atas

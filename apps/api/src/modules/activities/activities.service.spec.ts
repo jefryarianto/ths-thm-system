@@ -227,5 +227,32 @@ describe('ActivitiesService', () => {
       );
       expect(result.data).toBeDefined();
     });
+
+    it('should fall back to nasional scope for a superadmin account without explicit scope (regression: was 500)', async () => {
+      mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k3' });
+      const result = await service.create(
+        { nama: 'Kegiatan Tanpa Scope', tanggalMulai: '2026-09-20' } as any,
+        {}, // superadmin → scope kosong dari ScopeGuard
+      );
+      expect(result.data).toBeDefined();
+      expect(mockPrisma.kegiatan.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ scopeType: 'nasional', scopeId: 'national' }),
+        }),
+      );
+    });
+
+    it('should fall back to wilayah scope for an admin_wilayah account without rantingId', async () => {
+      mockPrisma.kegiatan.create.mockResolvedValue({ id: 'k4' });
+      await service.create(
+        { nama: 'Kegiatan Wilayah', tanggalMulai: '2026-09-20' } as any,
+        { wilayahId: 'w1' },
+      );
+      expect(mockPrisma.kegiatan.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ scopeType: 'wilayah', scopeId: 'w1' }),
+        }),
+      );
+    });
   });
 });

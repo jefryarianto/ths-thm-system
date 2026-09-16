@@ -25,8 +25,8 @@ export class DuesController {
 
   @Post()
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Buat iuran baru' })
-  create(@Body() dto: CreateDueDto) {
-    return this.service.create(dto);
+  create(@Body() dto: CreateDueDto, @Req() req: ScopedRequest) {
+    return this.service.create(dto, req.scope);
   }
 
   @Patch(':id')
@@ -73,14 +73,14 @@ export class DuesController {
 
   @Post('import')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Import iuran dari CSV' })
-  importDues(@Body() importDto: { data: Record<string, unknown>[] }) {
-    return this.service.importDues(importDto.data);
+  importDues(@Body() importDto: { data: Record<string, unknown>[] }, @Req() req: ScopedRequest) {
+    return this.service.importDues(importDto.data, req.scope);
   }
 
   @Patch('batch')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', { summary: 'Batch payment untuk banyak anggota' })
-  batchPayment(@Body() dto: BatchPaymentDto) {
-    return this.service.batchPayment(dto);
+  batchPayment(@Body() dto: BatchPaymentDto, @Req() req: ScopedRequest) {
+    return this.service.batchPayment(dto, req.scope);
   }
 
   @Get('dashboard/stats')

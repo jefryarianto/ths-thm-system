@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CandidatesService } from './candidates.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -720,6 +720,45 @@ describe('CandidatesService', () => {
       // Fields with commas or quotes should be wrapped in quotes
       expect(csv).toContain('"Test, Name"');
       expect(csv).toContain('"Jl. ""Besar"""');
+    });
+  });
+
+  describe('tenant isolation on create (regression)', () => {
+    it('should reject a candidate whose client rantingId is outside the admin scope', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      await expect(
+        service.create(
+          { namaLengkap: 'Calon Lain', jenisKelamin: 'L', rantingId: 'r-other' } as any,
+          { rantingId: 'r1' },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.calonAnggota.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow a candidate whose client rantingId is inside the admin scope', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c1' });
+      const result = await service.create(
+        { namaLengkap: 'Calon Dalam', jenisKelamin: 'L', rantingId: 'r1' } as any,
+        { rantingId: 'r1' },
+      );
+      expect(result.data).toBeDefined();
+    });
+
+    it('should allow public create (no scope) with explicit rantingId', async () => {
+      mockPrisma.calonAnggota.create.mockResolvedValue({ id: 'c2' });
+      const result = await service.create(
+        { namaLengkap: 'Calon Publik', jenisKelamin: 'P', rantingId: 'r-any' } as any,
+      );
+      expect(result.data).toBeDefined();
+    });
+
+    it('should mark out-of-scope CSV rows as failed during import', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);
+      const row = { nama_lengkap: 'Calon CSV', ranting_id: 'r-other' };
+      const res = await service.importCandidateRow(row, { rantingId: 'r1' });
+      expect(res.success).toBe(false);
+      expect(mockPrisma.calonAnggota.create).not.toHaveBeenCalled();
     });
   });
 });

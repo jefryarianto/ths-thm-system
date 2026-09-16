@@ -46,8 +46,8 @@ export class CandidatesController {
 
   @Post('import')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Impor data kandidat' })
-  importCsv(@Body() data: any[]) {
-    return this.candidatesService.importCsv(data);
+  importCsv(@Body() data: any[], @Req() req: ScopedRequest) {
+    return this.candidatesService.importCsv(data, req.scope);
   }
 
   @Post(':id/validate')

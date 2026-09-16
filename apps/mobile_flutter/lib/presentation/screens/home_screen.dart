@@ -3,13 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/dues/dues_bloc.dart';
 import '../../logic/gamification/gamification_bloc.dart';
+import '../../logic/home_feed/home_feed_bloc.dart';
 import '../../data/models/card_data.dart';
 import '../../logic/member/member_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/home_app_bar.dart';
+import '../widgets/home_feed_sections.dart';
 import '../widgets/kta_card_widget.dart';
 import '../widgets/secure_kta_container.dart';
 import '../../data/models/member.dart';
@@ -33,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (authState is AuthAuthenticated) {
       context.read<MemberBloc>().add(const MemberLoadRequested());
       context.read<DuesBloc>().add(const DuesLoadRequested());
+      context.read<HomeFeedBloc>().add(const HomeFeedLoadRequested());
     }
   }
 
@@ -41,11 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (authState is AuthAuthenticated) {
       context.read<MemberBloc>().add(const MemberLoadRequested());
       context.read<DuesBloc>().add(const DuesLoadRequested());
+      context.read<HomeFeedBloc>().add(const HomeFeedLoadRequested());
       _gamificationAsked = false;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data diperbarui')),
-        );
+        showCenteredSnackBar(context, 'Data diperbarui');
       }
     }
   }
@@ -87,6 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _GamificationTip()),
               ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              const SliverToBoxAdapter(child: AgendaSection()),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              const SliverToBoxAdapter(child: BeritaFeedSection()),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
@@ -126,7 +133,8 @@ class _ShortcutChips extends StatelessWidget {
           role == 'admin_wilayah' ||
           role == 'admin_distrik' ||
           role == 'superadmin') ...[
-        const _ChipItem(Icons.how_to_reg_outlined, 'Pendaftaran', '/admin/registrations'),
+        const _ChipItem(
+            Icons.how_to_reg_outlined, 'Pendaftaran', '/admin/registrations'),
         const _ChipItem(Icons.verified_user_outlined, 'Klaim', '/admin/claims'),
       ],
     ];
@@ -138,13 +146,18 @@ class _ShortcutChips extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final item = items[i];
+          // Semua chip tampil seragam sebagai kapsul krem solid + teks gelap.
           return ActionChip(
-            avatar: Icon(item.icon, size: 18, color: AppTheme.primary),
+            avatar: Icon(item.icon, size: 18, color: const Color(0xFF3E2F1D)),
             label: Text(item.label,
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
-            side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.2)),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF3E2F1D),
+                )),
+            backgroundColor: const Color(0xFFF4EAD9),
+            side: BorderSide(
+                color: const Color(0xFFD9C7A3).withValues(alpha: 0.6)),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             onPressed: () => context.push<void>(item.route),
@@ -197,11 +210,14 @@ class _KtaSection extends StatelessWidget {
             if (state.cardData == null) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
-                  context.read<MemberBloc>().add(const MemberCardDataRequested());
+                  context
+                      .read<MemberBloc>()
+                      .add(const MemberCardDataRequested());
                 }
               });
             }
-            return _KtaSectionCard(member: state.member, cardData: state.cardData);
+            return _KtaSectionCard(
+                member: state.member, cardData: state.cardData);
           },
         ),
       ],
@@ -216,26 +232,28 @@ class _KtaSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        // Kartu KTA lama dibungkus `SecureKtaContainer`: tata letak kartu TIDAK
-        // diubah — proteksi FLAG_SECURE aktif selama Halaman Beranda berada di
-        // layar (lihat `secure_window_channel.dart` — reference counting
-        // melindungi wrapper bertingkat dengan layar /kta maupun /kta/viewer).
-        // Banner jam verifikasi live disembunyikan (default showLiveClock false).
-        child: SecureKtaContainer(
-          childKtaExisting: KtaFlipCard(member: member, cardData: cardData),
-        ),
+    // Kartu digambar persis seperti layar /kta: tanpa frame, gutter total 20
+    // (16 sliver + 4) agar ukuran kartu identik dengan halaman KTA Digital.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      // Kartu KTA lama dibungkus `SecureKtaContainer`: tata letak kartu TIDAK
+      // diubah — proteksi FLAG_SECURE aktif selama Halaman Beranda berada di
+      // layar (lihat `secure_window_channel.dart` — reference counting
+      // melindungi wrapper bertingkat dengan layar /kta maupun /kta/viewer).
+      // Banner jam verifikasi live disembunyikan (default showLiveClock false).
+      child: SecureKtaContainer(
+        childKtaExisting: KtaFlipCard(member: member, cardData: cardData),
       ),
     );
   }
 }
 
 class _GamificationTip extends StatelessWidget {
+  // Bronzespalette — dipakai kartu "Level: Bronze" ala tampilan beranda.
+  static const Color _bronze = Color(0xFF8C6A3E);
+  static const Color _bronzeLight = Color(0xFFD7B98C);
+  static const Color _bronzeBg = Color(0xFFFBF4E8);
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GamificationBloc, GamificationState>(
@@ -244,28 +262,76 @@ class _GamificationTip extends StatelessWidget {
           return const SizedBox.shrink();
         }
         final p = state.profile!;
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(children: [
-              Text(p.level.icon, style: const TextStyle(fontSize: 28)),
-              const SizedBox(width: 14),
-              Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Text('Level: ${p.level.name}',
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text('${p.points} poin',
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade600)),
-                  ])),
-              TextButton(
-                  onPressed: () => context.push<void>('/gamification'),
-                  child: const Text('Lihat Semua')),
-            ]),
+        // Medali diambil dari data level (icon bisa emoji pangkat, mis. 🥉/🥈/🥇)
+        final medal = p.level.icon.isEmpty ? '🎖️' : p.level.icon;
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => context.push<void>('/gamification'),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _bronzeBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: _bronze.withValues(alpha: 0.28), width: 1.2),
+              ),
+              child: Row(children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [_bronzeLight, _bronze],
+                    ),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                          color: _bronze.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3)),
+                    ],
+                  ),
+                  child: Text(medal,
+                      style: const TextStyle(
+                          fontSize: 26, color: Color(0xFF3E2F1D))),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text('Level: ${p.level.name}',
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF3E2F1D))),
+                      const SizedBox(height: 2),
+                      Text('${p.points} poin • ${p.level.name} member',
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFF6F5330))),
+                      const SizedBox(height: 8),
+                      // Progress sederhana menuju level berikutnya (bronze→silver)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: p.points >= 500
+                              ? 1
+                              : (p.points / 500).clamp(0.0, 1.0),
+                          minHeight: 6,
+                          backgroundColor: Colors.white,
+                          valueColor: const AlwaysStoppedAnimation(_bronze),
+                        ),
+                      ),
+                    ])),
+              ]),
+            ),
           ),
         );
       },

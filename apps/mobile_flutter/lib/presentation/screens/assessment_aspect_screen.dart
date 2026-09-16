@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../data/models/graduation.dart';
 import '../../logic/assessments/assessment_bloc.dart';
 import '../../logic/assessments/assessment_event.dart';
@@ -43,10 +44,9 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
     final isEdit = aspek != null;
     final kodeCtrl = TextEditingController(text: aspek?.kodeAspek ?? '');
     final namaCtrl = TextEditingController(text: aspek?.namaAspek ?? '');
-    final deskripsiCtrl =
-        TextEditingController(text: aspek?.deskripsi ?? '');
-    final bobotCtrl = TextEditingController(
-        text: aspek?.bobot.toStringAsFixed(2) ?? '0');
+    final deskripsiCtrl = TextEditingController(text: aspek?.deskripsi ?? '');
+    final bobotCtrl =
+        TextEditingController(text: aspek?.bobot.toStringAsFixed(2) ?? '0');
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -103,8 +103,14 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
               child: const Text('Batal'),
             ),
             FilledButton(
-              onPressed: () => _submit(context, isEdit, aspek, kodeCtrl.text,
-                  namaCtrl.text, deskripsiCtrl.text, _parseBobot(bobotCtrl.text)),
+              onPressed: () => _submit(
+                  context,
+                  isEdit,
+                  aspek,
+                  kodeCtrl.text,
+                  namaCtrl.text,
+                  deskripsiCtrl.text,
+                  _parseBobot(bobotCtrl.text)),
               child: Text(isEdit ? 'Simpan' : 'Tambah'),
             ),
           ],
@@ -119,17 +125,10 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
     return v ?? 0;
   }
 
-  void _submit(
-      BuildContext dialogContext,
-      bool isEdit,
-      AssessmentAspect? aspek,
-      String kode,
-      String nama,
-      String deskripsi,
-      double bobot) {
+  void _submit(BuildContext dialogContext, bool isEdit, AssessmentAspect? aspek,
+      String kode, String nama, String deskripsi, double bobot) {
     if (kode.isEmpty || nama.isEmpty) {
-      ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(
-          content: Text('Kode dan nama aspek wajib diisi')));
+      showCenteredSnackBar(dialogContext, 'Kode dan nama aspek wajib diisi');
       return;
     }
     final bloc = context.read<AssessmentBloc>();
@@ -149,8 +148,7 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
         bobot: bobot,
       ));
     }
-    Navigator.of(dialogContext)
-        .pop(); // tutup dialog; hasil lewat listener
+    Navigator.of(dialogContext).pop(); // tutup dialog; hasil lewat listener
   }
 
   void _confirmDelete(AssessmentAspect aspek) {
@@ -158,8 +156,8 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus Aspek'),
-        content: Text(
-            'Hapus aspek "${aspek.namaAspek}" beserta seluruh itemnya?'),
+        content:
+            Text('Hapus aspek "${aspek.namaAspek}" beserta seluruh itemnya?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -198,11 +196,9 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
       body: BlocConsumer<AssessmentBloc, AssessmentState>(
         listener: (context, state) {
           if (state is AssessmentError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           } else if (state is AssessmentAspectSaved) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           }
         },
         builder: (context, state) {
@@ -235,9 +231,9 @@ class _AssessmentAspectScreenState extends State<AssessmentAspectScreen> {
                   final aspek = aspects[index];
                   return _AspectCard(
                     aspek: aspek,
-                  onTap: () => context.push(
-                      '/pendadaran/${widget.kegiatanId}/kriteria/${aspek.id}'
-                      '?nama=${Uri.encodeComponent(aspek.namaAspek)}'),
+                    onTap: () => context.push(
+                        '/pendadaran/${widget.kegiatanId}/kriteria/${aspek.id}'
+                        '?nama=${Uri.encodeComponent(aspek.namaAspek)}'),
                     onEdit: () => _showFormDialog(context, aspek),
                     onDelete: () => _confirmDelete(aspek),
                   );
@@ -299,8 +295,8 @@ class _AspectCard extends StatelessWidget {
                     Text(
                       '${aspek.kodeAspek}  ·  Bobot ${aspek.bobot.toStringAsFixed(1)}%'
                       '${aspek.items.isNotEmpty ? '  ·  ${aspek.items.length} item' : ''}',
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
                 ),

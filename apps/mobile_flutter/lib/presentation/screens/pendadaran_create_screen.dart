@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/pendadaran/pendadaran_bloc.dart';
 import '../widgets/app_bar_icon_title.dart';
@@ -37,9 +38,8 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
       // Guard frontend: layar ini hanya bisa dibuka admin distrik/superadmin.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Hanya admin distrik & superadmin yang dapat membuat pendadaran')));
+        showCenteredSnackBar(context,
+            'Hanya admin distrik & superadmin yang dapat membuat pendadaran');
         context.pop();
       });
     }
@@ -61,8 +61,7 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
     );
     if (picked != null) {
       setState(() => _tanggalMulai = picked);
-      if (_tanggalSelesai != null &&
-          _tanggalSelesai!.isBefore(picked)) {
+      if (_tanggalSelesai != null && _tanggalSelesai!.isBefore(picked)) {
         setState(() => _tanggalSelesai = null);
       }
     }
@@ -84,20 +83,17 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
   void _submit() {
     final nama = _namaCtrl.text.trim();
     if (nama.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nama pendadaran wajib diisi')));
+      showCenteredSnackBar(context, 'Nama pendadaran wajib diisi');
       return;
     }
     if (_tanggalMulai == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tanggal mulai wajib diisi')));
+      showCenteredSnackBar(context, 'Tanggal mulai wajib diisi');
       return;
     }
     context.read<PendadaranBloc>().add(PendadaranCreateRequested(
           nama: nama,
-          lokasi: _lokasiCtrl.text.trim().isEmpty
-              ? null
-              : _lokasiCtrl.text.trim(),
+          lokasi:
+              _lokasiCtrl.text.trim().isEmpty ? null : _lokasiCtrl.text.trim(),
           tanggalMulai: _fmt(_tanggalMulai!),
           tanggalSelesai:
               _tanggalSelesai == null ? null : _fmt(_tanggalSelesai!),
@@ -122,11 +118,9 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
       body: BlocConsumer<PendadaranBloc, PendadaranState>(
         listener: (context, state) {
           if (state is PendadaranError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)));
+            showCenteredSnackBar(context, state.message);
           } else if (state is PendadaranLoaded && state.justCreated) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Pendadaran berhasil dibuat')));
+            showCenteredSnackBar(context, 'Pendadaran berhasil dibuat');
             context.pop();
           }
         },

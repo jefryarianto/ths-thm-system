@@ -82,13 +82,13 @@ export default function EditTrainingPage() {
         hariTanggal: new Date(hariTanggal).toISOString(),
         materi,
       };
-      if (lokasi) body.lokasi = lokasi;
+      body.lokasi = lokasi || null;
 
       await apiClient.patch(`/trainings/${id}`, body);
       router.push(`/trainings/${id}`);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Gagal menyimpan perubahan');
+      const msg = (err as { message?: string | string[] })?.message;
+      setError(Array.isArray(msg) ? msg.join(', ') : msg || 'Gagal menyimpan perubahan');
     }
     setSaving(false);
   };

@@ -39,14 +39,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 onPressed: () => context
                     .read<NotificationBloc>()
                     .add(const NotificationMarkAllRead()),
-                child: const Text('Semua Dibaca',
-                    style: TextStyle(color: AppTheme.onPrimary)),
+                child: const Text('Semua Dibaca'),
               );
             },
           ),
-          PopupMenuButton<String>(
-            color: Colors.white,
-            onSelected: (value) {
+PopupMenuButton<String>(
+                color: Theme.of(context).colorScheme.surface,
+                onSelected: (value) {
               if (value == 'delete_all') _confirmDeleteAll(context);
             },
             itemBuilder: (context) => const [
