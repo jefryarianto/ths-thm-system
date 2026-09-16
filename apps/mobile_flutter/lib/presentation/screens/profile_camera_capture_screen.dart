@@ -144,10 +144,30 @@ class _ProfileCameraCaptureScreenState extends State<ProfileCameraCaptureScreen>
               child: _error != null
                   ? Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.videocam_off_outlined,
+                              size: 42, color: Colors.white.withValues(alpha: 0.65)),
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton.tonal(
+                            style: FilledButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.white12,
+                            ),
+                            onPressed: _setup,
+                            child: const Text('Coba Lagi'),
+                          ),
+                        ],
                       ),
                     )
                   : const CircularProgressIndicator(color: Colors.white),

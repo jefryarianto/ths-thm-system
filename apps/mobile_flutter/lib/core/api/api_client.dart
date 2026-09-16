@@ -8,10 +8,14 @@ import '../constants/app_constants.dart';
 
 class ApiClient {
   /// Ubah path relatif (mengandung `/storage/...`) menjadi URL absolut API.
+  /// Port default (80/443) dihilangkan agar URL bersih & konsisten.
   static String resolveAbsolute(String url) {
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     final base = Uri.parse(AppConstants.baseUrl);
-    final origin = '${base.scheme}://${base.host}:${base.port}';
+    final defaultPort = base.scheme == 'https' ? 443 : 80;
+    final origin = base.port == defaultPort
+        ? '${base.scheme}://${base.host}'
+        : '${base.scheme}://${base.host}:${base.port}';
     final path = url.startsWith('/') ? url : '/$url';
     return '$origin$path';
   }

@@ -179,6 +179,27 @@ class _DueCard extends StatelessWidget {
                 'Dibayar: ${Formatters.dateLong(due.tanggalBayar)}',
                 style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
               ),
+            // Tanda kecil bahwa detail iuran memiliki bukti pembayaran.
+            if (due.buktiUrl.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.receipt_long_outlined,
+                        size: 13, color: AppTheme.info),
+                    SizedBox(width: 4),
+                    Text(
+                      'Bukti pembayaran terlampir',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppTheme.info,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
         isThreeLine: true,

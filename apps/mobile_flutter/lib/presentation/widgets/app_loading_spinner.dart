@@ -34,6 +34,26 @@ class AppLoadingSpinner extends StatelessWidget {
     this.message,
   }) : small = true;
 
+  /// Proporsi geometri dual-ring (dalam satuan pecahan ukuran, 0..1):
+  /// `[strokeLuar, strokeDalam, celahLuarKeDalam, celahDalamKeLogo]`.
+  ///
+  /// Dr/diupayakan **sama persis** antara celah antar-cincin dengan celah
+  /// cincin-dalam → logo (permintaan desain: jarak seragam). Dijamin lewat
+  /// rumus konten pada `_DualRingSpinnerState.build`; test memakai helper ini
+  /// agar perubahan masa depan tidak membuat jarak melenceng diam-diam.
+  static List<double> debugSpacingFractions() {
+    const wo = 0.05; // stroke cincin luar
+    const wi = 0.0375; // stroke cincin dalam
+    const g = 0.075; // celah seragam target
+    const innerSize = 1 - 2 * (wo + g);
+    const logoSize = innerSize - 2 * (wi + g);
+    // Cincin luar digambar di kotak penuh → tepi-dalam berada di radius 0.5-wo.
+    const ringGap = (0.5 - wo) - innerSize / 2;
+    // Radius tepi-dalam cincin dalam = innerSize/2 - wi; logo radius = logoSize/2.
+    const logoGap = innerSize / 2 - wi - logoSize / 2;
+    return [wo, wi, ringGap, logoGap];
+  }
+
   @override
   Widget build(BuildContext context) {
     if (small) {
@@ -84,9 +104,15 @@ class _DualRingSpinner extends StatefulWidget {
 
 class _DualRingSpinnerState extends State<_DualRingSpinner>
     with TickerProviderStateMixin {
-  // Gradien ring: biru (dalam) & hitam (luar) — desain modern profesional.
+  /// Gradien ring sesuai permintaan desain:
+  /// - ring **dalam**: gradien biru (biru rosario → biru muda).
+  /// - ring **luar**: gradien hitam (abu sangat gelap → hitam pekat).
+  /// Ujung gradien sama warna dengan ujung lain (efek "komet") sehingga
+  /// putaran terlihat mulus tanpa lompatan.
+  static const _blueDeep = AppTheme.info; // 0xFF2B5AA6
   static const _blueLight = Color(0xFF7FB3F7);
-  static const _blackSoft = Color(0xFF6B7280);
+  static const _blackMid = Color(0xFF414141);
+  static const _blackCore = Color(0xFF000000);
 
   late final AnimationController _outer;
   late final AnimationController _inner;
@@ -116,13 +142,20 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
   @override
   Widget build(BuildContext context) {
     final size = widget.size;
-    // Geometri jarak seragam: celah antar-cincin dan celah cincin-dalam—logo
-    // dibuat sama ≈ 0.085×size (stroke luar 0.04×, dalam 0.03×, inner ring
-    // 0.76×, logo 0.56×). Verifikasi: (1 − 0.76 − 0.04 − 0.03)/2 = 0.085 dan
-    // (0.76 − 0.56 − 0.03)/2 = 0.085.
-    final innerSize = size * 0.76;
+    // Geometri jarak seragam (lihat AppLoadingSpinner.debugSpacingFractions):
+    //   wo = 0.05×size (stroke luar), wi = 0.0375×size (stroke dalam),
+    //   g = 0.075×size (celah seragam).
+    //   innerSize = size − 2(wo+g) ; logoSize = innerSize − 2(wi+g).
+    // Cek: celah luar→dalam = (size/2 − wo) − innerSize/2 = g dan
+    //      celah dalam→logo = innerSize/2 − wi − logoSize/2 = g — sama persis.
+    const woFrac = 0.05;
+    const wiFrac = 0.0375;
+    const gapFrac = 0.075;
+    final wo = size * woFrac;
+    final wi = size * wiFrac;
+    final innerSize = size * (1 - 2 * (woFrac + gapFrac));
     final innerPad = (size - innerSize) / 2;
-    final logoSize = size * 0.56;
+    final logoSize = innerSize - 2 * (wi + size * gapFrac);
 
     return SizedBox(
       width: size,
@@ -138,11 +171,11 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
                 child: CustomPaint(
                   painter: _GradientArcPainter(
                     gradientColors: const [
-                      _blackSoft,
-                      Color(0xFF141414),
-                      _blackSoft,
+                      _blackMid,
+                      _blackCore,
+                      _blackMid,
                     ],
-                    strokeWidth: size * 0.04,
+                    strokeWidth: wo,
                     startAngle: -math.pi / 2,
                     sweepAngle: 4.7,
                   ),
@@ -159,11 +192,11 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
                 child: CustomPaint(
                   painter: _GradientArcPainter(
                     gradientColors: const [
-                      AppTheme.info,
+                      _blueDeep,
                       _blueLight,
-                      AppTheme.info,
+                      _blueDeep,
                     ],
-                    strokeWidth: size * 0.03,
+                    strokeWidth: wi,
                     startAngle: math.pi / 2,
                     sweepAngle: 4.7,
                   ),

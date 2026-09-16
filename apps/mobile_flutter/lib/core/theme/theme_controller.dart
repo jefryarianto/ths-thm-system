@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Mengelola mode tema (terang/gelap/sistem) dan persistensinya.
+///
+/// Default adalah **terang** (bukan `system`) agar identitas brand tetap
+/// konsisten: latar `#E3F2FD`, kartu putih, AppBar putih. Bila ikut mode sistem,
+/// pengguna ber-tema gelap justru melihat navy gelap dan menganggap desain baru
+/// (termasuk warna latar `#E3F2FD` dan palet emas/biru) tidak diterapkan.
 class ThemeController extends ChangeNotifier {
   static const _prefKey = 'theme_mode';
 
-  ThemeController([ThemeMode initial = ThemeMode.system]) : _mode = initial;
+  ThemeController([ThemeMode initial = ThemeMode.light]) : _mode = initial;
 
   ThemeMode _mode;
   ThemeMode get mode => _mode;
@@ -30,8 +35,11 @@ class ThemeController extends ChangeNotifier {
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
-      default:
+      case 'system':
         return ThemeMode.system;
+      default:
+        // Simpanan kosong / rusak → terang (identitas brand THS-THM).
+        return ThemeMode.light;
     }
   }
 

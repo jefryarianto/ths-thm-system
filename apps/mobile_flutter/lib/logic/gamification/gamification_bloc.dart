@@ -120,14 +120,34 @@ class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
       } else {
         emit(GamificationLoaded(leaderboard: list));
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        emit(GamificationInitial());
-      } else {
-        emit(GamificationError(message: _message(e)));
+    } on DioException catch (_) {
+      // Kegagalan leaderboard TIDAK boleh menghancurkan layar (error) atau
+      // meninggalkan spinner selamanya. Pertahankan leaderboard lama bila ada;
+      // bila belum ada, daftar kosong agar tab tetap fungsional + bisa refresh.
+      final current = state;
+      if (current is GamificationLoaded) {
+        if (current.leaderboard == null) {
+          emit(current.copyWith(
+            leaderboard: const <LeaderboardEntry>[],
+            clearLeaderboard: true,
+          ));
+        }
+        // kalau sudah ada leaderboard lama: biarkan apa adanya.
+      } else if (current is! GamificationLoading) {
+        emit(const GamificationLoaded(leaderboard: []));
       }
-    } catch (e) {
-      emit(GamificationError(message: e.toString()));
+    } catch (_) {
+      final current = state;
+      if (current is GamificationLoaded) {
+        if (current.leaderboard == null) {
+          emit(current.copyWith(
+            leaderboard: const <LeaderboardEntry>[],
+            clearLeaderboard: true,
+          ));
+        }
+      } else if (current is! GamificationLoading) {
+        emit(const GamificationLoaded(leaderboard: []));
+      }
     }
   }
 
