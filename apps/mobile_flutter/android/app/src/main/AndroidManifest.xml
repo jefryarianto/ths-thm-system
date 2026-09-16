@@ -1,13 +1,17 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Akses internet untuk API & dokumen -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Kamera untuk scanner QR -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Notifikasi push (FCM) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- Izin tulis media untuk menyimpan kartu KTA ke galeri (Android < 10) -->
+    <!-- Izin tulis media untuk menyimpan kartu KTA ke galeri (Android < 10).
+         Plugin camera_android_camerax memakai maxSdkVersion=28; app sengaja
+         mempertahankan 29 untuk Android 9 — override via tools:replace. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29"/>
+        android:maxSdkVersion="29"
+        tools:replace="android:maxSdkVersion"/>
 
     <application
         android:label="THS-THM"
