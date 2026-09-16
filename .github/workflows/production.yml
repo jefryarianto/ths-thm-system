@@ -11,6 +11,14 @@ on:
         required: false
         default: 'latest'
 
+# Deploy produksi menulis ke VPS yang sama (docker compose, migrasi DB) —
+# dua deploy paralel saling menabrak di server. Push beruntun: deploy baru
+# membatalkan yang lama yang ter-supersede (dibuktikan saat dua deploy
+# paralel jam 07:22/07:29 membuat salah satunya macet >50 menit).
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: jefryarianto/ths-thm-system
