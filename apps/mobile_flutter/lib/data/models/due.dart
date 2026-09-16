@@ -1,3 +1,5 @@
+import '../../core/api/api_client.dart';
+
 class Due {
   final String id;
   final String periode;
@@ -5,6 +7,7 @@ class Due {
   final String status;
   final String? tanggalBayar;
   final String? tanggalJatuhTempo;
+  final String? buktiBayarPath;
   final String createdAt;
 
   Due({
@@ -14,8 +17,19 @@ class Due {
     required this.status,
     this.tanggalBayar,
     this.tanggalJatuhTempo,
+    this.buktiBayarPath,
     required this.createdAt,
   });
+
+  /// URL absolut gambar bukti pembayaran (endpoint upload menyimpan path
+  /// relatif seperti `/api/uploads/proofs/...`).
+  String get buktiUrl {
+    final p = buktiBayarPath?.trim() ?? '';
+    if (p.isEmpty) return '';
+    if (p.startsWith('http://') || p.startsWith('https://')) return p;
+    final path = p.startsWith('/') ? p : '/api/uploads/$p';
+    return ApiClient.resolveAbsolute(path);
+  }
 
   factory Due.fromJson(Map<String, dynamic> json) {
     return Due(
@@ -25,6 +39,7 @@ class Due {
       status: _str(json['status']),
       tanggalBayar: json['tanggalBayar']?.toString(),
       tanggalJatuhTempo: json['tanggalJatuhTempo']?.toString(),
+      buktiBayarPath: json['buktiBayarPath']?.toString(),
       createdAt: _str(json['createdAt']),
     );
   }
@@ -48,6 +63,7 @@ class Due {
       'status': status,
       'tanggalBayar': tanggalBayar,
       'tanggalJatuhTempo': tanggalJatuhTempo,
+      'buktiBayarPath': buktiBayarPath,
       'createdAt': createdAt,
     };
   }

@@ -96,34 +96,53 @@ class _TabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final labels = ['Profil', 'Leaderboard', 'Riwayat', 'Petunjuk'];
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Row(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F6FE),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
           children: List.generate(labels.length, (i) {
-        final active = tab == i;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => onChanged(i),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                  border: Border(
-                bottom: BorderSide(
-                    color: active ? AppTheme.primary : Colors.transparent,
-                    width: 2.5),
-              )),
-              child: Text(labels[i],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
+            final active = tab == i;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(i),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: active ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: active
+                        ? const [
+                            BoxShadow(
+                              color: Color(0x142B5AA6),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    labels[i],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
                       fontSize: 13,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                      color: active ? AppTheme.primary : Colors.grey.shade600)),
-            ),
-          ),
-        );
-      })),
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                      color:
+                          active ? AppTheme.primaryDark : Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
     );
   }
 }

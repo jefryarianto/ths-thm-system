@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'profile_camera_capture_screen.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/models/member.dart';
@@ -113,31 +114,72 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   // -- Foto Profil --
 
   Future<void> _pickAndUploadPhoto() async {
-    try {
-      final result = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+    // Tawarkan dua opsi: ambil langsung dari kamera (dengan frame panduan)
+    // atau pilih dari galeri penyimpanan internal.
+    final source = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            const Text('Ubah Foto Profil',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined, color: AppTheme.info),
+              title: const Text('Ambil Foto (Kamera)',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('Dengan bingkai panduan posisi wajah'),
+              onTap: () => Navigator.of(context).pop('camera'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.info),
+              title: const Text('Pilih dari Galeri',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('Penyimpanan internal perangkat'),
+              onTap: () => Navigator.of(context).pop('gallery'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    String? path;
+    if (source == 'camera') {
+      path = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+            builder: (_) => const ProfileCameraCaptureScreen()),
       );
-      if (result == null) return;
-
-      if (!mounted) return;
-      setState(() {
-        _localPhotoUri = result.path;
-        _photoUploading = true;
-      });
-
-      context.read<MemberBloc>().add(
-            MemberPhotoUploadRequested(filePath: result.path),
-          );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memilih foto: $e')),
+    } else {
+      try {
+        final result = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          imageQuality: 85,
         );
+        path = result?.path;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal memilih foto: $e')),
+          );
+        }
+        return;
       }
     }
+
+    if (path == null || !mounted) return;
+    setState(() {
+      _localPhotoUri = path;
+      _photoUploading = true;
+    });
+    context.read<MemberBloc>().add(
+          MemberPhotoUploadRequested(filePath: path),
+        );
   }
 
   // -- Form Submit --

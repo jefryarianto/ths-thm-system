@@ -48,11 +48,37 @@ class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
       );
       final events = _parseList(eventsRes.data, PointEvent.fromJson);
       final history = _parseList(historyRes.data, PointHistory.fromJson);
+
+      // Leaderboard: jangan menimpa yang sudah dimuat. Bila state belum punya
+      // (mis. `GamificationLeaderboardLoadRequested` belum tuntas), ambil di
+      // sini sekaligus — ini mencegah race di mana hasil request terpisah
+      // tertimpa emit profil di bawah sehingga leaderboard tampak "tidak
+      // berfungsi" (spinner selamanya).
+      var leaderboard = previousLeaderboard;
+      if (leaderboard == null) {
+        final current = state;
+        if (current is GamificationLoaded && current.leaderboard != null) {
+          leaderboard = current.leaderboard;
+        }
+      }
+      if (leaderboard == null) {
+        try {
+          final lbRes = await _apiClient.dio.get(
+            '/gamification/leaderboard',
+            queryParameters: {'limit': 10},
+          );
+          leaderboard = _parseList(lbRes.data, LeaderboardEntry.fromJson);
+        } catch (_) {
+          // Gagal memuat leaderboard tidak boleh menggagalkan profil.
+          leaderboard = const <LeaderboardEntry>[];
+        }
+      }
+
       emit(GamificationLoaded(
         profile: profile,
         events: events,
         pointsHistory: history,
-        leaderboard: previousLeaderboard,
+        leaderboard: leaderboard,
       ));
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {

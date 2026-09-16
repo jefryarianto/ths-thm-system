@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -190,30 +191,31 @@ class _DueCard extends StatelessWidget {
   void _showDetail(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Detail Iuran ${due.periode}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 12),
-            _row('Status', due.status),
-            _row('Jumlah', Formatters.rupiah(due.jumlah)),
-            _row('Tanggal Jatuh Tempo',
-                Formatters.dateLong(due.tanggalJatuhTempo)),
-            _row(
-                'Tanggal Bayar',
-                due.tanggalBayar != null
-                    ? Formatters.dateLong(due.tanggalBayar)
-                    : '-'),
-            const SizedBox(height: 8),
-          ],
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Detail Iuran ${due.periode}',
+                  style:
+                      const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              _row('Status', due.status),
+              _row('Jumlah', Formatters.rupiah(due.jumlah)),
+              _row('Tanggal Jatuh Tempo',
+                  Formatters.dateLong(due.tanggalJatuhTempo)),
+              _row(
+                  'Tanggal Bayar',
+                  due.tanggalBayar != null
+                      ? Formatters.dateLong(due.tanggalBayar)
+                      : '-'),
+              const SizedBox(height: 12),
+              _ProofSection(due: due),
+            ],
+          ),
         ),
       ),
     );
@@ -235,6 +237,147 @@ class _DueCard extends StatelessWidget {
                     const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bagian "Bukti Pembayaran" pada detail iuran — menampilkan gambar bukti dari
+/// `iuran.buktiBayarPath` (mis. `/api/uploads/proofs/...`). Tap gambar membuka
+/// viewer layar penuh (zoom). Tanpa bukti → placeholder sesuai status.
+class _ProofSection extends StatelessWidget {
+  final Due due;
+  const _ProofSection({required this.due});
+
+  @override
+  Widget build(BuildContext context) {
+    final url = due.buktiUrl;
+    final paid = due.status.toLowerCase().contains('lunas') ||
+        due.status.toLowerCase() == 'paid';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(),
+        const SizedBox(height: 8),
+        const Row(children: [
+          Icon(Icons.receipt_long_outlined,
+              size: 18, color: AppTheme.primaryDark),
+          SizedBox(width: 6),
+          Text('Bukti Pembayaran',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 10),
+        if (url.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F8FE),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0x2E2B5AA6)),
+            ),
+            child: Row(children: [
+              Icon(Icons.image_not_supported_outlined,
+                  size: 18, color: Colors.grey.shade500),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  paid
+                      ? 'Pembayaran dicatat manual (tanpa bukti unggah).'
+                      : 'Belum ada bukti pembayaran yang diunggah.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ),
+            ]),
+          )
+        else
+          GestureDetector(
+            onTap: () => _openViewer(context, url),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(
+                    color: const Color(0xFFF1F8FE),
+                    child: const Center(child: AppLoadingSpinner.small()),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    color: const Color(0xFFF1F8FE),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image_outlined,
+                            size: 28, color: Colors.grey.shade500),
+                        const SizedBox(height: 4),
+                        Text('Gambar tidak dapat dimuat',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (url.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: Text('Ketuk untuk melihat ukuran penuh',
+                style:
+                    TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _openViewer(BuildContext context, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => _ProofViewerScreen(url: url)),
+    );
+  }
+}
+
+/// Viewer layar penuh (latar gelap, zoom) untuk gambar bukti pembayaran.
+class _ProofViewerScreen extends StatelessWidget {
+  final String url;
+  const _ProofViewerScreen({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Bukti Pembayaran'),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          maxScale: 5,
+          minScale: 0.8,
+          child: CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.contain,
+            placeholder: (_, __) =>
+                const Center(child: AppLoadingSpinner.small(color: Colors.white)),
+            errorWidget: (_, __, ___) => const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.broken_image_outlined,
+                      size: 48, color: Colors.white54),
+                  SizedBox(height: 12),
+                  Text('Gambar tidak dapat dimuat',
+                      style: TextStyle(color: Colors.white70)),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
