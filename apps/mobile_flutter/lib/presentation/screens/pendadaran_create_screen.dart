@@ -3,14 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../logic/auth/auth_bloc.dart';
 import '../../logic/pendadaran/pendadaran_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 /// Layar pembuatan pendadaran (wisuda/graduations) baru.
 ///
-/// Hanya untuk admin distrik & admin kegiatan. Mengisi nama, lokasi,
-/// rentang tanggal, dan (opsional) admin kegiatan. Kirim lewat
-/// `PendadaranCreateRequested` pada `PendadaranBloc`.
+/// HANYA untuk admin distrik & superadmin. Pengguna lain (termasuk admin
+/// kegiatan) yang membuka layar ini langsung dialihkan kembali dengan
+/// pemberitahuan. Mengisi nama, lokasi, rentang tanggal, dan (opsional)
+/// admin kegiatan; kirim lewat `PendadaranCreateRequested` pada
+/// `PendadaranBloc`.
 class PendadaranCreateScreen extends StatefulWidget {
   const PendadaranCreateScreen({super.key});
 
@@ -23,6 +27,23 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
   final _lokasiCtrl = TextEditingController();
   DateTime? _tanggalMulai;
   DateTime? _tanggalSelesai;
+
+  @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.user.role : null;
+    if (role != 'admin_distrik' && role != 'superadmin') {
+      // Guard frontend: layar ini hanya bisa dibuka admin distrik/superadmin.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Hanya admin distrik & superadmin yang dapat membuat pendadaran')));
+        context.pop();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -92,7 +113,12 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buat Pendadaran')),
+      appBar: AppBar(
+        title: const AppBarIconTitle(
+          icon: Icons.school_outlined,
+          title: 'Buat Pendadaran',
+        ),
+      ),
       body: BlocConsumer<PendadaranBloc, PendadaranState>(
         listener: (context, state) {
           if (state is PendadaranError) {
@@ -150,7 +176,7 @@ class _PendadaranCreateScreenState extends State<PendadaranCreateScreen> {
               FilledButton.icon(
                 onPressed: busy ? null : _submit,
                 icon: busy
-                    ? const AppLoadingSpinner.small(color: Colors.white)
+                    ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
                     : const Icon(Icons.check),
                 label: const Text('Simpan Pendadaran'),
               ),

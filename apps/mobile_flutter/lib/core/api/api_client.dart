@@ -214,4 +214,28 @@ class ApiClient {
   Future<void> clearUser() async {
     await _storageProbe(_storage.delete(key: 'user'), _storageOpTimeout);
   }
+
+  // ─── "Ingat Saya" (hanya identifier — password TIDAK pernah disimpan) ────
+  static const String _rememberKey = 'remembered_identifier';
+
+  Future<void> saveRememberedIdentifier(String identifier) async {
+    await _storageProbe(
+      _storage.write(key: _rememberKey, value: identifier),
+      _storageOpTimeout,
+    );
+  }
+
+  Future<String?> loadRememberedIdentifier() async {
+    return _storageProbe(
+      _storage.read(key: _rememberKey),
+      _storageOpTimeout,
+    );
+  }
+
+  Future<void> clearRememberedIdentifier() async {
+    await _storageProbe(
+      _storage.delete(key: _rememberKey),
+      _storageOpTimeout,
+    );
+  }
 }

@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../logic/gamification/gamification_bloc.dart';
 import '../../logic/member/member_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class GamificationScreen extends StatefulWidget {
@@ -17,38 +18,55 @@ class _GamificationScreenState extends State<GamificationScreen> {
   int _tab = 0;
   bool _loaded = false;
 
+  /// Muat profil + leaderboard hanya sekali, setelah anggota tersedia.
+  /// Dipanggil dari `initState` (anggota sudah dimuat) dan dari
+  /// `BlocListener<MemberBloc>` bila layar dibuka sebelum `MemberLoaded`.
+  void _startLoading() {
+    if (_loaded) return;
+    final member = context.read<MemberBloc>().state;
+    if (member is! MemberLoaded) return;
+    _loaded = true;
+    context.read<GamificationBloc>().add(
+          GamificationLoadRequested(anggotaId: member.member.id),
+        );
+    context.read<GamificationBloc>().add(
+          const GamificationLeaderboardLoadRequested(),
+        );
+  }
+
   @override
   void initState() {
     super.initState();
-    final member = context.read<MemberBloc>().state;
-    if (member is MemberLoaded && !_loaded) {
-      _loaded = true;
-      context.read<GamificationBloc>().add(
-            GamificationLoadRequested(anggotaId: member.member.id),
-          );
-      context.read<GamificationBloc>().add(
-            const GamificationLeaderboardLoadRequested(),
-          );
-    }
+    _startLoading();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Poin & Level')),
-      body: BlocBuilder<GamificationBloc, GamificationState>(
-        builder: (context, state) {
-          if (state is GamificationLoading) {
-            return const AppLoadingSpinner(message: 'Memuat data...');
-          }
-          if (state is GamificationError) {
-            return Center(child: Text(state.message));
-          }
-          return Column(children: [
-            _TabBar(tab: _tab, onChanged: (i) => setState(() => _tab = i)),
-            Expanded(child: _buildTab()),
-          ]);
+      appBar: AppBar(
+        title: const AppBarIconTitle(
+          icon: Icons.emoji_events_outlined,
+          title: 'Poin & Level',
+        ),
+      ),
+      body: BlocListener<MemberBloc, MemberState>(
+        listener: (context, state) {
+          if (state is MemberLoaded) _startLoading();
         },
+        child: BlocBuilder<GamificationBloc, GamificationState>(
+          builder: (context, state) {
+            if (state is GamificationLoading) {
+              return const AppLoadingSpinner(message: 'Memuat data...');
+            }
+            if (state is GamificationError) {
+              return Center(child: Text(state.message));
+            }
+            return Column(children: [
+              _TabBar(tab: _tab, onChanged: (i) => setState(() => _tab = i)),
+              Expanded(child: _buildTab()),
+            ]);
+          },
+        ),
       ),
     );
   }
@@ -61,6 +79,8 @@ class _GamificationScreenState extends State<GamificationScreen> {
         return const _LeaderboardTab();
       case 2:
         return const _HistoryTab();
+      case 3:
+        return const _GuideTab();
       default:
         return const SizedBox.shrink();
     }
@@ -74,7 +94,7 @@ class _TabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['Profil', 'Leaderboard', 'Riwayat'];
+    final labels = ['Profil', 'Leaderboard', 'Riwayat', 'Petunjuk'];
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -114,14 +134,16 @@ class _ProfileTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
-        if (state is! GamificationLoaded) return const AppLoadingSpinner();
-        final p = state.profile;
+        if (state is! GamificationLoaded || state.profile == null) {
+          return const AppLoadingSpinner();
+        }
+        final p = state.profile!;
         return ListView(padding: const EdgeInsets.all(16), children: [
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                  colors: [AppTheme.primaryDark, AppTheme.primary]),
+                  colors: [AppTheme.primary, AppTheme.primaryLight]),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(children: [
@@ -129,17 +151,18 @@ class _ProfileTab extends StatelessWidget {
               const SizedBox(height: 8),
               Text(p.level.name,
                   style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.onPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
               Text('${p.points}',
                   style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.onPrimary,
                       fontSize: 32,
                       fontWeight: FontWeight.w800)),
               const Text('Poin',
-                  style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  style: TextStyle(
+                      color: Color(0xB31E1800), fontSize: 14)),
             ]),
           ),
           const SizedBox(height: 16),
@@ -179,10 +202,10 @@ class _LeaderboardTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
-        if (state is! GamificationLeaderboardLoaded) {
+        if (state is! GamificationLoaded || state.leaderboard == null) {
           return const AppLoadingSpinner();
         }
-        final entries = state.entries;
+        final entries = state.leaderboard!;
         if (entries.isEmpty) {
           return const Center(child: Text('Belum ada data leaderboard'));
         }
@@ -217,6 +240,127 @@ class _LeaderboardTab extends StatelessWidget {
   }
 }
 
+class _GuideSection {
+  final IconData icon;
+  final String title;
+  final List<String> lines;
+  const _GuideSection(this.icon, this.title, this.lines);
+}
+
+/// Tab Petunjuk — panduan cara mendapat poin, level, dan lencana sesuai aturan
+/// backend (`gamification.service.ts`): latihan +10, iuran tepat waktu +20 /
+/// terlambat +5, 5 level, dan 10 lencana.
+class _GuideTab extends StatelessWidget {
+  const _GuideTab();
+
+  static const _sections = [
+    _GuideSection(
+      Icons.stars_outlined,
+      'Cara Mendapatkan Poin',
+      [
+        'Hadir latihan rutin: +10 poin',
+        'Bayar iuran tepat waktu: +20 poin',
+        'Bayar iuran terlambat: +5 poin',
+        'Poin tercatat otomatis saat admin meng-input presensi latihan / pembayaran iuran Anda.',
+      ],
+    ),
+    _GuideSection(
+      Icons.workspace_premium_outlined,
+      'Level',
+      [
+        '🥉 Bronze — mulai 0 poin',
+        '🥈 Silver — mulai 100 poin',
+        '🥇 Gold — mulai 300 poin',
+        '💎 Platinum — mulai 500 poin',
+        '🔥 Diamond — mulai 1000 poin',
+      ],
+    ),
+    _GuideSection(
+      Icons.military_tech_outlined,
+      'Lencana (10 Badge)',
+      [
+        '🥋 Pemula Latihan — 5 latihan',
+        '💪 Aktif Latihan — 20 latihan',
+        '🏆 Master Latihan — 50 latihan',
+        '⏰ Tepat Waktu — iuran tepat 3 bulan berturut-turut',
+        '⭐ Disiplin — iuran tepat 6 bulan berturut-turut',
+        '👑 Setia — iuran tepat 12 bulan berturut-turut',
+        '🎓 Berprestasi — 1 sertifikat',
+        '🥇 Juara — 3 sertifikat',
+        '😈 Angel Points — total 100 poin',
+        '🔥 Legend — total 500 poin',
+      ],
+    ),
+    _GuideSection(
+      Icons.local_fire_department_outlined,
+      'Streak',
+      [
+        'Streak = catatan beruntun aktivitas Anda (latihan & iuran).',
+        'Rutin berlatih dan membayar iuran tanpa putus agar streak terus naik.',
+      ],
+    ),
+    _GuideSection(
+      Icons.emoji_events_outlined,
+      'Papan Peringkat & Hadiah',
+      [
+        'Lihat peringkat poin anggota se-distrik Anda.',
+        'Poin dapat ditukar hadiah / merchandise melalui admin — hubungi pengurus distrik Anda.',
+      ],
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Petunjuk Poin & Level',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Cara mengumpulkan poin, naik level, dan meraih lencana.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 12),
+        ..._sections.map(
+          (s) => Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(s.icon, size: 20, color: AppTheme.primaryDark),
+                    const SizedBox(width: 8),
+                    Text(
+                      s.title,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  ...s.lines.map(
+                    (l) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        l,
+                        style: const TextStyle(fontSize: 13, height: 1.35),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _HistoryTab extends StatelessWidget {
   const _HistoryTab();
   @override
@@ -228,8 +372,13 @@ class _HistoryTab extends StatelessWidget {
         final events = state.events;
         return ListView(padding: const EdgeInsets.all(16), children: [
           if (history.isNotEmpty) ...[
-            const Text('Poin per Bulan',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const Row(children: [
+              Icon(Icons.calendar_month_outlined,
+                  size: 18, color: AppTheme.primaryDark),
+              SizedBox(width: 6),
+              Text('Poin per Bulan',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            ]),
             const SizedBox(height: 8),
             ...history.map((h) => Card(
                   margin: const EdgeInsets.only(bottom: 6),
@@ -244,8 +393,12 @@ class _HistoryTab extends StatelessWidget {
             const SizedBox(height: 16),
           ],
           if (events.isNotEmpty) ...[
-            const Text('Aktivitas Terbaru',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const Row(children: [
+              Icon(Icons.history, size: 18, color: AppTheme.primaryDark),
+              SizedBox(width: 6),
+              Text('Aktivitas Terbaru',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            ]),
             const SizedBox(height: 8),
             ...events.map((e) => Card(
                   margin: const EdgeInsets.only(bottom: 6),

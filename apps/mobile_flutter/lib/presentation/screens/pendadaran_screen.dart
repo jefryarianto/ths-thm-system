@@ -6,9 +6,12 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/graduation.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/pendadaran/pendadaran_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
-/// Daftar pendadaran (wisuda/graduations) — admin distrik & admin kegiatan.
+/// Daftar pendadaran (wisuda/graduations) — dapat diakses admin distrik,
+/// admin kegiatan, dll. Pembuatan pendadaran baru hanya untuk admin distrik
+/// & superadmin.
 ///
 /// Menampilkan kartu pendadaran dengan status, rentang tanggal, lokasi, dan
 /// ringkasan undangan/hadir/peserta. Tombol fab untuk membuat pendadaran baru.
@@ -38,11 +41,14 @@ class _PendadaranScreenState extends State<PendadaranScreen> {
   Widget build(BuildContext context) {
     final authState = context.watch<AuthBloc>().state;
     final role = authState is AuthAuthenticated ? authState.user.role : null;
-    final canCreate = role != 'penguji';
+    final canCreate = role == 'admin_distrik' || role == 'superadmin';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pendadaran'),
+        title: const AppBarIconTitle(
+          icon: Icons.school_outlined,
+          title: 'Pendadaran',
+        ),
         actions: [
           IconButton(
             onPressed: _refresh,

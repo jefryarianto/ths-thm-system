@@ -127,7 +127,7 @@ class _VideoSplashplashState extends State<VideoSplashScreen> {
                       const Text(
                         'THS-THM',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.onPrimary,
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 2,
@@ -137,7 +137,7 @@ class _VideoSplashplashState extends State<VideoSplashScreen> {
                       const SizedBox(
                         width: 28,
                         height: 28,
-                        child: AppLoadingSpinner.small(color: Colors.white),
+                        child: AppLoadingSpinner.small(color: AppTheme.onPrimary),
                       ),
                     ],
                   ),

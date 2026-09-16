@@ -98,6 +98,9 @@ _scripts/*-preview-v*.apk
 _scripts/autolink-out.txt
 _scripts/*.tgz
 videoths*.mp4
+# Pengecualian: video splash Flutter wajib ikut repo agar ada di CI/release APK
+# (file root videothsnew.mp4 tetap di-ignore — hanya copy di assets/videos yang di-track)
+!apps/mobile_flutter/assets/videos/videothsnew.mp4
 
 # APK build output (terlalu besar utk GitHub >100MB)
 _scripts/*.apk

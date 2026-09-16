@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../logic/forum/forum_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class ForumThreadsScreen extends StatefulWidget {
@@ -37,8 +38,11 @@ class _ForumThreadsScreenState extends State<ForumThreadsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            widget.categoryName.isNotEmpty ? widget.categoryName : 'Thread'),
+        title: AppBarIconTitle(
+          icon: Icons.forum_outlined,
+          title:
+              widget.categoryName.isNotEmpty ? widget.categoryName : 'Thread',
+        ),
         actions: [
           IconButton(
               icon: const Icon(Icons.add),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../logic/forum/forum_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class ForumScreen extends StatefulWidget {
@@ -27,7 +28,10 @@ class _ForumScreenState extends State<ForumScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Forum Komunitas'),
+        title: const AppBarIconTitle(
+          icon: Icons.forum_outlined,
+          title: 'Forum Komunitas',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

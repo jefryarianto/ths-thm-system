@@ -9,6 +9,7 @@ import '../../core/utils/formatters.dart';
 import '../../data/models/card_data.dart';
 import '../../data/models/member.dart';
 import '../../logic/member/member_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/kta_card_widget.dart';
 
@@ -40,7 +41,12 @@ class _KtaScreenState extends State<KtaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('KTA Digital')),
+      appBar: AppBar(
+        title: const AppBarIconTitle(
+          icon: Icons.credit_card_outlined,
+          title: 'KTA Digital',
+        ),
+      ),
       body: BlocBuilder<MemberBloc, MemberState>(
         builder: (context, state) {
           if (state is MemberLoading) {

@@ -91,7 +91,7 @@ class _ClaimAccountFormScreenState extends State<ClaimAccountFormScreen> {
               if (_tipe == 'keanggotaan') ..._keanggotaanFields(),
               const SizedBox(height: 28),
               FilledButton(onPressed: busy ? null : _submit,
-                child: busy ? const AppLoadingSpinner.small(color: Colors.white) : const Text('Kirim Klaim')),
+                child: busy ? const AppLoadingSpinner.small(color: AppTheme.onPrimary) : const Text('Kirim Klaim')),
             ]);
           },
         ),

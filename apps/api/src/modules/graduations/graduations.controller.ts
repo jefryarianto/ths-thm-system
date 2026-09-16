@@ -81,7 +81,7 @@ export class GraduationsController {
   }
 
   @Post()
-  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Tambah wisuda baru' })
+  @CrudAuth('superadmin', 'admin_distrik', { summary: 'Tambah wisuda baru — hanya superadmin & admin_distrik' })
   create(@Body() dto: CreateGraduationDto, @Req() req: ScopedRequest) {
     return this.service.create(dto, req.scope, req.user?.id);
   }

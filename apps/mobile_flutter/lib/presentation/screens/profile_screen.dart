@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -15,7 +16,10 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: const AppBarIconTitle(
+          icon: Icons.person_outline,
+          title: 'Profil',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),

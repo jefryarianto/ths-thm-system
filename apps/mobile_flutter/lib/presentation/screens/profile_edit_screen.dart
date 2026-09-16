@@ -250,7 +250,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     onPressed: saving ? null : _submit,
                     style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                     child: saving
-                        ? const AppLoadingSpinner.small(color: Colors.white)
+                        ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
                         : const Text('Simpan Perubahan'),
                   );
                 },

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 
@@ -41,7 +42,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white70,
+                        color: Color(0xB31E1800),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -52,7 +53,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppTheme.onPrimary,
                       ),
                     ),
                   ],
@@ -91,7 +92,7 @@ class _Avatar extends StatelessWidget {
           if (state is MemberLoaded && state.member.fotoUrl.isNotEmpty) {
             return CircleAvatar(
               radius: 24,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
+              backgroundColor: AppTheme.onPrimary.withValues(alpha: 0.14),
               child: ClipOval(
                 child: CachedNetworkImage(
                   imageUrl: state.member.fotoUrl,
@@ -100,7 +101,7 @@ class _Avatar extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const Icon(
                     Icons.person,
-                    color: Colors.white,
+                    color: AppTheme.onPrimary,
                     size: 28,
                   ),
                 ),
@@ -120,11 +121,11 @@ class _Avatar extends StatelessWidget {
                   .join();
           return CircleAvatar(
             radius: 24,
-            backgroundColor: Colors.white.withValues(alpha: 0.25),
+            backgroundColor: AppTheme.onPrimary.withValues(alpha: 0.14),
             child: Text(
               inisial.toUpperCase(),
               style: const TextStyle(
-                color: Colors.white,
+                color: AppTheme.onPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),

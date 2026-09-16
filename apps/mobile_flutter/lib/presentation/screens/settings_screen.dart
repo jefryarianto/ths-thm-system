@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -15,7 +16,12 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pengaturan')),
+      appBar: AppBar(
+        title: const AppBarIconTitle(
+          icon: Icons.settings_outlined,
+          title: 'Pengaturan',
+        ),
+      ),
       body: ListView(
         children: [
           BlocBuilder<AuthBloc, AuthState>(

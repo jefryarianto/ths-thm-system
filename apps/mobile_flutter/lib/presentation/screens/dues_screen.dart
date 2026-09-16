@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/due.dart';
 import '../../logic/dues/dues_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class DuesScreen extends StatefulWidget {
@@ -27,7 +28,12 @@ class _DuesScreenState extends State<DuesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Status Iuran')),
+      appBar: AppBar(
+        title: const AppBarIconTitle(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Status Iuran',
+        ),
+      ),
       body: BlocBuilder<DuesBloc, DuesState>(
         builder: (context, state) {
           if (state is DuesLoading) {
@@ -111,10 +117,11 @@ class _SummaryBar extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Colors.white)),
+                color: AppTheme.onPrimary)),
         Text(label,
             style: TextStyle(
-                fontSize: 11, color: Colors.white.withValues(alpha: 0.8))),
+                fontSize: 11,
+                color: AppTheme.onPrimary.withValues(alpha: 0.8))),
       ],
     );
   }

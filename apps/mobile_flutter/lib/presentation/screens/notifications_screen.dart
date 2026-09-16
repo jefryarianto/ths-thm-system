@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/notification_item.dart';
 import '../../logic/notification/notification_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -22,7 +23,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifikasi'),
+        title: const AppBarIconTitle(
+          icon: Icons.notifications_outlined,
+          title: 'Notifikasi',
+        ),
         actions: [
           BlocBuilder<NotificationBloc, NotificationState>(
             buildWhen: (p, c) =>
@@ -36,7 +40,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     .read<NotificationBloc>()
                     .add(const NotificationMarkAllRead()),
                 child: const Text('Semua Dibaca',
-                    style: TextStyle(color: Colors.white)),
+                    style: TextStyle(color: AppTheme.onPrimary)),
               );
             },
           ),

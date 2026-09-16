@@ -83,8 +83,7 @@ class _DualRingSpinner extends StatefulWidget {
 
 class _DualRingSpinnerState extends State<_DualRingSpinner>
     with TickerProviderStateMixin {
-  static const _navy = Color(0xFF334E68);
-  static const _blue = Color(0xFF3B82F6);
+  static const _goldLight = Color(0xFFFFE9A8);
 
   late final AnimationController _outer;
   late final AnimationController _inner;
@@ -116,7 +115,9 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
     final size = widget.size;
     final innerSize = size * 0.58;
     final innerPad = (size - innerSize) / 2;
-    final logoSize = innerSize * 0.72;
+    // Logo tengah diperbesar proporsional (0.72×inner → 0.92×inner) dengan
+    // bantalan putih lebih tipis agar logo THS-THM lebih menonjol.
+    final logoSize = innerSize * 0.92;
 
     return SizedBox(
       width: size,
@@ -131,8 +132,12 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
               child: SizedBox.expand(
                 child: CustomPaint(
                   painter: _GradientArcPainter(
-                    gradientColors: const [_navy, Color(0xFF6AB7FF), _navy],
-                    strokeWidth: size * 0.094,
+                    gradientColors: const [
+                      AppTheme.primaryDark,
+                      AppTheme.primaryLight,
+                      AppTheme.primaryDark,
+                    ],
+                    strokeWidth: size * 0.04,
                     startAngle: -math.pi / 2,
                     sweepAngle: 4.7,
                   ),
@@ -148,8 +153,12 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
               child: SizedBox.expand(
                 child: CustomPaint(
                   painter: _GradientArcPainter(
-                    gradientColors: const [_blue, Color(0xFF93C5FD), _blue],
-                    strokeWidth: size * 0.078,
+                    gradientColors: const [
+                      AppTheme.primaryLight,
+                      _goldLight,
+                      AppTheme.primaryLight,
+                    ],
+                    strokeWidth: size * 0.03,
                     startAngle: math.pi / 2,
                     sweepAngle: 4.7,
                   ),
@@ -166,7 +175,7 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
                 shape: BoxShape.circle,
                 color: Colors.white,
               ),
-              padding: EdgeInsets.all(logoSize * 0.16),
+              padding: EdgeInsets.all(logoSize * 0.08),
               child: Image.asset(
                 'assets/images/logo.png',
                 fit: BoxFit.contain,

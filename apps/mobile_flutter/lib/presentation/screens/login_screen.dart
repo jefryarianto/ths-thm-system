@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/api/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifier = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -25,9 +27,36 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Isi otomatis identifier yang pernah disimpan ("Ingat Saya") dari secure
+  /// storage. Password TIDAK pernah dipersist.
+  Future<void> _restoreRememberedIdentifier() async {
+    if (const bool.fromEnvironment('E2E_LOGIN')) return;
+    final saved = await ApiClient().loadRememberedIdentifier();
+    if (!mounted || saved == null || saved.isEmpty) return;
+    setState(() {
+      _identifier.text = saved;
+      _rememberMe = true;
+    });
+  }
+
+  /// Persist identifier bila "Ingat Saya" dicentang, hapus bila tidak.
+  /// Dipanggil hanya saat login berhasil.
+  Future<void> _persistRemember() async {
+    final api = ApiClient();
+    if (_rememberMe) {
+      final id = _identifier.text.trim();
+      if (id.isNotEmpty) {
+        await api.saveRememberedIdentifier(id);
+        return;
+      }
+    }
+    await api.clearRememberedIdentifier();
+  }
+
   @override
   void initState() {
     super.initState();
+    _restoreRememberedIdentifier();
     // Hook E2E sementara: isi kredensial test + auto-submit.
     // Gate lewat dart-define --dart-define=E2E_LOGIN=true (lihat run_run.bat).
     // Kredensial bisa dioverride via:
@@ -77,8 +106,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: BlocListener<AuthBloc, AuthState>(
                   listener: (context, state) {
                     if (state is AuthAuthenticated) {
+                      _persistRemember();
                       context.go('/home');
                     } else if (state is AuthMustChangePassword) {
+                      _persistRemember();
                       context.go('/force-change-password');
                     } else if (state is AuthError) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -146,6 +177,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               onSubmitted: (_) => _submit(),
                             ),
+                            // "Ingat Saya" — simpan identifier (email/nomor
+                            // anggota) saja; password tidak pernah disimpan.
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 48,
+                                  height: 40,
+                                  child: Checkbox(
+                                    value: _rememberMe,
+                                    activeColor: AppTheme.primary,
+                                    onChanged: (v) =>
+                                        setState(() => _rememberMe = v ?? false),
+                                  ),
+                                ),
+                                const Text(
+                                  'Ingat Saya',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 24),
                             BlocBuilder<AuthBloc, AuthState>(
                               builder: (context, state) {
@@ -154,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onPressed: loading ? null : _submit,
                                   child: loading
                                       ? const AppLoadingSpinner.small(
-                                          color: Colors.white)
+                                          color: AppTheme.onPrimary)
                                       : const Text('Masuk'),
                                 );
                               },

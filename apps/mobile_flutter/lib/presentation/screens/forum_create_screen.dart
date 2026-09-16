@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../logic/forum/forum_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 
@@ -108,7 +109,7 @@ class _ForumCreateScreenState extends State<ForumCreateScreen> {
                 FilledButton(
                   onPressed: _submitting ? null : _submit,
                   child: _submitting
-                      ? const AppLoadingSpinner.small(color: Colors.white)
+                      ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
                       : const Text('Buat Thread'),
                 ),
               ],

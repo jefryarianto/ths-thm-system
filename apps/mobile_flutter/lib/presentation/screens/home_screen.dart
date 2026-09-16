@@ -151,8 +151,13 @@ class _KtaSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Kartu Anggota (KTA)',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const Row(children: [
+              Icon(Icons.credit_card_outlined,
+                  size: 18, color: AppTheme.primaryDark),
+              SizedBox(width: 6),
+              Text('Kartu Anggota (KTA)',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            ]),
             TextButton(
               onPressed: () => context.push<void>('/kta'),
               child: const Text('Lihat Detail'),
@@ -215,8 +220,10 @@ class _GamificationTip extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
-        if (state is! GamificationLoaded) return const SizedBox.shrink();
-        final p = state.profile;
+        if (state is! GamificationLoaded || state.profile == null) {
+          return const SizedBox.shrink();
+        }
+        final p = state.profile!;
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16),

@@ -202,7 +202,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           const SizedBox(height: 12),
           FilledButton.icon(
             icon: _downloading
-                ? const AppLoadingSpinner.small(color: Colors.white)
+                ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
                 : const Icon(Icons.download),
             label: Text(
                 _downloading ? 'Mengunduh...' : 'Download / Lihat Dokumen'),

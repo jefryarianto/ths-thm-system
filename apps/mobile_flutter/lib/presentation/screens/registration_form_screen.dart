@@ -184,7 +184,7 @@ class _RegistrationFormScreenState extends State<RegistrationFormScreen> {
       FilledButton(
         onPressed: busy ? null : _submit,
         child: busy
-            ? const AppLoadingSpinner.small(color: Colors.white)
+            ? const AppLoadingSpinner.small(color: AppTheme.onPrimary)
             : const Text('Kirim Pendaftaran'),
       ),
     ];

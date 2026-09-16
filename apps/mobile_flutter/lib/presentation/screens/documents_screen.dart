@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/document.dart';
 import '../../logic/document/document_bloc.dart';
+import '../widgets/app_bar_icon_title.dart';
 import '../widgets/app_loading_spinner.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -28,7 +29,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dokumen Saya')),
+      appBar: AppBar(
+        title: const AppBarIconTitle(
+          icon: Icons.folder_outlined,
+          title: 'Dokumen Saya',
+        ),
+      ),
       body: BlocBuilder<DocumentBloc, DocumentState>(
         builder: (context, state) {
           if (state is DocumentLoading) {
