@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import Modal from '@/components/ui/modal';
 import Input from '@/components/ui/input';
 import Select from '@/components/ui/select';
 import FormField from '@/components/ui/form-field';
+import OrgCascadeSelect, {
+  EMPTY_ORG_SELECTION,
+  type OrgSelection,
+} from '@/components/ui/org-cascade-select';
 import { ROLE_OPTIONS } from '@/components/users/constants';
 import { useToast } from '@/components/ui/toast';
+import { useOrgScopeLocks } from '@/hooks/use-org-scope';
 import type { User } from '@/types';
 
 interface EditUserModalProps {
@@ -17,12 +22,33 @@ interface EditUserModalProps {
   userId: string | null;
 }
 
+/** `/users/:id` menyertakan relasi ranting → wilayah → distrik untuk prefill cascade. */
+interface UserDetail extends User {
+  ranting?: {
+    id: string;
+    nama: string;
+    wilayahId?: string | null;
+    wilayah?: {
+      id: string;
+      nama: string;
+      distrikId?: string | null;
+      distrik?: { id: string; nama: string } | null;
+    } | null;
+  } | null;
+}
+
 export default function EditUserModal({ open, onClose, onSuccess, userId }: EditUserModalProps) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [form, setForm] = useState({ email: '', namaLengkap: '', role: '', password: '' });
+  const [org, setOrg] = useState<OrgSelection>(EMPTY_ORG_SELECTION);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const scope = useOrgScopeLocks(open);
+
+  // Superadmin tidak butuh ranting (scope nasional); role lain WAJIB punya.
+  const isSuperadmin = form.role === 'superadmin';
+  const showOrg = form.role !== '' && !isSuperadmin;
 
   useEffect(() => {
     if (open && userId) {
@@ -30,12 +56,17 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
       apiClient
         .get(`/users/${userId}`)
         .then((r) => {
-          const user: User = r.data.data;
+          const user = unwrap<UserDetail>(r);
           setForm({
             email: user.email,
             namaLengkap: user.namaLengkap,
             role: user.role,
             password: '',
+          });
+          setOrg({
+            distrikId: user.ranting?.wilayah?.distrik?.id ?? '',
+            wilayahId: user.ranting?.wilayah?.id ?? '',
+            rantingId: user.rantingId ?? '',
           });
         })
         .catch(() => {
@@ -46,9 +77,19 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
     }
   }, [open, userId, onClose, toast]);
 
+  // Kunci scope aktor diterapkan oleh OrgCascadeSelect (single source of truth)
+  // lewat prop lockDistrikId/lockWilayahId; prefill dari server dipertahankan.
+
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const handleRoleChange = (role: string) => {
+    setForm((prev) => ({ ...prev, role }));
+    // Ganti role = ganti kebutuhan organisasi → reset cascade.
+    setOrg(EMPTY_ORG_SELECTION);
+    setErrors((prev) => ({ ...prev, role: '', ranting: '' }));
   };
 
   const validate = () => {
@@ -57,6 +98,9 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
     if (!form.namaLengkap) errs.namaLengkap = 'Nama wajib diisi';
     if (!form.role) errs.role = 'Role wajib dipilih';
     if (form.password && form.password.length < 6) errs.password = 'Password minimal 6 karakter';
+    if (showOrg && !org.rantingId) {
+      errs.ranting = 'Ranting wajib dipilih untuk role selain superadmin';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -66,15 +110,17 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
     if (!validate() || !userId) return;
     setLoading(true);
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, unknown> = {
         email: form.email,
         namaLengkap: form.namaLengkap,
         role: form.role,
       };
       if (form.password) payload.password = form.password;
+      if (showOrg) payload.rantingId = org.rantingId;
       await apiClient.patch(`/users/${userId}`, payload);
       toast('success', 'User berhasil diperbarui');
       setForm({ email: '', namaLengkap: '', role: '', password: '' });
+      setOrg(EMPTY_ORG_SELECTION);
       setErrors({});
       onSuccess();
       onClose();
@@ -115,13 +161,29 @@ export default function EditUserModal({ open, onClose, onSuccess, userId }: Edit
           </FormField>
           <FormField label="Role" required>
             <Select
+              data-testid="user-role"
               value={form.role}
-              onChange={(e) => handleChange('role', e.target.value)}
+              onChange={(e) => handleRoleChange(e.target.value)}
               options={ROLE_OPTIONS.filter((o) => o.value !== '')}
               placeholder="Pilih Role"
               error={errors.role}
             />
           </FormField>
+          {showOrg && (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Penempatan organisasi — wajib untuk role selain superadmin.
+              </p>
+              <OrgCascadeSelect
+                value={org}
+                onChange={setOrg}
+                error={errors.ranting}
+                disabled={loading}
+                lockDistrikId={scope.lockDistrikId}
+                lockWilayahId={scope.lockWilayahId}
+              />
+            </div>
+          )}
           <FormField label="Password Baru (opsional)">
             <Input
               type="password"

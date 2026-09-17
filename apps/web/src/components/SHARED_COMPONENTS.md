@@ -174,3 +174,53 @@ Loading skeleton components for detail pages.
 - **New stat display**: Use `StatCard` with appropriate `variant` and `color`.
 - **New filter select**: Create a constants file exporting `STATUS_OPTIONS` (or equivalent) as `{value, label}[]`.
 - **New status badges**: Create a `StatusBadge` component in the module's constants file following the existing patterns.
+
+---
+
+## OrgCascadeSelect — `@/components/ui/org-cascade-select`
+
+Cascade selector **Distrik → Wilayah → Ranting** (3 select bertingkat). Memakai endpoint `/org-structure/*` yang sama dengan halaman anggota/kandidat, dengan stale-response guard (`useRef` sequence) agar pilihan cepat tidak tertimpa respons lama.
+
+**Props:**
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | `OrgSelection` | required | `{ distrikId, wilayahId, rantingId }` — isi ketiganya untuk prefill (mode edit) |
+| `onChange` | `(next: OrgSelection) => void` | required | Dipanggil saat pilihan berubah **atau** saat kunci scope diterapkan |
+| `required` | `boolean` | `false` | Tandai Ranting wajib |
+| `error` | `string` | — | Pesan error di bawah select Ranting |
+| `disabled` | `boolean` | `false` | Nonaktifkan seluruh cascade |
+| `lockDistrikId` | `string` | — | Kunci distrik (admin_distrik & admin_wilayah) — select disabled + 1 opsi |
+| `lockWilayahId` | `string` | — | Kunci wilayah (admin_wilayah & admin_ranting) |
+| `columns` | `1 \| 3` | `1` | `1` = stack vertikal (modal), `3` = grid tiga kolom |
+
+**Ekspor tambahan:** `OrgSelection` (type), `EMPTY_ORG_SELECTION` (konstanta state awal).
+
+**Perilaku penting:**
+- Ganti distrik → wilayah & ranting direset; ganti wilayah → ranting direset (handler, bukan effect).
+- Kunci scope **menyelaraskan nilai** bila masih kosong sehingga select disabled tidak pernah tampil kosong; prefill dari server tetap dipertahankan.
+- Semua select punya `data-testid`: `org-cascade-distrik`, `org-cascade-wilayah`, `org-cascade-ranting`.
+
+**Usage:**
+
+```tsx
+import OrgCascadeSelect, { EMPTY_ORG_SELECTION } from '@/components/ui/org-cascade-select';
+
+const [org, setOrg] = useState(EMPTY_ORG_SELECTION);
+
+<OrgCascadeSelect
+  value={org}
+  onChange={setOrg}
+  required
+  error={errors.ranting}
+  lockDistrikId={scope.lockDistrikId}
+  lockWilayahId={scope.lockWilayahId}
+/>
+```
+
+**Kaitan scope aktor:** gunakan hook `useOrgScopeLocks(open)` (`@/hooks/use-org-scope`) yang membaca `/auth/scope` dan menurunkan kunci distrik/wilayah untuk `admin_distrik`, `admin_wilayah`, dan `admin_ranting` (superadmin bebas).
+
+**Consumed by:**
+
+- `users/CreateUserModal` — penempatan ranting wajib untuk role selain superadmin
+- `users/EditUserModal` — prefill dari relasi `ranting` pada `GET /users/:id`
+- tests: `components/ui/__tests__/org-cascade-select.test.tsx`, `e2e/dashboard-users.spec.ts`
