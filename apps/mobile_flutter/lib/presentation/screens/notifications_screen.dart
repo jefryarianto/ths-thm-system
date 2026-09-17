@@ -41,8 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         actions: [
           BlocBuilder<NotificationBloc, NotificationState>(
-            buildWhen: (p, c) =>
-                p is NotificationLoaded && c is NotificationLoaded,
+            buildWhen: (p, c) => c is NotificationLoaded,
             builder: (context, state) {
               final unread =
                   state is NotificationLoaded ? state.unreadCount : 0;
