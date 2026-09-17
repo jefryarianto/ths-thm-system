@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import {
   Mail,
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { useMailLogs, useMailStats, useMailModules } from '@/lib/hooks/use-mail';
@@ -30,6 +31,21 @@ export default function EmailLogsTab() {
     failed: number;
   } | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
+  const [detailLog, setDetailLog] = useState<EmailLogEntry | null>(null);
+
+  // Modal detail: isi email terpotong sesuai EMAIL_LOG_CONTENT_LENGTH di backend
+  const openDetail = (log: EmailLogEntry) => setDetailLog(log);
+  const closeDetail = useCallback(() => setDetailLog(null), []);
+
+  // Close detail modal on Escape
+  useEffect(() => {
+    if (!detailLog) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeDetail();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [detailLog, closeDetail]);
 
   const {
     data: logs,
@@ -387,9 +403,10 @@ export default function EmailLogsTab() {
                   {(logs || []).map((log) => (
                     <tr
                       key={log.id}
-                      className={`border-b border-gray-100 dark:border-gray-800 transition ${selectedIds.has(log.id) ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'}`}
+                      onClick={() => openDetail(log)}
+                      className={`border-b border-gray-100 dark:border-gray-800 transition cursor-pointer ${selectedIds.has(log.id) ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'}`}
                     >
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(log.id)}
@@ -449,7 +466,7 @@ export default function EmailLogsTab() {
                           {formatDateShort(log.createdAt)}
                         </span>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
                         {log.status === 'failed' ? (
                           <button
                             onClick={() => handleRetrySingle(log.id)}
@@ -571,6 +588,75 @@ export default function EmailLogsTab() {
         </div>
       )}
       {confirmModal}
+
+      {/* Detail Modal — isi email untuk audit */}
+      {detailLog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={closeDetail}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-200 dark:border-gray-700">
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-gray-900 dark:text-white truncate">
+                  {detailLog.subject}
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {detailLog.to} · {formatDate(detailLog.createdAt)}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  {statusBadge(detailLog.status)}
+                  {detailLog.provider && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 capitalize">
+                      {detailLog.provider}
+                    </span>
+                  )}
+                  {detailLog.metadata?.module != null && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                      {MODULES.find((m) => m.value === detailLog.metadata?.module)?.label ||
+                        String(detailLog.metadata.module)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={closeDetail}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex-shrink-0"
+              >
+                <X size={18} className="text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto flex-1">
+              {detailLog.error && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-400">
+                  <strong>Error:</strong> {detailLog.error}
+                </div>
+              )}
+              {detailLog.content ? (
+                <>
+                  <iframe
+                    title="Isi email"
+                    sandbox=""
+                    srcDoc={detailLog.content}
+                    className="w-full h-96 rounded-lg border border-gray-200 dark:border-gray-700 bg-white"
+                  />
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                    Konten dipotong sesuai batas penyimpanan log (EMAIL_LOG_CONTENT_LENGTH).
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
+                  Konten email tidak tersedia untuk log ini.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

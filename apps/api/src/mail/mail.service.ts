@@ -142,8 +142,8 @@ export class MailService {
     for (const log of failedLogs) {
       retried++;
 
-      // Logged content may be truncated (max 500 chars). If so, the re-sent
-      // email will contain broken HTML — warn operators to re-render manually.
+      // Logged content may be truncated (max EMAIL_LOG_CONTENT_LENGTH chars).
+      // If so, the re-sent email will contain broken HTML — warn operators to re-render manually.
       if (log.content && log.content.endsWith('...')) {
         this.logger.warn(
           `Retrying email to ${log.to}: content was truncated (max ${this.MAX_LOG_CONTENT_LENGTH} chars). ` +
@@ -255,8 +255,14 @@ export class MailService {
    * Maximum length of email content to store in the log.
    * Full content is truncated to protect PII (names, email bodies, etc.)
    * from long-term storage in the email_logs table.
+   *
+   * Configurable via EMAIL_LOG_CONTENT_LENGTH env var so admins can raise it
+   * (e.g. 20000) to keep the full email body for audit purposes.
    */
-  private readonly MAX_LOG_CONTENT_LENGTH = 500;
+  private readonly MAX_LOG_CONTENT_LENGTH = (() => {
+    const parsed = parseInt(process.env.EMAIL_LOG_CONTENT_LENGTH || '', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
+  })();
 
   private async logToDb(
     to: string,

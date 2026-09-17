@@ -216,6 +216,7 @@ export interface EmailLogEntry {
   status: string;
   provider: string | null;
   error: string | null;
+  content?: string | null; // Truncated HTML/text body (see EMAIL_LOG_CONTENT_LENGTH)
   metadata: Record<string, unknown> | null;
   createdAt: string;
 }

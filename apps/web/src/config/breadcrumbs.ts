@@ -66,6 +66,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   users: 'Pengguna',
   settings: 'Pengaturan',
   email: 'Email',
+  logs: 'Riwayat',
   'org-structure': 'Struktur Organisasi',
   periods: 'Periode Iuran',
   'audit-logs': 'Audit Log',

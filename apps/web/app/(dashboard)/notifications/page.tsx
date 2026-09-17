@@ -25,6 +25,9 @@ import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import StatCard from '@/components/cards/stat-card';
 import SendNotificationModal from '@/components/notifications/SendNotificationModal';
+import NotificationDetailModal, {
+  type NotificationDetail,
+} from '@/components/notifications/NotificationDetailModal';
 import { TIPE_OPTIONS, tipeColors } from '@/components/notifications/constants';
 
 interface NotificationRow {
@@ -64,6 +67,9 @@ export default function NotificationsPage() {
 
   // Send notification modal state
   const [showSendModal, setShowSendModal] = useState(false);
+
+  // Detail modal state
+  const [detailNotif, setDetailNotif] = useState<NotificationDetail | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -356,6 +362,7 @@ export default function NotificationsPage() {
                             : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'
                       }`}
                       onClick={async () => {
+                        setDetailNotif(n);
                         if (!n.isRead) {
                           try {
                             await apiClient.patch(`/notifications/${n.id}/read`);
@@ -489,6 +496,12 @@ export default function NotificationsPage() {
 
       {/* Send Notification Modal */}
       <SendNotificationModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} />
+
+      {/* Detail Modal */}
+      <NotificationDetailModal
+        notification={detailNotif}
+        onClose={() => setDetailNotif(null)}
+      />
       {confirmModal}
     </PageContainer>
     </PermissionGuard>

@@ -52,6 +52,9 @@ const baseEnvSchema = z.object({
   // Resend
   RESEND_WEBHOOK_SECRET: z.string().optional().default(''),
 
+  // Email log content truncation limit (chars). Default 5000.
+  EMAIL_LOG_CONTENT_LENGTH: z.coerce.number().int().positive().optional(),
+
   // Default Password
   DEFAULT_PASSWORD: z.string().optional().default(''),
 

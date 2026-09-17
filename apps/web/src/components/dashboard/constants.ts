@@ -12,6 +12,7 @@ import {
   Mail,
   TrendingUp,
   Shield,
+  History,
 } from 'lucide-react';
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -233,5 +234,6 @@ export const quickActions = [
   { label: 'Catat Iuran', href: '/dues', icon: CreditCard, desc: 'Input pembayaran iuran' },
   { label: 'Kirim Notifikasi', href: '/notifications', icon: Bell, desc: 'Kirim pengumuman' },
   { label: 'Email Admin', href: '/settings/email', icon: Mail, desc: 'Kelola pengiriman email' },
+  { label: 'Riwayat Email', href: '/settings/email/logs', icon: History, desc: 'Audit isi email terkirim' },
   { label: 'Laporan', href: '/reports', icon: TrendingUp, desc: 'Lihat laporan detail' },
 ];
