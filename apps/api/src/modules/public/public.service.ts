@@ -395,4 +395,17 @@ export class PublicService {
     // Ranting has no children
     return { level: null, items: [] };
   }
+
+  async getMobileAppInfo() {
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'mobile_update' } });
+    const val = (setting?.value as Record<string, unknown>) ?? {};
+    return {
+      enabled: val.enabled ?? false,
+      versionCode: val.versionCode ?? 0,
+      versionName: val.versionName ?? '0.0.0',
+      minVersionCode: val.minVersionCode ?? 0,
+      changelog: val.changelog ?? '',
+      apkUrl: val.apkUrl ?? '',
+    };
+  }
 }

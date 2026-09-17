@@ -9,6 +9,7 @@ import {
   BroadcastNotificationDto,
   SendToRoleDto,
   NotificationFilterDto,
+  PublishAppUpdateDto,
 } from './dto/notification.dto';
 import { Role } from '@prisma/client';
 import { paginate } from '../../common/utils/pagination';
@@ -727,6 +728,147 @@ export class NotificationsService {
     } catch (error) {
       result.errors.push((error as Error).message);
       this.logger.warn('Test push failed:', (error as Error).message);
+    }
+
+    return result;
+  }
+
+  /**
+   * Publish rilis mobile app baru: simpan config versi (Setting `mobile_update`)
+   * lalu kirim push FCM/Expo ke SEMUA perangkat terdaftar + notifikasi in-app.
+   * Dipanggil saat superadmin merilis APK baru.
+   */
+  async publishAppUpdate(dto: PublishAppUpdateDto) {
+    const config = {
+      enabled: true,
+      versionCode: dto.versionCode,
+      versionName: dto.versionName,
+      minVersionCode: dto.minVersionCode,
+      changelog: dto.changelog ?? '',
+      apkUrl: dto.apkUrl ?? '',
+    };
+
+    await this.prisma.setting.upsert({
+      where: { key: 'mobile_update' },
+      update: { value: config as never },
+      create: { key: 'mobile_update', value: config as never },
+    });
+
+    const title = `Versi ${dto.versionName} tersedia`;
+    const body = dto.changelog?.trim()
+      ? `Update aplikasi: ${dto.changelog.trim()}`
+      : 'Ada versi baru THS-THM Mobile. Silakan lakukan update.';
+
+    const users = await this.prisma.user.findMany({ where: { isActive: true } });
+    if (users.length > 0) {
+      await this.prisma.notifikasi.createMany({
+        data: users.map((user) => ({
+          userId: user.id,
+          judul: title,
+          isi: body,
+          tipe: 'umum' as never,
+          data: {
+            type: 'app_update',
+            versionCode: dto.versionCode,
+            versionName: dto.versionName,
+            minVersionCode: dto.minVersionCode,
+          } as never,
+        })),
+      });
+    }
+
+    const pushResult = await this.pushUpdateToAll(
+      title,
+      body,
+      String(dto.versionCode),
+      String(dto.versionName),
+      String(dto.minVersionCode),
+    );
+
+    this.logger.log(
+      `publishAppUpdate: v${dto.versionName} (code ${dto.versionCode}), push ${pushResult.success}/${pushResult.total} token`,
+    );
+
+    return {
+      published: true,
+      versionCode: dto.versionCode,
+      versionName: dto.versionName,
+      push: pushResult,
+    };
+  }
+
+  /**
+   * Kirim push update ke semua token aktif tanpa filter preferensi user
+   * (update versi wajib sampai ke perangkat walau user sedang logout/disable notifikasi).
+   */
+  private async pushUpdateToAll(
+    title: string,
+    body: string,
+    versionCode: string,
+    versionName: string,
+    minVersionCode: string,
+  ): Promise<{ total: number; success: number; failure: number }> {
+    const result = { total: 0, success: 0, failure: 0 };
+
+    try {
+      const tokens = await this.prisma.deviceToken.findMany({ where: { isActive: true } });
+      result.total = tokens.length;
+      if (tokens.length === 0) return result;
+
+      const data: Record<string, string> = {
+        type: 'app_update',
+        versionCode,
+        versionName,
+        minVersionCode,
+      };
+
+      const expoTokens = tokens.filter((t) => this.isExpoToken(t.token));
+      if (expoTokens.length > 0) {
+        await this.pushExpo(title, body, expoTokens);
+      }
+
+      const fcmTokens = tokens.filter((t) => !this.isExpoToken(t.token));
+      if (fcmTokens.length === 0) return result;
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const admin = require('firebase-admin');
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FCM_PROJECT_ID,
+            privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\\\n/g, '\n'),
+            clientEmail: process.env.FCM_CLIENT_EMAIL,
+          }),
+        });
+      }
+
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < fcmTokens.length; i += BATCH_SIZE) {
+        const batch = fcmTokens.slice(i, i + BATCH_SIZE);
+        const message = {
+          tokens: batch.map((t) => t.token),
+          notification: { title, body },
+          data: { ...data, click_action: 'FLUTTER_NOTIFICATION_CLICK' },
+        };
+
+        const response = await admin.messaging().sendEachForMulticast(message);
+        result.success += response.successCount;
+        result.failure += response.failureCount;
+
+        if (response.failureCount > 0) {
+          response.responses.forEach(
+            (resp: { success: boolean; error?: { code?: string } }, idx: number) => {
+              if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
+                this.prisma.deviceToken
+                  .updateMany({ where: { token: batch[idx].token }, data: { isActive: false } })
+                  .catch(() => {});
+              }
+            },
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.warn('pushUpdateToAll failed:', (error as Error).message);
     }
 
     return result;

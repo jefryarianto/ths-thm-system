@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Loading spinner konsisten untuk seluruh aplikasi.
+/// Loading spinner konsisten untuk seluruh aplikasi, meniru spinner login web
+/// (https://ths-thm.cloud/login).
 ///
-/// Konstruktor default menampilkan dua cincin gradien yang berputar berlawanan
-/// arah (gradien hitam di luar, gradien biru di dalam) + logo THS-THM di tengah.
-/// Jarak antar-cincin dibuat sama dengan jarak cincin-dalam—logo (spacing
-/// seragam dan rapat). `.small` tetap satu cincin (untuk tombol).
+/// Konstruktor default menampilkan dua cincin 90° berputar berlawanan arah
+/// (cincin luar navy, cincin dalam biru) + logo THS-THM di tengah yang
+/// berdenyut (opacity pulse) + teks opsional di bawahnya. `.small` tetap satu
+/// cincin sederhana (untuk tombol).
 class AppLoadingSpinner extends StatelessWidget {
   final double size;
   final double strokeWidth;
@@ -19,8 +20,8 @@ class AppLoadingSpinner extends StatelessWidget {
 
   const AppLoadingSpinner({
     super.key,
-    this.size = 160,
-    this.strokeWidth = 15,
+    this.size = 80,
+    this.strokeWidth = 4,
     this.color,
     this.message,
     this.small = false,
@@ -50,9 +51,12 @@ class AppLoadingSpinner extends StatelessWidget {
           : Center(child: _withMessage(context, spinner, message!));
     }
 
-    final dual = _DualRingSpinner(size: size);
-    if (message == null) return Center(child: dual);
-    return Center(child: _withMessage(context, dual, message!));
+    final dual = _DualRingSpinner(
+      size: size,
+      strokeWidth: strokeWidth,
+      message: message,
+    );
+    return Center(child: dual);
   }
 
   Widget _withMessage(BuildContext context, Widget spinner, String text) {
@@ -73,10 +77,20 @@ class AppLoadingSpinner extends StatelessWidget {
   }
 }
 
-/// Dua cincin gradien berputar berlawanan arah + logo di tengah.
+/// Dua cincin bergaya spinner login web: busur 90° berputar berlawanan arah
+/// (cincin luar navy #334E68→#627D98 searah jarum jam, cincin dalam biru
+/// #3B82F6→#93C5FD berlawanan) + logo di tengah yang berdenyut. Tekstur
+/// opacity pulse meniru Tailwind `animate-pulse` (2 detik bolak-balik).
 class _DualRingSpinner extends StatefulWidget {
   final double size;
-  const _DualRingSpinner({required this.size});
+  final double strokeWidth;
+  final String? message;
+
+  const _DualRingSpinner({
+    required this.size,
+    required this.strokeWidth,
+    this.message,
+  });
 
   @override
   State<_DualRingSpinner> createState() => _DualRingSpinnerState();
@@ -84,73 +98,71 @@ class _DualRingSpinner extends StatefulWidget {
 
 class _DualRingSpinnerState extends State<_DualRingSpinner>
     with TickerProviderStateMixin {
-  // Gradien ring: biru (dalam) & hitam (luar) — desain modern profesional.
-  static const _blueLight = Color(0xFF7FB3F7);
-  static const _blackSoft = Color(0xFF6B7280);
+  // Warna persis Tailwind di apps/web/app/login/page.tsx.
+  static const _navyDark = Color(0xFF334E68); // tailwind navy-600
+  static const _navyLight = Color(0xFF627D98); // tailwind navy-400
+  static const _blueDark = Color(0xFF3B82F6); // tailwind blue-500
+  static const _blueLight = Color(0xFF93C5FD); // tailwind blue-300
+  static const _textColor = Color(0xFF243B53); // tailwind navy-700
 
   late final AnimationController _outer;
   late final AnimationController _inner;
+  late final AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
+    // Cincin luar: `animate-spin` (1 s, searah jarum jam).
     _outer = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
-    // Berputar konstan berlawanan arah jarum jam (tanpa reverse agar tidak
-    // bolak-balik) sehingga terlihat saling berlawanan dengan cincin luar.
+    // Cincin dalam: `animate-[spin_1.5s_linear_infinite_reverse]` (1,5 s,
+    // berlawanan arah jarum jam) — pakai Tween 1 → 0 agar tidak bolak-balik.
     _inner = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1500),
     )..repeat();
+    // Denyut logo & teks: Tailwind `animate-pulse` = opacity 1 ↔ 0,5 tiap 2 s.
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
     _outer.dispose();
     _inner.dispose();
+    _pulse.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = widget.size;
-    // Geometri jarak seragam tapi lebih rapat: celah antar-cincin dan celah
-    // cincin-dalam—logo sama ≈ 0.05×size (stroke luar 0.04×, dalam 0.03×,
-    // outer ring 0.69×, inner ring 0.55×, logo 0.42×). Logo 60% dari ukuran
-    // semula; diameter ring dalam & luar dikecilkan proporsional.
-    // Verifikasi: (0.69 − 0.55 − 0.04 − 0.03)/2 = 0.05 dan
-    // (0.55 − 0.42 − 0.03)/2 = 0.05.
-    final outerSize = size * 0.69;
-    final outerPad = (size - outerSize) / 2;
-    final innerSize = size * 0.55;
+    // Geometri web: cincin luar = full box, cincin dalam inset-2 (0,8×),
+    // logo inset-4 (0,6×), stroke `border-4` (4 px).
+    final innerSize = size * 0.8;
     final innerPad = (size - innerSize) / 2;
-    final logoSize = size * 0.42;
+    final logoSize = size * 0.6;
 
-    return SizedBox(
+    final rings = SizedBox(
       width: size,
       height: size,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Padding(
-            padding: EdgeInsets.all(outerPad),
-            child: RotationTransition(
-              // Animasi luar: clockwise (0 → 1).
-              turns: _outer,
-              child: SizedBox.expand(
-                child: CustomPaint(
-                  painter: _GradientArcPainter(
-                    gradientColors: const [
-                      _blackSoft,
-                      Color(0xFF141414),
-                      _blackSoft,
-                    ],
-                    strokeWidth: size * 0.04,
-                    startAngle: -math.pi / 2,
-                    sweepAngle: 4.7,
-                  ),
+          RotationTransition(
+            // Cincin luar: clockwise (0 → 1), busur atas (kiri) → kanan.
+            turns: _outer,
+            child: SizedBox.expand(
+              child: CustomPaint(
+                painter: _SolidArcPainter(
+                  colors: const [_navyDark, _navyLight],
+                  strokeWidth: widget.strokeWidth,
+                  startAngle: -math.pi / 2,
+                  sweepAngle: math.pi / 2,
                 ),
               ),
             ),
@@ -158,64 +170,72 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
           Padding(
             padding: EdgeInsets.all(innerPad),
             child: RotationTransition(
-              // Animasi dalam: counter-clockwise (1 → 0).
+              // Cincin dalam: counter-clockwise (1 → 0), busur bawah → kiri.
               turns: Tween<double>(begin: 1, end: 0).animate(_inner),
               child: SizedBox.expand(
                 child: CustomPaint(
-                  painter: _GradientArcPainter(
-                    gradientColors: const [
-                      AppTheme.info,
-                      _blueLight,
-                      AppTheme.info,
-                    ],
-                    strokeWidth: size * 0.03,
+                  painter: _SolidArcPainter(
+                    colors: const [_blueDark, _blueLight],
+                    strokeWidth: widget.strokeWidth,
                     startAngle: math.pi / 2,
-                    sweepAngle: 4.7,
+                    sweepAngle: math.pi / 2,
                   ),
                 ),
               ),
             ),
           ),
-          ScaleTransition(
-            scale: Tween<double>(begin: 0.9, end: 1.0).animate(_inner),
-            child: Container(
+          FadeTransition(
+            opacity: _pulse,
+            child: Image.asset(
+              'assets/images/logo.png',
               width: logoSize,
               height: logoSize,
-              // Backdrop lingkaran putih tetap (logo.png transparan di tepi);
-              // tanpa padding sehingga tidak ada border/ruang putih berlebih
-              // di sekeliling logo.
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              child: Image.asset(
-                'assets/images/logo.png',
-                fit: BoxFit.contain,
-              ),
+              fit: BoxFit.contain,
             ),
           ),
         ],
       ),
     );
+
+    if (widget.message == null) return rings;
+
+    final message = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        rings,
+        const SizedBox(height: 24),
+        FadeTransition(
+          opacity: _pulse,
+          child: Text(
+            widget.message!,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? _blueLight // dark:text-blue-300
+                  : _textColor,
+            ),
+          ),
+        ),
+      ],
+    );
+    return message;
   }
 }
 
-/// Painter satu cincin gradien (efek "komet"): transparan → warna → transparan.
-///
-/// Memakai `SweepGradient` agar satu arc panjang dengan warna yang memudar di
-/// kedua ujungnya. Ujung transparan menghadap arah putaran sehingga cincin
-/// tampak seperti bercahaya dan berputar berkelanjutan (tanpa garis lompatan).
-class _GradientArcPainter extends CustomPainter {
-  final List<Color> gradientColors;
+/// Satu busur 90° solid dengan warna yang bergeser halus (gradasi radius)
+/// meniru dua sisi border yang saling bertemu di sudut pada web.
+class _SolidArcPainter extends CustomPainter {
+  final List<Color> colors;
   final double strokeWidth;
   final double startAngle;
   final double sweepAngle;
 
-  const _GradientArcPainter({
-    required this.gradientColors,
+  const _SolidArcPainter({
+    required this.colors,
     required this.strokeWidth,
     this.startAngle = 0,
-    this.sweepAngle = math.pi * 2,
+    this.sweepAngle = math.pi / 2,
   });
 
   @override
@@ -223,7 +243,7 @@ class _GradientArcPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final arcRect = rect.deflate(strokeWidth / 2);
     final gradient = SweepGradient(
-      colors: gradientColors,
+      colors: colors,
       startAngle: startAngle,
       endAngle: startAngle + sweepAngle,
     );
@@ -231,18 +251,14 @@ class _GradientArcPainter extends CustomPainter {
       ..shader = gradient.createShader(rect)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.butt;
 
-    if (sweepAngle >= math.pi * 2) {
-      canvas.drawCircle(arcRect.center, arcRect.longestSide / 2, paint);
-      return;
-    }
     canvas.drawArc(arcRect, startAngle, sweepAngle, false, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _GradientArcPainter oldDelegate) =>
-      oldDelegate.gradientColors != gradientColors ||
+  bool shouldRepaint(covariant _SolidArcPainter oldDelegate) =>
+      oldDelegate.colors != colors ||
       oldDelegate.strokeWidth != strokeWidth ||
       oldDelegate.startAngle != startAngle ||
       oldDelegate.sweepAngle != sweepAngle;

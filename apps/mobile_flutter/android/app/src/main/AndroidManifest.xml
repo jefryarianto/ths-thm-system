@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Notifikasi push (FCM) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Izin menampilkan installer APK (update mandiri dari server) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <!-- Izin tulis media untuk menyimpan kartu KTA ke galeri (Android < 10).
          Plugin camera_android_camerax memakai maxSdkVersion=28; app sengaja
          mempertahankan 29 untuk Android 9 — override via tools:replace. -->

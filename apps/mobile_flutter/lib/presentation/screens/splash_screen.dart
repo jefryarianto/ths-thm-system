@@ -3,9 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../../logic/auth/auth_bloc.dart';
-import '../widgets/app_loading_spinner.dart';
 
 /// Splash video sebelum login — memutar `assets/videos/videothsnew.mp4`
 /// (file `videothsnew.mp4` dari root repo, 682 KB, offline).
@@ -108,39 +106,6 @@ class _VideoSplashplashState extends State<VideoSplashScreen> {
                 child: AspectRatio(
                   aspectRatio: _controller.value.aspectRatio,
                   child: VideoPlayer(_controller),
-                ),
-              ),
-            if (!_videoReady || _videoFailed)
-              Container(
-                color: AppTheme.primary,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/logo.png',
-                        width: 88,
-                        height: 88,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'THS-THM',
-                        style: TextStyle(
-                          color: AppTheme.onPrimary,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: AppLoadingSpinner.small(color: AppTheme.onPrimary),
-                      ),
-                    ],
-                  ),
                 ),
               ),
           ],

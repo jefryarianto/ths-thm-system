@@ -25,6 +25,12 @@ dependencies:
   intl: ^0.19.0
   url_launcher: ^6.2.1
   cached_network_image: ^3.3.0
+  flutter_html: ^3.0.0
+  # flutter_html 3.0.0 bergantung pada API internal `html` 0.15.x
+  # (`package:html/src/query_selector.dart` → `matches(element, selector)`).
+  # html 0.15.7 menghapus fungsi `matches(String)` tsb, jadi pin 0.15.5
+  # sebagai dependency langsung (irisan constrains → tepat 0.15.5).
+  html: 0.15.5
   video_player: ^2.9.2
   image_picker: ^1.0.7
   shared_preferences: ^2.5.5
@@ -32,6 +38,8 @@ dependencies:
   gal: ^2.3.3
   camera: ^0.12.1
   crypto: ^3.0.5
+  package_info_plus: ^9.0.1
+  open_filex: ^4.7.0
   # Keamanan KTA: blokir screenshot & rekaman layar lewat platform channel
   # aman `ths_thm/secure_window` (native Android FLAG_SECURE) — lihat
   # lib/core/security/secure_window_channel.dart.

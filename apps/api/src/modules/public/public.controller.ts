@@ -148,4 +148,11 @@ export class PublicController {
   ) {
     return { success: true, data: await this.publicService.getUnitChildren(level, unitId) };
   }
+
+  @Public()
+  @Get('mobile-app-info')
+  @ApiOperation({ summary: 'Info versi mobile app (public, untuk pengecekan update)' })
+  async getMobileAppInfo() {
+    return { success: true, data: await this.publicService.getMobileAppInfo() };
+  }
 }

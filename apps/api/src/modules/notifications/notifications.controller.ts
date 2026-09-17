@@ -10,6 +10,7 @@ import {
   SendToRoleDto,
   NotificationFilterDto,
   RegisterDeviceTokenDto,
+  PublishAppUpdateDto,
 } from './dto/notification.dto';
 
 @ApiTags('Notifications')
@@ -234,6 +235,13 @@ export class NotificationsController {
   )
   registerToken(@CurrentUser() user: { id: string }, @Body() dto: RegisterDeviceTokenDto) {
     return this.service.registerDeviceToken(user.id, dto.token, dto.platform);
+  }
+
+  @Post('app-update')
+  @ApiOperation({ summary: 'Terbitkan pembaruan aplikasi: simpan config + push FCM ke semua perangkat' })
+  @Roles('superadmin')
+  publishAppUpdate(@Body() dto: PublishAppUpdateDto) {
+    return this.service.publishAppUpdate(dto);
   }
 
   @Delete('fcm-token/:id')

@@ -71,4 +71,10 @@ export function setupStaticUploads(app: NestExpressApplication): void {
     mkdirSync(uploadDir, { recursive: true });
   }
   app.use('/api/uploads', require('express').static(uploadDir));
+
+  const appDir = pathMod.join(uploadDir, 'app');
+  if (!existsSync(appDir)) {
+    mkdirSync(appDir, { recursive: true });
+  }
+  app.use('/api/app', require('express').static(appDir));
 }

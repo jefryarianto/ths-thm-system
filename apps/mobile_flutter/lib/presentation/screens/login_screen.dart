@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/app_update_service.dart';
+import '../../core/services/fcm_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/snack_bar_helper.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
+import '../widgets/app_update_banner.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -58,6 +61,13 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _restoreRememberedIdentifier();
+
+    // Jalankan pengecekan pembaruan + registrasi FCM tanpa blokir render.
+    // Pengecekan update diperbarui setiap kali halaman login dibuka (berkat
+    // cache 1 jam di AppUpdateService, request hanya melesat saat lewat TTL).
+    AppUpdateService.instance.checkNow();
+    FcmService.instance.registerAfterLogin();
+
     // Hook E2E sementara: isi kredensial test + auto-submit.
     // Gate lewat dart-define --dart-define=E2E_LOGIN=true (lihat run_run.bat).
     // Kredensial bisa dioverride via:
@@ -106,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   listener: (context, state) {
                     if (state is AuthAuthenticated) {
                       _persistRemember();
+                      FcmService.instance.registerAfterLogin();
                       context.go('/home');
                     } else if (state is AuthMustChangePassword) {
                       _persistRemember();
@@ -123,6 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            const AppUpdateBanner(),
                             Image.asset(
                               'assets/images/logo.png',
                               width: 88,
@@ -142,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Masuk untuk melanjutkan',
+                              'Fortiter in Re, Suaviter in Modo',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   fontSize: 14, color: Colors.grey.shade600),
@@ -241,6 +253,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               if (state is AuthLoading) const _LoginLoadingOverlay(),
+              // Overlay update WAJIB diletakkan paling atas agar menutupi
+              // seluruh halaman (termasuk overlay loading login).
+              const ForceUpdateOverlay(),
             ],
           );
         },
@@ -257,8 +272,7 @@ class _LoginLoadingOverlay extends StatelessWidget {
     return ColoredBox(
       color: Colors.white.withValues(alpha: 0.96),
       child: const Center(
-        child:
-            AppLoadingSpinner(size: 88, message: 'Memverifikasi kredensial...'),
+        child: AppLoadingSpinner(message: 'Memverifikasi kredensial...'),
       ),
     );
   }

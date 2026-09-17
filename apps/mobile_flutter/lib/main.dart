@@ -1,10 +1,16 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'core/services/app_update_service.dart';
+import 'core/services/fcm_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'firebase_options.dart';
 import 'logic/auth/auth_bloc.dart';
 import 'logic/document/document_bloc.dart';
 import 'logic/dues/dues_bloc.dart';
@@ -45,6 +51,8 @@ import 'presentation/screens/registrations_admin_screen.dart';
 import 'presentation/screens/claims_admin_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/splash_screen.dart';
+import 'presentation/screens/berita_detail_screen.dart';
+import 'presentation/screens/kegiatan_detail_screen.dart';
 import 'presentation/screens/kta_viewer_screen.dart';
 import 'presentation/screens/verification_result_screen.dart';
 import 'logic/registration/registration_bloc.dart';
@@ -56,6 +64,13 @@ final ValueNotifier<int> _routerRefresh = ValueNotifier<int>(0);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Inisialisasi FCM (token + listener push) dan pengecekan pembaruan aplikasi
+  // berjalan paralel tanpa menunda render UI.
+  unawaited(FcmService.instance.initialize());
+  unawaited(AppUpdateService.instance.checkNow());
+
   final themeController = await ThemeController.load();
   runApp(MyApp(themeController: themeController));
 }
@@ -251,6 +266,16 @@ class AppRouter {
       GoRoute(
         path: '/gamification',
         builder: (context, state) => const GamificationScreen(),
+      ),
+      GoRoute(
+        path: '/berita/:slug',
+        builder: (context, state) =>
+            BeritaDetailScreen(slug: state.pathParameters['slug']!),
+      ),
+      GoRoute(
+        path: '/kegiatan/:id',
+        builder: (context, state) =>
+            KegiatanDetailScreen(id: state.pathParameters['id']!),
       ),
       // ── Publik: Registrasi & Klaim ──
       GoRoute(

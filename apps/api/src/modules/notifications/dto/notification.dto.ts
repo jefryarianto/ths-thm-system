@@ -161,6 +161,32 @@ export class RegisterDeviceTokenDto {
   platform: string;
 }
 
+export class PublishAppUpdateDto {
+  @ApiProperty({ example: 2 })
+  @Type(() => Number)
+  @IsInt()
+  versionCode: number;
+
+  @ApiProperty({ example: '1.1.0' })
+  @IsString()
+  versionName: string;
+
+  @ApiProperty({ example: 2, description: 'Minimal versionCode agar aplikasi wajib update' })
+  @Type(() => Number)
+  @IsInt()
+  minVersionCode: number;
+
+  @ApiPropertyOptional({ example: 'Perbaikan bug & fitur baru penjadwalan.' })
+  @IsOptional()
+  @IsString()
+  changelog?: string;
+
+  @ApiPropertyOptional({ description: 'URL alternatif APK. Kosongkan untuk memakai endpoint bawaan /api/app.' })
+  @IsOptional()
+  @IsString()
+  apkUrl?: string;
+}
+
 export class UpdateNotificationPreferencesDto {
   @ApiProperty({ example: { welcome: true, data_incomplete: true, reminder_latihan: false } })
   @IsObject()
