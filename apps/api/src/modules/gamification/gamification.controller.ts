@@ -192,6 +192,7 @@ export class GamificationController {
     summary: 'Get top members leaderboard (optional scope filter, search & pagination)',
   })
   async getLeaderboard(
+    @Req() req: ScopedRequest,
     @Query('limit') limit?: string,
     @Query('rantingId') rantingId?: string,
     @Query('wilayahId') wilayahId?: string,
@@ -199,7 +200,6 @@ export class GamificationController {
     @Query('scope') scopeFilter?: string,
     @Query('search') search?: string,
     @Query('skip') skip?: string,
-    @Req() req: ScopedRequest,
   ) {
     const scope =
       (rantingId || scopeFilter === 'ranting' || scopeFilter === 'self')
