@@ -234,7 +234,9 @@ export default function LoginPage() {
     }
   };
 
-  const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  // Mount-gated agar render pertama (hydration) identik dengan HTML server —
+  // pembacaan window saat render menyebabkan hydration mismatch di /login.
+  const isDev = mounted && typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50/30">

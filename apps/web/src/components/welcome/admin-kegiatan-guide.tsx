@@ -45,6 +45,8 @@ export default function AdminKegiatanWelcome() {
   const { role } = useAuth();
   const [open, setOpen] = useState(false);
 
+  // role baru tersedia setelah hydration (useAuth membaca localStorage di effect).
+  // Cek "seen" hanya berjalan di client, sehingga tidak ada risiko hydration mismatch.
   useEffect(() => {
     if (role === 'admin_kegiatan') {
       const seen = localStorage.getItem(STORAGE_KEY);
@@ -57,6 +59,8 @@ export default function AdminKegiatanWelcome() {
     setOpen(false);
   };
 
+  // Sebelum hydration role selalu null → komponen tak merender apa pun,
+  // sama seperti HTML dari server. Setelah hydration, role terisi via re-render.
   if (role !== 'admin_kegiatan') return null;
 
   return (

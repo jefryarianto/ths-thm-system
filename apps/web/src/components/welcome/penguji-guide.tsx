@@ -52,6 +52,8 @@ export default function PengujiWelcome() {
     setOpen(false);
   };
 
+  // Sebelum hydration role selalu null → komponen tak merender apa pun,
+  // sama seperti HTML dari server. Setelah hydration, role terisi via re-render.
   if (role !== 'penguji') return null;
 
   return (
