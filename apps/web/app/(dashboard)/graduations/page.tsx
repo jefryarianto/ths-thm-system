@@ -8,7 +8,7 @@ import apiClient from '@/lib/api-client';
 import { usePaginatedList, buildEmptyMessage } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Plus, GraduationCap, Eye, MapPin, Users, Calendar, Trash2 } from 'lucide-react';
+import { Plus, GraduationCap, Eye, MapPin, Users, Calendar, Trash2, Pencil } from 'lucide-react';
 import ExportMenu from '@/components/ui/export-menu';
 import { CanCreate, CanExport } from '@/components/auth/can';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -180,6 +180,13 @@ export default function GraduationsPage() {
                   title="Detail"
                 >
                   <Eye size={15} />
+                </button>
+                <button
+                  onClick={() => router.push(`/graduations/${row.id}/edit`)}
+                  className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-md transition-colors"
+                  title="Edit / Ubah Status"
+                >
+                  <Pencil size={15} />
                 </button>
                 {['draft', 'cancelled'].includes(row.status) && (
                   <button

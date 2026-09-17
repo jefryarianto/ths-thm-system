@@ -10,7 +10,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
 
   ArrowLeft, Calendar, MapPin, User, Users, FileText,
-  RefreshCw, AlertCircle, Edit, Trash2, Tag,
+  RefreshCw, AlertCircle, Edit, Trash2, Tag, CheckCircle2, XCircle,
 } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import { useToast } from '@/components/ui/toast';
@@ -75,6 +75,25 @@ export default function ActivityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Aksi cepat ubah status (Publish/Tutup) langsung dari header detail.
+  const [statusModal, setStatusModal] = useState<string | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const statusModalChange = async () => {
+    if (!statusModal || !activity) return;
+    setStatusSaving(true);
+    try {
+      await apiClient.patch(`/activities/${id}`, { status: statusModal });
+      toast('success', `Status kegiatan diubah menjadi "${statusModal === 'published' ? 'Dipublikasikan' : statusModal === 'closed' ? 'Ditutup' : statusModal}"`);
+      setStatusModal(null);
+      await fetchActivity();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal mengubah status kegiatan');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   const fetchActivity = useCallback(async () => {
     if (!id) return;
@@ -168,6 +187,30 @@ export default function ActivityDetailPage() {
                     </div>
                     {/* Actions - ikon saja */}
                     <div className="flex items-center gap-1 mt-4 sm:mt-0">
+                      {activity.status !== 'published' && (
+                        <button
+                          onClick={() => setStatusModal('published')}
+                          disabled={statusSaving}
+                          title="Publish"
+                          aria-label="Publish"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                        >
+                          <CheckCircle2 size={14} />
+                          <span className="hidden sm:inline">Publish</span>
+                        </button>
+                      )}
+                      {activity.status === 'published' && (
+                        <button
+                          onClick={() => setStatusModal('closed')}
+                          disabled={statusSaving}
+                          title="Tutup"
+                          aria-label="Tutup"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-600 text-white text-xs font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                        >
+                          <XCircle size={14} />
+                          <span className="hidden sm:inline">Tutup</span>
+                        </button>
+                      )}
                       <Link
                         href={`/activities/${activity.id}/edit`}
                         title="Edit"
@@ -300,6 +343,18 @@ export default function ActivityDetailPage() {
                 variant="danger"
                 onConfirm={handleDelete}
                 onCancel={() => setShowDeleteModal(false)}
+              />
+
+              {/* Status Quick Action Modal */}
+              <ConfirmModal
+                open={!!statusModal}
+                title="Ubah Status Kegiatan"
+                message={`Ubah status kegiatan "${activity.nama}" menjadi ${statusModal === 'published' ? 'Dipublikasikan' : 'Ditutup'}?${statusModal === 'closed' ? ' Kegiatan yang ditutup tidak dapat menerima perubahan lebih lanjut.' : ''}`}
+                confirmLabel="Simpan"
+                cancelLabel="Batal"
+                variant="info"
+                onConfirm={statusModalChange}
+                onCancel={() => !statusSaving && setStatusModal(null)}
               />
             </div>
       </PermissionGuard>

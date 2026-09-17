@@ -54,7 +54,7 @@ export default function ActivityActions({ activity, onSuccess }: ActivityActions
     {
       label: 'Edit',
       icon: Edit,
-      action: () => router.push(`/activities/new?id=${activity.id}`),
+      action: () => router.push(`/activities/${activity.id}/edit`),
       disabled: false,
     },
     {

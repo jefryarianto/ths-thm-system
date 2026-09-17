@@ -30,13 +30,14 @@ import {
   Save,
   ListChecks,
   Eye,
+  Pencil,
   EyeOff,
   ChevronDown,
   ChevronRight,
   Send,
   Mail,
-} from 'lucide-react';
-import Modal from '@/components/ui/modal';
+} from 'lucide-react';import Modal from '@/components/ui/modal';
+import { useToast } from '@/components/ui/toast';
 import MemberSearchPicker from '@/components/members/MemberSearchPicker';
 import InvitationTab from './components/InvitationTab';
 
@@ -296,8 +297,27 @@ export default function GraduationDetailPage() {
   const [proposeForm, setProposeForm] = useState({ pengujiUserId: '', catatan: '' });
   const [proposing, setProposing] = useState(false);
   const [approveScoresLoading, setApproveScoresLoading] = useState(false);
-  const [submitResultsLoading, setSubmitResultsLoading] = useState(false);
-  const [workflowMsg, setWorkflowMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [submitResultsLoading, setSubmitResultsLoading] = useState(false);  const [workflowMsg, setWorkflowMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Aksi cepat ubah status (Publish/Tutup/Batalkan) langsung dari header detail.
+  const [statusModal, setStatusModal] = useState<string | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const toast = useToast();
+  const statusModalChange = async () => {
+    if (!statusModal || !graduation) return;
+    setStatusSaving(true);
+    try {
+      await apiClient.patch(`/graduations/${id}`, { status: statusModal });
+      toast('success', `Status pendadaran diubah menjadi "${STATUS_LABELS[statusModal] || statusModal}"`);
+      setStatusModal(null);
+      await fetchData();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal mengubah status pendadaran');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   // Picker admin kegiatan (hanya superadmin / admin_distrik)
   const [showAdminKegiatanPicker, setShowAdminKegiatanPicker] = useState(false);
@@ -581,9 +601,7 @@ export default function GraduationDetailPage() {
       setWorkflowMsg({ ok: false, text: msg || 'Gagal memperbarui admin kegiatan' });
     }
     setSavingAdminKegiatan(false);
-  };
-
-  const fetchData = useCallback(async () => {
+  };  const fetchData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -1072,9 +1090,40 @@ export default function GraduationDetailPage() {
                 </div>
               </div>
             </div>
-            <button onClick={fetchData} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400" title="Refresh">
-              <RefreshCw size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              {isAdminKegiatanLevel && graduation.status !== 'published' && (
+                <button
+                  onClick={() => setStatusModal('published')}
+                  disabled={statusSaving}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                >
+                  <CheckCircle2 size={13} />
+                  Publish
+                </button>
+              )}
+              {isAdminKegiatanLevel && graduation.status === 'published' && (
+                <button
+                  onClick={() => setStatusModal('closed')}
+                  disabled={statusSaving}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600 text-white rounded-lg text-xs font-medium hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                >
+                  <XCircle size={13} />
+                  Tutup
+                </button>
+              )}
+              {isAdminKegiatanLevel && (
+                <Link
+                  href={`/graduations/${id}/edit`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                >
+                  <Pencil size={13} />
+                  Edit
+                </Link>
+              )}
+              <button onClick={fetchData} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-400" title="Refresh">
+                <RefreshCw size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2447,6 +2496,43 @@ export default function GraduationDetailPage() {
                 <button onClick={() => { setShowImportParticipants(false); setImportPreview([]); setImportResult(null); setImportFileName(''); }}
                   className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Selesai</button>
               )}
+            </div>
+          </div>
+        </Modal>
+
+        {/* ─── Modal konfirmasi ubah status cepat ─── */}
+        <Modal open={!!statusModal} onClose={() => !statusSaving && setStatusModal(null)} title="Ubah Status Pendadaran" size="sm">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Ubah status pendadaran <strong>{graduation?.nama}</strong> menjadi{' '}
+              <strong>{statusModal ? STATUS_LABELS[statusModal] || statusModal : '-'}</strong>?
+            </p>
+            {statusModal === 'published' && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                Pendadaran yang dipublikasikan memunculkan QR absensi dan tombol Input Hasil.
+              </p>
+            )}
+            {statusModal === 'closed' && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                Pendadaran yang ditutup tidak dapat menerima pendaftaran peserta baru. Admin kegiatan yang tidak lagi
+                menangani kegiatan terbuka lain akan otomatis diturunkan rolenya.
+              </p>
+            )}
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setStatusModal(null)}
+                disabled={statusSaving}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={statusModalChange}
+                disabled={statusSaving}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {statusSaving ? 'Menyimpan...' : 'Simpan'}
+              </button>
             </div>
           </div>
         </Modal>

@@ -158,9 +158,9 @@ export default function EditGraduationPage() {
                 <FormField label="Status">
                   <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition">
                     <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="published">Dipublikasikan</option>
+                    <option value="closed">Ditutup</option>
+                    <option value="cancelled">Dibatalkan</option>
                   </select>
                 </FormField>
         
