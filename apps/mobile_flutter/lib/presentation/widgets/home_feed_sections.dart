@@ -112,7 +112,7 @@ class _AgendaCard extends StatelessWidget {
                   children: [
 Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 14, color: Color(0xFF607D8F)),
+                        const Icon(Icons.calendar_today, size: 14, color: Color(0xFF607D8F)),
                         const SizedBox(width: 4),
                         Text(kegiatan.nama,
                             maxLines: 2,
@@ -240,7 +240,7 @@ class _BeritaCard extends StatelessWidget {
                 children: [
 Row(
                       children: [
-                        Icon(Icons.article_outlined, size: 14, color: Color(0xFF607D8F)),
+                        const Icon(Icons.article_outlined, size: 14, color: Color(0xFF607D8F)),
                         const SizedBox(width: 4),
                         Text(berita.judul,
                             maxLines: 2,

@@ -153,7 +153,7 @@ void main() {
     expect(AppTheme.navy, const Color(0xFF0F2E5A));
     expect(AppTheme.textSlate, const Color(0xFF1E293B));
     expect(AppTheme.textMuted, const Color(0xFF64748B));
-    expect(AppTheme.primary, const Color(0xFFB8860B));
+    expect(AppTheme.primary, const Color(0xFF1E5BB2));
     expect(theme.textTheme.titleMedium?.color, AppTheme.navy);
     expect(theme.textTheme.bodyMedium?.color, AppTheme.textSlate);
     expect(theme.textTheme.bodySmall?.color, AppTheme.textMuted);
