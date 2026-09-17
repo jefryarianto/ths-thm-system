@@ -10,6 +10,7 @@ import '../../logic/gamification/gamification_bloc.dart';
 import '../../logic/home_feed/home_feed_bloc.dart';
 import '../../data/models/card_data.dart';
 import '../../logic/member/member_bloc.dart';
+import '../../logic/notification/notification_bloc.dart';
 import '../widgets/app_loading_spinner.dart';
 import '../widgets/home_app_bar.dart';
 import '../widgets/home_feed_sections.dart';
@@ -38,6 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<DuesBloc>().add(const DuesLoadRequested());
       context.read<HomeFeedBloc>().add(const HomeFeedLoadRequested());
     }
+    // Muat jumlah notifikasi belum dibaca untuk badge lonceng (aman no-op
+    // bila sesi belum valid — handler memeriksa token sendiri).
+    context.read<NotificationBloc>().add(const NotificationCountRequested());
   }
 
   Future<void> _refresh() async {

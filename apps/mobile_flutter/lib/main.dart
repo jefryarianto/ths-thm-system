@@ -117,6 +117,11 @@ class MyApp extends StatelessWidget {
               previous.runtimeType != current.runtimeType,
           listener: (context, state) {
             _routerRefresh.value++;
+            // Segarkan jumlah notifikasi belum dibaca (badge Beranda) setelah
+            // sesi dipulihkan / login sukses.
+            if (state is AuthAuthenticated) {
+              appRefreshNotifications?.call();
+            }
           },
           child: ListenableBuilder(
             listenable: themeController,
