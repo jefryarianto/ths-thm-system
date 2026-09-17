@@ -57,10 +57,53 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Buka lembar bawah berisi semua shortcut (Iuran, KTA Digital, dll) yang
+  /// difilter sesuai peran — dipanggil oleh FAB menu cepat.
+  void _openShortcutMenu(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final role = authState is AuthAuthenticated ? authState.user.role : null;
+    final items = _menuItems(role);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            for (final item in items)
+              ListTile(
+                leading: Icon(item.icon, color: AppTheme.primary),
+                title: Text(item.label,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  context.push<void>(item.route);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const HomeAppBar(),
+      // Semua shortcut sehingga chip di atas kartu level diganti FAB menu:
+      // tombol melayang bulat ber-ikon menu ini membuka lembar bawah berisi
+      // daftar akses cepat (termasuk menu admin) yang difilter sesuai peran.
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: () => _openShortcutMenu(context),
+        tooltip: 'Menu Cepat',
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.menu),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: BlocListener<MemberBloc, MemberState>(
         listenWhen: (prev, curr) => curr is MemberLoaded,
         listener: (context, state) {
@@ -77,14 +120,9 @@ class _HomeScreenState extends State<HomeScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              // Konten beranda diberi padding horizontal 16 agar chip, judul
-              // section (mis. "Kartu Anggota (KTA)") dan kartu tidak menempel
-              // ke tepi layar.
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverToBoxAdapter(child: _ShortcutChips()),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              // Konten beranda diberi padding horizontal 16 agar judul section
+              // (mis. "Kartu Anggota (KTA)") dan kartu tidak menempel ke tepi
+              // layar. Baris chip shortcut dipindah jadi FAB menu di kanan-bawah.
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(child: _GamificationTip()),
@@ -114,12 +152,10 @@ class _ChipItem {
   const _ChipItem(this.icon, this.label, this.route);
 }
 
-class _ShortcutChips extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final authState = context.watch<AuthBloc>().state;
-    final role = authState is AuthAuthenticated ? authState.user.role : null;
-    final items = [
+/// Item akses cepat menu FAB — list diturunkan dari peran (role) pengguna,
+/// sama seperti daftar chip lama: urutan tetap, item admin disisip saat peran
+/// berhak, dan baris kompak memakai [ListTile] di dalam lembar bawah (sheet).
+List<_ChipItem> _menuItems(String? role) => [
       const _ChipItem(Icons.account_balance_wallet_outlined, 'Iuran', '/dues'),
       const _ChipItem(Icons.credit_card, 'KTA Digital', '/kta'),
       const _ChipItem(Icons.folder_outlined, 'Dokumen', '/documents'),
@@ -142,35 +178,6 @@ class _ShortcutChips extends StatelessWidget {
         const _ChipItem(Icons.verified_user_outlined, 'Klaim', '/admin/claims'),
       ],
     ];
-    return SizedBox(
-      height: 44,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final item = items[i];
-          // Semua chip tampil seragam sebagai kapsul krem solid + teks gelap.
-          return ActionChip(
-            avatar: Icon(item.icon, size: 18, color: const Color(0xFF3E2F1D)),
-            label: Text(item.label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF3E2F1D),
-                )),
-            backgroundColor: const Color(0xFFF4EAD9),
-            side: BorderSide(
-                color: const Color(0xFFD9C7A3).withValues(alpha: 0.6)),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            onPressed: () => context.push<void>(item.route),
-          );
-        },
-      ),
-    );
-  }
-}
 
 class _KtaSection extends StatelessWidget {
   @override

@@ -1,8 +1,7 @@
 name: mobile_flutter
 description: THS-THM Mobile App (Flutter version)
 publish_to: 'none'
-version: 1.0.0+18
-
+version: 1.0.0+22
 environment:
   sdk: '>=3.4.0 <4.0.0'
 

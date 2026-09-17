@@ -8,20 +8,20 @@ import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../../logic/notification/notification_bloc.dart';
 
-/// AppBar Beranda dengan avatar anggota + sapaan 2 baris ala aplikasi Expo:
-/// baris 1: `Gloria, selamat datang Kak` (sapaan brand statis, bukan nama depan user)
-/// baris 2: nama lengkap.
+/// AppBar Beranda ala aplikasi Expo — sapaan 3 baris dinamis:
+/// baris 1: `Gloria, selamat pagi` (pagi/siang/sore/malam — mengikuti jam).
+/// baris 2: `Kak <nama lengkap>`.
+/// baris 3: badge role emas kecil (jika role ada).
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(76);
+  Size get preferredSize => const Size.fromHeight(78);
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
-      toolbarHeight: 76,
+      toolbarHeight: 78,
       titleSpacing: 16,
       title: Row(
         children: [
@@ -32,34 +32,52 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               builder: (context, state) {
                 final namaLengkap = state is AuthAuthenticated
                     ? state.user.namaLengkap
-                    : 'Anggota';
+                    : '';
+                final role = state is AuthAuthenticated ? state.user.role : '';
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Gloria, selamat datang Kak',
+                      'Gloria, selamat ${_kataWaktu(DateTime.now())}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isDark
-                            ? const Color(0xB3FFFFFF)
-                            : const Color(0xB31E1800),
+                        color: Color(0xB31E1800),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      namaLengkap,
+                      'Kak $namaLengkap',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppTheme.onPrimary,
+                        color: Color(0xFF1E1800),
                       ),
                     ),
+                    if (role.isNotEmpty) const SizedBox(height: 2),
+                    if (role.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          _labelRole(role),
+                          style: const TextStyle(
+                            color: Color(0xFF3A2A00),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                   ],
                 );
               },
@@ -132,57 +150,71 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = isDark ? Colors.white : AppTheme.onPrimary;
-    final bg = (isDark ? Colors.white : AppTheme.onPrimary)
-        .withValues(alpha: 0.14);
-    return GestureDetector(
-      onTap: () => context.push<void>('/profile'),
-      child: BlocBuilder<MemberBloc, MemberState>(
-        builder: (context, state) {
-          if (state is MemberLoaded && state.member.fotoUrl.isNotEmpty) {
-            return CircleAvatar(
-              radius: 24,
-              backgroundColor: bg,
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: state.member.fotoUrl,
-                  width: 46,
-                  height: 46,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => Icon(
-                    Icons.person,
-                    color: fg,
-                    size: 28,
-                  ),
-                ),
-              ),
-            );
-          }
-          // Fallback: inisial nama dari AuthBloc
-          final auth = context.read<AuthBloc>().state;
-          final nama = auth is AuthAuthenticated ? auth.user.namaLengkap : '';
-          final inisial = nama.trim().isEmpty
-              ? 'A'
-              : nama
-                  .trim()
-                  .split(RegExp(r'\s+'))
-                  .take(2)
-                  .map((e) => e[0])
-                  .join();
+    final bg = isDark ? AppTheme.primary : Colors.white;
+    final fg = isDark ? Colors.white : AppTheme.primary;
+
+    return BlocBuilder<MemberBloc, MemberState>(
+      builder: (context, state) {
+        if (state is MemberLoaded && state.member.fotoUrl.isNotEmpty) {
           return CircleAvatar(
             radius: 24,
             backgroundColor: bg,
-            child: Text(
-              inisial.toUpperCase(),
-              style: TextStyle(
-                color: fg,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
+            child: ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: state.member.fotoUrl,
+                width: 46,
+                height: 46,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => Icon(
+                  Icons.person,
+                  color: fg,
+                  size: 28,
+                ),
               ),
             ),
           );
-        },
-      ),
+        }
+        final auth = context.read<AuthBloc>().state;
+        final nama = auth is AuthAuthenticated ? auth.user.namaLengkap : '';
+        final inisial = nama.trim().isEmpty
+            ? 'A'
+            : nama
+                .trim()
+                .split(RegExp(r'\s+'))
+                .take(2)
+                .map((e) => e[0])
+                .join();
+        return CircleAvatar(
+          radius: 24,
+          backgroundColor: bg,
+          child: Text(
+            inisial.toUpperCase(),
+            style: TextStyle(
+              color: fg,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+        );
+      },
     );
   }
+}
+
+String _kataWaktu(DateTime now) {
+  final jam = now.hour;
+  if (jam < 11) return 'pagi';
+  if (jam < 15) return 'siang';
+  if (jam < 18) return 'sore';
+  return 'malam';
+}
+
+String _labelRole(String role) {
+  final r = role.trim().toUpperCase();
+  if (r.contains('BENDAHARA')) return 'BENDAHARA';
+  if (r.contains('SEKRETARIS')) return 'SEKRETARIS';
+  if (r.contains('KETUA')) return 'KETUA I';
+  if (r.contains('PENDAFTAR') || r.contains('DOKUMENTASI')) return 'ANGGOTA';
+  if (r.isNotEmpty) return r.replaceAll(RegExp(r'\s+'), '');
+  return 'ANGGOTA';
 }

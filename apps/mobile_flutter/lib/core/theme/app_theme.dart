@@ -18,8 +18,8 @@ class AppTheme {
   /// Muted Grey — teks sub-informasi / keterangan (`#64748B`).
   static const Color textMuted = Color(0xFF64748B);
 
-  /// Emas tua — HANYA sebagai aksen kecil (garis tepi aktif, badge).
-  static const Color primary = Color(0xFFB8860B);
+  /// Biru utama — warna pengenal aplikasi (akan digunakan pada FAB, tombol, dan elemen pengenal).
+  static const Color primary = Color(0xFF1E5BB2);
 
   /// Emas pekat — teks/link kecil yang butuh kontras ≥4.5:1 di latar terang.
   static const Color primaryDark = Color(0xFF7A5A00);
