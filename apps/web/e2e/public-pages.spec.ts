@@ -3,15 +3,14 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Regression guard untuk middleware auth (src/middleware.ts).
+ * Regression guard untuk proxy auth (src/proxy.ts — dulu middleware.ts).
  *
  * Setiap halaman publik HARUS bisa diakses tanpa sesi. Bug nyata yang sudah
- * terjadi dua kali: halaman publik baru dilupakan di allowlist middleware
+ * terjadi dua kali: halaman publik baru dilupakan di allowlist proxy
  * (publicPaths), sehingga pengunjung anonim dialihkan 307 ke /login —
  * pertama pada /struktur-organisasi (16 test E2E merah berhari-hari),
  * kedua pada landing page root "/" (CI Smoke Test gagal karena health check
  * GET / mengharapkan 200/302).
- *
  * Spesifikasi ini mencegah kambuhnya dengan tiga lapis:
  *   1. Kunjungi SETIAP halaman publik tanpa cookie, lalu pastikan halaman
  *      dirender (marker h1 khas masing-masing) dan tidak ada redirect ke /login.
@@ -19,7 +18,7 @@ import path from 'path';
  *      sama dengan halaman login, mis. "THS-THM").
  *   3. Bandingkan daftar route level-atas dari build Next.js (routes-manifest)
  *      dengan klasifikasi publik/terproteksi — route publik baru yang belum
- *      masuk allowlist middleware akan langsung memicu kegagalan di sini.
+ *      masuk allowlist proxy akan langsung memicu kegagalan di sini.
  */
 
 const BASE = process.env.E2E_BASE_URL || 'http://localhost:3002';
@@ -221,7 +220,7 @@ test.describe('Public Pages — middleware allowlist regression guard', () => {
     expect(
       unclassified,
       `Route baru terdeteksi tanpa klasifikasi publik/terproteksi: ${unclassified.join(', ')}. ` +
-        `Jika publik, tambahkan ke allowlist middleware (src/middleware.ts) dan ke PUBLIC_PAGES; ` +
+        `Jika publik, tambahkan ke allowlist proxy (src/proxy.ts) dan ke PUBLIC_PAGES; ` +
         `jika terproteksi, tambahkan ke PROTECTED_ROUTES.`,
     ).toEqual([]);
 

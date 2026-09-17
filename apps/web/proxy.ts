@@ -23,7 +23,13 @@ const publicPaths = [
   '/donasi',
 ];
 
-export function middleware(request: NextRequest) {
+// ─────────────────────────────────────────────────────────────────────────
+// Proxy (dulu: Middleware) — Next.js 16 mengganti konvensi `middleware.ts`
+// menjadi `proxy.ts` dengan ekspor bernama `proxy`. File middleware.ts lama
+// TIDAK dijalankan Next 16, sehingga proteksi auth halaman dashboard mati
+// total di dev maupun produksi hingga migrasi ini.
+// ─────────────────────────────────────────────────────────────────────────
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
