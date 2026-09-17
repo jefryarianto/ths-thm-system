@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../../mail/mail.service';
@@ -145,7 +145,7 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('should create a user with hashed password', async () => {
-      const dto = { email: 'new@test.com', namaLengkap: 'New User', password: 'secret' };
+      const dto = { email: 'new@test.com', namaLengkap: 'New User', role: 'anggota', rantingId: 'r1', password: 'secret' };
       const mockCreated = { id: '1', email: 'new@test.com', passwordHash: 'hashed-password' };
       mockPrisma.user.create.mockResolvedValue(mockCreated);
 
@@ -170,6 +170,7 @@ describe('UsersService', () => {
   describe('update', () => {
     it('should update user fields', async () => {
       const dto = { namaLengkap: 'Updated' };
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
       mockPrisma.user.update.mockResolvedValue({ id: '1', namaLengkap: 'Updated' });
 
       const result = await service.update('1', dto);
@@ -210,9 +211,10 @@ describe('UsersService', () => {
     });
 
     it('should allow a scoped admin to create a role at or below their level', async () => {
+      mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(true);
       mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'admin_ranting' });
       const result = await service.create(
-        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_ranting' },
+        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_ranting', rantingId: 'r1' },
         { distrikId: 'd1' },
       );
       expect(result.data.role).toBe('admin_ranting');
@@ -238,6 +240,82 @@ describe('UsersService', () => {
     });
 
     it('should allow superadmin (no scope) to assign any role', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'superadmin' });
+      const result = await service.update('u1', { role: 'superadmin' });
+      expect(result.data.role).toBe('superadmin');
+    });
+
+    it('should allow superadmin (scope {} from ScopeGuard) to create admin_distrik', async () => {
+      mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'admin_distrik' });
+      const result = await service.create(
+        { email: 'x@y.com', namaLengkap: 'X', role: 'admin_distrik', rantingId: 'r1' },
+        {}, // ScopeGuard mengirim {} untuk superadmin (national)
+        'actor-1',
+        'superadmin',
+      );
+      expect(result.data.role).toBe('admin_distrik');
+    });
+
+    it('should allow superadmin (scope {} from ScopeGuard) to assign admin_distrik role', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'admin_distrik' });
+      const result = await service.update('u1', { role: 'admin_distrik' }, {}, 'superadmin');
+      expect(result.data.role).toBe('admin_distrik');
+    });
+
+    it('should reject admin_distrik role from non-superadmin with empty scope (tenant safety)', async () => {
+      // Admin tanpa rantingId juga menerima scope {} dari ScopeGuard — objek
+      // kosong TIDAK boleh diperlakukan sebagai superadmin.
+      await expect(
+        service.create(
+          { email: 'x@y.com', namaLengkap: 'X', role: 'admin_distrik' },
+          {},
+          'actor-2',
+          'admin_ranting',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject creating a non-superadmin role without ranting (hardening)', async () => {
+      await expect(
+        service.create(
+          { email: 'x@y.com', namaLengkap: 'X', role: 'admin_ranting' },
+          { distrikId: 'd1' },
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('should allow creating a superadmin without ranting (exempt)', async () => {
+      mockPrisma.user.create.mockResolvedValue({ id: 'u1', email: 'x@y.com', role: 'superadmin' });
+      const result = await service.create(
+        { email: 'x@y.com', namaLengkap: 'X', role: 'superadmin' },
+        {},
+        'actor-1',
+        'superadmin',
+      );
+      expect(result.data.role).toBe('superadmin');
+    });
+
+    it('should reject updating a ranting-less user into a non-superadmin role (hardening)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: null });
+      await expect(service.update('u1', { role: 'admin_wilayah' })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow updating unrelated fields when user already has a ranting (regression)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: 'r1' });
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', namaLengkap: 'Baru' });
+      const result = await service.update('u1', { namaLengkap: 'Baru' });
+      expect(result.data.namaLengkap).toBe('Baru');
+    });
+
+    it('should allow promoting a ranting-less user to superadmin (exempt)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'anggota', rantingId: null });
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'superadmin' });
       const result = await service.update('u1', { role: 'superadmin' });
       expect(result.data.role).toBe('superadmin');

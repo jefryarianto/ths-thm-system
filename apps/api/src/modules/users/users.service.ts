@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -51,12 +51,24 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   }
 
   /**
+   * ScopeGuard mengirim `{}` (objek kosong) untuk superadmin, tetapi objek
+   * kosong juga bisa terjadi pada admin ter-scope yang belum punya
+   * `rantingId`. Karena itu superadmin TIDAK boleh dideteksi dari scope kosong.
+   * Service ini mendeteksinya dari role aktor (req.user.role), lalu
+   * menormalisasi scope superadmin menjadi `undefined` agar aturan
+   * "superadmin bebas" vs "admin ter-scope dibatasi hierarki" tetap akurat.
+   */
+  private normalizeScope(scope: UserScope | undefined, actorRole?: string): UserScope | undefined {
+    return actorRole === 'superadmin' ? undefined : scope;
+  }
+
+  /**
    * Non-superadmin hanya boleh menetapkan role pada/di bawah levelnya sendiri.
    * Superadmin (scope kosong) bebas menetapkan role apa pun.
    */
   private resolveAssignableRole(role: string | undefined, scope?: UserScope): string | undefined {
     if (role === undefined) return undefined;
-    if (!scope) return role; // superadmin — scope kosong
+    if (!scope) return role; // superadmin — scope kosong (sudah dinormalisasi)
     const assignable = ASSIGNABLE_BY_LEVEL[UsersService.scopeLevel(scope)];
     if (!assignable || !assignable.includes(role)) {
       throw new ForbiddenException('Anda tidak dapat menetapkan role tersebut');
@@ -80,6 +92,22 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
     return rantingId;
   }
 
+  /**
+   * Ranting wajib dimiliki setiap akun non-superadmin.
+   *
+   * Akun tanpa ranting membuat ScopeGuard mengisi `scope = {}`, yang di
+   * `buildScopeFilter` berarti TANPA filter — yaitu akses baca/tulis level
+   * nasional. Karena itu penempatan ranting dipaksa di sini, bukan hanya di UI.
+   * Superadmin dikecualikan (memang nasional, `rantingId` boleh null).
+   */
+  private assertRantingForRole(role: string | undefined, rantingId: string | null | undefined): void {
+    // `role ?? 'anggota'` menyamai default kolom `role` di schema Prisma.
+    const effectiveRole = role ?? 'anggota';
+    if (effectiveRole !== 'superadmin' && !rantingId) {
+      throw new BadRequestException('Ranting wajib dipilih untuk role selain superadmin');
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════
   //  HOOKS
   // ═══════════════════════════════════════════════════════════
@@ -95,6 +123,7 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
   ): Promise<Record<string, unknown>> {
     const role = this.resolveAssignableRole(dto.role, scope);
     const rantingId = (await this.resolveRantingId(dto.rantingId, scope)) || scope?.rantingId;
+    this.assertRantingForRole(role, rantingId);
     const defaultPassword = dto.password || 'password123';
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
 
@@ -185,19 +214,59 @@ export class UsersService extends BaseCrudService<CreateUserDto, UpdateUserDto> 
       rantingId: true,
       isActive: true,
       createdAt: true,
+      // Relasi dipakai form Edit untuk prefill cascade distrik → wilayah → ranting.
+      // (`/org-structure/ranting/:id` superadmin-only, jadi tidak bisa dipakai
+      // admin ter-scope untuk resolve ranting target.)
+      ranting: {
+        select: {
+          id: true,
+          nama: true,
+          wilayahId: true,
+          wilayah: {
+            select: {
+              id: true,
+              nama: true,
+              distrikId: true,
+              distrik: { select: { id: true, nama: true } },
+            },
+          },
+        },
+      },
     });
   }
 
-  async create(dto: CreateUserDto, scope?: UserScope, userId?: string) {
-    return this.baseCreate(dto, scope, userId, 'User berhasil dibuat');
+  async create(dto: CreateUserDto, scope?: UserScope, userId?: string, actorRole?: string) {
+    return this.baseCreate(
+      dto,
+      this.normalizeScope(scope, actorRole),
+      userId,
+      'User berhasil dibuat',
+    );
   }
 
-  async update(id: string, dto: UpdateUserDto, scope?: UserScope) {
+  async update(id: string, dto: UpdateUserDto, scope?: UserScope, actorRole?: string) {
+    // Superadmin tidak boleh dideteksi dari scope kosong — lihat normalizeScope().
+    const effectiveScope = this.normalizeScope(scope, actorRole);
     // Tenant guard — baseUpdate tidak meneruskan scope ke beforeUpdate,
     // jadi role/rantingId dari client divalidasi di sini sebelum update.
-    this.resolveAssignableRole(dto.role, scope);
-    await this.resolveRantingId(dto.rantingId, scope);
-    return this.baseUpdate(id, dto, scope, 'User berhasil diperbarui');
+    this.resolveAssignableRole(dto.role, effectiveScope);
+    await this.resolveRantingId(dto.rantingId, effectiveScope);
+
+    // Hardening: role & ranting efektif (menggabungkan nilai lama + perubahan)
+    // harus tetap memenuhi aturan "non-superadmin wajib punya ranting".
+    const existing = await this.prisma.user.findUnique({
+      where: { id },
+      select: { role: true, rantingId: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('User tidak ditemukan');
+    }
+    const effectiveRole = dto.role ?? existing.role;
+    const effectiveRantingId =
+      dto.rantingId !== undefined ? dto.rantingId : existing.rantingId;
+    this.assertRantingForRole(effectiveRole, effectiveRantingId);
+
+    return this.baseUpdate(id, dto, effectiveScope, 'User berhasil diperbarui');
   }
 
   /**
