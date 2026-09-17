@@ -151,6 +151,16 @@ export class NotificationsController {
     return this.service.updatePreferences(user.id, dto);
   }
 
+  // CATATAN: rute statis (mis. 'fcm-tokens') WAJIB dideklarasikan sebelum
+  // rute parameter '@Get(:id)' — jika tidak, Express mencocokkan ':id'
+  // lebih dulu dan endpoint ini tak pernah tercapai (404).
+  @Get('fcm-tokens')
+  @ApiOperation({ summary: 'Daftar semua token FCM yang terdaftar' })
+  @Roles('superadmin')
+  getFcmTokens() {
+    return this.service.getFcmTokens();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Ambil detail notifikasi' })
   @Roles(
@@ -207,13 +217,6 @@ export class NotificationsController {
   cleanupStaleIncomplete() {
     return this.service.cleanupStaleIncompleteNotifications();
   }
-  @Get('fcm-tokens')
-  @ApiOperation({ summary: 'Daftar semua token FCM yang terdaftar' })
-  @Roles('superadmin')
-  getFcmTokens() {
-    return this.service.getFcmTokens();
-  }
-
   @Post('test-push')
   @ApiOperation({ summary: 'Kirim push notification test' })
   @Roles('superadmin')

@@ -185,6 +185,18 @@ describe('THS-THM API (e2e)', () => {
         });
     });
 
+    it('GET /api/notifications/fcm-tokens — should return token list (rute statis tidak tertutup oleh :id)', () => {
+      return request(app.getHttpServer())
+        .get('/api/notifications/fcm-tokens')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200)
+        .expect((res: any) => {
+          expect(res.body.success).toBe(true);
+          expect(typeof res.body.data.total).toBe('number');
+          expect(Array.isArray(res.body.data.tokens)).toBe(true);
+        });
+    });
+
     it('GET /api/notifications/count — should reject without auth', () => {
       return request(app.getHttpServer()).get('/api/notifications/count').expect(401);
     });
