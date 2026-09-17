@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/app_update_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_controller.dart';
 import '../../core/utils/snack_bar_helper.dart';
@@ -81,10 +83,12 @@ class SettingsScreen extends StatelessWidget {
             child: _ThemeSelector(),
           ),
           const Divider(),
-          const ListTile(
-            leading: Icon(Icons.info_outline, color: AppTheme.primary),
-            title: Text('Tentang Aplikasi'),
-            subtitle: Text('THS-THM Mobile Flutter v1.0.0'),
+          ListTile(
+            leading: const Icon(Icons.info_outline, color: AppTheme.primary),
+            title: const Text('Tentang Aplikasi'),
+            subtitle: const Text('Versi, pembaruan, dan info aplikasi'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showAboutDialog(context),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -113,6 +117,203 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (context) => const _ChangePasswordSheet(),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => const _AboutAppDialog(),
+    );
+  }
+}
+
+/// Dialog "Tentang Aplikasi": versi terpasang (package_info_plus), info versi
+/// server (`/api/public/mobile-app-info` via AppUpdateService), changelog, dan
+/// tombol periksa pembaruan / instal update.
+class _AboutAppDialog extends StatefulWidget {
+  const _AboutAppDialog();
+
+  @override
+  State<_AboutAppDialog> createState() => _AboutAppDialogState();
+}
+
+class _AboutAppDialogState extends State<_AboutAppDialog> {
+  PackageInfo? _package;
+  String? _packageError;
+
+  @override
+  void initState() {
+    super.initState();
+    // Muat info versi server segar saat dialog dibuka.
+    AppUpdateService.instance.checkNow(force: true);
+    _loadPackageInfo();
+  }
+
+  Future<void> _loadPackageInfo() async {
+    try {
+      final package = await PackageInfo.fromPlatform();
+      if (mounted) setState(() => _package = package);
+    } catch (error) {
+      if (mounted) setState(() => _packageError = error.toString());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.info_outline, color: AppTheme.primary),
+          SizedBox(width: 8),
+          Text('Tentang Aplikasi'),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: ValueListenableBuilder<AppUpdateState>(
+          valueListenable: AppUpdateService.instance.notifier,
+          builder: (context, updateState, _) {
+            final info = updateState.info;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _InfoRow(
+                  label: 'Versi Terpasang',
+                  value: _package == null
+                      ? (_packageError == null
+                          ? 'Memuat…'
+                          : 'Tidak diketahui')
+                      : 'v${_package!.version} (${_package!.buildNumber})',
+                ),
+                const SizedBox(height: 8),
+                _InfoRow(
+                  label: 'Versi Server',
+                  value: info == null
+                      ? '—'
+                      : 'v${info.versionName} (build ${info.versionCode})',
+                ),
+                const SizedBox(height: 12),
+                _statusLine(updateState),
+                if (info != null && info.changelog.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Catatan Pembaruan',
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    info.changelog,
+                    style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Colors.grey.shade700),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => AppUpdateService.instance.checkNow(force: true),
+          child: const Text('Periksa Pembaruan'),
+        ),
+        ValueListenableBuilder<AppUpdateState>(
+          valueListenable: AppUpdateService.instance.notifier,
+          builder: (context, updateState, _) {
+            final info = updateState.info;
+            final canUpdate = info != null &&
+                updateState.status == AppUpdateStatus.updateAvailable ||
+                updateState.status == AppUpdateStatus.forceUpdate;
+            return TextButton(
+              onPressed: canUpdate
+                  ? () => AppUpdateService.instance.downloadAndInstall(info!)
+                  : null,
+              child: const Text('Update'),
+            );
+          },
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Tutup'),
+        ),
+      ],
+    );
+  }
+
+  Widget _statusLine(AppUpdateState state) {
+    final (icon, text, color) = switch (state.status) {
+      AppUpdateStatus.checking => (Icons.hourglass_top, 'Memeriksa…', Colors.grey),
+      AppUpdateStatus.upToDate => (
+          Icons.check_circle_outline,
+          'Aplikasi sudah versi terbaru',
+          AppTheme.success,
+        ),
+      AppUpdateStatus.updateAvailable => (
+          Icons.system_update_alt,
+          'Versi baru tersedia',
+          AppTheme.warning,
+        ),
+      AppUpdateStatus.forceUpdate => (
+          Icons.error_outline,
+          'Pembaruan wajib untuk melanjutkan',
+          AppTheme.danger,
+        ),
+      AppUpdateStatus.downloading => (
+          Icons.downloading,
+          'Mengunduh…',
+          AppTheme.primary,
+        ),
+      AppUpdateStatus.error => (
+          Icons.error_outline,
+          state.error ?? 'Gagal memeriksa pembaruan',
+          AppTheme.danger,
+        ),
+    };
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 13, color: color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(value, style: const TextStyle(fontSize: 13)),
+        ),
+      ],
     );
   }
 }

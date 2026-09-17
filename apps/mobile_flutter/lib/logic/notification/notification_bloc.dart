@@ -11,9 +11,11 @@ part 'notification_state.dart';
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   NotificationBloc() : super(NotificationInitial()) {
     on<NotificationLoadRequested>(_onLoad);
+    on<NotificationCountRequested>(_onCountRequested);
     on<NotificationMarkRead>(_onMarkRead);
     on<NotificationMarkAllRead>(_onMarkAllRead);
     on<NotificationDelete>(_onDelete);
+    on<NotificationDeleteAll>(_onDeleteAll);
     on<NotificationLogoutRequested>(_onLogout);
   }
 
@@ -50,6 +52,32 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     } catch (e) {
       emit(NotificationError(message: e.toString()));
     }
+  }
+
+  Future<void> _onCountRequested(
+    NotificationCountRequested event,
+    Emitter<NotificationState> emit,
+  ) async {
+    final token = await _apiClient.getAccessToken();
+    if (token == null || token.isEmpty) {
+      emit(NotificationInitial());
+      return;
+    }
+    // Jika daftar sudah dimuat, jumlah belum-dibaca dihitung dari list tersebut.
+    if (state is NotificationLoaded) return;
+    try {
+      final response = await _apiClient.dio.get('/notifications/count');
+      final dynamic raw = response.data['data'];
+      final count = raw is Map
+          ? ((raw['count'] as num?)?.toInt() ?? 0)
+          : 0;
+      emit(NotificationUnreadState(unreadCount: count));
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        emit(NotificationInitial());
+      }
+      // Gagal jaringan → biarkan state lama; tidak fatal.
+    } catch (_) {}
   }
 
   Future<void> _onMarkRead(
@@ -118,6 +146,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     }
     try {
       await _apiClient.dio.delete('/notifications/${event.id}');
+    } catch (_) {}
+  }
+
+  Future<void> _onDeleteAll(
+    NotificationDeleteAll event,
+    Emitter<NotificationState> emit,
+  ) async {
+    final state = this.state;
+    if (state is NotificationLoaded) {
+      emit(const NotificationLoaded(notifications: []));
+    }
+    try {
+      // Route `DELETE /notifications` (bukan `DELETE /notifications/:id`).
+      await _apiClient.dio.delete('/notifications');
     } catch (_) {}
   }
 

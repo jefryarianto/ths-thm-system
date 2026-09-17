@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../api/api_client.dart';
 import '../constants/app_constants.dart';
+import 'app_navigator.dart';
 import 'app_update_service.dart';
 
 /// Menginisialisasi Firebase Cloud Messaging, mendaftarkan token perangkat ke
@@ -14,6 +16,13 @@ import 'app_update_service.dart';
 /// Token didaftarkan ulang saat login sukses atau saat Firebase menghasilkan
 /// token baru ([onTokenRefresh]). Token **tidak** dihapus saat logout agar
 /// push pembaruan tetap sampai ke perangkat.
+///
+/// Saat app berada di **foreground**, pesan push tidak muncul di tray otomatis
+/// oleh sistem — karena itu ditampilkan lewat `flutter_local_notifications`
+/// sehingga pengguna tetap melihat notifikasi. Mengetuk notifikasi lokal akan
+/// membuka layar `/notifications` (atau memicu cek update untuk tipe
+/// `app_update`). Saat app di background/terminated, tray menampilkan notifikasi
+/// asli FCM dan mengetuknya membuka app (via [FirebaseMessaging.onMessageOpenedApp]).
 class FcmService {
   FcmService._internal();
 
@@ -23,12 +32,24 @@ class FcmService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   static const String _tokenKey = 'fcm_device_token';
 
-  String? _lastFcmToken;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
-  /// Inisialisasi FCM: minta izin notifikasi, ambil token awal, daftarkan
-  /// handler pesan foreground/opened. Tidak memblokir start-up.
+  static const String _channelId = 'ths_thm_push';
+  static const String _channelName = 'Notifikasi THS-THM';
+
+  static const String _payloadAppUpdate = 'app_update';
+  static const String _payloadNotification = 'notification';
+
+  String? _lastFcmToken;
+  bool _localNotificationsReady = false;
+
+  /// Inisialisasi FCM: siapkan tampilan notifikasi lokal, minta izin,
+  /// ambil token awal, daftarkan handler pesan foreground/opened. Tidak
+  /// memblokir start-up.
   Future<void> initialize() async {
     try {
+      await _initLocalNotifications();
       await _messaging.requestPermission();
 
       _lastFcmToken = await _messaging.getToken();
@@ -64,11 +85,42 @@ class FcmService {
 
   // ── Private ──────────────────────────────────────────────────────────
 
+  Future<void> _initLocalNotifications() async {
+    const settings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    );
+    await _localNotifications.initialize(
+      settings: settings,
+      onDidReceiveNotificationResponse: _onLocalNotificationResponse,
+    );
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+    _localNotificationsReady = true;
+  }
+
+  void _onLocalNotificationResponse(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == _payloadAppUpdate) {
+      AppUpdateService.instance.checkNow(force: true);
+      return;
+    }
+    appNavigate?.call('/notifications');
+  }
+
   void _onForegroundMessage(RemoteMessage msg) {
+    _showLocalNotification(msg);
     _handleData(msg);
+    // Segarkan jumlah notifikasi yang belum dibaca (badge Beranda).
+    appRefreshNotifications?.call();
   }
 
   void _onMessageOpened(RemoteMessage msg) {
+    final data = msg.data;
+    if (data['type'] != 'app_update' && msg.notification != null) {
+      appNavigate?.call('/notifications');
+    }
     _handleData(msg);
   }
 
@@ -77,6 +129,47 @@ class FcmService {
     if (data['type'] == 'app_update') {
       log('Push app_update diterima', name: 'FcmService');
       AppUpdateService.instance.checkNow(force: true);
+    }
+  }
+
+  /// Tampilkan push sebagai notifikasi lokal (dibutuhkan karena notifikasi
+  /// FCM tidak otomatis muncul saat app di foreground).
+  Future<void> _showLocalNotification(RemoteMessage msg) async {
+    if (!_localNotificationsReady) return;
+    final notification = msg.notification;
+    final title =
+        notification?.title ?? (msg.data['title'] as String? ?? 'THS-THM');
+    final body =
+        notification?.body ?? (msg.data['body'] as String? ?? '');
+    final type = msg.data['type'];
+    final payload = type == 'app_update'
+        ? _payloadAppUpdate
+        : _payloadNotification;
+    try {
+      // id konstan untuk app_update agar tidak menumpuk; selainnya berbasis waktu
+      final id = type == 'app_update'
+          ? 1
+          : DateTime.now()
+              .millisecondsSinceEpoch
+              .remainder(0x7fffffff);
+      await _localNotifications.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: 'Notifikasi push aplikasi THS-THM',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+        payload: payload,
+      );
+    } catch (error) {
+      log('Menampilkan notifikasi lokal gagal',
+          name: 'FcmService', error: error);
     }
   }
 

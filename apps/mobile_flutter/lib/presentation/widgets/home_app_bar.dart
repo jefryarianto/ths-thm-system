@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
+import '../../logic/notification/notification_bloc.dart';
 
 /// AppBar Beranda dengan avatar anggota + sapaan 2 baris ala aplikasi Expo:
 /// baris 1: `Gloria, selamat datang Kak` (sapaan brand statis, bukan nama depan user)
@@ -67,10 +68,46 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          tooltip: 'Notifikasi',
-          onPressed: () => context.push<void>('/notifications'),
+        BlocBuilder<NotificationBloc, NotificationState>(
+          buildWhen: (previous, current) =>
+              _notificationBadge(previous) != _notificationBadge(current),
+          builder: (context, state) {
+            final count = _notificationBadge(state);
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  tooltip: 'Notifikasi',
+                  onPressed: () => context.push<void>('/notifications'),
+                ),
+                if (count > 0)
+                  Positioned(
+                    right: 2,
+                    top: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppTheme.danger,
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined),
@@ -80,6 +117,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 4),
       ],
     );
+  }
+
+  int _notificationBadge(NotificationState state) {
+    if (state is NotificationLoaded) return state.unreadCount;
+    if (state is NotificationUnreadState) return state.unreadCount;
+    return 0;
   }
 }
 

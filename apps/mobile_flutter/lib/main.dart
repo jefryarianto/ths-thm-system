@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'core/services/app_navigator.dart';
 import 'core/services/app_update_service.dart';
 import 'core/services/fcm_service.dart';
 import 'core/theme/app_theme.dart';
@@ -71,6 +72,17 @@ Future<void> main() async {
   unawaited(FcmService.instance.initialize());
   unawaited(AppUpdateService.instance.checkNow());
 
+  // Ikat navigasi global (dipakai handler notifikasi FCM/lokal untuk pindah ke
+  // layar `/notifications` atau memicu update) ke router aplikasi.
+  appNavigate = (location) => AppRouter.router.go(location);
+  appRefreshNotifications = () async {
+    final ctx = appNavigatorKey.currentContext;
+    if (ctx == null || !ctx.mounted) return;
+    final auth = ctx.read<AuthBloc>().state;
+    if (auth is! AuthAuthenticated) return;
+    ctx.read<NotificationBloc>().add(const NotificationCountRequested());
+  };
+
   final themeController = await ThemeController.load();
   runApp(MyApp(themeController: themeController));
 }
@@ -128,6 +140,7 @@ class MyApp extends StatelessWidget {
 class AppRouter {
   static GoRouter router = GoRouter(
     initialLocation: '/',
+    navigatorKey: appNavigatorKey,
     refreshListenable: _routerRefresh,
     redirect: (context, state) {
       final authState = context.read<AuthBloc>().state;

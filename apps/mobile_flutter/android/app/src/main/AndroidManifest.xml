@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Notifikasi push (FCM) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Receiver wajib flutter_local_notifications (ScheduledNotificationBootReceiver menangkap BOOT_COMPLETED) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>st
     <!-- Izin menampilkan installer APK (update mandiri dari server) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <!-- Izin tulis media untuk menyimpan kartu KTA ke galeri (Android < 10).
@@ -48,6 +50,19 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- flutter_local_notifications: receiver notifikasi + boot -->
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

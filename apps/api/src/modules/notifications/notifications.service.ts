@@ -693,6 +693,28 @@ export class NotificationsService {
         return result;
       }
 
+      // Simpan sebagai notifikasi in-app (badge unread + layar Notifikasi),
+      // satu baris per user yang memiliki perangkat aktif.
+      const userIds = [...new Set(tokens.map((t) => t.userId))];
+      if (userIds.length > 0) {
+        await this.prisma.notifikasi.createMany({
+          data: userIds.map((userId) => ({
+            userId,
+            judul: dto.title,
+            isi: dto.body,
+            tipe: 'umum' as never,
+            data: { type: 'test' } as never,
+          })),
+        });
+        for (const uid of userIds) {
+          this.cache?.invalidatePrefix(this.CACHE_PREFIX + uid);
+          const count = await this.prisma.notifikasi.count({
+            where: { userId: uid, isRead: false },
+          });
+          this.eventsGateway?.sendUnreadCount(uid, count);
+        }
+      }
+
       const BATCH_SIZE = 500;
       for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
         const batch = tokens.slice(i, i + BATCH_SIZE);

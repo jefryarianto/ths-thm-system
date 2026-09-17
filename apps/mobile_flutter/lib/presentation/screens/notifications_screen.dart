@@ -20,6 +20,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String _filter = 'all';
 
   @override
+  void initState() {
+    super.initState();
+    // Muat daftar notifikasi segera saat halaman dibuka (sebelumnya hanya
+    // dimuat lewat pull-to-refresh / retry).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<NotificationBloc>().add(const NotificationLoadRequested());
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -178,7 +190,7 @@ PopupMenuButton<String>(
       ),
     );
     if (ok == true && context.mounted) {
-      context.read<NotificationBloc>().add(const NotificationDelete('all'));
+      context.read<NotificationBloc>().add(const NotificationDeleteAll());
     }
   }
 }

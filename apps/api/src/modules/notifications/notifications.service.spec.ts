@@ -6,6 +6,19 @@ import { MailService } from '../../mail/mail.service';
 import { EventsGateway } from './events.gateway';
 import { CacheService } from '../../common/services/cache.service';
 
+jest.mock('firebase-admin', () => ({
+  apps: [],
+  initializeApp: jest.fn(),
+  credential: { cert: jest.fn().mockReturnValue({}) },
+  messaging: jest.fn().mockReturnValue({
+    sendEachForMulticast: jest.fn().mockResolvedValue({
+      successCount: 1,
+      failureCount: 0,
+      responses: [{ success: true }],
+    }),
+  }),
+}));
+
 describe('NotificationsService', () => {
   let service: NotificationsService;
 
@@ -495,6 +508,59 @@ describe('NotificationsService', () => {
         where: { id: 'dt1' },
         data: { isActive: false },
       });
+    });
+  });
+
+  describe('sendTestPush', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should persist in-app notifications for each active device user', async () => {
+      mockPrisma.deviceToken.findMany.mockResolvedValue([
+        { id: 'dt1', token: 'fcm-token-1', userId: 'u1', isActive: true },
+        { id: 'dt2', token: 'fcm-token-2', userId: 'u2', isActive: true },
+      ]);
+      mockPrisma.notifikasi.createMany.mockResolvedValue({ count: 2 });
+      mockPrisma.notifikasi.count.mockResolvedValue(1);
+
+      const result = await service.sendTestPush({ title: 'Test', body: 'Hello' });
+
+      expect(result.totalTokens).toBe(2);
+      expect(result.successCount).toBe(1);
+      expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ userId: 'u1', judul: 'Test', tipe: 'umum' }),
+          expect.objectContaining({ userId: 'u2', judul: 'Test', tipe: 'umum' }),
+        ]),
+      });
+      expect(mockCache.invalidatePrefix).toHaveBeenCalledWith('notifications:u1');
+      expect(mockCache.invalidatePrefix).toHaveBeenCalledWith('notifications:u2');
+      expect(mockGateway.sendUnreadCount).toHaveBeenCalledTimes(2);
+    });
+
+    it('should persist only once for multiple devices of the same user', async () => {
+      mockPrisma.deviceToken.findMany.mockResolvedValue([
+        { id: 'dt1', token: 'a', userId: 'u1', isActive: true },
+        { id: 'dt2', token: 'b', userId: 'u1', isActive: true },
+      ]);
+      mockPrisma.notifikasi.createMany.mockResolvedValue({ count: 1 });
+
+      await service.sendTestPush({ title: 'T', body: 'B', userId: 'u1' });
+
+      expect(mockPrisma.notifikasi.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ userId: 'u1' })],
+      });
+    });
+
+    it('should not create notifications when no active tokens', async () => {
+      mockPrisma.deviceToken.findMany.mockResolvedValue([]);
+
+      const result = await service.sendTestPush({ title: 'T', body: 'B' });
+
+      expect(result.totalTokens).toBe(0);
+      expect(result.errors).toEqual(['No active device tokens found']);
+      expect(mockPrisma.notifikasi.createMany).not.toHaveBeenCalled();
     });
   });
 });

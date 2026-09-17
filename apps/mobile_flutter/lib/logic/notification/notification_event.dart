@@ -14,6 +14,14 @@ class NotificationLoadRequested extends NotificationEvent {
   List<Object> get props => [];
 }
 
+/// Ambil jumlah notifikasi belum dibaca untuk badge (tanpa memuat daftar).
+class NotificationCountRequested extends NotificationEvent {
+  const NotificationCountRequested();
+
+  @override
+  List<Object> get props => [];
+}
+
 class NotificationMarkRead extends NotificationEvent {
   final String id;
   const NotificationMarkRead(this.id);
@@ -35,6 +43,14 @@ class NotificationDelete extends NotificationEvent {
 
   @override
   List<Object> get props => [id];
+}
+
+/// Hapus SEMUA notifikasi user (route `DELETE /notifications`).
+class NotificationDeleteAll extends NotificationEvent {
+  const NotificationDeleteAll();
+
+  @override
+  List<Object> get props => [];
 }
 
 class NotificationLogoutRequested extends NotificationEvent {
