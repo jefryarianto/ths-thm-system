@@ -38,6 +38,7 @@ import {
   Mail,
 } from 'lucide-react';import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
+import { Copy } from 'lucide-react';
 import MemberSearchPicker from '@/components/members/MemberSearchPicker';
 import InvitationTab from './components/InvitationTab';
 
@@ -303,6 +304,29 @@ export default function GraduationDetailPage() {
   const [statusModal, setStatusModal] = useState<string | null>(null);
   const [statusSaving, setStatusSaving] = useState(false);
   const toast = useToast();
+
+  // Salin aspek+item dari template global ke pendadaran ini (idempoten).
+  const [cloningAspek, setCloningAspek] = useState(false);
+  const handleCloneAspek = async () => {
+    setCloningAspek(true);
+    try {
+      const res = await apiClient.post(`/graduations/${id}/clone-aspek`);
+      const r = res.data?.data || {};
+      if (r.skipped) {
+        toast('info', `Pendadaran sudah memiliki ${r.total} aspek penilaian sendiri`);
+      } else if (r.clonedAspects === 0) {
+        toast('warning', 'Template aspek penilaian global masih kosong — tambahkan dulu di menu Penilaian');
+      } else {
+        toast('success', `${r.clonedAspects} aspek & ${r.clonedItems} item penilaian berhasil disalin`);
+      }
+      await fetchCompleteness();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', msg || 'Gagal menyalin aspek penilaian');
+    } finally {
+      setCloningAspek(false);
+    }
+  };
   const statusModalChange = async () => {
     if (!statusModal || !graduation) return;
     setStatusSaving(true);
@@ -1276,6 +1300,23 @@ export default function GraduationDetailPage() {
                   <p className="text-sm text-gray-400 text-center py-4">Memuat status kelengkapan...</p>
                 )}
               </div>
+
+              {completeness && completeness.aspek === 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    Pendadaran ini belum memiliki aspek &amp; item penilaian. Salin dari template global,
+                    atau kelola manual di menu Penilaian.
+                  </p>
+                  <button
+                    onClick={handleCloneAspek}
+                    disabled={cloningAspek}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                  >
+                    <Copy size={13} />
+                    {cloningAspek ? 'Menyalin...' : 'Salin dari Template'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

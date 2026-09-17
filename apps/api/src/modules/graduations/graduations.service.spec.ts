@@ -1520,6 +1520,38 @@ describe('GraduationsService', () => {
     });
   });
 
+  describe('cloneAspekTemplate', () => {
+    it('skip bila pendadaran sudah punya aspek sendiri', async () => {
+      mockPrisma.aspekPenilaian.count.mockReset();
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.aspekPenilaian.count.mockResolvedValueOnce(3); // owned
+
+      const result = await service.cloneAspekTemplate('g1');
+
+      expect(result).toEqual({ skipped: true, total: 3, clonedAspects: 0, clonedItems: 0 });
+      expect(mockAssessmentsService.cloneTemplateForKegiatan).not.toHaveBeenCalled();
+    });
+
+    it('mendelegasikan clone bila belum punya aspek', async () => {
+      mockPrisma.aspekPenilaian.count.mockReset();
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(mockGraduation);
+      mockPrisma.aspekPenilaian.count
+        .mockResolvedValueOnce(0) // owned
+        .mockResolvedValueOnce(4); // total setelah clone
+      mockAssessmentsService.cloneTemplateForKegiatan.mockResolvedValue({ clonedAspects: 4, clonedItems: 18 });
+
+      const result = await service.cloneAspekTemplate('g1');
+
+      expect(mockAssessmentsService.cloneTemplateForKegiatan).toHaveBeenCalledWith('g1');
+      expect(result).toEqual({ skipped: false, total: 4, clonedAspects: 4, clonedItems: 18 });
+    });
+
+    it('lempar NotFound untuk pendadaran yang tidak ada', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(null);
+      await expect(service.cloneAspekTemplate('missing')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('tenant isolation on create (regression)', () => {
     it('menolak pendadaran ranting di luar cakupan admin distrik', async () => {
       mockScopeHelper.hasAccessToResourceAsync.mockResolvedValue(false);

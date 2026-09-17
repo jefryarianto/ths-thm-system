@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { ArrowLeft, Save, AlertCircle, Users } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, AlertTriangle, Users } from 'lucide-react';
+import Link from 'next/link';
 import FormField from '@/components/ui/form-field';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -42,6 +43,17 @@ export default function NewGraduationPage() {
   // Opsi admin kegiatan diambil dari anggota aktif distrik (bukan daftar user).
   const [adminKegiatanOptions, setAdminKegiatanOptions] = useState<AdminKegiatanOption[]>([]);
   const [adminKegiatanSearch, setAdminKegiatanSearch] = useState('');
+
+  // Jumlah aspek di template global (null = masih memuat / gagal cek — warning disembunyikan).
+  // Pendadaran baru meng-clone aspek+item dari template ini saat dibuat; template kosong
+  // berarti pendadaran baru akan tanpa penilaian.
+  const [templateAspekCount, setTemplateAspekCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    apiClient.get('/assessments/aspects', { params: { limit: 1 } })
+      .then((res) => setTemplateAspekCount(Array.isArray(res.data?.data) ? res.data.data.length : 0))
+      .catch(() => setTemplateAspekCount(null));
+  }, []);
 
   useEffect(() => {
     // Hanya superadmin & admin_distrik yang dapat menunjuk admin kegiatan.
@@ -111,6 +123,22 @@ export default function NewGraduationPage() {
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
                   <AlertCircle size={16} className="shrink-0" />
                   {error}
+                </div>
+              )}
+
+              {/* Warning: template aspek penilaian global kosong */}
+              {templateAspekCount === 0 && (
+                <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-800 dark:text-amber-300">
+                  <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Template aspek penilaian masih kosong</p>
+                    <p className="text-xs mt-1 text-amber-700 dark:text-amber-400">
+                      Pendadaran yang dibuat sekarang tidak akan memiliki aspek &amp; item penilaian.
+                      Isi dulu template di menu{' '}
+                      <Link href="/assessments" className="font-medium underline hover:no-underline">Penilaian</Link>,
+                      atau setelah pendadaran dibuat gunakan tombol "Salin dari Template" di halaman detailnya.
+                    </p>
+                  </div>
                 </div>
               )}
         

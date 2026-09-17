@@ -2557,6 +2557,34 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
    * Tidak bergantung pada skor yang sudah diinput — jadi checklist
    * "Aspek Penilaian" langsung hijau begitu aspek terkonfigurasi.
    */
+  /**
+   * Salin aspek + item penilaian dari template global ke pendadaran yang
+   * sudah ada (mis. dibuat sebelum template terisi / sebelum fitur clone
+   * ada). Delegasi ke AssessmentsService.cloneTemplateForKegiatan yang
+   * idempoten, lalu laporkan jumlah aspek efektif setelah clone.
+   */
+  async cloneAspekTemplate(graduationId: string, scope?: UserScope) {
+    await this.getGraduationOrThrow(graduationId, scope);
+
+    const owned = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId: graduationId, isActive: true },
+    });
+    if (owned > 0) {
+      return { skipped: true, total: owned, clonedAspects: 0, clonedItems: 0 };
+    }
+
+    const cloned = await this.assessmentsService.cloneTemplateForKegiatan(graduationId);
+    const total = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId: graduationId, isActive: true },
+    });
+    this.invalidateCache();
+    this.audit('CLONE_ASPEK', 'kegiatan', graduationId, null, {
+      clonedAspects: cloned.clonedAspects,
+      clonedItems: cloned.clonedItems,
+    });
+    return { skipped: false, total, clonedAspects: cloned.clonedAspects, clonedItems: cloned.clonedItems };
+  }
+
   async getAspekCount(graduationId: string, scope?: UserScope) {
     await this.getGraduationOrThrow(graduationId, scope);
 

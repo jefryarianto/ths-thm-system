@@ -204,6 +204,12 @@ export class GraduationsController {
     return this.service.getAspekCount(id, req.scope);
   }
 
+  @Post(':id/clone-aspek')
+  @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', { summary: 'Salin aspek & item penilaian dari template global ke pendadaran ini (idempoten)' })
+  cloneAspek(@Param('id') id: string, @Req() req: ScopedRequest) {
+    return this.service.cloneAspekTemplate(id, req.scope);
+  }
+
   @Get(':id/score-progress')
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Progress pengisian nilai penguji secara real-time' })
   getScoreProgress(@Param('id') id: string, @Req() req: ScopedRequest) {
