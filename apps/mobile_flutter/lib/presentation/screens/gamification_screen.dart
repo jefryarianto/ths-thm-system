@@ -215,8 +215,28 @@ class _ProfileTab extends StatelessWidget {
   }
 }
 
-class _LeaderboardTab extends StatelessWidget {
+class _LeaderboardTab extends StatefulWidget {
   const _LeaderboardTab();
+  @override
+  State<_LeaderboardTab> createState() => _LeaderboardTabState();
+}
+
+class _LeaderboardTabState extends State<_LeaderboardTab> {
+  GamificationLeaderboardScope _scope = GamificationLeaderboardScope.global;
+
+  void _applyScope(GamificationLeaderboardScope scope) {
+    if (scope == _scope) return;
+    setState(() => _scope = scope);
+    final current = context.read<GamificationBloc>().state;
+    String? search;
+    if (current is GamificationLoaded) {
+      /* leaderboard disimpan terpisah; kirim pencarian saat ini jika ada */
+    }
+    context
+        .read<GamificationBloc>()
+        .add(GamificationLeaderboardLoadRequested(scope: scope, search: search));
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GamificationBloc, GamificationState>(
@@ -225,36 +245,106 @@ class _LeaderboardTab extends StatelessWidget {
           return const AppLoadingSpinner();
         }
         final entries = state.leaderboard!;
-        if (entries.isEmpty) {
-          return const Center(child: Text('Belum ada data leaderboard'));
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: entries.length,
-          itemBuilder: (context, i) {
-            final e = entries[i];
-            final medals = {1: '\u{1F947}', 2: '\u{1F948}', 3: '\u{1F949}'};
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-                  child: Text(medals[e.rank] ?? '${e.rank}',
-                      style: const TextStyle(fontSize: 14)),
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _ScopeChip(
+                        label: 'Global',
+                        scope: GamificationLeaderboardScope.global,
+                        selected: _scope == GamificationLeaderboardScope.global,
+                        onSelected: (s) => _applyScope(s)),
+                    const SizedBox(width: 8),
+                    _ScopeChip(
+                        label: 'Distrik',
+                        scope: GamificationLeaderboardScope.distrik,
+                        selected: _scope == GamificationLeaderboardScope.distrik,
+                        onSelected: (s) => _applyScope(s)),
+                    const SizedBox(width: 8),
+                    _ScopeChip(
+                        label: 'Wilayah',
+                        scope: GamificationLeaderboardScope.wilayah,
+                        selected: _scope == GamificationLeaderboardScope.wilayah,
+                        onSelected: (s) => _applyScope(s)),
+                    const SizedBox(width: 8),
+                    _ScopeChip(
+                        label: 'Ranting',
+                        scope: GamificationLeaderboardScope.ranting,
+                        selected: _scope == GamificationLeaderboardScope.ranting,
+                        onSelected: (s) => _applyScope(s)),
+                  ],
                 ),
-                title: Text(e.namaLengkap,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('${e.badges} lencana',
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                trailing: Text('${e.points}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 15)),
               ),
-            );
-          },
+            ),
+            if (entries.isEmpty)
+              const Expanded(
+                child: Center(child: Text('Belum ada data leaderboard')),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: entries.length,
+                  itemBuilder: (context, i) {
+                    final e = entries[i];
+                    final medals = {
+                      1: '\u{1F947}',
+                      2: '\u{1F948}',
+                      3: '\u{1F949}',
+                    };
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor:
+                              AppTheme.primary.withValues(alpha: 0.1),
+                          child: Text(medals[e.rank] ?? '${e.rank}',
+                              style: const TextStyle(fontSize: 14)),
+                        ),
+                        title: Text(e.namaLengkap,
+                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: Text('${e.badges} lencana',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600)),
+                        trailing: Text('${e.points}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 15)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
         );
       },
+    );
+  }
+}
+
+class _ScopeChip extends StatelessWidget {
+  final String label;
+  final GamificationLeaderboardScope scope;
+  final bool selected;
+  final ValueChanged<GamificationLeaderboardScope> onSelected;
+
+  const _ScopeChip({
+    required this.label,
+    required this.scope,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      selectedColor: AppTheme.primary.withValues(alpha: 0.15),
+      onSelected: (_) => onSelected(scope),
     );
   }
 }

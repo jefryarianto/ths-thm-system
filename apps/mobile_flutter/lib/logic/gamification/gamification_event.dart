@@ -27,12 +27,15 @@ class GamificationRefreshRequested extends GamificationEvent {
 
 class GamificationLeaderboardLoadRequested extends GamificationEvent {
   final String? search;
+  final GamificationLeaderboardScope scope;
 
-  const GamificationLeaderboardLoadRequested({this.search});
+  const GamificationLeaderboardLoadRequested({this.search, this.scope = GamificationLeaderboardScope.global});
 
   @override
-  List<Object> get props => [search ?? ''];
+  List<Object> get props => [search ?? '', scope];
 }
+
+enum GamificationLeaderboardScope { global, distrik, wilayah, ranting }
 
 class GamificationEventsLoadRequested extends GamificationEvent {
   final int limit;

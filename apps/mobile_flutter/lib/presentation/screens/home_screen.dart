@@ -87,14 +87,14 @@ class _HomeScreenState extends State<HomeScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverToBoxAdapter(child: _KtaSection()),
+                sliver: SliverToBoxAdapter(child: _GamificationTip()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverToBoxAdapter(child: _GamificationTip()),
+                sliver: SliverToBoxAdapter(child: _KtaSection()),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
               const SliverToBoxAdapter(child: AgendaSection()),
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
               const SliverToBoxAdapter(child: BeritaFeedSection()),

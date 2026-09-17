@@ -196,16 +196,19 @@ export class GamificationController {
     @Query('rantingId') rantingId?: string,
     @Query('wilayahId') wilayahId?: string,
     @Query('distrikId') distrikId?: string,
+    @Query('scope') scopeFilter?: string,
     @Query('search') search?: string,
     @Query('skip') skip?: string,
+    @Req() req: ScopedRequest,
   ) {
-    const scope = rantingId
-      ? { rantingId }
-      : wilayahId
-        ? { wilayahId }
-        : distrikId
-          ? { distrikId }
-          : undefined;
+    const scope =
+      (rantingId || scopeFilter === 'ranting' || scopeFilter === 'self')
+        ? { rantingId: rantingId ?? req.scope?.rantingId }
+        : (wilayahId || scopeFilter === 'wilayah')
+          ? { wilayahId: wilayahId ?? req.scope?.wilayahId }
+          : (distrikId || scopeFilter === 'distrik')
+            ? { distrikId: distrikId ?? req.scope?.distrikId }
+            : undefined;
     const leaderboard = await this.gamificationService.getLeaderboard(
       limit ? parseInt(limit) : 10,
       scope,

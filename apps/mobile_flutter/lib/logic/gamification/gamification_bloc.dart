@@ -107,6 +107,8 @@ class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
         '/gamification/leaderboard',
         queryParameters: {
           'limit': 10,
+          if (event.scope != GamificationLeaderboardScope.global)
+            'scope': event.scope.name,
           if (event.search != null && event.search!.isNotEmpty)
             'search': event.search,
         },

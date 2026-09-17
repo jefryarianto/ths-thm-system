@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/services/app_update_service.dart';
@@ -22,7 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifier = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
-  bool _rememberMe = false;
+  bool _rememberMe = false; // state real-time "Ingat Saya" (checkbox)
+  String _description = 'Member login'; // deskripsi login untuk pembaruan
+  String _appVersion = ''; // versi aplikasi terpasang (footer login)
 
   @override
   void dispose() {
@@ -57,11 +60,25 @@ class _LoginScreenState extends State<LoginScreen> {
     await api.clearRememberedIdentifier();
   }
 
+  /// Ambil versi terpasang (footer login) via package_info_plus.
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _appVersion = info.version;
+        _description = 'Member login';
+      });
+    } catch (_) {
+      // Footer versi bersifat opsional; abaikan bila gagal.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _restoreRememberedIdentifier();
-
+    _loadAppVersion();
     // Jalankan pengecekan pembaruan + registrasi FCM tanpa blokir render.
     // Pengecekan update diperbarui setiap kali halaman login dibuka (berkat
     // cache 1 jam di AppUpdateService, request hanya melesat saat lewat TTL).
@@ -111,6 +128,17 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (context, state) {
           return Stack(
             children: [
+              const Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [AppTheme.primary, AppTheme.primaryLight],
+                    ),
+                  ),
+                ),
+              ),
               SafeArea(
                 child: BlocListener<AuthBloc, AuthState>(
                   listener: (context, state) {
@@ -137,34 +165,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             const AppUpdateBanner(),
                             Image.asset(
                               'assets/images/logo.png',
-                              width: 88,
-                              height: 88,
+                              width: 120,
+                              height: 120,
                               fit: BoxFit.contain,
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'THS-THM',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 2,
-                                color: AppTheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
                             Text(
                               'Fortiter in Re, Suaviter in Modo',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontSize: 14, color: Colors.grey.shade600),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.onPrimary.withValues(alpha: 0.92),
+                              ),
                             ),
                             const SizedBox(height: 36),
                             TextField(
                               controller: _identifier,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Email / Nomor Anggota',
-                                prefixIcon: Icon(Icons.person_outline),
+                                prefixIcon: const Icon(Icons.person_outline),
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -174,6 +199,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 prefixIcon: const Icon(Icons.lock_outline),
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscure
@@ -225,26 +255,36 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: const Text('Lupa Password?'),
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            const SizedBox(height: 6),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
                               children: [
-                                TextButton(
+                                TextButton.icon(
                                   onPressed: () => context.push('/register'),
-                                  child: const Text('Daftar Calon Anggota',
+                                  icon: const Icon(Icons.person_add_outlined,
+                                      size: 16),
+                                  label: const Text('Daftar Calon Anggota',
                                       style: TextStyle(fontSize: 12)),
                                 ),
-                                Text('|',
-                                    style: TextStyle(
-                                        color: Colors.grey.shade400,
-                                        fontSize: 12)),
-                                TextButton(
+                                TextButton.icon(
                                   onPressed: () =>
                                       context.push('/claim-account'),
-                                  child: const Text('Klaim Akun Anggota',
+                                  icon: const Icon(Icons.how_to_reg_outlined,
+                                      size: 16),
+                                  label: const Text('Klaim Akun Anggota',
                                       style: TextStyle(fontSize: 12)),
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$_description · v$_appVersion',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600),
+                            ),
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
