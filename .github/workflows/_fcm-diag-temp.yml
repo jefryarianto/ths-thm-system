@@ -1,0 +1,32 @@
+name: FCM VPS Diag (temporary)
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'diag | fix'
+        required: true
+        default: 'diag'
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USERNAME }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          script: |
+            ENV=/opt/ths-thm/.env
+            echo "=== current FCM config (masked) ==="
+            grep -E "^FCM_" "$ENV" | sed -E "s/^(FCM_PRIVATE_KEY=).*/\1<masked>/" || true
+            PID=$(grep -E "^FCM_PROJECT_ID=" "$ENV" | head -1 | cut -d= -f2-)
+            CEMAIL=$(grep -E "^FCM_CLIENT_EMAIL=" "$ENV" | head -1 | cut -d= -f2-)
+            echo "PROJECT_ID=$PID"
+            echo "CLIENT_EMAIL_DOMAIN=${CEMAIL##*@}"
+            if [ "$PID" = "ayo-lapor-56443" ]; then echo "project_is_ayo=yes"; else echo "project_is_ayo=no"; fi
+            if echo "$CEMAIL" | grep -qi 'ayo-lapor-56443'; then echo "email_is_ayo=yes"; else echo "email_is_ayo=no"; fi
+            echo "=== other FCM-ish refs ==="
+            grep -inE 'ayo-lapor|ths-thm-system' "$ENV" || true
