@@ -62,6 +62,18 @@ paths = [
 ]
 
 [[allowlists]]
+description = "firebase_options.dart (Flutter) — API key client-side memang publik & dikirim di APK, bukan secret"
+paths = [
+  '(?i)firebase_options\.dart$',
+]
+
+[[allowlists]]
+description = "Artefak hasil scan (SARIF) yang di-scan ulang oleh `gitleaks dir` — bukan kode sumber"
+paths = [
+  '(?i)\.sarif$',
+]
+
+[[allowlists]]
 description = "Placeholder & contoh di docs, env example, dan CSV template"
 paths = [
   '(?i)\.env\.example$',
