@@ -60,6 +60,14 @@ jobs:
       # sehingga deploy produksi tak pernah lewat tanpa kontrak segar.
       # Regenerasi deterministik & environment-independent (tanpa .env/DB/Redis).
       - name: Verify swagger.json in sync before building images
+        env:
+          # swagger:export mem-boot AppModule → env.validation (zod) butuh env
+          # meski export tidak menyentuh DB/Redis. Dummy cukup: URL valid +
+          # secret ≥32 karakter; refinement "production" tidak aktif karena
+          # NODE_ENV tidak diset di runner.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_dummy
+          JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+          JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
         run: |
           pnpm --filter @ths-thm/api swagger:export
           pnpm --filter @ths-thm/api generate:client

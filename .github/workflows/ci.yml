@@ -56,6 +56,14 @@ jobs:
       - run: pnpm --filter @ths-thm/shared-types build
       - run: pnpm --filter @ths-thm/api prisma:generate
       - name: Regenerate kontrak API
+        env:
+          # swagger:export mem-boot AppModule → env.validation (zod) butuh env
+          # meski export tidak menyentuh DB/Redis. Dummy cukup: URL valid +
+          # secret ≥32 karakter; refinement "production" tidak aktif karena
+          # NODE_ENV tidak diset di CI.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_dummy
+          JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef
+          JWT_REFRESH_SECRET: ci-dummy-jwt-refresh-0123456789abcdef0123456789abcdef
         run: |
           pnpm --filter @ths-thm/api swagger:export
           pnpm --filter @ths-thm/api generate:client
