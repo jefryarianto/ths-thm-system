@@ -185,8 +185,10 @@ jobs:
       contents: read
       packages: read
     # Deploy script on the VPS (docker prune + pull + migrate + restart + health check)
-    # can exceed 10 min on slow connections — give it headroom.
-    timeout-minutes: 25
+    # can be slow: pull dua image terbukti menggantung >24 menit di koneksi
+    # VPS hingga job timeout 25m membunuh deploy (run 35365663713). Beri
+    # headroom 60m — komposisi terburuk: 3x12m pull + migrasi/health.
+    timeout-minutes: 60
 
     steps:
       - name: Setup SSH key
@@ -264,7 +266,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
           envs: IMAGE_TAG
-          command_timeout: 30m
+          command_timeout: 50m
           script: |
             set -e
 
@@ -284,8 +286,24 @@ jobs:
             # FATAL sengaja: bila pull gagal, deploy berhenti di sini —
             # jangan lanjut migrasi/restart dengan image lama lalu gagal
             # samar di health check.
-            echo "   Pulling Docker images from GHCR..."
-            docker compose -f docker-compose.production.yml pull --quiet api web
+            echo "   Pulling Docker images from GHCR (maks 3 percobaan x 12 menit)..."
+            # Pull bisa sangat lambat/hang di koneksi VPS. Batasi tiap
+            # percobaan 12 menit agar hang tidak memakan seluruh budget job;
+            # layer yang sudah ter-download ter-cache sehingga retry efektif.
+            # Gagal semua → FATAL sebelum migrasi/restart: kontainer lama
+            # tetap berjalan (pull terjadi sebelum down, jadi zero downtime).
+            PULL_OK=0
+            for i in 1 2 3; do
+              if timeout 720 docker compose -f docker-compose.production.yml pull --quiet api web; then
+                PULL_OK=1; break
+              fi
+              echo "   ⚠️ Pull percobaan $i/3 gagal/timeout, mencoba lagi dalam 15s..."
+              sleep 15
+            done
+            if [ "$PULL_OK" -ne 1 ]; then
+              echo "   ❌ Pull image gagal setelah 3 percobaan — deploy dibatalkan, kontainer lama tetap berjalan."
+              exit 1
+            fi
 
             # Resolve any stuck migrations from previous failed deploys
             docker compose -f docker-compose.production.yml run --rm api \
