@@ -132,6 +132,43 @@ docs/             # SEMUA dokumentasi & panduan
 
 ---
 
+## 🔄 Kontrak API: Ubah Endpoint → Regenerate → Commit
+
+Kontrak API disimpan sebagai dua artefak yang **di-commit ke repo**:
+
+| Artefak                       | Dihasilkan dari   | Isi                                                       |
+| ----------------------------- | ----------------- | --------------------------------------------------------- |
+| `apps/api/swagger.json`       | Dekorator NestJS  | OpenAPI spec seluruh endpoint API                          |
+| `apps/web/src/types/api.d.ts` | `swagger.json`    | Tipe TypeScript untuk konsumsi web                         |
+
+CI menjalankan job **`contract`** (`.github/workflows/ci.yml`): kedua artefak di-regenerate dari kode lalu dibandingkan dengan yang di-commit (`git diff --exit-code`). **PR yang mengubah endpoint tanpa memperbarui kontrak akan gagal di job ini.**
+
+### Alur saat mengubah endpoint (route, DTO, atau bentuk respons)
+
+1. Edit controller/DTO di `apps/api` seperti biasa.
+2. Regenerate kedua artefak:
+
+   ```bash
+   pnpm --filter @ths-thm/api swagger:export
+   pnpm --filter @ths-thm/api generate:client
+   ```
+
+3. Pastikan konsumen tipe masih sehat: `pnpm typecheck` (web memakai `api.d.ts`).
+4. **Commit kedua artefak bersama perubahan endpoint** dalam commit yang sama.
+
+### Jika job `contract` gagal di PR Anda
+
+Itu tanda kontrak basi — bukan bug CI. Jalankan dua perintah regenerasi di atas, periksa bahwa diff-nya masuk akal, lalu commit hasilnya. (Pesan error job juga mencantumkan perintah yang sama.)
+
+Catatan:
+
+- Regenerasi **deterministik dan tidak butuh `.env`/DB/Redis** — aman dijalankan kapan saja; hasilnya identik di mesin mana pun (job CI pun menjalankannya tanpa service apa pun).
+- Perubahan internal service yang tidak menyentuh controller/DTO tidak mengubah kontrak — job tetap lulus tanpa langkah apa pun, karena regenerasi menghasilkan file identik.
+- **Jangan edit `swagger.json`/`api.d.ts` secara manual** — keduanya sepenuhnya dihasilkan. `api.d.ts` berukuran ±18 ribu baris karena meng-enumerasi seluruh tipe API; itu normal.
+- Script `generate-swagger.ts` mem-boot AppModule penuh; bila gagal karena dependensi hilang, pesan errornya biasanya sudah menyebutkan package yang harus di-install (contoh nyata: `nodemailer`).
+
+---
+
 ## 🗂️ Struktur Dokumentasi (`docs/`)
 
 Semua dokumentasi hidup di `docs/` — **bukan di root**. Struktur:
