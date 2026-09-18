@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/card_design.dart';
 import '../../data/models/card_data.dart';
 import '../../data/models/member.dart';
@@ -117,9 +118,9 @@ class _KtaCardFront extends StatelessWidget {
         child: Stack(children: [
           Positioned.fill(child: CustomPaint(painter: _FrontDecorPainter())),
           Positioned(top: FrontLayout.circle1Top, right: FrontLayout.circle1Right,
-              child: _bgCircle(FrontLayout.circle1Size, const Color(0x2606B6D4))),
+              child: _bgCircle(FrontLayout.circle1Size, CardColors.guillocheFront)),
           Positioned(bottom: -FrontLayout.circle2Bottom.abs(), left: FrontLayout.circle2Left,
-              child: _bgCircle(FrontLayout.circle2Size, const Color(0x141D4ED8))),
+              child: _bgCircle(FrontLayout.circle2Size, CardColors.guillocheBack)),
           const Positioned.fill(child: CustomPaint(painter: _GuillochePainter(CardColors.guillocheFront))),
           Positioned(left: FrontLayout.wmLeft, top: FrontLayout.wmTop,
               child: _wm('assets/images/peta-indonesia.png', FrontLayout.wmW, FrontLayout.wmH, FrontLayout.wmOpacity, CardColors.watermarkMap)),
@@ -170,42 +171,42 @@ class _KtaCardBack extends StatelessWidget {
           Positioned.fill(child: CustomPaint(painter: _BackDecorPainter())),
           const Positioned.fill(child: CustomPaint(painter: _GuillochePainter(CardColors.guillocheBack))),
           Positioned(left: (CardSpec.w - BackLayout.wmW) / 2, top: (CardSpec.h - BackLayout.wmH) / 2,
-              child: _wm('assets/images/peta-indonesia.png', BackLayout.wmW, BackLayout.wmH, BackLayout.wmOpacity, Colors.white)),
-          _NamePattern(name: member.namaLengkap, color: Colors.white, opacity: Pat.backOpacity),
+              child: _wm('assets/images/peta-indonesia.png', BackLayout.wmW, BackLayout.wmH, BackLayout.wmOpacity, CardColors.white)),
+          _NamePattern(name: member.namaLengkap, color: CardColors.white, opacity: Pat.backOpacity),
           Positioned(top: 0, left: 0, right: 0, height: BackLayout.headerHeight, child: _backHdr(distrik)),
-Positioned(left: BackLayout.qrLeft, top: BackLayout.qrTop, child: Container(
-          width: BackLayout.qrSize, height: BackLayout.qrSize, padding: const EdgeInsets.all(BackLayout.qrPadding),
-          decoration: BoxDecoration(color: CardColors.white, borderRadius: BorderRadius.circular(16),
-              border: Border.all(width: BackLayout.qrBorderW, color: const Color(0xFF1E3A5F))),
-          child: Stack(children: [
-            Positioned.fill(
-                child: QrImageView(data: qrData, version: QrVersions.auto,
-                    errorCorrectionLevel: QrErrorCorrectLevel.H, padding: const EdgeInsets.all(0))),
-            Positioned.fill(
-              child: LayoutBuilder(builder: (context, c) {
-                final size = c.maxWidth * 0.26;
-                return Center(
-                  child: Container(
-                    width: size, height: size,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                    padding: EdgeInsets.all(size * 0.12),
-                    child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
-                  ),
-                );
-              }),
-            ),
-          ]))),
+          Positioned(left: BackLayout.qrLeft, top: BackLayout.qrTop, child: Container(
+            width: BackLayout.qrSize, height: BackLayout.qrSize, padding: const EdgeInsets.all(BackLayout.qrPadding),
+            decoration: BoxDecoration(color: CardColors.white, borderRadius: BorderRadius.circular(16),
+                border: Border.all(width: BackLayout.qrBorderW, color: CardColors.stampText)),
+            child: Stack(children: [
+              Positioned.fill(
+                  child: QrImageView(data: qrData, version: QrVersions.auto,
+                      errorCorrectionLevel: QrErrorCorrectLevel.H, padding: const EdgeInsets.all(0))),
+              Positioned.fill(
+                child: LayoutBuilder(builder: (context, c) {
+                  final size = c.maxWidth * 0.26;
+                  return Center(
+                    child: Container(
+                      width: size, height: size,
+                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                      padding: EdgeInsets.all(size * 0.12),
+                      child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                    ),
+                  );
+                }),
+              ),
+            ]))),
           Positioned(left: BackLayout.infoLeft, top: BackLayout.infoTop, right: BackLayout.infoRight, child: _backInfo(member)),
           Positioned(left: BackLayout.footerLeft, right: BackLayout.footerRight, bottom: BackLayout.footerBottom,
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 const Expanded(child: Text('Jika kartu ini ditemukan, harap menghubungi sekretariat THS-THM setempat.',
-                    style: TextStyle(fontSize: 15, height: 22/15, color: Color(0xFFF0F9FF)))),
+                    style: TextStyle(fontSize: 15, height: 22/15, color: CardColors.white))),
                 if (verificationUrl.isNotEmpty) ...[
                   const SizedBox(width: 24),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 360),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
-                      const Text('URL VERIFIKASI', style: TextStyle(fontSize: 12, color: Color(0xFFF0F9FF))),
+                      const Text('URL VERIFIKASI', style: TextStyle(fontSize: 12, color: CardColors.white)),
                       const SizedBox(height: 2),
                       FittedBox(
                         fit: BoxFit.scaleDown,
@@ -246,7 +247,7 @@ Widget _statusBadge(String status) {
     margin: const EdgeInsets.only(top: 2),
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
-      color: revoked ? const Color(0xFFDC2626) : const Color(0xFF059669),
+      color: revoked ? AppTheme.error : AppTheme.success,
       borderRadius: BorderRadius.circular(20),
       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 4)],
     ),
@@ -362,23 +363,23 @@ Widget _backHdr(String distrik) => Stack(children: [
           child: Center(child: Image.asset('assets/images/logo.png', width: BackLayout.logoImg, height: BackLayout.logoImg, fit: BoxFit.contain)))),
   Positioned(left: BackLayout.headerPadH + BackLayout.logoSize + BackLayout.headerGap, top: 14, right: BackLayout.headerPadH,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        const Text('VERIFIKASI KARTU ANGGOTA', maxLines: 1, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 3, color: Colors.white)),
+        const Text('VERIFIKASI KARTU ANGGOTA', maxLines: 1, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 3, color: CardColors.white)),
         const SizedBox(height: 2),
-        Text('Scan QR untuk memeriksa keabsahan anggota', style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.88))),
+        Text('Scan QR untuk memeriksa keabsahan anggota', style: TextStyle(fontSize: 13, color: CardColors.white.withValues(alpha: 0.88))),
       ])),
-  Positioned(bottom: 0, left: 0, right: 0, height: 1, child: Container(color: Colors.white.withValues(alpha: 0.30))),
+  Positioned(bottom: 0, left: 0, right: 0, height: 1, child: Container(color: CardColors.white.withValues(alpha: 0.30))),
 ]);
 Widget _backInfo(Member m) {
   final ttl = ttlText(m.tempatLahir, m.tanggalLahir);
   Widget row(String label, String value) => Padding(padding: const EdgeInsets.only(bottom: 12),
       child: Row(children: [
-        SizedBox(width: BackLayout.rowLabelW, child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))),
-        SizedBox(width: BackLayout.rowColonW, child: Text(':', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)))),
-        Expanded(child: Text(properCase(value), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.white))),
+        SizedBox(width: BackLayout.rowLabelW, child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: CardColors.white))),
+        SizedBox(width: BackLayout.rowColonW, child: Text(':', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: CardColors.white.withValues(alpha: 0.9)))),
+        Expanded(child: Text(properCase(value), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: CardColors.white))),
       ]));
   return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
     Text('Halaman verifikasi publik hanya menampilkan data minimum untuk membuktikan keabsahan anggota.',
-        style: TextStyle(fontSize: 18, height: 27 / 18, color: Colors.white.withValues(alpha: 0.95))),
+        style: TextStyle(fontSize: 18, height: 27 / 18, color: CardColors.white.withValues(alpha: 0.95))),
     const SizedBox(height: 16),
     row('TTL', ttl), row('Dadar', dadarText(m.tempatDadar, m.tahunDadar)),
     row('Status', m.statusKeanggotaan == 'aktif' ? 'Aktif' : 'Nonaktif'),
@@ -392,13 +393,31 @@ class _NamePattern extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final n = name.isEmpty ? 'THS-THM' : name;
-    return Positioned.fill(child: OverflowBox(maxWidth: double.infinity, maxHeight: double.infinity,
-        child: Transform.rotate(angle: Pat.angleDeg * math.pi / 180, child: Opacity(opacity: opacity,
-            child: Column(mainAxisSize: MainAxisSize.min,
-                children: List.generate(Pat.rows, (_) => Padding(padding: const EdgeInsets.only(bottom: Pat.stepY),
-                    child: Row(mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(Pat.cols, (_) => Padding(padding: const EdgeInsets.only(right: Pat.gapX),
-                            child: Text(n, style: TextStyle(fontSize: Pat.fontSize, fontWeight: FontWeight.w900, color: color, letterSpacing: 2))))))))))));
+    return Positioned.fill(
+      child: OverflowBox(
+        maxWidth: double.infinity,
+        maxHeight: double.infinity,
+        child: Transform.rotate(
+          angle: Pat.angleDeg * math.pi / 180,
+          child: Opacity(
+            opacity: opacity,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(Pat.rows, (_) => Padding(
+                padding: const EdgeInsets.only(bottom: Pat.stepY),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(Pat.cols, (_) => Padding(
+                    padding: const EdgeInsets.only(right: Pat.gapX),
+                    child: Text(n, style: TextStyle(fontSize: Pat.fontSize, fontWeight: FontWeight.w900, color: color, letterSpacing: 2)),
+                  )),
+                ),
+              )),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -415,11 +434,11 @@ class _FrontDecorPainter extends CustomPainter {
   @override
   void paint(Canvas c, Size s) {
     final b = Offset.zero & s;
-    _w(c, s, const Color(0xFFBFDBFE), 0.9, const Color(0xFFE0F2FE), 0.0,
+    _w(c, s, CardColors.headerFrom, 0.9, CardColors.headerTo, 0.0,
         const Alignment(-1, -1), const Alignment(0.2, 1), 'M-60 110 C140 30,320 200,500 110 C680 20,780 20,916 100 L916 560 L-60 560Z');
-    _w(c, s, const Color(0xFF93C5FD), 0.6, const Color(0xFFEFF6FF), 0.0,
+    _w(c, s, CardColors.bottomFrom, 0.6, CardColors.bottomTo, 0.0,
         const Alignment(1, -1), const Alignment(-0.2, 1), 'M-40 300 C180 200,380 380,560 300 C740 220,780 220,900 290 L900 560 L-40 560Z');
-    _w(c, s, const Color(0xFF7DD3FC), 0.45, const Color(0xFFF0F9FF), 0.0,
+    _w(c, s, CardColors.bottomFrom, 0.45, CardColors.backGradEnd, 0.0,
         const Alignment(-1, 1), const Alignment(1, -1), 'M-60 440 C150 350,340 530,540 440 C740 350,790 370,916 440 L916 560 L-60 560Z');
     c.drawRect(Rect.fromLTWH(0, 0, s.width, 104), Paint()..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
         colors: [CardColors.headerFrom, CardColors.headerTo]).createShader(b));

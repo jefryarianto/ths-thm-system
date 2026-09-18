@@ -94,14 +94,15 @@ class _TabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final labels = ['Profil', 'Leaderboard', 'Riwayat', 'Petunjuk'];
     return Container(
-      color: Colors.white,
+      color: theme.colorScheme.surface,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F6FE),
+          color: theme.colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -115,14 +116,14 @@ class _TabBar extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: active ? Colors.white : Colors.transparent,
+                    color: active ? theme.colorScheme.surface : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: active
-                        ? const [
+                        ? [
                             BoxShadow(
-                              color: Color(0x142B5AA6),
+                              color: theme.shadowColor,
                               blurRadius: 6,
-                              offset: Offset(0, 2),
+                              offset: const Offset(0, 2),
                             ),
                           ]
                         : null,
@@ -133,8 +134,9 @@ class _TabBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                      color:
-                          active ? AppTheme.primaryDark : Colors.grey.shade600,
+                      color: active
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -179,15 +181,15 @@ class _ProfileTab extends StatelessWidget {
                       color: AppTheme.onPrimary,
                       fontSize: 32,
                       fontWeight: FontWeight.w800)),
-              const Text('Poin',
+              Text('Poin',
                   style: TextStyle(
-                      color: Color(0xB31E1800), fontSize: 14)),
+                      color: AppTheme.onPrimary.withValues(alpha: 0.7), fontSize: 14)),
             ]),
           ),
           const SizedBox(height: 16),
           if (p.badges.isNotEmpty) ...[
             const Text('Lencana',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
             const SizedBox(height: 8),
             Wrap(
                 spacing: 8,
@@ -197,14 +199,14 @@ class _ProfileTab extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.06),
+                              color: AppTheme.primaryContainer,
                               borderRadius: BorderRadius.circular(12)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             Text(b.icon, style: const TextStyle(fontSize: 18)),
                             const SizedBox(width: 6),
                             Text(b.name,
                                 style: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600)),
+                                    fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.navy)),
                           ]),
                         ))
                     .toList()),
@@ -239,6 +241,7 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
         if (state is! GamificationLoaded || state.leaderboard == null) {
@@ -301,15 +304,15 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor:
-                              AppTheme.primary.withValues(alpha: 0.1),
+                              theme.colorScheme.primaryContainer,
                           child: Text(medals[e.rank] ?? '${e.rank}',
-                              style: const TextStyle(fontSize: 14)),
+                              style: TextStyle(fontSize: 14, color: theme.colorScheme.onPrimaryContainer)),
                         ),
                         title: Text(e.namaLengkap,
                             style: const TextStyle(fontWeight: FontWeight.w600)),
                         subtitle: Text('${e.badges} lencana',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600)),
+                                fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
                         trailing: Text('${e.points}',
                             style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 15)),
@@ -340,10 +343,11 @@ class _ScopeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ChoiceChip(
       label: Text(label),
       selected: selected,
-      selectedColor: AppTheme.primary.withValues(alpha: 0.15),
+      selectedColor: theme.colorScheme.primaryContainer,
       onSelected: (_) => onSelected(scope),
     );
   }
@@ -420,17 +424,18 @@ class _GuideTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
+        Text(
           'Petunjuk Poin & Level',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: theme.colorScheme.onSurface),
         ),
         const SizedBox(height: 4),
         Text(
           'Cara mengumpulkan poin, naik level, dan meraih lencana.',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
         ..._sections.map(
@@ -442,12 +447,12 @@ class _GuideTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    Icon(s.icon, size: 20, color: AppTheme.primaryDark),
+                    Icon(s.icon, size: 20, color: theme.colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
                       s.title,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
                     ),
                   ]),
                   const SizedBox(height: 8),
@@ -456,7 +461,7 @@ class _GuideTab extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
                         l,
-                        style: const TextStyle(fontSize: 13, height: 1.35),
+                        style: TextStyle(fontSize: 13, height: 1.35, color: theme.colorScheme.onSurface),
                       ),
                     ),
                   ),
@@ -474,6 +479,7 @@ class _HistoryTab extends StatelessWidget {
   const _HistoryTab();
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocBuilder<GamificationBloc, GamificationState>(
       builder: (context, state) {
         if (state is! GamificationLoaded) return const AppLoadingSpinner();
@@ -481,12 +487,12 @@ class _HistoryTab extends StatelessWidget {
         final events = state.events;
         return ListView(padding: const EdgeInsets.all(16), children: [
           if (history.isNotEmpty) ...[
-            const Row(children: [
+            Row(children: [
               Icon(Icons.calendar_month_outlined,
-                  size: 18, color: AppTheme.primaryDark),
-              SizedBox(width: 6),
+                  size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
               Text('Poin per Bulan',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface)),
             ]),
             const SizedBox(height: 8),
             ...history.map((h) => Card(
@@ -502,11 +508,11 @@ class _HistoryTab extends StatelessWidget {
             const SizedBox(height: 16),
           ],
           if (events.isNotEmpty) ...[
-            const Row(children: [
-              Icon(Icons.history, size: 18, color: AppTheme.primaryDark),
-              SizedBox(width: 6),
+            Row(children: [
+              Icon(Icons.history, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
               Text('Aktivitas Terbaru',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface)),
             ]),
             const SizedBox(height: 8),
             ...events.map((e) => Card(
@@ -514,22 +520,22 @@ class _HistoryTab extends StatelessWidget {
                   child: ListTile(
                     dense: true,
                     title: Text(e.description,
-                        style: const TextStyle(fontSize: 13)),
+                        style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface)),
                     subtitle: Text(Formatters.relative(e.timestamp),
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade600)),
+                            fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
                     trailing: Text('+${e.points}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.success)),
+                            color: theme.colorScheme.secondary)),
                   ),
                 )),
           ],
           if (history.isEmpty && events.isEmpty)
-            const Center(
+            Center(
                 child: Padding(
-              padding: EdgeInsets.only(top: 60),
-              child: Text('Belum ada riwayat poin'),
+              padding: const EdgeInsets.only(top: 60),
+              child: Text('Belum ada riwayat poin', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
             )),
         ]);
       },

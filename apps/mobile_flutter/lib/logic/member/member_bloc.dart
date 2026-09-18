@@ -232,15 +232,6 @@ class MemberBloc extends Bloc<MemberEvent, MemberState> {
     emit(MemberInitial());
   }
 
-  /// Ambil pesan error API yang ramah pengguna. Pesan validasi NestJS
-  /// (class-validator) berbentuk List — gabungkan agar tidak tampil mentah.
-  String _messageFromError(DioException error) {
-    final data = error.response?.data;
-    if (data is Map) {
-      final m = data['message'];
-      if (m is List && m.isNotEmpty) return m.join(', ');
-      if (m != null) return m.toString();
-    }
-    return error.message ?? error.toString();
-  }
+  String _messageFromError(DioException error) =>
+      _apiClient.messageFromError(error);
 }

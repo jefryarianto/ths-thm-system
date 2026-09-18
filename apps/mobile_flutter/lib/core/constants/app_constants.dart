@@ -116,5 +116,16 @@ class AppConstants {
   static String get assessmentsItems => "$baseUrl/assessments/items";
   static String assessmentItemById(String id) => "$baseUrl/assessments/items/$id";
   static String get assessmentsScores => "$baseUrl/assessments/scores";
+
+  // Alur input nilai penguji yg benar: via sesi ujian praktek
+  // (aturan: semua penguji x semua aspek). POST bulk per penguji.
+  static String graduationUjianPraktek(String id) =>
+      '$baseUrl/graduations/$id/ujian-praktek';
+  static String graduationUjianPraktekScore(String id, String ujianId) =>
+      '$baseUrl/graduations/$id/ujian-praktek/$ujianId/score';
+  // Agregat layar input nilai penguji: ujian aktif + aspek/item + peserta
+  // + skor penguji pemanggil dalam satu respons (1 request, bukan 3).
+  static String graduationMyScoreCard(String id) =>
+      '$baseUrl/graduations/$id/ujian-praktek/my-score-card';
   static String assessmentScoresByGraduation(String id) => "$baseUrl/graduations/$id/scores";
 }

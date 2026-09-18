@@ -3,7 +3,6 @@ import 'formatters.dart';
 
 /// Port spec desain kartu KTA dari packages/card-design.
 /// Semua ukuran dalam kanvas CR80 landscape 856x540.
-
 class CardSpec {
   static const double w = 856;
   static const double h = 540;
@@ -11,28 +10,36 @@ class CardSpec {
 }
 
 class CardColors {
-  static const Color frontBg = Color(0xFFF7FCFF);
-  static const Color frontBorder = Color(0xFFDBEAFE);
-  static const Color backBg = Color(0xFF1E40AF);
-  static const Color headerFrom = Color(0xFF2563EB);
-  static const Color headerTo = Color(0xFF1D4ED8);
-  static const Color bottomFrom = Color(0xFF93C5FD);
-  static const Color bottomTo = Color(0xFFDBEAFE);
-  static const Color backGradStart = Color(0xFF2563EB);
-  static const Color backGradMid = Color(0xFF1E40AF);
-  static const Color backGradEnd = Color(0xFF0F2B4A);
-  static const Color label = Color(0xFF1E3A5F);
-  static const Color value = Color(0xFF111827);
-  static const Color valueStrong = Color(0xFF0F2B4A);
-  static const Color rankText = Color(0xFF0F2B4A);
+  // Front (light) colors - aligned with new primary system
+  static const Color frontBg = Color(0xFFF0F4FF); // Light primary container tint
+  static const Color frontBorder = Color(0xFFDDE4FF); // Primary container
+
+  // Back (dark) colors - aligned with new primary system
+  static const Color backBg = Color(0xFF051C8A); // Primary dark
+  static const Color headerFrom = Color(0xFF072AC8); // Primary
+  static const Color headerTo = Color(0xFF051C8A); // Primary dark
+  static const Color bottomFrom = Color(0xFF3D5BE0); // Primary light
+  static const Color bottomTo = Color(0xFFDDE4FF); // Primary container
+
+  static const Color backGradStart = Color(0xFF072AC8); // Primary
+  static const Color backGradMid = Color(0xFF051C8A); // Primary dark
+  static const Color backGradEnd = Color(0xFF06154F); // Navy
+
+  // Text colors - aligned with new system
+  static const Color label = Color(0xFF06154F); // Navy
+  static const Color value = Color(0xFF00145C); // On primary container
+  static const Color valueStrong = Color(0xFF00145C); // On primary container
+  static const Color rankText = Color(0xFF00145C); // On primary container
   static const Color white = Color(0xFFFFFFFF);
-  static const Color ttd = Color(0xFF334155);
-  static const Color stampBorder = Color(0x4D1E40AF);
-  static const Color stampText = Color(0xFF1E40AF);
+  static const Color ttd = Color(0xFF06154F); // Navy
+
+  // Border/decoration colors
+  static const Color stampBorder = Color(0x4D072AC8); // Primary 30%
+  static const Color stampText = Color(0xFF072AC8); // Primary
   static const Color rankStripBorder = Color(0x40000000);
-  static const Color guillocheFront = Color(0x4D1D4ED8);
-  static const Color guillocheBack = Color(0x66BFDBFE);
-  static const Color watermarkMap = Color(0xFF1D4ED8);
+  static const Color guillocheFront = Color(0x4D072AC8); // Primary 30%
+  static const Color guillocheBack = Color(0x66DDE4FF); // Primary container 40%
+  static const Color watermarkMap = Color(0xFF072AC8); // Primary
 }
 
 class CardFonts {
@@ -138,9 +145,9 @@ class LevelVisual {
 LevelVisual getLevelVisual(String? tingkat) {
   switch (tingkat) {
     case 'Pratama':
-      return const LevelVisual(1, Color(0xFF1D4ED8), 'Biru 1');
+      return const LevelVisual(1, Color(0xFF072AC8), 'Primary 1');
     case 'Tamtama':
-      return const LevelVisual(2, Color(0xFF1D4ED8), 'Biru 2');
+      return const LevelVisual(2, Color(0xFF072AC8), 'Primary 2');
     case 'Muda':
       return const LevelVisual(1, Color(0xFFCA8A04), 'Kuning 1');
     case 'Madya':

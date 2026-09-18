@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
+import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/models/distrik.dart';
 import '../../data/models/ranting.dart';
@@ -22,12 +20,15 @@ class _PickerResult {
 /// calon anggota & klaim akun).
 class OrgStructureFields extends StatefulWidget {
   final ValueChanged<String?> onRantingChanged;
-  final http.Client? client;
+
+  /// Seam untuk test: GET sendiri (absolute URL, mengembalikan decoded
+  /// body). Default memakai [ApiClient.dio] dengan interceptor auth.
+  final Future<dynamic> Function(String url)? fetch;
 
   const OrgStructureFields({
     super.key,
     required this.onRantingChanged,
-    this.client,
+    this.fetch,
   });
 
   @override
@@ -35,14 +36,14 @@ class OrgStructureFields extends StatefulWidget {
 }
 
 class _OrgStructureFieldsState extends State<OrgStructureFields> {
-  late final http.Client _client = widget.client ?? http.Client();
+  late final Future<dynamic> Function(String url) _fetch =
+      widget.fetch ?? ((url) => ApiClient().dio.get(url));
   final _displayCtrl = TextEditingController();
   String? _rantingId;
 
   @override
   void dispose() {
     _displayCtrl.dispose();
-    if (widget.client == null) _client.close();
     super.dispose();
   }
 
@@ -55,7 +56,7 @@ class _OrgStructureFieldsState extends State<OrgStructureFields> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _OrgPickerSheet(client: _client),
+      builder: (_) => _OrgPickerSheet(fetch: _fetch),
     );
     if (result == null || !mounted) return;
     setState(() {
@@ -101,8 +102,8 @@ class _OrgStructureFieldsState extends State<OrgStructureFields> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _OrgPickerSheet extends StatefulWidget {
-  final http.Client client;
-  const _OrgPickerSheet({required this.client});
+  final Future<dynamic> Function(String url) fetch;
+  const _OrgPickerSheet({required this.fetch});
   @override
   State<_OrgPickerSheet> createState() => _OrgPickerSheetState();
 }
@@ -179,10 +180,10 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
       _distrikFailed = false;
     });
     try {
-      final res = await widget.client.get(Uri.parse(AppConstants.publicDistrik));
+      final res = await widget.fetch(AppConstants.publicDistrik);
       if (!mounted) return;
       setState(() {
-        _distriks = _parseData<Distrik>(res.body, Distrik.fromJson);
+        _distriks = _parseData<Distrik>(res.data, Distrik.fromJson);
         _distriksLoading = false;
       });
     } catch (_) {
@@ -200,12 +201,11 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
       _wilayahFailed = false;
     });
     try {
-      final uri = Uri.parse(AppConstants.publicWilayah)
-          .replace(queryParameters: {'distrikId': distrikId});
-      final res = await widget.client.get(uri);
+      final res = await widget
+          .fetch('${AppConstants.publicWilayah}?distrikId=$distrikId');
       if (!mounted) return;
       setState(() {
-        _wilayahs = _parseData<Wilayah>(res.body, Wilayah.fromJson);
+        _wilayahs = _parseData<Wilayah>(res.data, Wilayah.fromJson);
         _wilayahsLoading = false;
       });
     } catch (_) {
@@ -223,12 +223,11 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
       _rantingFailed = false;
     });
     try {
-      final uri = Uri.parse(AppConstants.publicRanting)
-          .replace(queryParameters: {'wilayahId': wilayahId});
-      final res = await widget.client.get(uri);
+      final res = await widget
+          .fetch('${AppConstants.publicRanting}?wilayahId=$wilayahId');
       if (!mounted) return;
       setState(() {
-        _rantings = _parseData<Ranting>(res.body, Ranting.fromJson);
+        _rantings = _parseData<Ranting>(res.data, Ranting.fromJson);
         _rantingsLoading = false;
       });
     } catch (_) {
@@ -240,9 +239,8 @@ class _OrgPickerSheetState extends State<_OrgPickerSheet> {
     }
   }
 
-  List<T> _parseData<T>(String body, T Function(Map<String, dynamic>) from) {
-    final d = jsonDecode(body);
-    final raw = d is Map ? d['data'] : d;
+  List<T> _parseData<T>(dynamic body, T Function(Map<String, dynamic>) from) {
+    final raw = body is Map ? body['data'] : body;
     return (raw is List ? raw : [])
         .whereType<Map<String, dynamic>>()
         .map(from)

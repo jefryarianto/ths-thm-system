@@ -99,8 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () => _openShortcutMenu(context),
         tooltip: 'Menu Cepat',
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        backgroundColor: AppTheme.primaryDark,
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.primary,
+        foregroundColor: AppTheme.onPrimary,
         child: const Icon(Icons.menu),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -190,10 +190,10 @@ class _KtaSection extends StatelessWidget {
           children: [
             const Row(children: [
               Icon(Icons.credit_card_outlined,
-                  size: 18, color: AppTheme.primaryDark),
+                  size: 18, color: AppTheme.primary),
               SizedBox(width: 6),
               Text('Kartu Anggota (KTA)',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.navy)),
             ]),
             TextButton(
               onPressed: () => context.push<void>('/kta'),
@@ -207,12 +207,12 @@ class _KtaSection extends StatelessWidget {
               return const AppLoadingSpinner();
             }
             if (state is! MemberLoaded) {
-              return Card(
+              return const Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(24),
                   child: Center(
                     child: Text('Data kartu belum tersedia.',
-                        style: TextStyle(color: Colors.grey.shade500)),
+                        style: TextStyle(color: AppTheme.textMuted)),
                   ),
                 ),
               );
@@ -261,6 +261,7 @@ class _KtaSectionCard extends StatelessWidget {
 
 class _GamificationTip extends StatelessWidget {
   // Bronzespalette — dipakai kartu "Level: Bronze" ala tampilan beranda.
+  // Warna bronze dipertahankan untuk representasi visual level (fungsi khusus).
   static const Color _bronze = Color(0xFF8C6A3E);
   static const Color _bronzeLight = Color(0xFFD7B98C);
   static const Color _bronzeBg = Color(0xFFFBF4E8);
@@ -311,7 +312,7 @@ class _GamificationTip extends StatelessWidget {
                   ),
                   child: Text(medal,
                       style: const TextStyle(
-                          fontSize: 26, color: Color(0xFF3E2F1D))),
+                          fontSize: 26, color: AppTheme.navy)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -322,11 +323,11 @@ class _GamificationTip extends StatelessWidget {
                           style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF3E2F1D))),
+                              color: AppTheme.navy)),
                       const SizedBox(height: 2),
                       Text('${p.points} poin • ${p.level.name} member',
                           style: const TextStyle(
-                              fontSize: 13, color: Color(0xFF6F5330))),
+                              fontSize: 13, color: AppTheme.textMuted)),
                       const SizedBox(height: 8),
                       // Progress sederhana menuju level berikutnya (bronze→silver)
                       ClipRRect(

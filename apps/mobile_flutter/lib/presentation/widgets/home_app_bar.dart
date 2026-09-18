@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../../logic/auth/auth_bloc.dart';
 import '../../logic/member/member_bloc.dart';
 import '../../logic/notification/notification_bloc.dart';
@@ -11,7 +10,7 @@ import '../../logic/notification/notification_bloc.dart';
 /// AppBar Beranda ala aplikasi Expo — sapaan 3 baris dinamis:
 /// baris 1: `Gloria, selamat pagi` (pagi/siang/sore/malam — mengikuti jam).
 /// baris 2: `Kak <nama lengkap>`.
-/// baris 3: badge role emas kecil (jika role ada).
+/// baris 3: badge role primary container kecil (jika role ada).
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key});
 
@@ -20,6 +19,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
+
     return AppBar(
       toolbarHeight: 78,
       titleSpacing: 16,
@@ -43,10 +46,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       'Gloria, selamat ${_kataWaktu(DateTime.now())}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xB31E1800),
+                        color: onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -54,10 +57,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       'Kak $namaLengkap',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E1800),
+                        color: onSurface,
                       ),
                     ),
                     if (role.isNotEmpty) const SizedBox(height: 2),
@@ -66,13 +69,13 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
+                          color: theme.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
                           _labelRole(role),
-                          style: const TextStyle(
-                            color: Color(0xFF3A2A00),
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimaryContainer,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                           ),
@@ -107,15 +110,15 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppTheme.danger,
+                        color: theme.colorScheme.error,
                         borderRadius: BorderRadius.circular(9),
-                        border: Border.all(color: Colors.white, width: 1),
+                        border: Border.all(color: theme.colorScheme.surface, width: 1),
                       ),
                       constraints: const BoxConstraints(minWidth: 16),
                       child: Text(
                         count > 99 ? '99+' : '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: theme.colorScheme.onError,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -149,9 +152,9 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppTheme.primary : Colors.white;
-    final fg = isDark ? Colors.white : AppTheme.primary;
+    final theme = Theme.of(context);
+    final bg = theme.colorScheme.primary;
+    final fg = theme.colorScheme.onPrimary;
 
     return BlocBuilder<MemberBloc, MemberState>(
       builder: (context, state) {

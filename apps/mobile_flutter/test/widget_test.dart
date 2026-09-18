@@ -146,17 +146,13 @@ void main() {
     expect(find.byIcon(Icons.check_circle), findsNothing);
   });
 
-  test('Tema global: background #F9F8F6, teks kontras tinggi, card radius 16',
+  test('Tema global: background #FAF9FF, primary #072AC8, card radius 16',
       () {
     final theme = AppTheme.light();
-    expect(theme.scaffoldBackgroundColor, const Color(0xFFF9F8F6));
-    expect(AppTheme.navy, const Color(0xFF0F2E5A));
-    expect(AppTheme.textSlate, const Color(0xFF1E293B));
-    expect(AppTheme.textMuted, const Color(0xFF64748B));
-    expect(AppTheme.primary, const Color(0xFF1E5BB2));
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFFAF9FF));
+    expect(AppTheme.navy, const Color(0xFF06154F));
+    expect(AppTheme.primary, const Color(0xFF072AC8));
     expect(theme.textTheme.titleMedium?.color, AppTheme.navy);
-    expect(theme.textTheme.bodyMedium?.color, AppTheme.textSlate);
-    expect(theme.textTheme.bodySmall?.color, AppTheme.textMuted);
     final shape = theme.cardTheme.shape;
     expect(shape, isA<RoundedRectangleBorder>());
     expect(

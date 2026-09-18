@@ -4,7 +4,6 @@ import 'package:flutter_html/flutter_html.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/berita.dart';
 import '../widgets/app_loading_spinner.dart';
@@ -84,23 +83,28 @@ class _BeritaDetailScreenState extends State<BeritaDetailScreen> {
 
   Widget _body() {
     final berita = _berita!;
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         Text(
           berita.judul,
-          style: const TextStyle(
-              fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            height: 1.3,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            const Icon(Icons.calendar_today_outlined,
-                size: 14, color: Color(0xFF8A7A66)),
+            Icon(Icons.calendar_today_outlined,
+                size: 14, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               Formatters.dateLong(berita.tanggal.toIso8601String()),
-              style: const TextStyle(fontSize: 13, color: Color(0xFF8A7A66)),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -108,11 +112,9 @@ class _BeritaDetailScreenState extends State<BeritaDetailScreen> {
           const SizedBox(height: 14),
           Text(
             berita.ringkasan,
-            style: const TextStyle(
-              fontSize: 15,
+            style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               height: 1.5,
-              color: AppTheme.textSlate,
             ),
           ),
         ],
@@ -125,10 +127,10 @@ class _BeritaDetailScreenState extends State<BeritaDetailScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: 160,
-                color: const Color(0xFFF0E8DB),
+                color: theme.colorScheme.surfaceContainerHighest,
                 alignment: Alignment.center,
-                child: const Icon(Icons.article_outlined,
-                    color: Color(0xFFB0A85C), size: 40),
+                child: Icon(Icons.article_outlined,
+                    color: theme.colorScheme.onSurfaceVariant, size: 40),
               ),
             ),
           ),
@@ -143,7 +145,7 @@ class _BeritaDetailScreenState extends State<BeritaDetailScreen> {
                 padding: HtmlPaddings.zero,
                 fontSize: FontSize(14.5),
                 lineHeight: const LineHeight(1.6),
-                color: AppTheme.textSlate,
+                color: theme.textTheme.bodyMedium?.color,
               ),
             },
             shrinkWrap: true,
@@ -161,13 +163,14 @@ class _CenterRetry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
           const SizedBox(height: 12),
-          Text(message, style: const TextStyle(color: Colors.grey)),
+          Text(message, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: onRetry,

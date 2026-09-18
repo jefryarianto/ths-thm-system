@@ -100,8 +100,7 @@ class _DuesScreenState extends State<DuesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Detail Iuran ${due.periode}',
-                  style:
-                      const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.navy)),
               const SizedBox(height: 12),
               _row('Status', due.status),
               _row('Jumlah', Formatters.rupiah(due.jumlah)),
@@ -130,7 +129,7 @@ class _DuesScreenState extends State<DuesScreen> {
           SizedBox(
               width: 140,
               child: Text(label,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600))),
+                  style: const TextStyle(fontSize: 13, color: AppTheme.textMuted))),
           Expanded(
             child: Text(value,
                 style:
@@ -149,38 +148,39 @@ class _SummaryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.all(12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primaryDark, AppTheme.primary],
+        gradient: LinearGradient(
+          colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _stat('Total Iuran', '$total'),
-          _stat('Lunas', '$lunas'),
-          _stat('Belum Lunas', '${total - lunas}'),
+          _stat(theme, 'Total Iuran', '$total'),
+          _stat(theme, 'Lunas', '$lunas'),
+          _stat(theme, 'Belum Lunas', '${total - lunas}'),
         ],
       ),
     );
   }
 
-  Widget _stat(String label, String value) {
+  Widget _stat(ThemeData theme, String label, String value) {
     return Column(
       children: [
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.onPrimary)),
+                color: theme.colorScheme.onPrimary)),
         Text(label,
             style: TextStyle(
                 fontSize: 11,
-                color: AppTheme.onPrimary.withValues(alpha: 0.8))),
+                color: theme.colorScheme.onPrimary.withValues(alpha: 0.8))),
       ],
     );
   }
@@ -195,6 +195,7 @@ class _ProofSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final url = due.buktiUrl;
     final paid = due.status.toLowerCase().contains('lunas') ||
         due.status.toLowerCase() == 'paid';
@@ -203,12 +204,12 @@ class _ProofSection extends StatelessWidget {
       children: [
         const Divider(),
         const SizedBox(height: 8),
-        const Row(children: [
+        Row(children: [
           Icon(Icons.receipt_long_outlined,
-              size: 18, color: AppTheme.primaryDark),
-          SizedBox(width: 6),
+              size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
           Text('Bukti Pembayaran',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface)),
         ]),
         const SizedBox(height: 10),
         if (url.isEmpty)
@@ -216,20 +217,20 @@ class _ProofSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F8FE),
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x2E2B5AA6)),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Row(children: [
               Icon(Icons.image_not_supported_outlined,
-                  size: 18, color: Colors.grey.shade500),
+                  size: 18, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   paid
                       ? 'Pembayaran dicatat manual (tanpa bukti unggah).'
                       : 'Belum ada bukti pembayaran yang diunggah.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
             ]),
@@ -245,20 +246,20 @@ class _ProofSection extends StatelessWidget {
                   imageUrl: url,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(
-                    color: const Color(0xFFF1F8FE),
+                    color: theme.colorScheme.surfaceContainerHighest,
                     child: const Center(child: AppLoadingSpinner.small()),
                   ),
                   errorWidget: (_, __, ___) => Container(
-                    color: const Color(0xFFF1F8FE),
+                    color: theme.colorScheme.surfaceContainerHighest,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.broken_image_outlined,
-                            size: 28, color: Colors.grey.shade500),
+                            size: 28, color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(height: 4),
                         Text('Gambar tidak dapat dimuat',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600)),
+                                fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -271,7 +272,7 @@ class _ProofSection extends StatelessWidget {
           Center(
             child: Text('Ketuk untuk melihat ukuran penuh',
                 style:
-                    TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                    TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
           ),
         ],
       ],
@@ -333,15 +334,16 @@ class _Error extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface)),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () =>

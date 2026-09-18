@@ -138,17 +138,25 @@ class ApiClient {
   Dio get dio => _dio;
 
   /// Ambil pesan error API yang ramah pengguna dari exception Dio.
-  String messageFromError(Object error) {
+  /// Ambil pesan error API yang ramah pengguna dari exception apa pun
+  /// (umumnya [DioException]). Pesan validasi NestJS (class-validator)
+  /// berbentuk List — digabung agar tidak tampil mentah. [fallback]
+  /// dipakai bila tidak ada pesan yang bisa diekstrak.
+  String messageFromError(Object error, {String? fallback}) {
     try {
       final data = (error as dynamic).response?.data;
-      if (data is Map && data['message'] != null) {
-        return data['message'].toString();
+      if (data is Map) {
+        final m = data['message'];
+        if (m is List && m.isNotEmpty) return m.join(', ');
+        if (m != null && m.toString().isNotEmpty) return m.toString();
       }
     } catch (_) {}
-    if (error is DioException && error.message != null) {
+    if (error is DioException &&
+        error.message != null &&
+        error.message!.isNotEmpty) {
       return error.message!;
     }
-    return error.toString();
+    return fallback ?? error.toString();
   }
 
   Future<void> saveTokens({

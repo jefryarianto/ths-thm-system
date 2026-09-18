@@ -39,6 +39,14 @@ export class UjianPraktekController {
     return this.service.findByKegiatan(kegiatanId);
   }
 
+  @Get(':kegiatanId/ujian-praktek/my-score-card')
+  @ApiOperation({ summary: 'Agregat layar input nilai penguji: ujian aktif + aspek/item + peserta + skor penguji pemanggil' })
+  @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')
+  @RequireScope('branch')
+  getMyScoreCard(@Param('kegiatanId') kegiatanId: string, @Req() req: ScopedRequest) {
+    return this.service.getMyScoreCard(kegiatanId, req.user?.id || 'system');
+  }
+
   @Get(':kegiatanId/ujian-praktek/:id')
   @ApiOperation({ summary: 'Ambil detail ujian praktek' })
   @Roles('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji')

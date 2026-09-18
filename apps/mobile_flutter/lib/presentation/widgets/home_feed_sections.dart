@@ -17,8 +17,6 @@ import '../../logic/home_feed/home_feed_bloc.dart';
 class AgendaSection extends StatelessWidget {
   const AgendaSection({super.key});
 
-  static const _gold = Color(0xFFB8860B);
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeFeedBloc, HomeFeedState>(
@@ -55,7 +53,7 @@ class AgendaSection extends StatelessWidget {
 }
 
 /// Kartu agenda kompak — format sama dengan kartu berita:
-/// kotak tanggal EMAS (persegi 84x72) di kiri + nama/ringkas di kanan,
+/// kotak tanggal PRIMARY (persegi 84x72) di kiri + nama/ringkas di kanan,
 /// dibungkus [InkWell] agar bisa diklik menuju detail kegiatan.
 class _AgendaCard extends StatelessWidget {
   final Kegiatan kegiatan;
@@ -70,34 +68,31 @@ class _AgendaCard extends StatelessWidget {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.lightSurface,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 2)),
-          ],
+          boxShadow: AppTheme.softShadow(),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kotak tanggal EMAS kiri — memakai dimensi thumbnail berita.
+            // Kotak tanggal PRIMARY kiri — memakai dimensi thumbnail berita.
             Container(
               width: 84,
               height: 72,
-              color: AgendaSection._gold,
+              color: AppTheme.primary,
               alignment: Alignment.center,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(kegiatan.bulanSingkat,
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.onPrimary,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5)),
                   Text(kegiatan.tanggalAngka,
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.onPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.w900)),
                 ],
@@ -110,9 +105,9 @@ class _AgendaCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-Row(
+                    Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: Color(0xFF607D8F)),
+                        const Icon(Icons.calendar_today, size: 14, color: AppTheme.textMuted),
                         const SizedBox(width: 4),
                         Text(kegiatan.nama,
                             maxLines: 2,
@@ -121,7 +116,7 @@ Row(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 height: 1.25,
-                                color: Color(0xFF3E2F1D))),
+                                color: AppTheme.navy)),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -129,7 +124,7 @@ Row(
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF8A7A66))),
+                            fontSize: 11, color: AppTheme.textMuted)),
                   ],
                 ),
               ),
@@ -198,18 +193,16 @@ class _BeritaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () => context.push<void>('/berita/${berita.slug}'),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 2)),
-          ],
+          boxShadow: AppTheme.softShadow(),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,18 +212,18 @@ class _BeritaCard extends StatelessWidget {
               child: Container(
                 width: 84,
                 height: 72,
-                color: const Color(0xFFF0E8DB),
+                color: theme.colorScheme.surfaceContainerHighest,
                 alignment: Alignment.center,
                 child: _hasGambar
                     ? Image.network(
                         _gambarUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, __, ___) => Icon(
                             Icons.article_outlined,
-                            color: Color(0xFFB0A85C)),
+                            color: theme.colorScheme.onSurfaceVariant),
                       )
-                    : const Icon(Icons.article_outlined,
-                        color: Color(0xFFB0A85C)),
+                    : Icon(Icons.article_outlined,
+                        color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
             const SizedBox(width: 10),
@@ -238,25 +231,25 @@ class _BeritaCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-Row(
-                      children: [
-                        const Icon(Icons.article_outlined, size: 14, color: Color(0xFF607D8F)),
-                        const SizedBox(width: 4),
-                        Text(berita.judul,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                height: 1.25,
-                                color: AppTheme.textSlate)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.article_outlined, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(berita.judul,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          )),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     '${berita.tanggal.day} ${_bulan(berita.tanggal.month)}',
-                    style:
-                        const TextStyle(fontSize: 11, color: Color(0xFF8A7A66)),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

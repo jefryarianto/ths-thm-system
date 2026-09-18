@@ -42,6 +42,99 @@ export class UjianPraktekService {
     return data;
   }
 
+  /**
+   * Agregat layar input nilai penguji (mobile): satu respons berisi
+   * ujian praktek aktif, aspek+item penilaian, daftar peserta, dan
+   * skor milik penguji pemanggil. Menggantikan 3 request terpisah
+   * (aspek, peserta, resolve ujian) di klien.
+   */
+  async getMyScoreCard(kegiatanId: string, pengujiUserId: string) {
+    const kegiatan = await this.prisma.kegiatan.findUnique({
+      where: { id: kegiatanId },
+      select: { id: true, nama: true, status: true },
+    });
+    if (!kegiatan) throw new NotFoundException('Kegiatan pendadaran tidak ditemukan');
+
+    const owned = await this.prisma.aspekPenilaian.count({
+      where: { kegiatanId },
+    });
+
+    const [ujians, participants, aspects, myScores] = await Promise.all([
+      this.prisma.ujianPraktek.findMany({
+        where: { kegiatanId },
+        select: { id: true, status: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.pesertaPendadaran.findMany({
+        where: { kegiatanId },
+        include: {
+          calonAnggota: {
+            select: { id: true, namaLengkap: true, email: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.aspekPenilaian.findMany({
+        // Fallback template global (kegiatanId=null) bila pendadaran belum
+        // punya set sendiri — pola sama dengan AspectService.findAll.
+        where: { kegiatanId: owned > 0 ? kegiatanId : null, isActive: true },
+        include: {
+          itemPenilaian: {
+            where: { isActive: true },
+            orderBy: { urutan: 'asc' },
+          },
+        },
+        orderBy: { kodeAspek: 'asc' },
+      }),
+      this.prisma.nilaiPendadaran.findMany({
+        where: { kegiatanId, pengujiUserId },
+        select: {
+          ujianPraktekId: true,
+          itemPenilaianId: true,
+          skor: true,
+          komentar: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // Ujian aktif: non-dibatalkan, prioritas berlangsung → draft → selesai.
+    const kandidat = ujians.filter((u) => u.status !== 'dibatalkan');
+    const prioritas = ['berlangsung', 'draft', 'selesai'];
+    const ujianAktif =
+      prioritas
+        .map((s) => kandidat.find((u) => u.status === s))
+        .find((u) => !!u) ?? kandidat[0] ?? null;
+
+    // Skor milik penguji utk ujian aktif: item terbaru menang (upsert create
+    // baru tidak selalu menimpa createdAt — orderBy asc + overwrite = latest).
+    const skorByItem: Record<string, { skor: number; komentar: string | null }> = {};
+    if (ujianAktif) {
+      for (const n of myScores) {
+        if (n.ujianPraktekId !== ujianAktif.id) continue;
+        skorByItem[n.itemPenilaianId] = {
+          skor: Number(n.skor),
+          komentar: n.komentar ?? null,
+        };
+      }
+    }
+
+    return {
+      kegiatan,
+      ujianAktif: ujianAktif
+        ? { id: ujianAktif.id, status: ujianAktif.status }
+        : null,
+      aspects,
+      participants: participants.map((p) => ({
+        ...p.calonAnggota,
+        sumberPeserta: p.sumber,
+        terdaftarAt: p.createdAt,
+      })),
+      myScores: skorByItem,
+    };
+  }
+
   async findOne(id: string) {
     const data = await this.prisma.ujianPraktek.findUnique({
       where: { id },
@@ -230,58 +323,55 @@ export class UjianPraktekService {
       }
     }
 
-    const results: Array<{ calonAnggotaId: string; itemPenilaianId: string; skor: number }> = [];
+    // Transaksional: semua nilai dari satu submit tersimpan atomik —
+    // kegagalan di tengah tidak meninggalkan sebagian nilai tersimpan.
+    // (findFirst→update/create dipakai karena model ini belum punya
+    // constraint unique; menambahkannya butuh migrasi berisiko.)
+    return this.prisma.$transaction(async (tx) => {
+      const results: Array<{ calonAnggotaId: string; itemPenilaianId: string; skor: number }> = [];
 
-    for (const scoreDto of dto.scores) {
-      for (const item of scoreDto.items) {
-        // Upsert: create or update the score for this candidate/item/penguji combination
-        const where = {
-          kegiatanId_ujianPraktekId_calonAnggotaId_itemPenilaianId_pengujiUserId: {
-            kegiatanId: ujian.kegiatanId,
-            ujianPraktekId,
-            calonAnggotaId: scoreDto.calonAnggotaId,
-            itemPenilaianId: item.itemPenilaianId,
-            pengujiUserId,
-          },
-        };
-        const existing = await this.prisma.nilaiPendadaran.findFirst({
-          where: {
-            kegiatanId: ujian.kegiatanId,
-            ujianPraktekId,
-            calonAnggotaId: scoreDto.calonAnggotaId,
-            itemPenilaianId: item.itemPenilaianId,
-            pengujiUserId,
-          },
-        });
-
-        if (existing) {
-          await this.prisma.nilaiPendadaran.update({
-            where: { id: existing.id },
-            data: { skor: item.skor, komentar: item.komentar },
-          });
-        } else {
-          await this.prisma.nilaiPendadaran.create({
-            data: {
+      for (const scoreDto of dto.scores) {
+        for (const item of scoreDto.items) {
+          // Upsert: create or update the score for this candidate/item/penguji combination
+          const existing = await tx.nilaiPendadaran.findFirst({
+            where: {
               kegiatanId: ujian.kegiatanId,
               ujianPraktekId,
               calonAnggotaId: scoreDto.calonAnggotaId,
               itemPenilaianId: item.itemPenilaianId,
               pengujiUserId,
-              skor: item.skor,
-              komentar: item.komentar,
             },
           });
+
+          if (existing) {
+            await tx.nilaiPendadaran.update({
+              where: { id: existing.id },
+              data: { skor: item.skor, komentar: item.komentar },
+            });
+          } else {
+            await tx.nilaiPendadaran.create({
+              data: {
+                kegiatanId: ujian.kegiatanId,
+                ujianPraktekId,
+                calonAnggotaId: scoreDto.calonAnggotaId,
+                itemPenilaianId: item.itemPenilaianId,
+                pengujiUserId,
+                skor: item.skor,
+                komentar: item.komentar,
+              },
+            });
+          }
+
+          results.push({
+            calonAnggotaId: scoreDto.calonAnggotaId,
+            itemPenilaianId: item.itemPenilaianId,
+            skor: item.skor,
+          });
         }
-
-        results.push({
-          calonAnggotaId: scoreDto.calonAnggotaId,
-          itemPenilaianId: item.itemPenilaianId,
-          skor: item.skor,
-        });
       }
-    }
 
-    return { scored: results.length };
+      return { scored: results.length };
+    });
   }
 
   // ─── Auto-fill: semua penguji × semua aspek/item ──────────

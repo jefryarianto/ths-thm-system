@@ -52,11 +52,6 @@ class DuesBloc extends Bloc<DuesEvent, DuesState> {
     emit(DuesInitial());
   }
 
-  String _messageFromError(DioException error) {
-    final data = error.response?.data;
-    if (data is Map && data['message'] != null) {
-      return data['message'].toString();
-    }
-    return error.message ?? error.toString();
-  }
+  String _messageFromError(DioException error) =>
+      _apiClient.messageFromError(error);
 }

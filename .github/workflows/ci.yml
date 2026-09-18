@@ -39,6 +39,32 @@ jobs:
       - run: pnpm --filter @ths-thm/api prisma:generate
       - run: pnpm typecheck
 
+  # ─── API Contract: swagger.json & api.d.ts harus sinkron ──────────
+  # Regenerate kedua artefak lalu bandingkan dengan yang di-commit
+  # (keduanya di-commit, bukan di-gitignore, agar bisa dibandingkan).
+  # PR yang mengubah endpoint tanpa memperbarui kontrak akan gagal di sini.
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm --filter @ths-thm/shared-types build
+      - run: pnpm --filter @ths-thm/api prisma:generate
+      - name: Regenerate kontrak API
+        run: |
+          pnpm --filter @ths-thm/api swagger:export
+          pnpm --filter @ths-thm/api generate:client
+      - name: Verifikasi swagger.json & api.d.ts sinkron
+        run: |
+          git diff --exit-code -- apps/api/swagger.json apps/web/src/types/api.d.ts \
+            || (echo "::error::Kontrak API basi — endpoint berubah tanpa regenerate. Jalankan 'pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client' lalu commit hasilnya." && exit 1)
+          echo "✅ Kontrak API sinkron"
+
   test-api:
     runs-on: ubuntu-latest
     services:
@@ -63,11 +89,19 @@ jobs:
       - run: pnpm --filter @ths-thm/api prisma:deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ths_thm_test
-      - run: pnpm --filter @ths-thm/api test
+      - name: Test API (dengan coverage)
+        run: pnpm --filter @ths-thm/api test:cov
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ths_thm_test
           JWT_SECRET: ci-test-jwt-secret-key-min-32-chars-long-for-ci
           JWT_REFRESH_SECRET: ci-test-jwt-refresh-secret-key-min-32-chars-long
+      - name: Unggah laporan coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage/lcov.info
+          if-no-files-found: error
 
   test-web:
     runs-on: ubuntu-latest

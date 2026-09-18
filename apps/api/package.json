@@ -60,6 +60,7 @@
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
+    "nodemailer": "^10.0.10",
     "papaparse": "^5.4.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
@@ -120,9 +121,29 @@
     "/node_modules/(?!uuid)"
    ],
    "collectCoverageFrom": [
-    "**/*.(t|j)s"
+    "**/*.(t|j)s",
+    "!**/*.spec.ts",
+    "!**/*.module.ts",
+    "!**/main.ts",
+    "!**/migrations/**",
+    "!**/seed*.ts"
    ],
    "coverageDirectory": "../coverage",
+   "coverageThreshold": {
+    "global": {
+     "statements": 35,
+     "branches": 34,
+     "functions": 33,
+     "lines": 36
+    }
+   },
+   "coverageReporters": [
+    "text",
+    "text-summary",
+    "lcov",
+    "json-summary"
+   ],
+   "testTimeout": 15000,
    "testEnvironment": "node"
   }
 }

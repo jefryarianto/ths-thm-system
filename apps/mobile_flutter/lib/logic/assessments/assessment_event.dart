@@ -130,7 +130,61 @@ class AssessmentScoresRequested extends AssessmentEvent {
   List<Object?> get props => <Object?>[kegiatanId, calonAnggotaId];
 }
 
+/// F3 - Resolve sesi ujian praktek aktif milik pendadaran (aturan: semua
+/// penguji x semua aspek memakai SATU ujian; pilih yg tidak dibatalkan).
+class AssessmentUjianResolveRequested extends AssessmentEvent {
+  final String kegiatanId;
+
+  /// true = abaikan cache & resolve ulang dari server (dipakai saat refresh
+  /// layar / retry). false = boleh memakai id ujian yang sudah di-cache.
+  final bool force;
+
+  const AssessmentUjianResolveRequested(this.kegiatanId, {this.force = false});
+
+  @override
+  List<Object?> get props => <Object?>[kegiatanId, force];
+}
+
+/// F3 - Submit SEMUA nilai satu peserta sekaligus (bulk) via endpoint ujian
+/// praktek yg benar: POST /graduations/:id/ujian-praktek/:ujianId/score.
+/// Payload: {scores: [{calonAnggotaId, items: [{itemPenilaianId, skor, komentar?}]}]}.
+class AssessmentBulkScoreSubmitRequested extends AssessmentEvent {
+  final String kegiatanId;
+  final String ujianPraktekId;
+  final String calonAnggotaId;
+  final Map<String, double> skorByItem;
+  final Map<String, String> catatanByItem;
+  const AssessmentBulkScoreSubmitRequested({
+    required this.kegiatanId,
+    required this.ujianPraktekId,
+    required this.calonAnggotaId,
+    required this.skorByItem,
+    this.catatanByItem = const {},
+  });
+  @override
+  List<Object?> get props => <Object?>[
+        kegiatanId,
+        ujianPraktekId,
+        calonAnggotaId,
+        skorByItem,
+        catatanByItem,
+      ];
+}
+
+/// F3+ - Muat SEMUA data layar input nilai dalam satu request:
+/// ujian praktek aktif + aspek/item + peserta + skor milik penguji.
+/// force=true melewati cache id ujian (refresh layar / retry).
+class AssessmentScoreCardRequested extends AssessmentEvent {
+  final String kegiatanId;
+  final bool force;
+  const AssessmentScoreCardRequested(this.kegiatanId, {this.force = false});
+  @override
+  List<Object?> get props => <Object?>[kegiatanId, force];
+}
+
 /// F3 - Submit satu nilai utk satu item penilaian milik seorang calon.
+/// (LEGACY: endpoint /assessments/scores tanpa sesi ujian. Dipertahankan
+/// utk kompatibilitas, tapi layar input nilai memakai versi bulk di atas.)
 class AssessmentScoreSubmitRequested extends AssessmentEvent {
   final String kegiatanId;
   final String calonAnggotaId;

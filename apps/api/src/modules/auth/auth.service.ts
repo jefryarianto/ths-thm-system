@@ -1090,9 +1090,26 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  setRefreshTokenCookie(res: Response, refreshToken: string) {
+  private getCookieDomain(): string | undefined {
+      if (!this.envConfig.frontendUrl) return undefined;
+      try {
+        const url = new URL(this.envConfig.frontendUrl);
+        const hostname = url.hostname;
+        // If hostname is localhost or an IP address, return undefined
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+          return undefined;
+        }
+        return `.${hostname}`;
+      } catch {
+        return undefined;
+      }
+    }
+    
+    setRefreshTokenCookie(res: Response, refreshToken: string) {
     // Convert JWT duration ('14d') to milliseconds for cookie maxAge.
     const maxAge = parseDurationToMs(this.envConfig.jwtRefreshExpiresIn) ?? 7 * 24 * 60 * 60 * 1000;
+
+    const domain = this.getCookieDomain();
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -1100,17 +1117,20 @@ export class AuthService {
       maxAge: maxAge, // Use maxAge for cookie expiry
       sameSite: 'lax',
       path: '/',
-      domain: '.ths-thm.cloud',
+      ...(domain ? { domain } : {}),
     });
   }
 
   clearRefreshTokenCookie(res: Response) {
+    const domain = this.getCookieDomain();
+
     res.cookie('refreshToken', '', {
       httpOnly: true,
       secure: this.resolveCookieSecure(),
       maxAge: 0, // Expire immediately
       sameSite: 'lax',
       path: '/',
+      ...(domain ? { domain } : {}),
     });
   }
 

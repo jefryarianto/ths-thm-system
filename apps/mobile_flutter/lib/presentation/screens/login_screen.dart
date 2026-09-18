@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/services/app_update_service.dart';
@@ -23,9 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identifier = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
-  bool _rememberMe = false; // state real-time "Ingat Saya" (checkbox)
-  String _description = 'Member login'; // deskripsi login untuk pembaruan
-  String _appVersion = ''; // versi aplikasi terpasang (footer login)
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -34,8 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Isi otomatis identifier yang pernah disimpan ("Ingat Saya") dari secure
-  /// storage. Password TIDAK pernah dipersist.
   Future<void> _restoreRememberedIdentifier() async {
     if (const bool.fromEnvironment('E2E_LOGIN')) return;
     final saved = await ApiClient().loadRememberedIdentifier();
@@ -46,8 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  /// Persist identifier bila "Ingat Saya" dicentang, hapus bila tidak.
-  /// Dipanggil hanya saat login berhasil.
   Future<void> _persistRemember() async {
     final api = ApiClient();
     if (_rememberMe) {
@@ -60,35 +53,13 @@ class _LoginScreenState extends State<LoginScreen> {
     await api.clearRememberedIdentifier();
   }
 
-  /// Ambil versi terpasang (footer login) via package_info_plus.
-  Future<void> _loadAppVersion() async {
-    try {
-      final info = await PackageInfo.fromPlatform();
-      if (!mounted) return;
-      setState(() {
-        _appVersion = info.version;
-        _description = 'Member login';
-      });
-    } catch (_) {
-      // Footer versi bersifat opsional; abaikan bila gagal.
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     _restoreRememberedIdentifier();
-    _loadAppVersion();
-    // Jalankan pengecekan pembaruan + registrasi FCM tanpa blokir render.
-    // Pengecekan update diperbarui setiap kali halaman login dibuka (berkat
-    // cache 1 jam di AppUpdateService, request hanya melesat saat lewat TTL).
     AppUpdateService.instance.checkNow();
     FcmService.instance.registerAfterLogin();
 
-    // Hook E2E sementara: isi kredensial test + auto-submit.
-    // Gate lewat dart-define --dart-define=E2E_LOGIN=true (lihat run_run.bat).
-    // Kredensial bisa dioverride via:
-    //   --dart-define=E2E_LOGIN_IDENTIFIER=<email> --dart-define=E2E_LOGIN_PASSWORD=<password>
     if (const bool.fromEnvironment('E2E_LOGIN')) {
       const identifier = String.fromEnvironment(
         'E2E_LOGIN_IDENTIFIER',
@@ -123,22 +94,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           return Stack(
             children: [
-              const Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [AppTheme.primary, AppTheme.primaryLight],
-                    ),
-                  ),
-                ),
-              ),
               SafeArea(
                 child: BlocListener<AuthBloc, AuthState>(
                   listener: (context, state) {
@@ -155,136 +120,180 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
+                        constraints: const BoxConstraints(maxWidth: 440),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const AppUpdateBanner(),
-                            Image.asset(
-                              'assets/images/logo.png',
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.contain,
+                            // ── LOGO ──────────────────────────────────────
+                            Center(
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 20),
+                            // ── SLOGAN ───────────────────────────────────
                             Text(
                               'Fortiter in Re, Suaviter in Modo',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.onPrimary.withValues(alpha: 0.92),
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? colorScheme.onSurface : AppTheme.navy,
+                                height: 1.3,
                               ),
                             ),
                             const SizedBox(height: 36),
-                            TextField(
+                            // ── FORM LOGIN ───────────────────────────────
+                            _EmailField(
                               controller: _identifier,
-                              decoration: InputDecoration(
-                                labelText: 'Email / Nomor Anggota',
-                                prefixIcon: const Icon(Icons.person_outline),
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
+                              theme: theme,
                             ),
                             const SizedBox(height: 16),
-                            TextField(
+                            _PasswordField(
                               controller: _password,
-                              obscureText: _obscure,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscure
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
-                                  onPressed: () =>
-                                      setState(() => _obscure = !_obscure),
-                                ),
-                              ),
+                              obscure: _obscure,
+                              onToggle: () => setState(() => _obscure = !_obscure),
                               onSubmitted: (_) => _submit(),
+                              theme: theme,
                             ),
-                            // "Ingat Saya" — simpan identifier (email/nomor
-                            // anggota) saja; password tidak pernah disimpan.
+                            const SizedBox(height: 16),
+                            // ── INGAT SAYA + LUPA PASSWORD (SAME ROW) ────────
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(
-                                  width: 48,
-                                  height: 40,
-                                  child: Checkbox(
-                                    value: _rememberMe,
-                                    activeColor: AppTheme.primary,
-                                    onChanged: (v) => setState(
-                                        () => _rememberMe = v ?? false),
-                                  ),
+                                _RememberMeCheckbox(
+                                  value: _rememberMe,
+                                  onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                                  theme: theme,
                                 ),
-                                const Text(
-                                  'Ingat Saya',
-                                  style: TextStyle(fontSize: 14),
+                                TextButton(
+                                  onPressed: () => context.go('/forgot-password'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: colorScheme.primary,
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                    minimumSize: const Size(0, 48),
+                                    textStyle: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  child: const Text('Lupa Password?'),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 24),
+                            // ── TOMBOL MASUK (PRIMARY CTA) ────────────────
                             BlocBuilder<AuthBloc, AuthState>(
                               builder: (context, state) {
                                 final loading = state is AuthLoading;
                                 return FilledButton(
                                   onPressed: loading ? null : _submit,
+                                  style: FilledButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(56),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    backgroundColor: colorScheme.primary,
+                                    foregroundColor: colorScheme.onPrimary,
+                                    textStyle: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
                                   child: loading
                                       ? const AppLoadingSpinner.small(
-                                          color: AppTheme.onPrimary)
+                                          color: Colors.white)
                                       : const Text('Masuk'),
                                 );
                               },
                             ),
-                            const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: () => context.go('/forgot-password'),
-                              child: const Text('Lupa Password?'),
-                            ),
-                            const SizedBox(height: 8),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: 8,
+                            const SizedBox(height: 28),
+                            // ── SECONDARY ACTIONS ────────────────────────
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                TextButton.icon(
-                                  onPressed: () => context.push('/register'),
-                                  icon: const Icon(Icons.person_add_outlined,
-                                      size: 16),
-                                  label: const Text('Daftar Calon Anggota',
-                                      style: TextStyle(fontSize: 12)),
+                                Tooltip(
+                                  message: 'Daftar menjadi calon anggota THS-THM',
+                                  child: TextButton.icon(
+                                    onPressed: () => context.push('/register'),
+                                    icon: Icon(
+                                      Icons.person_add_outlined,
+                                      size: 18,
+                                      color: colorScheme.primary,
+                                    ),
+                                    label: Text(
+                                      'Daftar',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                TextButton.icon(
-                                  onPressed: () =>
-                                      context.push('/claim-account'),
-                                  icon: const Icon(Icons.how_to_reg_outlined,
-                                      size: 16),
-                                  label: const Text('Klaim Akun Anggota',
-                                      style: TextStyle(fontSize: 12)),
+                                const SizedBox(width: 24),
+                                Tooltip(
+                                  message: 'Buka halaman Klaim keanggotaan',
+                                  child: TextButton.icon(
+                                    onPressed: () => context.push('/claim-account'),
+                                    icon: Icon(
+                                      Icons.how_to_reg_outlined,
+                                      size: 18,
+                                      color: colorScheme.primary,
+                                    ),
+                                    label: Text(
+                                      'Klaim',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '$_description · v$_appVersion',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 11, color: Colors.grey.shade600),
+                            const SizedBox(height: 28),
+                            // ── FOOTER ────────────────────────────────────
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Baris 1: Motto institusional
+                                Text(
+                                  'Koordinatorat Nasional 2026-2029',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                    color: isDark
+                                        ? colorScheme.primaryContainer
+                                        : AppTheme.navy,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                // Baris 2: Copyright
+                                Text(
+                                  '(c)2026-2029 komisi litbang',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w400,
+                                    color: isDark
+                                        ? colorScheme.primaryContainer
+                                        : const Color(0xFF667085),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),
@@ -293,8 +302,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               if (state is AuthLoading) const _LoginLoadingOverlay(),
-              // Overlay update WAJIB diletakkan paling atas agar menutupi
-              // seluruh halaman (termasuk overlay loading login).
               const ForceUpdateOverlay(),
             ],
           );
@@ -304,13 +311,187 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+class _EmailField extends StatelessWidget {
+  final TextEditingController controller;
+  final ThemeData theme;
+
+  const _EmailField({required this.controller, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      style: theme.textTheme.bodyLarge,
+      decoration: InputDecoration(
+        labelText: 'Email / Nomor Anggota',
+        prefixIcon: Icon(
+          Icons.person_outline,
+          size: 22,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        filled: true,
+        fillColor: colorScheme.surface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        floatingLabelStyle: TextStyle(
+          color: colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool obscure;
+  final VoidCallback onToggle;
+  final ValueChanged<String> onSubmitted;
+  final ThemeData theme;
+
+  const _PasswordField({
+    required this.controller,
+    required this.obscure,
+    required this.onToggle,
+    required this.onSubmitted,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      textInputAction: TextInputAction.done,
+      style: theme.textTheme.bodyLarge,
+      onSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        labelText: 'Password',
+        prefixIcon: Icon(
+          Icons.lock_outline,
+          size: 22,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        filled: true,
+        fillColor: colorScheme.surface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        floatingLabelStyle: TextStyle(
+          color: colorScheme.primary,
+          fontWeight: FontWeight.w600,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            size: 22,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          onPressed: onToggle,
+          tooltip: obscure ? 'Tampilkan password' : 'Sembunyikan password',
+        ),
+      ),
+    );
+  }
+}
+
+class _RememberMeCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+  final ThemeData theme;
+
+  const _RememberMeCheckbox({
+    required this.value,
+    required this.onChanged,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    return Row(
+      children: [
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: Checkbox(
+            value: value,
+            activeColor: colorScheme.primary,
+            checkColor: colorScheme.onPrimary,
+            side: BorderSide(color: colorScheme.outline, width: 2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+            onChanged: onChanged,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Ingat Saya',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _LoginLoadingOverlay extends StatelessWidget {
   const _LoginLoadingOverlay();
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ColoredBox(
-      color: Colors.white.withValues(alpha: 0.96),
+      color: colorScheme.surface.withValues(alpha: 0.96),
       child: const Center(
         child: AppLoadingSpinner(message: 'Memverifikasi kredensial...'),
       ),

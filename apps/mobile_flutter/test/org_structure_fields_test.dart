@@ -1,68 +1,61 @@
-import 'dart:convert';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:mobile_flutter/presentation/widgets/org_structure_fields.dart';
 
-const _h = {'content-type': 'application/json; charset=utf-8'};
+/// Wrapper respons tiruan — meniru `Response.data` milik dio.
+class _Res {
+  final dynamic data;
+  const _Res(this.data);
+}
 
-/// MockClient with cascade filter: distrik → wilayah → ranting.
-/// Distrik A (d1) has wilayahs; Distrik B (d2) has none.
-/// Wilayah 1 (w1) has rantings; Wilayah 2 (w2) has none.
-MockClient _mock() {
-  return MockClient((req) async {
-    final p = req.url.path;
+/// Seam fetch tiruan dengan filter cascade: distrik → wilayah → ranting.
+/// Distrik A (d1) punya wilayah; Distrik B (d2) tidak.
+/// Wilayah 1 (w1) punya ranting; Wilayah 2 (w2) tidak.
+Future<dynamic> Function(String url) _mockFetch() {
+  return (url) async {
+    final u = Uri.parse(url);
+    final p = u.path;
     if (p.endsWith('/distrik')) {
-      return http.Response(
-        jsonEncode({
-          'success': true,
-          'data': [
-            {'id': 'd1', 'nama': 'Distrik A'},
-            {'id': 'd2', 'nama': 'Distrik B'},
-          ],
-        }),
-        200, headers: _h,
-      );
+      return const _Res({
+        'success': true,
+        'data': [
+          {'id': 'd1', 'nama': 'Distrik A'},
+          {'id': 'd2', 'nama': 'Distrik B'},
+        ],
+      });
     }
     if (p.endsWith('/wilayah')) {
-      final d = req.url.queryParameters['distrikId'];
-      return http.Response(
-        jsonEncode({
-          'success': true,
-          'data': d == 'd1'
-              ? [
-                  {'id': 'w1', 'nama': 'Wilayah 1'},
-                  {'id': 'w2', 'nama': 'Wilayah 2'},
-                ]
-              : <Map<String, String>>[],
-        }),
-        200, headers: _h,
-      );
+      final d = u.queryParameters['distrikId'];
+      return _Res({
+        'success': true,
+        'data': d == 'd1'
+            ? [
+                {'id': 'w1', 'nama': 'Wilayah 1'},
+                {'id': 'w2', 'nama': 'Wilayah 2'},
+              ]
+            : <Map<String, String>>[],
+      });
     }
     if (p.endsWith('/ranting')) {
-      final w = req.url.queryParameters['wilayahId'];
-      return http.Response(
-        jsonEncode({
-          'success': true,
-          'data': w == 'w1'
-              ? [
-                  {'id': 'r1', 'nama': 'Ranting X'},
-                  {'id': 'r2', 'nama': 'Ranting Y'},
-                ]
-              : <Map<String, String>>[],
-        }),
-        200, headers: _h,
-      );
+      final w = u.queryParameters['wilayahId'];
+      return _Res({
+        'success': true,
+        'data': w == 'w1'
+            ? [
+                {'id': 'r1', 'nama': 'Ranting X'},
+                {'id': 'r2', 'nama': 'Ranting Y'},
+              ]
+            : <Map<String, String>>[],
+      });
     }
-    return http.Response('{"success":false}', 404, headers: _h);
-  });
+    return const _Res({'success': false});
+  };
 }
 
 Future<void> _pump(
   WidgetTester tester, {
-  http.Client? client,
+  Future<dynamic> Function(String url)? fetch,
   ValueChanged<String?>? onChanged,
 }) async {
   await tester.pumpWidget(MaterialApp(
@@ -70,7 +63,7 @@ Future<void> _pump(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: OrgStructureFields(
-          client: client ?? _mock(),
+          fetch: fetch ?? _mockFetch(),
           onRantingChanged: onChanged ?? (_) {},
         ),
       ),
@@ -88,32 +81,39 @@ void main() {
     String? sel;
 
     await _pump(tester,
-      client: MockClient((req) async {
-        log.add(req.url);
-        final p = req.url.path;
+      fetch: (url) async {
+        log.add(Uri.parse(url));
+        final u = Uri.parse(url);
+        final p = u.path;
         if (p.endsWith('/distrik')) {
-          return http.Response(
-            jsonEncode({'success': true, 'data': [
+          return const _Res({
+            'success': true,
+            'data': [
               {'id': 'd1', 'nama': 'Distrik A'},
               {'id': 'd2', 'nama': 'Distrik B'},
-            ]}), 200, headers: _h);
+            ],
+          });
         }
         if (p.endsWith('/wilayah')) {
-          final d = req.url.queryParameters['distrikId'];
-          return http.Response(
-            jsonEncode({'success': true, 'data': d == 'd1'
+          final d = u.queryParameters['distrikId'];
+          return _Res({
+            'success': true,
+            'data': d == 'd1'
               ? [{'id': 'w1', 'nama': 'Wilayah 1'}]
-              : []}), 200, headers: _h);
+              : <Map<String, String>>[],
+          });
         }
         if (p.endsWith('/ranting')) {
-          final w = req.url.queryParameters['wilayahId'];
-          return http.Response(
-            jsonEncode({'success': true, 'data': w == 'w1'
+          final w = u.queryParameters['wilayahId'];
+          return _Res({
+            'success': true,
+            'data': w == 'w1'
               ? [{'id': 'r1', 'nama': 'Ranting X'}]
-              : []}), 200, headers: _h);
+              : <Map<String, String>>[],
+          });
         }
-        return http.Response('fail', 404, headers: _h);
-      }),
+        return const _Res({'success': false});
+      },
       onChanged: (v) => sel = v,
     );
     await tester.pumpAndSettle();
@@ -174,18 +174,24 @@ void main() {
 
   testWidgets('Shows retry when request fails', (tester) async {
     var failed = true;
-    final client = MockClient((req) async {
-      if (req.url.path.endsWith('/distrik')) {
-        if (failed) { failed = false; return http.Response('err', 500); }
-        return http.Response(
-          jsonEncode({'success': true, 'data': [
+    Future<dynamic> fetch(String url) async {
+      if (Uri.parse(url).path.endsWith('/distrik')) {
+        if (failed) {
+          failed = false;
+          // Simulasi error jaringan/server seperti DioException asli.
+          throw DioException(requestOptions: RequestOptions(path: url));
+        }
+        return const _Res({
+          'success': true,
+          'data': [
             {'id': 'd1', 'nama': 'Distrik A'},
-          ]}), 200, headers: _h);
+          ],
+        });
       }
-      return http.Response('fail', 404, headers: _h);
-    });
+      return const _Res({'success': false});
+    }
 
-    await _pump(tester, client: client);
+    await _pump(tester, fetch: fetch);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Ranting Asal *'));
@@ -208,7 +214,7 @@ void main() {
       home: Scaffold(body: Form(key: fk, child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          OrgStructureFields(client: _mock(), onRantingChanged: (_) {}),
+          OrgStructureFields(fetch: _mockFetch(), onRantingChanged: (_) {}),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () => fk.currentState!.validate(),

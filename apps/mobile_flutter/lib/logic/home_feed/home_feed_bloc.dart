@@ -76,15 +76,6 @@ class HomeFeedBloc extends Bloc<HomeFeedEvent, HomeFeedState> {
     }
   }
 
-  String _messageFromError(Object e) {
-    try {
-      final data = (e as dynamic).response?.data;
-      final msg = data is Map ? data['message']?.toString() : null;
-      if (msg != null && msg.isNotEmpty) return msg;
-    } catch (_) {}
-    if (e is DioException && e.message != null && e.message!.isNotEmpty) {
-      return e.message!;
-    }
-    return 'Gagal memuat konten beranda';
-  }
+  String _messageFromError(Object e) =>
+      _apiClient.messageFromError(e, fallback: 'Gagal memuat konten beranda');
 }

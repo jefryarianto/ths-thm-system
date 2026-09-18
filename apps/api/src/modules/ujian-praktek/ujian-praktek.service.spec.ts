@@ -15,14 +15,16 @@ describe('UjianPraktekService', () => {
   const mockPrisma = {
     $transaction: jest.fn((fn) => fn(mockPrisma)),
     kegiatan: { findUnique: jest.fn() },
-    ujianPraktek: { create: jest.fn(), findUnique: jest.fn() },
+    ujianPraktek: { create: jest.fn(), findUnique: jest.fn(), findMany: jest.fn() },
     ujianPraktekItem: { createMany: jest.fn() },
     ujianPraktekPenilai: { createMany: jest.fn() },
-    aspekPenilaian: { count: jest.fn() },
+    aspekPenilaian: { count: jest.fn(), findMany: jest.fn() },
     itemPenilaian: { findMany: jest.fn() },
     penugasanPenguji: { findMany: jest.fn(), findFirst: jest.fn() },
     user: { findUnique: jest.fn() },
-    nilaiPendadaran: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
+    nilaiPendadaran: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn(), upsert: jest.fn(), findMany: jest.fn() },
+    kegiatan: { findUnique: jest.fn() },
+    pesertaPendadaran: { findMany: jest.fn() },
   };
 
   beforeEach(async () => {
@@ -123,6 +125,124 @@ describe('UjianPraktekService', () => {
     });
   });
 
+  describe('getMyScoreCard (agregat layar input nilai)', () => {
+    const baseKegiatan = { id: 'k1', nama: 'Pendadaran Distrik A', status: 'published' };
+
+    beforeEach(() => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(baseKegiatan);
+      mockPrisma.aspekPenilaian.count.mockResolvedValue(1);
+    });
+
+    it('mengembalikan ujian aktif + aspek/item + peserta + skor penguji dalam satu respons', async () => {
+      mockPrisma.ujianPraktek.findMany.mockResolvedValue([
+        { id: 'u1', status: 'berlangsung', createdAt: new Date() },
+      ]);
+      mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([
+        {
+          sumber: 'manual',
+          createdAt: new Date(),
+          calonAnggota: { id: 'c1', namaLengkap: 'Budi', email: null },
+        },
+      ]);
+      mockPrisma.aspekPenilaian.findMany.mockResolvedValue([
+        {
+          id: 'a1', kodeAspek: 'A', namaAspek: 'Teknis', isActive: true,
+          itemPenilaian: [{ id: 'i1', namaItem: 'Kuda', urutan: 1, isActive: true }],
+        },
+      ]);
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
+        { ujianPraktekId: 'u1', itemPenilaianId: 'i1', skor: '85.5', komentar: 'baik', createdAt: new Date() },
+      ]);
+
+      const res = await service.getMyScoreCard('k1', 'penguji-1');
+
+      expect(res.kegiatan).toEqual(baseKegiatan);
+      expect(res.ujianAktif).toEqual({ id: 'u1', status: 'berlangsung' });
+      expect(res.aspects).toHaveLength(1);
+      expect(res.aspects[0].itemPenilaian).toHaveLength(1);
+      expect(res.participants).toEqual([
+        expect.objectContaining({ id: 'c1', namaLengkap: 'Budi', sumberPeserta: 'manual' }),
+      ]);
+      expect(res.myScores).toEqual({ i1: { skor: 85.5, komentar: 'baik' } });
+    });
+
+    it('ujianAktif melewati yang dibatalkan dan memprioritaskan berlangsung', async () => {
+      mockPrisma.ujianPraktek.findMany.mockResolvedValue([
+        { id: 'u0', status: 'dibatalkan', createdAt: new Date('2026-01-01') },
+        { id: 'u2', status: 'draft', createdAt: new Date('2026-01-02') },
+        { id: 'u1', status: 'berlangsung', createdAt: new Date('2026-01-03') },
+      ]);
+      mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([]);
+      mockPrisma.aspekPenilaian.findMany.mockResolvedValue([]);
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([]);
+
+      const res = await service.getMyScoreCard('k1', 'penguji-1');
+
+      expect(res.ujianAktif).toEqual({ id: 'u1', status: 'berlangsung' });
+    });
+
+    it('semua ujian dibatalkan → ujianAktif null, data lain tetap ada', async () => {
+      mockPrisma.ujianPraktek.findMany.mockResolvedValue([
+        { id: 'u0', status: 'dibatalkan', createdAt: new Date() },
+      ]);
+      mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([
+        {
+          sumber: 'manual', createdAt: new Date(),
+          calonAnggota: { id: 'c1', namaLengkap: 'Budi', email: null },
+        },
+      ]);
+      mockPrisma.aspekPenilaian.findMany.mockResolvedValue([]);
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
+        { ujianPraktekId: 'u0', itemPenilaianId: 'i1', skor: 90, komentar: null, createdAt: new Date() },
+      ]);
+
+      const res = await service.getMyScoreCard('k1', 'penguji-1');
+
+      expect(res.ujianAktif).toBeNull();
+      expect(res.participants).toHaveLength(1);
+      // Skor tidak dipilih karena tidak ada ujian aktif.
+      expect(res.myScores).toEqual({});
+    });
+
+    it('kegiatan tidak ditemukan → NotFoundException', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue(null);
+
+      await expect(service.getMyScoreCard('x', 'penguji-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('fallback ke template global bila pendadaran belum punya set aspek', async () => {
+      mockPrisma.aspekPenilaian.count.mockResolvedValue(0);
+      mockPrisma.ujianPraktek.findMany.mockResolvedValue([]);
+      mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([]);
+      mockPrisma.aspekPenilaian.findMany.mockResolvedValue([]);
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([]);
+
+      await service.getMyScoreCard('k1', 'penguji-1');
+
+      expect(mockPrisma.aspekPenilaian.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ kegiatanId: null }),
+        }),
+      );
+    });
+
+    it('skor duplikat item → nilai createdAt terbaru yang menang', async () => {
+      mockPrisma.ujianPraktek.findMany.mockResolvedValue([
+        { id: 'u1', status: 'berlangsung', createdAt: new Date() },
+      ]);
+      mockPrisma.pesertaPendadaran.findMany.mockResolvedValue([]);
+      mockPrisma.aspekPenilaian.findMany.mockResolvedValue([]);
+      mockPrisma.nilaiPendadaran.findMany.mockResolvedValue([
+        { ujianPraktekId: 'u1', itemPenilaianId: 'i1', skor: 70, komentar: null, createdAt: new Date('2026-01-01') },
+        { ujianPraktekId: 'u1', itemPenilaianId: 'i1', skor: 88, komentar: 'revisi', createdAt: new Date('2026-01-02') },
+      ]);
+
+      const res = await service.getMyScoreCard('k1', 'penguji-1');
+
+      expect(res.myScores).toEqual({ i1: { skor: 88, komentar: 'revisi' } });
+    });
+  });
+
   describe('scoreCandidate guard (penguji harus approved)', () => {
     const dto = { scores: [{ calonAnggotaId: 'c1', items: [{ itemPenilaianId: 'i1', skor: 80 }] }] };
     const ujian = { id: 'uj1', kegiatanId: 'k1', status: 'draft' };
@@ -135,7 +255,7 @@ describe('UjianPraktekService', () => {
       await expect(service.scoreCandidate('uj1', dto, 'u1')).rejects.toThrow(ForbiddenException);
     });
 
-    it('penguji approved → boleh input nilai', async () => {
+    it('penguji approved → boleh input nilai (dalam transaksi)', async () => {
       mockPrisma.ujianPraktek.findUnique.mockResolvedValue(ujian);
       mockPrisma.user.findUnique.mockResolvedValue({ role: 'penguji' });
       mockPrisma.penugasanPenguji.findFirst.mockResolvedValue({ id: 'pp1' });
@@ -145,6 +265,24 @@ describe('UjianPraktekService', () => {
       const result = await service.scoreCandidate('uj1', dto, 'u1');
       expect(result.scored).toBe(1);
       expect(mockPrisma.nilaiPendadaran.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('submit batch → semua tulisan dalam SATU transaksi (atomik)', async () => {
+      mockPrisma.ujianPraktek.findUnique.mockResolvedValue(ujian);
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'admin_kegiatan' });
+      mockPrisma.nilaiPendadaran.findFirst.mockResolvedValue(null);
+      mockPrisma.nilaiPendadaran.create.mockResolvedValue({});
+      const dto2 = {
+        scores: [
+          { calonAnggotaId: 'c1', items: [{ itemPenilaianId: 'i1', skor: 80 }] },
+          { calonAnggotaId: 'c2', items: [{ itemPenilaianId: 'i1', skor: 70 }] },
+        ],
+      };
+
+      const result = await service.scoreCandidate('uj1', dto2, 'admin1');
+      expect(result.scored).toBe(2);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.nilaiPendadaran.create).toHaveBeenCalledTimes(2);
     });
 
     it('admin (bukan role penguji) → tanpa cek penugasan', async () => {

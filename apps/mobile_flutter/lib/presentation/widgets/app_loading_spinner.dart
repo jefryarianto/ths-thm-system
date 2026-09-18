@@ -8,7 +8,7 @@ import '../../core/theme/app_theme.dart';
 /// (https://ths-thm.cloud/login).
 ///
 /// Konstruktor default menampilkan dua cincin 90° berputar berlawanan arah
-/// (cincin luar navy, cincin dalam biru) + logo THS-THM di tengah yang
+/// (cincin luar primary, cincin dalam primaryLight) + logo THS-THM di tengah yang
 /// berdenyut (opacity pulse) + teks opsional di bawahnya. `.small` tetap satu
 /// cincin sederhana (untuk tombol).
 class AppLoadingSpinner extends StatelessWidget {
@@ -60,6 +60,7 @@ class AppLoadingSpinner extends StatelessWidget {
   }
 
   Widget _withMessage(BuildContext context, Widget spinner, String text) {
+    final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -69,7 +70,7 @@ class AppLoadingSpinner extends StatelessWidget {
           text,
           style: TextStyle(
             fontSize: 13,
-            color: Colors.grey.shade600,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -78,9 +79,9 @@ class AppLoadingSpinner extends StatelessWidget {
 }
 
 /// Dua cincin bergaya spinner login web: busur 90° berputar berlawanan arah
-/// (cincin luar navy #334E68→#627D98 searah jarum jam, cincin dalam biru
-/// #3B82F6→#93C5FD berlawanan) + logo di tengah yang berdenyut. Tekstur
-/// opacity pulse meniru Tailwind `animate-pulse` (2 detik bolak-balik).
+/// (cincin luar primary #072AC8→#3D5BE0 searah jarum jam, cincin dalam
+/// primaryContainer #DDE4FF→primary #072AC8 berlawanan) + logo di tengah yang
+/// berdenyut. Tekstur opacity pulse meniru Tailwind `animate-pulse` (2 detik bolak-balik).
 class _DualRingSpinner extends StatefulWidget {
   final double size;
   final double strokeWidth;
@@ -98,12 +99,11 @@ class _DualRingSpinner extends StatefulWidget {
 
 class _DualRingSpinnerState extends State<_DualRingSpinner>
     with TickerProviderStateMixin {
-  // Warna persis Tailwind di apps/web/app/login/page.tsx.
-  static const _navyDark = Color(0xFF334E68); // tailwind navy-600
-  static const _navyLight = Color(0xFF627D98); // tailwind navy-400
-  static const _blueDark = Color(0xFF3B82F6); // tailwind blue-500
-  static const _blueLight = Color(0xFF93C5FD); // tailwind blue-300
-  static const _textColor = Color(0xFF243B53); // tailwind navy-700
+  // Warna sistem warna baru THS-THM (Primary #072AC8)
+  static const _primaryDark = AppTheme.primary;        // #072AC8
+  static const _primaryLight = AppTheme.primaryLight;  // #3D5BE0
+  static const _primaryContainerDark = AppTheme.primaryContainer; // #DDE4FF
+  static const _primaryContainerLight = AppTheme.primary;        // #072AC8
 
   late final AnimationController _outer;
   late final AnimationController _inner;
@@ -159,7 +159,7 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
             child: SizedBox.expand(
               child: CustomPaint(
                 painter: _SolidArcPainter(
-                  colors: const [_navyDark, _navyLight],
+                  colors: const [_primaryDark, _primaryLight],
                   strokeWidth: widget.strokeWidth,
                   startAngle: -math.pi / 2,
                   sweepAngle: math.pi / 2,
@@ -175,7 +175,7 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
               child: SizedBox.expand(
                 child: CustomPaint(
                   painter: _SolidArcPainter(
-                    colors: const [_blueDark, _blueLight],
+                    colors: const [_primaryContainerDark, _primaryContainerLight],
                     strokeWidth: widget.strokeWidth,
                     startAngle: math.pi / 2,
                     sweepAngle: math.pi / 2,
@@ -212,8 +212,8 @@ class _DualRingSpinnerState extends State<_DualRingSpinner>
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).brightness == Brightness.dark
-                  ? _blueLight // dark:text-blue-300
-                  : _textColor,
+                  ? AppTheme.onDarkPrimaryContainer // dark mode: on dark primary container
+                  : AppTheme.navy,
             ),
           ),
         ),
