@@ -5,6 +5,8 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import { typedApi } from '@/lib/api-typed';
+import { unwrap } from '@/lib/api-client';
 import { Download, Filter } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -42,14 +44,14 @@ export default function MembersReportPage() {
 
   const loadWilayahs = async (distrikId: string) => {
     if (!distrikId) { setWilayahs([]); return; }
-    const { data } = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-    setWilayahs(data.data || []);
+    const res = await typedApi.get('/org-structure/wilayah', { query: { distrikId } });
+    setWilayahs(unwrap<OrgItem[]>(res));
   };
 
   const loadRantings = async (wilayahId: string) => {
     if (!wilayahId) { setRantings([]); return; }
-    const { data } = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-    setRantings(data.data || []);
+    const res = await typedApi.get('/org-structure/ranting', { query: { wilayahId } });
+    setRantings(unwrap<OrgItem[]>(res));
   };
 
   const fetchMembers = async () => {

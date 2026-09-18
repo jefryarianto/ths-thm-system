@@ -4,7 +4,8 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
+import { typedApi } from '@/lib/api-typed';
 import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
 
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -66,9 +67,9 @@ export default function NewMemberPage() {
     if (!distrikId) return;
     setOrgLoading(prev => ({ ...prev, wilayah: true }));
     try {
-      const r = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+      const r = await typedApi.get('/org-structure/wilayah', { query: { distrikId } });
       if (seq !== orgReqSeq.current) return; // stale response - user moved on
-      setWilayahs(r.data.data || []);
+      setWilayahs(unwrap<Array<{ id: string; nama: string }>>(r));
     } catch { /* ignore */ }
     if (seq === orgReqSeq.current) {
       setOrgLoading(prev => ({ ...prev, wilayah: false }));
@@ -83,9 +84,9 @@ export default function NewMemberPage() {
     if (!wilayahId) return;
     setOrgLoading(prev => ({ ...prev, ranting: true }));
     try {
-      const r = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+      const r = await typedApi.get('/org-structure/ranting', { query: { wilayahId } });
       if (seq !== orgReqSeq.current) return; // stale response - user moved on
-      setRantings(r.data.data || []);
+      setRantings(unwrap<Array<{ id: string; nama: string; kodeRanting: string }>>(r));
     } catch { /* ignore */ }
     if (seq === orgReqSeq.current) {
       setOrgLoading(prev => ({ ...prev, ranting: false }));

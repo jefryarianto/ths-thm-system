@@ -12655,8 +12655,9 @@
         "parameters": [
           {
             "name": "distrikId",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Bila diisi, hanya wilayah pada distrik tersebut",
             "schema": {
               "type": "string"
             }
@@ -12805,8 +12806,9 @@
         "parameters": [
           {
             "name": "wilayahId",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Bila diisi, hanya ranting pada wilayah tersebut",
             "schema": {
               "type": "string"
             }

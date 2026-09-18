@@ -15986,8 +15986,9 @@ export interface operations {
     };
     OrgStructureController_getAllWilayah: {
         parameters: {
-            query: {
-                distrikId: string;
+            query?: {
+                /** @description Bila diisi, hanya wilayah pada distrik tersebut */
+                distrikId?: string;
             };
             header?: never;
             path?: never;
@@ -16087,8 +16088,9 @@ export interface operations {
     };
     OrgStructureController_getAllRanting: {
         parameters: {
-            query: {
-                wilayahId: string;
+            query?: {
+                /** @description Bila diisi, hanya ranting pada wilayah tersebut */
+                wilayahId?: string;
             };
             header?: never;
             path?: never;

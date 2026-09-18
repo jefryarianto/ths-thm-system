@@ -53,6 +53,20 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm --filter @ths-thm/api prisma:generate
 
+      # ── Verifikasi kontrak API segar (defense-in-depth) ──
+      # Job `contract` di ci.yml sudah men-gate PR, tapi kontrak bisa basi
+      # sampai di master lewat jalur lain (push langsung, merge darurat,
+      # bypass CI). Gagal di sini MURAH — sebelum dua build image yang mahal —
+      # sehingga deploy produksi tak pernah lewat tanpa kontrak segar.
+      # Regenerasi deterministik & environment-independent (tanpa .env/DB/Redis).
+      - name: Verify swagger.json in sync before building images
+        run: |
+          pnpm --filter @ths-thm/api swagger:export
+          pnpm --filter @ths-thm/api generate:client
+          git diff --exit-code -- apps/api/swagger.json apps/web/src/types/api.d.ts \
+            || (echo "::error::Kontrak API basi saat deploy produksi — endpoint berubah tanpa regenerate. Jalankan 'pnpm --filter @ths-thm/api swagger:export && pnpm --filter @ths-thm/api generate:client' lalu commit hasilnya." && exit 1)
+          echo "✅ Kontrak API sinkron — aman build image"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
 import { OrgStructureService, ImportOrgRow } from './org-structure.service';
 import {
   CreateDistrikDto,
@@ -55,6 +55,7 @@ export class OrgStructureController {
   }
 
   @Get('wilayah')
+  @ApiQuery({ name: 'distrikId', required: false, description: 'Bila diisi, hanya wilayah pada distrik tersebut' })
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar wilayah (opsional filter by distrikId)' })
   getAllWilayah(@Query('distrikId') distrikId?: string) {
     return this.service.getAllWilayah(distrikId);
@@ -85,6 +86,7 @@ export class OrgStructureController {
   }
 
   @Get('ranting')
+  @ApiQuery({ name: 'wilayahId', required: false, description: 'Bila diisi, hanya ranting pada wilayah tersebut' })
   @CrudAuth('superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting', 'admin_kegiatan', 'penguji', { summary: 'Daftar ranting (opsional filter by wilayahId)' })
   getAllRanting(@Query('wilayahId') wilayahId?: string) {
     return this.service.getAllRanting(wilayahId);

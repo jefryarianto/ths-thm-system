@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
+import { typedApi } from '@/lib/api-typed';
+import type { components } from '@/types/api';
 import { Save, AlertCircle } from 'lucide-react';
 import FormField from '@/components/ui/form-field';
 import Modal from '@/components/ui/modal';
@@ -79,8 +81,8 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
     (async () => {
       setLoading(true);
       try {
-        const { data: res } = await apiClient.get(`/members/${memberId}`);
-        const m: MemberDetail = res.data;
+        const res = await typedApi.get('/members/{id}', { path: { id: memberId } });
+        const m = unwrap<MemberDetail>(res);
         setMemberName(m.namaLengkap || '');
         setForm({
           namaLengkap: m.namaLengkap,
@@ -109,22 +111,20 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
   const loadOrgData = async (m: MemberDetail) => {
     setOrgLoading(true);
     try {
-      const dRes = await apiClient.get('/org-structure/distrik');
-      const dList = dRes.data.data || [];
-      setDistriks(dList);
+      const dRes = await typedApi.get('/org-structure/distrik');
+      setDistriks(unwrap<Array<{ id: string; nama: string }>>(dRes));
 
       const distrikId = m.ranting?.wilayah?.distrik?.id || '';
       if (distrikId) {
         setSelectedDistrikId(distrikId);
-        const wRes = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
-        const wList = wRes.data.data || [];
-        setWilayahs(wList);
+        const wRes = await typedApi.get('/org-structure/wilayah', { query: { distrikId } });
+        setWilayahs(unwrap<Array<{ id: string; nama: string }>>(wRes));
 
         const wilayahId = m.ranting?.wilayah?.id || '';
         if (wilayahId) {
           setSelectedWilayahId(wilayahId);
-          const rRes = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
-          setRantings(rRes.data.data || []);
+          const rRes = await typedApi.get('/org-structure/ranting', { query: { wilayahId } });
+          setRantings(unwrap<Array<{ id: string; nama: string; kodeRanting: string }>>(rRes));
         }
       }
     } catch {
@@ -141,9 +141,9 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
     setForm((f) => ({ ...f, rantingId: '' }));
     if (!distrikId) return;
     try {
-      const { data: res } = await apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`);
+      const res = await typedApi.get('/org-structure/wilayah', { query: { distrikId } });
       if (seq !== orgReqSeq.current) return;
-      setWilayahs(res.data || []);
+      setWilayahs(unwrap<Array<{ id: string; nama: string }>>(res));
     } catch { /* ignore */ }
   };
 
@@ -153,9 +153,9 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
     setForm((f) => ({ ...f, rantingId: '' }));
     if (!wilayahId) return;
     try {
-      const { data: res } = await apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`);
+      const res = await typedApi.get('/org-structure/ranting', { query: { wilayahId } });
       if (seq !== orgReqSeq.current) return;
-      setRantings(res.data || []);
+      setRantings(unwrap<Array<{ id: string; nama: string; kodeRanting: string }>>(res));
     } catch { /* ignore */ }
   };
 
@@ -168,9 +168,9 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
     setSaving(true);
     setError('');
     try {
-      const { data: orig } = await apiClient.get(`/members/${memberId}`);
-      const original = orig.data;
-      const payload: Record<string, unknown> = {};
+      const orig = await typedApi.get('/members/{id}', { path: { id: memberId } });
+      const original = unwrap<MemberDetail>(orig);
+      const payload: Partial<components['schemas']['UpdateMemberDto']> = {};
 
       if (form.namaLengkap !== original.namaLengkap) payload.namaLengkap = form.namaLengkap;
       if (form.jenisKelamin !== original.jenisKelamin) payload.jenisKelamin = form.jenisKelamin;
@@ -190,7 +190,7 @@ export default function EditMemberModal({ open, memberId, onClose, onSuccess }: 
         return;
       }
 
-      await apiClient.patch(`/members/${memberId}`, payload);
+      await typedApi.patch('/members/{id}', payload, { path: { id: memberId } });
       onSuccess?.();
       onClose();
     } catch (err: unknown) {

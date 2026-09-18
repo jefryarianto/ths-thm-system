@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import apiClient from '@/lib/api-client';
+import { typedApi } from '@/lib/api-typed';
+import { unwrap } from '@/lib/api-client';
 import { Plus, Edit3, Trash2, RefreshCw, Users, Search, Download, Upload, Calendar, ArrowUpDown, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
@@ -96,13 +98,19 @@ export default function KepengurusanPage() {
   // Load wilayahs
   useEffect(() => {
     if (!distrikId) { setWilayahs([]); return; }
-    apiClient.get(`/org-structure/wilayah?distrikId=${distrikId}`).then(({ data }) => setWilayahs(data.data || [])).catch(() => {});
+    typedApi
+      .get('/org-structure/wilayah', { query: { distrikId } })
+      .then((res) => setWilayahs(unwrap<Array<{ id: string; nama: string }>>(res)))
+      .catch(() => {});
   }, [distrikId]);
 
   // Load rantings
   useEffect(() => {
     if (!wilayahId) { setRantings([]); return; }
-    apiClient.get(`/org-structure/ranting?wilayahId=${wilayahId}`).then(({ data }) => setRantings(data.data || [])).catch(() => {});
+    typedApi
+      .get('/org-structure/ranting', { query: { wilayahId } })
+      .then((res) => setRantings(unwrap<Array<{ id: string; nama: string }>>(res)))
+      .catch(() => {});
   }, [wilayahId]);
 
   // Fetch kepengurusan data

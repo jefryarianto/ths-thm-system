@@ -452,7 +452,7 @@ export interface PaginatedResponse<T> {
 }
 
 // eslint-disable-next-line no-restricted-syntax
-export const unwrap = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
+export const unwrap = <T>(response: { data: ApiResponse<T> | ApiResponse<unknown> }): T => response.data.data as T;
 
 // eslint-disable-next-line no-restricted-syntax
 export const unwrapPaginated = <T>(response: {
