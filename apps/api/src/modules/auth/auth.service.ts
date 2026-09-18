@@ -1100,6 +1100,7 @@ export class AuthService {
       maxAge: maxAge, // Use maxAge for cookie expiry
       sameSite: 'lax',
       path: '/',
+      domain: '.ths-thm.cloud',
     });
   }
 
