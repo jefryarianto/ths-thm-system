@@ -5,8 +5,8 @@ const { PALETTES } = require('@ths-thm/card-design');
    ════════════════════════════════════════════════════════════════════
    Semua warna komponen WAJIB memakai token semantic di bawah ini.
    Dilarang hard-code warna Tailwind default (blue-*, gray-*, dst.)
-   di halaman/komponen baru. Palet `navy`/`gold` HANYA untuk template
-   kartu/dokumen PDF (@ths-thm/card-design), bukan untuk UI aplikasi.
+   di halaman/komponen baru. Palet `navy`/`gold` adalah merek THS-THM
+   dan boleh digunakan di UI aplikasi (misal: public layout, CTA, dsb.).
 
    Semantic scale (50/100/200/300/400/500/600/700/800/900/950):
    - primary   : #072AC8 — aksi utama, link aktif, fokus
@@ -54,6 +54,7 @@ module.exports = {
         gold: PALETTES.gold,
         // ── Semantic tokens ──
         primary: {
+          DEFAULT: '#072AC8',
           ...scale([
             '#EEF2FF', '#DDE4FF', '#BCC8FA', '#8FA0EF', '#3D5BE0', '#072AC8',
             '#0625B2', '#051C8A', '#041668', '#030F4A', '#020930',
@@ -63,10 +64,13 @@ module.exports = {
           // Teks di atas Primary Container (pasangan kontras)
           'on-container': 'rgb(var(--on-primary-container) / <alpha-value>)',
         },
-        secondary: scale([
-          '#EEF1F8', '#D8DEED', '#AEB8D2', '#7A87B0', '#3F5487', '#06154F',
-          '#051345', '#041038', '#06154F', '#030B28', '#02061A',
-        ]),
+        secondary: {
+          DEFAULT: '#06154F',
+          ...scale([
+            '#EEF1F8', '#D8DEED', '#AEB8D2', '#7A87B0', '#3F5487', '#06154F',
+            '#051345', '#041038', '#06154F', '#030B28', '#02061A',
+          ]),
+        },
         info: scale([
           '#EBF1FE', '#D3E1FD', '#A6C1FA', '#6E93F2', '#2B63E6', '#2B63E6',
           '#244FC0', '#1D3F9A', '#16307A', '#102158', '#0A1536',

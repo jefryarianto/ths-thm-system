@@ -133,6 +133,83 @@ export interface DashboardData {
 
 export { formatRupiah } from '@/lib/format';
 
+/**
+ * "Perlu Tindakan" — item yang benar-benar membutuhkan perhatian admin.
+ * Semua data dari DashboardData (API /reports/dashboard).
+ * Warna: error=red, warning=orange, pending=yellow, info=blue, success=green.
+ */
+export type ActionItemKey =
+  | 'pendingValidasi'
+  | 'incompleteData'
+  | 'totalPendaftaran'
+  | 'totalKlaim'
+  | 'totalDokumen';
+
+export interface ActionItemConfig {
+  key: ActionItemKey;
+  label: string;
+  detail: string;
+  href: string;
+  /** Semantic accent: error | warning | pending | info | success */
+  accent: 'error' | 'warning' | 'pending' | 'info' | 'success';
+  icon: React.ElementType;
+}
+
+export const actionItems: ActionItemConfig[] = [
+  {
+    key: 'pendingValidasi',
+    label: 'Data Anggota',
+    detail: 'menunggu validasi',
+    href: '/members',
+    accent: 'warning',
+    icon: AlertCircle,
+  },
+  {
+    key: 'incompleteData',
+    label: 'Data Tidak Lengkap',
+    detail: 'anggota memiliki data belum lengkap',
+    href: '/members/incomplete',
+    accent: 'error',
+    icon: AlertCircle,
+  },
+  {
+    key: 'totalPendaftaran',
+    label: 'Calon Anggota',
+    detail: 'pendaftaran menunggu verifikasi',
+    href: '/candidates',
+    accent: 'pending',
+    icon: UserPlus,
+  },
+  {
+    key: 'totalKlaim',
+    label: 'Klaim Diproses',
+    detail: 'klaim sedang diproses',
+    href: '/claims',
+    accent: 'info',
+    icon: ClipboardCheck,
+  },
+];
+
+export interface QuickActionConfig {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  desc: string;
+  /** Module + action for permission gate */
+  module: string;
+  action: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'admin';
+}
+
+export const quickActions: QuickActionConfig[] = [
+  { label: 'Tambah Anggota', href: '/members', icon: Users, desc: 'Input anggota baru', module: 'members', action: 'create' },
+  { label: 'Buat Kegiatan', href: '/activities', icon: Calendar, desc: 'Jadwalkan kegiatan baru', module: 'activities', action: 'create' },
+  { label: 'Catat Iuran', href: '/dues', icon: CreditCard, desc: 'Input pembayaran iuran', module: 'dues', action: 'create' },
+  { label: 'Kirim Notifikasi', href: '/notifications', icon: Bell, desc: 'Kirim pengumuman', module: 'notifications', action: 'create' },
+  { label: 'Email Admin', href: '/settings/email', icon: Mail, desc: 'Kelola pengiriman email', module: 'settings', action: 'admin' },
+  { label: 'Riwayat Email', href: '/settings/email/logs', icon: History, desc: 'Audit isi email terkirim', module: 'settings', action: 'admin' },
+  { label: 'Laporan', href: '/reports', icon: TrendingUp, desc: 'Lihat laporan detail', module: 'reports', action: 'view' },
+];
+
 export function formatTime(dateStr: string) {
   const d = new Date(dateStr);
   const now = new Date();
@@ -246,14 +323,4 @@ export const secondaryStats = [
     accent: 'slate' as const,
     href: '/users',
   },
-];
-
-export const quickActions = [
-  { label: 'Tambah Anggota', href: '/members', icon: Users, desc: 'Input anggota baru' },
-  { label: 'Buat Kegiatan', href: '/activities', icon: Calendar, desc: 'Jadwalkan kegiatan baru' },
-  { label: 'Catat Iuran', href: '/dues', icon: CreditCard, desc: 'Input pembayaran iuran' },
-  { label: 'Kirim Notifikasi', href: '/notifications', icon: Bell, desc: 'Kirim pengumuman' },
-  { label: 'Email Admin', href: '/settings/email', icon: Mail, desc: 'Kelola pengiriman email' },
-  { label: 'Riwayat Email', href: '/settings/email/logs', icon: History, desc: 'Audit isi email terkirim' },
-  { label: 'Laporan', href: '/reports', icon: TrendingUp, desc: 'Lihat laporan detail' },
 ];

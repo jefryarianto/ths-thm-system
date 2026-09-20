@@ -9,7 +9,7 @@ type StepKey = 'ranting' | 'wilayah' | 'distrik';
 type SideKey = 'asal' | 'tujuan';
 type StepShape = { side: SideKey; level: StepKey; order: number };
 
-interface OrgContext {
+export interface OrgContext {
   fromRantingId: string;
   fromWilayahId: string;
   fromDistrikId: string;

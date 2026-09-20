@@ -23,6 +23,8 @@
     "@tanstack/react-table": "^8.20.0",
     "@ths-thm/card-design": "workspace:*",
     "@ths-thm/shared-types": "workspace:*",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "axios": "^1.19.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { unwrap } from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
@@ -13,6 +13,7 @@ import {
   Mail,
   ExternalLink,
   AlertCircle,
+  AlertTriangle,
   GraduationCap,
   ClipboardCheck,
   Calendar,
@@ -30,6 +31,8 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from 'recharts';
 import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
 import {
@@ -40,11 +43,14 @@ import {
   statConfigs,
   secondaryStats,
   quickActions,
+  actionItems,
+  type QuickActionConfig,
   formatRupiah,
   formatTime,
 } from '@/components/dashboard/constants';
 import { useAuth } from '@/hooks/use-auth';
-import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { Can } from '@/components/auth/can';
+import { ChartSkeleton } from '@/components/ui/skeleton';
 
 // ── Design tokens untuk accent strip sekunder ─────────────────────
 const ACCENT_CLASSES: Record<string, { icon: string; bar: string }> = {
@@ -54,12 +60,29 @@ const ACCENT_CLASSES: Record<string, { icon: string; bar: string }> = {
   error: { icon: 'bg-error-50 text-error-700', bar: 'bg-error' },
   info: { icon: 'bg-info-50 text-info-700', bar: 'bg-info' },
   slate: { icon: 'bg-surface-variant text-muted', bar: 'bg-border' },
+  pending: { icon: 'bg-warning-50 text-warning-700', bar: 'bg-warning-300' },
+};
+
+/** Warna latar icon per item "Perlu Tindakan" sesuai semantic token */
+const ACTION_ICON_BG: Record<string, string> = {
+  error: 'bg-error-50 dark:bg-error-950',
+  warning: 'bg-warning-50 dark:bg-warning-950',
+  pending: 'bg-warning-50 dark:bg-warning-950',
+  info: 'bg-info-50 dark:bg-info-950',
+  success: 'bg-success-50 dark:bg-success-950',
+};
+
+const ACTION_ICON_COLOR: Record<string, string> = {
+  error: 'text-error-700 dark:text-error-300',
+  warning: 'text-warning-700 dark:text-warning-300',
+  pending: 'text-warning-700 dark:text-warning-300',
+  info: 'text-info-700 dark:text-info-300',
+  success: 'text-success-700 dark:text-success-300',
 };
 
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex items-center justify-center h-64">
-      <Breadcrumbs />
       <div className="text-center">
         <AlertCircle className="h-12 w-12 text-error-400 mx-auto mb-3" aria-hidden="true" />
         <p className="text-error font-medium">{message}</p>
@@ -75,89 +98,81 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
   );
 }
 
-// ─── Panel "Perlu Perhatian" — HANYA dari data nyata API ──────────
-// Tidak ada kalkulasi karangan: panel ini murni meneruskan 3 angka
-// (pendingValidasi, incompleteData, totalKlaim) yang disediakan backend.
-// Jika semuanya 0 → empty state informatif, tanpa alarm berlebihan.
-function AttentionPanel({
-  pendingValidasi,
-  incompleteData,
-  totalKlaim,
-}: {
-  pendingValidasi: number;
-  incompleteData: number;
-  totalKlaim: number;
-}) {
-  const items = [
-    {
-      key: 'pending',
-      label: 'Pending Validasi',
-      value: pendingValidasi,
-      href: '/members',
-      chip: 'bg-warning-50 text-warning-700',
-      icon: <AlertCircle size={16} aria-hidden="true" />,
-      empty: 'Tidak ada antrean validasi.',
-    },
-    {
-      key: 'incomplete',
-      label: 'Data Tidak Lengkap',
-      value: incompleteData,
-      href: '/members/incomplete',
-      chip: 'bg-error-50 text-error-700',
-      icon: <AlertTriangle size={16} aria-hidden="true" />,
-      empty: 'Seluruh data anggota lengkap.',
-    },
-    {
-      key: 'klaim',
-      label: 'Klaim Diproses',
-      value: totalKlaim,
-      href: '/claims',
-      chip: 'bg-info-50 text-info-700',
-      icon: <ClipboardCheck size={16} aria-hidden="true" />,
-      empty: 'Tidak ada klaim menunggu.',
-    },
-  ];
+// ─── Panel "Perlu Tindakan" ─ HANYA dari data nyata API ───
+// Menggunakan konfigurasi actionItems dari constants.ts.
+// Semua nilai berasal dari DashboardData (API /reports/dashboard).
+// Jika semua 0 → empty state informatif, tanpa alarm berlebihan.
+function ActionPanel({ data }: { data: DashboardData }) {
+  const total = actionItems.reduce((sum, item) => sum + (Number(data[item.key]) || 0), 0);
 
-  const total = pendingValidasi + incompleteData + totalKlaim;
+  // Helper: map accent → border/hover classes (semantic, no rainbow)
+  const getBorderHover = (accent: string) => {
+    switch (accent) {
+      case 'error':
+        return 'border-border hover:border-error-300 dark:hover:border-error-800 hover:shadow-elegant-md';
+      case 'warning':
+        return 'border-border hover:border-warning-300 dark:hover:border-warning-800 hover:shadow-elegant-md';
+      case 'pending':
+        return 'border-border hover:border-warning-300 dark:hover:border-warning-800 hover:shadow-elegant-md';
+      case 'info':
+        return 'border-border hover:border-info-300 dark:hover:border-info-800 hover:shadow-elegant-md';
+      case 'success':
+        return 'border-border hover:border-success-300 dark:hover:border-success-800 hover:shadow-elegant-md';
+      default:
+        return 'border-border hover:border-border';
+    }
+  };
 
   return (
-    <section aria-label="Perlu perhatian" className="card-elegant p-5 sm:p-6">
+    <section aria-label="Perlu tindakan" className="card-elegant p-5 sm:p-6">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-text flex items-center gap-1.5">
           <AlertTriangle size={15} className="text-warning-600" aria-hidden="true" />
-          Perlu Perhatian
+          Perlu Tindakan
         </h2>
         <span className="text-2xs text-muted">
           {total > 0 ? `${total.toLocaleString('id-ID')} item menunggu` : 'Semua clear'}
         </span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {items.map((item) => (
-          <Link
-            key={item.key}
-            href={item.href}
-            className={`flex items-center gap-3 rounded-xl border p-3.5 transition ${
-              item.value > 0
-                ? 'border-border hover:border-warning-300 hover:shadow-elegant-md'
-                : 'border-border bg-surface-variant/40'
-            }`}
-          >
-            <span className={`p-2 rounded-lg shrink-0 ${item.chip}`}>{item.icon}</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted truncate">{item.label}</p>
-              {item.value > 0 ? (
-                <p className="text-xl font-bold text-text leading-6">
-                  {item.value.toLocaleString('id-ID')}
-                </p>
-              ) : (
-                <p className="text-xs text-success-600 font-medium mt-0.5">{item.empty}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {actionItems.map((item) => {
+          const value = Number(data[item.key]) || 0;
+          const Icon = item.icon;
+          const isEmpty = value === 0;
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-xl border p-3.5 transition ${
+                !isEmpty ? getBorderHover(item.accent) : 'border-border bg-surface-variant/40'
+              }`}
+            >
+              <span className={`p-2 rounded-lg shrink-0 ${ACTION_ICON_BG[item.accent]}`}>
+                <Icon size={16} className={ACTION_ICON_COLOR[item.accent]} aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted truncate">{item.label}</p>
+                {value > 0 ? (
+                  <>
+                    <p className="text-xl font-bold text-text leading-6">
+                      {value.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-[10px] text-muted mt-0.5 truncate">
+                      {item.detail}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-success-600 dark:text-success-400 font-medium mt-0.5">
+                    Tidak ada yang perlu ditindaklanjuti.
+                  </p>
+                )}
+              </div>
+              {!isEmpty && (
+                <ChevronRight size={16} className="text-muted shrink-0" aria-hidden="true" />
               )}
-            </div>
-            {item.value > 0 && (
-              <ChevronRight size={16} className="text-muted shrink-0" aria-hidden="true" />
-            )}
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
@@ -327,9 +342,14 @@ function ActivityScopedDashboard() {
 // ─── Page Component ───
 
 export default function DashboardPage() {
-  const { isActivityScoped } = useAuth();
+  const { user, isActivityScoped } = useAuth();
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [chartTab, setChartTab] = useState<'dues' | 'growth'>('dues');
+  const [growthData, setGrowthData] = useState<
+    Array<{ month: string; count: number; total: number; label: string }>
+  >([]);
+  const [growthLoading, setGrowthLoading] = useState(false);
 
   const fetchDashboard = useCallback(
     () =>
@@ -342,12 +362,60 @@ export default function DashboardPage() {
 
   const { data, loading, error, refetch } = useApi<DashboardData>(fetchDashboard, []);
 
+  const fetchGrowthData = useCallback(async () => {
+    setGrowthLoading(true);
+    try {
+      const res = await apiClient.get('/reports/chart/members-over-time');
+      const raw = (res.data?.data || res.data || []) as Array<{ month: string; count: number }>;
+      let cumulative = 0;
+      const formatted = raw.map((item) => {
+        cumulative += item.count;
+        const [year, month] = item.month.split('-');
+        const monthNames = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'Mei',
+          'Jun',
+          'Jul',
+          'Agu',
+          'Sep',
+          'Okt',
+          'Nov',
+          'Des',
+        ];
+        const mIndex = parseInt(month, 10) - 1;
+        const label = `${monthNames[mIndex] || month} '${year ? year.slice(2) : ''}`;
+        return {
+          ...item,
+          total: cumulative,
+          label,
+        };
+      });
+      setGrowthData(formatted);
+    } catch {
+      setGrowthData([]);
+    } finally {
+      setGrowthLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isActivityScoped) {
+      fetchGrowthData();
+    }
+  }, [isActivityScoped, fetchGrowthData]);
+
   // Auto-refresh every 60 seconds
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(refetch, 60000);
+    const interval = setInterval(() => {
+      refetch();
+      fetchGrowthData();
+    }, 60000);
     return () => clearInterval(interval);
-  }, [autoRefresh, refetch]);
+  }, [autoRefresh, refetch, fetchGrowthData]);
 
   // Activity-scoped roles get their own dashboard (AFTER all hooks)
   if (isActivityScoped) {
@@ -422,18 +490,22 @@ export default function DashboardPage() {
           aria-hidden="true"
           className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/25 blur-3xl"
         />
-        <div className="relative flex flex-wrap items-center gap-x-8 gap-y-3">
+        <div className="relative flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
           <div className="min-w-0">
             <p className="text-sm text-secondary-100/80">Selamat datang kembali,</p>
             <p className="text-lg font-bold truncate">
               {user?.namaLengkap || 'Anggota THS-THM'}
             </p>
-            <p className="mt-0.5 font-mono text-xs text-primary-100">No. {nomorAnggota}</p>
-          ) : null}
-          {!nomorAnggota && (
-            <p className="mt-0.5 text-xs text-primary-100/70">
-              Data keanggotaan Anda akan tampil di sini setelah terhubung.
+            <p className="mt-0.5 text-xs text-primary-100/80">
+              {user?.email || 'Sistem Informasi Manajemen THS-THM'}
             </p>
+          </div>
+          {user?.role && (
+            <div className="shrink-0">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white backdrop-blur-sm border border-white/20">
+                {user.role.replace('_', ' ').toUpperCase()}
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -479,12 +551,8 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* ── 4. PERLU PERHATIAN — hanya dari data nyata API ── */}
-      <AttentionPanel
-        pendingValidasi={Number(data.pendingValidasi) || 0}
-        incompleteData={Number(data.incompleteData) || 0}
-        totalKlaim={Number(data.totalKlaim) || 0}
-      />
+            {/* ── 4. PERLU TINDAKAN — hanya dari data nyata API ── */}
+      <ActionPanel data={data} />
 
       {/* ── 8 secondary statistics — strip kompak, tidak ada yang dihapus ── */}
       <section aria-label="Statistik lainnya">
@@ -523,27 +591,51 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* ── 5. CHARTS — Iuran 6 bulan + Status Keanggotaan ── */}
+      {/* ── 5. CHARTS — Iuran Bulanan / Pertumbuhan Anggota + Status Keanggotaan ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Bar Chart - Monthly Dues */}
+        {/* Main Chart Card with Tab Switcher */}
         <div className="lg:col-span-2 card-elegant p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-base font-semibold text-text">
-                Iuran 6 Bulan Terakhir
-              </h3>
-              <p className="text-xs text-muted mt-0.5">
-                Total iuran terkumpul per bulan
+              <div className="flex items-center gap-1.5 p-1 bg-surface-variant rounded-lg w-fit">
+                <button
+                  type="button"
+                  onClick={() => setChartTab('dues')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                    chartTab === 'dues'
+                      ? 'bg-surface text-primary shadow-elegant-sm'
+                      : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Iuran 6 Bulan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartTab('growth')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                    chartTab === 'growth'
+                      ? 'bg-surface text-primary shadow-elegant-sm'
+                      : 'text-muted hover:text-text'
+                  }`}
+                >
+                  Pertumbuhan Anggota
+                </button>
+              </div>
+              <p className="text-xs text-muted mt-1.5">
+                {chartTab === 'dues'
+                  ? 'Total iuran terkumpul per bulan'
+                  : 'Tren anggota baru dan total akumulasi'}
               </p>
             </div>
             <Link
-              href="/dues"
+              href={chartTab === 'dues' ? '/dues' : '/reports'}
               className="text-xs text-primary hover:underline flex items-center gap-0.5"
             >
               Detail <ChevronRight size={12} />
             </Link>
           </div>
-          {data.monthlyDues && data.monthlyDues.length > 0 ? (
+          {chartTab === 'dues' ? (
+            data.monthlyDues && data.monthlyDues.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={data.monthlyDues} margin={{ top: 5, right: 12, left: 12, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
@@ -591,7 +683,73 @@ export default function DashboardPage() {
             <div className="flex items-center justify-center h-56 text-sm text-muted">
               Belum ada data iuran
             </div>
-          )}
+          )
+        ) : growthLoading ? (
+          <ChartSkeleton height={240} />
+        ) : growthData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={growthData} margin={{ top: 5, right: 12, left: 12, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--chart-grid, #e5e7eb)' }}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => Number(v).toLocaleString('id-ID')}
+              />
+              <Tooltip
+                formatter={(value: number, name: string) => [
+                  `${value.toLocaleString('id-ID')} Anggota`,
+                  name,
+                ]}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid var(--tooltip-border)',
+                  background: 'var(--tooltip-bg)',
+                  color: 'var(--tooltip-color)',
+                  boxShadow: 'var(--tooltip-shadow)',
+                }}
+              />
+              <Legend
+                verticalAlign="bottom"
+                height={28}
+                iconType="circle"
+                iconSize={8}
+                formatter={(value) => (
+                  <span className="text-xs text-muted">{value}</span>
+                )}
+              />
+              <Line
+                type="monotone"
+                name="Anggota Baru"
+                dataKey="count"
+                stroke="var(--primary, #072AC8)"
+                strokeWidth={2}
+                dot={{ r: 3, fill: 'var(--primary, #072AC8)' }}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                name="Total Kumulatif"
+                dataKey="total"
+                stroke="var(--success, #1B7F4B)"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-56 text-sm text-muted">
+            Belum ada data pertumbuhan anggota
+          </div>
+        )}
         </div>
 
         {/* Right column - stacked */}
@@ -770,27 +928,28 @@ export default function DashboardPage() {
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-variant transition group"
-                >
-                  <div className="p-2 rounded-lg bg-primary-container group-hover:scale-105 transition-transform">
-                    <Icon size={16} className="text-primary" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text">
-                      {action.label}
-                    </p>
-                    <p className="text-xs text-muted truncate">
-                      {action.desc}
-                    </p>
-                  </div>
-                  <ChevronRight
-                    size={14}
-                    className="text-muted group-hover:text-primary transition"
-                  />
-                </Link>
+                <Can key={action.href} module={action.module} action={action.action}>
+                  <Link
+                    href={action.href}
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-variant transition group"
+                  >
+                    <div className="p-2 rounded-lg bg-primary-container group-hover:scale-105 transition-transform">
+                      <Icon size={16} className="text-primary" aria-hidden="true" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text">
+                        {action.label}
+                      </p>
+                      <p className="text-xs text-muted truncate">
+                        {action.desc}
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-muted group-hover:text-primary transition"
+                    />
+                  </Link>
+                </Can>
               );
             })}
           </div>

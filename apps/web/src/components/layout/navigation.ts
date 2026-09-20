@@ -168,7 +168,7 @@ export const menuGroups: MenuGroup[] = [
   {
     label: 'Konten Public',
     items: [
-      { href: '/content/berita', label: 'Berita', icon: BookOpen, minRole: 'superadmin' },
+      { href: '/content/berita', label: 'Berita', icon: BookOpen, minRole: 'admin_wilayah' },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
       { href: '/content/organisasi', label: 'Konten Web Organisasi', icon: Globe, minRole: 'superadmin' },
     ],

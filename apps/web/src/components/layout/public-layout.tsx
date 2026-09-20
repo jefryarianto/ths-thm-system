@@ -32,7 +32,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* ── Top Utility Bar ── */}
       <div className="bg-navy-900 text-white text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
@@ -65,8 +65,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
       {/* ── Main Navbar ── */}
       <nav aria-label="Navigasi utama"
-        className={`bg-white sticky top-0 z-50 transition-shadow duration-300 ${
-          scrolled ? 'shadow-lg' : 'shadow-sm'
+        className={`bg-surface sticky top-0 z-50 transition-shadow duration-300 ${
+          scrolled ? 'shadow-elegant-lg' : 'shadow-elegant-md'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -121,7 +121,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* ── Mobile Navigation Drawer ── */}
         {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-gray-100 bg-white animate-slide-down">
+          <div className="xl:hidden border-t border-gray-100 bg-surface animate-slide-down">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               {NAV_LINKS.map((link) => (
                 <Link

@@ -7,7 +7,10 @@ import { PermissionGuard } from '@/components/auth/permission-guard';
 import { useToast } from '@/components/ui/toast';
 import PageHeader from '@/components/ui/page-header';
 import PageContainer from '@/components/ui/page-container';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Upload } from 'lucide-react';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+
+
 
 export default function NewBeritaPage() {
   const router = useRouter();
@@ -20,6 +23,18 @@ export default function NewBeritaPage() {
   const [konten, setKonten] = useState('');
   const [slug, setSlug] = useState('');
   const [isVisible, setIsVisible] = useState(true);
+
+  // Gambar opsional — diupload setelah berita dibuat (endpoint upload butuh id)
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    if (preview) URL.revokeObjectURL(preview);
+    setFile(selected);
+    setPreview(selected ? URL.createObjectURL(selected) : null);
+  };
 
   const generateSlug = (text: string) => {
     return text
@@ -41,14 +56,35 @@ export default function NewBeritaPage() {
 
     setSaving(true);
     try {
-      await apiClient.post('/content/berita', {
+      const res = await apiClient.post('/content/berita', {
         judul,
         ringkasan,
         konten,
         slug,
         isVisible,
       });
-      toast('success', 'Berita berhasil dibuat');
+      const createdId: string | undefined = res.data?.data?.id;
+
+      // Upload gambar terpilih ke berita yang baru dibuat. Kegagalan upload
+      // tidak membatalkan berita — admin bisa menambah ulang gambar via edit.
+      if (file && createdId) {
+        setUploading(true);
+        try {
+          const formData = new FormData();
+          formData.append('image', file);
+          await apiClient.post(`/content/berita/${createdId}/image`, formData);
+          toast('success', 'Berita berhasil dibuat dengan gambar');
+        } catch (err) {
+          toast('error', extractErrorMessage(
+            err,
+            'Berita dibuat, tetapi gambar gagal diupload — tambahkan lewat halaman Edit',
+          ));
+        } finally {
+          setUploading(false);
+        }
+      } else {
+        toast('success', 'Berita berhasil dibuat');
+      }
       router.push('/content/berita');
     } catch (err) {
       toast('error', extractErrorMessage(err, 'Gagal membuat berita'));
@@ -93,6 +129,33 @@ export default function NewBeritaPage() {
             </button>
           </div>
 
+          {/* Image (opsional, diupload setelah berita dibuat) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gambar</label>
+            <div className="flex items-center gap-4">
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Preview gambar berita"
+                  className="w-32 h-32 object-cover rounded-lg border"
+                />
+              )}
+              <label className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <Upload size={16} />
+                <span className="text-sm">{file ? 'Ganti Gambar' : 'Pilih Gambar'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  disabled={uploading}
+                />
+              </label>
+              {uploading && <span className="text-sm text-gray-500">Mengupload...</span>}
+              <p className="text-sm text-gray-500">Opsional — gambar tampil di carousel landing.</p>
+            </div>
+          </div>
+
           {/* Form Fields */}
           <div className="grid gap-6">
             <div>
@@ -130,12 +193,11 @@ export default function NewBeritaPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Konten (HTML) *</label>
-              <textarea
+              <RichTextEditor
                 value={konten}
-                onChange={(e) => setKonten(e.target.value)}
-                rows={15}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Konten berita dalam format HTML..."
+                onChange={setKonten}
+                placeholder="Tulis konten berita di sini..."
+                className="min-h-[200px]"
               />
               <p className="mt-2 text-sm text-gray-500">
                 Format: Gunakan tag HTML seperti &lt;p&gt;, &lt;h2&gt;, &lt;ul&gt;, &lt;li&gt;, dll.
