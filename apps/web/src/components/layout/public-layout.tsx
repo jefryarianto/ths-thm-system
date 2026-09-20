@@ -38,11 +38,11 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
           <div className="flex items-center gap-4">
             <span className="hidden sm:flex items-center gap-1">
-              <Phone size={11} />
+              <Phone size={11} aria-hidden="true" className="shrink-0" />
               <span>THS-THM</span>
             </span>
             <span className="hidden md:flex items-center gap-1">
-              <Mail size={11} />
+              <Mail size={11} aria-hidden="true" className="shrink-0" />
               <span>info@ths-thm.cloud</span>
             </span>
           </div>
@@ -51,8 +51,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <button
               onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
               className="flex items-center gap-1 hover:text-accent-400 transition-colors"
+              aria-label={locale === 'id' ? 'Ganti bahasa ke Inggris' : 'Ganti bahasa ke Bahasa Indonesia'}
             >
-              <Globe size={12} />
+              <Globe size={12} aria-hidden="true" />
               <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
             </button>
             <Link href="/login" className="hover:text-accent-400 transition-colors">
@@ -63,7 +64,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       </div>
 
       {/* ── Main Navbar ── */}
-      <nav
+      <nav aria-label="Navigasi utama"
         className={`bg-white sticky top-0 z-50 transition-shadow duration-300 ${
           scrolled ? 'shadow-lg' : 'shadow-sm'
         }`}
@@ -153,7 +154,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         )}
       </nav>
 
-      <main>{children}</main>
+      <main id="main-content" className="flex-1">{children}</main>
 
       {/* ── Footer ── */}
       <footer className="bg-navy-900 text-white">
@@ -190,7 +191,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                       href={link.href}
                       className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1"
                     >
-                      <ChevronRight size={12} />
+                      <ChevronRight size={12} aria-hidden="true" />
                       {link.label}
                     </Link>
                   </li>
@@ -206,19 +207,19 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <ul className="space-y-2">
                 <li>
                   <Link href="/login" className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1">
-                    <ChevronRight size={12} />
+                    <ChevronRight size={12} aria-hidden="true" />
                     {t.nav.login}
                   </Link>
                 </li>
                 <li>
                   <Link href="/daftar" className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1">
-                    <ChevronRight size={12} />
+                    <ChevronRight size={12} aria-hidden="true" />
                     {t.nav.daftar}
                   </Link>
                 </li>
                 <li>
                   <Link href="/sejarah" className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1">
-                    <ChevronRight size={12} />
+                    <ChevronRight size={12} aria-hidden="true" />
                     {t.nav.sejarah}
                   </Link>
                 </li>
@@ -232,15 +233,15 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               </h4>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400/40" />
+                  <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400/40" aria-hidden="true" />
                   <span>Indonesia</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <Mail size={14} className="shrink-0 mt-0.5 text-gold-400/40" />
+                  <Mail size={14} className="shrink-0 mt-0.5 text-gold-400/40" aria-hidden="true" />
                   <span>info@ths-thm.cloud</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <Phone size={14} className="shrink-0 mt-0.5 text-gold-400/40" />
+                  <Phone size={14} className="shrink-0 mt-0.5 text-gold-400/40" aria-hidden="true" />
                   <span>THS-THM</span>
                 </li>
               </ul>

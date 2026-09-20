@@ -278,9 +278,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast: addToast, dismissToast }}>
       {children}
 
-      {/* Toast Container — center of screen */}
+      {/* Toast Container — center of screen (live region for screen readers) */}
       {toasts.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" role="status" aria-live="polite" aria-atomic="false">
           <div className="flex flex-col gap-3 max-w-sm w-full px-4 pointer-events-auto">
             {toasts.map((t) => (
               <ToastItem key={t.id} toast={t} onDismiss={dismissToast} />

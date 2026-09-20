@@ -16,7 +16,6 @@ import SummaryBar from '@/components/ui/summary-bar';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
 import {
-
   ACTIVITY_STATUS_COLORS,
   ACTIVITY_STATUS_OPTIONS,
   ACTIVITY_TIPE_OPTIONS,
@@ -87,7 +86,7 @@ export default function ActivitiesPage() {
         <CanCreate module="activities">
           <button
             onClick={() => router.push('/activities/new')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             <Plus size={14} /> Tambah
           </button>
@@ -148,7 +147,7 @@ export default function ActivitiesPage() {
               <span className="font-medium text-gray-900 dark:text-white">{row.nama}</span>
             </td>
             <td className="px-4 py-3 text-gray-600 dark:text-navy-400 hidden sm:table-cell">
-              <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+              <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
                 {row.tipe}
               </span>
             </td>

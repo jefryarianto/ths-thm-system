@@ -451,7 +451,7 @@ export default function BuktiPreviewModal({
           <div className="flex items-center gap-1">
             <button
               onClick={toggleFullscreen}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-navy-600 dark:text-navy-400 bg-navy-50 dark:bg-navy-950 border border-navy-200 dark:border-navy-700 rounded-lg hover:bg-navy-100 dark:hover:bg-navy-900 transition"
               title="Fullscreen (F)"
             >
               <Maximize2 size={12} /> Layar Penuh

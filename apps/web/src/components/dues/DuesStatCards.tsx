@@ -42,7 +42,7 @@ const cards = [
     key: 'iuranBulanIni',
     label: 'Iuran Bulan Ini',
     icon: TrendingUp,
-    color: 'bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400',
+    color: 'bg-navy-50 dark:bg-navy-950 text-navy-600 dark:text-navy-400',
     format: true,
   },
 ];

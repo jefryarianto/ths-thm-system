@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '@/lib/a11y';
 
 interface ModalProps {
   open: boolean;
@@ -18,6 +19,8 @@ const sizeClasses = {
 };
 
 const Modal = ({ open, onClose, title, children, size = 'md' }: ModalProps) => {
+  const modalRef = useFocusTrap(open) as React.RefObject<HTMLDivElement>;
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -40,17 +43,22 @@ const Modal = ({ open, onClose, title, children, size = 'md' }: ModalProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black bg-opacity-40 transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-black bg-opacity-40 transition-opacity" onClick={onClose} aria-hidden="true" />
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
         className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${sizeClasses[size]} mx-4 max-h-[85vh] flex flex-col`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+          <h3 id="modal-title" className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           <button
             onClick={onClose}
+            aria-label="Tutup modal"
             className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
         <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>

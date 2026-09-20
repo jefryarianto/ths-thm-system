@@ -89,6 +89,32 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* ── Keyboard focus visibility (WCAG 2.4.7, 2.4.11) ── */
+  :focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  .dark :focus-visible {
+    outline-color: #60a5fa;
+  }
+
+  /* ── Skip link (a11y, WCAG 2.4.1): tersembunyi sampai menerima fokus keyboard ── */
+  .skip-link {
+    position: absolute;
+    top: -48px;
+    left: 0;
+    z-index: 100;
+    padding: 8px 16px;
+    background: var(--navy-primary, #1A2E40);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
 }
 
 /* ── Theme transition ── */

@@ -41,8 +41,9 @@ export function ThemeToggle() {
       onClick={cycle}
       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition text-sm"
       title={`Tema: ${label}`}
+      aria-label={`Ganti tema. Saat ini: ${label}`}
     >
-      <Icon size={16} />
+      <Icon size={16} aria-hidden="true" />
       <span className="hidden sm:inline">{label}</span>
     </button>
   );

@@ -29,6 +29,7 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
       <button
         key={p}
         onClick={() => onPageChange(p)}
+        aria-current={p === page ? 'page' : undefined}
         className={`px-2.5 py-1 text-sm rounded-md ${
           p === page
             ? 'bg-blue-600 text-white'
@@ -47,17 +48,19 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
         <button
           onClick={handlePrev}
           disabled={page <= 1}
+          aria-label="Halaman sebelumnya"
           className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={16} aria-hidden="true" />
         </button>
         {renderPageNumbers()}
         <button
           onClick={handleNext}
           disabled={page >= totalPages}
+          aria-label="Halaman berikutnya"
           className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={16} aria-hidden="true" />
         </button>
       </div>
     </div>

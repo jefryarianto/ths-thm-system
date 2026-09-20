@@ -626,7 +626,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4">
+        <nav aria-label="Navigasi sidebar" className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-4">
           {/* Activity-scoped roles: show dynamic menu for assigned kegiatan */}
           {isActivityScoped && mounted && assignedKegiatan.length > 0 && (
             <div>
@@ -916,7 +916,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main id="main-content" className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
   );

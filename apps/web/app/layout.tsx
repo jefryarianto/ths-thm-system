@@ -33,6 +33,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="antialiased overflow-x-hidden">
+        {/* Skip link for keyboard navigation */}
+        <a href="#main-content" className="skip-link">
+          Menuju ke konten utama
+        </a>
         <ThemeProvider>
           <ToastProvider>
             <SessionProvider>

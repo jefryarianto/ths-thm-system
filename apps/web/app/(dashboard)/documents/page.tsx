@@ -206,7 +206,7 @@ export default function DocumentsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 hidden sm:table-cell">
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 capitalize">
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 capitalize">
                     {row.tipe}
                   </span>
                 </td>

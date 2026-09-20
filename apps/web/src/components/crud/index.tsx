@@ -247,10 +247,10 @@ interface MiniStatCardProps {
 const STAT_COLORS: Record<string, { bg: string; text: string }> = {
   blue: { bg: 'bg-blue-50 dark:bg-blue-950', text: 'text-blue-600 dark:text-blue-400' },
   green: { bg: 'bg-green-50 dark:bg-green-950', text: 'text-green-600 dark:text-green-400' },
-  purple: { bg: 'bg-purple-50 dark:bg-purple-950', text: 'text-purple-600 dark:text-purple-400' },
+  purple: { bg: 'bg-navy-50 dark:bg-navy-950', text: 'text-navy-600 dark:text-navy-400' },
   red: { bg: 'bg-red-50 dark:bg-red-950', text: 'text-red-600 dark:text-red-400' },
   yellow: { bg: 'bg-yellow-50 dark:bg-yellow-950', text: 'text-yellow-600 dark:text-yellow-400' },
-  orange: { bg: 'bg-orange-50 dark:bg-orange-950', text: 'text-orange-600 dark:text-orange-400' },
+  orange: { bg: 'bg-amber-50 dark:bg-amber-950', text: 'text-amber-600 dark:text-amber-400' },
 };
 
 export function MiniStatCard({ label, value, icon, color }: MiniStatCardProps) {

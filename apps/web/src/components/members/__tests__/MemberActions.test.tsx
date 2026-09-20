@@ -8,7 +8,7 @@ vi.mock('next/navigation', () => ({
 
 /** Helper: open the kebab menu (dropdown) so menu items render in the DOM */
 function openDropdown() {
-  fireEvent.click(screen.getByTitle('Menu lainnya'));
+  fireEvent.click(screen.getByRole('button', { name: 'Menu lainnya' }));
 }
 
 describe('MemberActions', () => {

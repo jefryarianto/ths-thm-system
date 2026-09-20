@@ -587,11 +587,11 @@ describe('StatCard', () => {
       expect(screen.getByText('Bulan ini')).toBeInTheDocument();
     });
 
-    it('renders purple stat card correctly', () => {
+    it('renders stat card with legacy purple color key (now navy palette) correctly', () => {
       const { container } = render(
         <StatCard label="Total Poin" value={5000} icon={<Shield size={20} />} color="purple" />,
       );
-      expect(container.querySelector('[class*="ring-purple"]')).toBeInTheDocument();
+      expect(container.querySelector('[class*="ring-navy"]')).toBeInTheDocument();
       expect(screen.getByText('Total Poin')).toBeInTheDocument();
       expect(screen.getByText('5000')).toBeInTheDocument();
     });

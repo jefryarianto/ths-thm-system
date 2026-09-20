@@ -58,7 +58,7 @@ export default function ScanTab({ scanStats, loading }: ScanTabProps) {
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
           <p className="text-xs text-gray-500">Dokumen Tersedia</p>
-          <p className="text-2xl font-bold text-purple-600">
+          <p className="text-2xl font-bold text-navy-600">
             {scanStats.totalDokumen.toLocaleString('id-ID')}
           </p>
         </div>

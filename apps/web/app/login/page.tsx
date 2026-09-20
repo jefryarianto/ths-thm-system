@@ -378,11 +378,11 @@ export default function LoginPage() {
           {googleOAuthEnabled && (
             <div className="mt-4">
               <div className="relative my-3 flex items-center justify-center">
-                <div className="w-full border-t border-[#E5E7EB]" />
-                <span className="bg-[#FAF9FF] px-3 text-xs font-medium uppercase tracking-wider text-[#667085] select-none">
+                <div className="h-px min-w-0 flex-1 border-t border-[#E5E7EB]" />
+                <span className="shrink-0 whitespace-nowrap bg-[#FAF9FF] px-3 text-xs font-medium uppercase tracking-wider text-[#667085] select-none">
                   Atau login dengan
                 </span>
-                <div className="w-full border-t border-[#E5E7EB]" />
+                <div className="h-px min-w-0 flex-1 border-t border-[#E5E7EB]" />
               </div>
 
               <a

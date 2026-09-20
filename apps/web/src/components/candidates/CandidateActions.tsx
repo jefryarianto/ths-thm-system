@@ -118,15 +118,19 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
             ref={buttonRef}
             onClick={toggleMenu}
             className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            aria-label={`Opsi ${candidate.namaLengkap}`}
+            aria-expanded={showMenu}
+            aria-haspopup="true"
           >
-            <MoreVertical size={14} className="text-gray-400" />
+            <MoreVertical size={14} className="text-gray-400" aria-hidden="true" />
           </button>
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} aria-hidden="true" />
               <div
                 style={menuStyle}
                 className="w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1"
+                role="menu"
               >
                 {menuItems.map((item, i) => (
                   <button
@@ -136,8 +140,9 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
                     className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 ${
                       item.danger ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
                     } ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    role="menuitem"
                   >
-                    <item.icon size={14} />
+                    <item.icon size={14} aria-hidden="true" />
                     {item.label}
                   </button>
                 ))}

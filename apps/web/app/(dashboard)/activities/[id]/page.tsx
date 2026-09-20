@@ -221,11 +221,11 @@ export default function ActivityDetailPage() {
                       </Link>
                       <button
                         onClick={() => setShowDeleteModal(true)}
-                        title="Hapus"
-                        aria-label="Hapus"
+                        title="Hapus kegiatan"
+                        aria-label="Hapus kegiatan"
                         className="p-2 rounded-lg border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={15} aria-hidden="true" />
                       </button>
                     </div>
                   </div>

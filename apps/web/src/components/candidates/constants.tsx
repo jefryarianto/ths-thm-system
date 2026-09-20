@@ -5,7 +5,7 @@ export const STATUS_STYLES: Record<string, string> = {
   diusulkan:
     'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
   mengikuti_pendadaran:
-    'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800',
+    'bg-navy-100 dark:bg-navy-950 text-navy-700 dark:text-navy-400 border-navy-200 dark:border-navy-800',
   lulus:
     'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
   gagal:

@@ -244,7 +244,7 @@ export default function EditActivityPage() {
                     disabled={saving}
                     className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
-                    <Save size={16} />
+                    <Save size={16} aria-hidden="true" />
                     {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                   </button>
                 </div>
