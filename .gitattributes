@@ -4,3 +4,17 @@
 *.sh text eol=lf
 
 .ps1 text eol=crlf
+
+# ── Artefak kontrak API (output generator) — wajib LF ──
+# Regenerator selalu menulis LF; tanpa aturan ini checkout Windows (core.autocrlf=true)
+# menimpanya menjadi CRLF sehingga file kontrak tampak "modified" permanen di
+# git status (diff kosong) dan mengganggu gate kontrak di CI.
+apps/api/swagger.json text eol=lf
+apps/web/src/types/api.d.ts text eol=lf
+
+# ── Kode web — LF agar diff bersih lintas OS ──
+apps/web/**/*.ts text eol=lf
+apps/web/**/*.tsx text eol=lf
+apps/web/**/*.js text eol=lf
+apps/web/**/*.css text eol=lf
+apps/web/**/*.json text eol=lf
