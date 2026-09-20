@@ -15,12 +15,18 @@ import {
   History,
 } from 'lucide-react';
 
+/**
+ * Warna chart Command Center — HANYA dari semantic tokens Tahap 1.
+ * - Aktif/Sukses → Success #1B7F4B · Nonaktif/Pending → Warning #8A6200
+ * - Navigasi/pindah → Info #2B63E6 · Keluar/destruktif → Error #BA1A1A
+ * - Netral → Border-dark #334155 (tetap terbaca di dua tema)
+ */
 export const STATUS_COLORS: Record<string, string> = {
-  aktif: '#22c55e',
-  nonaktif: '#eab308',
-  pindah: '#3b82f6',
-  keluar: '#ef4444',
-  meninggal: '#6b7280',
+  aktif: '#1B7F4B',
+  nonaktif: '#8A6200',
+  pindah: '#2B63E6',
+  keluar: '#BA1A1A',
+  meninggal: '#334155',
 };
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -140,6 +146,12 @@ export function formatTime(dateStr: string) {
   return `${days}h lalu`;
 }
 
+/**
+ * Command Center: 4 PRIMARY KPI (hero) + 8 SECONDARY (strip kompak).
+ * `color`/`accent`: kunci colorMap — warna semantik saja
+ * (primary, success, warning, error, info, + slate netral).
+ * Tidak ada 12 warna berbeda.
+ */
 export const statConfigs = [
   {
     key: 'totalMembers' as const,
@@ -156,35 +168,6 @@ export const statConfigs = [
     href: '/candidates',
   },
   {
-    key: 'totalGraduated' as const,
-    label: 'Lulus Pendadaran',
-    icon: GraduationCap,
-    color: 'green' as const,
-    href: '/graduations',
-  },
-  {
-    key: 'totalDuesCollected' as const,
-    label: 'Iuran Terkumpul',
-    icon: CreditCard,
-    color: 'yellow' as const,
-    isCurrency: true,
-    href: '/dues',
-  },
-  {
-    key: 'pendingValidasi' as const,
-    label: 'Menunggu Validasi',
-    icon: AlertCircle,
-    color: 'orange' as const,
-    href: '/members',
-  },
-  {
-    key: 'incompleteData' as const,
-    label: 'Data Tidak Lengkap',
-    icon: AlertCircle,
-    color: 'red' as const,
-    href: '/members/incomplete',
-  },
-  {
     key: 'totalKegiatan' as const,
     label: 'Kegiatan Aktif',
     icon: Calendar,
@@ -192,38 +175,75 @@ export const statConfigs = [
     href: '/activities',
   },
   {
+    key: 'totalDuesCollected' as const,
+    label: 'Iuran Terkumpul',
+    icon: CreditCard,
+    color: 'green' as const,
+    isCurrency: true,
+    href: '/dues',
+  },
+];
+
+/**
+ * Secondary statistics — strip kompak 8 item. TIDAK dihapus,
+ * divisualkan sebagai indikator ringkas (nilai + label + link).
+ * `accent`: primary | success | warning | error | info | slate.
+ */
+export const secondaryStats = [
+  {
+    key: 'totalGraduated' as const,
+    label: 'Lulus Pendadaran',
+    icon: GraduationCap,
+    accent: 'success' as const,
+    href: '/graduations',
+  },
+  {
+    key: 'pendingValidasi' as const,
+    label: 'Pending Validasi',
+    icon: AlertCircle,
+    accent: 'warning' as const,
+    href: '/members',
+  },
+  {
+    key: 'incompleteData' as const,
+    label: 'Data Tidak Lengkap',
+    icon: AlertCircle,
+    accent: 'error' as const,
+    href: '/members/incomplete',
+  },
+  {
     key: 'totalLatihan' as const,
     label: 'Total Latihan',
     icon: Dumbbell,
-    color: 'teal' as const,
+    accent: 'info' as const,
     href: '/trainings',
   },
   {
     key: 'totalKlaim' as const,
     label: 'Klaim Diproses',
     icon: ClipboardCheck,
-    color: 'pink' as const,
+    accent: 'warning' as const,
     href: '/claims',
   },
   {
     key: 'totalDokumen' as const,
-    label: 'Dokumen Tersedia',
+    label: 'Dokumen',
     icon: FileText,
-    color: 'cyan' as const,
+    accent: 'info' as const,
     href: '/documents',
   },
   {
     key: 'totalPendaftaran' as const,
     label: 'Pendaftaran Baru',
     icon: UserPlus,
-    color: 'amber' as const,
+    accent: 'primary' as const,
     href: '/registrations',
   },
   {
     key: 'totalUsers' as const,
     label: 'Total Pengguna',
     icon: Shield,
-    color: 'slate' as const,
+    accent: 'slate' as const,
     href: '/users',
   },
 ];
