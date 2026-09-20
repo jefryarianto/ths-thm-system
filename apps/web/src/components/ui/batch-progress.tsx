@@ -22,19 +22,19 @@ import apiClient from '@/lib/api-client';
 // ─── Status Helpers ───
 
 const PROGRESS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-400',
-  processing: 'bg-blue-500 animate-pulse',
-  completed: 'bg-green-500',
-  completed_with_errors: 'bg-orange-500',
-  cancelled: 'bg-gray-400',
+  pending: 'bg-warning-400',
+  processing: 'bg-info-500 animate-pulse',
+  completed: 'bg-success-500',
+  completed_with_errors: 'bg-warning-500',
+  cancelled: 'bg-muted',
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  pending: <Clock size={16} className="text-yellow-600" />,
-  processing: <Loader2 size={16} className="text-blue-600 animate-spin" />,
-  completed: <CheckCircle2 size={16} className="text-green-600" />,
-  completed_with_errors: <AlertTriangle size={16} className="text-orange-600" />,
-  cancelled: <XCircle size={16} className="text-gray-500 dark:text-gray-400" />,
+  pending: <Clock size={16} className="text-warning-600" />,
+  processing: <Loader2 size={16} className="text-info-600 animate-spin" />,
+  completed: <CheckCircle2 size={16} className="text-success" />,
+  completed_with_errors: <AlertTriangle size={16} className="text-warning-600" />,
+  cancelled: <XCircle size={16} className="text-muted" />,
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -46,29 +46,29 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const JOB_STATUS_ICONS: Record<string, React.ReactNode> = {
-  pending: <Clock size={14} className="text-gray-400 dark:text-gray-500" />,
-  processing: <Loader2 size={14} className="text-blue-500 animate-spin" />,
-  completed: <CheckCircle2 size={14} className="text-green-500" />,
-  failed: <XCircle size={14} className="text-red-500" />,
+  pending: <Clock size={14} className="text-muted" />,
+  processing: <Loader2 size={14} className="text-primary animate-spin" />,
+  completed: <CheckCircle2 size={14} className="text-success-500" />,
+  failed: <XCircle size={14} className="text-error-500" />,
 };
 
 // ─── Single Job Row ───
 
 function JobRow({ job }: { job: BatchJobItem }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2 text-xs border-b border-gray-50 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors rounded-sm">
+    <div className="flex items-center gap-3 px-3 py-2 text-xs border-b border-border last:border-0 hover:bg-surface-variant/30 transition-colors rounded-sm">
       <span className="shrink-0">{JOB_STATUS_ICONS[job.status]}</span>
-      <span className="font-mono text-gray-500 dark:text-gray-400 truncate min-w-0 flex-1">
+      <span className="font-mono text-muted truncate min-w-0 flex-1">
         {job.nomorDokumen || '-'}
       </span>
-      <span className="text-gray-400 dark:text-gray-500">{job.memberId.slice(0, 8)}...</span>
+      <span className="text-muted">{job.memberId.slice(0, 8)}...</span>
       {job.error && (
-        <span className="text-red-500 truncate max-w-[200px]" title={job.error}>
+        <span className="text-error-500 truncate max-w-[200px]" title={job.error}>
           {job.error}
         </span>
       )}
       {job.retryCount > 0 && (
-        <span className="text-yellow-600 font-medium shrink-0">
+        <span className="text-warning-600 font-medium shrink-0">
           retry {job.retryCount}x
         </span>
       )}
@@ -95,27 +95,27 @@ function ProgressBar({
   const isIndeterminate = status === 'processing' && completed === 0 && failed === 0;
 
   return (
-    <div className="relative h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div className="relative h-2.5 bg-surface-variant rounded-full overflow-hidden">
       {/* Completed segment */}
       <div
-        className="absolute inset-y-0 left-0 bg-green-500 rounded-full transition-all duration-500 ease-out"
+        className="absolute inset-y-0 left-0 bg-success-500 rounded-full transition-all duration-500 ease-out"
         style={{ width: `${isIndeterminate ? 30 : pctComplete}%` }}
       />
       {/* Failed segment */}
       {pctFailed > 0 && (
         <div
-          className="absolute inset-y-0 bg-red-500 transition-all duration-500 ease-out"
+          className="absolute inset-y-0 bg-error-500 transition-all duration-500 ease-out"
           style={{ left: `${pctComplete}%`, width: `${pctFailed}%` }}
         />
       )}
       {/* Remaining segment */}
       <div
-        className="absolute inset-y-0 right-0 bg-gray-200 dark:bg-gray-600 rounded-full transition-all duration-500 ease-out"
+        className="absolute inset-y-0 right-0 bg-surface-variant rounded-full transition-all duration-500 ease-out"
         style={{ width: `${pctRemaining}%` }}
       />
       {/* Indeterminate animation for processing with 0 progress */}
       {isIndeterminate && (
-        <div className="absolute inset-y-0 w-1/3 bg-blue-400/50 rounded-full animate-pulse" />
+        <div className="absolute inset-y-0 w-1/3 bg-info-400/50 rounded-full animate-pulse" />
       )}
     </div>
   );
@@ -190,15 +190,15 @@ export function BatchProgressCard({
   if (loading && !progress) {
     return (
       <div
-        className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 ${
+        className={`bg-surface rounded-xl border border-border shadow-sm p-5 ${
           elevated ? 'shadow-xl' : ''
         }`}
       >
         <div className="flex items-center gap-3 animate-pulse">
-          <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
+          <div className="w-10 h-10 rounded-lg bg-surface-variant" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+            <div className="h-4 bg-surface-variant rounded w-3/4" />
+            <div className="h-3 bg-surface-variant rounded w-1/2" />
           </div>
         </div>
       </div>
@@ -208,17 +208,17 @@ export function BatchProgressCard({
   // ── Error state ──
   if (error && !progress) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-800 shadow-sm p-5">
+      <div className="bg-surface rounded-xl border border-error-200 dark:border-error-800 shadow-sm p-5">
         <div className="flex items-start gap-3">
-          <AlertTriangle size={20} className="text-red-500 shrink-0 mt-0.5" />
+          <AlertTriangle size={20} className="text-error-500 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-red-700 dark:text-red-400">
+            <p className="text-sm font-medium text-error-700 dark:text-error-400">
               Gagal memuat progress
             </p>
-            <p className="text-xs text-red-500 dark:text-red-400 mt-1">{error}</p>
+            <p className="text-xs text-error-500 dark:text-error-400 mt-1">{error}</p>
             <button
               onClick={refetch}
-              className="flex items-center gap-1.5 mt-3 text-xs text-blue-600 hover:text-blue-700 transition"
+              className="flex items-center gap-1.5 mt-3 text-xs text-link hover:text-link-dark transition"
             >
               <RefreshCw size={12} />
               Coba Lagi
@@ -239,14 +239,14 @@ export function BatchProgressCard({
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-xl border transition-shadow ${
+      className={`bg-surface rounded-xl border transition-shadow ${
         progress.status === 'processing'
-          ? 'border-blue-200 dark:border-blue-800 shadow-md shadow-blue-100 dark:shadow-blue-950'
+          ? 'border-primary-200 dark:border-primary-800 shadow-md shadow-primary-100 dark:shadow-primary-950'
           : progress.status === 'completed'
-            ? 'border-green-200 dark:border-green-800'
+            ? 'border-success-200 dark:border-success-800'
             : hasFailed
-              ? 'border-orange-200 dark:border-orange-800'
-              : 'border-gray-200 dark:border-gray-700'
+              ? 'border-warning-200 dark:border-warning-800'
+              : 'border-border'
       } ${elevated ? 'shadow-xl' : 'shadow-sm'}`}
     >
       {/* Header */}
@@ -257,31 +257,31 @@ export function BatchProgressCard({
             <div
               className={`p-2.5 rounded-lg shrink-0 ${
                 progress.status === 'completed'
-                  ? 'bg-green-50 dark:bg-green-950'
+                  ? 'bg-success-50 dark:bg-success-950'
                   : hasFailed
-                    ? 'bg-orange-50 dark:bg-orange-950'
-                    : 'bg-blue-50 dark:bg-blue-950'
+                    ? 'bg-warning-50 dark:bg-warning-950'
+                    : 'bg-info-50 dark:bg-info-950'
               }`}
             >
               <FileText
                 size={18}
                 className={
                   progress.status === 'completed'
-                    ? 'text-green-600 dark:text-green-400'
+                    ? 'text-success dark:text-success-400'
                     : hasFailed
-                      ? 'text-orange-600 dark:text-orange-400'
-                      : 'text-blue-600 dark:text-blue-400'
+                      ? 'text-warning-600 dark:text-warning-400'
+                      : 'text-primary'
                 }
               />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                <h4 className="text-sm font-semibold text-text">
                   {formatBatchType(detail.type)}
                 </h4>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border"
                   style={{
-                    borderColor: PROGRESS_COLORS[progress.status] || 'bg-gray-400',
+                    borderColor: PROGRESS_COLORS[progress.status] || 'bg-muted',
                     backgroundColor: `${PROGRESS_COLORS[progress.status]}15`,
                   }}
                 >
@@ -289,7 +289,7 @@ export function BatchProgressCard({
                   {STATUS_LABELS[progress.status] || progress.status}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-muted mt-1">
                 {jobSummary}
               </p>
             </div>
@@ -299,7 +299,7 @@ export function BatchProgressCard({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={refetch}
-              className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition"
+              className="p-1.5 text-muted hover:text-text hover:bg-surface-variant rounded-md transition"
               title="Refresh"
             >
               <RefreshCw size={14} />
@@ -322,27 +322,27 @@ export function BatchProgressCard({
           <StatBox
             label="Total"
             value={progress.total}
-            color="text-gray-900 dark:text-white"
+            color="text-text"
           />
           <StatBox
             label="Berhasil"
             value={progress.completed}
-            color="text-green-600 dark:text-green-400"
+            color="text-success dark:text-success-400"
           />
           <StatBox
             label="Gagal"
             value={progress.failed}
-            color={progress.failed > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}
+            color={progress.failed > 0 ? 'text-error-600 dark:text-error-400' : 'text-muted'}
           />
           <StatBox
             label="Progress"
             value={`${progress.progress}%`}
-            color="text-blue-600 dark:text-blue-400"
+            color="text-primary"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
           {canCancel && (
             <button
               onClick={async () => {
@@ -354,7 +354,7 @@ export function BatchProgressCard({
                 }
               }}
               disabled={cancelling}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-error-600 dark:text-error-400 border border-error-200 dark:border-error-800 rounded-lg hover:bg-error-50 dark:hover:bg-error-950 transition disabled:opacity-50"
             >
               {cancelling ? (
                 <Loader2 size={12} className="animate-spin" />
@@ -368,7 +368,7 @@ export function BatchProgressCard({
           {canRetry && (
             <button
               onClick={retryFailed}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-warning-600 dark:text-warning-400 border border-warning-200 dark:border-warning-800 rounded-lg hover:bg-warning-50 dark:hover:bg-warning-950 transition"
             >
               <RotateCcw size={12} />
               Ulangi {progress.failed} Gagal
@@ -379,7 +379,7 @@ export function BatchProgressCard({
             <button
               onClick={downloadCsv}
               disabled={downloading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary border border-primary-200 dark:border-primary-800 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950 transition disabled:opacity-50"
             >
               {downloading ? (
                 <Loader2 size={12} className="animate-spin" />
@@ -391,7 +391,7 @@ export function BatchProgressCard({
           )}
 
           {isFinal && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">
+            <span className="text-xs text-muted ml-auto">
               {progress.status === 'completed'
                 ? `${progress.completed} dokumen berhasil digenerate`
                 : progress.status === 'cancelled'
@@ -404,7 +404,7 @@ export function BatchProgressCard({
           {detail.jobs.length > 0 && !compact && (
             <button
               onClick={() => setShowJobs(!showJobs)}
-              className="flex items-center gap-1 ml-auto text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition"
+              className="flex items-center gap-1 ml-auto text-xs text-muted hover:text-text transition"
             >
               {showJobs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               {detail.jobs.length} job
@@ -415,9 +415,9 @@ export function BatchProgressCard({
 
       {/* ── Expandable Job List ── */}
       {showJobs && !compact && (
-        <div className="border-t border-gray-100 dark:border-gray-700">
-          <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
-            <div className="flex items-center gap-3 text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        <div className="border-t border-border">
+          <div className="px-3 py-2 bg-surface-variant">
+            <div className="flex items-center gap-3 text-[11px] font-medium text-muted uppercase tracking-wider">
               <span className="w-4" />
               <span className="flex-1">Nomor Dokumen</span>
               <span>Member ID</span>
@@ -425,7 +425,7 @@ export function BatchProgressCard({
               <span className="w-12 text-right">Retry</span>
             </div>
           </div>
-          <div className="max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-800">
+          <div className="max-h-64 overflow-y-auto divide-y divide-border">
             {detail.jobs.map((job) => (
               <JobRow key={job.id} job={job} />
             ))}
@@ -450,7 +450,7 @@ function StatBox({
   return (
     <div className="text-center">
       <p className={`text-sm font-bold ${color}`}>{value}</p>
-      <p className="text-[11px] text-gray-400 dark:text-gray-500">{label}</p>
+      <p className="text-[11px] text-muted">{label}</p>
     </div>
   );
 }

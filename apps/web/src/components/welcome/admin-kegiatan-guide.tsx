@@ -15,12 +15,12 @@ interface GuideStep {
 
 const steps: GuideStep[] = [
   {
-    icon: <GraduationCap className='h-6 w-6 text-blue-600' />,
+    icon: <GraduationCap className='h-6 w-6 text-primary' />,
     title: 'Kelola Pendadaran',
     description: 'Buat dan kelola jadwal pendadaran. Tetapkan admin kegiatan, tentukan kriteria ujian, dan pantau progres peserta.',
   },
   {
-    icon: <Users className='h-6 w-6 text-emerald-600' />,
+    icon: <Users className='h-6 w-6 text-success' />,
     title: 'Daftarkan Calon Anggota',
     description: 'Masukkan data calon anggota yang akan mengikuti pendadaran. Import dari Excel atau input manual.',
   },
@@ -30,12 +30,12 @@ const steps: GuideStep[] = [
     description: 'Pilih penguji dari anggota yang hadir di lokasi pendadaran. Pengajuan akan disetujui oleh admin distrik.',
   },
   {
-    icon: <FileText className='h-6 w-6 text-orange-600' />,
+    icon: <FileText className='h-6 w-6 text-warning' />,
     title: 'Atur Ujian Praktek',
     description: 'Buat ujian, tentukan item penilaian, dan assign penguji untuk menilai setiap calon anggota.',
   },
   {
-    icon: <Calendar className='h-6 w-6 text-red-600' />,
+    icon: <Calendar className='h-6 w-6 text-error' />,
     title: 'Pantau Progres',
     description: 'Lihat status kehadiran, skor penguji, dan hasil validasi secara real-time dari dashboard.',
   },
@@ -66,30 +66,30 @@ export default function AdminKegiatanWelcome() {
   return (
     <Modal open={open} onClose={handleClose} title='Selamat Datang, Admin Kegiatan!' size='lg'>
       <div className='space-y-4'>
-        <p className='text-sm text-gray-600 dark:text-gray-400'>
+        <p className='text-sm text-muted'>
           Anda ditugaskan sebagai <strong>Admin Kegiatan</strong>. Berikut panduan cepat untuk memulai:
         </p>
 
         <div className='space-y-3'>
           {steps.map((step, i) => (
-            <div key={i} className='flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800'>
+            <div key={i} className='flex items-start gap-3 p-3 rounded-lg bg-surface-variant'>
               <div className='shrink-0 mt-0.5'>{step.icon}</div>
               <div>
-                <h4 className='text-sm font-semibold text-gray-900 dark:text-white'>{step.title}</h4>
-                <p className='text-xs text-gray-600 dark:text-gray-400 mt-0.5'>{step.description}</p>
+                <h4 className='text-sm font-semibold text-text'>{step.title}</h4>
+                <p className='text-xs text-muted mt-0.5'>{step.description}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <div className='p-3 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800'>
-          <p className='text-xs text-blue-700 dark:text-blue-300'>
+        <div className='p-3 rounded-lg bg-info-50 dark:bg-info-950 border border-info-200 dark:border-info-800'>
+          <p className='text-xs text-info-700 dark:text-info-300'>
             <strong>Menu Anda:</strong> Dashboard, Calon, Pendadaran, Penguji, Penilaian, Dokumen, Iuran, Forum, Notifikasi
           </p>
         </div>
 
         <div className='flex justify-end'>
-          <button onClick={handleClose} className='px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700'>
+          <button onClick={handleClose} className='px-4 py-2 bg-success text-white rounded-lg text-sm font-medium hover:bg-success-700'>
             Mulai Bekerja <ChevronRight className='inline h-4 w-4 ml-1' />
           </button>
         </div>

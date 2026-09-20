@@ -93,7 +93,7 @@ export default function ExportMenu({
       <button
         onClick={() => setOpen(!open)}
         disabled={disabled || !hasExport}
-        className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-2 bg-surface border border-border text-text rounded-lg text-sm hover:bg-surface-variant disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <Download size={14} />
         {label}
@@ -104,29 +104,29 @@ export default function ExportMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden animate-fade-in-up">
+        <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-surface border border-border rounded-xl shadow-lg overflow-hidden animate-fade-in-up">
           <div className="p-1">
             <button
               onClick={() => handleExport('xlsx')}
               disabled={loading !== null}
-              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-text hover:bg-surface-variant transition disabled:opacity-50"
             >
               {loading === 'xlsx' ? (
-                <Loader2 size={16} className="animate-spin text-blue-500" />
+                <Loader2 size={16} className="animate-spin text-primary" />
               ) : (
-                <FileSpreadsheet size={16} className="text-green-600" />
+                <FileSpreadsheet size={16} className="text-success" />
               )}
               <span>Excel (.xlsx)</span>
             </button>
             <button
               onClick={() => handleExport('csv')}
               disabled={loading !== null}
-              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition disabled:opacity-50"
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm text-text hover:bg-surface-variant transition disabled:opacity-50"
             >
               {loading === 'csv' ? (
-                <Loader2 size={16} className="animate-spin text-blue-500" />
+                <Loader2 size={16} className="animate-spin text-primary" />
               ) : (
-                <FileText size={16} className="text-blue-600" />
+                <FileText size={16} className="text-primary" />
               )}
               <span>CSV (.csv)</span>
             </button>

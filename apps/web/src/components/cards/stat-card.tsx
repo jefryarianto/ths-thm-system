@@ -25,44 +25,44 @@ interface StatCardProps {
 
 const colorMap: Record<string, { icon: string; bg: string; ring: string }> = {
   blue: {
-    icon: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    ring: 'ring-blue-100 dark:ring-blue-800',
+    icon: 'text-primary dark:text-primary-300',
+    bg: 'bg-primary-50 dark:bg-primary-950',
+    ring: 'ring-primary-100 dark:ring-primary-800',
   },
   green: {
-    icon: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-50 dark:bg-green-950',
-    ring: 'ring-green-100 dark:ring-green-800',
+    icon: 'text-success-600 dark:text-success-400',
+    bg: 'bg-success-50 dark:bg-success-950',
+    ring: 'ring-success-100 dark:ring-success-800',
   },
   yellow: {
-    icon: 'text-yellow-600 dark:text-yellow-400',
-    bg: 'bg-yellow-50 dark:bg-yellow-950',
-    ring: 'ring-yellow-100 dark:ring-yellow-800',
+    icon: 'text-warning-600 dark:text-warning-400',
+    bg: 'bg-warning-50 dark:bg-warning-950',
+    ring: 'ring-warning-100 dark:ring-warning-800',
   },
   red: {
-    icon: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-950',
-    ring: 'ring-red-100 dark:ring-red-800',
+    icon: 'text-error-600 dark:text-error-400',
+    bg: 'bg-error-50 dark:bg-error-950',
+    ring: 'ring-error-100 dark:ring-error-800',
   },
   purple: {
-    icon: 'text-navy-600 dark:text-navy-400',
-    bg: 'bg-navy-50 dark:bg-navy-950',
-    ring: 'ring-navy-100 dark:ring-navy-800',
+    icon: 'text-secondary-600 dark:text-secondary-400',
+    bg: 'bg-secondary-50 dark:bg-secondary-950',
+    ring: 'ring-secondary-100 dark:ring-secondary-800',
   },
   orange: {
-    icon: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-950',
-    ring: 'ring-amber-100 dark:ring-amber-800',
+    icon: 'text-warning dark:text-warning-300',
+    bg: 'bg-warning-50 dark:bg-warning-950',
+    ring: 'ring-warning-100 dark:ring-warning-800',
   },
   indigo: {
-    icon: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    ring: 'ring-blue-100 dark:ring-blue-800',
+    icon: 'text-primary dark:text-primary-300',
+    bg: 'bg-primary-50 dark:bg-primary-950',
+    ring: 'ring-primary-100 dark:ring-primary-800',
   },
   teal: {
-    icon: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-50 dark:bg-green-950',
-    ring: 'ring-green-100 dark:ring-green-800',
+    icon: 'text-success-600 dark:text-success-400',
+    bg: 'bg-success-50 dark:bg-success-950',
+    ring: 'ring-success-100 dark:ring-success-800',
   },
   pink: {
     icon: 'text-gold-600 dark:text-gold-400',
@@ -70,19 +70,19 @@ const colorMap: Record<string, { icon: string; bg: string; ring: string }> = {
     ring: 'ring-gold-100 dark:ring-gold-800',
   },
   cyan: {
-    icon: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    ring: 'ring-blue-100 dark:ring-blue-800',
+    icon: 'text-primary dark:text-primary-300',
+    bg: 'bg-primary-50 dark:bg-primary-950',
+    ring: 'ring-primary-100 dark:ring-primary-800',
   },
   amber: {
-    icon: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-950',
-    ring: 'ring-amber-100 dark:ring-amber-800',
+    icon: 'text-warning dark:text-warning-300',
+    bg: 'bg-warning-50 dark:bg-warning-950',
+    ring: 'ring-warning-100 dark:ring-warning-800',
   },
   slate: {
-    icon: 'text-gray-600 dark:text-gray-400',
-    bg: 'bg-gray-50 dark:bg-gray-800',
-    ring: 'ring-gray-100 dark:ring-gray-700',
+    icon: 'text-muted',
+    bg: 'bg-surface-variant',
+    ring: 'ring-border',
   },
 };
 
@@ -98,25 +98,25 @@ const StatCard = ({
 
   if (variant === 'mini') {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex items-center gap-3">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-4 flex items-center gap-3">
         <div className={`p-2.5 rounded-lg ${styles.bg} ${styles.ring} ring-1`}>
           <span className={styles.icon}>{icon}</span>
         </div>
         <div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{value}</p>
+          <p className="text-xs text-muted">{label}</p>
+          <p className="text-lg font-bold text-text">{value}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 hover:shadow-md transition-shadow">
+    <div className="bg-surface rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
-          {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
+          <p className="text-sm font-medium text-muted">{label}</p>
+          <p className="text-2xl font-bold text-text mt-1">{value}</p>
+          {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
         </div>
         <div className={`p-3 rounded-xl ring-1 ${styles.ring} ${styles.bg}`}>
           <span className={styles.icon}>{icon}</span>

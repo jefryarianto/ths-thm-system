@@ -54,34 +54,70 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* ── THS-THM Design Tokens (semantic) ─────────────────────────
+       Var-flip: nilai otomatis berubah saat mode gelap (.dark).
+       Format RGB-triplet (mendukung alpha modifier Tailwind).
+       Skala tailwind lengkap ada di tailwind.config.js.          */
+    --background: 248 249 252;      /* #F8F9FC */
+    --surface: 255 255 255;         /* #FFFFFF */
+    --surface-variant: 241 243 248; /* #F1F3F8 */
+    --border: 211 218 232;          /* #D3DAE8 */
+    --text: 13 24 48;               /* #0D1830 */
+    --muted: 72 101 129;            /* #486581 */
+    /* Aksi & status (light) */
+    --primary: #072AC8;
+    --primary-hover: #0625B2;
+    --primary-container: 221 228 255;   /* #DDE4FF */
+    --on-primary-container: 4 22 104;   /* #041668 */
+    --secondary: #06154F;
+    --info: #2B63E6;
+    --link: #1E5BFF;
+    --success: #1B7F4B;
+    --success-container: #D2EDDE;
+    --warning: #8A6200;
+    --warning-container: #F6E9C3;
+    --error: #BA1A1A;
+    --error-container: #F5D6D6;
+
+    /* ── Legacy vars (dipakai chart tooltip di banyak halaman) ── */
     --tooltip-bg: #ffffff;
     --tooltip-border: #e5e7eb;
     --tooltip-color: #111827;
     --tooltip-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    /* ── THS-THM Sacred Palette ── */
-    --navy-primary: #1A2E40;
-    --navy-dark: #102a43;
-    --gold-primary: #D4AF37;
-    --gold-dark: #a67c1e;
-    --surface: #F8F9FA;
-    --surface-card: #FFFFFF;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* ── Var-flip tokens (dark) — sesuai spesifikasi Global Design System ── */
+    --background: 8 11 18;          /* #080B12 */
+    --surface: 30 41 59;            /* #1E293B */
+    --surface-variant: 23 32 51;    /* #172033 */
+    --border: 51 65 85;             /* #334155 */
+    --text: 227 226 233;            /* #E3E2E9 */
+    --muted: 148 163 184;           /* #94A3B8 */
+    /* Aksi & status (dark) — kontainer gelap, aksen dinaikkan agar kontras */
+    --primary: #5B79FF;
+    --primary-hover: #7A92FF;
+    --primary-container: 10 30 86;      /* #0A1E56 */
+    --on-primary-container: 221 228 255; /* #DDE4FF */
+    --secondary: #94A3C8;
+    --info: #6E93F2;
+    --link: #5B87FF;
+    --success: #4CC98A;
+    --success-container: #0E2E1E;
+    --warning: #DCB447;
+    --warning-container: #2E2309;
+    --error: #F08080;
+    --error-container: #3A0D0D;
+
+    /* ── Legacy vars — versi dark (dipakai chart tooltip) ── */
     --tooltip-bg: #1f2937;
     --tooltip-border: #374151;
     --tooltip-color: #f3f4f6;
     --tooltip-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
-    --surface: #0f172a;
-    --surface-card: #1e293b;
   }
 
   body {
-    @apply bg-[#F8F9FA] text-gray-900 dark:bg-gray-950 dark:text-gray-100 font-sans antialiased;
+    @apply bg-background text-text font-sans antialiased;
   }
 
   /* Smooth font rendering */
@@ -92,12 +128,12 @@
 
   /* ── Keyboard focus visibility (WCAG 2.4.7, 2.4.11) ── */
   :focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
   }
 
   .dark :focus-visible {
-    outline-color: #60a5fa;
+    outline-color: var(--primary);
   }
 
   /* ── Skip link (a11y, WCAG 2.4.1): tersembunyi sampai menerima fokus keyboard ── */
@@ -107,7 +143,7 @@
     left: 0;
     z-index: 100;
     padding: 8px 16px;
-    background: var(--navy-primary, #1A2E40);
+    background: var(--secondary);
     color: #fff;
     font-weight: 600;
   }
@@ -149,41 +185,62 @@
   .animation-delay-4000 { animation-delay: 4s; }
   .animation-delay-6000 { animation-delay: 6s; }
 
-  /* ── Gold shimmer for CTA buttons ── */
-  .btn-gold {
-    @apply bg-gold-400 text-navy-900 font-bold px-6 py-2.5 rounded-xl
-           shadow-elegant hover:shadow-elegant-md hover:bg-gold-300
-           transition-all duration-200 ease-out;
+  /* ── Mobile sidebar drawer (Global Navigation) ── */
+  .animate-sidebar-in {
+    animation: sidebarIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .btn-gold-lg {
-    @apply btn-gold px-8 py-3.5 text-lg;
+  /* ── Primary button ──
+     Aturan radius tombol: md = rounded-lg · sm = rounded-md · lg = rounded-xl */
+  .btn-primary {
+    @apply bg-primary text-white font-semibold px-4 py-2.5 rounded-lg
+           text-sm inline-flex items-center justify-center gap-2
+           shadow-elegant hover:bg-[var(--primary-hover)] hover:shadow-elegant-md
+           transition-all duration-200 ease-out
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  /* ── Navy button ── */
-  .btn-navy {
-    @apply bg-navy-800 text-white font-bold px-6 py-2.5 rounded-xl
-           shadow-elegant hover:shadow-elegant-md hover:bg-navy-700
-           transition-all duration-200 ease-out;
+  .btn-primary-lg {
+    @apply btn-primary px-8 py-3.5 text-lg rounded-xl;
   }
 
-  .btn-navy-lg {
-    @apply btn-navy px-8 py-3.5 text-lg;
+  /* ── Secondary button ── */
+  .btn-secondary {
+    @apply bg-secondary text-white font-semibold px-4 py-2.5 rounded-lg
+           text-sm inline-flex items-center justify-center gap-2
+           shadow-elegant hover:bg-secondary-800 hover:shadow-elegant-md
+           transition-all duration-200 ease-out
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  /* ── Elegant card ── */
+  .btn-secondary-lg {
+    @apply btn-secondary px-8 py-3.5 text-lg rounded-xl;
+  }
+
+  /* ── Canonical card ──
+     Semua kartu/panel WAJIB pola ini (atau komponen Card): surface + border token + radius xl */
+  .card-base {
+    @apply bg-surface border-border rounded-xl shadow-elegant border;
+  }
+
   .card-elegant {
-    @apply bg-white rounded-2xl shadow-elegant border border-gray-100
-           hover:shadow-elegant-md transition-all duration-200;
+    @apply card-base hover:shadow-elegant-md transition-all duration-200;
   }
 
   /* ── Table row hover ── */
   .table-row-elegant {
-    @apply border-b border-gray-100 hover:bg-navy-50/50 transition-colors duration-150;
+    @apply border-b border-border hover:bg-surface-variant transition-colors duration-150;
   }
 }
 
 /* ── Keyframes ── */
+@keyframes sidebarIn {
+  from { opacity: 0.6; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes blob {
   0%, 100% { transform: translate(0, 0) scale(1); }
   25% { transform: translate(20px, -30px) scale(1.05); }

@@ -47,35 +47,35 @@ export const useDismissToast = () => useContext(ToastContext).dismissToast;
 // ─── Icons ───
 
 const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle size={20} className="text-emerald-500 dark:text-emerald-400" />,
-  error: <AlertCircle size={20} className="text-red-500 dark:text-red-400" />,
-  info: <Info size={20} className="text-blue-500 dark:text-blue-400" />,
-  warning: <AlertTriangle size={20} className="text-amber-500 dark:text-amber-400" />,
+  success: <CheckCircle size={20} className="text-success dark:text-success-400" />,
+  error: <AlertCircle size={20} className="text-error dark:text-error-400" />,
+  info: <Info size={20} className="text-info dark:text-info-400" />,
+  warning: <AlertTriangle size={20} className="text-warning dark:text-warning-400" />,
 };
 
 const TOAST_STYLES: Record<ToastType, string> = {
   success:
-    'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/80',
+    'border-success-200 bg-success-50 dark:border-success-800 dark:bg-success-950/80',
   error:
-    'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/80',
+    'border-error-200 bg-error-50 dark:border-error-800 dark:bg-error-950/80',
   info:
-    'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/80',
+    'border-info-200 bg-info-50 dark:border-info-800 dark:bg-info-950/80',
   warning:
-    'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/80',
+    'border-warning-200 bg-warning-50 dark:border-warning-800 dark:bg-warning-950/80',
 };
 
 const TOAST_ICON_BG: Record<ToastType, string> = {
-  success: 'bg-emerald-100 dark:bg-emerald-900/60',
-  error: 'bg-red-100 dark:bg-red-900/60',
-  info: 'bg-blue-100 dark:bg-blue-900/60',
-  warning: 'bg-amber-100 dark:bg-amber-900/60',
+  success: 'bg-success-100 dark:bg-success-900/60',
+  error: 'bg-error-100 dark:bg-error-900/60',
+  info: 'bg-info-100 dark:bg-info-900/60',
+  warning: 'bg-warning-100 dark:bg-warning-900/60',
 };
 
 const TOAST_PROGRESS: Record<ToastType, string> = {
-  success: 'bg-emerald-500 dark:bg-emerald-400',
-  error: 'bg-red-500 dark:bg-red-400',
-  info: 'bg-blue-500 dark:bg-blue-400',
-  warning: 'bg-amber-500 dark:bg-amber-400',
+  success: 'bg-success-500 dark:bg-success-400',
+  error: 'bg-error-500 dark:bg-error-400',
+  info: 'bg-info-500 dark:bg-info-400',
+  warning: 'bg-warning-500 dark:bg-warning-400',
 };
 
 // ─── Toast Item ───
@@ -143,7 +143,7 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
         </div>
 
         {/* Message */}
-        <div className="text-sm font-medium text-gray-800 dark:text-gray-100 flex-1 pt-0.5 leading-relaxed">
+        <div className="text-sm font-medium text-text flex-1 pt-0.5 leading-relaxed">
           {t.content ?? t.message}
         </div>
 
@@ -155,9 +155,9 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
               handleDismiss();
             }}
             className="shrink-0 text-sm font-semibold px-3 py-1.5 rounded-lg
-              bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-              hover:bg-gray-50 dark:hover:bg-gray-700
-              text-gray-800 dark:text-gray-200
+              bg-surface border border-border
+              hover:bg-surface-variant
+              text-text
               transition-all duration-150 active:scale-95"
           >
             {t.action.label}
@@ -167,9 +167,9 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
         {/* Close button */}
         <button
           onClick={handleDismiss}
-          className="shrink-0 p-1 rounded-lg text-gray-400 dark:text-gray-500
-            hover:text-gray-600 dark:hover:text-gray-300
-            hover:bg-gray-200/50 dark:hover:bg-gray-700/50
+          className="shrink-0 p-1 rounded-lg text-muted
+            hover:text-text
+            hover:bg-surface-variant
             transition-all duration-150"
         >
           <X size={14} />
@@ -178,7 +178,7 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
 
       {/* Progress bar */}
       {duration > 0 && (
-        <div className="h-0.5 w-full bg-gray-200/50 dark:bg-gray-700/50">
+        <div className="h-0.5 w-full bg-border/50">
           <div
             className={`h-full transition-all duration-75 ease-linear ${TOAST_PROGRESS[t.type]}`}
             style={{ width: `${progress}%` }}

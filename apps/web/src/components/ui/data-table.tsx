@@ -70,15 +70,15 @@ export default function DataTable<T>({
   const effectiveColSpan = colSpan || columns.length + (actions ? 1 : 0);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-elegant">
+    <div className="bg-surface rounded-2xl border border-border shadow-elegant">
 
       {/* Mobile Card View */}
       {renderMobileCard && (
-        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="md:hidden divide-y divide-border">
           {loading ? (
-            <div className="p-6 text-center text-navy-400 dark:text-gray-500 text-sm">Memuat data...</div>
+            <div className="p-6 text-center text-muted text-sm">Memuat data...</div>
           ) : data.length === 0 ? (
-            <div className="p-6 text-center text-navy-400 dark:text-gray-500 text-sm">{empty.message}</div>
+            <div className="p-6 text-center text-muted text-sm">{empty.message}</div>
           ) : (
             data.map((item, idx) => (
               <div key={((item as Record<string, unknown>).id as string) || idx} className="p-4">
@@ -92,11 +92,11 @@ export default function DataTable<T>({
       <div className="hidden md:block overflow-x-auto overflow-y-visible">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-navy-50 dark:bg-gray-900">
+            <tr className="border-b border-border bg-surface-variant">
               {columns.map((col, i) => (
                 <th
                   key={col.key || i}
-                  className={`px-4 py-3 font-medium text-navy-500 dark:text-gray-400 whitespace-nowrap text-xs uppercase tracking-wider ${col.hidden || ''} ${
+                  className={`px-4 py-3 font-medium text-muted whitespace-nowrap text-xs uppercase tracking-wider ${col.hidden || ''} ${
                     col.align === 'right'
                       ? 'text-right'
                       : col.align === 'center'
@@ -108,7 +108,7 @@ export default function DataTable<T>({
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3 font-medium text-navy-500 dark:text-gray-400 whitespace-nowrap text-xs uppercase tracking-wider text-right">
+                <th className="px-4 py-3 font-medium text-muted whitespace-nowrap text-xs uppercase tracking-wider text-right">
                   Aksi
                 </th>
               )}
@@ -129,7 +129,7 @@ export default function DataTable<T>({
               data.map((item, idx) => (
                 <tr
                   key={((item as Record<string, unknown>).id as string) || idx}
-                  className={`border-b border-gray-100 dark:border-gray-700/50 hover:bg-navy-50/50 dark:hover:bg-gray-800 transition-colors${onRowClick ? ' cursor-pointer' : ''}`}
+                  className={`border-b border-border hover:bg-surface-variant transition-colors${onRowClick ? ' cursor-pointer' : ''}`}
                   onClick={() => onRowClick?.(item)}
                 >
                   {columns.map((col) => (
@@ -153,7 +153,7 @@ export default function DataTable<T>({
               <tr>
                 <td
                   colSpan={effectiveColSpan}
-                  className="px-4 py-12 text-center text-gray-400 dark:text-gray-500"
+                  className="px-4 py-12 text-center text-muted"
                 >
                   No render function provided
                 </td>

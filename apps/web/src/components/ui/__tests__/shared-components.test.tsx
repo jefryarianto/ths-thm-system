@@ -38,7 +38,7 @@ describe('Pagination', () => {
   it('highlights active page', () => {
     render(<Pagination page={3} totalPages={5} total={50} onPageChange={() => {}} />);
     const activeBtn = screen.getByText('3');
-    expect(activeBtn.className).toContain('bg-blue-600');
+    expect(activeBtn.className).toContain('bg-primary');
   });
 
   it('calls onPageChange when page button clicked', () => {
@@ -547,7 +547,7 @@ describe('StatCard', () => {
 
   it('defaults to blue color when not specified', () => {
     const { container } = render(<StatCard label="Default" value={5} icon={<Users size={20} />} />);
-    expect(container.querySelector('[class*="ring-blue"]')).toBeInTheDocument();
+    expect(container.querySelector('[class*="ring-primary"]')).toBeInTheDocument();
   });
 
   it('renders icon element', () => {
@@ -567,7 +567,7 @@ describe('StatCard', () => {
       const { container } = render(
         <StatCard label="Anggota" value="1.234" icon={<Users size={20} />} color="blue" />,
       );
-      expect(container.querySelector('[class*="ring-blue"]')).toBeInTheDocument();
+      expect(container.querySelector('[class*="ring-primary"]')).toBeInTheDocument();
       expect(screen.getByText('Anggota')).toBeInTheDocument();
       expect(screen.getByText('1.234')).toBeInTheDocument();
     });
@@ -582,7 +582,7 @@ describe('StatCard', () => {
           sub="Bulan ini"
         />,
       );
-      expect(container.querySelector('[class*="ring-green"]')).toBeInTheDocument();
+      expect(container.querySelector('[class*="ring-success"]')).toBeInTheDocument();
       expect(screen.getByText('Hadir')).toBeInTheDocument();
       expect(screen.getByText('Bulan ini')).toBeInTheDocument();
     });
@@ -591,7 +591,7 @@ describe('StatCard', () => {
       const { container } = render(
         <StatCard label="Total Poin" value={5000} icon={<Shield size={20} />} color="purple" />,
       );
-      expect(container.querySelector('[class*="ring-navy"]')).toBeInTheDocument();
+      expect(container.querySelector('[class*="ring-secondary"]')).toBeInTheDocument();
       expect(screen.getByText('Total Poin')).toBeInTheDocument();
       expect(screen.getByText('5000')).toBeInTheDocument();
     });
@@ -623,7 +623,7 @@ describe('StatCard', () => {
           variant="mini"
         />,
       );
-      expect(container.querySelector('[class*="ring-green"]')).toBeInTheDocument();
+      expect(container.querySelector('[class*="ring-success"]')).toBeInTheDocument();
       expect(screen.getByText('Lunas')).toBeInTheDocument();
     });
 
@@ -631,7 +631,7 @@ describe('StatCard', () => {
       const { container } = render(
         <StatCard label="Gagal" value={3} icon={<Shield size={18} />} color="red" variant="mini" />,
       );
-      expect(container.querySelector('[class*="ring-red"]')).toBeInTheDocument();
+      expect(container.querySelector('[class*="ring-error"]')).toBeInTheDocument();
       expect(screen.getByText('Gagal')).toBeInTheDocument();
     });
   });

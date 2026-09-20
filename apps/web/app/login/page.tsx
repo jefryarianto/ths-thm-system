@@ -70,7 +70,7 @@ function BrandFeatureItem({
 }) {
   return (
     <div className="flex items-center gap-3.5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#072AC8] text-white shadow-sm">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
         <Icon size={20} className="stroke-[2]" />
       </div>
       <span className="text-[15px] font-medium leading-snug text-white/95">{text}</span>
@@ -170,42 +170,66 @@ export default function LoginPage() {
         <OAuthCallbackHandler />
       </Suspense>
 
-      {/* ── MOBILE COMPACT HEADER (< 1024px) ── */}
-      <div className="flex flex-col items-center justify-center bg-gradient-to-b from-[#06154F] to-[#072AC8] px-6 py-8 text-center text-white lg:hidden">
-        <img
-          src="/logo.svg"
-          alt="THS-THM Logo"
-          className="h-20 w-20 object-contain drop-shadow-md"
+      {/* ── MOBILE COMPACT HEADER (< 1024px) ──
+          Dipadatkan agar form login normal tidak perlu scroll di layar mobile wajar. */}
+      <div className="relative overflow-hidden bg-secondary px-5 py-3 text-center text-white sm:py-5 lg:hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/25 blur-3xl"
         />
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-white">THS-THM</h1>
-        <p className="mt-1 text-sm font-normal text-[#DDE4FF]">
-          Sistem Manajemen Organisasi Terpadu
-        </p>
+        <div className="relative flex flex-col items-center">
+          <img
+            src="/logo.svg"
+            alt="THS-THM Logo"
+            className="h-9 w-9 object-contain drop-shadow-md sm:h-14 sm:w-14"
+          />
+          <h1 className="mt-1.5 text-lg font-bold tracking-tight text-white">
+            THS-THM System
+          </h1>
+          <p className="mt-0.5 text-xs font-semibold text-primary-100 sm:text-sm">
+            Satu Data THS-THM Indonesia
+          </p>
+        </div>
       </div>
 
-      {/* ── LEFT PANEL - BRANDING (Desktop 40%, >= 1024px) ── */}
-      <div className="relative hidden w-full flex-col justify-between bg-gradient-to-b from-[#06154F] via-[#06154F] to-[#072AC8] p-10 text-white lg:flex lg:w-[40%] xl:p-14 2xl:p-16">
+      {/* ── LEFT PANEL - BRANDING (Desktop 40%, >= 1024px) ──
+          Deep Navy #06154F (token: secondary) sesuai Design System. */}
+      <div className="relative hidden w-full flex-col justify-between overflow-hidden bg-secondary p-10 text-white lg:flex lg:w-[40%] xl:p-14 2xl:p-16">
+        {/* Dekorasi halus (navy tetap solid) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary/20 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl"
+        />
+
         {/* Top & Brand Info */}
-        <div>
+        <div className="relative">
           {/* Logo */}
           <div className="mb-6">
             <img
               src="/logo.svg"
               alt="THS-THM Logo"
-              className="h-24 w-24 object-contain drop-shadow-lg xl:h-28 xl:w-28"
+              className="h-20 w-20 object-contain drop-shadow-lg xl:h-24 xl:w-24"
             />
           </div>
 
-          {/* Title & Subtitle */}
-          <h1 className="text-4xl font-bold tracking-tight text-white xl:text-[44px]">
-            THS-THM
+          {/* Title, Tagline & Deskripsi Singkat */}
+          <h1 className="text-3xl font-bold tracking-tight text-white xl:text-4xl">
+            THS-THM System
           </h1>
-          <p className="mt-2 text-lg font-medium text-[#DDE4FF]">
-            Sistem Manajemen Organisasi Terpadu
+          <p className="mt-2 text-base font-semibold text-primary-100 xl:text-lg">
+            Satu Data THS-THM Indonesia
+          </p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-secondary-100/85">
+            Platform terpadu untuk pengelolaan data anggota, pelatihan, kegiatan, iuran, dan
+            dokumen organisasi THS-THM di seluruh Indonesia.
           </p>
 
-          {/* Feature List (Section G: Max 4 items) */}
-          <div className="mt-10 space-y-4 xl:mt-12 xl:space-y-5">
+          {/* Feature Highlights (maks 4) */}
+          <div className="mt-9 space-y-4 xl:mt-11 xl:space-y-5">
             <BrandFeatureItem
               icon={Users}
               text="Manajemen anggota & calon anggota"
@@ -225,28 +249,29 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bottom Quote (Section H) */}
-        <div className="mt-8 border-t border-white/15 pt-5">
-          <p className="text-sm italic leading-relaxed text-[#DDE4FF]/85">
+        {/* Quote */}
+        <div className="relative mt-8 border-t border-white/15 pt-5">
+          <p className="text-sm italic leading-relaxed text-primary-100/85">
             &ldquo;Bersama membangun organisasi yang lebih baik, transparan, dan efisien.&rdquo;
           </p>
         </div>
       </div>
 
-      {/* ── RIGHT PANEL - LOGIN FORM (Desktop 60%, Clean Light Surface) ── */}
-      <div className="flex w-full flex-1 flex-col justify-center overflow-y-auto bg-[#FAF9FF] px-6 py-8 sm:px-10 lg:w-[60%] lg:px-12 xl:px-16">
+      {/* ── RIGHT PANEL - LOGIN FORM (Desktop 60%, Clean Light Surface) ──
+          Surface #FAF9FF sesuai spesifikasi. */}
+      <div className="flex w-full flex-1 flex-col justify-center overflow-y-auto bg-[#FAF9FF] px-5 py-4 sm:px-10 sm:py-8 lg:w-[60%] lg:px-12 xl:px-16">
         <div className="mx-auto w-full max-w-[460px]">
-          {/* Login Header (Section K & L) */}
-          <div className="mb-6">
+          {/* Login Header */}
+          <div className="mb-4 sm:mb-6">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#072AC8] text-white shadow-sm">
+              <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm sm:flex">
                 <LogIn size={22} className="stroke-[2.5]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-[#06154F] sm:text-[28px]">
+                <h2 className="text-lg font-bold tracking-tight text-secondary sm:text-[28px]">
                   Masuk ke Akun
                 </h2>
-                <p className="text-sm text-[#667085] mt-0.5">
+                <p className="mt-0.5 text-xs text-muted sm:text-sm">
                   Masukkan kredensial Anda untuk mengakses dashboard
                 </p>
               </div>
@@ -257,33 +282,33 @@ export default function LoginPage() {
           {error && (
             <div
               data-testid="login-error"
-              className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/90 p-3.5 text-xs text-[#BA1A1A] sm:text-sm animate-fade-in-up"
+              className="mb-4 flex items-start gap-3 rounded-xl border border-error-200 bg-error-50/90 p-3.5 text-xs text-error animate-fade-in-up sm:text-sm"
             >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#BA1A1A]" />
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
               <span className="flex-1 font-medium">{error}</span>
             </div>
           )}
 
           {/* Success Message */}
           {successMessage && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/90 p-3.5 text-xs text-[#1B7F4B] sm:text-sm animate-fade-in-up">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7F4B]" />
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-success-200 bg-success-50/90 p-3.5 text-xs text-success animate-fade-in-up sm:text-sm">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
               <span className="flex-1 font-medium">{successMessage}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
-            {/* Email / No. HP Input (Section M) */}
+          <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-4">
+            {/* Email / No. HP Input */}
             <div>
               <label
                 htmlFor="identifier"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#06154F]"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary"
               >
                 Email / No. HP
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#667085]">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted">
                   <Mail size={18} />
                 </div>
                 <input
@@ -295,21 +320,21 @@ export default function LoginPage() {
                   required
                   autoComplete="username"
                   placeholder="nama@email.com / 08xxxxxxxxxx"
-                  className="block h-[52px] w-full rounded-xl border border-[#C6C6D0] bg-white pl-11 pr-4 text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-all duration-200 hover:border-[#A0A0B0] focus:border-[#072AC8] focus:outline-none focus:ring-4 focus:ring-[#072AC8]/12"
+                  className="block h-[54px] w-full rounded-xl border border-border bg-white pl-11 pr-4 text-sm text-text placeholder:text-muted transition-all duration-200 hover:border-muted/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15"
                 />
               </div>
             </div>
 
-            {/* Password Input (Section N) */}
+            {/* Password Input */}
             <div>
               <label
                 htmlFor="password"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#06154F]"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary"
               >
                 Password
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#667085]">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted">
                   <Lock size={18} />
                 </div>
                 <input
@@ -321,46 +346,46 @@ export default function LoginPage() {
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="block h-[52px] w-full rounded-xl border border-[#C6C6D0] bg-white pl-11 pr-11 text-sm text-[#1F2937] placeholder-[#9CA3AF] transition-all duration-200 hover:border-[#A0A0B0] focus:border-[#072AC8] focus:outline-none focus:ring-4 focus:ring-[#072AC8]/12"
+                  className="block h-[54px] w-full rounded-xl border border-border bg-white pl-11 pr-11 text-sm text-text placeholder:text-muted transition-all duration-200 hover:border-muted/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#667085] transition-colors hover:text-[#06154F]"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted transition-colors hover:text-secondary"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me + Forgot Password in ONE Single Row (Section O) */}
+            {/* Remember Me + Forgot Password in ONE Single Row */}
             <div className="flex items-center justify-between pt-0.5">
-              <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-[#1F2937]">
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-text">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-[#C6C6D0] text-[#072AC8] focus:ring-[#072AC8] focus:ring-offset-0"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                 />
-                <span className="font-normal text-[#1F2937]">Ingat saya</span>
+                <span className="font-normal text-text">Ingat saya</span>
               </label>
 
               <Link
                 href="/forgot-password"
-                className="text-sm font-semibold text-[#1E5BFF] transition-colors hover:text-[#1646C7] hover:underline"
+                className="text-sm font-semibold text-link transition-colors hover:text-link-dark hover:underline"
               >
                 Lupa Password?
               </Link>
             </div>
 
-            {/* Primary Masuk Button (Section P) */}
+            {/* Primary Masuk Button */}
             <div className="pt-1.5">
               <button
                 type="submit"
                 data-testid="login-submit"
                 disabled={loading}
-                className="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#072AC8] text-base font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#1646C7] active:bg-[#051C8A] disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                className="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-white shadow-sm transition-all duration-200 hover:bg-[var(--primary-hover)] active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -374,20 +399,20 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Google Login Section (Section Q) */}
+          {/* Google Login */}
           {googleOAuthEnabled && (
-            <div className="mt-4">
-              <div className="relative my-3 flex items-center justify-center">
-                <div className="h-px min-w-0 flex-1 border-t border-[#E5E7EB]" />
-                <span className="shrink-0 whitespace-nowrap bg-[#FAF9FF] px-3 text-xs font-medium uppercase tracking-wider text-[#667085] select-none">
+            <div className="mt-3 sm:mt-4">
+              <div className="relative my-2.5 sm:my-3 flex items-center justify-center">
+                <div className="h-px min-w-0 flex-1 border-t border-border" />
+                <span className="shrink-0 whitespace-nowrap bg-[#FAF9FF] px-3 text-xs font-medium uppercase tracking-wider text-muted select-none">
                   Atau login dengan
                 </span>
-                <div className="h-px min-w-0 flex-1 border-t border-[#E5E7EB]" />
+                <div className="h-px min-w-0 flex-1 border-t border-border" />
               </div>
 
               <a
                 href="/api/auth/google"
-                className="flex h-[50px] w-full items-center justify-center gap-3 rounded-xl border border-[#C6C6D0] bg-white text-sm font-semibold text-[#1F2937] shadow-xs transition-all duration-200 hover:bg-gray-50 active:bg-gray-100"
+                className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl border border-border bg-white text-sm font-semibold text-text shadow-sm transition-all duration-200 hover:bg-surface-variant active:bg-surface-variant"
               >
                 <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -412,58 +437,56 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Membership Actions (Section R, S, T) */}
-          <div className="mt-4">
-            <p className="mb-2 text-center text-xs font-medium text-[#667085]">
-              Belum punya akun?
-            </p>
+          {/* Membership Actions: Klaim & Daftar */}
+          <div className="mt-3 sm:mt-4">
+            <p className="mb-2 text-center text-xs font-medium text-muted">Belum punya akun?</p>
 
             <div className="space-y-2">
-              {/* Klaim Keanggotaan (Section S) */}
+              {/* Klaim Keanggotaan */}
               <Link
                 href="/klaim"
-                className="group flex items-center justify-between rounded-xl bg-[#E8EDFF] p-3 transition-all duration-200 hover:bg-[#DDE4FF] border border-[#D0DCFF]/60"
+                className="group flex items-center justify-between rounded-xl border border-primary-100 bg-primary-50 p-2.5 transition-all duration-200 hover:bg-primary-container sm:p-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#072AC8] text-white shadow-xs">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm sm:h-9 sm:w-9">
                     <UserCheck size={18} className="stroke-[2.5]" />
                   </div>
                   <div>
-                    <span className="block text-sm font-semibold text-[#06154F]">
+                    <span className="block text-[13px] font-semibold text-secondary sm:text-sm">
                       Klaim Keanggotaan
                     </span>
-                    <span className="block text-xs text-[#667085]">
+                    <span className="hidden text-xs text-muted sm:block">
                       Sudah menjadi anggota tapi belum terdaftar di sistem
                     </span>
                   </div>
                 </div>
                 <ArrowRight
                   size={16}
-                  className="text-[#072AC8] transition-transform duration-200 group-hover:translate-x-1 shrink-0 ml-2"
+                  className="ml-2 shrink-0 text-primary transition-transform duration-200 group-hover:translate-x-1"
                 />
               </Link>
 
-              {/* Daftar Calon Anggota (Section T) */}
+              {/* Daftar Calon Anggota */}
               <Link
                 href="/daftar"
-                className="group flex items-center justify-between rounded-xl bg-[#E8EDFF] p-3 transition-all duration-200 hover:bg-[#DDE4FF] border border-[#D0DCFF]/60"
+                className="group flex items-center justify-between rounded-xl border border-primary-100 bg-primary-50 p-2.5 transition-all duration-200 hover:bg-primary-container sm:p-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#072AC8] text-white shadow-xs">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm sm:h-9 sm:w-9">
                     <UserPlus size={18} className="stroke-[2.5]" />
                   </div>
                   <div>
-                    <span className="block text-sm font-semibold text-[#06154F]">
+                    <span className="block text-[13px] font-semibold text-secondary sm:text-sm">
                       Daftar Calon Anggota
                     </span>
-                    <span className="block text-xs text-[#667085]">
+                    <span className="hidden text-xs text-muted sm:block">
                       Bergabung menjadi bagian dari THS-THM
                     </span>
                   </div>
                 </div>
                 <ArrowRight
                   size={16}
-                  className="text-[#072AC8] transition-transform duration-200 group-hover:translate-x-1 shrink-0 ml-2"
+                  className="ml-2 shrink-0 text-primary transition-transform duration-200 group-hover:translate-x-1"
                 />
               </Link>
             </div>
@@ -471,19 +494,19 @@ export default function LoginPage() {
 
           {/* Dev credentials (only shown in development) */}
           {isDev && (
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-xs">
-              <p className="font-semibold text-amber-800">⚡ Development Mode</p>
-              <p className="mt-0.5 text-amber-700">
+            <div className="mt-3.5 rounded-xl border border-warning-200 bg-warning-50/90 px-3.5 py-2.5 text-xs">
+              <p className="font-semibold text-warning-800">⚡ Development Mode</p>
+              <p className="mt-0.5 text-warning-700">
                 Seed: <code className="font-mono font-bold">superadmin@ths-thm.org</code> /{' '}
                 <code className="font-mono font-bold">password123</code>
               </p>
             </div>
           )}
 
-          {/* Footer (Section U) */}
-          <div className="mt-5 text-center">
-            <p className="text-xs font-semibold text-[#06154F]">Pro Patria et Ecclesia</p>
-            <p className="mt-0.5 text-[10px] text-[#667085]">
+          {/* Footer */}
+          <div className="mt-3 text-center sm:mt-5">
+            <p className="text-xs font-semibold text-secondary">Pro Patria et Ecclesia</p>
+            <p className="mt-0.5 text-2xs text-muted">
               &copy; 2026 | Created by litbang_koornas 2026
             </p>
           </div>
@@ -492,14 +515,14 @@ export default function LoginPage() {
 
       {/* Full-screen loading overlay */}
       {loading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm">
           <div className="relative">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-[#072AC8] border-r-[#06154F]" />
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-primary border-r-secondary" />
             <div className="absolute inset-0 flex items-center justify-center">
               <img src="/logo.svg" alt="" className="h-8 w-8 animate-pulse object-contain" />
             </div>
           </div>
-          <p className="mt-4 text-sm font-semibold text-[#06154F] animate-pulse">
+          <p className="mt-4 text-sm font-semibold text-secondary animate-pulse">
             Memverifikasi kredensial...
           </p>
         </div>

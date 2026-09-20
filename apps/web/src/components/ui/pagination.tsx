@@ -32,8 +32,8 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
         aria-current={p === page ? 'page' : undefined}
         className={`px-2.5 py-1 text-sm rounded-md ${
           p === page
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ? 'bg-primary text-white'
+            : 'text-muted hover:bg-surface-variant'
         }`}
       >
         {p}
@@ -42,14 +42,14 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-      <p className="text-sm text-gray-500 dark:text-gray-400">{total} total</p>
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+      <p className="text-sm text-muted">{total} total</p>
       <div className="flex items-center gap-1">
         <button
           onClick={handlePrev}
           disabled={page <= 1}
           aria-label="Halaman sebelumnya"
-          className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 text-muted hover:bg-surface-variant rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>
@@ -58,7 +58,7 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
           onClick={handleNext}
           disabled={page >= totalPages}
           aria-label="Halaman berikutnya"
-          className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 text-muted hover:bg-surface-variant rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronRight size={16} aria-hidden="true" />
         </button>

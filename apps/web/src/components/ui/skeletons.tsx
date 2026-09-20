@@ -5,13 +5,13 @@
  */
 export function StatCardSkeleton() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 animate-pulse">
+    <div className="bg-surface rounded-xl border border-border shadow-sm p-5 animate-pulse">
       <div className="flex items-center justify-between">
         <div className="space-y-2 flex-1">
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24" />
-          <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+          <div className="h-3 bg-surface-variant rounded w-24" />
+          <div className="h-7 bg-surface-variant rounded w-16" />
         </div>
-        <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+        <div className="h-10 w-10 bg-surface-variant rounded-xl" />
       </div>
     </div>
   );

@@ -62,7 +62,7 @@ export default function PageHeader({
       {backHref ? (
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition group"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text transition group"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           {backLabel}
@@ -74,11 +74,11 @@ export default function PageHeader({
       {/* Title + Actions Row */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+          <h1 className="text-xl font-semibold text-text truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
+            <p className="text-sm text-muted mt-0.5">{subtitle}</p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -86,7 +86,7 @@ export default function PageHeader({
             <button
               onClick={onRefresh}
               aria-label="Refresh data"
-              className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm text-text hover:bg-surface-variant transition-colors"
             >
               <RefreshCw size={14} />
               <span className="hidden sm:inline">Refresh</span>
@@ -98,7 +98,7 @@ export default function PageHeader({
 
       {/* Tab Bar */}
       {tabs && tabs.length > 0 && (
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-border">
           <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -109,8 +109,8 @@ export default function PageHeader({
                   onClick={() => onTabChange?.(tab.key)}
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap shrink-0 ${
                     isActive
-                      ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted hover:text-text hover:border-border'
                   }`}
                 >
                   {Icon && <Icon size={16} />}
@@ -118,8 +118,8 @@ export default function PageHeader({
                   {tab.count !== undefined && (
                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                       isActive
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        ? 'bg-primary-container text-primary-on-container'
+                        : 'bg-surface-variant text-muted'
                     }`}>
                       {tab.count}
                     </span>

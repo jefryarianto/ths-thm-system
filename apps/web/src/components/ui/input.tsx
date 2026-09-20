@@ -5,24 +5,28 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
+/**
+ * Input canonical — wajib pakai token (bg-surface, border-border, ring-primary).
+ */
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className = '', ...props }, ref) => (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-text mb-1">
           {label}
         </label>
       )}
       <input
         ref={ref}
-        className={`block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+        aria-invalid={!!error}
+        className={`block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 focus-visible:ring-2 bg-surface text-text placeholder:text-muted ${
           error
-            ? 'border-red-300 dark:border-red-500 focus:ring-red-500 focus:border-red-500'
-            : 'border-gray-300 dark:border-gray-600'
+            ? 'border-error focus:ring-error focus:border-error'
+            : 'border-border focus:ring-primary focus:border-primary'
         } ${className}`}
         {...props}
       />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-error">{error}</p>}
     </div>
   ),
 );

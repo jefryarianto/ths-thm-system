@@ -45,7 +45,7 @@ export default function ProfileHeader({
   avatar,
   badges,
   actions,
-  gradient = 'from-blue-600 via-blue-700 to-indigo-700',
+  gradient = 'from-primary via-primary-700 to-secondary',
   hideGradient = false,
   onRefresh,
 }: ProfileHeaderProps) {
@@ -54,7 +54,7 @@ export default function ProfileHeader({
   const uploadRadius = avatarShape === 'rounded' ? 'rounded-xl' : 'rounded-full';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
       {/* Gradient Bar */}
       {!hideGradient && (
         <div className={`h-16 bg-gradient-to-r ${gradient} relative`}>
@@ -77,7 +77,7 @@ export default function ProfileHeader({
           {avatar && (
             <div className="relative group shrink-0">
               <div
-                className={`w-20 h-20 ${avatarRadius} bg-white dark:bg-gray-800 flex items-center justify-center shadow-lg ring-4 ring-white dark:ring-gray-800 overflow-hidden`}
+                className={`w-20 h-20 ${avatarRadius} bg-surface flex items-center justify-center shadow-lg ring-4 ring-surface overflow-hidden`}
               >
                 {avatar.src ? (
                   <img
@@ -117,19 +117,19 @@ export default function ProfileHeader({
           {/* Name + Badges */}
           <div className="flex-1 mt-2 sm:mt-0 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+              <h1 className="text-xl font-bold text-text truncate">
                 {name}
               </h1>
               {badges}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
               {subtitle && (
-                <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                <span className="text-sm text-muted truncate">
                   {subtitle}
                 </span>
               )}
               {meta && (
-                <span className="font-mono text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md">
+                <span className="font-mono text-xs text-muted bg-surface-variant px-2 py-0.5 rounded-md">
                   {meta}
                 </span>
               )}
@@ -142,7 +142,7 @@ export default function ProfileHeader({
               {hideGradient && onRefresh && (
                 <button
                   onClick={onRefresh}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-lg text-sm text-text hover:bg-surface-variant transition-colors"
                   title="Refresh"
                 >
                   <RefreshCw size={14} />

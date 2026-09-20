@@ -50,13 +50,13 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <ThemeToggle />
               <button
               onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
-              className="flex items-center gap-1 hover:text-accent-400 transition-colors"
+              className="flex items-center gap-1 hover:text-gold-400 transition-colors"
               aria-label={locale === 'id' ? 'Ganti bahasa ke Inggris' : 'Ganti bahasa ke Bahasa Indonesia'}
             >
               <Globe size={12} aria-hidden="true" />
               <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
             </button>
-            <Link href="/login" className="hover:text-accent-400 transition-colors">
+            <Link href="/login" className="hover:text-gold-400 transition-colors">
               {t.nav.login}
             </Link>
           </div>

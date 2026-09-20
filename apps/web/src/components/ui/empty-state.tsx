@@ -23,11 +23,11 @@ export default function EmptyState({
   return (
     <tr>
       <td colSpan={colSpan || 999} className="px-4 py-12 text-center">
-        <Icon size={36} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-        {title && <p className="font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</p>}
-        <p className="text-gray-500 dark:text-gray-400">{message}</p>
+        <Icon size={36} className="mx-auto text-muted mb-2" />
+        {title && <p className="font-medium text-muted mb-1">{title}</p>}
+        <p className="text-muted">{message}</p>
         {action && (
-          <button onClick={action.onClick} className="mt-2 text-sm text-blue-600 hover:underline">
+          <button onClick={action.onClick} className="mt-2 text-sm text-link hover:underline">
             {action.label}
           </button>
         )}

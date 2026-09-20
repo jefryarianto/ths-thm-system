@@ -1,39 +1,63 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+'use client';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+/**
+ * Button canonical THS-THM.
+ * WAJIB dipakai untuk semua tombol — larang styling <button> ad-hoc.
+ * Radius: sm → rounded-md · md → rounded-lg · lg → rounded-xl.
+ */
+const buttonVariants = cva(
+  // Base: focus ring, motion, disabled, ukuran radius mengikuti size
+  'inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+  {
+    variants: {
+      variant: {
+        primary:
+          'bg-primary text-white shadow-elegant hover:bg-[var(--primary-hover)] hover:shadow-elegant-md focus-visible:ring-primary',
+        secondary:
+          'bg-secondary text-white shadow-elegant hover:bg-secondary-800 hover:shadow-elegant-md focus-visible:ring-secondary',
+        outline:
+          'border border-border bg-surface text-text hover:bg-surface-variant focus-visible:ring-primary',
+        danger:
+          'bg-error text-white shadow-elegant hover:bg-error-700 hover:shadow-elegant-md focus-visible:ring-error',
+        success:
+          'bg-success text-white shadow-elegant hover:bg-success-700 hover:shadow-elegant-md focus-visible:ring-success',
+        ghost:
+          'bg-transparent text-muted hover:bg-surface-variant hover:text-text focus-visible:ring-primary',
+        link: 'text-link underline-offset-4 hover:underline p-0 h-auto',
+      },
+      size: {
+        sm: 'px-2.5 py-1.5 text-xs rounded-md',
+        md: 'px-4 py-2 text-sm rounded-lg',
+        lg: 'px-6 py-3 text-base rounded-xl',
+        icon: 'h-9 w-9 rounded-lg',
+      },
+    },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'md',
+    },
+  },
+);
+
+export interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   loading?: boolean;
 }
 
-const variants = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-  secondary:
-    'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-400',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-  ghost:
-    'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-gray-400',
-};
-
-const sizes = {
-  sm: 'px-2.5 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
-};
-
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    { variant = 'primary', size = 'md', loading, className = '', children, disabled, ...props },
-    ref,
-  ) => (
+  ({ variant, size, loading, className = '', children, disabled, ...props }, ref) => (
     <button
       ref={ref}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      className={buttonVariants({ variant, size, className })}
       {...props}
     >
       {loading && (
-        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <circle
             className="opacity-25"
             cx="12"
@@ -57,3 +81,5 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export default Button;
+export { buttonVariants };
+

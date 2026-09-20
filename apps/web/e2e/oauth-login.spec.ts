@@ -4,7 +4,7 @@ import { mockAuthWithAll } from './helpers';
 test.describe('OAuth Login Flow', () => {
   test('shows OAuth buttons on login page', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByText('THS-THM').first()).toBeVisible();
+    await expect(page.locator('h1:visible', { hasText: 'THS-THM' }).first()).toBeVisible();
     await expect(page.locator('text=Atau login dengan')).toBeVisible();
 
     // Check for Google button
@@ -53,7 +53,7 @@ test.describe('OAuth Login Flow', () => {
     });
 
     await page.goto('/login');
-    await expect(page.getByText('THS-THM').first()).toBeVisible();
+    await expect(page.locator('h1:visible', { hasText: 'THS-THM' }).first()).toBeVisible();
     await expect(page.locator('text=Atau login dengan')).not.toBeVisible();
     await expect(page.locator('a[href*="/api/auth/google"]')).not.toBeVisible();
   });

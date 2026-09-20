@@ -65,9 +65,9 @@ export interface CalendarDayProps {
 
 const DEFAULT_EVENT_STYLES: Record<string, { dot: string; badge: string; text: string }> = {
   training: {
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800',
-    text: 'text-emerald-700 dark:text-emerald-300',
+    dot: 'bg-success-500',
+    badge: 'bg-success-100 dark:bg-success-900/60 text-success-800 dark:text-success-200 border-success-200 dark:border-success-800',
+    text: 'text-success-700 dark:text-success-300',
   },
   pendadaran: {
     dot: 'bg-violet-500',
@@ -75,9 +75,9 @@ const DEFAULT_EVENT_STYLES: Record<string, { dot: string; badge: string; text: s
     text: 'text-violet-700 dark:text-violet-300',
   },
   latihan: {
-    dot: 'bg-amber-500',
-    badge: 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800',
-    text: 'text-amber-700 dark:text-amber-300',
+    dot: 'bg-warning-500',
+    badge: 'bg-warning-100 dark:bg-warning-900/60 text-warning-800 dark:text-warning-200 border-warning-200 dark:border-warning-800',
+    text: 'text-warning-700 dark:text-warning-300',
   },
   ujian_tingkat: {
     dot: 'bg-rose-500',
@@ -90,18 +90,18 @@ const DEFAULT_EVENT_STYLES: Record<string, { dot: string; badge: string; text: s
     text: 'text-sky-700 dark:text-sky-300',
   },
   holiday: {
-    dot: 'bg-red-500',
-    badge: 'bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800',
-    text: 'text-red-700 dark:text-red-300',
+    dot: 'bg-error-500',
+    badge: 'bg-error-100 dark:bg-error-900/60 text-error-800 dark:text-error-200 border-error-200 dark:border-error-800',
+    text: 'text-error-700 dark:text-error-300',
   },
 };
 
 function getEventStyle(type: string, customStyles?: Record<string, { dot: string; badge: string; text: string }>) {
   const styles = customStyles || DEFAULT_EVENT_STYLES;
   return styles[type] || {
-    dot: 'bg-blue-500',
-    badge: 'bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800',
-    text: 'text-blue-700 dark:text-blue-300',
+    dot: 'bg-primary',
+    badge: 'bg-primary-100 dark:bg-primary-900/60 text-primary-800 dark:text-primary-300 border-primary-200 dark:border-primary-800',
+    text: 'text-primary-700 dark:text-primary-300',
   };
 }
 
@@ -192,27 +192,27 @@ export default function CalendarDay({
   let cellBg: string;
 
   if (isOutsideMonth) {
-    numClass = 'text-gray-300 dark:text-gray-600';
-    cellBg = 'bg-gray-50/50 dark:bg-gray-900/30';
+    numClass = 'text-muted';
+    cellBg = 'bg-surface-variant/40';
   } else if (isToday) {
-    numClass = 'bg-blue-600 text-white font-bold';
-    cellBg = 'ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/20';
+    numClass = 'bg-primary text-white font-bold';
+    cellBg = 'ring-2 ring-primary dark:ring-primary-400 ring-inset bg-primary-container/50';
   } else if (isRedDay && showWeekendColors) {
-    numClass = 'text-red-600 dark:text-red-400 font-semibold';
-    cellBg = 'bg-red-50/40 dark:bg-red-950/10';
+    numClass = 'text-error-600 dark:text-error-400 font-semibold';
+    cellBg = 'bg-error-50/40 dark:bg-error-950/10';
   } else if (isSaturday && showWeekendColors) {
-    numClass = 'text-blue-600 dark:text-blue-400';
-    cellBg = 'bg-white dark:bg-gray-900';
+    numClass = 'text-primary';
+    cellBg = 'bg-surface';
   } else {
-    numClass = 'text-gray-900 dark:text-gray-100';
-    cellBg = 'bg-white dark:bg-gray-900';
+    numClass = 'text-text';
+    cellBg = 'bg-surface';
   }
 
   const handleClick = onClick ? () => onClick(day) : undefined;
 
   return (
     <div
-      className={`${style.cell} border-b border-r border-gray-100 dark:border-gray-800/50 ${cellBg} transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/20 ${onClick ? 'cursor-pointer' : ''} ${isOutsideMonth ? 'opacity-50' : ''} ${className}`}
+      className={`${style.cell} border-b border-r border-border ${cellBg} transition-colors hover:bg-surface-variant/20 ${onClick ? 'cursor-pointer' : ''} ${isOutsideMonth ? 'opacity-50' : ''} ${className}`}
       title={holidayName || (events.length > 0 ? `${events.length} kegiatan` : undefined)}
       onClick={handleClick}
       role={onClick ? 'button' : undefined}
@@ -225,7 +225,7 @@ export default function CalendarDay({
           {day}
         </span>
         {events.length > 0 && variant !== 'sm' && (
-          <span className={`inline-flex items-center justify-center rounded-full font-bold text-white bg-blue-500 ${style.badgeSize}`}>
+          <span className={`inline-flex items-center justify-center rounded-full font-bold text-white bg-primary ${style.badgeSize}`}>
             {events.length}
           </span>
         )}
@@ -233,7 +233,7 @@ export default function CalendarDay({
 
       {/* Holiday name */}
       {holidayName && (
-        <div className={`${style.holidayText} leading-tight text-red-600 dark:text-red-400 font-medium truncate mb-0.5 px-0.5`}>
+        <div className={`${style.holidayText} leading-tight text-error-600 dark:text-error-400 font-medium truncate mb-0.5 px-0.5`}>
           {holidayName}
         </div>
       )}
@@ -258,7 +258,7 @@ export default function CalendarDay({
 
           {/* Overflow indicator */}
           {overflowCount > 0 && (
-            <div className={`${style.eventText} text-gray-400 dark:text-gray-500 pl-1 ${variant === 'sm' ? 'hidden' : ''}`}>
+            <div className={`${style.eventText} text-muted pl-1 ${variant === 'sm' ? 'hidden' : ''}`}>
               +{overflowCount} lainnya
             </div>
           )}

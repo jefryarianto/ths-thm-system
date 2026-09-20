@@ -71,7 +71,7 @@ export default function JabatanSelect({ value, onChange }: { value: string; onCh
           // Pilih "Lainnya…" → pertahankan teks custom yang sudah ada di input
           onChange(v === JABATAN_CUSTOM ? value : v);
         }}
-        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="w-full px-3 py-2 border border-border bg-surface text-text rounded-lg text-sm focus:ring-2 focus:ring-primary focus:outline-none"
       >
         <option value="">— Pilih jabatan —</option>
         {presets.map((p) => (
@@ -87,7 +87,7 @@ export default function JabatanSelect({ value, onChange }: { value: string; onCh
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Tulis jabatan lain…"
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="w-full px-3 py-2 border border-border bg-surface text-text rounded-lg text-sm focus:ring-2 focus:ring-primary focus:outline-none"
         />
       )}
     </div>

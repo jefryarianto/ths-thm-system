@@ -62,20 +62,20 @@ export function SessionWarningToast({ expiresInSeconds: initial, toastId }: Sess
     <div className="flex flex-col gap-3 p-1">
       {/* Header with icon */}
       <div className="flex items-center gap-2.5">
-        <div className={`shrink-0 p-1.5 rounded-full ${isUrgent ? 'bg-red-100 dark:bg-red-900/60' : 'bg-amber-100 dark:bg-amber-900/60'}`}>
+        <div className={`shrink-0 p-1.5 rounded-full ${isUrgent ? 'bg-error-100 dark:bg-error-900/60' : 'bg-warning-100 dark:bg-warning-900/60'}`}>
           {isUrgent ? (
-            <Clock size={16} className="text-red-500 dark:text-red-400 animate-pulse" />
+            <Clock size={16} className="text-error-500 dark:text-error-400 animate-pulse" />
           ) : (
-            <Shield size={16} className="text-amber-500 dark:text-amber-400" />
+            <Shield size={16} className="text-warning-500 dark:text-warning-400" />
           )}
         </div>
-        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+        <span className="text-sm font-medium text-text">
           Sesi berakhir dalam{' '}
           <span
             className={`font-mono font-bold tabular-nums ${
               isUrgent
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-amber-600 dark:text-amber-400'
+                ? 'text-error dark:text-error'
+                : 'text-warning-600 dark:text-warning-400'
             }`}
           >
             {formatTime(remaining)}
@@ -84,16 +84,16 @@ export function SessionWarningToast({ expiresInSeconds: initial, toastId }: Sess
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+      <div className="w-full h-1.5 rounded-full bg-surface-variant overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-1000 ease-linear ${
-            isUrgent ? 'bg-red-500 dark:bg-red-400' : 'bg-amber-500 dark:bg-amber-400'
+            isUrgent ? 'bg-error-500 dark:bg-error-400' : 'bg-warning-500 dark:bg-warning-400'
           }`}
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
+      <p className="text-xs text-muted -mt-1">
         Klik &quot;Perpanjang Sesi&quot; untuk tetap masuk
       </p>
 
@@ -106,8 +106,8 @@ export function SessionWarningToast({ expiresInSeconds: initial, toastId }: Sess
           disabled:opacity-50 disabled:cursor-not-allowed
           ${
             isUrgent
-              ? 'bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white'
+              ? 'bg-error hover:bg-error-700 dark:bg-error-700 dark:hover:bg-error-600 text-white'
+              : 'bg-primary hover:bg-[var(--primary-hover)] dark:bg-primary-700 dark:hover:bg-primary-600 text-white'
           }`}
       >
         {refreshing ? (

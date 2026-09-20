@@ -32,7 +32,7 @@ export function UserAvatar({ fotoPath, namaLengkap, size = 'md' }: UserAvatarPro
       <img
         src={`/api/uploads/${fotoPath}`}
         alt={namaLengkap}
-        className={`${sizeClass} rounded-full object-cover shrink-0 shadow-sm ring-2 ring-white dark:ring-gray-800`}
+        className={`${sizeClass} rounded-full object-cover shrink-0 shadow-sm ring-2 ring-surface`}
         onError={() => setImgError(true)}
       />
     );
@@ -41,7 +41,7 @@ export function UserAvatar({ fotoPath, namaLengkap, size = 'md' }: UserAvatarPro
   // Gradient initials fallback
   return (
     <div
-      className={`${sizeClass} rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shrink-0 shadow-sm ring-2 ring-white dark:ring-gray-800`}
+      className={`${sizeClass} rounded-full bg-gradient-to-br from-primary-500 to-primary-800 flex items-center justify-center text-white font-bold shrink-0 shadow-sm ring-2 ring-surface`}
     >
       {getInitials(namaLengkap)}
     </div>

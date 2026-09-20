@@ -62,14 +62,14 @@ export default function Breadcrumbs({
               {index > 0 && (
                 <ChevronRight
                   size={14}
-                  className="text-gray-400 dark:text-gray-500 shrink-0 mx-0.5"
+                  className="text-muted shrink-0 mx-0.5"
                   aria-hidden="true"
                 />
               )}
 
               {isLast ? (
                 // Current page - not clickable, greyed out
-                <span className="text-gray-500 dark:text-gray-400 font-medium truncate max-w-[200px]" aria-current="page">
+                <span className="text-muted font-medium truncate max-w-[200px]" aria-current="page">
                   {index === 0 ? (
                     <span className="flex items-center gap-1">
                       <Home size={14} className="shrink-0" aria-hidden="true" />
@@ -80,11 +80,11 @@ export default function Breadcrumbs({
                   )}
                 </span>
               ) : isEllipsis ? (
-                <span className="text-gray-400 dark:text-gray-500 px-1" aria-hidden="true">...</span>
+                <span className="text-muted px-1" aria-hidden="true">...</span>
               ) : (
                 <Link
                   href={segment.href}
-                  className={`text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate max-w-[180px] ${
+                  className={`text-muted hover:text-primary transition-colors truncate max-w-[180px] ${
                     index === 0 ? 'hidden sm:flex sm:items-center sm:gap-1' : ''
                   }`}
                 >

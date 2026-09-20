@@ -123,31 +123,31 @@ export default function CustomDatePicker({ value, onChange, placeholder = 'DD/MM
         type="button"
         onClick={() => !disabled && setOpen((prev) => !prev)}
         disabled={disabled}
-        className={`w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 transition ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full flex items-center justify-between px-3 py-2 border border-border rounded-lg text-sm bg-surface text-text focus:ring-2 focus:ring-primary transition ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <span className={displayValue ? '' : 'text-gray-400 dark:text-gray-500'}>
+        <span className={displayValue ? '' : 'text-muted'}>
           {displayValue || placeholder}
         </span>
-        <CalendarIcon size={16} className="text-gray-400 dark:text-gray-500" />
+        <CalendarIcon size={16} className="text-muted" />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-elegant-lg p-3">
+        <div className="absolute z-50 mt-2 w-72 bg-surface border border-border rounded-xl shadow-elegant-lg p-3">
           <div className="flex items-center justify-between mb-2">
-            <button type="button" onClick={prevMonth} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <button type="button" onClick={prevMonth} className="p-1 rounded-lg hover:bg-surface-variant transition">
               <ChevronLeft size={16} />
             </button>
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+            <span className="text-sm font-semibold text-text">
               {MONTHS_ID[viewDate.getMonth()]} {viewDate.getFullYear()}
             </span>
-            <button type="button" onClick={nextMonth} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <button type="button" onClick={nextMonth} className="p-1 rounded-lg hover:bg-surface-variant transition">
               <ChevronRight size={16} />
             </button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-1">
             {DAYS_ID.map((day) => (
-              <div key={day} className="text-center text-[11px] font-medium text-gray-500 dark:text-gray-400 py-1">
+              <div key={day} className="text-center text-[11px] font-medium text-muted py-1">
                 {day}
               </div>
             ))}
@@ -177,10 +177,10 @@ export default function CustomDatePicker({ value, onChange, placeholder = 'DD/MM
                   onClick={() => handleSelect(day)}
                   className={`h-8 w-8 mx-auto flex items-center justify-center rounded-lg text-xs font-medium transition ${
                     isSelected
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary text-white'
                       : isToday
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'bg-primary-container text-primary-on-container'
+                        : 'text-text hover:bg-surface-variant'
                   }`}
                 >
                   {day}

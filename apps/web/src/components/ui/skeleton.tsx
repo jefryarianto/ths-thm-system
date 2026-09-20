@@ -17,11 +17,11 @@ export function Skeleton({
   height,
   lines = 1,
 }: SkeletonProps) {
-  const baseClasses = 'animate-pulse bg-gray-200 dark:bg-gray-700 rounded';
+  const baseClasses = 'animate-pulse bg-surface-variant rounded';
 
   const variantClasses = {
     text: 'h-4',
-    card: 'rounded-xl border border-gray-200 dark:border-gray-700 p-5',
+    card: 'rounded-xl border border-border p-5',
     'table-row': '',
     avatar: 'rounded-full',
     chart: 'rounded-xl',
@@ -80,14 +80,14 @@ export function InputSkeleton({ className, ...props }: Omit<SkeletonProps, 'vari
 
 export function ChartSkeleton({ height = 280, className, ...props }: { height?: number; className?: string } & Omit<SkeletonProps, 'variant' | 'height'>) {
   return (
-    <div className={cn('bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 animate-pulse', className)}>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2" />
-      <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded w-64 mb-6" />
+    <div className={cn('bg-surface rounded-xl border border-border shadow-sm p-6 animate-pulse', className)}>
+      <div className="h-4 bg-surface-variant rounded w-48 mb-2" />
+      <div className="h-3 bg-surface-variant rounded w-64 mb-6" />
       <div
-        className="bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center"
+        className="bg-surface-variant rounded-xl flex items-center justify-center"
         style={{ height }}
       >
-        <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-600" />
+        <div className="h-12 w-12 rounded-full bg-surface-variant" />
       </div>
     </div>
   );
