@@ -48,7 +48,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-              <button
+            <button
               onClick={() => setLocale(locale === 'id' ? 'en' : 'id')}
               className="flex items-center gap-1 hover:text-gold-400 transition-colors"
               aria-label={locale === 'id' ? 'Ganti bahasa ke Inggris' : 'Ganti bahasa ke Bahasa Indonesia'}
