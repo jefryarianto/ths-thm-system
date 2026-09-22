@@ -53,7 +53,7 @@ test.describe('Members Page - Enhanced Features', () => {
 
   // --- Search Clear ---
   test('should clear search with X button', async ({ page }) => {
-    const searchInput = page.locator('input[type="text"]').first();
+    const searchInput = page.locator('input[type="search"], input[type="text"]').first();
     await expect(searchInput).toBeVisible({ timeout: 8000 });
     await searchInput.fill('Anggota 1');
 
