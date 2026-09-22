@@ -53,8 +53,8 @@ test.describe('Members Page - Enhanced Features', () => {
 
   // --- Search Clear ---
   test('should clear search with X button', async ({ page }) => {
-    const searchInput = page.locator('input[type="search"], input[type="text"]').first();
-    await expect(searchInput).toBeVisible({ timeout: 8000 });
+    const searchInput = page.getByPlaceholder('Cari nama, nomor anggota, email...');
+    await expect(searchInput).toBeVisible({ timeout: 15000 });
     await searchInput.fill('Anggota 1');
 
     const clearButton = page.locator('button[aria-label="Clear search"]');
