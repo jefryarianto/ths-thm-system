@@ -3,7 +3,7 @@ import { mockAuth } from './helpers';
 
 test.describe('Members Page - Enhanced Features', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuth(page, { mockDashboardPages: true });
+    await mockAuth(page, { mockMembers: true, mockDashboardPages: true });
     await page.goto('/members');
     await expect(page.locator('h1').first()).toContainText('Anggota', { timeout: 10000 });
   });
