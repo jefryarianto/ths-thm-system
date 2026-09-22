@@ -8,7 +8,9 @@ import { usePaginatedList } from '@/lib/hooks/use-api';
 import { useFilters } from '@/lib/hooks/use-filters';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import type { Member } from '@/types';
-import { Plus, Upload, Users, Printer } from 'lucide-react';
+import { Plus, Upload, Users, Printer, X } from 'lucide-react';
+import MultiFormatExport from '@/components/ui/MultiFormatExport';
+import SavedViews from '@/components/ui/SavedViews';
 import ExportMenu from '@/components/ui/export-menu';
 import { CanCreate, CanExport } from '@/components/auth/can';
 import { PermissionGuard } from '@/components/auth/permission-guard';
@@ -20,8 +22,11 @@ import FilterSelect from '@/components/ui/filter-select';
 import { useToast } from '@/components/ui/toast';
 import { StatCardGridSkeleton } from '@/components/ui/skeletons';
 import MemberActions from '@/components/members/MemberActions';
+import MembersBulkAction from '@/components/members/MembersBulkAction';
 import MutationModal from '@/components/members/MutationModal';
 import MemberStatCards from '@/components/members/MemberStatCards';
+import ColumnVisibility from '@/components/ui/ColumnVisibility';
+import DateRangeFilter from '@/components/ui/DateRangeFilter';
 import { StatusBadge, STATUS_LABELS, formatDate, toProperCase } from '@/components/members/constants';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -36,6 +41,9 @@ export default function MembersPage() {
   const [mutasiMember, setMutasiMember] = useState<Member | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchPrinting, setBatchPrinting] = useState(false);
+  const [isApproveLoading, setIsApproveLoading] = useState(false);
+  const [dadars, setDadars] = useState({ from: '', to: '' });
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['namaLengkap', 'nomorAnggota', 'statusKeanggotaan']);
 
   const toggleSelect = (id: string) =>
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -63,6 +71,23 @@ export default function MembersPage() {
     setBatchPrinting(false);
   };
 
+  const handleBatchApprove = async () => {
+    if (selectedIds.length === 0) return;
+    setIsApproveLoading(true);
+    try {
+      await apiClient.post('/members/batch-action', {
+        memberIds: selectedIds,
+        action: 'approve',
+      });
+      toast('success', `Berhasil menyetujui ${selectedIds.length} anggota`);
+      setSelectedIds([]);
+      refetch();
+    } catch {
+      toast('error', `Gagal menyetujui ${selectedIds.length} anggota`);
+    }
+    setIsApproveLoading(false);
+  };
+
   // Stats
   const [stats, setStats] = useState({ total: 0, aktif: 0, pendingValidasi: 0, incomplete: 0 });
 
@@ -73,6 +98,8 @@ export default function MembersPage() {
     setSearch,
     filters,
     setFilter,
+    sort,
+    setSort,
     hasActiveFilters,
     getApiParams,
     resetFilters,
@@ -101,16 +128,22 @@ export default function MembersPage() {
     if (filters.statusKeanggotaan) params.statusKeanggotaan = filters.statusKeanggotaan;
     if (filters.statusData) params.statusData = filters.statusData;
     if (filters.statusValidasi) params.statusValidasi = filters.statusValidasi;
+    if (dadars.from) params.dadarFrom = dadars.from;
+    if (dadars.to) params.dadarTo = dadars.to;
     return apiClient.get('/members', { params }).then((r) => r.data);
   }, [
     page,
     debouncedSearch,
+    sort?.key,
+    sort?.direction,
     filters.statusKeanggotaan,
     filters.statusData,
     filters.statusValidasi,
     filters.distrikId,
     filters.wilayahId,
     filters.rantingId,
+    dadars.from,
+    dadars.to,
   ]);
 
   interface OrgNode { id: string; name: string; children?: OrgNode[]; }
@@ -330,25 +363,37 @@ export default function MembersPage() {
     <PermissionGuard module="members" action="view">
     <PageContainer>
       <PageHeader title="Anggota" onRefresh={refetch}>
-        <CanCreate module="members">
-          <button
-            onClick={() => router.push('/members/import')}
-            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-          >
-            <Upload size={14} /> Import
-          </button>
-        </CanCreate>
-        <CanExport module="members">
-          <ExportMenu serverType="members" filename="anggota-export" />
-        </CanExport>
-        <CanCreate module="members">
-          <button
-            onClick={() => router.push('/members/new')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
-          >
-            <Plus size={16} /> Tambah
-          </button>
-        </CanCreate>
+      <SavedViews
+        onApply={(view) => {
+          // Apply saved filters
+          Object.entries(view.filters).forEach(([key, value]) => {
+            setFilter(key, value);
+          });
+          if (view.sort) {
+            setSort(view.sort);
+          }
+        }}
+        onReset={resetFilters}
+      />
+      <CanCreate module="members">
+        <button
+          onClick={() => router.push('/members/import')}
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+        >
+          <Upload size={14} /> Import
+        </button>
+      </CanCreate>
+      <CanExport module="members">
+        <MultiFormatExport serverType="members" filename="anggota-export" selectedIds={selectedIds} />
+      </CanExport>
+      <CanCreate module="members">
+        <button
+          onClick={() => router.push('/members/new')}
+          className="flex items-center gap-1.5 px-4 py-2 bg-gold-400 text-navy-900 rounded-xl text-sm font-bold hover:bg-gold-300 transition-all duration-200"
+        >
+          <Plus size={16} /> Tambah
+        </button>
+      </CanCreate>
       </PageHeader>
 
       {/* Stats Cards */}
@@ -358,6 +403,7 @@ export default function MembersPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
+        onClear={() => setSearch('')}
         onReset={resetFilters}
         placeholder="Cari nama, nomor anggota, email..."
       >
@@ -422,6 +468,131 @@ export default function MembersPage() {
         />
       </SearchBar>
 
+      {/* Date Range Filter, Column Visibility & Saved Views */}
+      <div className="flex flex-wrap items-center gap-3 -mt-2 mb-2">
+        <DateRangeFilter
+          from={dadars.from}
+          to={dadars.to}
+          onFromChange={(v) => setDadars(prev => ({ ...prev, from: v }))}
+          onToChange={(v) => setDadars(prev => ({ ...prev, to: v }))}
+        />
+        <ColumnVisibility
+          columns={[
+            { key: 'namaLengkap', label: 'Nama' },
+            { key: 'nomorAnggota', label: 'NRA' },
+            { key: 'ttl', label: 'Tempat, Tgl Lahir' },
+            { key: 'dadar', label: 'Tempat - Tahun Dadar' },
+            { key: 'ranting', label: 'Ranting' },
+            { key: 'tingkat', label: 'Tingkatan' },
+            { key: 'statusKeanggotaan', label: 'Status' },
+          ]}
+          visibleColumns={visibleColumns}
+          onVisibleColumnsChange={setVisibleColumns}
+        />
+        <SavedViews
+          onApply={(view) => {
+            Object.entries(view.filters).forEach(([key, value]) => {
+              setFilter(key, value);
+            });
+            if (view.sort) {
+              setSort(view.sort);
+            }
+          }}
+          onReset={resetFilters}
+        />
+      </div>
+
+      {/* Quick Filter Presets & Active Filter Chips */}
+      <div className="flex flex-wrap items-center gap-2 -mt-2 mb-2">
+        <span className="text-xs font-medium text-muted">Quick:</span>
+        <button
+          onClick={() => {
+            setFilter('statusKeanggotaan', 'aktif');
+            setFilter('statusData', '');
+            setFilter('statusValidasi', '');
+          }}
+          className="px-2.5 py-1 text-xs bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300 rounded-full hover:opacity-80 transition"
+        >
+          Aktif
+        </button>
+        <button
+          onClick={() => {
+            setFilter('statusData', 'incomplete');
+            setFilter('statusKeanggotaan', '');
+            setFilter('statusValidasi', '');
+          }}
+          className="px-2.5 py-1 text-xs bg-warning-50 dark:bg-warning-950 text-warning-700 dark:text-warning-300 rounded-full hover:opacity-80 transition"
+        >
+          Data Belum Lengkap
+        </button>
+        <button
+          onClick={() => {
+            setFilter('statusValidasi', 'pending');
+            setFilter('statusKeanggotaan', '');
+            setFilter('statusData', '');
+          }}
+          className="px-2.5 py-1 text-xs bg-info-50 dark:bg-info-950 text-info-700 dark:text-info-300 rounded-full hover:opacity-80 transition"
+        >
+          Pending Validasi
+        </button>
+      </div>
+
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 -mt-1 mb-2">
+          {filters.distrikId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs">
+              Distrik: {distrikOptions.find((d) => d.value === filters.distrikId)?.label || filters.distrikId}
+              <button onClick={() => setFilter('distrikId', '')} className="p-0.5 hover:opacity-70" aria-label="Hapus filter distrik">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          {filters.wilayahId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs">
+              Wilayah: {wilayahOptions.find((d) => d.value === filters.wilayahId)?.label || filters.wilayahId}
+              <button onClick={() => setFilter('wilayahId', '')} className="p-0.5 hover:opacity-70" aria-label="Hapus filter wilayah">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          {filters.rantingId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs">
+              Ranting: {rantingOptions.find((d) => d.value === filters.rantingId)?.label || filters.rantingId}
+              <button onClick={() => setFilter('rantingId', '')} className="p-0.5 hover:opacity-70" aria-label="Hapus filter ranting">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          {filters.statusKeanggotaan && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs">
+              Status: {STATUS_LABELS.keanggotaan[filters.statusKeanggotaan] || filters.statusKeanggotaan}
+              <button onClick={() => setFilter('statusKeanggotaan', '')} className="p-0.5 hover:opacity-70" aria-label="Hapus filter status">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          {filters.statusData && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs">
+              Data: {filters.statusData === 'complete' ? 'Lengkap' : 'Belum Lengkap'}
+              <button onClick={() => setFilter('statusData', '')} className="p-0.5 hover:opacity-70" aria-label="Hapus filter data">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          {filters.statusValidasi && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs">
+              Validasi: {filters.statusValidasi === 'pending' ? 'Pending' : filters.statusValidasi === 'approved' ? 'Disetujui' : 'Ditolak'}
+              <button onClick={() => setFilter('statusValidasi', '')} className="p-0.5 hover:opacity-70" aria-label="Hapus filter validasi">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          <button onClick={resetFilters} className="text-xs text-primary hover:underline ml-1">
+            Reset semua
+          </button>
+        </div>
+      )}
+
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl flex items-center justify-between">
@@ -432,8 +603,17 @@ export default function MembersPage() {
         </div>
       )}
 
-      {/* Cetak batch kartu fisik */}
-      {selectedIds.length > 0 && (
+      {/* Batch Actions */}
+      <MembersBulkAction
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        onApprove={handleBatchApprove}
+        onPrint={handleBatchPrint}
+        isApproveLoading={isApproveLoading}
+        isPrintLoading={batchPrinting}
+      />
+      {/* Cetak batch kartu fisik (hapus setelah menggunakan MembersBulkAction) */}
+      {selectedIds.length > 0 && !isApproveLoading && (
         <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-xl mb-4">
           <p className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">
             {selectedIds.length} anggota dipilih untuk cetak kartu fisik
@@ -451,9 +631,11 @@ export default function MembersPage() {
 
       {/* Table */}
       <DataTable
-        columns={columns}
+        columns={columns.filter(c => !c.key || visibleColumns.includes(c.key))}
         data={members}
         loading={loading}
+        sort={sort}
+        onSort={setSort}
         empty={{
           icon: Users,
           message: hasActiveFilters
@@ -476,6 +658,32 @@ export default function MembersPage() {
             onMutate={isAdmin ? (id) => setMutasiMember(members.find((x) => x.id === id) ?? null) : undefined}
             onUploadPhoto={isAdmin ? handleUploadPhoto : undefined}
           />
+        )}
+        renderMobileCard={(m: Member) => (
+          <Link href={`/members/${m.id}`} className="block p-4 border-b border-border last:border-0 active:bg-surface-variant">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="relative shrink-0">
+                  {m.fotoPath ? (
+                    <img
+                      src={`/api/uploads/${m.fotoPath}`}
+                      alt=""
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex'; }}
+                    />
+                  ) : null}
+                  <div className="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
+                    <span className="font-semibold text-sm text-text">{m.namaLengkap.charAt(0)}</span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-text truncate">{toProperCase(m.namaLengkap)}</p>
+                  <p className="text-xs text-muted font-mono">{m.nomorAnggota}</p>
+                </div>
+              </div>
+              <StatusBadge status={m.statusKeanggotaan} />
+            </div>
+          </Link>
         )}
       />
 

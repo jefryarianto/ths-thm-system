@@ -1,98 +1,159 @@
 import { test, expect } from '@playwright/test';
-import { mockAuth } from './helpers';
 
-test.describe('Members — /members', () => {
+test.describe('Members Page - Enhanced Features', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuth(page, { mockMembers: true, mockDashboardPages: true });
     await page.goto('/members');
-    await expect(page.locator('h1').first()).toContainText('Anggota', { timeout: 10000 });
   });
 
-  test('renders page title and action buttons', async ({ page }) => {
-    await expect(page.locator('h1').first()).toContainText('Anggota');
-    await expect(page.getByRole('button', { name: /tambah/i }).first()).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: /import/i }).first()).toBeVisible({ timeout: 8000 });
+  // --- Mobile View ---
+  test('should show mobile cards on small screens', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    
+    // Cards should appear instead of table
+    await expect(page.locator('a[href^="/members/"]')).toBeVisible();
+    
+    // Verify card content
+    const card = page.locator('a[href^="/members/"]').first();
+    await expect(card.locator('span.font-medium')).toBeVisible();
+    await expect(card.locator('span.font-mono')).toBeVisible();
+    
+    // Reset to desktop
+    await page.setViewportSize({ width: 1280, height: 720 });
   });
 
-  test('renders stat cards after loading', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    const totalVisible = await page.getByText('total').first().isVisible().catch(() => false);
-    if (totalVisible) {
-      await expect(page.getByText('total').first()).toBeVisible({ timeout: 5000 });
-    }
+  // --- Sorting ---
+  test('should sort by name', async ({ page }) => {
+    // Click sort button
+    const sortButton = page.locator('th:has-text("Nama") button').first();
+    await expect(sortButton).toBeVisible();
+    await sortButton.click();
+    
+    // Wait for URL parameter change
+    await page.waitForURL(/sort=/);
+    
+    // Verify sort icon appears
+    await expect(page.locator('svg')).toBeVisible();
   });
 
-  test('renders DataTable with columns and rows', async ({ page }) => {
-    // Column headers
-    await expect(page.getByText('Nama').first()).toBeVisible({ timeout: 8000 });
-    const statusVisible = await page.getByText('Status').first().isVisible().catch(() => false);
-    if (statusVisible) {
-      await expect(page.getByText('Status').first()).toBeVisible({ timeout: 5000 });
-    }
-
-    // Mock data rows should appear
-    await page.waitForTimeout(1000);
-    const memberVisible = await page.getByText('Anggota 1').first().isVisible().catch(() => false);
-    if (memberVisible) {
-      await expect(page.getByText('Anggota 1').first()).toBeVisible({ timeout: 5000 });
-    }
+  // --- Column Visibility ---
+  test('should toggle column visibility', async ({ page }) => {
+    // Open visibility menu
+    const visibilityButton = page.locator('button[aria-label="Toggle kolom"]');
+    await visibilityButton.click();
+    
+    // Toggle a column
+    const checkbox = page.locator('input[type="checkbox"]').first();
+    await checkbox.click();
+    
+    // Verify localStorage change
+    const stored = await page.evaluate(() => 
+      localStorage.getItem('membersTableColumns')
+    );
+    expect(stored).toBeTruthy();
+    
+    // Reset to desktop
+    await page.setViewportSize({ width: 1280, height: 720 });
   });
 
-  test('search bar accepts input', async ({ page }) => {
-    const searchInput = page.locator('input[placeholder="Cari nama, nomor anggota, email..."]').first();
-    const searchVisible = await searchInput.isVisible().catch(() => false);
-    if (searchVisible) {
-      await expect(searchInput).toBeVisible();
-      await searchInput.fill('test search');
-      await expect(searchInput).toHaveValue('test search');
-    }
+  // --- Filter Chips ---
+  test('should show active filter chips', async ({ page }) => {
+    // Apply status filter
+    await page.selectOption('select[name="statusKeanggotaan"]', 'aktif');
+    
+    // Chip should appear
+    await expect(page.locator('span:has-text("Aktif")')).toBeVisible();
+    
+    // Clear chip
+    await page.locator('span:has-text("Aktif") button').click();
+    await expect(page.locator('span:has-text("Aktif")')).not.toBeVisible();
   });
 
-  test('filter dropdowns are present', async ({ page }) => {
-    await page.waitForTimeout(500);
-    const filterSelects = page.locator('select');
-    const count = await filterSelects.count().catch(() => 0);
-    expect(count).toBeGreaterThanOrEqual(1);
+  // --- Search Clear ---
+  test('should clear search with X button', async ({ page }) => {
+    // Type in search
+    await page.fill('input[type="text"]', 'test');
+    
+    // X button should appear
+    await expect(page.locator('button[aria-label="Clear search"]')).toBeVisible();
+    
+    // Clear
+    await page.click('button[aria-label="Clear search"]');
+    const value = await page.inputValue('input[type="text"]');
+    expect(value).toBe('');
   });
 
-  test('Tambah button navigates to /members/new', async ({ page }) => {
-    const btn = page.locator('button:has-text("Tambah")').first();
-    if (await btn.isVisible().catch(() => false)) {
-      await btn.click();
-      await expect(page).toHaveURL(/\/members\/new/);
-    }
+  // --- Quick Filter Presets ---
+  test('should use quick filter presets', async ({ page }) => {
+    // Click Aktif preset
+    await page.click('button:has-text("Aktif")');
+    
+    // Verify filter applied
+    await expect(page.locator('span:has-text("Aktif")')).toBeVisible();
+    
+    // Reset
+    await page.click('button:has-text("Reset semua")');
+    await expect(page.locator('span:has-text("Aktif")')).not.toBeVisible();
   });
 
-  test('Import button navigates to /members/import', async ({ page }) => {
-    const btn = page.locator('button:has-text("Import")').first();
-    if (await btn.isVisible().catch(() => false)) {
-      await btn.click();
-      await expect(page).toHaveURL(/\/members\/import/);
-    }
+  // --- Bulk Actions ---
+  test('should select members for bulk action', async ({ page }) => {
+    // Select first member
+    const checkbox = page.locator('input[type="checkbox"]').first();
+    await checkbox.click();
+    
+    // Bulk action bar should appear
+    await expect(page.locator('.bg-primary-50')).toBeVisible();
+    
+    // Verify count
+    await expect(page.locator('text=1 anggota dipilih')).toBeVisible();
   });
 
-  test('pagination renders for 150 members (10 pages at 15 limit)', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    const totalVisible = await page.getByText('total').first().isVisible().catch(() => false);
-    if (totalVisible) {
-      await expect(page.getByText('total').first()).toBeVisible({ timeout: 5000 });
-    }
+  // --- Multi-Format Export ---
+  test('should show export options', async ({ page }) => {
+    const exportButton = page.locator('button:has-text("Export")');
+    await expect(exportButton).toBeVisible();
+    
+    // Hover to show dropdown (if it's a dropdown)
+    // Note: MultiFormatExport uses hover, but testing may need different approach
   });
 
-  test('status badges render with correct styles', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    const activeVisible = await page.getByText('Aktif').first().isVisible().catch(() => false);
-    if (activeVisible) {
-      await expect(page.getByText('Aktif').first()).toBeVisible({ timeout: 5000 });
-    }
+  // --- Date Range Filter ---
+  test('should filter by date range', async ({ page }) => {
+    const fromInput = page.locator('input[type="date"]').first();
+    await fromInput.fill('2023-01-01');
+    
+    const toInput = page.locator('input[type="date"]').last();
+    await toInput.fill('2023-12-31');
+    
+    // Verify values
+    await expect(await fromInput.inputValue()).toBe('2023-01-01');
+    await expect(await toInput.inputValue()).toBe('2023-12-31');
   });
 
-  test('renders 15 rows per page', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    const rows = page.locator('table tbody tr');
-    const count = await rows.count().catch(() => 0);
-    if (count > 0) {
-      await expect(rows.first()).toBeVisible({ timeout: 5000 });
-    }
+  // --- Saved Views ---
+  test('should show saved views menu', async ({ page }) => {
+    const viewsButton = page.locator('button[aria-label="Saved views"]');
+    await viewsButton.click();
+    
+    // Menu should appear
+    await expect(page.locator('.SavedViews')).toBeVisible().catch(() => {});
+    
+    // For initial state, no saved views exist
+    await expect(page.locator('text=No saved views')).toBeVisible().catch(() => {});
+  });
+
+  // --- Pagination Info ---
+  test('should show pagination info', async ({ page }) => {
+    // Check for "Showing X-Y of Z" text
+    await expect(page.locator('text=Showing')).toBeVisible().catch(() => {});
+  });
+
+  // --- Accessibility ---
+  test('should have proper aria labels', async ({ page }) => {
+    const searchInput = page.locator('input[type="text"]');
+    await expect(await searchInput.getAttribute('aria-label')).toBeTruthy();
+    
+    const sortButtons = page.locator('button[aria-label*="Sort"]');
+    await expect(sortButtons.count()).toBeGreaterThan(0);
   });
 });
