@@ -363,18 +363,6 @@ export default function MembersPage() {
     <PermissionGuard module="members" action="view">
     <PageContainer>
       <PageHeader title="Anggota" onRefresh={refetch}>
-      <SavedViews
-        onApply={(view) => {
-          // Apply saved filters
-          Object.entries(view.filters).forEach(([key, value]) => {
-            setFilter(key, value);
-          });
-          if (view.sort) {
-            setSort(view.sort);
-          }
-        }}
-        onReset={resetFilters}
-      />
       <CanCreate module="members">
         <button
           onClick={() => router.push('/members/import')}
