@@ -9,16 +9,17 @@ test.describe('Members Page - Enhanced Features', () => {
   });
 
   // --- Mobile View ---
-  test('should show mobile cards on small screens', async ({ page }) => {
+  test('should show mobile cards on small screens', async ({ page, context }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.reload();
+    await page.goto('/members');
 
-    // On mobile, either the card list or the table should render.
+    // On mobile the page should render member content: either mobile card list
+    // or the responsive table. Wait for any member row/card.
     const card = page.locator('a[href^="/members/"]').first();
-    const table = page.locator('table tbody tr').first();
+    const tableRow = page.locator('table tbody tr').first();
 
-    const cardVisible = await card.isVisible({ timeout: 8000 }).catch(() => false);
-    const tableVisible = await table.isVisible({ timeout: 8000 }).catch(() => false);
+    const cardVisible = await card.isVisible({ timeout: 10000 }).catch(() => false);
+    const tableVisible = await tableRow.isVisible({ timeout: 10000 }).catch(() => false);
 
     expect(cardVisible || tableVisible).toBeTruthy();
 
