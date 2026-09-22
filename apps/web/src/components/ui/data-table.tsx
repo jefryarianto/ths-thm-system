@@ -1,6 +1,7 @@
 'use client';
 
-import { type LucideIcon } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { type LucideIcon, ArrowUp, ArrowDown } from 'lucide-react';
 import TableSkeleton from './table-skeleton';
 import EmptyState from './empty-state';
 import Pagination from './pagination';
@@ -15,6 +16,11 @@ export interface Column<TRow = Record<string, unknown>> {
   /** Responsive visibility class e.g. 'hidden sm:table-cell' */
   hidden?: string;
   align?: 'left' | 'right' | 'center';
+}
+
+export interface SortConfig {
+  key: string;
+  direction: 'asc' | 'desc';
 }
 
 interface EmptyConfig {
@@ -46,6 +52,10 @@ interface DataTableProps<T> {
   skeletonRows?: number;
   /** Render function for mobile card view (shown on screens < md) */
   renderMobileCard?: (item: T, index: number) => React.ReactNode;
+  /** Current sort state */
+  sort?: SortConfig | null;
+  /** Callback when sort changes */
+  onSort?: (sort: SortConfig | null) => void;
 }
 
 export default function DataTable<T>({
@@ -63,11 +73,81 @@ export default function DataTable<T>({
   colSpan,
   skeletonRows = 5,
   renderMobileCard,
+  sort,
+  onSort,
 }: DataTableProps<T>) {
   // Determine if we should auto-render rows using column render functions
   const hasColumnRender = columns.some((c) => c.render);
   const autoRender = hasColumnRender && !renderRow;
   const effectiveColSpan = colSpan || columns.length + (actions ? 1 : 0);
+
+  const handleSort = (colKey: string) => {
+    if (!onSort) return;
+    const newDirection = sort?.key === colKey 
+      ? (sort.direction === 'asc' ? 'desc' : 'asc')
+      : 'asc';
+    onSort({ key: colKey, direction: newDirection });
+  };
+
+  // Keyboard navigation state
+  const [activeRow, setActiveRow] = useState(0);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const table = tableRef.current;
+    if (!table) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!autoRender || !onRowClick) return;
+
+      const currentIndex = activeRow;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (currentIndex < data.length - 1) {
+            setActiveRow((prev: number) => prev + 1);
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (currentIndex > 0) {
+            setActiveRow((prev: number) => prev - 1);
+          }
+          break;
+        case 'Enter':
+          e.preventDefault();
+          onRowClick(data[currentIndex]);
+          break;
+        case 'Home':
+          e.preventDefault();
+          setActiveRow(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          setActiveRow(data.length - 1);
+          break;
+      }
+    };
+
+    table.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      table.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeRow, data, autoRender, onRowClick]);
+
+  useEffect(() => {
+    if (activeRow > 0 && autoRender) {
+      const row = tableRef.current?.querySelector(`[data-row-index="${activeRow}"]`);
+      row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeRow, autoRender]);
+
+  // Reset active row when page changes
+  useEffect(() => {
+    setActiveRow(0);
+  }, [page]);
 
   return (
     <div className="bg-surface rounded-2xl border border-border shadow-elegant">
@@ -91,8 +171,8 @@ export default function DataTable<T>({
       {/* Desktop Table View */}
       <div className="hidden md:block overflow-x-auto overflow-y-visible">
         <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-surface-variant">
+          <thead className="sticky top-0 z-10 bg-surface-variant">
+            <tr className="border-b border-border">
               {columns.map((col, i) => (
                 <th
                   key={col.key || i}
@@ -104,7 +184,27 @@ export default function DataTable<T>({
                         : 'text-left'
                   }`}
                 >
-                  {col.header ? col.header() : col.label}
+                  <div className={`flex items-center gap-2 group ${col.align === 'right' ? 'justify-end' : ''}`}>
+                    {col.header ? col.header() : col.label}
+                    {onSort && col.key && (
+                      <button
+                        onClick={() => handleSort(col.key as string)}
+                        className="p-0.5 hover:bg-surface-variant rounded transition-colors"
+                        title="Sort column"
+                        aria-label={`Sort by ${col.label}`}
+                      >
+                        {sort?.key === col.key ? (
+                          sort.direction === 'asc' ? (
+                            <ArrowUp size={14} className="text-primary" />
+                          ) : (
+                            <ArrowDown size={14} className="text-primary" />
+                          )
+                        ) : (
+                          <ArrowUp size={14} className="text-muted opacity-0 group-hover:opacity-100" />
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </th>
               ))}
               {actions && (

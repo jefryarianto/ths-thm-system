@@ -10,6 +10,11 @@ export interface FilterConfig {
   defaultValue: string;
 }
 
+export interface SortConfig {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+
 interface UseFiltersOptions {
   /** Initial search value (default '') */
   initialSearch?: string;
@@ -24,10 +29,12 @@ interface UseFiltersReturn {
   page: number;
   search: string;
   filters: Record<string, string>;
+  sort: SortConfig | null;
   // Actions
   setPage: (page: number) => void;
   setSearch: (search: string) => void;
   setFilter: (key: string, value: string) => void;
+  setSort: (sort: SortConfig | null) => void;
   resetFilters: () => void;
   // Derived
   hasActiveFilters: boolean;
@@ -65,6 +72,7 @@ export function useFilters(options: UseFiltersOptions = {}): UseFiltersReturn {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState(initialSearch);
+  const [sort, setSort] = useState<SortConfig | null>(null);
 
   // Build initial filter state from config (stable reference)
   const [initialFilters] = useState(() =>
@@ -100,6 +108,7 @@ export function useFilters(options: UseFiltersOptions = {}): UseFiltersReturn {
   const resetFilters = useCallback(() => {
     setSearch(initialSearch);
     setFilters(initialFilters);
+    setSort(null);
     setPage(1);
   }, [initialSearch, initialFilters]);
 
@@ -112,21 +121,27 @@ export function useFilters(options: UseFiltersOptions = {}): UseFiltersReturn {
     (extra?: Record<string, unknown>): Record<string, unknown> => {
       const params: Record<string, unknown> = { page, ...extra };
       if (search) params.search = search;
+      if (sort) {
+        params.sort = sort.key;
+        params.order = sort.direction;
+      }
       for (const [key, value] of Object.entries(filters)) {
         if (value) params[key] = value;
       }
       return params;
     },
-    [page, search, filters],
+    [page, search, filters, sort],
   );
 
   return {
     page,
     search,
     filters,
+    sort,
     setPage,
     setSearch,
     setFilter,
+    setSort,
     resetFilters,
     hasActiveFilters,
     getApiParams,

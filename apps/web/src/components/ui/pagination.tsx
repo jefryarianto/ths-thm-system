@@ -7,10 +7,15 @@ interface PaginationProps {
   totalPages: number;
   total: number;
   onPageChange: (page: number) => void;
+  /** Jumlah item per halaman (untuk teks "Showing X-Y of Z") */
+  pageSize?: number;
 }
 
-export default function Pagination({ page, totalPages, total, onPageChange }: PaginationProps) {
+export default function Pagination({ page, totalPages, total, onPageChange, pageSize = 15 }: PaginationProps) {
   if (totalPages <= 1) return null;
+
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
 
   const handlePrev = () => {
     if (page > 1) onPageChange(page - 1);
@@ -43,7 +48,9 @@ export default function Pagination({ page, totalPages, total, onPageChange }: Pa
 
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-      <p className="text-sm text-muted">{total} total</p>
+      <p className="text-sm text-muted">
+        Showing <strong className="text-text">{start}-{end}</strong> of <strong className="text-text">{total}</strong>
+      </p>
       <div className="flex items-center gap-1">
         <button
           onClick={handlePrev}

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 interface SearchBarProps {
   search: string;
   onSearchChange: (value: string) => void;
+  onClear?: () => void;
   onReset: () => void;
   placeholder?: string;
   children?: React.ReactNode;
@@ -19,6 +20,7 @@ interface SearchBarProps {
 export default function SearchBar({
   search,
   onSearchChange,
+  onClear,
   onReset,
   placeholder = 'Cari...',
   children,
@@ -41,8 +43,27 @@ export default function SearchBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full pl-9 pr-3 py-2 border border-border rounded-md text-sm bg-surface text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full pl-9 pr-9 py-2 border border-border rounded-md text-sm bg-surface text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={onClear}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
         {children}
         <button
