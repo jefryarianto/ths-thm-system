@@ -14,7 +14,7 @@ export function StatCardSkeleton() {
 
 export default function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="status" aria-label="Memuat dashboard">
       <div className="flex items-center justify-between">
         <div>
           <div className="h-8 bg-surface-variant rounded w-48 animate-pulse mb-1" />

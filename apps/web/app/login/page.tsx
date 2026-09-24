@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -21,7 +21,43 @@ import {
   UserPlus,
 } from 'lucide-react';
 import apiClient, { setTokens } from '@/lib/api-client';
+import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
+
+// AUTH-003: shared key between the login handoff and the force-change page.
+const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
+
+/**
+ * AUTH-010: validate the `next` return-to param before navigating.
+ *
+ * Accepts only internal relative paths: a single leading "/" followed by
+ * content that is NOT another "/" and NOT a ":" (protocol separator). This
+ * deliberately rejects "//evil.example", "/\evil.example", "https://…",
+ * "javascript:…", and any absolute/protocol-relative/malformed value that
+ * could escape the current origin (open-redirect prevention).
+ *
+ * Returns null when the value is unsafe or absent.
+ */
+function safeNextParam(value: string | null | undefined): string | null {
+  if (!value) return null;
+  // Strips a "%2F%2Fevil" style bypass so encoded values are checked too.
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return null;
+    }
+  })();
+  if (decoded === null) return null;
+  // Reject control characters (e.g. %0A) that could be used to smuggle
+  // protocol separators past a naive check.
+  if ([...decoded].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)) return null;
+  // Internal path only: starts with one "/", and the next char is neither
+  // "/" (protocol-relative), "\" (Windows-style escape), nor ":" (scheme).
+  // A bare "/" (site root) is allowed.
+  if (!/^\/([^/\\:]|$)/.test(decoded)) return null;
+  return decoded;
+}
 import { useToast } from '@/components/ui/toast';
 
 function getOAuthErrorFromUrl(): string | null {
@@ -91,6 +127,35 @@ export default function LoginPage() {
   const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(true);
   const toast = useToast();
 
+  // AUTH-011: focus target for the global error banner so keyboard/screen-reader
+  // users get immediate feedback after a failed submit.
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  const { user, isAuthenticated } = useAuth();
+
+  // AUTH-011: move focus to the error banner when a NEW error appears (e.g.
+  // after a failed submit) so keyboard/AT users are notified immediately. The
+  // ref guard prevents refocusing on every render while the error persists.
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
+
+  // AUTH-005: after auth hydration, an authenticated visitor has no business on
+  // the login page — send them to their role home (or a validated return-to).
+  // Gated on `mounted` so this never fires on the pre-hydration anonymous render
+  // (which would both cause a hydration mismatch and false-redirect anonymous
+  // users who genuinely belong here).
+  const resolvedNext = mounted
+    ? safeNextParam(new URLSearchParams(window.location.search).get('next'))
+    : null;
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (!isAuthenticated) return;
+    // Prefer the validated return-to (AUTH-010), else the role home.
+    router.replace(resolvedNext ?? getHomePathForRole(user?.role));
+  }, [mounted, isAuthenticated, resolvedNext, user?.role, router]);
+
   useEffect(() => {
     setMounted(true);
     apiClient
@@ -144,12 +209,20 @@ export default function LoginPage() {
         }
 
         if (data.data.user.mustChangePassword && data.data.resetToken) {
-          router.push(`/force-change-password?token=${data.data.resetToken}`);
+          // AUTH-003: carry the reset token via sessionStorage instead of the URL
+          // so it never lands in browser history, server logs, or referrers.
+          sessionStorage.setItem(FORCE_CHANGE_TOKEN_KEY, data.data.resetToken);
+          router.push('/force-change-password');
           return;
         }
 
         setSuccessMessage('Login berhasil! Mengalihkan...');
-        setTimeout(() => router.push(getHomePathForRole(data.data.user.role)), 800);
+
+        // AUTH-010: return to the origin the user was sent from, when present
+        // and safe. Falls back to the existing role-based home path otherwise.
+        const next = safeNextParam(new URLSearchParams(window.location.search).get('next'));
+
+        setTimeout(() => router.push(next ?? getHomePathForRole(data.data.user.role)), 800);
       }
     } catch (err: unknown) {
       const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -163,6 +236,24 @@ export default function LoginPage() {
   // Mount-gated agar render pertama (hydration) identik dengan HTML server —
   // pembacaan window saat render menyebabkan hydration mismatch di /login.
   const isDev = mounted && typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+  // AUTH-005: an authenticated user is being redirected to their home — render
+  // a neutral loading state instead of the login form so the form never flashes
+  // for someone who is already signed in.
+  if (mounted && isAuthenticated) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center bg-[#FAF9FF] font-sans"
+        role="status"
+        aria-label="Anda sudah masuk. Mengalihkan..."
+      >
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <Loader2 size={28} className="animate-spin" />
+          <p className="text-sm">Anda sudah masuk. Mengalihkan...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-[#FAF9FF] lg:h-screen lg:flex-row lg:overflow-hidden font-sans">
@@ -281,8 +372,12 @@ export default function LoginPage() {
           {/* Error Message */}
           {error && (
             <div
+              ref={errorRef}
+              id="login-error"
               data-testid="login-error"
-              className="mb-4 flex items-start gap-3 rounded-xl border border-error-200 bg-error-50/90 p-3.5 text-xs text-error animate-fade-in-up sm:text-sm"
+              role="alert"
+              tabIndex={-1}
+              className="mb-4 flex items-start gap-3 rounded-xl border border-error-200 bg-error-50/90 p-3.5 text-xs text-error animate-fade-in-up focus:outline-none sm:text-sm"
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
               <span className="flex-1 font-medium">{error}</span>
@@ -316,11 +411,22 @@ export default function LoginPage() {
                   name="identifier"
                   type="text"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    // AUTH-006: a stale credential error shouldn't linger once
+                    // the user starts correcting the input.
+                    setError((prev) => (prev ? '' : prev));
+                  }}
                   required
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'login-error' : undefined}
                   autoComplete="username"
                   placeholder="nama@email.com / 08xxxxxxxxxx"
-                  className="block h-[54px] w-full rounded-xl border border-border bg-white pl-11 pr-4 text-sm text-text placeholder:text-muted transition-all duration-200 hover:border-muted/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15"
+                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-text placeholder:text-muted transition-all duration-200 focus:outline-none focus:ring-4 ${
+                    error
+                      ? 'border-error focus:border-error focus:ring-error/15'
+                      : 'border-border hover:border-muted/60 focus:border-primary focus:ring-primary/15'
+                  }`}
                 />
               </div>
             </div>
@@ -342,17 +448,30 @@ export default function LoginPage() {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    // AUTH-006: a stale credential error shouldn't linger once
+                    // the user starts correcting the input.
+                    setError((prev) => (prev ? '' : prev));
+                  }}
                   required
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'login-error' : undefined}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="block h-[54px] w-full rounded-xl border border-border bg-white pl-11 pr-11 text-sm text-text placeholder:text-muted transition-all duration-200 hover:border-muted/60 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15"
+                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-11 text-sm text-text placeholder:text-muted transition-all duration-200 focus:outline-none focus:ring-4 ${
+                    error
+                      ? 'border-error focus:border-error focus:ring-error/15'
+                      : 'border-border hover:border-muted/60 focus:border-primary focus:ring-primary/15'
+                  }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted transition-colors hover:text-secondary"
+                  className={`absolute inset-y-0 right-0 flex items-center pr-3.5 transition-colors ${
+                    error ? 'text-error' : 'text-muted hover:text-secondary'
+                  }`}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>

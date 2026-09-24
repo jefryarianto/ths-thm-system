@@ -1,22 +1,21 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import apiClient, { unwrap } from '@/lib/api-client';
+import apiClient from '@/lib/api-client';
 import { useApi } from '@/lib/hooks/use-api';
-import Breadcrumbs from '@/components/ui/breadcrumbs';
 import {
   TrendingUp,
-  Bell,
-  Activity,
   RefreshCw,
   ChevronRight,
   Mail,
   ExternalLink,
   AlertCircle,
-  AlertTriangle,
+  Pause,
+  BarChart3,
+  MousePointerClick,
   GraduationCap,
   ClipboardCheck,
-  Calendar,
+  CalendarCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -35,21 +34,25 @@ import {
   Line,
 } from 'recharts';
 import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
+import ActionPanel from '@/components/dashboard/ActionPanel';
+import KpiGrid from '@/components/dashboard/KpiGrid';
+import SecondaryStats from '@/components/dashboard/SecondaryStats';
+import QuickActions from '@/components/dashboard/QuickActions';
+import SectionCard from '@/components/dashboard/SectionCard';
+import ActivityFeed, {
+  ActivityFeedHeader,
+  type ActivityItem,
+} from '@/components/dashboard/ActivityFeed';
 import {
   type DashboardData,
   STATUS_COLORS,
   STATUS_LABELS,
-  colorMap,
-  statConfigs,
-  secondaryStats,
-  quickActions,
-  actionItems,
-  type QuickActionConfig,
+  ROLE_LABELS,
   formatRupiah,
+  formatCompactRupiah,
   formatTime,
 } from '@/components/dashboard/constants';
 import { useAuth } from '@/hooks/use-auth';
-import { Can } from '@/components/auth/can';
 import { ChartSkeleton } from '@/components/ui/skeleton';
 
 // ── Design tokens untuk accent strip sekunder ─────────────────────
@@ -72,14 +75,6 @@ const ACTION_ICON_BG: Record<string, string> = {
   success: 'bg-success-50 dark:bg-success-950',
 };
 
-const ACTION_ICON_COLOR: Record<string, string> = {
-  error: 'text-error-700 dark:text-error-300',
-  warning: 'text-warning-700 dark:text-warning-300',
-  pending: 'text-warning-700 dark:text-warning-300',
-  info: 'text-info-700 dark:text-info-300',
-  success: 'text-success-700 dark:text-success-300',
-};
-
 function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex items-center justify-center h-64">
@@ -98,114 +93,21 @@ function DashboardError({ message, onRetry }: { message: string; onRetry: () => 
   );
 }
 
-// ─── Panel "Perlu Tindakan" ─ HANYA dari data nyata API ───
-// Menggunakan konfigurasi actionItems dari constants.ts.
-// Semua nilai berasal dari DashboardData (API /reports/dashboard).
-// Jika semua 0 → empty state informatif, tanpa alarm berlebihan.
-function ActionPanel({ data }: { data: DashboardData }) {
-  const total = actionItems.reduce((sum, item) => sum + (Number(data[item.key]) || 0), 0);
-
-  // Helper: map accent → border/hover classes (semantic, no rainbow)
-  const getBorderHover = (accent: string) => {
-    switch (accent) {
-      case 'error':
-        return 'border-border hover:border-error-300 dark:hover:border-error-800 hover:shadow-elegant-md';
-      case 'warning':
-        return 'border-border hover:border-warning-300 dark:hover:border-warning-800 hover:shadow-elegant-md';
-      case 'pending':
-        return 'border-border hover:border-warning-300 dark:hover:border-warning-800 hover:shadow-elegant-md';
-      case 'info':
-        return 'border-border hover:border-info-300 dark:hover:border-info-800 hover:shadow-elegant-md';
-      case 'success':
-        return 'border-border hover:border-success-300 dark:hover:border-success-800 hover:shadow-elegant-md';
-      default:
-        return 'border-border hover:border-border';
-    }
-  };
-
-  return (
-    <section aria-label="Perlu tindakan" className="card-elegant p-5 sm:p-6">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-text flex items-center gap-1.5">
-          <AlertTriangle size={15} className="text-warning-600" aria-hidden="true" />
-          Perlu Tindakan
-        </h2>
-        <span className="text-2xs text-muted">
-          {total > 0 ? `${total.toLocaleString('id-ID')} item menunggu` : 'Semua clear'}
-        </span>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {actionItems.map((item) => {
-          const value = Number(data[item.key]) || 0;
-          const Icon = item.icon;
-          const isEmpty = value === 0;
-          return (
-            <Link
-              key={item.key}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-xl border p-3.5 transition ${
-                !isEmpty ? getBorderHover(item.accent) : 'border-border bg-surface-variant/40'
-              }`}
-            >
-              <span className={`p-2 rounded-lg shrink-0 ${ACTION_ICON_BG[item.accent]}`}>
-                <Icon size={16} className={ACTION_ICON_COLOR[item.accent]} aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted truncate">{item.label}</p>
-                {value > 0 ? (
-                  <>
-                    <p className="text-xl font-bold text-text leading-6">
-                      {value.toLocaleString('id-ID')}
-                    </p>
-                    <p className="text-[10px] text-muted mt-0.5 truncate">
-                      {item.detail}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-xs text-success-600 dark:text-success-400 font-medium mt-0.5">
-                    Tidak ada yang perlu ditindaklanjuti.
-                  </p>
-                )}
-              </div>
-              {!isEmpty && (
-                <ChevronRight size={16} className="text-muted shrink-0" aria-hidden="true" />
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 // ─── Activity-Scoped Dashboard (admin_kegiatan & penguji) ───
 
-/** Salam beranda: "Gloria, Selamat Datang, {nama}" + nomor anggota di bawah nama. */
+/**
+ * Salam beranda: "Gloria, Selamat Datang, {nama}".
+ * Menggunakan data `user` dari useAuth (sudah ada) — tidak ada lagi
+ * panggilan API /members/me terpisah yang redundan.
+ */
 function GloriaGreeting({ className = '' }: { className?: string }) {
   const { user } = useAuth();
-  const [nomorAnggota, setNomorAnggota] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    apiClient
-      .get('/members/me')
-      .then(({ data }) => {
-        const member = data?.data || data;
-        if (active) setNomorAnggota(member?.nomorAnggota || null);
-      })
-      .catch(() => {
-        if (active) setNomorAnggota(null);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
   return (
-    <p className="text-sm text-muted mt-1">
+    <p className={`text-sm text-muted mt-1 ${className}`}>
       Gloria, Selamat Datang,{' '}
       <span className="font-medium text-text">
         {user?.namaLengkap || 'Anggota THS-THM'}
       </span>
-      {nomorAnggota ? <span className="ml-2 font-mono text-xs text-muted">{nomorAnggota}</span> : null}
     </p>
   );
 }
@@ -271,7 +173,7 @@ function ActivityScopedDashboard() {
               <p className="text-2xl font-bold text-success-700 mt-1">{kegiatan.filter(k => k.status === 'published' || k.status === 'draft').length}</p>
             </div>
             <div className="p-3 rounded-xl ring-1 ring-success-200 bg-success-50">
-              <Activity size={22} className="text-success-700" />
+              <GraduationCap size={22} className="text-success-700" />
             </div>
           </div>
         </div>
@@ -282,7 +184,7 @@ function ActivityScopedDashboard() {
               <p className="text-2xl font-bold text-muted mt-1">{kegiatan.filter(k => k.status === 'closed').length}</p>
             </div>
             <div className="p-3 rounded-xl ring-1 ring-border bg-surface-variant">
-              <Calendar size={22} className="text-muted" />
+              <CalendarCheck size={22} className="text-muted" />
             </div>
           </div>
         </div>
@@ -436,28 +338,24 @@ export default function DashboardPage() {
     ? data.emailSummary.totalSent + data.emailSummary.totalFailed + data.emailSummary.totalSkipped
     : 0;
 
+  const unreadCount = (data.recentNotifications || []).filter((n) => !n.isRead).length;
+
   return (
     <div className="space-y-5">
       {/* ── 1. HEADER (Command Center) ── */}
       <div className="flex items-center justify-between gap-4">
-        <div>
-          {/* Breadcrumbs di atas judul sesuai pola PageHeader */}
-          <Breadcrumbs />
-          <div className="flex items-center gap-2.5 mt-2">
-            <span className="p-2 rounded-xl bg-primary-container text-primary-700">
-              <TrendingUp size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <h1 className="text-xl font-bold text-text">
-                Organizational Command Center
-              </h1>
-              <GloriaGreeting />
-            </div>
+        <div className="flex items-center gap-2.5">
+          <span className="p-2 rounded-xl bg-primary-container text-primary-700 shrink-0">
+            <TrendingUp size={20} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-text">Dashboard</h1>
+            <GloriaGreeting />
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {lastUpdated && (
-            <span className="text-xs text-muted hidden sm:block">
+            <span className="text-xs text-muted">
               Terakhir:{' '}
               {lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
             </span>
@@ -465,13 +363,18 @@ export default function DashboardPage() {
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             aria-pressed={autoRefresh}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 ${
               autoRefresh
                 ? 'bg-success-50 text-success-700'
                 : 'bg-surface-variant text-muted'
             }`}
           >
-            {autoRefresh ? '🔄 Auto' : '⏸ Manual'}
+            {autoRefresh ? (
+              <RefreshCw size={12} aria-hidden="true" />
+            ) : (
+              <Pause size={12} aria-hidden="true" />
+            )}
+            {autoRefresh ? 'Auto' : 'Manual'}
           </button>
           <button
             onClick={refetch}
@@ -484,112 +387,33 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── 2. WELCOME SECTION (status snapshot, bukan sekadar sapaan) ── */}
-      <div className="relative overflow-hidden rounded-xl bg-secondary text-white px-5 py-5 sm:px-6">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/25 blur-3xl"
-        />
-        <div className="relative flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-          <div className="min-w-0">
-            <p className="text-sm text-secondary-100/80">Selamat datang kembali,</p>
-            <p className="text-lg font-bold truncate">
-              {user?.namaLengkap || 'Anggota THS-THM'}
-            </p>
-            <p className="mt-0.5 text-xs text-primary-100/80">
-              {user?.email || 'Sistem Informasi Manajemen THS-THM'}
-            </p>
-          </div>
-          {user?.role && (
-            <div className="shrink-0">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white backdrop-blur-sm border border-white/20">
-                {user.role.replace('_', ' ').toUpperCase()}
-              </span>
-            </div>
-          )}
-        </div>
+      {/* ── 2. STATUS BAR — sapaan + scope aktif (mengganti welcome banner
+            dekoratif & breadcrumbs yang redundan di halaman top-level) ── */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        {user?.role && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-variant text-text ring-1 ring-border">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+            {ROLE_LABELS[user.role] || user.role.replace('_', ' ')}
+          </span>
+        )}
+        {user?.email && (
+          <span className="text-xs text-muted truncate">{user.email}</span>
+        )}
+        <span className="ml-auto text-2xs text-muted">Sistem Informasi Manajemen THS-THM</span>
       </div>
 
-      {/* ── 3. PRIMARY KPI — 4 kartu hero ── */}
-      <section aria-label="Indikator utama">
-        <h2 className="sr-only">Indikator Utama</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {statConfigs.map(({ key, label, icon: Icon, color, isCurrency, href }) => {
-            const styles = colorMap[color];
-            const rawValue = data[key as keyof DashboardData];
-            const rawNumber = Number(rawValue) || 0;
-            const displayValue = isCurrency
-              ? formatRupiah(rawNumber)
-              : rawNumber.toLocaleString('id-ID');
-            return (
-              <Link
-                key={key}
-                href={href}
-                className="card-elegant p-5 group hover:border-primary-300 transition-all duration-200"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-                      {label}
-                    </p>
-                    <p className="text-[28px] leading-8 font-bold text-text mt-1.5 truncate">
-                      {displayValue}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-3 rounded-xl ring-1 shrink-0 ${styles.ring} ${styles.bg} group-hover:scale-105 transition-transform`}
-                  >
-                    <Icon size={22} className={styles.icon} aria-hidden="true" />
-                  </div>
-                </div>
-                <p className="mt-2 text-xs font-medium text-primary group-hover:underline">
-                  Lihat detail →
-                </p>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      {/* ── 3. PERLU TINDAKAN — prioritas tertinggi, paling atas ── */}
+      <ActionPanel
+        values={{
+          incompleteData: Number(data.incompleteData) || 0,
+          pendingValidasi: Number(data.pendingValidasi) || 0,
+          totalPendaftaran: Number(data.totalPendaftaran) || 0,
+          totalKlaim: Number(data.totalKlaim) || 0,
+        }}
+      />
 
-            {/* ── 4. PERLU TINDAKAN — hanya dari data nyata API ── */}
-      <ActionPanel data={data} />
-
-      {/* ── 8 secondary statistics — strip kompak, tidak ada yang dihapus ── */}
-      <section aria-label="Statistik lainnya">
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-sm font-semibold text-text">Statistik Lainnya</h2>
-          <span className="text-2xs text-muted">Seluruh indikator tetap tersedia</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {secondaryStats.map(({ key, label, icon: Icon, accent, href }) => {
-            const styles = ACCENT_CLASSES[accent];
-            const rawNumber = Number(data[key as keyof DashboardData]) || 0;
-            return (
-              <Link
-                key={key}
-                href={href}
-                className="card-elegant relative overflow-hidden p-3.5 group"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`absolute left-0 top-0 h-full w-1 ${styles.bar}`}
-                />
-                <div className="flex items-center gap-2.5 pl-1.5">
-                  <span className={`p-1.5 rounded-lg shrink-0 ${styles.icon}`}>
-                    <Icon size={15} aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-base font-bold text-text leading-5 truncate">
-                      {rawNumber.toLocaleString('id-ID')}
-                    </p>
-                    <p className="text-[11px] text-muted truncate">{label}</p>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      {/* ── 4. PRIMARY KPI — 4 kartu hero ── */}
+      <KpiGrid data={data} />
 
       {/* ── 5. CHARTS — Iuran Bulanan / Pertumbuhan Anggota + Status Keanggotaan ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -597,9 +421,15 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 card-elegant p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
-              <div className="flex items-center gap-1.5 p-1 bg-surface-variant rounded-lg w-fit">
+              <div
+                role="tablist"
+                aria-label="Periode grafik"
+                className="flex items-center gap-1.5 p-1 bg-surface-variant rounded-lg w-fit"
+              >
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={chartTab === 'dues'}
                   onClick={() => setChartTab('dues')}
                   className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
                     chartTab === 'dues'
@@ -611,6 +441,8 @@ export default function DashboardPage() {
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={chartTab === 'growth'}
                   onClick={() => setChartTab('growth')}
                   className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
                     chartTab === 'growth'
@@ -637,7 +469,10 @@ export default function DashboardPage() {
           {chartTab === 'dues' ? (
             data.monthlyDues && data.monthlyDues.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={data.monthlyDues} margin={{ top: 5, right: 12, left: 12, bottom: 5 }}>
+              <BarChart
+                data={data.monthlyDues}
+                margin={{ top: 5, right: 12, left: 4, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
                 <XAxis
                   dataKey="bulan"
@@ -646,13 +481,14 @@ export default function DashboardPage() {
                   axisLine={{ stroke: 'var(--chart-grid, #e5e7eb)' }}
                 />
                 <YAxis
+                  width={76}
                   tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v) => formatRupiah(v)}
+                  tickFormatter={(v) => formatCompactRupiah(v)}
                 />
                 <Tooltip
-                  formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Jumlah']}
+                  formatter={(value: number) => [formatRupiah(value), 'Iuran Terkumpul']}
                   contentStyle={{
                     borderRadius: '8px',
                     border: '1px solid var(--tooltip-border)',
@@ -661,19 +497,10 @@ export default function DashboardPage() {
                     boxShadow: 'var(--tooltip-shadow)',
                   }}
                 />
-                <Legend
-                  verticalAlign="bottom"
-                  height={28}
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(value) => (
-                    <span className="text-xs text-muted">{value}</span>
-                  )}
-                />
                 <Bar
                   name="Iuran Terkumpul"
                   dataKey="jumlah"
-                  fill="var(--primary, #072AC8)"
+                  fill="var(--primary, #2563EB)"
                   radius={[6, 6, 0, 0]}
                   maxBarSize={40}
                 />
@@ -688,7 +515,10 @@ export default function DashboardPage() {
           <ChartSkeleton height={240} />
         ) : growthData.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={growthData} margin={{ top: 5, right: 12, left: 12, bottom: 5 }}>
+            <LineChart
+              data={growthData}
+              margin={{ top: 5, right: 12, left: 12, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid, #e5e7eb)" />
               <XAxis
                 dataKey="label"
@@ -697,6 +527,7 @@ export default function DashboardPage() {
                 axisLine={{ stroke: 'var(--chart-grid, #e5e7eb)' }}
               />
               <YAxis
+                width={48}
                 tick={{ fontSize: 11, fill: 'var(--chart-tick, #6b7280)' }}
                 tickLine={false}
                 axisLine={false}
@@ -728,9 +559,9 @@ export default function DashboardPage() {
                 type="monotone"
                 name="Anggota Baru"
                 dataKey="count"
-                stroke="var(--primary, #072AC8)"
+                stroke="var(--primary, #2563EB)"
                 strokeWidth={2}
-                dot={{ r: 3, fill: 'var(--primary, #072AC8)' }}
+                dot={{ r: 3, fill: 'var(--primary, #2563EB)' }}
                 activeDot={{ r: 5 }}
               />
               <Line
@@ -770,7 +601,7 @@ export default function DashboardPage() {
                   <Pie
                     data={pieData}
                     cx="50%"
-                    cy="45%"
+                    cy="50%"
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={3}
@@ -807,154 +638,102 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-
-          {/* Email Summary (data.emailSummary dari API bila tersedia) */}
-          {data.emailSummary && (
-            <div className="card-elegant p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-text flex items-center gap-1.5">
-                  <Mail size={15} className="text-primary" aria-hidden="true" />
-                  Email Summary
-                </h3>
-                <Link
-                  href="/settings/email"
-                  className="text-xs text-primary hover:underline flex items-center gap-0.5"
-                >
-                  Kelola <ExternalLink size={10} />
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-success-50 dark:bg-success-950 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold text-success-600">
-                    {data.emailSummary.totalSent.toLocaleString('id-ID')}
-                  </p>
-                  <p className="text-2xs text-success-600 dark:text-success-400">Terkirim</p>
-                </div>
-                <div className="bg-error-50 dark:bg-error-950 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold text-error-600">
-                    {data.emailSummary.totalFailed.toLocaleString('id-ID')}
-                  </p>
-                  <p className="text-2xs text-error-600 dark:text-error-400">Gagal</p>
-                </div>
-                <div className="bg-warning-50 dark:bg-warning-950 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold text-warning-600">
-                    {data.emailSummary.totalSkipped.toLocaleString('id-ID')}
-                  </p>
-                  <p className="text-2xs text-warning-600 dark:text-warning-400">Skip</p>
-                </div>
-                <div className="bg-surface-variant rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold text-muted">
-                    {data.emailSummary.totalSuppressed.toLocaleString('id-ID')}
-                  </p>
-                  <p className="text-2xs text-muted">Supresi</p>
-                </div>
-              </div>
-              {totalEmailSent > 0 && (
-                <p className="text-xs text-muted mt-2 text-center">
-                  {Math.round((data.emailSummary.totalSent / totalEmailSent) * 100)}% success rate
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* ── 6. Aktivitas Terbaru (data.recentNotifications bila tersedia) ── */}
+      {/* ── 6. Aktivitas Terbaru + Quick Actions ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Recent Activity */}
         <div className="lg:col-span-2 card-elegant">
-          <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-text flex items-center gap-1.5">
-              <Activity size={15} className="text-primary" aria-hidden="true" />
-              Aktivitas Terbaru
-            </h3>
-            <Link
-              href="/notifications"
-              className="text-xs text-primary hover:underline flex items-center gap-0.5"
-            >
-              Lihat semua <ChevronRight size={12} />
-            </Link>
-          </div>
-          <div className="divide-y divide-border max-h-72 overflow-y-auto">
-            {data.recentNotifications && data.recentNotifications.length > 0 ? (
-              data.recentNotifications.map((n) => (
-                <div
-                  key={n.id}
-                  className="px-5 py-3 hover:bg-surface-variant transition"
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`p-1.5 rounded-lg flex-shrink-0 mt-0.5 ${
-                        n.isRead ? 'bg-surface-variant' : 'bg-primary-container'
-                      }`}
-                    >
-                      <Bell size={14} className={n.isRead ? 'text-muted' : 'text-primary'} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={`text-xs ${n.isRead ? 'text-muted' : 'text-text font-medium'}`}
-                      >
-                        {n.judul}
-                      </p>
-                      <p className="text-xs text-muted mt-0.5 truncate">
-                        {n.isi}
-                      </p>
-                      <p className="text-2xs text-muted mt-0.5">
-                        {formatTime(n.createdAt)}
-                      </p>
-                    </div>
-                    {!n.isRead && (
-                      <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-2" />
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="px-5 py-8 text-center text-sm text-muted">
-                <Bell size={20} className="mx-auto mb-1 opacity-50" aria-hidden="true" />
-                <p>Belum ada aktivitas</p>
-              </div>
-            )}
+          <ActivityFeedHeader unread={unreadCount} />
+          <div className="max-h-72 overflow-y-auto">
+            <ActivityFeed items={(data.recentNotifications || []) as ActivityItem[]} />
           </div>
         </div>
 
-        {/* 7. Quick Actions (fungsi existing dari quickActions — href tidak diubah) */}
-        <div className="card-elegant p-5">
-          <h3 className="text-sm font-semibold text-text flex items-center gap-1.5 mb-3">
-            <Activity size={15} className="text-primary" aria-hidden="true" />
-            Aksi Cepat
-          </h3>
-          <div className="space-y-2">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Can key={action.href} module={action.module} action={action.action}>
-                  <Link
-                    href={action.href}
-                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-surface-variant transition group"
-                  >
-                    <div className="p-2 rounded-lg bg-primary-container group-hover:scale-105 transition-transform">
-                      <Icon size={16} className="text-primary" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text">
-                        {action.label}
-                      </p>
-                      <p className="text-xs text-muted truncate">
-                        {action.desc}
-                      </p>
-                    </div>
-                    <ChevronRight
-                      size={14}
-                      className="text-muted group-hover:text-primary transition"
-                    />
-                  </Link>
-                </Can>
-              );
-            })}
+        {/* 7. Quick Actions */}
+        <div className="card-elegant">
+          <div className="px-5 py-4 border-b border-border">
+            <h3 className="text-sm font-semibold text-text flex items-center gap-1.5">
+              <MousePointerClick size={15} className="text-primary" aria-hidden="true" />
+              Aksi Cepat
+            </h3>
           </div>
+          <QuickActions />
         </div>
       </div>
+
+      {/* ── 7. OPERASIONAL — statistik sekunder & email audit (diciutkan
+            secara default: informasi tersier, tidak boleh mendominasi) ── */}
+      <SectionCard
+        title="Operasional"
+        icon={<BarChart3 size={15} aria-hidden="true" />}
+        collapsible
+        defaultCollapsed
+        action={<span className="text-2xs text-muted">Detail &amp; audit</span>}
+      >
+        <div className="p-5 space-y-5">
+          <div>
+            <p className="text-2xs font-semibold uppercase tracking-wider text-muted mb-2">
+              Statistik Lainnya
+            </p>
+            <SecondaryStats data={data} />
+          </div>
+
+          {data.emailSummary && (
+            <div>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted mb-2">
+                Ringkasan Email
+              </p>
+              <div className="card-elegant p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-text flex items-center gap-1.5">
+                    <Mail size={14} className="text-primary" aria-hidden="true" />
+                    Pengiriman Email
+                  </h4>
+                  <Link
+                    href="/settings/email"
+                    className="text-xs text-primary hover:underline flex items-center gap-0.5"
+                  >
+                    Kelola <ExternalLink size={10} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="bg-success-50 dark:bg-success-950 rounded-lg p-2.5 text-center">
+                    <p className="text-lg font-bold text-success-600">
+                      {data.emailSummary.totalSent.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-2xs text-success-600 dark:text-success-400">Terkirim</p>
+                  </div>
+                  <div className="bg-error-50 dark:bg-error-950 rounded-lg p-2.5 text-center">
+                    <p className="text-lg font-bold text-error-600">
+                      {data.emailSummary.totalFailed.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-2xs text-error-600 dark:text-error-400">Gagal</p>
+                  </div>
+                  <div className="bg-warning-50 dark:bg-warning-950 rounded-lg p-2.5 text-center">
+                    <p className="text-lg font-bold text-warning-600">
+                      {data.emailSummary.totalSkipped.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-2xs text-warning-600 dark:text-warning-400">Skip</p>
+                  </div>
+                  <div className="bg-surface-variant rounded-lg p-2.5 text-center">
+                    <p className="text-lg font-bold text-muted">
+                      {data.emailSummary.totalSuppressed.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-2xs text-muted">Supresi</p>
+                  </div>
+                </div>
+                {totalEmailSent > 0 && (
+                  <p className="text-xs text-muted mt-2 text-center">
+                    {Math.round((data.emailSummary.totalSent / totalEmailSent) * 100)}% success rate
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </SectionCard>
     </div>
   );
 }

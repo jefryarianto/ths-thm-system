@@ -104,7 +104,7 @@ export class DocumentBatchService implements OnApplicationShutdown {
 
     // 1-3. Create batch + jobs + update status dalam satu transaksi atomik
     const { batch, jobRecords }: { batch: DocumentBatchJob; jobRecords: DocumentJob[] } =
-      await (this.prisma as any).$transaction(async (tx: any) => {
+      await this.prisma.$transaction(async (tx) => {
       const createdBatch = await tx.documentBatchJob.create({
         data: {
           type,
@@ -234,7 +234,7 @@ export class DocumentBatchService implements OnApplicationShutdown {
     });
     if (!batch || batch.status !== 'processing') return false;
 
-    await (this.prisma as any).$transaction([
+    await this.prisma.$transaction([
       this.prisma.documentBatchJob.update({
         where: { id: batchId },
         data: { status: 'cancelled' },
@@ -313,7 +313,7 @@ export class DocumentBatchService implements OnApplicationShutdown {
     }
 
     // Reset failed jobs to pending
-    await (this.prisma as any).$transaction([
+    await this.prisma.$transaction([
       this.prisma.documentJob.updateMany({
         where: where as never,
         data: { status: 'pending', error: null, retryCount: { increment: 1 } },

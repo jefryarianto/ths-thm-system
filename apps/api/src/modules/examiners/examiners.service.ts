@@ -215,15 +215,13 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
   // ── Domain: assign examiner to kegiatan ──────────────────
 
   async assign(id: string, dto: AssignExaminerDto, scope?: UserScope) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const examiner = await (this.prisma as any).user.findUnique({
+    const examiner = await this.prisma.user.findUnique({
       where: { id, role: 'penguji' },
     });
     if (!examiner) throw new NotFoundException('Penguji tidak ditemukan');
 
     const kegiatanId = dto.kegiatanId || dto.graduationId;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kegiatan = await (this.prisma as any).kegiatan.findUnique({
+    const kegiatan = await this.prisma.kegiatan.findUnique({
       where: { id: kegiatanId },
     });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
@@ -238,8 +236,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignment = await (this.prisma as any).penugasanPenguji.create({
+    const assignment = await this.prisma.penugasanPenguji.create({
       data: {
         pengujiUserId: id,
         kegiatanId: kegiatanId!,
@@ -257,8 +254,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
   // ── Domain: get assignments for an examiner ──────────────
 
   async getAssignments(id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignments = await (this.prisma as any).penugasanPenguji.findMany({
+    const assignments = await this.prisma.penugasanPenguji.findMany({
       where: { pengujiUserId: id },
       include: {
         kegiatan: {
@@ -273,8 +269,7 @@ export class ExaminersService extends BaseCrudService<CreateExaminerDto, UpdateE
   // ── Domain: get upcoming schedules for an examiner ───────
 
   async getSchedules(id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignments = await (this.prisma as any).penugasanPenguji.findMany({
+    const assignments = await this.prisma.penugasanPenguji.findMany({
       where: { pengujiUserId: id },
       include: {
         kegiatan: {

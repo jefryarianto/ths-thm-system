@@ -258,8 +258,7 @@ export class GraduationsController {
     @Req() req: ScopedRequest,
   ) {
     const direct = ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'].includes(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (req.user as any)?.role,
+      req.user?.role || '',
     );
     return this.service.addExaminerFromMember(id, dto, direct, req.user?.id, req.scope);
   }

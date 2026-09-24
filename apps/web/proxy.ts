@@ -29,7 +29,7 @@ const publicPaths = [
 // TIDAK dijalankan Next 16, sehingga proteksi auth halaman dashboard mati
 // total di dev maupun produksi hingga migrasi ini.
 // ─────────────────────────────────────────────────────────────────────────
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -43,7 +43,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // E2E test bypass: when the Playwright route interceptor injects this header,
+// E2E test bypass: when the Playwright route interceptor injects this header,
   // skip the auth check so tests can mock auth at the API level.
   // Only active in development/test mode - never in production.
   if (process.env.NODE_ENV !== 'production' && request.headers.get('x-e2e-bypass') === 'true') {
@@ -52,17 +52,44 @@ export function proxy(request: NextRequest) {
 
   // Gunakan refreshToken (cookie httpOnly, berumur 14 hari, diset backend dengan
   // `Secure` di production) sebagai sinyal sesi yang tahan lama. accessToken hanya
-  // berumur 15 menit — mengandalkannya untuk proteksi halaman akan memicu redirect
-  // palsu ("session expired") setelah token akses kadaluarsa padahal sesi masih valid.
+  // berumur 15 menit — tidak lagi digunakan untuk keputusan autentikasi di proxy.
   const refreshToken = request.cookies.get('refreshToken')?.value;
-  const accessToken = request.cookies.get('accessToken')?.value;
 
-  if (!refreshToken && !accessToken) {
+  // Jika tidak ada refreshToken, dianggap tidak terautentikasi.
+  if (!refreshToken) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  // Panggil endpoint verifikasi sesi di backend.
+  // Gunakan timeout agar tidak menunggu selamanya jika backend tidak merespon.
+  const verifyUrl = new URL('/api/auth/session/verify', request.url);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  let loginUrl: URL;
+  try {
+    const verifyResp = await fetch(verifyUrl.toString(), {
+      method: 'GET',
+      headers: request.headers, // Forward semua header (terutama cookie)
+      credentials: 'include',   // Pastikan cookie dikirim ke backend
+      signal: controller.signal, // Timeout 5 detik
+    });
+
+    if (verifyResp.ok) {
+      // Sesi valid, lanjutkan request.
+      return NextResponse.next();
+    }
+
+    // Jika backend mengembalikan 401 (sesi tidak valid) atau status lain,
+    // anggap sesi tidak valid dan redirect ke login.
+    loginUrl = new URL('/login', request.url);
+  } catch {
+    // Jika terjadi error (timeout, network error, dll), fail closed.
+    loginUrl = new URL('/login', request.url);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

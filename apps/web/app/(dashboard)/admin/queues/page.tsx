@@ -18,6 +18,7 @@ import {
 import type { LucideProps } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
+import EmptyState from '@/components/ui/empty-state';
 
 interface QueueStats {
   queueName: string;
@@ -878,15 +879,18 @@ export default function QueueMonitorPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {persistentEvents.length === 0 ? (
+                      {loading && persistentEvents.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-                            <div className="flex flex-col items-center gap-2">
-                              <Clock size={20} className="text-gray-300 dark:text-gray-600" />
-                              <span>Tidak ada gangguan {severityFilter ? `dengan tingkat ${severityLabels[severityFilter]}` : ''} dalam 30 hari terakhir</span>
-                            </div>
+                            Memuat...
                           </td>
                         </tr>
+                      ) : persistentEvents.length === 0 ? (
+                        <EmptyState
+                          icon={Clock}
+                          message={`Tidak ada gangguan ${severityFilter ? `dengan tingkat ${severityLabels[severityFilter]}` : ''} dalam 30 hari terakhir`}
+                          colSpan={4}
+                        />
                       ) : (
                         persistentEvents.slice(0, 5).map((event) => {
                           const dMs = event.durationMs ?? 0;
@@ -1218,14 +1222,11 @@ export default function QueueMonitorPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                           {stats.recentJobs.length === 0 ? (
-                            <tr>
-                              <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-                                <div className="flex flex-col items-center gap-2">
-                                  <Clock size={20} className="text-gray-300 dark:text-gray-600" />
-                                  <span>Belum ada pekerjaan yang selesai atau gagal</span>
-                                </div>
-                              </td>
-                            </tr>
+                            <EmptyState
+                              icon={Clock}
+                              message="Belum ada pekerjaan yang selesai atau gagal"
+                              colSpan={5}
+                            />
                           ) : (
                             stats.recentJobs.map((job) => (
                               <tr

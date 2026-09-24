@@ -313,8 +313,7 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
 
     let member;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      member = await (this.prisma as any).$transaction(async (tx: any) => {
+      member = await this.prisma.$transaction(async (tx) => {
         const created = await tx.anggota.create({
           data: {
             namaLengkap: candidate.namaLengkap,
@@ -329,7 +328,13 @@ export class CandidatesService extends BaseCrudService<CreateCandidateDto, Updat
             email: candidate.email,
             rantingId: candidate.rantingId,
             tingkat: dto?.tingkat || candidate.tingkat || null,
-            nomorAnggota: await this.nraService.generateMemberNumber(candidate.rantingId, dto?.tahunDadar),
+            // Race-safe: generate NRA pada tx yang SAMA dengan insert anggota —
+            // generator mengambil advisory lock per ranting di dalam tx ini.
+            nomorAnggota: await this.nraService.generateMemberNumber(
+              candidate.rantingId,
+              dto?.tahunDadar,
+              tx,
+            ),
             statusKeanggotaan: 'aktif',
             statusData: 'complete',
             statusValidasi: 'approved',

@@ -4,8 +4,10 @@ import {
   forwardRef,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
   Optional,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -25,6 +27,7 @@ import { SelfScopeUser, assertSelfMember } from '../../common/utils/self-scope.h
 import { MemberMailService } from '../../common/services/member-mail.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import type { MetodeBayar, StatusIuran } from '@prisma/client';
 
 @Injectable()
 export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
@@ -187,7 +190,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         },
       });
       if (!iuran) throw new NotFoundException('Iuran tidak ditemukan');
-      await assertSelfMember(this.prisma as any, user, iuran.anggotaId);
+      await assertSelfMember(this.prisma, user, iuran.anggotaId);
       return iuran;
     }
     return this.baseFindOne(id, scope, {
@@ -198,11 +201,31 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
   }
 
   async create(dto: CreateDueDto, scope?: UserScope) {
-    return this.baseCreate(dto, scope, undefined, 'Pembayaran iuran berhasil dicatat');
+    try {
+      return await this.baseCreate(dto, scope, undefined, 'Pembayaran iuran berhasil dicatat');
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        // @@unique([anggotaId, periode]): satu record iuran per anggota per periode.
+        throw new ConflictException(
+          `Iuran untuk anggota ini pada periode ${dto.periode} sudah ada`,
+        );
+      }
+      throw error;
+    }
   }
 
   async update(id: string, dto: UpdateDueDto, scope?: UserScope, userId?: string) {
-    return this.baseUpdate(id, dto, scope, 'Data iuran berhasil diperbarui', userId);
+    try {
+      return await this.baseUpdate(id, dto, scope, 'Data iuran berhasil diperbarui', userId);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        // Update periode bisa menabrak record lain milik anggota yang sama.
+        throw new ConflictException(
+          'Perubahan menabrak record iuran lain dengan anggota & periode yang sama',
+        );
+      }
+      throw error;
+    }
   }
 
   async remove(id: string, scope?: UserScope) {
@@ -212,7 +235,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
   // ── Domain Methods ──────────────────────────────────────
 
   async getMemberDues(memberId: string) {
-    const dues = await (this.prisma as any).iuran.findMany({
+    const dues = await this.prisma.iuran.findMany({
       where: { anggotaId: memberId },
       orderBy: { periode: 'desc' },
     });
@@ -220,14 +243,14 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
   }
 
   async getMyDues(user: { id: string; email: string; role: string; namaLengkap?: string }) {
-    let anggota = await (this.prisma as any).anggota.findFirst({
+    let anggota = await this.prisma.anggota.findFirst({
       where: { email: user.email, deletedAt: null },
       select: { id: true },
     });
 
     // Fallback: anggota di-import tanpa email — cocokkan via nama (unik & email kosong)
     if (!anggota && user.namaLengkap?.trim()) {
-      const byName = await (this.prisma as any).anggota.findMany({
+      const byName = await this.prisma.anggota.findMany({
         where: {
           namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
           OR: [{ email: null }, { email: '' }],
@@ -242,7 +265,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       return [];
     }
 
-    const dues = await (this.prisma as any).iuran.findMany({
+    const dues = await this.prisma.iuran.findMany({
       where: { anggotaId: anggota.id },
       orderBy: { periode: 'desc' },
     });
@@ -252,7 +275,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
   async getArrears(scope?: UserScope) {
     const scopeFilter = scope ? this.buildIndirectScopeFilter(scope, 'anggota') : {};
-    const arrears = await (this.prisma as any).iuran.findMany({
+    const arrears = await this.prisma.iuran.findMany({
       where: { status: 'menunggak', ...scopeFilter },
       include: {
         anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true, noHp: true } },
@@ -279,32 +302,33 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
         const [totalIuranAll, totalLunas, totalMenunggak, iuranBulanIni, anggotaAktif] =
           await Promise.all([
             // Total Iuran Terkumpul = hanya iuran yang sudah lunas
-            (this.prisma as any).iuran.aggregate({
+            // Total Iuran Terkumpul = hanya iuran yang sudah lunas
+            this.prisma.iuran.aggregate({
               _sum: { jumlah: true },
               _count: true,
               where: { status: 'lunas' },
             }),
             // Total Lunas = jumlah transaksi yang lunas
-            (this.prisma as any).iuran.aggregate({
+            this.prisma.iuran.aggregate({
               _sum: { jumlah: true },
               _count: true,
               where: { status: 'lunas' },
             }),
             // Total Menunggak = menunggak + belum_dibayar (semua yang belum lunas)
-            (this.prisma as any).iuran.aggregate({
+            this.prisma.iuran.aggregate({
               _sum: { jumlah: true },
               _count: true,
               where: { status: { in: ['menunggak', 'belum_dibayar'] } },
             }),
-            (this.prisma as any).iuran.findMany({
+            this.prisma.iuran.findMany({
               where: { periode },
               select: { jumlah: true, status: true },
             }),
-            (this.prisma as any).anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
+            this.prisma.anggota.count({ where: { statusKeanggotaan: 'aktif' } }),
           ]);
 
         // Hitung total semua transaksi (tanpa filter status)
-        const totalAllTransaksi = await (this.prisma as any).iuran.count();
+        const totalAllTransaksi = await this.prisma.iuran.count();
 
         const iuranBulanIniTotal = iuranBulanIni.reduce(
           (sum: number, i: any) => sum + Number(i.jumlah),
@@ -315,8 +339,8 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
         // Hitung jumlah transaksi per status
         const [paidCountResult, pendingCountResult] = await Promise.all([
-          (this.prisma as any).iuran.count({ where: { status: 'lunas' } }),
-          (this.prisma as any).iuran.count({ where: { status: { in: ['menunggak', 'belum_dibayar', 'menunggu_verifikasi'] } } }),
+          this.prisma.iuran.count({ where: { status: 'lunas' } }),
+          this.prisma.iuran.count({ where: { status: { in: ['menunggak', 'belum_dibayar', 'menunggu_verifikasi'] } } }),
         ]);
 
         return {
@@ -338,7 +362,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
   async getReport(scope?: UserScope) {
     const scopeFilter = scope ? this.buildIndirectScopeFilter(scope, 'anggota') : {};
-    const stats = await (this.prisma as any).iuran.groupBy({
+    const stats = await this.prisma.iuran.groupBy({
       by: ['status'],
       _count: true,
       _sum: { jumlah: true },
@@ -350,7 +374,7 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
   async exportReport(scope?: UserScope) {
     const scopeFilter = scope ? this.buildIndirectScopeFilter(scope, 'anggota') : {};
-    const dues = await (this.prisma as any).iuran.findMany({
+    const dues = await this.prisma.iuran.findMany({
       where: scopeFilter,
       include: { anggota: { select: { nomorAnggota: true, namaLengkap: true } } },
       take: 10_000,
@@ -364,16 +388,14 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
       try {
         // Tenant safety: anggota_id dari CSV harus dalam cakupan admin.
         await this.assertMemberInScope(row.anggota_id as string, scope);
-        await (this.prisma as any).iuran.create({
+        await this.prisma.iuran.create({
           data: {
             anggotaId: row.anggota_id as string,
             periode: row.periode as string,
             jumlah: parseFloat(row.jumlah as string),
             tanggalBayar: row.tanggal_bayar ? new Date(row.tanggal_bayar as string) : null,
-            metodeBayar: (row.metode_bayar as 'manual' | 'transfer' | 'online') || 'manual',
-            status:
-              (row.status as 'belum_dibayar' | 'menunggu_verifikasi' | 'lunas' | 'menunggak') ||
-              'lunas',
+            metodeBayar: (row.metode_bayar as MetodeBayar) || 'manual',
+            status: (row.status as StatusIuran) || 'lunas',
           },
         });
         success++;
@@ -389,22 +411,40 @@ export class DuesService extends BaseCrudService<CreateDueDto, UpdateDueDto> {
 
   async batchPayment(dto: BatchPaymentDto, scope?: UserScope) {
     const { memberIds, periode, jumlah } = dto;
+    let skipped = 0;
     for (const memberId of memberIds) {
       // Tenant safety: setiap anggota target harus dalam cakupan admin.
       await this.assertMemberInScope(memberId, scope);
-      await (this.prisma as any).iuran.create({
-        data: {
-          anggotaId: memberId,
-          periode,
-          jumlah,
-          status: 'lunas',
-          tanggalBayar: new Date(),
-          metodeBayar: 'manual',
-        },
-      });
+      try {
+        await this.prisma.iuran.create({
+          data: {
+            anggotaId: memberId,
+            periode,
+            jumlah,
+            status: 'lunas',
+            tanggalBayar: new Date(),
+            metodeBayar: 'manual',
+          },
+        });
+      } catch (error) {
+        // Duplikat (anggota sudah punya iuran periode ini) di-skip, bukan gagalkan seluruh batch.
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          skipped++;
+          continue;
+        }
+        throw error;
+      }
     }
     this.cache.invalidatePrefix(this.CACHE_PREFIX);
     this.cache.invalidatePrefix('reports:');
+    if (skipped > 0) {
+      this.audit('BATCH_PAYMENT_SKIPPED_DUPLICATE', 'Iuran', 'bulk', undefined, {
+        periode,
+        skipped,
+        total: memberIds.length,
+      });
+    }
+    return { created: memberIds.length - skipped, skipped, total: memberIds.length };
   }
 
   async submitPaymentConfirmation(id: string, dto: PaymentConfirmationDto) {

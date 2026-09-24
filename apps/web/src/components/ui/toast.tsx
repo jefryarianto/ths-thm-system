@@ -167,6 +167,7 @@ function ToastItem({ toast: t, onDismiss }: { toast: Toast; onDismiss: (id: stri
         {/* Close button */}
         <button
           onClick={handleDismiss}
+          aria-label="Tutup notifikasi"
           className="shrink-0 p-1 rounded-lg text-muted
             hover:text-text
             hover:bg-surface-variant

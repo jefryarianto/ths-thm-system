@@ -314,7 +314,7 @@ export class GamificationService {
    * Enforce self-scope pada data profil poin (anggota/penguji hanya data sendiri).
    */
   async assertSelfMember(user?: SelfScopeUser, anggotaId?: string): Promise<void> {
-    await assertSelfMember(this.prisma as any, user, anggotaId);
+    await assertSelfMember(this.prisma, user, anggotaId);
   }
 
   async getProfile(anggotaId: string): Promise<GamificationProfile> {

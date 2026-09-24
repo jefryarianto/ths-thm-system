@@ -52,7 +52,7 @@ export class ApprovalService {
     }
 
     // Create approval request + levels dalam satu transaksi atomik
-    const request = await (this.prisma as any).$transaction(async (tx: any) => {
+    const request = await this.prisma.$transaction(async (tx) => {
       const created = await tx.approvalRequest.create({
         data: {
           requestType: dto.requestType,
@@ -102,7 +102,7 @@ export class ApprovalService {
     if (!currentLevel) throw new ForbiddenException('Semua level sudah diproses');
 
     // Approve current level + (bila final) set status request dalam satu transaksi
-    await (this.prisma as any).$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx) => {
       await tx.approvalRequestLevel.update({
         where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },
         data: { status: 'approved', decidedBy: userId, decidedAt: new Date(), note: note || null },
@@ -148,7 +148,7 @@ export class ApprovalService {
     const currentLevel = request.levels.find((l) => l.status === 'pending');
 
     // Reject level + request dalam satu transaksi atomik
-    await (this.prisma as any).$transaction(async (tx: any) => {
+    await this.prisma.$transaction(async (tx) => {
       if (currentLevel) {
         await tx.approvalRequestLevel.update({
           where: { requestId_approvalLevelId: { requestId, approvalLevelId: currentLevel.approvalLevelId } },

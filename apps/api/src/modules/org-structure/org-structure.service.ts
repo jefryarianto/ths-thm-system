@@ -326,19 +326,18 @@ export class OrgStructureService {
     model: 'distrik' | 'wilayah' | 'ranting',
     prefix: string,
   ): Promise<string> {
-    const field =
-      model === 'distrik'
-        ? 'kodeDistrik'
-        : model === 'wilayah'
-          ? 'kodeWilayah'
-          : 'kodeRanting';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const all = await (this.prisma[model] as any).findMany({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      select: { [field]: true } as any,
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const used = new Set(all.map((x: any) => x[field] as string));
+    // Dispatch per-cabang agar delegate Prisma tetap ber-tipe konkret.
+    const used = new Set<string>();
+    if (model === 'distrik') {
+      const rows = await this.prisma.distrik.findMany({ select: { kodeDistrik: true } });
+      rows.forEach((r) => used.add(r.kodeDistrik));
+    } else if (model === 'wilayah') {
+      const rows = await this.prisma.wilayah.findMany({ select: { kodeWilayah: true } });
+      rows.forEach((r) => used.add(r.kodeWilayah));
+    } else {
+      const rows = await this.prisma.ranting.findMany({ select: { kodeRanting: true } });
+      rows.forEach((r) => used.add(r.kodeRanting));
+    }
     let i = 1;
     let kode = `${prefix}${String(i).padStart(3, '0')}`;
     while (used.has(kode)) {

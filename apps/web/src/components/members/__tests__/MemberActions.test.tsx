@@ -33,7 +33,7 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
-    const approveBtn = screen.getByTitle('Setujui');
+    const approveBtn = screen.getByLabelText('Setujui anggota');
     expect(approveBtn).toBeInTheDocument();
   });
 
@@ -98,7 +98,7 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
-    fireEvent.click(screen.getByTitle('Setujui'));
+    fireEvent.click(screen.getByLabelText('Setujui anggota'));
     expect(onAction).toHaveBeenCalledWith('member-1', 'approve');
   });
 
@@ -125,7 +125,7 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
-    fireEvent.click(screen.getByTitle('Detail'));
+    fireEvent.click(screen.getByLabelText('Detail'));
     expect(onViewDetail).toHaveBeenCalledWith('member-1');
   });
 
@@ -139,9 +139,9 @@ describe('MemberActions', () => {
       />,
     );
     // Inline approve button should be disabled when loading
-    expect(screen.getByTitle('Setujui')).toBeDisabled();
+    expect(screen.getByLabelText('Setujui anggota')).toBeDisabled();
     // Detail button should NOT be disabled (it doesn't accept disabled)
-    expect(screen.getByTitle('Detail')).not.toBeDisabled();
+    expect(screen.getByLabelText('Detail')).not.toBeDisabled();
   });
 
   it('renders detail button always', () => {
@@ -153,6 +153,6 @@ describe('MemberActions', () => {
         onViewDetail={onViewDetail}
       />,
     );
-    expect(screen.getByTitle('Detail')).toBeInTheDocument();
+    expect(screen.getByLabelText('Detail')).toBeInTheDocument();
   });
 });

@@ -55,26 +55,28 @@ export async function mockAuth(
   },
 ) {
   // ── 1. Set auth cookies + localStorage (runs before any page JS) ──
-  await page.addInitScript(
-    (params: { accessToken: string; refreshToken: string; user: string }) => {
-      localStorage.setItem('accessToken', params.accessToken);
-      localStorage.setItem('refreshToken', params.refreshToken);
-      localStorage.setItem('user', params.user);
-      document.cookie = `accessToken=${params.accessToken}; path=/; SameSite=Lax`;
-      document.cookie = `refreshToken=${params.refreshToken}; path=/; SameSite=Lax`;
-    },
-    {
-      accessToken: MOCK_ACCESS_TOKEN,
-      refreshToken: MOCK_REFRESH_TOKEN,
-      user: JSON.stringify(MOCK_USER),
-    },
-  );
+await page.addInitScript(
+     (params: { accessToken: string; refreshToken: string; user: string }) => {
+       localStorage.setItem('accessToken', params.accessToken);
+       localStorage.setItem('refreshToken', params.refreshToken);
+       localStorage.setItem('user', params.user);
+       // NOTE: accessToken cookie intentionally removed per FASE 29P
+       // Only refreshToken cookie is used for session verification
+       document.cookie = `refreshToken=${params.refreshToken}; path=/; SameSite=Lax`;
+     },
+     {
+       accessToken: MOCK_ACCESS_TOKEN,
+       refreshToken: MOCK_REFRESH_TOKEN,
+       user: JSON.stringify(MOCK_USER),
+     },
+   );
 
-  const cookieDomain = new URL(E2E_BASE_URL).hostname;
-  await page.context().addCookies([
-    { name: 'accessToken', value: MOCK_ACCESS_TOKEN, domain: cookieDomain, path: '/' },
-    { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
-  ]);
+const cookieDomain = new URL(E2E_BASE_URL).hostname;
+   await page.context().addCookies([
+     // NOTE: accessToken cookie intentionally removed per FASE 29P
+     // Only refreshToken cookie is used for session verification
+     { name: 'refreshToken', value: MOCK_REFRESH_TOKEN, domain: cookieDomain, path: '/' },
+   ]);
 
   // ── 2. Catch-all interceptors (registered FIRST — act as defaults) ──
   // These match broad URL patterns. Specific mocks registered later

@@ -1,7 +1,8 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { STATUS_LABELS } from './constants';
+import EmptyState from '@/components/ui/empty-state';
 
 interface MemberRow {
   id: string;
@@ -78,11 +79,7 @@ export default function MembersTab({
                 </td>
               </tr>
             ) : members.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-sm text-gray-400">
-                  Tidak ada data anggota
-                </td>
-              </tr>
+              <EmptyState icon={Users} message="Tidak ada data anggota" colSpan={5} />
             ) : (
               members.map((m) => (
                 <tr

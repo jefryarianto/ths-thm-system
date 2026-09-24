@@ -13,11 +13,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { useMailSuppressions } from '@/lib/hooks/use-mail';
+import Pagination from '@/components/ui/pagination';
 import { type SuppressionEntry, formatDateShort } from './shared';
 
 export default function EmailSuppressedTab() {
@@ -279,27 +278,13 @@ export default function EmailSuppressedTab() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                Halaman {page} dari {totalPages}
-              </span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
-                >
-                  <ChevronLeft size={16} className="text-gray-600 dark:text-gray-400" />
-                </button>
-                <button
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page >= totalPages}
-                  className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
-                >
-                  <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={20}
+              onPageChange={setPage}
+            />
           )}
         </>
       )}

@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { StatusData, StatusKeanggotaan, StatusValidasi } from '@prisma/client';
 import { MemberSchema } from '@ths-thm/shared-types';
 import { z } from 'zod';
 
@@ -181,20 +182,20 @@ export class MemberFilterDto {
   @IsString()
   wilayahId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusKeanggotaan) })
   @IsOptional()
-  @IsString()
-  statusKeanggotaan?: string;
+  @IsEnum(StatusKeanggotaan)
+  statusKeanggotaan?: StatusKeanggotaan;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusValidasi) })
   @IsOptional()
-  @IsString()
-  statusValidasi?: string;
+  @IsEnum(StatusValidasi)
+  statusValidasi?: StatusValidasi;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusData) })
   @IsOptional()
-  @IsString()
-  statusData?: string;
+  @IsEnum(StatusData)
+  statusData?: StatusData;
 
   @ApiPropertyOptional({ description: 'Filter anggota tanpa foto (tanpaFoto=true)' })
   @IsOptional()

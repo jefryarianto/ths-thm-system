@@ -70,7 +70,25 @@ export default function ApprovalsPage() {
       />
 
       {loading ? (
-        <div className="text-center py-16 text-gray-500">Memuat...</div>
+        <div className="space-y-3" role="status" aria-label="Memuat pengajuan">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="p-5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 animate-pulse"
+            >
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                  <div className="h-3.5 w-40 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                  <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : requests.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <CheckCircle size={48} className="mx-auto mb-4 opacity-30" />

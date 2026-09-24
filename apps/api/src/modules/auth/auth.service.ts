@@ -327,8 +327,6 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
       if (!user) throw new UnauthorizedException('Token tidak valid');
 
-      // Cari sesi aktif berdasarkan refresh token yang disajikan. Ini adalah
-      // sumber kebenaran utama (bukan field denormalisasi di tabel users).
       const session = await this.prisma.userSession.findUnique({
         where: { refreshToken },
       });
@@ -336,16 +334,9 @@ export class AuthService {
       const sessionValid =
         !!session && session.userId === user.id && !session.revokedAt;
 
-      // Dukungan sesi pra-migrasi: belum ada baris sesi tapi token cocok dengan
-      // pointer denormalisasi di tabel users → adopt menjadi sesi baru.
       const isCurrentDenormalized = !session && user.refreshToken === refreshToken;
 
       if (!sessionValid && !isCurrentDenormalized) {
-        // Token masih JWT valid tapi tidak cocok dengan sesi aktif.
-        // PENTING: jangan cabut seluruh sesi pengguna. Ini mencegah logout
-        // massal akibat race condition (refresh konkuren antar-tab/perangkat
-        // atau banyak request 401 bersamaan). Cukup tolak permintaan ini;
-        // klien akan memicu re-auth pada tab/perangkat terkait saja.
         this.logAuthAudit('REFRESH_TOKEN_STALE', user.id, null, meta);
         throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
       }
@@ -353,7 +344,6 @@ export class AuthService {
       const tokens = await this.generateTokens(user);
 
       if (sessionValid) {
-        // Rotasi token pada sesi yang sama
         await this.prisma.userSession.update({
           where: { id: session!.id },
           data: {
@@ -365,7 +355,6 @@ export class AuthService {
           },
         });
       } else {
-        // Sesi pra-migrasi: belum ada baris sesi → adopsi jadi sesi baru
         await this.prisma.userSession.create({
           data: {
             userId: user.id,
@@ -387,6 +376,44 @@ export class AuthService {
       if (err instanceof UnauthorizedException) throw err;
       throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
     }
+  }
+
+  /**
+   * Read-only validation of a refresh token.
+   * Verifies JWT signature and expiry, then checks session revocation and user binding.
+   * Produces NO side-effects — no rotation, no cookie mutation, no session update.
+   *
+   * @returns { valid: boolean; userId?: string }
+   *   valid=true + userId  → session is current and not revoked
+   *   valid=false          → token invalid/expired/revoked/not-found
+   */
+  async validateRefreshToken(refreshToken: string): Promise<{ valid: boolean; userId?: string }> {
+    let payload: { sub: string; email: string; role: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.envConfig.jwtRefreshSecret,
+      });
+    } catch {
+      return { valid: false };
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) return { valid: false };
+
+    const session = await this.prisma.userSession.findUnique({
+      where: { refreshToken },
+    });
+
+    if (!session) {
+      const isCurrentDenormalized = user.refreshToken === refreshToken;
+      if (!isCurrentDenormalized) return { valid: false };
+      return { valid: true, userId: user.id };
+    }
+
+    if (session.revokedAt !== null) return { valid: false };
+    if (session.userId !== user.id) return { valid: false };
+
+    return { valid: true, userId: user.id };
   }
 
   async listSessions(userId: string) {
@@ -678,8 +705,7 @@ export class AuthService {
     // email; fallback via nama lengkap (email kosong hasil import CSV) — sama seperti
     // updateProfile. Non-critical: gagal diam-diam bila anggota tidak ditemukan.
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const prisma = this.prisma as any;
+      const prisma = this.prisma;
       const select = {
         noHp: true,
         alamat: true,
@@ -749,13 +775,14 @@ export class AuthService {
       // Cocokkan via email; fallback via nama lengkap untuk anggota yang email-nya
       // kosong (hasil import CSV) dan unik — supaya profil tetap tersinkron.
       let anggota = await this.prisma.anggota.findFirst({
-        where: { email: user.email },
+        where: { email: user.email, deletedAt: null },
       });
       if (!anggota && user.namaLengkap?.trim()) {
         const byName = await this.prisma.anggota.findMany({
           where: {
             namaLengkap: { equals: user.namaLengkap.trim(), mode: 'insensitive' },
             OR: [{ email: null }, { email: '' }],
+            deletedAt: null,
           },
         });
         if (byName.length === 1) anggota = byName[0];
@@ -849,8 +876,7 @@ export class AuthService {
    */
   private async triggerProfileApproval(anggotaId: string, userId: string): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const member = await (this.prisma as any).anggota.findUnique({
+      const member = await this.prisma.anggota.findUnique({
         where: { id: anggotaId },
         select: {
           namaLengkap: true,
@@ -870,21 +896,18 @@ export class AuthService {
       const statusData = missingFields.length > 0 ? 'incomplete' : 'complete';
 
       // Update statusData and missingFields
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (this.prisma as any).anggota.update({
+      await this.prisma.anggota.update({
         where: { id: anggotaId },
         data: {
           statusData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
+          missingFields: missingFields.length > 0 ? missingFields : undefined,
         },
       });
 
       if (statusData === 'complete') {
         // Data is complete → clear stale 'data_incomplete' notifications
         // (notifikasi are stored under User.id — both legacy anggotaId and userId keys)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.prisma as any).notifikasi.deleteMany({
+        await this.prisma.notifikasi.deleteMany({
           where: {
             tipe: 'data_incomplete',
             OR: [{ userId }, { userId: anggotaId }],
@@ -892,8 +915,7 @@ export class AuthService {
         });
 
         // Set statusValidasi to pending
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.prisma as any).anggota.update({
+        await this.prisma.anggota.update({
           where: { id: anggotaId },
           data: { statusValidasi: 'pending' },
         });
@@ -909,8 +931,7 @@ export class AuthService {
         // Data still incomplete → update existing 'data_incomplete' notification text
         // so it always reflects the current missing fields (no stale messages)
         const missingList = missingFields.map((f) => f.replace(/_/g, ' ')).join(', ');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const existing = await (this.prisma as any).notifikasi.findFirst({
+        const existing = await this.prisma.notifikasi.findFirst({
           // notifikasi are stored under User.id — check both userId and legacy anggotaId keys
           where: {
             tipe: 'data_incomplete',
@@ -920,8 +941,7 @@ export class AuthService {
           orderBy: { createdAt: 'desc' },
         });
         if (existing) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (this.prisma as any).notifikasi.update({
+          await this.prisma.notifikasi.update({
             where: { id: existing.id },
             data: {
               judul: '📋 Data Anggota Belum Lengkap',

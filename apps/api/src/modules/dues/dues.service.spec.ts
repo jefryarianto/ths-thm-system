@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { DuesService } from './dues.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -115,6 +116,26 @@ describe('DuesService', () => {
       await service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-01' });
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
     });
+
+    it('should map P2002 duplicate to ConflictException (unique anggotaId+periode)', async () => {
+      const dupError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      });
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1', rantingId: 'r1', email: null, namaLengkap: 'Budi' });
+      mockPrisma.iuran.create.mockRejectedValue(dupError);
+      await expect(
+        service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-02' }, { rantingId: 'r1' }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should rethrow non-P2002 errors on create', async () => {
+      mockPrisma.anggota.findUnique.mockResolvedValue({ id: 'a1', rantingId: 'r1', email: null, namaLengkap: 'Budi' });
+      mockPrisma.iuran.create.mockRejectedValue(new Error('DB down'));
+      await expect(
+        service.create({ anggotaId: 'a1', jumlah: 100000, periode: '2026-02' }, { rantingId: 'r1' }),
+      ).rejects.toThrow('DB down');
+    });
   });
 
   describe('findOne', () => {
@@ -133,6 +154,16 @@ describe('DuesService', () => {
     it('should update a due record', async () => {
       mockPrisma.iuran.update.mockResolvedValue({ id: 'd1', jumlah: 200000 });
       const result = await service.update('d1', { jumlah: 200000 });
+    });
+
+    it('should map P2002 to ConflictException when changed periode hits another record', async () => {
+      const dupError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      });
+      mockPrisma.iuran.findUnique.mockResolvedValue({ id: 'd1', anggotaId: 'a1', periode: '2026-01' });
+      mockPrisma.iuran.update.mockRejectedValue(dupError);
+      await expect(service.update('d1', { periode: '2026-02' })).rejects.toThrow(ConflictException);
     });
   });
 
@@ -209,6 +240,23 @@ describe('DuesService', () => {
         jumlah: 100000,
       });
       expect(mockPrisma.iuran.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('should skip duplicates (P2002) and report counts instead of failing the batch', async () => {
+      const dupError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      });
+      mockPrisma.iuran.create
+        .mockResolvedValueOnce({ id: 'd1' })
+        .mockRejectedValueOnce(dupError);
+      const result = await service.batchPayment({
+        memberIds: ['a1', 'a2'],
+        periode: '2026-03',
+        jumlah: 50000,
+      });
+      expect(mockPrisma.iuran.create).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({ created: 1, skipped: 1, total: 2 });
     });
   });
 

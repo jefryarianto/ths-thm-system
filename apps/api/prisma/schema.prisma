@@ -425,7 +425,7 @@ model UserSession {
 model Anggota {
   id                String            @id @default(uuid())
   rantingId         String            @map("ranting_id")
-  nomorAnggota      String            @unique @map("nomor_anggota")
+  nomorAnggota      String            @unique @map("nomor_anggota") // partial index di DB: WHERE deleted_at IS NULL (lihat migration)
   namaLengkap       String            @map("nama_lengkap")
   jenisKelamin      JenisKelamin      @map("jenis_kelamin")
   tempatLahir       String?           @map("tempat_lahir")
@@ -435,7 +435,7 @@ model Anggota {
   alamat            String?
   noHp              String?           @map("no_hp")
   noHpNormalized    String?           @map("no_hp_normalized")
-  email             String?           @unique
+  email             String?           @unique // partial index di DB: WHERE deleted_at IS NULL (lihat migration)
   fotoPath          String?           @map("foto_path")
   statusKeanggotaan StatusKeanggotaan @default(aktif) @map("status_keanggotaan")
   tingkat           String?
@@ -1197,6 +1197,8 @@ model Iuran {
 
   @@index([status])
   @@index([anggotaId])
+  // Satu record iuran per anggota per periode — cegah input ganda di level DB.
+  @@unique([anggotaId, periode])
   @@map("iuran")
 }
 

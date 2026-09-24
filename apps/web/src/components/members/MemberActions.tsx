@@ -87,7 +87,7 @@ export default function MemberActions({
           onClick={() => onAction(member.id, 'approve')}
           disabled={actionLoading === member.id}
           className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-950 transition disabled:opacity-30"
-          title="Setujui"
+          aria-label="Setujui anggota"
         >
           <CheckCircle2 size={14} className="text-green-600" />
         </button>
@@ -95,7 +95,7 @@ export default function MemberActions({
       <button
         onClick={() => onViewDetail(member.id)}
         className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
-        title="Detail"
+        aria-label="Detail"
       >
         <Eye size={14} className="text-blue-600" />
       </button>

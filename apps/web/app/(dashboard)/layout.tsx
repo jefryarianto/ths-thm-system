@@ -28,6 +28,10 @@ import PengujiWelcome from '@/components/welcome/penguji-guide';
  * Semua halaman di route group `(dashboard)` otomatis memakai shell ini.
  */
 
+// Upper bound on the server-side logout request (AUTH-001). If the backend is
+// unreachable or slow, the local session is still cleared after this elapses.
+const LOGOUT_TIMEOUT_MS = 3000;
+
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -306,10 +310,31 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       .catch(() => {});
   }, [user, isAdmin]);
 
-  const handleLogout = () => {
-    disconnectSocket();
-    sessionManager.logout();
-    router.push('/login');
+  // Logout in flight (AUTH-008): disables the menu action so a second click
+  // cannot start a parallel logout flow.
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+
+    try {
+      // AUTH-001: revoke the refresh token server-side. A bounded wait ensures a
+      // slow/hanging backend cannot trap the user on the dashboard.
+      await Promise.race([
+        apiClient.post('/auth/logout').catch(() => {
+          // 4xx/5xx/network: the local session is still cleared in finally.
+        }),
+        new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_TIMEOUT_MS)),
+      ]);
+    } finally {
+      // The client session is ALWAYS cleared, regardless of the backend outcome.
+      disconnectSocket();
+      sessionManager.logout();
+      // AUTH-007: replace (not push) so Back cannot return to the dashboard.
+      router.replace('/login');
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -352,6 +377,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               : null
           }
           onLogout={handleLogout}
+          loggingOut={loggingOut}
           onOpenMobileNav={() => setMobileOpen(true)}
         />
 

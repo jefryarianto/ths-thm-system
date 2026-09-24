@@ -285,7 +285,7 @@ describe('CandidatesService', () => {
 
       const result = await service.approve('c1');
 
-      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined);
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', undefined, expect.anything());
       expect(result.nomorAnggota).toBe('0114-0101-011-2026');
       expect(mockMemberMailService.sendToMemberWithArgs).toHaveBeenCalledTimes(1);
       expect(mockPrisma.anggota.create).toHaveBeenCalledWith(
@@ -305,7 +305,7 @@ describe('CandidatesService', () => {
 
       const result = await service.approve('c1', { tahunDadar: '2020' });
 
-      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', '2020');
+      expect(mockNraService.generateMemberNumber).toHaveBeenCalledWith('r1', '2020', expect.anything());
       expect(result.nomorAnggota).toBe('0114-0101-001-2020');
     });
 

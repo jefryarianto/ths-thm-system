@@ -1,4 +1,5 @@
 import { Injectable, Optional, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -221,9 +222,9 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   // ── Sejarah (public content) ──────────────────────
 
   async getSejarah() {
-    let record = await (this.prisma as any).sejarah.findFirst();
+    let record = await this.prisma.sejarah.findFirst();
     if (!record) {
-      record = await (this.prisma as any).sejarah.create({
+      record = await this.prisma.sejarah.create({
         data: { konten: '', isVisible: true },
       });
     }
@@ -231,10 +232,10 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   }
 
   async updateSejarah(body: { konten: string; isVisible?: boolean }) {
-    const existing = await (this.prisma as any).sejarah.findFirst();
+    const existing = await this.prisma.sejarah.findFirst();
     let result;
     if (existing) {
-      result = await (this.prisma as any).sejarah.update({
+      result = await this.prisma.sejarah.update({
         where: { id: existing.id },
         data: {
           konten: body.konten,
@@ -242,7 +243,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
         },
       });
     } else {
-      result = await (this.prisma as any).sejarah.create({
+      result = await this.prisma.sejarah.create({
         data: {
           konten: body.konten,
           isVisible: body.isVisible ?? true,
@@ -256,9 +257,9 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   // ── Organisasi (public content) ────────────────────
 
   async getOrganisasi() {
-    let record = await (this.prisma as any).organisasi.findFirst();
+    let record = await this.prisma.organisasi.findFirst();
     if (!record) {
-      record = await (this.prisma as any).organisasi.create({
+      record = await this.prisma.organisasi.create({
         data: { struktur: [], isVisible: true },
       });
     }
@@ -266,20 +267,20 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
   }
 
   async updateOrganisasi(body: { struktur: unknown; isVisible?: boolean }) {
-    const existing = await (this.prisma as any).organisasi.findFirst();
+    const existing = await this.prisma.organisasi.findFirst();
     let result;
     if (existing) {
-      result = await (this.prisma as any).organisasi.update({
+      result = await this.prisma.organisasi.update({
         where: { id: existing.id },
         data: {
-          struktur: body.struktur,
+          struktur: body.struktur as Prisma.InputJsonValue,
           ...(body.isVisible !== undefined && { isVisible: body.isVisible }),
         },
       });
     } else {
-      result = await (this.prisma as any).organisasi.create({
+      result = await this.prisma.organisasi.create({
         data: {
-          struktur: body.struktur,
+          struktur: body.struktur as Prisma.InputJsonValue,
           isVisible: body.isVisible ?? true,
         },
       });
@@ -348,7 +349,7 @@ export class SettingsService extends BaseCrudService<CreatePeriodDto, UpdatePeri
       // Append with deduplication
       const existing = await this.getOrganisasi();
       const existingItems: { jabatan: string; nama: string; deskripsi: string }[] =
-        (existing.struktur as any[]) || [];
+        (existing.struktur as { jabatan: string; nama: string; deskripsi: string }[] | null) || [];
 
       // Build a set of existing keys for deduplication
       const existingKeys = new Set(

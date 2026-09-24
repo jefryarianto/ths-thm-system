@@ -406,9 +406,9 @@ export default function AuditLogsPage() {
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-sm text-gray-400">
-            <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
-            Memuat audit log...
+          <div className="p-12 text-center" role="status" aria-label="Memuat audit log">
+            <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-gray-400" />
+            <span className="text-sm text-gray-400">Memuat audit log...</span>
           </div>
         ) : data.length === 0 ? (
           <div className="p-12 text-center">

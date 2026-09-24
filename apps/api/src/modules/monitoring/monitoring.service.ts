@@ -110,7 +110,8 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
 
     const alert = await this.prismaDelegate.update({
       where: { id },
-      data: { isActive: !(existing as any).isActive },
+      // isActive ada di MonitoringAlert — pastikan lewat cast Record.
+      data: { isActive: !(existing as { isActive?: boolean }).isActive },
     });
     this.invalidateCache();
     return alert;
@@ -122,8 +123,7 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
     triggered: { alertName: string; metric: string; currentValue: number; threshold: number }[];
     sent: number;
   }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const activeAlerts = await (this.prisma as any).monitoringAlert.findMany({
+    const activeAlerts = await this.prisma.monitoringAlert.findMany({
       where: { isActive: true },
     });
 
@@ -156,8 +156,7 @@ export class MonitoringService extends BaseCrudService<CreateMonitoringAlertDto,
 
         await this.sendNotifications(alert, currentValue);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.prisma as any).monitoringAlert.update({
+        await this.prisma.monitoringAlert.update({
           where: { id: alert.id },
           data: { lastTriggeredAt: new Date() },
         });

@@ -474,9 +474,9 @@ describe('AuthService', () => {
         alamat: 'Jl. Test No. 123',
       });
 
-      // Should find Anggota by user email
+      // Should find Anggota by user email (baris soft-deleted dikecualikan)
       expect(mockPrisma.anggota.findFirst).toHaveBeenCalledWith({
-        where: { email: 'test@ths-thm.org' },
+        where: { email: 'test@ths-thm.org', deletedAt: null },
       });
       // Should update Anggota with profile fields
       expect(mockPrisma.anggota.update).toHaveBeenCalledWith({
@@ -547,10 +547,12 @@ describe('AuthService', () => {
       });
 
       // Fallback nama harus memfilter hanya anggota ber-email kosong
+      // (dan bukan anggota yang sudah soft-deleted)
       expect(mockPrisma.anggota.findMany).toHaveBeenCalledWith({
         where: {
           namaLengkap: { equals: 'Anggota User', mode: 'insensitive' },
           OR: [{ email: null }, { email: '' }],
+          deletedAt: null,
         },
       });
       expect(mockPrisma.anggota.update).toHaveBeenCalledWith({

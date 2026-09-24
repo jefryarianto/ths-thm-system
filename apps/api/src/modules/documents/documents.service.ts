@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TipeDokumen } from '@prisma/client';
 import { documentReadyEmail } from '../../mail/email-templates';
 import {
   GenerateDocumentDto,
@@ -136,11 +137,11 @@ export class DocumentsService {
     const verificationUrl = buildPublicVerifyUrl(token, { typ: dto.type, src: 'digital' });
     const nomorDokumen = `DOC-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    const doc = await (this.prisma as any).$transaction(async (tx: any) => {
+    const doc = await this.prisma.$transaction(async (tx) => {
       const created = await tx.dokumen.create({
         data: {
           anggotaId: dto.memberId,
-          tipe: dto.type as never,
+          tipe: dto.type,
           nomorDokumen,
           verificationUrl,
           signatureId: dto.signatureId,
@@ -218,7 +219,13 @@ export class DocumentsService {
    * This is the core method called by the queue adapter.
    */
   async generateSingle(payload: JobPayload): Promise<JobResult> {
-    const { memberId, type, batchId, documentJobId } = payload.data as Record<string, string>;
+    // Kontrak payload queue: `type` adalah TipeDokumen (tervalidasi di DTO saat enqueue).
+    const { memberId, type, batchId, documentJobId } = payload.data as {
+      memberId: string;
+      type: TipeDokumen;
+      batchId: string;
+      documentJobId: string;
+    };
 
     try {
       await this.generate({
@@ -499,7 +506,7 @@ export class DocumentsService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${token}`;
     const nomorDokumen = `SPD-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    const doc = await (this.prisma as any).$transaction(async (tx: any) => {
+    const doc = await this.prisma.$transaction(async (tx) => {
       const created = await tx.dokumen.create({
         data: {
           anggotaId: dto.memberId,
@@ -651,7 +658,7 @@ export class DocumentsService {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${token}`;
     const nomorDokumen = `PP-${new Date().getFullYear()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    const doc = await (this.prisma as any).$transaction(async (tx: any) => {
+    const doc = await this.prisma.$transaction(async (tx) => {
       const created = await tx.dokumen.create({
         data: {
           anggotaId: dto.memberId,

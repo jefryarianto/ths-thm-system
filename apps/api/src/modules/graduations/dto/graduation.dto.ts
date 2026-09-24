@@ -8,9 +8,11 @@ import {
   ValidateNested,
   IsNumber,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { JenisKelamin, StatusKegiatan } from '@prisma/client';
 
 export class CreateGraduationDto {
   @ApiProperty()
@@ -62,15 +64,16 @@ export class GraduationFilterDto {
   @Min(1)
   limit?: number;
 
+  // tipe selalu dipaksa 'pendadaran' oleh service — tidak diekspos sebagai filter.
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   tipe?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusKegiatan) })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(StatusKegiatan)
+  status?: StatusKegiatan;
 }
 
 export class RegisterParticipantDto {
@@ -94,8 +97,8 @@ export class CreateParticipantDto {
 
   @ApiPropertyOptional({ enum: ['L', 'P'] })
   @IsOptional()
-  @IsString()
-  jenisKelamin?: string;
+  @IsEnum(JenisKelamin)
+  jenisKelamin?: JenisKelamin;
 
   @ApiPropertyOptional()
   @IsOptional()

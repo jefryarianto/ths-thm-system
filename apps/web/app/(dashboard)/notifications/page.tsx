@@ -12,8 +12,6 @@ import {
   CheckCheck,
   Download,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   RefreshCw,
 } from 'lucide-react';
@@ -29,6 +27,7 @@ import NotificationDetailModal, {
   type NotificationDetail,
 } from '@/components/notifications/NotificationDetailModal';
 import { TIPE_OPTIONS, tipeColors } from '@/components/notifications/constants';
+import Pagination from '@/components/ui/pagination';
 
 interface NotificationRow {
   [key: string]: unknown;
@@ -305,9 +304,9 @@ export default function NotificationsPage() {
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-400">
-            <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
-            Memuat notifikasi...
+          <div className="p-8 text-center" role="status" aria-label="Memuat notifikasi">
+            <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-gray-400" />
+            <span className="text-sm text-gray-400">Memuat notifikasi...</span>
           </div>
         ) : data.length === 0 ? (
           <div className="p-8 text-center">
@@ -435,27 +434,13 @@ export default function NotificationsPage() {
 
             {/* Pagination */}
             {meta.totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Halaman {page} dari {meta.totalPages} ({meta.total} total)
-                </span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setPage(page - 1)}
-                    disabled={page <= 1}
-                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
-                  >
-                    <ChevronLeft size={16} className="text-gray-600 dark:text-gray-400" />
-                  </button>
-                  <button
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= meta.totalPages}
-                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition"
-                  >
-                    <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                page={page}
+                totalPages={meta.totalPages}
+                total={meta.total}
+                pageSize={10}
+                onPageChange={setPage}
+              />
             )}
           </>
         )}

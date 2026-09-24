@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import apiClient from '@/lib/api-client';
-import { Plus, Edit3, Trash2, RefreshCw, CheckCircle2, X } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, CheckCircle2, X, CalendarRange } from 'lucide-react';
 import PageContainer from '@/components/ui/page-container';
 import PageHeader from '@/components/ui/page-header';
+import EmptyState from '@/components/ui/empty-state';
 import Modal from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-modal';
@@ -243,11 +244,11 @@ export default function PeriodePage() {
               </thead>
               <tbody className="divide-y dark:divide-gray-700">
                 {activeUnitRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-gray-500">
-                      Belum ada periode aktif per unit. Semua unit menggunakan periode global (isActive).
-                    </td>
-                  </tr>
+                  <EmptyState
+                    icon={CalendarRange}
+                    message="Belum ada periode aktif per unit. Semua unit menggunakan periode global (isActive)."
+                    colSpan={4}
+                  />
                 ) : activeUnitRows.map((row) => (
                   <tr key={`${row.level}-${row.unitId}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     <td className="px-4 py-3">

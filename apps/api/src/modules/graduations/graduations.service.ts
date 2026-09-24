@@ -74,9 +74,6 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     }, persistentAudit);
   }
 
-  /** User admin kegiatan yang dijadwalkan auto-downgrade setelah update/hapus berhasil. */
-  private pendingDowngradeUsers: string[] = [];
-
   // ═══════════════════════════════════════════════════════════
   //  HOOKS
   // ═══════════════════════════════════════════════════════════
@@ -165,13 +162,14 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     if (dto.tanggalSelesai !== undefined) data.tanggalSelesai = new Date(dto.tanggalSelesai);
     if (dto.status !== undefined) data.status = dto.status;
 
-    // Snapshot admin & status saat ini — dipakai untuk auto-downgrade setelah update.
+    // Snapshot admin & status saat ini (untuk validasi + resolve distrik).
+    // Penentuan auto-downgrade TIDAK disimpan di state instance — dilakukan
+    // per-call di update() setelah update sukses, agar aman terhadap request
+    // konkuren (state shared antar-request bisa saling mencampur daftar).
     const kegiatan = await this.prisma.kegiatan.findUnique({
       where: { id },
       select: { adminKegiatanId: true, status: true, scopeType: true, scopeId: true },
     });
-    const oldAdmin = kegiatan?.adminKegiatanId || null;
-    const closing = dto.status === 'closed' || dto.status === 'cancelled';
 
     if (dto.adminKegiatanId !== undefined) {
       if (dto.adminKegiatanId) {
@@ -186,55 +184,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       }
     }
 
-    // Jadwalkan auto-downgrade bila admin kegiatan tak lagi punya kegiatan terbuka:
-    // - kegiatan ditutup/dibatalkan, ATAU
-    // - admin kegiatan lama diganti/dilepas (dto.adminKegiatanId dikirim, apapun nilainya).
-    const adminTouched = dto.adminKegiatanId !== undefined;
-    const newAdmin = adminTouched ? (data.adminKegiatanId as string | null) : oldAdmin;
-    if (oldAdmin) {
-      if (closing || newAdmin === null || newAdmin !== oldAdmin) {
-        this.pendingDowngradeUsers.push(oldAdmin);
-      }
-    }
-
     return data;
-  }
-
-  /**
-   * After update: proses auto-downgrade admin kegiatan yang dijadwalkan
-   * di beforeUpdate (dilepas/diganti/status ditutup-dibatalkan).
-   */
-  protected async afterUpdate(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _result: any,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _dto: UpdateGraduationDto,
-  ): Promise<void> {
-    const users = this.pendingDowngradeUsers;
-    this.pendingDowngradeUsers = [];
-    for (const uid of users) {
-      await this.downgradeAdminKegiatanIfNeeded(uid);
-    }
-  }
-
-  /** Sebelum remove: catat admin kegiatan pendadaran untuk auto-downgrade. */
-  protected async beforeRemove(id: string): Promise<void> {
-    const kegiatan = await this.prisma.kegiatan.findUnique({
-      where: { id },
-      select: { adminKegiatanId: true },
-    });
-    if (kegiatan?.adminKegiatanId) {
-      this.pendingDowngradeUsers.push(kegiatan.adminKegiatanId);
-    }
-  }
-
-  /** Setelah remove berhasil: jalankan auto-downgrade admin kegiatan. */
-  protected async afterRemove(_id: string): Promise<void> {
-    const users = this.pendingDowngradeUsers;
-    this.pendingDowngradeUsers = [];
-    for (const uid of users) {
-      await this.downgradeAdminKegiatanIfNeeded(uid);
-    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -565,8 +515,36 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     return this.baseCreate(dto, scope, userId, 'Pendadaran berhasil dibuat');
   }
 
+  /**
+   * Update pendadaran + auto-downgrade admin kegiatan.
+   *
+   * Race-safe: snapshot admin lama dibaca per-call SEBELUM update, lalu
+   * downgrade dijalankan SETELAH update BERHASIL — tidak ada state instance
+   * yang dibagi antar-request. Dua request konkuren masing-masing memegang
+   * snapshot sendiri; downgradeAdminKegiatanIfNeeded idempoten (cek jumlah
+   * kegiatan terbuka + role saat ini), sehingga eksekusi dobel tidak berbahaya.
+   * Bila update gagal (exception), downgrade tidak pernah dijalankan.
+   */
   async update(id: string, dto: UpdateGraduationDto, scope?: UserScope) {
-    return this.baseUpdate(id, dto, scope, 'Pendadaran berhasil diperbarui');
+    const current = await this.prisma.kegiatan.findUnique({
+      where: { id },
+      select: { adminKegiatanId: true },
+    });
+    const oldAdmin = current?.adminKegiatanId || null;
+
+    const result = await this.baseUpdate(id, dto, scope, 'Pendadaran berhasil diperbarui');
+
+    // Downgrade admin lama bila: kegiatan ditutup/dibatalkan, ATAU penugasan
+    // admin diganti/dilepas (dto.adminKegiatanId dikirim). Bila admin sama
+    // dikirim ulang, downgradeAdminKegiatanIfNeeded tetap aman — kegiatan
+    // masih terbuka dengan admin yang sama sehingga count > 0 → no-op.
+    const closing = dto.status === 'closed' || dto.status === 'cancelled';
+    const adminTouched = dto.adminKegiatanId !== undefined;
+    if (oldAdmin && (closing || adminTouched)) {
+      await this.downgradeAdminKegiatanIfNeeded(oldAdmin);
+    }
+
+    return result;
   }
 
   /**
@@ -615,8 +593,23 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
   }
 
 
+  /**
+   * Hapus (soft via baseRemove) + auto-downgrade admin kegiatan per-call.
+   * Snapshot admin dibaca sebelum hapus; downgrade hanya bila hapus BERHASIL.
+   */
   async remove(id: string, scope?: UserScope) {
-    return this.baseRemove(id, scope, 'Pendadaran berhasil dihapus');
+    const current = await this.prisma.kegiatan.findUnique({
+      where: { id },
+      select: { adminKegiatanId: true },
+    });
+    const oldAdmin = current?.adminKegiatanId || null;
+
+    const result = await this.baseRemove(id, scope, 'Pendadaran berhasil dihapus');
+
+    if (oldAdmin) {
+      await this.downgradeAdminKegiatanIfNeeded(oldAdmin);
+    }
+    return result;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -782,7 +775,7 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       data: {
         rantingId: dto.rantingId,
         namaLengkap: dto.namaLengkap,
-        jenisKelamin: dto.jenisKelamin === 'P' ? 'P' : 'L',
+        jenisKelamin: dto.jenisKelamin ?? 'L',
         noHp: dto.noHp || null,
         email: dto.email || null,
         alamat: dto.alamat || null,
@@ -809,14 +802,12 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
     await this.getGraduationOrThrow(graduationId, scope);
 
     // Hapus tautan peserta (sumber kebenaran per-kegiatan)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).pesertaPendadaran.deleteMany({
+    await this.prisma.pesertaPendadaran.deleteMany({
       where: { kegiatanId: graduationId, calonAnggotaId: dto.candidateId },
     });
 
     // Kembalikan status calon (alur existing)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).calonAnggota.update({
+    await this.prisma.calonAnggota.update({
       where: { id: dto.candidateId },
       data: { status: 'diusulkan' },
     });
@@ -1256,24 +1247,44 @@ export class GraduationsService extends BaseCrudService<CreateGraduationDto, Upd
       });
     }
     if (!anggota) {
-      anggota = await this.prisma.anggota.create({
-        data: {
-          namaLengkap: candidate.namaLengkap,
-          jenisKelamin: candidate.jenisKelamin,
-          tempatLahir: candidate.tempatLahir,
-          tanggalLahir: candidate.tanggalLahir ?? null,
-          alamat: candidate.alamat,
-          noHp: candidate.noHp,
-          noHpNormalized: normalizePhone(candidate.noHp),
-          email: candidate.email,
-          rantingId: candidate.rantingId,
-          tingkat: candidate.tingkat || null,
-          nomorAnggota: await this.nraService.generateMemberNumber(candidate.rantingId),
-          statusKeanggotaan: 'aktif',
-          statusData: 'complete',
-          statusValidasi: 'approved',
-        },
+      // Race-safe: generate NRA + insert anggota dalam SATU transaksi.
+      // Generator mengambil pg_advisory_xact_lock per ranting di dalam tx ini
+      // sehingga dua approve konkuren untuk ranting sama tidak mendapat seq sama.
+      anggota = await this.prisma.$transaction(async (tx) => {
+        // Re-resolve di dalam tx: calon mungkin sudah diproses request konkuren.
+        if (candidate.email) {
+          const existing = await tx.anggota.findUnique({
+            where: { email: candidate.email },
+            select: { id: true },
+          });
+          if (existing) return existing;
+        }
+        return tx.anggota.create({
+          data: {
+            namaLengkap: candidate.namaLengkap,
+            jenisKelamin: candidate.jenisKelamin,
+            tempatLahir: candidate.tempatLahir,
+            tanggalLahir: candidate.tanggalLahir ?? null,
+            alamat: candidate.alamat,
+            noHp: candidate.noHp,
+            noHpNormalized: normalizePhone(candidate.noHp),
+            email: candidate.email,
+            rantingId: candidate.rantingId,
+            tingkat: candidate.tingkat || null,
+            nomorAnggota: await this.nraService.generateMemberNumber(
+              candidate.rantingId,
+              undefined,
+              tx,
+            ),
+            statusKeanggotaan: 'aktif',
+            statusData: 'complete',
+            statusValidasi: 'approved',
+          },
+        });
       });
+      if (!anggota) {
+        throw new NotFoundException('Gagal membuat anggota dari calon pendadaran');
+      }
       // Notify the new member
       if (candidate.email) {
         this.memberMailService.sendToMemberWithArgs(

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Optional, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../common/services/cache.service';
 import { MailService } from '../../mail/mail.service';
@@ -521,7 +522,7 @@ export class NotificationsService {
     }
 
     const members = await this.prisma.anggota.findMany({
-      where: where as any,
+      where: where as Prisma.AnggotaWhereInput,
       select: { id: true, namaLengkap: true, email: true, missingFields: true },
     });
 

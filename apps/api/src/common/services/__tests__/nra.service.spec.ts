@@ -41,6 +41,7 @@ describe('NraService', () => {
   const mockTx = {
     ranting: { findUnique: jest.fn() },
     anggota: { findFirst: jest.fn() },
+    $queryRaw: jest.fn().mockResolvedValue([]),
   };
 
   const mockPrisma = {
@@ -48,6 +49,7 @@ describe('NraService', () => {
     $transaction: jest.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
     ranting: mockTx.ranting,
     anggota: mockTx.anggota,
+    $queryRaw: mockTx.$queryRaw,
   };
 
   beforeEach(async () => {
@@ -199,6 +201,63 @@ describe('NraService', () => {
       const nra = await service.generateMemberNumber('r1');
 
       // DST-0114 → 0114, WLY-0114-01 → 01, RTG-0114-01 → 01
+      expect(nra).toBe('0114-0101-001-2026');
+    });
+
+    it('mengambil pg_advisory_xact_lock per ranting sebelum membaca sequence', async () => {
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
+
+      await service.generateMemberNumber('r1');
+
+      expect(mockTx.$queryRaw).toHaveBeenCalledTimes(1);
+      const [query] = mockTx.$queryRaw.mock.calls[0];
+      expect(String(query)).toContain('pg_advisory_xact_lock');
+      // Nilai interpolasi: param pertama = prefix lock, param kedua = rantingId
+      const [, prefixParam, rantingParam] = mockTx.$queryRaw.mock.calls[0];
+      expect(String(prefixParam)).toContain('ths-thm:nra:ranting:');
+      expect(String(rantingParam)).toBe('r1');
+      // Lock diambil SEBELUM pembacaan anggota (sequence)
+      const lockCallIndex = 0;
+      const seqCallIndex = mockTx.anggota.findFirst.mock.invocationCallOrder[0];
+      expect(lockCallIndex).toBeLessThan(seqCallIndex);
+    });
+
+    it('memakai transaction client pemanggil (tx) bila disediakan', async () => {
+      const callerTx = {
+        ranting: { findUnique: jest.fn().mockResolvedValue(mockRanting) },
+        anggota: { findFirst: jest.fn().mockResolvedValue(null) },
+        $queryRaw: jest.fn().mockResolvedValue([]),
+      };
+
+      await service.generateMemberNumber('r1', undefined, callerTx);
+
+      // Semua akses DB lewat client pemanggil — tx internal hanya pembungkus
+      expect(callerTx.ranting.findUnique).toHaveBeenCalled();
+      expect(callerTx.anggota.findFirst).toHaveBeenCalled();
+      expect(callerTx.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(mockTx.ranting.findUnique).not.toHaveBeenCalled();
+      expect(mockTx.anggota.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('tidak gagal bila client tidak punya $queryRaw (mock/db non-Postgres)', async () => {
+      const callerTx = {
+        ranting: { findUnique: jest.fn().mockResolvedValue(mockRanting) },
+        anggota: { findFirst: jest.fn().mockResolvedValue(null) },
+      };
+
+      const nra = await service.generateMemberNumber('r1', undefined, callerTx);
+
+      expect(nra).toBe('0114-0101-001-2026');
+    });
+
+    it('tetap generate bila advisory lock gagal (non-fatal)', async () => {
+      mockTx.ranting.findUnique.mockResolvedValue(mockRanting);
+      mockTx.anggota.findFirst.mockResolvedValue(null);
+      mockTx.$queryRaw.mockRejectedValueOnce(new Error('lock timeout'));
+
+      const nra = await service.generateMemberNumber('r1');
+
       expect(nra).toBe('0114-0101-001-2026');
     });
   });

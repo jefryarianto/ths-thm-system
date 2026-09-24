@@ -3,6 +3,7 @@ import { mockAuth, mockLoginError } from './helpers';
 
 test.describe('Login Flow', () => {
   test('shows login page with title and form', async ({ page }) => {
+    await page.setExtraHTTPHeaders({ 'x-e2e-bypass': 'true' });
     await page.goto('/login');
     await expect(page.locator('h1:visible', { hasText: 'THS-THM' }).first()).toBeVisible();
     // Use text-based locators since the login page may not have data-testid attributes
@@ -13,6 +14,7 @@ test.describe('Login Flow', () => {
 
   test('shows error for invalid credentials', async ({ page }) => {
     await mockLoginError(page);
+    await page.setExtraHTTPHeaders({ 'x-e2e-bypass': 'true' });
     await page.goto('/login');
     await page.locator('#identifier, input[name="identifier"], input[type="text"]').first().fill('wrong@email.com');
     await page.fill('input[type="password"]', 'wrongpassword');
@@ -99,6 +101,7 @@ test.describe('Login Flow', () => {
     });
 
     // Navigate to login — NO tokens in localStorage, so form is visible
+    await page.setExtraHTTPHeaders({ 'x-e2e-bypass': 'true' });
     await page.goto('/login');
     await page.locator('#identifier, input[name="identifier"], input[type="text"]').first().fill('superadmin@ths.thm.org');
     await page.fill('input[type="password"]', 'password123');

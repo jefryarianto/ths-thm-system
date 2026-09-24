@@ -550,8 +550,10 @@ export default function MemberDetailPage() {
         await apiClient.post(endpoint, {});
       }
       await fetchMember();
-    } catch {
-      /* ignore */
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || `Gagal ${action === 'suspend' ? 'menonaktifkan' : action === 'reactivate' ? 'mengaktifkan kembali' : 'memproses'} anggota`);
     }
     setActionLoading(null);
   };
@@ -779,12 +781,15 @@ export default function MemberDetailPage() {
     setActionLoading('delete');
     try {
       await apiClient.delete(`/members/${member.id}`);
-      router.push('/members');
-    } catch {
-      /* ignore */
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal menghapus anggota');
+      setActionLoading(null);
+      setShowDeleteModal(false);
+      return;
     }
-    setActionLoading(null);
-    setShowDeleteModal(false);
+    router.push('/members');
   };
 
   if (loading) return <DetailSkeleton />;

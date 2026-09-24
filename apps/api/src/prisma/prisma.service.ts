@@ -41,7 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
               args.where = {
                 ...args.where,
                 distrikId: ctx.distrikId,
-              } as any;
+              };
             }
             return query(args);
           },

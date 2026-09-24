@@ -28,23 +28,25 @@ async function seedAuth(page: import('@playwright/test').Page) {
   // setiap navigasi — termasuk redirect ke '/' setelah sesi benar-benar
   // expired (test kedua) — sehingga token yang sudah dihapus sessionManager
   // bangkit kembali dan halaman '/' menganggap user masih login.
-  await page.addInitScript(
-    (tokens: { access: string; refresh: string }) => {
-      if (localStorage.getItem('e2e-seeded') === '1') return;
-      localStorage.setItem('e2e-seeded', '1');
-      localStorage.setItem('accessToken', tokens.access);
-      localStorage.setItem('refreshToken', tokens.refresh);
-      document.cookie = `accessToken=${tokens.access}; path=/; SameSite=Lax`;
-      document.cookie = `refreshToken=${tokens.refresh}; path=/; SameSite=Lax`;
-    },
-    { access: ACCESS, refresh: REFRESH },
-  );
+await page.addInitScript(
+     (tokens: { access: string; refresh: string }) => {
+       if (localStorage.getItem('e2e-seeded') === '1') return;
+       localStorage.setItem('e2e-seeded', '1');
+       localStorage.setItem('accessToken', tokens.access);
+       localStorage.setItem('refreshToken', tokens.refresh);
+       // NOTE: accessToken cookie intentionally removed per FASE 29P
+       // Only refreshToken cookie is used for session verification
+       document.cookie = `refreshToken=${tokens.refresh}; path=/; SameSite=Lax`;
+     },
+     { access: ACCESS, refresh: REFRESH },
+   );
 
-  const domain = new URL(E2E_BASE_URL).hostname;
-  await page.context().addCookies([
-    { name: 'accessToken', value: ACCESS, domain, path: '/' },
-    { name: 'refreshToken', value: REFRESH, domain, path: '/' },
-  ]);
+const domain = new URL(E2E_BASE_URL).hostname;
+   await page.context().addCookies([
+     // NOTE: accessToken cookie intentionally removed per FASE 29P
+     // Only refreshToken cookie is used for session verification
+     { name: 'refreshToken', value: REFRESH, domain, path: '/' },
+   ]);
 }
 
 test.describe('Session token refresh', () => {
@@ -108,6 +110,7 @@ test.describe('Session token refresh', () => {
       });
     });
 
+await page.setExtraHTTPHeaders({ 'x-e2e-bypass': 'true' });
     await page.goto('/dashboard');
 
     // User must stay on the dashboard (no spurious redirect to /login).

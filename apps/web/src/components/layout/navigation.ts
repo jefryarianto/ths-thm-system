@@ -1,6 +1,6 @@
-import type { LucideProps } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
-  BarChart3,
+  LayoutDashboard,
   Users,
   UserPlus,
   GraduationCap,
@@ -11,15 +11,15 @@ import {
   CreditCard,
   Bell,
   Settings,
-  Shield,
+  BadgeCheck,
   ClipboardCheck,
   Wallet,
   Trophy,
   TrendingUp,
   MessageSquare,
-  Activity,
+  Gauge,
   AlertTriangle,
-  Wifi,
+  Radio,
   ArrowLeftRight,
   Smartphone,
   Database,
@@ -28,6 +28,22 @@ import {
   Globe,
   BookOpen,
   History,
+  KeyRound,
+  Waypoints,
+  CalendarClock,
+  Printer,
+  ChartNoAxesColumn,
+  Megaphone,
+  Newspaper,
+  Landmark,
+  ClipboardList,
+  ShieldCheck,
+  Archive,
+  FileBarChart,
+  ScanLine,
+  Siren,
+  ListChecks,
+  MonitorCog,
 } from 'lucide-react';
 import { MODULE_PERMISSIONS } from '@/components/auth/can';
 import type { Role } from '@/types';
@@ -41,7 +57,7 @@ import type { Role } from '@/types';
 export interface MenuItem {
   href: string;
   label: string;
-  icon: React.ElementType<LucideProps>;
+  icon: LucideIcon;
   /** If true, only show to users with admin-level roles */
   adminOnly?: boolean;
   /** If true, open in a new tab (external/API-hosted pages like Bull Board) */
@@ -82,7 +98,7 @@ export const menuGroups: MenuGroup[] = [
     items: [
       // Dashboard admin - anggota diarahkan ke /forum sebagai home.
       // minRole 'penguji' karena role-redirect mengarahkan penguji ke /dashboard juga.
-      { href: '/dashboard', label: 'Dashboard', icon: BarChart3, minRole: 'penguji' },
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, minRole: 'penguji' },
     ],
   },
   {
@@ -92,8 +108,8 @@ export const menuGroups: MenuGroup[] = [
       { href: '/members/mutasi', label: 'Mutasi', icon: ArrowLeftRight, minRole: 'admin_ranting' },
       // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
       { href: '/candidates', label: 'Calon', icon: UserPlus, minRole: 'admin_kegiatan' },
-      { href: '/registrations', label: 'Pendaftaran', icon: UserPlus, minRole: 'admin_ranting' },
-      { href: '/claims', label: 'Klaim', icon: ClipboardCheck, minRole: 'admin_ranting' },
+      { href: '/registrations', label: 'Pendaftaran', icon: ClipboardList, minRole: 'admin_ranting' },
+      { href: '/claims', label: 'Klaim', icon: BadgeCheck, minRole: 'admin_ranting' },
     ],
   },
   {
@@ -103,7 +119,7 @@ export const menuGroups: MenuGroup[] = [
       // admin_kegiatan mengelola pendadaran (alur langkah 3)
       { href: '/graduations', label: 'Pendadaran', icon: GraduationCap, minRole: 'admin_kegiatan' },
       // admin_kegiatan mengajukan penguji ke admin distrik (alur langkah 6)
-      { href: '/examiners', label: 'Penguji', icon: Shield, minRole: 'admin_kegiatan' },
+      { href: '/examiners', label: 'Penguji', icon: ShieldCheck, minRole: 'admin_kegiatan' },
       { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck, minRole: 'penguji' },
     ],
   },
@@ -111,19 +127,19 @@ export const menuGroups: MenuGroup[] = [
     label: 'Aktivitas',
     items: [
       { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
-      { href: '/calendar', label: 'Kalender', icon: Calendar, minRole: 'anggota' },
+      { href: '/calendar', label: 'Kalender', icon: CalendarClock, minRole: 'anggota' },
       { href: '/approvals', label: 'Persetujuan', icon: ClipboardCheck, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Organisasi',
     items: [
-      { href: '/org-chart', label: 'Peta Organisasi', icon: Shield, minRole: 'anggota' },
-      { href: '/org-documents', label: 'Dokumen Organisasi', icon: FileText, minRole: 'anggota' },
-      { href: '/settings/jabatan', label: 'Jabatan', icon: Shield, minRole: 'admin_distrik' },
-      { href: '/settings/periode', label: 'Periode', icon: Calendar, minRole: 'superadmin' },
+      { href: '/org-chart', label: 'Peta Organisasi', icon: Landmark, minRole: 'anggota' },
+      { href: '/org-documents', label: 'Dokumen Organisasi', icon: Archive, minRole: 'anggota' },
+      { href: '/settings/jabatan', label: 'Jabatan', icon: IdCard, minRole: 'admin_distrik' },
+      { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'superadmin' },
       { href: '/settings/kepengurusan', label: 'Kepengurusan', icon: Users, minRole: 'admin_wilayah' },
-      { href: '/settings/org-chart-editor', label: 'Editor Org Chart', icon: Shield, minRole: 'admin_wilayah' },
+      { href: '/settings/org-chart-editor', label: 'Editor Org Chart', icon: Waypoints, minRole: 'admin_wilayah' },
     ],
   },
   {
@@ -144,9 +160,9 @@ export const menuGroups: MenuGroup[] = [
     label: 'Gamifikasi',
     items: [
       { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
-      { href: '/gamification/admin', label: 'Admin', icon: Shield, minRole: 'admin_ranting' },
+      { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_ranting' },
       { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'admin_kegiatan' },
-      { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: ChartNoAxesColumn, minRole: 'admin_ranting' },
       { href: '/gamification/settings', label: 'Pengaturan Gamifikasi', icon: Settings, minRole: 'admin_ranting' },
     ],
   },
@@ -155,20 +171,20 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { href: '/forum', label: 'Forum', icon: MessageSquare, minRole: 'anggota' },
       { href: '/notifications', label: 'Notifikasi', icon: Bell, minRole: 'anggota' },
-      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: Megaphone, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Laporan & Analitik',
     items: [
-      { href: '/reports', label: 'Laporan Umum', icon: BarChart3, minRole: 'admin_ranting' },
-      { href: '/scan-stats', label: 'Statistik Scan', icon: BarChart3, minRole: 'admin_ranting' },
+      { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
+      { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Konten Public',
     items: [
-      { href: '/content/berita', label: 'Berita', icon: BookOpen, minRole: 'admin_wilayah' },
+      { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
       { href: '/content/organisasi', label: 'Konten Web Organisasi', icon: Globe, minRole: 'superadmin' },
     ],
@@ -176,22 +192,22 @@ export const menuGroups: MenuGroup[] = [
   {
     label: 'Sistem',
     items: [
-      { href: '/users', label: 'Users', icon: Shield, minRole: 'admin_ranting' },
-      { href: '/monitoring', label: 'Monitoring', icon: Activity, minRole: 'admin_ranting' },
-      { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: Bell, minRole: 'admin_ranting' },
-      { href: '/monitoring/incidents', label: 'Incidents', icon: AlertTriangle, minRole: 'admin_ranting' },
+      { href: '/users', label: 'Pengguna', icon: Users, minRole: 'admin_ranting' },
+      { href: '/monitoring', label: 'Monitoring', icon: Gauge, minRole: 'admin_ranting' },
+      { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: AlertTriangle, minRole: 'admin_ranting' },
+      { href: '/monitoring/incidents', label: 'Incidents', icon: Siren, minRole: 'admin_ranting' },
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
-      { href: '/settings#autentikasi', label: 'Autentikasi', icon: Shield, minRole: 'superadmin' },
+      { href: '/settings#autentikasi', label: 'Autentikasi', icon: KeyRound, minRole: 'superadmin' },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
       { href: '/settings/email/logs', label: 'Riwayat Email', icon: History, minRole: 'admin_distrik' },
       { href: '/settings/penandatangan', label: 'Penandatangan', icon: PenLine, minRole: 'admin_distrik' },
       { href: '/settings/kartu', label: 'Template Kartu', icon: IdCard, minRole: 'admin_distrik' },
-      { href: '/settings/dokumen', label: 'Template Dokumen', icon: FileText, minRole: 'admin_distrik' },
-      { href: '/admin/queues', label: 'Antrean', icon: Activity, adminOnly: true },
-      { href: '/settings/fcm-test', label: 'FCM Push Test', icon: Smartphone, minRole: 'superadmin' },
-      { href: '/settings/sessions', label: 'Manajemen Sesi', icon: Shield, minRole: 'superadmin' },
+      { href: '/settings/dokumen', label: 'Template Dokumen', icon: Printer, minRole: 'admin_distrik' },
+      { href: '/admin/queues', label: 'Antrean', icon: ListChecks, adminOnly: true },
+      { href: '/settings/fcm-test', label: 'Pengujian FCM', icon: Smartphone, minRole: 'superadmin' },
+      { href: '/settings/sessions', label: 'Manajemen Sesi', icon: MonitorCog, minRole: 'superadmin' },
       { href: '/settings/backup', label: 'Database Backup', icon: Database, minRole: 'superadmin' },
-      { href: '/ws-monitor', label: 'WebSocket', icon: Wifi, adminOnly: true },
+      { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
     ],
   },
 ];
@@ -201,7 +217,13 @@ export const menuItems = menuGroups.flatMap((g) => g.items);
 
 /** Judul halaman untuk header berdasarkan pathname aktif */
 export function getPageTitle(pathname: string | null | undefined): string {
-  return menuItems.find((m) => pathname?.startsWith(m.href))?.label || 'Dashboard';
+  if (!pathname) return 'Dashboard';
+  // Ambil kecocokan prefix TERPANJANG: /settings/email → "Email Admin",
+  // bukan "/settings" → "Pengaturan".
+  const matches = menuItems
+    .filter((m) => pathname.startsWith(m.href))
+    .sort((a, b) => b.href.length - a.href.length);
+  return matches[0]?.label || 'Dashboard';
 }
 
 export function getModuleKey(href: string): string | null {

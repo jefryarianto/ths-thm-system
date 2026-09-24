@@ -139,8 +139,15 @@ export class PeriodeService {
 
   /** Validasi bahwa unitId benar-benar milik level yang sesuai. */
   private async validateUnit(level: PeriodeLevel, unitId: string) {
-    const table = level === 'nasional' ? 'nasional' : level === 'distrik' ? 'distrik' : level === 'wilayah' ? 'wilayah' : 'ranting';
-    const exists = (await (this.prisma[table] as any).findUnique({ where: { id: unitId } })) as { id: string } | null;
+    const findUnit = (lvl: PeriodeLevel) =>
+      lvl === 'nasional'
+        ? this.prisma.nasional.findUnique({ where: { id: unitId }, select: { id: true } })
+        : lvl === 'distrik'
+          ? this.prisma.distrik.findUnique({ where: { id: unitId }, select: { id: true } })
+          : lvl === 'wilayah'
+            ? this.prisma.wilayah.findUnique({ where: { id: unitId }, select: { id: true } })
+            : this.prisma.ranting.findUnique({ where: { id: unitId }, select: { id: true } });
+    const exists = await findUnit(level);
     if (!exists) {
       throw new BadRequestException(`${level} dengan id "${unitId}" tidak ditemukan`);
     }

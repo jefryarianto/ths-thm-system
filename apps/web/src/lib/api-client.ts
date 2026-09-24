@@ -1,10 +1,21 @@
 import axios from 'axios';
 import { sessionManager } from './session-manager';
 
+// Helper to determine if a method is safe for network retry (idempotent methods only)
+function isNetworkRetryableMethod(method: string | undefined): boolean {
+  if (!method) {
+    // Fail closed: if method is missing/undefined, do not retry
+    return false;
+  }
+  const upperMethod = method.toUpperCase();
+  return upperMethod === 'GET' || upperMethod === 'HEAD' || upperMethod === 'OPTIONS';
+}
+
 // Use relative URL so requests go through Next.js proxy (no CORS issues)
 // Next.js rewrites in next.config.js proxy /api/* to the backend on the server side.
 const apiClient = axios.create({
   baseURL: '/api',
+  timeout: 30000, // 30 seconds default timeout
 });
 
 // ─── Session Expiry ───────────────────────────────────────────────
@@ -206,12 +217,11 @@ async function performTokenRefresh(): Promise<string> {
     let lastRefreshErr: unknown;
     for (let attempt = 0; attempt <= MAX_REFRESH_RETRIES; attempt++) {
       try {
-        const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true });
+        const { data } = await axios.post(`/api/auth/refresh`, {}, { withCredentials: true, timeout: 15000 });
         const newToken = data.data.accessToken;
         localStorage.setItem('accessToken', newToken);
-        if (typeof document !== 'undefined') {
-          document.cookie = `accessToken=${newToken}; path=/; max-age=86400; SameSite=Lax`;
-        }
+        // NOTE: accessToken cookie intentionally removed per FASE 29P
+        // Only refreshToken cookie is used for session verification
         onTokenRefreshed(newToken);
         refreshChannel?.postMessage({ type: 'REFRESH_SUCCESS', token: newToken });
         if (sessionManager.isExpired) {
@@ -341,20 +351,20 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // --- NETWORK RETRY STRATEGY ---
-    const isNetworkError =
-      error.code === 'ECONNABORTED' || error.message?.includes('Network Error') || !error.response;
+// --- NETWORK RETRY STRATEGY ---
+     const isNetworkError =
+       error.code === 'ECONNABORTED' || error.message?.includes('Network Error') || !error.response;
 
-    if (isNetworkError && !originalRequest._retryCount) {
-      originalRequest._retryCount = 1;
-    }
+     if (isNetworkError && !originalRequest._retryCount && isNetworkRetryableMethod(originalRequest.method)) {
+       originalRequest._retryCount = 1;
+     }
 
-    if (isNetworkError && originalRequest._retryCount <= 2) {
-      const delay = 500 * originalRequest._retryCount;
-      await new Promise((res) => setTimeout(res, delay));
-      originalRequest._retryCount += 1;
-      return apiClient(originalRequest);
-    }
+     if (isNetworkError && originalRequest._retryCount <= 2 && isNetworkRetryableMethod(originalRequest.method)) {
+       const delay = 500 * originalRequest._retryCount;
+       await new Promise((res) => setTimeout(res, delay));
+       originalRequest._retryCount += 1;
+       return apiClient(originalRequest);
+     }
 
     // --- TOKEN REFRESH HANDLING ---
     // Skip refresh on auth endpoints since there's no valid refresh token yet
@@ -398,10 +408,8 @@ export const setTokens = (accessToken: string, refreshToken: string) => {
   sessionManager.reset();
   localStorage.setItem('accessToken', accessToken);
   localStorage.setItem('refreshToken', refreshToken);
-  // Also set in cookie for consistency with login flow and middleware
-  if (typeof document !== 'undefined') {
-    document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
-  }
+  // NOTE: accessToken cookie intentionally removed per FASE 29P
+  // Only refreshToken cookie is used for session verification
   // Schedule warning toast ~5 min before token expires
   sessionManager.scheduleExpiryWarning(accessToken);
 };
@@ -417,9 +425,9 @@ export async function proactivelyRefresh(): Promise<string> {
 
 export const clearTokens = () => {
   sessionManager.expire(true);
-  if (typeof document !== 'undefined') {
-    document.cookie = 'accessToken=; path=/; max-age=0; SameSite=Lax';
-  }
+  // NOTE: accessToken cookie clearing removed per FASE 29P
+  // Only refreshToken cookie is cleared by backend on logout
+  // localStorage accessToken is cleared by sessionManager.expiry flow
 };
 
 /**

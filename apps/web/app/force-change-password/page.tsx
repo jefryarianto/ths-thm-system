@@ -1,15 +1,26 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
+// AUTH-003: shared key with the login handoff (app/login/page.tsx).
+const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
+
 function ForceChangePasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+
+  // AUTH-003: the reset token arrives via sessionStorage (written by the login
+  // handoff) instead of the URL. Read once, then remove it immediately so it
+  // cannot be reused on refresh or via the Back button.
+  const [token] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = sessionStorage.getItem(FORCE_CHANGE_TOKEN_KEY);
+    if (stored) sessionStorage.removeItem(FORCE_CHANGE_TOKEN_KEY);
+    return stored;
+  });
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

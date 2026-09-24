@@ -1,5 +1,6 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException, Optional, OnModuleInit } from '@nestjs/common';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 import * as crypto from 'crypto';
 import { welcomeMemberEmail, credentialEmail, dataIncompleteEmail, escapeHtml } from '../../mail/email-templates';
 import { CreateMemberDto, UpdateMemberDto, MemberFilterDto } from './dto/member.dto';
@@ -155,8 +156,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       cacheKey,
       async () => {
         const scopeFilter = this.buildScopeFilter(scope);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const where: any = { deletedAt: null, ...scopeFilter };
+        const where: Prisma.AnggotaWhereInput = { deletedAt: null, ...scopeFilter };
 
         if (filter.search) {
           where.OR = [
@@ -170,9 +170,15 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         }
         if (filter.tanpaFoto === 'true') where.fotoPath = null;
         if (filter.rantingId) where.rantingId = filter.rantingId;
-        if (filter.statusKeanggotaan) where.statusKeanggotaan = filter.statusKeanggotaan;
-        if (filter.statusValidasi) where.statusValidasi = filter.statusValidasi;
-        if (filter.statusData) where.statusData = filter.statusData;
+        if (filter.statusKeanggotaan) {
+          where.statusKeanggotaan = filter.statusKeanggotaan;
+        }
+        if (filter.statusValidasi) {
+          where.statusValidasi = filter.statusValidasi;
+        }
+        if (filter.statusData) {
+          where.statusData = filter.statusData;
+        }
 
         // Hierarchical filters: distrikId → wilayahId → rantingId.
         // Tenant safety: scope pengguna adalah batas atas (buildScopeFilter sudah
@@ -186,15 +192,18 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         } else if (scope?.distrikId) {
           if (filter.rantingId) where.rantingId = filter.rantingId;
           if (filter.wilayahId) {
-            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            where.ranting = rantingFilter;
           }
         } else {
           // Tanpa scope (nasional/superadmin): filter klien berlaku penuh.
           if (filter.distrikId) {
-            where.ranting = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+            where.ranting = rantingFilter;
           }
           if (filter.wilayahId) {
-            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            where.ranting = rantingFilter;
           }
         }
 
@@ -215,8 +224,8 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async findOne(id: string, scope?: UserScope) {
     // Use prismaDelegate directly to pass deletedAt in where clause
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const member = await (this.prisma as any).anggota.findUnique({
+    // (Prisma 5 extendedWhereUnique: non-unique filter boleh menyertai id unik)
+    const member = await this.prisma.anggota.findUnique({
       where: { id, deletedAt: null },
       include: {
         ranting: { include: { wilayah: { include: { distrik: true } } } },
@@ -398,8 +407,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
           );
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const member = await (this.prisma as any).anggota.create({
+        const member = await this.prisma.anggota.create({
           data: {
             nomorAnggota,
             namaLengkap: row.nama_lengkap || row.nama || row.name,
@@ -407,7 +415,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             tempatLahir: parsedTempatLahir || null,
             tanggalLahir: this.csvImportService.parseDateField(parsedTanggalLahir),
             tempatDadar: parsedTempatDadar || null,
-            tahunDadar: parsedTahunDadar ? parseInt(String(parsedTahunDadar), 10) : null,
+            tahunDadar: parsedTahunDadar || null,
             fotoPath: row.foto || row.fotoPath || row.foto_path || null,
             noHp: row.no_hp || row.phone || null,
             noHpNormalized: normalizePhone(row.no_hp || row.phone),
@@ -417,13 +425,11 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
             tingkat: row.tingkat || row.tingkatan || null,
             statusData: missingFields.length > 0 ? 'incomplete' : 'complete',
             statusValidasi: 'pending',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
+            missingFields: missingFields.length > 0 ? missingFields : undefined,
             isImported: true,
             importSource: row.import_source || row.importSource || 'csv_import',
             importedAt: new Date(),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any,
+          },
         });
 
         // Peringatan non-blocking: nomor HP sudah terdaftar untuk anggota lain
@@ -473,8 +479,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async exportCsv(filter: MemberFilterDto, scope?: UserScope) {
     const scopeFilter = this.buildScopeFilter(scope);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const members = await (this.prisma as any).anggota.findMany({
+    const members = await this.prisma.anggota.findMany({
       where: { deletedAt: null, ...scopeFilter },
       select: {
         nomorAnggota: true,
@@ -508,8 +513,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     };
 
     // Prioritas 1: akun terhubung ke anggota via email.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const member = await (this.prisma as any).anggota.findFirst({
+    const member = await this.prisma.anggota.findFirst({
       where: { email, deletedAt: null },
       include,
     });
@@ -517,8 +521,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
     // Prioritas 2 (fallback nama): hanya untuk anggota ber-email kosong & hasil unik.
     if (namaLengkap && namaLengkap.trim()) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const byName = await (this.prisma as any).anggota.findMany({
+      const byName = await this.prisma.anggota.findMany({
         where: {
           namaLengkap: { equals: namaLengkap.trim(), mode: 'insensitive' },
           OR: [{ email: null }, { email: '' }],
@@ -538,7 +541,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async resendCredentials(memberId: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const member = await (this.prisma as any).anggota.findUnique({
+    const member = await this.prisma.anggota.findUnique({
       where: { id: memberId },
       select: { id: true, email: true, noHp: true, namaLengkap: true, rantingId: true },
     });
@@ -552,8 +555,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     const email = member.email || (phone ? `${phone}@noemail.ths-thm.org` : null);
 
     // Cari akun yang sudah ada: via email (asli/sintetis) atau phone
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let user: any = email ? await this.prisma.user.findUnique({ where: { email } }) : null;
+    let user = email ? await this.prisma.user.findUnique({ where: { email } }) : null;
     if (!user && phone) {
       user = await this.prisma.user.findUnique({ where: { phone } });
     }
@@ -591,10 +593,9 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async getDocuments(id: string, user?: SelfScopeUser) {
     // Anggota hanya boleh ambil dokumen miliknya sendiri
-    await assertSelfMember(this.prisma as any, user, id);
+    await assertSelfMember(this.prisma, user, id);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const documents = await (this.prisma as any).dokumen.findMany({
+    const documents = await this.prisma.dokumen.findMany({
       where: { anggotaId: id },
       orderBy: { createdAt: 'desc' },
     });
@@ -606,10 +607,9 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async getDues(id: string, user?: SelfScopeUser) {
     // Anggota hanya boleh ambil iuran miliknya sendiri
-    await assertSelfMember(this.prisma as any, user, id);
+    await assertSelfMember(this.prisma, user, id);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dues = await (this.prisma as any).iuran.findMany({
+    const dues = await this.prisma.iuran.findMany({
       where: { anggotaId: id },
       orderBy: { createdAt: 'desc' },
     });
@@ -620,7 +620,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // ── Domain: search members for picker ─────────────────────
 
   async searchMembers(q?: string, rantingId?: string, wilayahId?: string) {
-    const where: any = { deletedAt: null, statusKeanggotaan: 'aktif' };
+    const where: Prisma.AnggotaWhereInput = { deletedAt: null, statusKeanggotaan: 'aktif' };
 
     if (rantingId) where.rantingId = rantingId;
     if (wilayahId) where.ranting = { wilayahId };
@@ -633,7 +633,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       ];
     }
 
-    const members = await (this.prisma as any).anggota.findMany({
+    const members = await this.prisma.anggota.findMany({
       where,
       select: {
         id: true,
@@ -664,8 +664,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       cacheKey,
       async () => {
         const scopeFilter = this.buildScopeFilter(scope);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const where: any = { deletedAt: null, statusData: 'incomplete', ...scopeFilter };
+        const where: Prisma.AnggotaWhereInput = { deletedAt: null, statusData: 'incomplete', ...scopeFilter };
 
         // Tenant safety: sama dengan findAll — scope mengikat batas atas,
         // filter hierarkis klien hanya boleh mempersempit di dalamnya.
@@ -676,15 +675,18 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         } else if (scope?.distrikId) {
           if (filter.rantingId) where.rantingId = filter.rantingId;
           if (filter.wilayahId) {
-            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            where.ranting = rantingFilter;
           }
         } else {
           if (filter.rantingId) where.rantingId = filter.rantingId;
           if (filter.distrikId) {
-            where.ranting = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayah: { distrikId: filter.distrikId } };
+            where.ranting = rantingFilter;
           }
           if (filter.wilayahId) {
-            where.ranting = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            const rantingFilter: Prisma.RantingWhereInput = { ...(where.ranting ?? {}), wilayahId: filter.wilayahId };
+            where.ranting = rantingFilter;
           }
         }
 
@@ -704,18 +706,17 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
   async getIncompleteStats(scope?: UserScope) {
     const scopeFilter = this.buildScopeFilter(scope);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const baseWhere: any = { deletedAt: null, ...scopeFilter };
+    const baseWhere: Prisma.AnggotaWhereInput = { deletedAt: null, ...scopeFilter };
 
     const [totalMembers, incompleteMembers, importedMembers, importedIncomplete] = await Promise.all([
-      (this.prisma as any).anggota.count({ where: baseWhere }),
-      (this.prisma as any).anggota.count({ where: { ...baseWhere, statusData: 'incomplete' } }),
-      (this.prisma as any).anggota.count({ where: { ...baseWhere, isImported: true } }),
-      (this.prisma as any).anggota.count({ where: { ...baseWhere, isImported: true, statusData: 'incomplete' } }),
+      this.prisma.anggota.count({ where: baseWhere }),
+      this.prisma.anggota.count({ where: { ...baseWhere, statusData: 'incomplete' } }),
+      this.prisma.anggota.count({ where: { ...baseWhere, isImported: true } }),
+      this.prisma.anggota.count({ where: { ...baseWhere, isImported: true, statusData: 'incomplete' } }),
     ]);
 
     // Get breakdown by ranting (for admin scope)
-    const rantingBreakdown = await (this.prisma as any).anggota.groupBy({
+    const rantingBreakdown = await this.prisma.anggota.groupBy({
       by: ['rantingId'],
       where: { ...baseWhere, statusData: 'incomplete' },
       _count: { id: true },
@@ -735,14 +736,15 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     }));
 
     // Get breakdown by missing field
-    const incompleteWithFields = await (this.prisma as any).anggota.findMany({
+    const incompleteWithFields = await this.prisma.anggota.findMany({
       where: { ...baseWhere, statusData: 'incomplete' },
       select: { missingFields: true },
     });
 
     const fieldCounts: Record<string, number> = {};
     for (const member of incompleteWithFields) {
-      const fields = member.missingFields || [];
+      // Kolom Json? — di sini selalu array of string (ditulis dari calculateMissingFields).
+      const fields = (member.missingFields as string[] | null) || [];
       for (const field of fields) {
         fieldCounts[field] = (fieldCounts[field] || 0) + 1;
       }
@@ -768,8 +770,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
   // Used after profile update to determine if data is complete.
 
   async recalculateMissingFields(anggotaId: string): Promise<{ statusData: string; missingFields: string[] }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const member = await (this.prisma as any).anggota.findUnique({
+    const member = await this.prisma.anggota.findUnique({
       where: { id: anggotaId },
       select: {
         namaLengkap: true,
@@ -788,13 +789,11 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
 
     const statusData = missingFields.length > 0 ? 'incomplete' : 'complete';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).anggota.update({
+    await this.prisma.anggota.update({
       where: { id: anggotaId },
       data: {
         statusData,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        missingFields: missingFields.length > 0 ? (missingFields as any) : undefined,
+        missingFields: missingFields.length > 0 ? missingFields : undefined,
       },
     });
 
@@ -811,8 +810,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
       // Only trigger approval if data is now complete (was incomplete before)
       if (statusData === 'complete') {
         // Set statusValidasi to pending for approval
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.prisma as any).anggota.update({
+        await this.prisma.anggota.update({
           where: { id: anggotaId },
           data: { statusValidasi: 'pending' },
         });
@@ -827,8 +825,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
         }
       } else if (missingFields.length > 0) {
         // Still incomplete, send notification reminder
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const member = await (this.prisma as any).anggota.findUnique({
+        const member = await this.prisma.anggota.findUnique({
           where: { id: anggotaId },
           select: { email: true, namaLengkap: true },
         });
@@ -848,7 +845,7 @@ export class MembersService extends BaseCrudService<CreateMemberDto, UpdateMembe
     email: string,
     namaLengkap: string,
     rantingId: string,
-    phone?: string,
+    phone?: string | null,
     anggotaId?: string,
   ): Promise<void> {
     try {

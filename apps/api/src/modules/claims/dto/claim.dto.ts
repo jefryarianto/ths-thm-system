@@ -1,6 +1,7 @@
-import { IsString, IsOptional, IsInt, Min, IsEmail, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsEmail, IsIn, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { StatusKlaim, TipeKlaim } from '@prisma/client';
 
 export class CreateClaimDto {
   @ApiPropertyOptional({ description: 'ID anggota (opsional, ada jika klaim dokumen)' })
@@ -98,15 +99,15 @@ export class ClaimFilterDto {
   @Min(1)
   limit?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusKlaim) })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(StatusKlaim)
+  status?: StatusKlaim;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(TipeKlaim) })
   @IsOptional()
-  @IsString()
-  tipe?: string;
+  @IsEnum(TipeKlaim)
+  tipe?: TipeKlaim;
 }
 
 export class RejectClaimDto {

@@ -58,6 +58,8 @@ describe('GraduationsService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    // Interactive transaction: delegasikan ke mockPrisma (pola tx sama dengan produksi)
+    $transaction: jest.fn((cb: (tx: unknown) => Promise<unknown>) => cb(mockPrisma)),
     user: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
@@ -1452,30 +1454,32 @@ describe('GraduationsService', () => {
     });
   });
 
-  describe('auto-downgrade admin kegiatan', () => {
+  describe('auto-downgrade admin kegiatan (via update — race-safe per-call)', () => {
     beforeEach(() => {
       mockPrisma.kegiatan.findUnique.mockReset();
       mockPrisma.kegiatan.count.mockReset();
+      mockPrisma.kegiatan.update.mockReset().mockResolvedValue({ id: 'g1' });
       mockPrisma.user.findUnique.mockReset();
       mockPrisma.user.update.mockReset();
     });
 
     it('menurunkan role admin_kegiatan → anggota saat kegiatan ditutup & tak ada kegiatan terbuka lain', async () => {
-      mockPrisma.kegiatan.findUnique.mockResolvedValue({
-        id: 'g1',
-        adminKegiatanId: 'u1',
-        status: 'published',
-        scopeType: 'ranting',
-        scopeId: 'r1',
-      });
+      // Snapshot pra-update lalu state pasca-update
+      mockPrisma.kegiatan.findUnique
+        .mockResolvedValueOnce({ id: 'g1', adminKegiatanId: 'u1' })
+        .mockResolvedValueOnce({
+          id: 'g1',
+          adminKegiatanId: 'u1',
+          status: 'published',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+        });
+      mockPrisma.kegiatan.update.mockResolvedValue({ id: 'g1', status: 'closed' });
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'anggota' });
 
-      await service.beforeUpdate('g1', { status: 'closed' } as any);
-
-      // Jalankan hook afterUpdate (dipanggil otomatis oleh baseUpdate)
-      await (service as any).afterUpdate({}, { status: 'closed' });
+      await service.update('g1', { status: 'closed' } as any);
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 'u1' }, data: { role: 'anggota' } }),
@@ -1483,40 +1487,53 @@ describe('GraduationsService', () => {
     });
 
     it('TIDAK menurunkan role bila masih ada kegiatan terbuka lain', async () => {
-      mockPrisma.kegiatan.findUnique.mockResolvedValue({
-        id: 'g1',
-        adminKegiatanId: 'u1',
-        status: 'published',
-        scopeType: 'ranting',
-        scopeId: 'r1',
-      });
+      mockPrisma.kegiatan.findUnique
+        .mockResolvedValueOnce({ id: 'g1', adminKegiatanId: 'u1' })
+        .mockResolvedValueOnce({
+          id: 'g1',
+          adminKegiatanId: 'u1',
+          status: 'published',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+        });
+      mockPrisma.kegiatan.update.mockResolvedValue({ id: 'g1', status: 'closed' });
       mockPrisma.kegiatan.count.mockResolvedValue(1); // masih ada kegiatan terbuka lain
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
 
-      await service.beforeUpdate('g1', { status: 'closed' } as any);
-      await (service as any).afterUpdate({}, { status: 'closed' });
+      await service.update('g1', { status: 'closed' } as any);
 
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
 
     it('menurunkan role saat admin kegiatan dilepas dari satu-satunya pendadaran', async () => {
-      mockPrisma.kegiatan.findUnique.mockResolvedValue({
-        id: 'g1',
-        adminKegiatanId: 'u1',
-        status: 'published',
-        scopeType: 'ranting',
-        scopeId: 'r1',
-      });
+      mockPrisma.kegiatan.findUnique
+        .mockResolvedValueOnce({ id: 'g1', adminKegiatanId: 'u1' })
+        .mockResolvedValueOnce({
+          id: 'g1',
+          adminKegiatanId: 'u1',
+          status: 'published',
+          scopeType: 'ranting',
+          scopeId: 'r1',
+        });
+      mockPrisma.kegiatan.update.mockResolvedValue({ id: 'g1' });
       mockPrisma.kegiatan.count.mockResolvedValue(0);
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', role: 'admin_kegiatan' });
       mockPrisma.user.update.mockResolvedValue({ id: 'u1', role: 'anggota' });
 
-      await service.beforeUpdate('g1', { adminKegiatanId: null } as any);
-      await (service as any).afterUpdate({}, { adminKegiatanId: null });
+      await service.update('g1', { adminKegiatanId: null } as any);
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: 'u1' }, data: { role: 'anggota' } }),
       );
+    });
+
+    it('TIDAK menurunkan role bila update GAGAL (snapshot pra-update tidak jadi dipakai)', async () => {
+      mockPrisma.kegiatan.findUnique.mockResolvedValue({ id: 'g1', adminKegiatanId: 'u1' });
+      mockPrisma.kegiatan.update.mockRejectedValue(new Error('update gagal'));
+
+      await expect(service.update('g1', { status: 'closed' } as any)).rejects.toThrow('update gagal');
+
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
   });
 

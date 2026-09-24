@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsEnum, IsEmail, IsInt, Min, MinLength, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { JenisKelamin, StatusCalon } from '@prisma/client';
 
 export class CreateCandidateDto {
   @ApiProperty()
@@ -8,9 +9,9 @@ export class CreateCandidateDto {
   @MinLength(1, { message: 'Nama lengkap tidak boleh kosong' })
   namaLengkap: string;
 
-  @ApiProperty({ enum: ['L', 'P'] })
-  @IsEnum(['L', 'P'], { message: 'Jenis kelamin harus L atau P' })
-  jenisKelamin: 'L' | 'P';
+  @ApiProperty({ enum: Object.values(JenisKelamin) })
+  @IsEnum(JenisKelamin, { message: 'Jenis kelamin harus L atau P' })
+  jenisKelamin: JenisKelamin;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -59,8 +60,8 @@ export class UpdateCandidateDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsEnum(['L', 'P'])
-  jenisKelamin?: 'L' | 'P';
+  @IsEnum(JenisKelamin)
+  jenisKelamin?: JenisKelamin;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -118,8 +119,8 @@ export class CandidateFilterDto {
   @IsString()
   rantingId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusCalon) })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(StatusCalon)
+  status?: StatusCalon;
 }

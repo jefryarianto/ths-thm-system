@@ -27,6 +27,8 @@ import { env } from '../../config/env.validation';
 import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
 import { ScopedRequest } from '../../common/interfaces/user-scope.interface';
 import { RequireScope } from '../../common/decorators/scope.decorator';
+import { MetricsService } from '../../common/services/metrics.service';
+import type { AuthOperation, AuthResult } from '../../common/services/metrics.service';
 
 function parseCookie(cookieHeader: string, name: string): string | undefined {
   const cookies = cookieHeader.split(';').map((c) => c.trim().split('='));
@@ -43,7 +45,31 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
     @Inject('ENV') private readonly envConfig: typeof env,
+    private readonly metrics: MetricsService,
   ) {}
+
+  /**
+   * Membungkus operasi autentikasi untuk mencatat metrik low-cardinality
+   * tanpa mengubah perilaku/response. Mengklasifikasikan hasil hanya dari
+   * himpunan terbatas: success / unauthorized / internal. Error asli tetap
+   * dilempar ulang sehingga kontrak API tidak berubah.
+   */
+  private async withAuthMetric<T>(
+    operation: AuthOperation,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const started = Date.now();
+    try {
+      const result = await fn();
+      this.metrics.recordAuth(operation, 'success', Date.now() - started);
+      return result;
+    } catch (err) {
+      const result: AuthResult =
+        err instanceof UnauthorizedException ? 'unauthorized' : 'internal';
+      this.metrics.recordAuth(operation, result, Date.now() - started);
+      throw err;
+    }
+  }
 
   @Post('login')
   @Public()
@@ -68,19 +94,21 @@ export class AuthController {
   @Public()
   @ApiOperation({ summary: 'Refresh token akses' })
   async refresh(@Req() req: Request, @Body() dto: RefreshDto, @Res({ passthrough: true }) res: Response) {
-    // Mobile mengirim refreshToken via body; web via httpOnly cookie — terima keduanya
-    const refreshToken = dto.refreshToken || parseCookie(req.headers.cookie || '', 'refreshToken');
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token tidak ditemukan');
-    }
-    const result = await this.authService.refreshToken(refreshToken, {
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
+    return this.withAuthMetric('refresh', async () => {
+      // Mobile mengirim refreshToken via body; web via httpOnly cookie — terima keduanya
+      const refreshToken = dto.refreshToken || parseCookie(req.headers.cookie || '', 'refreshToken');
+      if (!refreshToken) {
+        throw new UnauthorizedException('Refresh token tidak ditemukan');
+      }
+      const result = await this.authService.refreshToken(refreshToken, {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      this.authService.setRefreshTokenCookie(res, result.refreshToken);
+      // Kembalikan refreshToken (rotasi) agar mobile bisa menyimpan token baru;
+      // cookie tetap dipakai web.
+      return result;
     });
-    this.authService.setRefreshTokenCookie(res, result.refreshToken);
-    // Kembalikan refreshToken (rotasi) agar mobile bisa menyimpan token baru;
-    // cookie tetap dipakai web.
-    return result;
   }
 
   @Post('forgot')
@@ -111,13 +139,35 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Keluar — hapus refresh token (server + cookie)' })
   async logout(@CurrentUser() user: { id: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
-    this.authService.clearRefreshTokenCookie(res);
-    await this.authService.logout(user.id, refreshToken, {
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
+    return this.withAuthMetric('logout', async () => {
+      const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
+      this.authService.clearRefreshTokenCookie(res);
+      await this.authService.logout(user.id, refreshToken, {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      return { success: true, message: 'Berhasil keluar' };
     });
-    return { success: true, message: 'Berhasil keluar' };
+  }
+
+  @Get('session/verify')
+  @Public()
+  @ApiOperation({
+    summary:
+      'Verifikasi read-only refresh session (untuk Next.js proxy route gate)',
+  })
+  async verifySession(@Req() req: Request) {
+    return this.withAuthMetric('session_verify', async () => {
+      const refreshToken = parseCookie(req.headers.cookie || '', 'refreshToken');
+      if (!refreshToken) {
+        throw new UnauthorizedException('Sesi tidak valid');
+      }
+      const { valid } = await this.authService.validateRefreshToken(refreshToken);
+      if (!valid) {
+        throw new UnauthorizedException('Sesi tidak valid');
+      }
+      return { valid: true };
+    });
   }
 
   @Get('sessions')
@@ -325,8 +375,10 @@ export class AuthController {
   @UseGuards(GoogleOAuthEnabledGuard, AuthGuard('google'))
   @ApiOperation({ summary: 'Callback login Google' })
   async googleAuthCallback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = (req as any).user;
+    // Passport menempelkan hasil validate() strategy ke req.user (bukan tipe Express.User bawaan).
+    const user = req.user as unknown as
+      | ({ id: string; email: string; role: string } & Record<string, unknown>)
+      | undefined;
     if (!user) {
       return res.redirect(
         `${this.envConfig.frontendUrl}/login?error=oauth_failed`,

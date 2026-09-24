@@ -39,6 +39,7 @@ test.describe('OAuth Login Flow', () => {
 
   test('OAuth callback with token and refresh redirects to dashboard', async ({ page }) => {
     await mockAuthWithAll(page);
+await page.setExtraHTTPHeaders({ 'x-e2e-bypass': 'true' });
     await page.goto('/login?token=fake_test_token&refresh=fake_test_refresh');
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
   });

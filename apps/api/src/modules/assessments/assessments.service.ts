@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -90,8 +91,9 @@ export class AssessmentsService {
     // tapi pastikan nilai positif supaya endpoint robust tegen partial payload.
     if (dto.bobot === undefined || Number(dto.bobot) <= 0) data.bobot = 1;
     if (dto.skorMaksimal === undefined || Number(dto.skorMaksimal) <= 0) data.skorMaksimal = 100;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const item = await this.prisma.itemPenilaian.create({ data: data as any });
+    const item = await this.prisma.itemPenilaian.create({
+      data: data as Prisma.ItemPenilaianCreateInput,
+    });
     // Aturan "semua penguji menguji semua aspek": item baru yang aspek-nya
     // milik pendadaran tertentu otomatis dilampirkan ke semua ujian praktek
     // pendadaran tsb (additive). Item di bawah aspek template global

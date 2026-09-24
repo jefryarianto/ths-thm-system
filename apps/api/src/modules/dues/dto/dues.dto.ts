@@ -1,6 +1,7 @@
-import { IsString, IsOptional, IsInt, Min, IsNumber, IsDateString, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsNumber, IsDateString, IsArray, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { MetodeBayar, StatusIuran } from '@prisma/client';
 
 export class CreateDueDto {
   @ApiProperty()
@@ -21,15 +22,15 @@ export class CreateDueDto {
   @IsDateString()
   tanggalBayar?: string;
 
-  @ApiPropertyOptional({ enum: ['manual', 'transfer', 'online'] })
+  @ApiPropertyOptional({ enum: Object.values(MetodeBayar) })
   @IsOptional()
-  @IsString()
-  metodeBayar?: string;
+  @IsEnum(MetodeBayar)
+  metodeBayar?: MetodeBayar;
 
-  @ApiPropertyOptional({ enum: ['belum_dibayar', 'menunggu_verifikasi', 'lunas', 'menunggak'] })
+  @ApiPropertyOptional({ enum: Object.values(StatusIuran) })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(StatusIuran)
+  status?: StatusIuran;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -54,15 +55,15 @@ export class UpdateDueDto {
   @IsDateString()
   tanggalBayar?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(MetodeBayar) })
   @IsOptional()
-  @IsString()
-  metodeBayar?: string;
+  @IsEnum(MetodeBayar)
+  metodeBayar?: MetodeBayar;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusIuran) })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(StatusIuran)
+  status?: StatusIuran;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -85,10 +86,10 @@ export class DueFilterDto {
   @Min(1)
   limit?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(StatusIuran) })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(StatusIuran)
+  status?: StatusIuran;
 
   @ApiPropertyOptional()
   @IsOptional()

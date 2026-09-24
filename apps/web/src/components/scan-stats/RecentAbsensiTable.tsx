@@ -1,7 +1,9 @@
 'use client';
 
+import { ClipboardCheck } from 'lucide-react';
 import SearchBar from '@/components/ui/search-bar';
 import FilterSelect from '@/components/ui/filter-select';
+import EmptyState from '@/components/ui/empty-state';
 
 interface AbsensiRow {
   namaAnggota: string;
@@ -97,16 +99,15 @@ export default function RecentAbsensiTable({
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {filteredAbsensi.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="text-center py-8 text-sm text-gray-400 dark:text-gray-500"
-                >
-                  {searchQuery || statusFilter
+              <EmptyState
+                icon={ClipboardCheck}
+                message={
+                  searchQuery || statusFilter
                     ? 'Tidak ada absensi yang cocok dengan filter'
-                    : 'Belum ada data'}
-                </td>
-              </tr>
+                    : 'Belum ada data'
+                }
+                colSpan={5}
+              />
             ) : (
               filteredAbsensi.map((a, i) => (
                 <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">

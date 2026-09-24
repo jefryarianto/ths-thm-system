@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -685,15 +686,17 @@ export class CsvImportService {
     totalRows: number,
     result: CsvImportResult,
   ): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.prisma as any).importLog
+    this.prisma.importLog
       .create({
         data: {
           module,
           totalRows,
           successRows: result.success,
           errorRows: result.errors + result.incomplete,
-          details: result.details.length > 0 ? result.details.slice(0, 100) : undefined,
+          details:
+            result.details.length > 0
+              ? (result.details.slice(0, 100) as unknown as Prisma.InputJsonValue[])
+              : undefined,
         },
       })
       .catch((err: Error) =>

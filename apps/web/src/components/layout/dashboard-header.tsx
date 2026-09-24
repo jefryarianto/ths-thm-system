@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, ChevronDown, Lock, LogOut, Menu, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Bell, ChevronDown, Lock, LogOut, Loader2, Menu, User as UserIcon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -28,6 +28,7 @@ interface DashboardHeaderProps {
   unreadCount: number;
   user: HeaderUser | null;
   onLogout: () => void;
+  loggingOut?: boolean;
   onOpenMobileNav: () => void;
 }
 
@@ -39,6 +40,7 @@ export default function DashboardHeader({
   unreadCount,
   user,
   onLogout,
+  loggingOut,
   onOpenMobileNav,
 }: DashboardHeaderProps) {
   const router = useRouter();
@@ -150,10 +152,17 @@ export default function DashboardHeader({
                   type="button"
                   role="menuitem"
                   onClick={onLogout}
-                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-error hover:bg-error-50 transition-colors"
+                  disabled={loggingOut}
+                  aria-busy={loggingOut}
+                  aria-label={loggingOut ? 'Sedang keluar...' : 'Keluar'}
+                  className="flex items-center gap-3 w-full px-3 py-2 text-sm text-error hover:bg-error-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <LogOut size={16} className="shrink-0" aria-hidden="true" />
-                  Keluar
+                  {loggingOut ? (
+                    <Loader2 size={16} className="shrink-0 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <LogOut size={16} className="shrink-0" aria-hidden="true" />
+                  )}
+                  {loggingOut ? 'Sedang keluar...' : 'Keluar'}
                 </button>
               </div>
             )}

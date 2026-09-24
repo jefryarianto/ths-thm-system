@@ -1,7 +1,10 @@
 // @ts-nocheck
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { MembersService } from './members.service';
+import { MemberFilterDto } from './dto/member.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
 import { CacheService } from '../../common/services/cache.service';
@@ -570,5 +573,42 @@ describe('MembersService', () => {
       ).rejects.toThrow(ForbiddenException);
       expect(mockPrisma.anggota.create).not.toHaveBeenCalled();
     });
+  });
+});
+
+// ── Validasi DTO filter (mirror ValidationPipe global: whitelist +
+//    forbidNonWhitelisted + transform w/ implicit conversion) ──────────────
+describe('MemberFilterDto validation', () => {
+  const validateFilter = async (query: Record<string, unknown>) => {
+    const dto = plainToInstance(MemberFilterDto, query, {
+      enableImplicitConversion: true,
+    });
+    return validate(dto, { whitelist: true, forbidNonWhitelisted: true });
+  };
+
+  it('rejects statusKeanggotaan di luar enum', async () => {
+    const errors = await validateFilter({ statusKeanggotaan: 'AKTIF_BANGET' });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].property).toBe('statusKeanggotaan');
+    expect(errors[0].constraints).toHaveProperty('isEnum');
+  });
+
+  it('rejects statusValidasi dan statusData di luar enum', async () => {
+    const errors = await validateFilter({ statusValidasi: 'oke', statusData: 'bakso' });
+    expect(errors.map((e) => e.property).sort()).toEqual(['statusData', 'statusValidasi']);
+  });
+
+  it('accepts nilai enum yang valid', async () => {
+    const errors = await validateFilter({
+      statusKeanggotaan: 'aktif',
+      statusValidasi: 'approved',
+      statusData: 'incomplete',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts query tanpa field status (semua optional)', async () => {
+    const errors = await validateFilter({ page: '2', search: 'budi' });
+    expect(errors).toHaveLength(0);
   });
 });

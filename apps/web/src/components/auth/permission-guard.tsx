@@ -2,8 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { getHomePathForRole } from '@/lib/role-redirect';
 import { MODULE_PERMISSIONS } from './can';
 import type { ModulePermission } from './can';
 import type { Role } from '@/types';
@@ -28,6 +30,7 @@ export function PermissionGuard({
   fallback,
 }: PermissionGuardProps) {
   const { hasMinRole, role, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   // The user's role is only known after client hydration (useAuth reads
@@ -37,6 +40,18 @@ export function PermissionGuard({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // AUTH-002: an anonymous visitor on a protected route is redirected to
+  // login (with a return-to param) instead of a dead-end 403 page. This runs
+  // only AFTER hydration, so auth state is settled and there is no premature
+  // redirect or flicker. Authenticated users with insufficient role fall
+  // through to the existing AccessDenied page.
+  useEffect(() => {
+    if (mounted && !isAuthenticated) {
+      const { pathname, search } = window.location;
+      router.replace(`/login?next=${encodeURIComponent(pathname + search)}`);
+    }
+  }, [mounted, isAuthenticated, router]);
 
   if (!mounted) return <PageLoadingPlaceholder />;
 
@@ -128,11 +143,11 @@ function AccessDenied({
 
         <div className="flex items-center justify-center gap-3">
           <Link
-            href="/members"
+            href={role ? getHomePathForRole(role) : '/login'}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
           >
             <ArrowLeft size={16} />
-            Kembali ke Dashboard
+            {isAuthenticated ? 'Kembali ke Dashboard' : 'Ke Halaman Login'}
           </Link>
         </div>
       </div>

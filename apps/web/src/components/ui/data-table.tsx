@@ -56,6 +56,8 @@ interface DataTableProps<T> {
   sort?: SortConfig | null;
   /** Callback when sort changes */
   onSort?: (sort: SortConfig | null) => void;
+  /** Data completeness indicator for rows */
+  dataComplete?: (item: T) => boolean;
 }
 
 export default function DataTable<T>({
@@ -75,11 +77,13 @@ export default function DataTable<T>({
   renderMobileCard,
   sort,
   onSort,
+  dataComplete,
 }: DataTableProps<T>) {
   // Determine if we should auto-render rows using column render functions
   const hasColumnRender = columns.some((c) => c.render);
   const autoRender = hasColumnRender && !renderRow;
   const effectiveColSpan = colSpan || columns.length + (actions ? 1 : 0);
+  const showDataComplete = typeof dataComplete === 'function';
 
   const handleSort = (colKey: string) => {
     if (!onSort) return;
@@ -212,6 +216,11 @@ export default function DataTable<T>({
                   Aksi
                 </th>
               )}
+              {showDataComplete && (
+                <th className="px-4 py-3 font-medium text-muted whitespace-nowrap text-xs uppercase tracking-wider">
+                  Data
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -244,11 +253,24 @@ export default function DataTable<T>({
                           : '-'}
                     </td>
                   ))}
-                  {actions && <td className="px-4 py-3 text-right">{actions(item)}</td>}
-                </tr>
-              ))
-            ) : renderRow ? (
-              data.map((item, i) => renderRow(item, i))
+                   {actions && <td className="px-4 py-3 text-right">{actions(item)}</td>}
+                   {showDataComplete && (
+                     <td className="px-4 py-3 text-center">
+                       {dataComplete(item) ? (
+                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400">
+                           Lengkap
+                         </span>
+                       ) : (
+                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
+                           Belum Lengkap
+                         </span>
+                       )}
+                     </td>
+                   )}
+                 </tr>
+               ))
+             ) : renderRow ? (
+               data.map((item, i) => renderRow(item, i))
             ) : (
               <tr>
                 <td

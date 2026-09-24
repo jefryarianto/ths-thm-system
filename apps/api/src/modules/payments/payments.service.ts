@@ -210,7 +210,7 @@ export class PaymentsService {
 
     // Anggota/penguji: hanya boleh upload bukti untuk iuran miliknya sendiri
     if (user && (user.role === 'anggota' || user.role === 'penguji')) {
-      await assertSelfMember(this.prisma as any, user, iuran.anggotaId);
+      await assertSelfMember(this.prisma, user, iuran.anggotaId);
     } else if (scope && iuran.anggota?.rantingId) {
       if (
         !(await this.scopeHelper.hasAccessToResourceAsync(

@@ -73,4 +73,63 @@ describe('MetricsService', () => {
     expect(snap.websocket?.totalConnections).toBe(5);
     expect(snap.websocket?.security?.throttledPackets).toBe(2);
   });
+
+  it('should record auth metrics per operation+result', () => {
+    service.recordAuth('session_verify', 'success', 10);
+    service.recordAuth('session_verify', 'success', 20);
+    service.recordAuth('session_verify', 'unauthorized', 5);
+    service.recordAuth('refresh', 'success', 30);
+
+    const snap = service.snapshot();
+    const verifySuccess = snap.auth.byOperationResult.find(
+      (a) => a.operation === 'session_verify' && a.result === 'success',
+    );
+    expect(verifySuccess?.count).toBe(2);
+    expect(verifySuccess?.totalDurationMs).toBe(30);
+    expect(verifySuccess?.maxDurationMs).toBe(20);
+
+    const verifyUnauthorized = snap.auth.byOperationResult.find(
+      (a) => a.operation === 'session_verify' && a.result === 'unauthorized',
+    );
+    expect(verifyUnauthorized?.count).toBe(1);
+  });
+
+  it('should render auth metrics in Prometheus format with predefined labels only', () => {
+    service.recordAuth('session_verify', 'success', 15);
+    service.recordAuth('refresh', 'unauthorized', 7);
+
+    const text = service.prometheus();
+    expect(text).toContain('# HELP ths_auth_requests_total');
+    expect(text).toContain(
+      'ths_auth_requests_total{operation="session_verify",result="success"} 1',
+    );
+    expect(text).toContain(
+      'ths_auth_request_duration_ms_total{operation="refresh",result="unauthorized"} 7',
+    );
+    expect(text).toContain('ths_auth_request_duration_max_ms');
+  });
+
+  it('should not emit token values or identity data in auth metric output', () => {
+    service.recordAuth('session_verify', 'success', 15);
+    const text = service.prometheus();
+    expect(text).not.toMatch(/token/i);
+    expect(text).not.toMatch(/Bearer/i);
+    expect(text).not.toMatch(/Authorization/i);
+    expect(text).not.toMatch(/userId|sessionId|tabId/i);
+    expect(text).not.toMatch(/\?|query/i);
+  });
+
+  it('should restrict auth metric labels to predefined finite value sets', () => {
+    const all = service['authMetrics'] as Map<string, unknown>;
+    // Keys are `${operation}:${result}` from AUTH_OPERATIONS × AUTH_RESULTS
+    service.recordAuth('session_verify', 'success', 1);
+    service.recordAuth('refresh', 'internal', 1);
+    service.recordAuth('logout', 'unauthorized', 1);
+
+    for (const key of all.keys()) {
+      const [operation, result] = key.split(':');
+      expect(['session_verify', 'refresh', 'logout']).toContain(operation);
+      expect(['success', 'unauthorized', 'internal']).toContain(result);
+    }
+  });
 });

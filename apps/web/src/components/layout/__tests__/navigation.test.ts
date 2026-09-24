@@ -142,7 +142,7 @@ describe('getPageTitle', () => {
   it('mengembalikan label menu untuk pathname yang cocok', () => {
     expect(getPageTitle('/dashboard')).toBe('Dashboard');
     expect(getPageTitle('/members')).toBe('Anggota');
-    expect(getPageTitle('/gamification/scoreboard')).toBe('Dasbor Gamifikasi');
+    expect(getPageTitle('/gamification/scoreboard')).toBe('Scoreboard');
     expect(getPageTitle('/admin/queues')).toBe('Antrean');
   });
 

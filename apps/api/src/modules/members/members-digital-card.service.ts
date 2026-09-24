@@ -164,18 +164,28 @@ export class MembersDigitalCardService {
     }
   }
 
-  /** findFirst aktif untuk model tandaTangan/stempel: distrik dulu, lalu global. */
+  /**
+   * findFirst aktif untuk model tandaTangan/stempel: distrik dulu, lalu global.
+   * Delegate dipanggil konkret per-cabang — union delegate Prisma tidak callable
+   * langsung karena signature findFirst-nya tidak identik antar model.
+   */
   private async findActiveScoped(model: 'tandaTangan' | 'stempel', distrikId?: string) {
+    const findFirst = (args: {
+      where: { isActive: boolean; distrikId: string | null };
+      orderBy: { updatedAt: 'desc' };
+    }) =>
+      model === 'tandaTangan'
+        ? this.prisma.tandaTangan.findFirst(args)
+        : this.prisma.stempel.findFirst(args);
+
     if (distrikId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const scoped = await (this.prisma as any)[model].findFirst({
+      const scoped = await findFirst({
         where: { isActive: true, distrikId },
         orderBy: { updatedAt: 'desc' },
       });
       if (scoped) return scoped;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this.prisma as any)[model].findFirst({
+    return findFirst({
       where: { isActive: true, distrikId: null },
       orderBy: { updatedAt: 'desc' },
     });
@@ -231,7 +241,7 @@ export class MembersDigitalCardService {
    * Guard scope: anggota hanya kartu sendiri; admin dicakup wilayah.
    */
   private async findKtaDocument(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
-    await assertSelfMember(this.prisma as any, user, memberId);
+    await assertSelfMember(this.prisma, user, memberId);
     const member = await this.prisma.anggota.findUnique({
       where: { id: memberId, deletedAt: null },
       select: { id: true, rantingId: true },
@@ -331,7 +341,7 @@ export class MembersDigitalCardService {
 
   /** Riwayat penerbitan kartu (semua QR: digital + fisik). */
   async getCardIssuances(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
-    await assertSelfMember(this.prisma as any, user, memberId);
+    await assertSelfMember(this.prisma, user, memberId);
     const member = await this.prisma.anggota.findUnique({
       where: { id: memberId, deletedAt: null },
       select: { rantingId: true },
@@ -585,7 +595,7 @@ export class MembersDigitalCardService {
 
   /** Guard umum: self-member + akses scope. Load anggota lengkap ranting→wilayah→distrik. */
   private async loadMemberForScope(memberId: string, scope?: UserScope, user?: SelfScopeUser) {
-    await assertSelfMember(this.prisma as any, user, memberId);
+    await assertSelfMember(this.prisma, user, memberId);
     const member = await this.prisma.anggota.findUnique({
       where: { id: memberId, deletedAt: null },
       include: {

@@ -15,7 +15,7 @@ import StatCard from '@/components/cards/stat-card';
 describe('Pagination', () => {
   it('renders total count', () => {
     render(<Pagination page={1} totalPages={3} total={25} onPageChange={() => {}} />);
-    expect(screen.getByText('25 total')).toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent?.trim() === 'Showing 1-15 of 25')).toBeInTheDocument();
   });
 
   it('returns null when totalPages <= 1', () => {
@@ -783,7 +783,7 @@ describe('DataTable', () => {
         )}
       />,
     );
-    expect(screen.getByText('10 total')).toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent?.trim() === 'Showing 1-10 of 10')).toBeInTheDocument();
   });
 
   it('does not render pagination when 1 page', () => {
@@ -1006,7 +1006,7 @@ describe('DataTable', () => {
           total={10}
         />,
       );
-      expect(screen.getByText('10 total')).toBeInTheDocument();
+      expect(screen.getByText((_, node) => node?.textContent?.trim() === 'Showing 1-10 of 10')).toBeInTheDocument();
     });
   });
 
@@ -1142,7 +1142,7 @@ describe('DataTable', () => {
           total={25}
         />,
       );
-      expect(screen.getByText('25 total')).toBeInTheDocument();
+      expect(screen.getByText((_, node) => node?.textContent?.trim() === 'Showing 1-15 of 25')).toBeInTheDocument();
     });
 
     it('calls onPageChange when paginating', () => {

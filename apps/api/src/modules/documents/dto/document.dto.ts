@@ -1,17 +1,20 @@
-import { IsString, IsOptional, IsInt, Min, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsArray, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { TipeDokumen } from '@prisma/client';
+
+/** Rentang batch generate dokumen (bukan enum DB — kontrak endpoint). */
+export const BATCH_RANGES = ['all_active', 'by_ranting', 'by_ids', 'graduated_only'] as const;
+export type BatchRange = (typeof BATCH_RANGES)[number];
 
 export class GenerateDocumentDto {
   @ApiProperty()
   @IsString()
   memberId: string;
 
-  @ApiProperty({
-    enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'],
-  })
-  @IsString()
-  type: string;
+  @ApiProperty({ enum: Object.values(TipeDokumen) })
+  @IsEnum(TipeDokumen)
+  type: TipeDokumen;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -30,19 +33,14 @@ export class BatchGenerateDocumentDto {
   @IsArray()
   memberIds?: string[];
 
-  @ApiProperty({
-    enum: ['kartu_anggota', 'sertifikat_pendadaran', 'sertifikat_pelatihan', 'piagam_prestasi'],
-  })
-  @IsString()
-  type: string;
+  @ApiProperty({ enum: Object.values(TipeDokumen) })
+  @IsEnum(TipeDokumen)
+  type: TipeDokumen;
 
-  @ApiPropertyOptional({
-    enum: ['all_active', 'by_ranting', 'by_ids', 'graduated_only'],
-    description: 'Rentang anggota untuk resolve memberIds otomatis',
-  })
+  @ApiPropertyOptional({ enum: BATCH_RANGES, description: 'Rentang anggota untuk resolve memberIds otomatis' })
   @IsOptional()
-  @IsString()
-  range?: string;
+  @IsEnum(BATCH_RANGES)
+  range?: BatchRange;
 
   @ApiPropertyOptional({ description: 'ID ranting jika range=by_ranting' })
   @IsOptional()
@@ -61,11 +59,9 @@ export class BatchGenerateDocumentDto {
 }
 
 export class BatchEstimateQueryDto {
-  @ApiProperty({
-    enum: ['all_active', 'by_ranting', 'by_ids', 'graduated_only'],
-  })
-  @IsString()
-  range: string;
+  @ApiProperty({ enum: BATCH_RANGES })
+  @IsEnum(BATCH_RANGES)
+  range: BatchRange;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -95,10 +91,10 @@ export class DocumentFilterDto {
   @Min(1)
   limit?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: Object.values(TipeDokumen) })
   @IsOptional()
-  @IsString()
-  tipe?: string;
+  @IsEnum(TipeDokumen)
+  tipe?: TipeDokumen;
 
   @ApiPropertyOptional()
   @IsOptional()

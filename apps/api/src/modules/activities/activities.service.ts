@@ -176,7 +176,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
 
-    const participant = await (this.prisma as any).kegiatanPeserta.create({
+    const participant = await this.prisma.kegiatanPeserta.create({
       data: { kegiatanId: activityId, anggotaId: dto.anggotaId },
     });
 
@@ -193,7 +193,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
   }
 
   async removeParticipant(activityId: string, participantId: string) {
-    await (this.prisma as any).kegiatanPeserta.delete({
+    await this.prisma.kegiatanPeserta.delete({
       where: { id: participantId },
     });
     this.invalidateCache();
@@ -217,7 +217,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     }
 
     // Batch check existing participants
-    const existingRecords = await (this.prisma as any).kegiatanPeserta.findMany({
+    const existingRecords = await this.prisma.kegiatanPeserta.findMany({
       where: { kegiatanId: activityId, anggotaId: { in: allAnggotaIds } },
       select: { anggotaId: true },
     });
@@ -230,7 +230,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
 
     if (newEntries.length > 0) {
       // Batch insert
-      await (this.prisma as any).kegiatanPeserta.createMany({
+      await this.prisma.kegiatanPeserta.createMany({
         data: newEntries.map((row) => ({
           kegiatanId: activityId,
           anggotaId: (row.anggotaId || row.memberId)!,
@@ -255,7 +255,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
   }
 
   async getPresence(activityId: string) {
-    const presence = await (this.prisma as any).presensiKegiatan.findMany({
+    const presence = await this.prisma.presensiKegiatan.findMany({
       where: { kegiatanId: activityId },
       include: {
         anggota: { select: { id: true, nomorAnggota: true, namaLengkap: true } },
@@ -271,7 +271,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
     });
     if (!kegiatan) throw new NotFoundException('Kegiatan tidak ditemukan');
 
-    const presence = await (this.prisma as any).presensiKegiatan.create({
+    const presence = await this.prisma.presensiKegiatan.create({
       data: { kegiatanId: activityId, anggotaId: dto.anggotaId, hadir: dto.hadir !== false },
     });
     this.invalidateCache();
@@ -279,7 +279,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
   }
 
   async getDocuments(activityId: string) {
-    const docs = await (this.prisma as any).dokumenKegiatan.findMany({
+    const docs = await this.prisma.dokumenKegiatan.findMany({
       where: { kegiatanId: activityId },
       orderBy: { createdAt: 'desc' },
     });
@@ -287,7 +287,7 @@ export class ActivitiesService extends BaseCrudService<CreateActivityDto, Update
   }
 
   async uploadDocument(activityId: string, dto: UploadActivityDocumentDto) {
-    const doc = await (this.prisma as any).dokumenKegiatan.create({
+    const doc = await this.prisma.dokumenKegiatan.create({
       data: {
         kegiatanId: activityId,
         nama: dto.nama,

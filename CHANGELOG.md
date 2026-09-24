@@ -2,6 +2,16 @@
 
 ## [Unreleased] — Dependency Cleanup & Configuration Update
 
+### 📈 FASE 29U-F.1 — Auth E2E Regression Verification
+
+- **E2E Auth (3 spec)** — unblock 3 kegagalan akibat middleware `proxy.ts` (Next.js 16) yang fail-closed: ditambahkan `x-e2e-bypass: true` via `setExtraHTTPHeaders` sebelum `page.goto` pada `login.spec.ts`, `oauth-login.spec.ts`, `session-refresh.spec.ts` → **11/11 hijau**
+- **`apps/web/package.json`** — script `test` distale `jest` → `vitest`
+- **`navigation.test.ts`** — ekspektasi `getPageTitle('/gamification/scoreboard')` → `"Scoreboard"`
+- **`MemberActions.test.tsx`** (10) — tombol header memakai `aria-label` dialihkan ke `getByLabelText`; item dropdown tetap `getByTitle`
+- **`shared-components.test.tsx`** (4) — asersi teks total Pagination diperbarui ke format baru `Showing {start}-{end} of {total}` memakai fungsi matcher `textContent`
+- **Verifikasi:** unit web 408/408, API `auth.controller` 7/7 & `metrics.service` 9/9, typecheck web+api 0 error, lint web+api 0 error
+- **Laporan:** `docs/QA/FASE-29U-F.1.md`
+
 ### ✨ Major Refactoring
 
 #### 1. Pagination Utility (`common/utils/pagination.ts`)

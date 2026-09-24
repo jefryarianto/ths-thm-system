@@ -359,8 +359,10 @@ export class HealthController implements OnApplicationBootstrap {
     if (this.cache.isRedisConnected()) {
       const redisStart = Date.now();
       try {
-        // Use the internal redis client to ping
-        const redisClient = (this.cache as any).redisClient;
+        // Use the internal redis client to ping (bukan bagian API publik CacheService)
+        const redisClient = (
+          this.cache as unknown as { redisClient?: { ping(): Promise<unknown> } }
+        ).redisClient;
         if (redisClient) {
           await redisClient.ping();
           redisStatus = 'connected';
@@ -441,7 +443,7 @@ export class HealthController implements OnApplicationBootstrap {
           active: apiKeys.length,
         },
         backup: backupStatus,
-        queue: await this.getQueueHealth() as any,
+        queue: (await this.getQueueHealth()) as unknown as Record<string, unknown>,
       },
     };
   }

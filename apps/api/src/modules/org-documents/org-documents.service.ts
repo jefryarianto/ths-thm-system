@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeHelper } from '../../common/utils/scope-helpers';
@@ -83,13 +84,13 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
   // ── Domain: Categories ──────────────────────────────
 
   async getCategories() {
-    return (this.prisma as any).kategoriDokumen.findMany({
+    return this.prisma.kategoriDokumen.findMany({
       include: { _count: { select: { dokumen: true } } },
     });
   }
 
   async getCategory(id: string) {
-    const cat = await (this.prisma as any).kategoriDokumen.findUnique({
+    const cat = await this.prisma.kategoriDokumen.findUnique({
       where: { id },
     });
     if (!cat) throw new NotFoundException('Kategori tidak ditemukan');
@@ -97,28 +98,27 @@ export class OrgDocumentsService extends BaseCrudService<CreateOrgDocumentDto, U
   }
 
   async createCategory(dto: CreateCategoryDto) {
-    return (this.prisma as any).kategoriDokumen.create({
-      data: dto as any,
+    return this.prisma.kategoriDokumen.create({
+      data: dto as Prisma.KategoriDokumenCreateInput,
     });
   }
 
   async updateCategory(id: string, dto: UpdateCategoryDto) {
-    return (this.prisma as any).kategoriDokumen.update({
+    return this.prisma.kategoriDokumen.update({
       where: { id },
       data: dto as Record<string, unknown>,
     });
   }
 
   async deleteCategory(id: string) {
-    await (this.prisma as any).kategoriDokumen.delete({ where: { id } });
+    await this.prisma.kategoriDokumen.delete({ where: { id } });
   }
 
   // ── Private Helpers ─────────────────────────────────
 
   private async notifyAdminsNewDocument(judul: string): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const admins = await (this.prisma as any).user.findMany({
+      const admins = await this.prisma.user.findMany({
         where: {
           role: { in: ['superadmin', 'admin_distrik', 'admin_wilayah', 'admin_ranting'] },
           isActive: true,

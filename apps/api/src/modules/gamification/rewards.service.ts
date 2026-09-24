@@ -111,14 +111,14 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
 
   async createReward(data: CreateRewardInput): Promise<Reward> {
     const result = await this.baseCreate(data, undefined, undefined, 'Reward berhasil dibuat');
-    return this.toRewardDto((result as any).data);
+    return this.toRewardDto(result.data);
   }
 
   // ── CRUD: Update reward ────────────────────────────
 
   async updateReward(id: string, data: UpdateRewardInput): Promise<Reward> {
     const result = await this.baseUpdate(id, data, undefined, 'Reward berhasil diperbarui');
-    return this.toRewardDto((result as any).data);
+    return this.toRewardDto(result.data);
   }
 
   // ── CRUD: Delete reward ────────────────────────────
@@ -131,16 +131,14 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
 
   async redeemReward(anggotaId: string, rewardId: string, user?: SelfScopeUser): Promise<Redemption> {
     // Anggota hanya boleh redeem untuk dirinya sendiri
-    await assertSelfMember(this.prisma as any, user, anggotaId);
+    await assertSelfMember(this.prisma, user, anggotaId);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const reward = await (this.prisma as any).gamificationReward.findUnique({ where: { id: rewardId } });
+    const reward = await this.prisma.gamificationReward.findUnique({ where: { id: rewardId } });
     if (!reward) throw new NotFoundException('Reward tidak ditemukan');
     if (!reward.isActive) throw new BadRequestException('Reward tidak aktif');
     if (reward.stock <= 0) throw new BadRequestException('Stok reward habis');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const profile = await (this.prisma as any).gamificationProfile.findUnique({ where: { anggotaId } });
+    const profile = await this.prisma.gamificationProfile.findUnique({ where: { anggotaId } });
     if (!profile) throw new NotFoundException('Profil gamifikasi tidak ditemukan');
     if (profile.points < reward.pointCost) {
       throw new BadRequestException(
@@ -148,9 +146,8 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [redemption] = await (this.prisma as any).$transaction([
-      (this.prisma as any).gamificationRedemption.create({
+    const [redemption] = await this.prisma.$transaction([
+      this.prisma.gamificationRedemption.create({
         data: {
           rewardId: reward.id,
           anggotaId,
@@ -158,15 +155,15 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
           status: 'pending',
         },
       }),
-      (this.prisma as any).gamificationProfile.update({
+      this.prisma.gamificationProfile.update({
         where: { id: profile.id },
         data: { points: profile.points - reward.pointCost },
       }),
-      (this.prisma as any).gamificationReward.update({
+      this.prisma.gamificationReward.update({
         where: { id: reward.id },
         data: { stock: reward.stock - 1 },
       }),
-      (this.prisma as any).gamificationEvent.create({
+      this.prisma.gamificationEvent.create({
         data: {
           profileId: profile.id,
           anggotaId,
@@ -177,8 +174,7 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
       }),
     ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anggota = await (this.prisma as any).anggota.findUnique({
+    const anggota = await this.prisma.anggota.findUnique({
       where: { id: anggotaId },
       select: { namaLengkap: true },
     });
@@ -201,16 +197,15 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
 
   async getMemberRedemptions(anggotaId: string, user?: SelfScopeUser): Promise<Redemption[]> {
     // Anggota hanya boleh lihat redemption miliknya sendiri
-    await assertSelfMember(this.prisma as any, user, anggotaId);
+    await assertSelfMember(this.prisma, user, anggotaId);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const redemptions = await (this.prisma as any).gamificationRedemption.findMany({
+    const redemptions = await this.prisma.gamificationRedemption.findMany({
       where: { anggotaId },
       orderBy: { createdAt: 'desc' },
       include: { reward: { select: { name: true, icon: true } } },
     });
 
-    return redemptions.map((r: any) => ({
+    return redemptions.map((r) => ({
       id: r.id,
       rewardId: r.rewardId,
       rewardName: r.reward.name,
@@ -226,8 +221,7 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
   // ── Domain: Get all redemptions (admin) ────────────
 
   async getAllRedemptions(): Promise<Redemption[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const redemptions = await (this.prisma as any).gamificationRedemption.findMany({
+    const redemptions = await this.prisma.gamificationRedemption.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
         reward: { select: { name: true, icon: true } },
@@ -235,7 +229,7 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
       },
     });
 
-    return redemptions.map((r: any) => ({
+    return redemptions.map((r) => ({
       id: r.id,
       rewardId: r.rewardId,
       rewardName: r.reward.name,
@@ -252,22 +246,19 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
   // ── Domain: Update redemption status ───────────────
 
   async updateRedemptionStatus(id: string, status: string, notes?: string): Promise<Redemption> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = await (this.prisma as any).gamificationRedemption.findUnique({
+    const existing = await this.prisma.gamificationRedemption.findUnique({
       where: { id },
       include: { reward: { select: { name: true, icon: true } } },
     });
     if (!existing) throw new NotFoundException('Redemption tidak ditemukan');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updated = await (this.prisma as any).gamificationRedemption.update({
+    const updated = await this.prisma.gamificationRedemption.update({
       where: { id },
       data: { status, notes },
       include: { reward: { select: { name: true, icon: true } } },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anggota = await (this.prisma as any).anggota.findUnique({
+    const anggota = await this.prisma.anggota.findUnique({
       where: { id: existing.anggotaId },
       select: { namaLengkap: true },
     });
@@ -322,15 +313,13 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
     notes?: string,
   ): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const anggota = await (this.prisma as any).anggota.findUnique({
+      const anggota = await this.prisma.anggota.findUnique({
         where: { id: anggotaId },
         select: { rantingId: true, namaLengkap: true, email: true },
       });
       if (!anggota) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const users = await (this.prisma as any).user.findMany({
+      const users = await this.prisma.user.findMany({
         where: { rantingId: anggota.rantingId, isActive: true },
         select: { id: true },
       });
@@ -353,8 +342,7 @@ export class RewardsService extends BaseCrudService<CreateRewardInput, UpdateRew
       }
 
       if (anggota.email) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const memberUser = await (this.prisma as any).user.findFirst({
+        const memberUser = await this.prisma.user.findFirst({
           where: { email: anggota.email, isActive: true },
           select: { id: true },
         });

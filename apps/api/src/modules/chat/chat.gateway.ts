@@ -29,6 +29,13 @@ interface ChatMessage {
   type?: 'text' | 'file' | 'image';
 }
 
+/** Data sesi yang dilampirkan ke client saat handshake (dulu di-stamp langsung tanpa tipe). */
+interface ChatClientData {
+  userId: string;
+  email: string;
+  role: string;
+}
+
 @WebSocketGateway({
   cors: { origin: corsOrigins },
   namespace: '/chat',
@@ -56,12 +63,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = jwt.verify(token, JWT_SECRET) as { sub: string; email: string; role: string };
       const userId = payload.sub;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client as any).userId = userId;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client as any).email = payload.email;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (client as any).role = payload.role;
+      (client.data as ChatClientData).userId = userId;
+      (client.data as ChatClientData).email = payload.email;
+      (client.data as ChatClientData).role = payload.role;
 
       if (!this.userSockets.has(userId)) {
         this.userSockets.set(userId, new Set());
@@ -76,8 +80,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
+    const userId = (client.data as ChatClientData).userId;
     if (userId) {
       const sockets = this.userSockets.get(userId);
       if (sockets) {
@@ -96,8 +99,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('joinRoom')
   handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
+    const userId = (client.data as ChatClientData).userId;
     client.join(data.roomId);
 
     if (!this.roomUsers.has(data.roomId)) {
@@ -111,8 +113,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
+    const userId = (client.data as ChatClientData).userId;
     client.leave(data.roomId);
 
     const roomSockets = this.roomUsers.get(data.roomId);
@@ -126,12 +127,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('chatMessage')
   handleChatMessage(@ConnectedSocket() client: Socket, @MessageBody() data: ChatMessage) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const email = (client as any).email;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const role = (client as any).role;
+    const clientData = client.data as ChatClientData;
+    const userId = clientData.userId;
+    const email = clientData.email;
+    const role = clientData.role;
 
     const message = {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
@@ -150,15 +149,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('typing:start')
   handleTypingStart(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
+    const userId = (client.data as ChatClientData).userId;
     client.to(data.roomId).emit('typing:start', { userId, roomId: data.roomId });
   }
 
   @SubscribeMessage('typing:stop')
   handleTypingStop(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const userId = (client as any).userId;
+    const userId = (client.data as ChatClientData).userId;
     client.to(data.roomId).emit('typing:stop', { userId, roomId: data.roomId });
   }
 

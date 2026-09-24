@@ -37,67 +37,100 @@ export const STATUS_LABELS: Record<string, string> = {
   meninggal: 'Meninggal',
 };
 
+/**
+ * Enam accent semantik yang menjadi satu-satunya palet warna dashboard.
+ * Alias lama (yellow/orange/amber/teal/cyan/indigo/pink) tetap diterima
+ * untuk menjaga kompatibilitas konfig lama — semuanya dipetakan ke
+ * salah satu dari token semantik di bawah.
+ */
+export type AccentKey =
+  | 'primary'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'secondary'
+  | 'gold'
+  | 'slate';
+
 export const colorMap: Record<string, { bg: string; icon: string; ring: string }> = {
-  blue: {
+  primary: {
     bg: 'bg-primary-50 dark:bg-primary-950',
     icon: 'text-primary-600 dark:text-primary-400',
     ring: 'ring-primary-100 dark:ring-primary-800',
   },
-  green: {
+  success: {
     bg: 'bg-success-50 dark:bg-success-950',
     icon: 'text-success-600 dark:text-success-400',
     ring: 'ring-success-100 dark:ring-success-800',
   },
-  yellow: {
+  warning: {
     bg: 'bg-warning-50 dark:bg-warning-950',
     icon: 'text-warning-600 dark:text-warning-400',
     ring: 'ring-warning-100 dark:ring-warning-800',
   },
-  orange: {
-    bg: 'bg-warning-50 dark:bg-warning-950',
-    icon: 'text-warning-600 dark:text-warning-400',
-    ring: 'ring-warning-100 dark:ring-warning-800',
-  },
-  red: {
+  error: {
     bg: 'bg-error-50 dark:bg-error-950',
     icon: 'text-error-600 dark:text-error-400',
     ring: 'ring-error-100 dark:ring-error-800',
   },
-  purple: {
+  info: {
+    bg: 'bg-info-50 dark:bg-info-950',
+    icon: 'text-info-600 dark:text-info-400',
+    ring: 'ring-info-100 dark:ring-info-800',
+  },
+  secondary: {
     bg: 'bg-secondary-50 dark:bg-secondary-950',
     icon: 'text-secondary-600 dark:text-secondary-400',
     ring: 'ring-secondary-100 dark:ring-secondary-800',
   },
-  indigo: {
-    bg: 'bg-primary-50 dark:bg-primary-950',
-    icon: 'text-primary-600 dark:text-primary-400',
-    ring: 'ring-primary-100 dark:ring-primary-800',
-  },
-  teal: {
-    bg: 'bg-success-50 dark:bg-success-950',
-    icon: 'text-success-600 dark:text-success-400',
-    ring: 'ring-success-100 dark:ring-success-800',
-  },
-  pink: {
+  gold: {
     bg: 'bg-gold-50 dark:bg-gold-950',
     icon: 'text-gold-600 dark:text-gold-400',
     ring: 'ring-gold-100 dark:ring-gold-800',
-  },
-  cyan: {
-    bg: 'bg-primary-50 dark:bg-primary-950',
-    icon: 'text-primary-600 dark:text-primary-400',
-    ring: 'ring-primary-100 dark:ring-primary-800',
-  },
-  amber: {
-    bg: 'bg-warning-50 dark:bg-warning-950',
-    icon: 'text-warning-600 dark:text-warning-400',
-    ring: 'ring-warning-100 dark:ring-warning-800',
   },
   slate: {
     bg: 'bg-surface-variant',
     icon: 'text-muted',
     ring: 'ring-border',
   },
+};
+
+// ── Alias nama warna lama → token semantik ──
+const ACCENT_ALIASES: Record<string, AccentKey> = {
+  blue: 'primary',
+  indigo: 'primary',
+  cyan: 'primary',
+  green: 'success',
+  teal: 'success',
+  yellow: 'warning',
+  orange: 'warning',
+  amber: 'warning',
+  red: 'error',
+  purple: 'secondary',
+  pink: 'gold',
+};
+
+/** Resolusi accent aman: kembali ke 'primary' bila key tak dikenal. */
+export function resolveAccent(key: string | undefined): AccentKey {
+  if (!key) return 'primary';
+  if (key in colorMap) return key as AccentKey;
+  return ACCENT_ALIASES[key] ?? 'primary';
+}
+
+/**
+ * Kelas strip + ikon untuk SecondaryStats.
+ * `pending` dibedakan dari `warning` (bar warning-300) agar kedua severity
+ * tetap dapat dibedakan secara visual.
+ */
+export const ACCENT_CLASSES: Record<string, { icon: string; bar: string }> = {
+  primary: { icon: 'bg-primary-container text-primary-700', bar: 'bg-primary' },
+  success: { icon: 'bg-success-50 text-success-700', bar: 'bg-success' },
+  warning: { icon: 'bg-warning-50 text-warning-700', bar: 'bg-warning' },
+  error: { icon: 'bg-error-50 text-error-700', bar: 'bg-error' },
+  info: { icon: 'bg-info-50 text-info-700', bar: 'bg-info' },
+  slate: { icon: 'bg-surface-variant text-muted', bar: 'bg-border' },
+  pending: { icon: 'bg-warning-50 text-warning-700', bar: 'bg-warning-300' },
 };
 
 export interface DashboardData {
@@ -137,6 +170,9 @@ export { formatRupiah } from '@/lib/format';
  * "Perlu Tindakan" — item yang benar-benar membutuhkan perhatian admin.
  * Semua data dari DashboardData (API /reports/dashboard).
  * Warna: error=red, warning=orange, pending=yellow, info=blue, success=green.
+ *
+ * `severity` menentukan urutan tampil & intensitas visual:
+ *   1 = kritis (menghentikan operasional) … 4 = informatif.
  */
 export type ActionItemKey =
   | 'pendingValidasi'
@@ -144,7 +180,6 @@ export type ActionItemKey =
   | 'totalPendaftaran'
   | 'totalKlaim'
   | 'totalDokumen';
-
 export interface ActionItemConfig {
   key: ActionItemKey;
   label: string;
@@ -152,25 +187,33 @@ export interface ActionItemConfig {
   href: string;
   /** Semantic accent: error | warning | pending | info | success */
   accent: 'error' | 'warning' | 'pending' | 'info' | 'success';
+  /** Urutan prioritas tampil (1 = paling mendesak) */
+  severity: 1 | 2 | 3 | 4;
+  /** Teks aksi spesifik (bukan generik "Lihat detail") */
+  cta: string;
   icon: React.ElementType;
 }
 
 export const actionItems: ActionItemConfig[] = [
-  {
-    key: 'pendingValidasi',
-    label: 'Data Anggota',
-    detail: 'menunggu validasi',
-    href: '/members',
-    accent: 'warning',
-    icon: AlertCircle,
-  },
   {
     key: 'incompleteData',
     label: 'Data Tidak Lengkap',
     detail: 'anggota memiliki data belum lengkap',
     href: '/members/incomplete',
     accent: 'error',
+    severity: 1,
+    cta: 'Lengkapi data',
     icon: AlertCircle,
+  },
+  {
+    key: 'pendingValidasi',
+    label: 'Data Anggota',
+    detail: 'menunggu validasi',
+    href: '/members',
+    accent: 'warning',
+    severity: 2,
+    cta: 'Validasi sekarang',
+    icon: ClipboardCheck,
   },
   {
     key: 'totalPendaftaran',
@@ -178,6 +221,8 @@ export const actionItems: ActionItemConfig[] = [
     detail: 'pendaftaran menunggu verifikasi',
     href: '/candidates',
     accent: 'pending',
+    severity: 3,
+    cta: 'Verifikasi',
     icon: UserPlus,
   },
   {
@@ -186,6 +231,8 @@ export const actionItems: ActionItemConfig[] = [
     detail: 'klaim sedang diproses',
     href: '/claims',
     accent: 'info',
+    severity: 4,
+    cta: 'Proses klaim',
     icon: ClipboardCheck,
   },
 ];
@@ -198,16 +245,22 @@ export interface QuickActionConfig {
   /** Module + action for permission gate */
   module: string;
   action: 'view' | 'create' | 'edit' | 'delete' | 'export' | 'admin';
+  /** Pengelompokan: 'create' = aksi input harian, 'ops' = operasional/administratif */
+  group: 'create' | 'ops';
 }
 
 export const quickActions: QuickActionConfig[] = [
-  { label: 'Tambah Anggota', href: '/members', icon: Users, desc: 'Input anggota baru', module: 'members', action: 'create' },
-  { label: 'Buat Kegiatan', href: '/activities', icon: Calendar, desc: 'Jadwalkan kegiatan baru', module: 'activities', action: 'create' },
-  { label: 'Catat Iuran', href: '/dues', icon: CreditCard, desc: 'Input pembayaran iuran', module: 'dues', action: 'create' },
-  { label: 'Kirim Notifikasi', href: '/notifications', icon: Bell, desc: 'Kirim pengumuman', module: 'notifications', action: 'create' },
-  { label: 'Email Admin', href: '/settings/email', icon: Mail, desc: 'Kelola pengiriman email', module: 'settings', action: 'admin' },
-  { label: 'Riwayat Email', href: '/settings/email/logs', icon: History, desc: 'Audit isi email terkirim', module: 'settings', action: 'admin' },
-  { label: 'Laporan', href: '/reports', icon: TrendingUp, desc: 'Lihat laporan detail', module: 'reports', action: 'view' },
+  // ── Aksi input harian (form langsung, bukan halaman list) ──
+  { label: 'Tambah Anggota', href: '/members/new', icon: Users, desc: 'Input anggota baru', module: 'members', action: 'create', group: 'create' },
+  { label: 'Buat Kegiatan', href: '/activities/new', icon: Calendar, desc: 'Jadwalkan kegiatan baru', module: 'activities', action: 'create', group: 'create' },
+  { label: 'Catat Iuran', href: '/dues/new', icon: CreditCard, desc: 'Input pembayaran iuran', module: 'dues', action: 'create', group: 'create' },
+  { label: 'Kirim Notifikasi', href: '/notifications', icon: Bell, desc: 'Kirim pengumuman', module: 'notifications', action: 'create', group: 'create' },
+  { label: 'Import Anggota', href: '/members/import', icon: UserPlus, desc: 'Import massal dari CSV', module: 'members', action: 'create', group: 'create' },
+  { label: 'Buat Surat', href: '/letters/outgoing/new', icon: Mail, desc: 'Buat surat keluar', module: 'letters', action: 'create', group: 'create' },
+  // ── Operasional (analitik & administratif) ──
+  { label: 'Laporan', href: '/reports', icon: TrendingUp, desc: 'Lihat laporan detail', module: 'reports', action: 'view', group: 'ops' },
+  { label: 'Email Admin', href: '/settings/email', icon: Mail, desc: 'Kelola pengiriman email', module: 'settings', action: 'admin', group: 'ops' },
+  { label: 'Riwayat Email', href: '/settings/email/logs', icon: History, desc: 'Audit isi email terkirim', module: 'settings', action: 'admin', group: 'ops' },
 ];
 
 export function formatTime(dateStr: string) {
@@ -224,46 +277,56 @@ export function formatTime(dateStr: string) {
 }
 
 /**
- * Command Center: 4 PRIMARY KPI (hero) + 8 SECONDARY (strip kompak).
- * `color`/`accent`: kunci colorMap — warna semantik saja
- * (primary, success, warning, error, info, + slate netral).
- * Tidak ada 12 warna berbeda.
+ * Command Center: 4 PRIMARY KPI (hero).
+ * `color`: kunci colorMap — hanya token semantik.
+ *
+ * Catatan label: `totalKegiatan` adalah JUMLAH SELURUH kegiatan
+ * (bukan hanya yang berstatus aktif), sehingga ditulis "Total Kegiatan"
+ * agar tidak menyesatkan admin.
  */
 export const statConfigs = [
   {
     key: 'totalMembers' as const,
     label: 'Total Anggota',
     icon: Users,
-    color: 'blue' as const,
+    color: 'primary' as const,
+    cta: 'Kelola anggota',
     href: '/members',
   },
   {
     key: 'totalCandidates' as const,
     label: 'Calon Anggota',
     icon: UserPlus,
-    color: 'purple' as const,
+    color: 'secondary' as const,
+    cta: 'Lihat calon',
     href: '/candidates',
   },
   {
     key: 'totalKegiatan' as const,
-    label: 'Kegiatan Aktif',
+    label: 'Total Kegiatan',
     icon: Calendar,
-    color: 'indigo' as const,
+    color: 'info' as const,
+    cta: 'Lihat kegiatan',
     href: '/activities',
   },
   {
     key: 'totalDuesCollected' as const,
     label: 'Iuran Terkumpul',
     icon: CreditCard,
-    color: 'green' as const,
+    color: 'success' as const,
     isCurrency: true,
+    cta: 'Lihat iuran',
     href: '/dues',
   },
 ];
 
 /**
- * Secondary statistics — strip kompak 8 item. TIDAK dihapus,
- * divisualkan sebagai indikator ringkas (nilai + label + link).
+ * Secondary statistics — indikator ringkas.
+ *
+ * Hanya metrik yang TIDAK sudah ditampilkan di "Perlu Tindakan"
+ * (pendingValidasi, incompleteData, totalKlaim, totalPendaftaran
+ * sudah ada di section tersebut — menampilkannya lagi di sini hanya
+ * menambah noise tanpa informasi baru).
  * `accent`: primary | success | warning | error | info | slate.
  */
 export const secondaryStats = [
@@ -275,20 +338,6 @@ export const secondaryStats = [
     href: '/graduations',
   },
   {
-    key: 'pendingValidasi' as const,
-    label: 'Pending Validasi',
-    icon: AlertCircle,
-    accent: 'warning' as const,
-    href: '/members',
-  },
-  {
-    key: 'incompleteData' as const,
-    label: 'Data Tidak Lengkap',
-    icon: AlertCircle,
-    accent: 'error' as const,
-    href: '/members/incomplete',
-  },
-  {
     key: 'totalLatihan' as const,
     label: 'Total Latihan',
     icon: Dumbbell,
@@ -296,25 +345,11 @@ export const secondaryStats = [
     href: '/trainings',
   },
   {
-    key: 'totalKlaim' as const,
-    label: 'Klaim Diproses',
-    icon: ClipboardCheck,
-    accent: 'warning' as const,
-    href: '/claims',
-  },
-  {
     key: 'totalDokumen' as const,
     label: 'Dokumen',
     icon: FileText,
-    accent: 'info' as const,
-    href: '/documents',
-  },
-  {
-    key: 'totalPendaftaran' as const,
-    label: 'Pendaftaran Baru',
-    icon: UserPlus,
     accent: 'primary' as const,
-    href: '/registrations',
+    href: '/documents',
   },
   {
     key: 'totalUsers' as const,
@@ -324,3 +359,31 @@ export const secondaryStats = [
     href: '/users',
   },
 ];
+
+/**
+ * Format Rupiah ringkas untuk axis chart: "Rp 1,5 jt".
+ * Recharts YAxis menempati lebar tetap; tanpa pemformatan ringkas,
+ * label seperti "Rp 1.500.000" terpotong atau memaksa grafik menyempit.
+ */
+export function formatCompactRupiah(value: number | string): string {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return String(value);
+  if (num === 0) return '0';
+  if (Math.abs(num) >= 1_000_000) return `${(num / 1_000_000).toFixed(1).replace('.', ',')} jt`;
+  if (Math.abs(num) >= 1_000) return `${(num / 1_000).toFixed(0)} rb`;
+  return String(num);
+}
+
+/**
+ * Label peran untuk status bar — pengguna membaca "Admin Ranting",
+ * bukan "ADMIN_RANTING".
+ */
+export const ROLE_LABELS: Record<string, string> = {
+  anggota: 'Anggota',
+  penguji: 'Penguji',
+  admin_kegiatan: 'Admin Kegiatan',
+  admin_ranting: 'Admin Ranting',
+  admin_distrik: 'Admin Distrik',
+  admin_wilayah: 'Admin Wilayah',
+  superadmin: 'Superadmin',
+};

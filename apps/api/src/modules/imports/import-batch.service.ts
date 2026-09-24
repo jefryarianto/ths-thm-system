@@ -187,8 +187,7 @@ export class ImportBatchService implements OnModuleDestroy {
       throw new BadRequestException(`Maksimal ${MAX_BATCH_ROWS} baris per batch import`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { batch, items } = await (this.prisma as any).$transaction(async (tx: any) => {
+    const { batch, items } = await this.prisma.$transaction(async (tx) => {
       const createdBatch = await tx.importBatch.create({
         data: {
           module,
@@ -337,8 +336,7 @@ export class ImportBatchService implements OnModuleDestroy {
     const batch = await this.prisma.importBatch.findUnique({ where: { id: batchId } });
     if (!batch || !['pending', 'processing'].includes(batch.status)) return false;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).$transaction([
+    await this.prisma.$transaction([
       this.prisma.importBatch.update({ where: { id: batchId }, data: { status: 'cancelled' } }),
       this.prisma.importBatchItem.updateMany({
         where: { batchId, status: 'pending' },

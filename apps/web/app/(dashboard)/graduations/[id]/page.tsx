@@ -834,7 +834,11 @@ export default function GraduationDetailPage() {
       await fetchData();
       setShowGraduateModal(false);
       setGraduateResults({});
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal melakukan kelulusan');
+    }
   };
 
   const handleValidate = async () => {
@@ -851,7 +855,11 @@ export default function GraduationDetailPage() {
       setGenDocsResult(null);
       await fetchResults();
       await fetchData();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal memvalidasi hasil');
+    }
     setValidating(false);
   };
 
@@ -864,7 +872,11 @@ export default function GraduationDetailPage() {
       setGenDocsResult(res.data.data || { generated: 0, total: 0, errors: [] });
       await fetchResults();
       await fetchData();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal membuat dokumen');
+    }
     setGenDocsLoading(false);
   };
 
@@ -881,14 +893,22 @@ export default function GraduationDetailPage() {
       setShowCreateUjian(false);
       setCreateUjianForm({ nama: '', deskripsi: '', tanggal: '', durasiMenit: '' });
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal membuat sesi ujian');
+    }
   };
 
   const handleAssignExaminer = async (ujianId: string, pengujiUserId: string) => {
     try {
       await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/examiners`, { pengujiUserId });
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal menambahkan penguji');
+    }
   };
 
   const handleRemoveExaminer = async (ujianId: string, pengujiUserId: string) => {
@@ -897,35 +917,55 @@ export default function GraduationDetailPage() {
         data: { pengujiUserId },
       });
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal menghapus penguji');
+    }
   };
 
   const handleAssignItem = async (ujianId: string, itemPenilaianId: string) => {
     try {
       await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/items`, { itemPenilaianId });
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal menambahkan item penilaian');
+    }
   };
 
   const handleRemoveItem = async (ujianId: string, itemPenilaianId: string) => {
     try {
       await apiClient.delete(`/graduations/${id}/ujian-praktek/${ujianId}/items/${itemPenilaianId}`);
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal menghapus item penilaian');
+    }
   };
 
   const handleUpdateUjianStatus = async (ujianId: string, status: string) => {
     try {
       await apiClient.patch(`/graduations/${id}/ujian-praktek/${ujianId}`, { status });
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal memperbarui status ujian');
+    }
   };
 
   const handleAutoSyncUjian = async (ujianId: string) => {
     try {
       await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/auto-sync`);
       await fetchUjianList();
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal melakukan sinkronisasi otomatis');
+    }
   };
 
   const expandUjian = async (ujianId: string) => {
@@ -978,7 +1018,11 @@ export default function GraduationDetailPage() {
     try {
       await apiClient.post(`/graduations/${id}/ujian-praktek/${ujianId}/score`, { scores: scoresPayload });
       await expandUjian(ujianId); // reload
-    } catch { /* ignore */ }
+    } catch (err) {
+      const apiError =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast('error', apiError || 'Gagal menyimpan skor');
+    }
     setSavingScores(false);
   };
 
@@ -1386,11 +1430,15 @@ export default function GraduationDetailPage() {
                         </span>
                         <button onClick={async () => {
                           if (!confirm('Batalkan pendaftaran peserta ini?')) return;
-                          try {
-                            await apiClient.post(`/graduations/${id}/unregister`, { candidateId: p.id });
-                            await fetchData();
-                            await fetchCompleteness();
-                          } catch { /* ignore */ }
+try {
+                              await apiClient.post(`/graduations/${id}/unregister`, { candidateId: p.id });
+                              await fetchData();
+                              await fetchCompleteness();
+                            } catch (err) {
+                              const apiError =
+                                (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                              toast('error', apiError || 'Gagal membatalkan pendaftaran');
+                            }
                         }} className="p-1 text-red-400 hover:text-red-600 transition" title="Batalkan pendaftaran">
                           <XCircle size={14} />
                         </button>

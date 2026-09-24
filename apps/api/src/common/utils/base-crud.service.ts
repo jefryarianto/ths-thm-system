@@ -460,10 +460,8 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     const entity = await this.prismaDelegate.create({ data });
     await this.afterCreate(entity, dto);
     this.invalidateCache();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rid = (entity as any)?.rantingId;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.audit('CREATE', this.config.model, (entity as any)?.id ?? null, userId, null, rid);
+    const entityRow = entity as { id?: string; rantingId?: string | null } | null;
+    this.audit('CREATE', this.config.model, entityRow?.id ?? null, userId, null, entityRow?.rantingId);
     return {
       data: entity,
       message: message || 'Data berhasil ditambahkan',
@@ -488,8 +486,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     await this.verifyScope(id, scope);
     const data = await this.beforeUpdate(id, dto);
     // Field `version` adalah kontrol konkurensi — jangan tulis nilai client mentah.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (data as any).version;
+    delete (data as { version?: unknown }).version;
 
     // Snapshot sebelum-perubahan untuk riwayat revisi (diff audit).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -509,8 +506,7 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
       requestedVersion !== undefined &&
       requestedVersion !== null
     ) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const current = await (this.prismaDelegate as any).findUnique({
+      const current = await this.prismaDelegate.findUnique({
         where: { id },
         select: { version: true },
       });
@@ -540,9 +536,8 @@ export abstract class BaseCrudService<TCreateDto, TUpdateDto> {
     }
     await this.afterUpdate(updated, dto);
     this.invalidateCache();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rid = (updated as any)?.rantingId;
-    this.audit('UPDATE', this.config.model, id, userId, null, rid);
+    const updatedRow = updated as { rantingId?: string | null } | null;
+    this.audit('UPDATE', this.config.model, id, userId, null, updatedRow?.rantingId);
     if (REVISION_TRACKED_MODELS.has(this.config.model) && this.revisions && beforeRow) {
       await this.revisions.recordUpdate(
         this.config.model,

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
-import { Edit, Trash2, CheckCircle2, MoreVertical, Eye, UserCheck } from 'lucide-react';
+import { Edit, Trash2, CheckCircle2, MoreVertical, Eye, UserCheck, ThumbsDown } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import { useToast } from '@/components/ui/toast';
 
@@ -12,6 +12,7 @@ interface CandidateActionsProps {
     id: string;
     namaLengkap: string;
     status: string;
+    statusData?: 'complete' | 'incomplete';
   };
   onSuccess: () => void;
 }
@@ -22,6 +23,8 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
   const [showMenu, setShowMenu] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRequestCorrectionModal, setShowRequestCorrectionModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
@@ -43,9 +46,23 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
     try {
       await apiClient.post(`/candidates/${candidate.id}/approve`, {});
       toast('success', `${candidate.namaLengkap} disetujui menjadi anggota`);
+      setShowApproveModal(false);
       onSuccess();
     } catch {
       toast('error', 'Gagal menyetujui calon anggota');
+    }
+    setActionLoading(null);
+  };
+
+  const handleRequestCorrection = async () => {
+    setActionLoading('requestCorrection');
+    try {
+      await apiClient.post(`/candidates/${candidate.id}/request-correction`, {});
+      toast('success', `Permintaan perbaikan dikirim ke ${candidate.namaLengkap}`);
+      setShowRequestCorrectionModal(false);
+      onSuccess();
+    } catch {
+      toast('error', 'Gagal mengirim permintaan perbaikan');
     }
     setActionLoading(null);
   };
@@ -80,8 +97,16 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
       ? [{
           label: 'Setujui',
           icon: CheckCircle2,
-          action: handleApprove,
+          action: () => setShowApproveModal(true),
           disabled: actionLoading === 'approve',
+        }]
+      : []),
+    ...(candidate.status === 'diusulkan'
+      ? [{
+          label: 'Minta Perbaikan',
+          icon: ThumbsDown,
+          action: () => setShowRequestCorrectionModal(true),
+          disabled: actionLoading === 'requestCorrection',
         }]
       : []),
     {
@@ -95,17 +120,17 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
 
   return (
     <>
-      <div className="flex items-center justify-end gap-1">
-        {candidate.status === 'diusulkan' && (
-          <button
-            onClick={handleApprove}
-            disabled={actionLoading === 'approve'}
-            className="p-1.5 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950 transition disabled:opacity-30"
-            title="Setujui"
-          >
-            <UserCheck size={14} className="text-emerald-600" />
-          </button>
-        )}
+        <div className="flex items-center justify-end gap-1">
+          {candidate.status === 'diusulkan' && (
+            <button
+              onClick={() => setShowApproveModal(true)}
+              disabled={actionLoading === 'approve'}
+              className="p-1.5 rounded hover:bg-emerald-50 dark:hover:bg-emerald-950 transition disabled:opacity-30"
+              title="Setujui"
+            >
+              <UserCheck size={14} className="text-emerald-600" />
+            </button>
+          )}
         <button
           onClick={() => router.push(`/candidates/${candidate.id}`)}
           className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950 transition"
@@ -161,6 +186,24 @@ export default function CandidateActions({ candidate, onSuccess }: CandidateActi
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteModal(false)}
+      />
+      <ConfirmModal
+        open={showApproveModal}
+        title="Setujui Calon Anggota"
+        message={`Apakah Anda yakin ingin menyetujui "${candidate.namaLengkap}" menjadi anggota?`}
+        confirmLabel="Ya, Setujui"
+        cancelLabel="Batal"
+        onConfirm={handleApprove}
+        onCancel={() => setShowApproveModal(false)}
+      />
+      <ConfirmModal
+        open={showRequestCorrectionModal}
+        title="Minta Perbaikan"
+        message={`Apakah Anda yakin ingin meminta perbaikan data "${candidate.namaLengkap}"? Calon akan diminta untuk memperbaiki data yang kurang lengkap.`}
+        confirmLabel="Ya, Minta Perbaikan"
+        cancelLabel="Batal"
+        onConfirm={handleRequestCorrection}
+        onCancel={() => setShowRequestCorrectionModal(false)}
       />
     </>
   );
