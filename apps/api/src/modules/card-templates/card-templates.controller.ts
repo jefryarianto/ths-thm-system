@@ -8,10 +8,10 @@ import {
   Body,
   Query,
   Req,
-  UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { CardTemplatesService } from './card-templates.service';
 import { buildImageUploadOptions } from '../../common/utils/image-upload.util';
@@ -66,18 +66,22 @@ export class CardTemplatesController {
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
-    FileInterceptor('front', buildImageUploadOptions('card-front')),
-    FileInterceptor('back', buildImageUploadOptions('card-back')),
+    FileFieldsInterceptor(
+      [
+        { name: 'front', maxCount: 1 },
+        { name: 'back', maxCount: 1 },
+      ],
+      buildImageUploadOptions('card-template'),
+    ),
   )
   create(
     @Req() req: ScopedRequest,
     @Body() body: { name?: string; label?: string; overlayConfig?: string; distrikId?: string | null },
-    @UploadedFile() front?: Express.Multer.File,
-    @UploadedFile() back?: Express.Multer.File,
+    @UploadedFiles() files?: { front?: Express.Multer.File[]; back?: Express.Multer.File[] },
   ) {
     return this.service.create(
       { name: body.name, label: body.label, overlayConfig: body.overlayConfig },
-      { front, back },
+      { front: files?.front?.[0], back: files?.back?.[0] },
       // superadmin bebas menentukan scope; admin_distrik terkunci ke distriknya.
       resolveWriteDistrikId(req, body.distrikId ?? null),
     );
@@ -89,20 +93,24 @@ export class CardTemplatesController {
   })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
-    FileInterceptor('front', buildImageUploadOptions('card-front')),
-    FileInterceptor('back', buildImageUploadOptions('card-back')),
+    FileFieldsInterceptor(
+      [
+        { name: 'front', maxCount: 1 },
+        { name: 'back', maxCount: 1 },
+      ],
+      buildImageUploadOptions('card-template'),
+    ),
   )
   update(
     @Req() req: ScopedRequest,
     @Param('id') id: string,
     @Body() body: { label?: string; overlayConfig?: string },
-    @UploadedFile() front?: Express.Multer.File,
-    @UploadedFile() back?: Express.Multer.File,
+    @UploadedFiles() files?: { front?: Express.Multer.File[]; back?: Express.Multer.File[] },
   ) {
     return this.service.update(
       id,
       { label: body.label, overlayConfig: body.overlayConfig },
-      { front, back },
+      { front: files?.front?.[0], back: files?.back?.[0] },
       { role: req?.user?.role, distrikId: req?.scope?.distrikId },
     );
   }

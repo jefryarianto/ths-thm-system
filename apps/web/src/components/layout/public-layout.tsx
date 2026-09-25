@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ReactNode, useState, useEffect } from 'react';
 import { Menu, X, Globe, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -12,6 +13,7 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
   const { locale, t, setLocale } = useI18n();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -37,14 +39,22 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       <div className="bg-navy-900 text-white text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
           <div className="flex items-center gap-4">
-            <span className="hidden sm:flex items-center gap-1">
+            <a
+              href="tel:+628123456789"
+              className="hidden sm:flex items-center gap-1 hover:text-gold-400 transition-colors"
+              title="Hubungi Kontak THS-THM"
+            >
               <Phone size={11} aria-hidden="true" className="shrink-0" />
-              <span>THS-THM</span>
-            </span>
-            <span className="hidden md:flex items-center gap-1">
+              <span>THS-THM Hotline</span>
+            </a>
+            <a
+              href="mailto:info@ths-thm.cloud"
+              className="hidden md:flex items-center gap-1 hover:text-gold-400 transition-colors"
+              title="Kirim Email"
+            >
               <Mail size={11} aria-hidden="true" className="shrink-0" />
               <span>info@ths-thm.cloud</span>
-            </span>
+            </a>
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -64,7 +74,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       </div>
 
       {/* ── Main Navbar ── */}
-      <nav aria-label="Navigasi utama"
+      <nav
+        aria-label="Navigasi utama"
         className={`bg-surface sticky top-0 z-50 transition-shadow duration-300 ${
           scrolled ? 'shadow-elegant-lg' : 'shadow-elegant-md'
         }`}
@@ -75,7 +86,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <Link href="/" className="flex items-center gap-3 shrink-0">
               <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain shadow-md" />
               <div className="hidden sm:block">
-                <span className="font-bold font-serif font-bold text-navy-800 text-lg leading-tight block tracking-tight">
+                <span className="font-bold font-serif text-navy-800 text-lg leading-tight block tracking-tight">
                   THS-THM
                 </span>
                 <span className="text-[10px] text-navy-400 leading-tight font-medium">
@@ -86,22 +97,29 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Desktop Navigation */}
             <div className="hidden xl:flex xl:items-center xl:gap-1">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="px-3.5 py-2 text-sm font-medium text-navy-600 hover:text-navy-900 hover:bg-navy-50 rounded-xl transition-all duration-200 transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`px-3.5 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? 'bg-navy-800 text-white font-bold shadow-sm'
+                        : 'text-navy-600 hover:text-navy-900 hover:bg-navy-50'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Right side: Search + CTA */}
             <div className="flex items-center gap-3">
               <Link
                 href="/daftar"
-                className="hidden sm:inline-flex items-center gap-2 bg-gold-400 text-navy-900 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gold-300 shadow-elegant transition-all duration-200 transition-colors shadow-sm"
+                className="hidden sm:inline-flex items-center gap-2 bg-gold-400 text-navy-900 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gold-300 shadow-elegant transition-all duration-200 shadow-sm"
               >
                 {t.nav.daftar}
               </Link>
@@ -121,29 +139,36 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* ── Mobile Navigation Drawer ── */}
         {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-gray-100 bg-surface animate-slide-down">
+          <div className="xl:hidden border-t border-gray-100 bg-surface animate-slide-down shadow-xl">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block px-4 py-3 text-navy-700 hover:bg-navy-50 hover:text-navy-900 rounded-xl font-medium transition-colors duration-200 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`block px-4 py-3 rounded-xl font-medium transition-colors duration-200 ${
+                      isActive
+                        ? 'bg-navy-800 text-white font-bold'
+                        : 'text-navy-700 hover:bg-navy-50 hover:text-navy-900'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-3 text-primary-700 hover:bg-primary-50 rounded-lg font-semibold transition-colors"
+                  className="block px-4 py-3 text-navy-800 hover:bg-navy-50 rounded-lg font-semibold transition-colors text-center border border-navy-200"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.login}
                 </Link>
                 <Link
                   href="/daftar"
-                  className="block px-4 py-3 bg-gold-400 text-navy-900 rounded-xl hover:bg-gold-300 font-bold transition-colors text-center"
+                  className="block px-4 py-3 bg-gold-400 text-navy-900 rounded-xl hover:bg-gold-300 font-bold transition-colors text-center shadow-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.daftar}
@@ -154,7 +179,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         )}
       </nav>
 
-      <main id="main-content" className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
 
       {/* ── Footer ── */}
       <footer className="bg-navy-900 text-white">
@@ -164,26 +191,22 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             {/* Column 1: About */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain" />
+                <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain bg-white p-1" />
                 <div>
-                  <span className="font-bold text-white text-lg leading-tight block">
-                    THS-THM
-                  </span>
+                  <span className="font-bold text-white text-lg leading-tight block font-serif">THS-THM</span>
                   <span className="text-[10px] text-white/60 leading-tight">
                     Tunggal Hati Seminari &mdash; Tunggal Hati Maria
                   </span>
                 </div>
               </div>
               <p className="text-white/70 text-sm leading-relaxed">
-                Sistem Manajemen Organisasi THS-THM - Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
+                Sistem Manajemen Organisasi THS-THM &mdash; Kelola anggota, iuran, latihan, pendadaran, dan dokumentasi secara digital.
               </p>
             </div>
 
             {/* Column 2: Navigasi */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">
-                Navigasi
-              </h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Navigasi</h4>
               <ul className="space-y-2">
                 {NAV_LINKS.map((link) => (
                   <li key={link.href}>
@@ -201,24 +224,31 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 3: Akses Cepat */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">
-                Akses Cepat
-              </h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Akses Cepat</h4>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/login" className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1">
+                  <Link
+                    href="/login"
+                    className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1"
+                  >
                     <ChevronRight size={12} aria-hidden="true" />
                     {t.nav.login}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/daftar" className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1">
+                  <Link
+                    href="/daftar"
+                    className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1"
+                  >
                     <ChevronRight size={12} aria-hidden="true" />
                     {t.nav.daftar}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/sejarah" className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1">
+                  <Link
+                    href="/sejarah"
+                    className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1"
+                  >
                     <ChevronRight size={12} aria-hidden="true" />
                     {t.nav.sejarah}
                   </Link>
@@ -228,21 +258,23 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Column 4: Kontak */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">
-                Kontak
-              </h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Kontak</h4>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400/40" aria-hidden="true" />
+                  <MapPin size={14} className="shrink-0 mt-0.5 text-gold-400" aria-hidden="true" />
                   <span>Indonesia</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <Mail size={14} className="shrink-0 mt-0.5 text-gold-400/40" aria-hidden="true" />
-                  <span>info@ths-thm.cloud</span>
+                  <Mail size={14} className="shrink-0 mt-0.5 text-gold-400" aria-hidden="true" />
+                  <a href="mailto:info@ths-thm.cloud" className="hover:text-gold-400 transition-colors">
+                    info@ths-thm.cloud
+                  </a>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-white/70">
-                  <Phone size={14} className="shrink-0 mt-0.5 text-gold-400/40" aria-hidden="true" />
-                  <span>THS-THM</span>
+                  <Phone size={14} className="shrink-0 mt-0.5 text-gold-400" aria-hidden="true" />
+                  <a href="tel:+628123456789" className="hover:text-gold-400 transition-colors">
+                    +62 812-3456-789 (Sekretariat)
+                  </a>
                 </li>
               </ul>
             </div>
@@ -255,9 +287,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <p className="text-white/50 text-xs">
               &copy; {new Date().getFullYear()} THS-THM. All rights reserved.
             </p>
-            <p className="text-white/30 text-xs">
-              Dikelola oleh Tim Teknologi THS-THM
-            </p>
+            <p className="text-white/30 text-xs">Dikelola oleh Tim Teknologi THS-THM</p>
           </div>
         </div>
       </footer>

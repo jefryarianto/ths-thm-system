@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import { IdCard, Upload, CheckCircle2, Trash2, RefreshCw, Pencil, Globe } from 'lucide-react';
-import apiClient from '@/lib/api-client';
+import apiClient, { extractErrorMessage } from '@/lib/api-client';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -139,7 +139,7 @@ export default function KartuSettingsPage() {
   };
 
   const errMessage = (err: unknown, fallback: string) =>
-    (err as { response?: { data?: { message?: string } } })?.response?.data?.message || fallback;
+    extractErrorMessage(err, fallback);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -169,14 +169,10 @@ export default function KartuSettingsPage() {
     setSaving(true);
     try {
       if (editingId) {
-        await apiClient.patch(`/card-templates/${editingId}`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await apiClient.patch(`/card-templates/${editingId}`, fd);
         toast('success', 'Template diperbarui');
       } else {
-        await apiClient.post('/card-templates', fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await apiClient.post('/card-templates', fd);
         toast('success', `Template dibuat untuk ${scopeLabel} — klik "Set Aktif" untuk menerapkannya`);
       }
       resetForm();

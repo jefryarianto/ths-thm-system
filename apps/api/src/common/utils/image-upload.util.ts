@@ -128,7 +128,7 @@ export function buildImageUploadOptions(prefix: string) {
       },
       filename: (
         _req: unknown,
-        file: { originalname: string },
+        file: { originalname: string; fieldname?: string },
         cb: (err: Error | null, filename: string) => void,
       ) => {
         const ext = extname(file.originalname).toLowerCase();
@@ -143,7 +143,8 @@ export function buildImageUploadOptions(prefix: string) {
           return;
         }
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `${prefix}-${uniqueSuffix}${ext}`);
+        const namePrefix = file.fieldname ? `${prefix}-${file.fieldname}` : prefix;
+        cb(null, `${namePrefix}-${uniqueSuffix}${ext}`);
       },
     }),
     fileFilter: (
