@@ -852,6 +852,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/session/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verifikasi read-only refresh session (untuk Next.js proxy route gate) */
+        get: operations["AuthController_verifySession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/sessions": {
         parameters: {
             query?: never;
@@ -7704,8 +7721,10 @@ export interface components {
             periode?: string;
             jumlah?: number;
             tanggalBayar?: string;
-            metodeBayar?: string;
-            status?: string;
+            /** @enum {string} */
+            metodeBayar?: "manual" | "transfer" | "online";
+            /** @enum {string} */
+            status?: "belum_dibayar" | "menunggu_verifikasi" | "lunas" | "menunggak";
             buktiBayarPath?: string;
         };
         BatchPaymentDto: {
@@ -8856,6 +8875,23 @@ export interface operations {
             };
         };
     };
+    AuthController_verifySession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AuthController_listSessions: {
         parameters: {
             query?: never;
@@ -9490,9 +9526,9 @@ export interface operations {
                 rantingId?: string;
                 distrikId?: string;
                 wilayahId?: string;
-                statusKeanggotaan?: string;
-                statusValidasi?: string;
-                statusData?: string;
+                statusKeanggotaan?: "aktif" | "nonaktif" | "pindah" | "keluar" | "meninggal";
+                statusValidasi?: "pending" | "approved" | "rejected";
+                statusData?: "complete" | "incomplete";
                 /** @description Filter anggota tanpa foto (tanpaFoto=true) */
                 tanpaFoto?: string;
             };
@@ -9536,9 +9572,9 @@ export interface operations {
                 rantingId?: string;
                 distrikId?: string;
                 wilayahId?: string;
-                statusKeanggotaan?: string;
-                statusValidasi?: string;
-                statusData?: string;
+                statusKeanggotaan?: "aktif" | "nonaktif" | "pindah" | "keluar" | "meninggal";
+                statusValidasi?: "pending" | "approved" | "rejected";
+                statusData?: "complete" | "incomplete";
                 /** @description Filter anggota tanpa foto (tanpaFoto=true) */
                 tanpaFoto?: string;
             };
@@ -9704,9 +9740,9 @@ export interface operations {
                 rantingId?: string;
                 distrikId?: string;
                 wilayahId?: string;
-                statusKeanggotaan?: string;
-                statusValidasi?: string;
-                statusData?: string;
+                statusKeanggotaan?: "aktif" | "nonaktif" | "pindah" | "keluar" | "meninggal";
+                statusValidasi?: "pending" | "approved" | "rejected";
+                statusData?: "complete" | "incomplete";
                 /** @description Filter anggota tanpa foto (tanpaFoto=true) */
                 tanpaFoto?: string;
             };
@@ -10380,7 +10416,7 @@ export interface operations {
                 limit?: number;
                 search?: string;
                 rantingId?: string;
-                status?: string;
+                status?: "diusulkan" | "mengikuti_pendadaran" | "lulus" | "gagal" | "dibatalkan";
             };
             header?: never;
             path?: never;
@@ -10563,7 +10599,7 @@ export interface operations {
                 limit?: number;
                 search?: string;
                 rantingId?: string;
-                status?: string;
+                status?: "diusulkan" | "mengikuti_pendadaran" | "lulus" | "gagal" | "dibatalkan";
             };
             header?: never;
             path?: never;
@@ -10765,8 +10801,8 @@ export interface operations {
             query?: {
                 page?: number;
                 limit?: number;
-                status?: string;
-                tipe?: string;
+                status?: "pending" | "diproses" | "disetujui" | "ditolak";
+                tipe?: "keanggotaan" | "dokumen";
             };
             header?: never;
             path?: never;
@@ -11811,7 +11847,7 @@ export interface operations {
                 page?: number;
                 limit?: number;
                 tipe?: string;
-                status?: string;
+                status?: "draft" | "published" | "closed" | "cancelled";
             };
             header?: never;
             path?: never;
@@ -12530,7 +12566,7 @@ export interface operations {
             query?: {
                 page?: number;
                 limit?: number;
-                tipe?: string;
+                tipe?: "kartu_anggota" | "sertifikat_pendadaran" | "sertifikat_pelatihan" | "piagam_prestasi";
                 anggotaId?: string;
             };
             header?: never;
@@ -14266,7 +14302,7 @@ export interface operations {
             query?: {
                 page?: number;
                 limit?: number;
-                status?: string;
+                status?: "belum_dibayar" | "menunggu_verifikasi" | "lunas" | "menunggak";
                 periode?: string;
             };
             header?: never;

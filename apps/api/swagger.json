@@ -1551,6 +1551,21 @@
         ]
       }
     },
+    "/auth/session/verify": {
+      "get": {
+        "operationId": "AuthController_verifySession",
+        "summary": "Verifikasi read-only refresh session (untuk Next.js proxy route gate)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/sessions": {
       "get": {
         "operationId": "AuthController_listSessions",
@@ -2492,6 +2507,13 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "aktif",
+                "nonaktif",
+                "pindah",
+                "keluar",
+                "meninggal"
+              ],
               "type": "string"
             }
           },
@@ -2500,6 +2522,11 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
               "type": "string"
             }
           },
@@ -2508,6 +2535,10 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "complete",
+                "incomplete"
+              ],
               "type": "string"
             }
           },
@@ -2616,6 +2647,13 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "aktif",
+                "nonaktif",
+                "pindah",
+                "keluar",
+                "meninggal"
+              ],
               "type": "string"
             }
           },
@@ -2624,6 +2662,11 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
               "type": "string"
             }
           },
@@ -2632,6 +2675,10 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "complete",
+                "incomplete"
+              ],
               "type": "string"
             }
           },
@@ -2923,6 +2970,13 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "aktif",
+                "nonaktif",
+                "pindah",
+                "keluar",
+                "meninggal"
+              ],
               "type": "string"
             }
           },
@@ -2931,6 +2985,11 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected"
+              ],
               "type": "string"
             }
           },
@@ -2939,6 +2998,10 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "complete",
+                "incomplete"
+              ],
               "type": "string"
             }
           },
@@ -4006,6 +4069,13 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "diusulkan",
+                "mengikuti_pendadaran",
+                "lulus",
+                "gagal",
+                "dibatalkan"
+              ],
               "type": "string"
             }
           }
@@ -4310,6 +4380,13 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "diusulkan",
+                "mengikuti_pendadaran",
+                "lulus",
+                "gagal",
+                "dibatalkan"
+              ],
               "type": "string"
             }
           }
@@ -4636,6 +4713,12 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "pending",
+                "diproses",
+                "disetujui",
+                "ditolak"
+              ],
               "type": "string"
             }
           },
@@ -4644,6 +4727,10 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "keanggotaan",
+                "dokumen"
+              ],
               "type": "string"
             }
           }
@@ -6302,6 +6389,12 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "draft",
+                "published",
+                "closed",
+                "cancelled"
+              ],
               "type": "string"
             }
           }
@@ -7444,6 +7537,12 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "kartu_anggota",
+                "sertifikat_pendadaran",
+                "sertifikat_pelatihan",
+                "piagam_prestasi"
+              ],
               "type": "string"
             }
           },
@@ -10221,6 +10320,12 @@
             "required": false,
             "in": "query",
             "schema": {
+              "enum": [
+                "belum_dibayar",
+                "menunggu_verifikasi",
+                "lunas",
+                "menunggak"
+              ],
               "type": "string"
             }
           },
@@ -18034,10 +18139,21 @@
             "type": "string"
           },
           "metodeBayar": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "manual",
+              "transfer",
+              "online"
+            ]
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "belum_dibayar",
+              "menunggu_verifikasi",
+              "lunas",
+              "menunggak"
+            ]
           },
           "buktiBayarPath": {
             "type": "string"
