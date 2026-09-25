@@ -33,6 +33,36 @@ async function fetchBerita(slug: string): Promise<Berita | null> {
   }
 }
 
+/**
+ * Clean & sanitize raw HTML content.
+ * Prevents full HTML documents (with <!DOCTYPE>, <html>, <head>, <style>, <body>)
+ * from breaking page styling or duplicating titles/body elements.
+ */
+function cleanHtmlContent(rawHtml: string): string {
+  if (!rawHtml) return '';
+  let html = rawHtml;
+
+  // If full HTML document, extract inner content of <body>...</body>
+  if (html.includes('<body') && html.includes('</body>')) {
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    if (bodyMatch && bodyMatch[1]) {
+      html = bodyMatch[1];
+    }
+  }
+
+  // Remove embedded <style>, <head>, <!DOCTYPE>, <html>, <body> tags
+  html = html
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<\/?(html|body|head)[^>]*>/gi, '');
+
+  // Remove redundant leading <h1> heading if it duplicates article title
+  html = html.replace(/^\s*<h1[^>]*>[\s\S]*?<\/h1>/i, '');
+
+  return html.trim();
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -108,6 +138,8 @@ export default async function BeritaDetailPage({
     );
   }
 
+  const cleanedContent = cleanHtmlContent(berita.konten);
+
   return (
     <PublicLayout>
       {/* Header Banner */}
@@ -153,7 +185,7 @@ export default async function BeritaDetailPage({
       {/* Main Body */}
       <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Back link */}
+          {/* Back link & Share */}
           <div className="flex justify-between items-center mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
             <Link
               href="/berita"
@@ -202,7 +234,7 @@ export default async function BeritaDetailPage({
               prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
               prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-a:font-semibold
               prose-img:rounded-2xl prose-img:shadow-md"
-            dangerouslySetInnerHTML={{ __html: berita.konten }}
+            dangerouslySetInnerHTML={{ __html: cleanedContent }}
           />
 
           {/* Article Footer & Action */}
