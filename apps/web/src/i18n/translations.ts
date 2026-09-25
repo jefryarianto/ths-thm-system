@@ -57,13 +57,23 @@ export const translations = {
       title: 'Berita & Artikel',
       readMore: 'Baca selengkapnya',
       empty: 'Belum ada berita',
+      searchPlaceholder: 'Cari judul atau kata kunci berita...',
+      readTime: 'mnt baca',
+      allCategories: 'Semua Berita',
+      share: 'Bagikan Artikel',
+      linkCopied: 'Tautan artikel berhasil disalin!',
+      relatedTitle: 'Berita Terkait Lainnya',
     },
     // Galeri
     galeri: {
-      title: 'Galeri',
+      title: 'Galeri Foto & Kegiatan',
       empty: 'Belum ada foto',
       emptyDesc: 'Galeri akan segera diisi dengan momen-momen indah THS-THM',
-      allCategories: 'Semua Kategori',
+      allCategories: 'Semua Foto',
+      photoCount: 'Foto',
+      of: 'dari',
+      prevPhoto: 'Sebelumnya',
+      nextPhoto: 'Berikutnya',
     },
     // Donasi
     donasi: {
@@ -152,13 +162,23 @@ export const translations = {
       title: 'News & Articles',
       readMore: 'Read more',
       empty: 'No news yet',
+      searchPlaceholder: 'Search news titles or keywords...',
+      readTime: 'min read',
+      allCategories: 'All News',
+      share: 'Share Article',
+      linkCopied: 'Article link copied!',
+      relatedTitle: 'Related Articles',
     },
     // Galeri
     galeri: {
-      title: 'Gallery',
+      title: 'Photo Gallery & Activities',
       empty: 'No photos yet',
       emptyDesc: 'Gallery will soon be filled with beautiful moments from THS-THM',
-      allCategories: 'All Categories',
+      allCategories: 'All Photos',
+      photoCount: 'Photo',
+      of: 'of',
+      prevPhoto: 'Previous',
+      nextPhoto: 'Next',
     },
     // Donasi
     donasi: {
