@@ -2,54 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Font web: self-host (tidak tergantung Google Fonts) ── */
+/* ── Font web: self-hosted WOFF2 (optimal performa) ── */
+/* Format .woff2 sudah tersedia di public/fonts/ sebagai sumber utama.
+   TTF disediakan sebagai fallback untuk lingkungan tanpa WOFF2. */
 @font-face {
   font-family: 'Inter';
-  src: url('/fonts/inter-var.ttf') format('truetype');
+  src: url('/fonts/inter-var.woff2') format('woff2-variations'),
+       url('/fonts/inter-var.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 @font-face {
   font-family: 'Playfair Display';
-  src: url('/fonts/playfair-display-var.ttf') format('truetype');
+  src: url('/fonts/playfair-display-var.woff2') format('woff2-variations'),
+       url('/fonts/playfair-display-var.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 /* ── OCR Font ── */
 @font-face {
   font-family: 'OCR A Extended';
-  src: url('/fonts/ocr-a-extended.ttf') format('truetype');
+  src: url('/fonts/ocr-a-extended.woff2') format('woff2'),
+       url('/fonts/ocr-a-extended.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  font-display: auto;
 }
 
 /* ── Roboto & Open Sans (untuk kartu anggota) ── */
 @font-face {
   font-family: 'Open Sans';
-  src: url('/fonts/open-sans-bold.ttf') format('truetype');
+  src: url('/fonts/open-sans-bold.woff2') format('woff2'),
+       url('/fonts/open-sans-bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 @font-face {
   font-family: 'Roboto';
-  src: url('/fonts/roboto-regular.ttf') format('truetype');
+  src: url('/fonts/roboto-regular.woff2') format('woff2'),
+       url('/fonts/roboto-regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 @font-face {
   font-family: 'Roboto';
-  src: url('/fonts/roboto-bold.ttf') format('truetype');
+  src: url('/fonts/roboto-bold.woff2') format('woff2'),
+       url('/fonts/roboto-bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 @layer base {
