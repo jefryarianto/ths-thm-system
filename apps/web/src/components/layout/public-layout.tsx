@@ -76,7 +76,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       {/* ── Main Navbar ── */}
       <nav
         aria-label="Navigasi utama"
-        className={`bg-surface sticky top-0 z-50 transition-shadow duration-300 ${
+        className={`bg-surface border-b border-border/40 sticky top-0 z-50 transition-shadow duration-300 ${
           scrolled ? 'shadow-elegant-lg' : 'shadow-elegant-md'
         }`}
       >
@@ -86,10 +86,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <Link href="/" className="flex items-center gap-3 shrink-0">
               <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain shadow-md" />
               <div className="hidden sm:block">
-                <span className="font-bold font-serif text-navy-800 text-lg leading-tight block tracking-tight">
+                <span className="font-bold font-serif text-navy-900 dark:text-white text-lg leading-tight block tracking-tight">
                   THS-THM
                 </span>
-                <span className="text-[10px] text-navy-400 leading-tight font-medium">
+                <span className="text-[10px] text-navy-600 dark:text-gray-400 leading-tight font-medium">
                   Tunggal Hati Seminari &mdash; Tunggal Hati Maria
                 </span>
               </div>
@@ -103,10 +103,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-3.5 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
+                    className={`px-3.5 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-navy-800 text-white font-bold shadow-sm'
-                        : 'text-navy-600 hover:text-navy-900 hover:bg-navy-50'
+                        ? 'bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950 font-bold shadow-sm'
+                        : 'text-navy-800 dark:text-gray-200 hover:text-navy-950 dark:hover:text-white hover:bg-navy-50 dark:hover:bg-navy-900/60'
                     }`}
                   >
                     {link.label}
@@ -119,7 +119,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <div className="flex items-center gap-3">
               <Link
                 href="/daftar"
-                className="hidden sm:inline-flex items-center gap-2 bg-gold-400 text-navy-900 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gold-300 shadow-elegant transition-all duration-200 shadow-sm"
+                className="hidden sm:inline-flex items-center gap-2 bg-gold-400 text-navy-950 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gold-300 shadow-elegant transition-all duration-200 shadow-sm"
               >
                 {t.nav.daftar}
               </Link>
@@ -127,7 +127,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="xl:hidden p-2 rounded-lg text-navy-600 hover:bg-navy-50 transition-colors duration-200"
+                className="xl:hidden p-2 rounded-lg text-navy-800 dark:text-gray-200 hover:bg-navy-50 dark:hover:bg-navy-900/60 transition-colors duration-200"
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
               >
@@ -139,7 +139,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* ── Mobile Navigation Drawer ── */}
         {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-gray-100 bg-surface animate-slide-down shadow-xl">
+          <div className="xl:hidden border-t border-border bg-surface animate-slide-down shadow-xl">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
@@ -147,10 +147,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`block px-4 py-3 rounded-xl font-medium transition-colors duration-200 ${
+                    className={`block px-4 py-3 rounded-xl font-semibold transition-colors duration-200 ${
                       isActive
-                        ? 'bg-navy-800 text-white font-bold'
-                        : 'text-navy-700 hover:bg-navy-50 hover:text-navy-900'
+                        ? 'bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950 font-bold'
+                        : 'text-navy-800 dark:text-gray-200 hover:bg-navy-50 dark:hover:bg-navy-900/60 hover:text-navy-950 dark:hover:text-white'
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -158,17 +158,17 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   </Link>
                 );
               })}
-              <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
+              <div className="pt-3 mt-3 border-t border-border space-y-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-3 text-navy-800 hover:bg-navy-50 rounded-lg font-semibold transition-colors text-center border border-navy-200"
+                  className="block px-4 py-3 text-navy-800 dark:text-white hover:bg-navy-50 dark:hover:bg-navy-900/60 rounded-lg font-semibold transition-colors text-center border border-navy-200 dark:border-navy-700"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.login}
                 </Link>
                 <Link
                   href="/daftar"
-                  className="block px-4 py-3 bg-gold-400 text-navy-900 rounded-xl hover:bg-gold-300 font-bold transition-colors text-center shadow-md"
+                  className="block px-4 py-3 bg-gold-400 text-navy-950 rounded-xl hover:bg-gold-300 font-bold transition-colors text-center shadow-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.daftar}

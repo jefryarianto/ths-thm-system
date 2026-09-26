@@ -144,7 +144,7 @@ export default async function BeritaDetailPage({
     <PublicLayout>
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-navy-800 to-navy-950 py-10 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-white/60 text-xs sm:text-sm mb-4">
             <Link href="/" className="hover:text-white transition-colors">
               Beranda
@@ -184,7 +184,7 @@ export default async function BeritaDetailPage({
 
       {/* Main Body */}
       <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back link & Share */}
           <div className="flex justify-between items-center mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
             <Link

@@ -82,41 +82,41 @@ export function LandingPageContent() {
   return (
     <PublicLayout>
       {/* ── Hero Section ── */}
-      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 text-white overflow-hidden py-24 sm:py-32">
+      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 text-white overflow-hidden py-14 sm:py-20">
         {/* Decorative Watermark & Light Orbs */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-400/5 rounded-full blur-3xl" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-navy-600/30 rounded-full blur-2xl" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-gold-500/10 rounded-full blur-2xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gold-400/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-navy-600/30 rounded-full blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-70 h-70 bg-gold-500/10 rounded-full blur-2xl" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
           <div className="max-w-4xl mx-auto sm:mx-0">
             {/* Tagline Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-300 text-xs sm:text-sm font-semibold tracking-wider uppercase mb-6 shadow-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-300 text-xs sm:text-sm font-semibold tracking-wider uppercase mb-4 shadow-sm">
               <Shield size={14} className="text-gold-400" />
               <span>{t.home.tagline || 'Pro Patria et Ecclesia'}</span>
             </div>
 
-            <h1 className="mb-6 text-4xl sm:text-6xl font-serif font-bold leading-tight tracking-tight text-white drop-shadow-md">
+            <h1 className="mb-4 text-3xl sm:text-5xl font-serif font-bold leading-tight tracking-tight text-white drop-shadow-md">
               TUNGGAL HATI SEMINARI &mdash; TUNGGAL HATI MARIA
             </h1>
 
-            <p className="mb-8 text-lg sm:text-xl text-white/80 leading-relaxed font-light max-w-2xl">
+            <p className="mb-6 text-base sm:text-lg text-white/80 leading-relaxed font-light max-w-2xl">
               {t.home.description || 'Organisasi Seni Bela Diri Pencak Silat & Pembinaan Rohani Katolik'}
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
               <Link
                 href="/daftar"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-900 px-8 py-4 rounded-xl text-base font-bold hover:bg-gold-300 shadow-lg hover:shadow-gold-400/20 transition-all duration-200"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gold-400 text-navy-950 px-6 py-3.5 rounded-xl text-base font-bold hover:bg-gold-300 shadow-lg hover:shadow-gold-400/20 transition-all duration-200"
               >
                 Daftar Anggota Baru
                 <ArrowRight size={18} />
               </Link>
               <Link
                 href="/login"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/30 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-white/10 transition-all duration-200"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-white/30 text-white px-6 py-3.5 rounded-xl text-base font-semibold hover:bg-white/10 transition-all duration-200"
               >
                 Masuk ke Dashboard
               </Link>

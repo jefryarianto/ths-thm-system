@@ -49,31 +49,31 @@ export default function SejarahPage() {
         </div>
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl border border-gray-100 p-6 sm:p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-gold-50 flex items-center justify-center">
-                    <BookOpen size={20} className="text-navy-800" />
+          <div className="grid lg:grid-cols-4 gap-8">
+            {/* Main Content (Wider 3/4 layout) */}
+            <div className="lg:col-span-3">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 sm:p-10 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gold-100 dark:bg-gold-900/30 flex items-center justify-center text-navy-800 dark:text-gold-400">
+                    <BookOpen size={22} />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">{t.sejarah.title}</h2>
+                  <h2 className="text-2xl font-bold font-serif text-navy-900 dark:text-white">{t.sejarah.title}</h2>
                 </div>
                 <div
-                  className="prose prose-green max-w-none text-gray-700 leading-relaxed
-                    prose-headings:text-navy-800 prose-headings:font-serif
-                    prose-a:text-navy-800 prose-strong:text-gray-900"
+                  className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
+                    prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
+                    prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
                   dangerouslySetInnerHTML={{ __html: data?.konten || `<p class="text-gray-400">${t.sejarah.empty}</p>` }}
                 />
               </div>
             </div>
 
-            {/* Sidebar */}
+            {/* Sidebar (1/4 layout) */}
             <aside className="space-y-6">
               {/* Navigasi */}
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">Navigasi</h3>
-                <ul className="space-y-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+                <h3 className="font-bold text-navy-900 dark:text-white mb-4 text-xs uppercase tracking-wider font-serif">Navigasi</h3>
+                <ul className="space-y-1.5">
                   {[
                     { href: '/sejarah', label: t.nav.sejarah, active: true },
                     { href: '/organisasi', label: t.nav.organisasi, active: false },
@@ -82,10 +82,10 @@ export default function SejarahPage() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className={`flex items-center gap-2 text-sm py-2 px-3 rounded-lg transition-colors ${
+                        className={`flex items-center gap-2 text-sm py-2 px-3 rounded-xl transition-colors ${
                           link.active
-                            ? 'bg-navy-50 text-navy-800 font-semibold'
-                            : 'text-gray-600 hover:bg-[#F8F9FA] hover:text-gray-900'
+                            ? 'bg-navy-800 text-white font-bold dark:bg-gold-400 dark:text-navy-950'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-navy-50 dark:hover:bg-gray-700 hover:text-navy-900 dark:hover:text-white'
                         }`}
                       >
                         <ChevronRight size={14} />
@@ -97,12 +97,12 @@ export default function SejarahPage() {
               </div>
 
               {/* Tentang THS-THM */}
-              <div className="bg-navy-800 rounded-xl p-5 text-white">
-                <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-gold-400">
+              <div className="bg-navy-900 rounded-2xl p-6 text-white shadow-sm border border-navy-800">
+                <h3 className="font-bold mb-3 text-xs uppercase tracking-widest text-gold-400 font-serif">
                   Tentang THS-THM
                 </h3>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Tunggal Hati Seminari (THS) dan Tunggal Hati Maria (THM) adalah organisasi yang bergerak dalam bidang pendidikan dan pembinaan generasi muda Katolik.
+                <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-light">
+                  Tunggal Hati Seminari (THS) dan Tunggal Hati Maria (THM) adalah organisasi bela diri pencak silat Katolik yang berfokus pada olah rohani, olah raga, keorganisasian, dan persaudaraan.
                 </p>
               </div>
             </aside>
