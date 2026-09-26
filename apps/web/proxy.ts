@@ -64,14 +64,27 @@ export async function proxy(request: NextRequest) {
 
   // Panggil endpoint verifikasi sesi di backend.
   // Gunakan timeout agar tidak menunggu selamanya jika backend tidak merespon.
-  const verifyUrl = new URL('/api/auth/session/verify', request.url);
+  //
+  // PENTING (BUG login loop "login sukses → langsung di-kick ke /login"):
+  // Jangan `fetch` ke origin Next.js sendiri (`new URL('/api/...', request.url)`)
+  // karena request itu RE-ENTER Next.js dan di dev/standalone bisa gagal sampai
+  // API (tidak terekam di log backend) namun tetap mengembalikan 401 dari jalur
+  // lain → proxy salah anggap sesi invalid → 307 /login?session_invalid=1 → loop.
+  // Solusinya: panggil API backend LANGSUNG lewat NEXT_PUBLIC_API_URL, dan
+  // teruskan header `cookie` dari `request.cookies` secara eksplisit (di runtime
+  // proxy, `request.headers` tidak dijamin memuat `cookie`).
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '');
+  const verifyUrl = `${apiBase}/api/auth/session/verify`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
-    const verifyResp = await fetch(verifyUrl.toString(), {
+    const verifyResp = await fetch(verifyUrl, {
       method: 'GET',
-      headers: request.headers, // Forward semua header (terutama cookie)
-      credentials: 'include',   // Pastikan cookie dikirim ke backend
+      headers: {
+        // Hanya kirim cookie + minimal header; jangan teruskan `host`/`origin`
+        // dari request asal agar backend tidak bingung.
+        cookie: request.cookies.toString(),
+      },
       signal: controller.signal, // Timeout 5 detik
     });
 

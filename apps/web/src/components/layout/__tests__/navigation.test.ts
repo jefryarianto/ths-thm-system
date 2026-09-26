@@ -79,10 +79,10 @@ describe('navigation config', () => {
     }
   });
 
-  it('12 grup navigasi dengan label unik', () => {
+  it('11 grup navigasi dengan label unik', () => {
     const labels = menuGroups.map((g) => g.label);
-    expect(labels).toHaveLength(12);
-    expect(new Set(labels).size).toBe(12);
+    expect(labels).toHaveLength(11);
+    expect(new Set(labels).size).toBe(11);
   });
 
   it('DEFAULT_OPEN_GROUPS mencakup seluruh 7 role', () => {
@@ -97,7 +97,7 @@ describe('filterVisibleGroups', () => {
   it('superadmin melihat semua grup, termasuk item adminOnly', () => {
     const groups = filterVisibleGroups(menuGroups, optionsFor('superadmin'));
     const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
-    expect(groups).toHaveLength(12);
+    expect(groups).toHaveLength(11);
     expect(hrefs).toContain('/admin/queues');
     expect(hrefs).toContain('/ws-monitor');
     expect(hrefs).toContain('/users');

@@ -80,16 +80,36 @@ export interface AssignedKegiatan {
 
 /** Grup yang terbuka secara default saat login pertama (belum ada preferensi tersimpan) */
 export const DEFAULT_OPEN_GROUPS: Record<Role, string[]> = {
-  // System admins live in Keanggotaan + Sistem (Users, Settings, Antrean) daily.
-  superadmin: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi', 'Sistem'],
-  admin_distrik: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi', 'Sistem'],
-  admin_wilayah: ['Utama', 'Keanggotaan', 'Organisasi', 'Keuangan', 'Komunikasi'],
-  admin_ranting: ['Utama', 'Keanggotaan', 'Keuangan', 'Komunikasi'],
-  // Kegiatan organisasi → aktivitas & kalender.
-  admin_kegiatan: ['Utama', 'Pelatihan & Penilaian', 'Keuangan', 'Komunikasi'],
-  // Penguji bekerja di halaman Penilaian.
-  penguji: ['Utama', 'Pelatihan & Penilaian'],
-  anggota: ['Utama', 'Aktivitas', 'Keuangan', 'Komunikasi'],
+  // System admins live in Keanggotaan + Pengaturan / Sistem daily.
+  superadmin: [
+    'Utama',
+    'Keanggotaan',
+    'Keuangan',
+    'Pengguna',
+    'Pemantauan',
+    'Pengaturan',
+    'Cadangan & Sesi',
+    'Gamifikasi',
+    'Lainnya',
+  ],
+  admin_distrik: [
+    'Utama',
+    'Keanggotaan',
+    'Keuangan',
+    'Pengguna',
+    'Pemantauan',
+    'Pengaturan',
+    'Cadangan & Sesi',
+    'Gamifikasi',
+    'Lainnya',
+  ],
+  admin_wilayah: ['Utama', 'Keanggotaan', 'Organisasi', 'Keuangan'],
+  admin_ranting: ['Utama', 'Keanggotaan', 'Keuangan'],
+  // Kegiatan organisasi → Pelatihan & Keuangan.
+  admin_kegiatan: ['Utama', 'Pelatihan', 'Keuangan'],
+  // Penguji bekerja di halaman Pelatihan & Penilaian.
+  penguji: ['Utama', 'Pelatihan'],
+  anggota: ['Utama', 'Keuangan'],
 };
 
 export const menuGroups: MenuGroup[] = [
@@ -148,12 +168,23 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: 'Sistem',
+    label: 'Pengguna',
     items: [
       { href: '/users', label: 'Pengguna', icon: Users, minRole: 'admin_ranting' },
+    ],
+  },
+  {
+    label: 'Pemantauan',
+    items: [
       { href: '/monitoring', label: 'Monitoring', icon: Gauge, minRole: 'admin_ranting' },
       { href: '/monitoring/alerts', label: 'Alert Thresholds', icon: AlertTriangle, minRole: 'admin_ranting' },
       { href: '/monitoring/incidents', label: 'Incidents', icon: Siren, minRole: 'admin_ranting' },
+      { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
+    ],
+  },
+  {
+    label: 'Pengaturan',
+    items: [
       { href: '/settings', label: 'Pengaturan', icon: Settings, minRole: 'admin_ranting' },
       { href: '/settings#autentikasi', label: 'Autentikasi', icon: KeyRound, minRole: 'superadmin' },
       { href: '/settings/email', label: 'Email Admin', icon: Mail, minRole: 'admin_distrik' },
@@ -162,15 +193,29 @@ export const menuGroups: MenuGroup[] = [
       { href: '/settings/kartu', label: 'Template Kartu', icon: IdCard, minRole: 'admin_distrik' },
       { href: '/settings/dokumen', label: 'Template Dokumen', icon: Printer, minRole: 'admin_distrik' },
       { href: '/admin/queues', label: 'Antrean', icon: ListChecks, adminOnly: true },
+    ],
+  },
+  {
+    label: 'Cadangan & Sesi',
+    items: [
       { href: '/settings/fcm-test', label: 'Pengujian FCM', icon: Smartphone, minRole: 'superadmin' },
       { href: '/settings/sessions', label: 'Manajemen Sesi', icon: MonitorCog, minRole: 'superadmin' },
       { href: '/settings/backup', label: 'Database Backup', icon: Database, minRole: 'superadmin' },
-      { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
+    ],
+  },
+  {
+    label: 'Gamifikasi',
+    items: [
       { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
       { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_ranting' },
       { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'admin_kegiatan' },
       { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: ChartNoAxesColumn, minRole: 'admin_ranting' },
       { href: '/gamification/settings', label: 'Pengaturan Gamifikasi', icon: Settings, minRole: 'admin_ranting' },
+    ],
+  },
+  {
+    label: 'Lainnya',
+    items: [
       { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
       { href: '/notifications/report', label: 'Lap. Notifikasi', icon: Megaphone, minRole: 'admin_ranting' },
       { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
