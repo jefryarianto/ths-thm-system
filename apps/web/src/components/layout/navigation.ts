@@ -96,9 +96,16 @@ export const menuGroups: MenuGroup[] = [
   {
     label: 'Utama',
     items: [
-      // Dashboard admin - anggota diarahkan ke /forum sebagai home.
-      // minRole 'penguji' karena role-redirect mengarahkan penguji ke /dashboard juga.
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, minRole: 'penguji' },
+      { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
+      { href: '/calendar', label: 'Kalender', icon: CalendarClock, minRole: 'anggota' },
+      { href: '/forum', label: 'Forum', icon: MessageSquare, minRole: 'anggota' },
+      { href: '/notifications', label: 'Notifikasi', icon: Bell, minRole: 'anggota' },
+      { href: '/org-chart', label: 'Peta Organisasi', icon: Landmark, minRole: 'anggota' },
+      { href: '/documents', label: 'Dokumen', icon: FileText, minRole: 'anggota' },
+      { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
+      { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
+      { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
     ],
   },
   {
@@ -106,14 +113,14 @@ export const menuGroups: MenuGroup[] = [
     items: [
       { href: '/members', label: 'Anggota', icon: Users, minRole: 'admin_ranting' },
       { href: '/members/mutasi', label: 'Mutasi', icon: ArrowLeftRight, minRole: 'admin_ranting' },
-      // admin_kegiatan memasukkan calon anggota ke pendadaran (alur langkah 4)
       { href: '/candidates', label: 'Calon', icon: UserPlus, minRole: 'admin_kegiatan' },
       { href: '/registrations', label: 'Pendaftaran', icon: ClipboardList, minRole: 'admin_ranting' },
       { href: '/claims', label: 'Klaim', icon: BadgeCheck, minRole: 'admin_ranting' },
+      { href: '/letters', label: 'Surat', icon: Mail, minRole: 'admin_ranting' },
     ],
   },
   {
-    label: 'Pelatihan & Penilaian',
+    label: 'Pelatihan',
     items: [
       { href: '/trainings', label: 'Latihan', icon: Dumbbell, minRole: 'admin_ranting' },
       // admin_kegiatan mengelola pendadaran (alur langkah 3)
@@ -121,20 +128,12 @@ export const menuGroups: MenuGroup[] = [
       // admin_kegiatan mengajukan penguji ke admin distrik (alur langkah 6)
       { href: '/examiners', label: 'Penguji', icon: ShieldCheck, minRole: 'admin_kegiatan' },
       { href: '/assessments', label: 'Penilaian', icon: ClipboardCheck, minRole: 'penguji' },
-    ],
-  },
-  {
-    label: 'Aktivitas',
-    items: [
-      { href: '/activities', label: 'Kegiatan', icon: Calendar, minRole: 'anggota' },
-      { href: '/calendar', label: 'Kalender', icon: CalendarClock, minRole: 'anggota' },
       { href: '/approvals', label: 'Persetujuan', icon: ClipboardCheck, minRole: 'admin_ranting' },
     ],
   },
   {
     label: 'Organisasi',
     items: [
-      { href: '/org-chart', label: 'Peta Organisasi', icon: Landmark, minRole: 'anggota' },
       { href: '/org-documents', label: 'Dokumen Organisasi', icon: Archive, minRole: 'anggota' },
       { href: '/settings/jabatan', label: 'Jabatan', icon: IdCard, minRole: 'admin_distrik' },
       { href: '/settings/periode', label: 'Periode', icon: CalendarClock, minRole: 'superadmin' },
@@ -143,50 +142,9 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: 'Dokumen & Surat',
-    items: [
-      { href: '/documents', label: 'Dokumen', icon: FileText, minRole: 'anggota' },
-      { href: '/letters', label: 'Surat', icon: Mail, minRole: 'admin_ranting' },
-    ],
-  },
-  {
     label: 'Keuangan',
     items: [
-      { href: '/dues', label: 'Iuran', icon: CreditCard, minRole: 'anggota' },
       { href: '/payments', label: 'Pembayaran', icon: Wallet, minRole: 'admin_ranting' },
-    ],
-  },
-  {
-    label: 'Gamifikasi',
-    items: [
-      { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
-      { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_ranting' },
-      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'admin_kegiatan' },
-      { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: ChartNoAxesColumn, minRole: 'admin_ranting' },
-      { href: '/gamification/settings', label: 'Pengaturan Gamifikasi', icon: Settings, minRole: 'admin_ranting' },
-    ],
-  },
-  {
-    label: 'Komunikasi',
-    items: [
-      { href: '/forum', label: 'Forum', icon: MessageSquare, minRole: 'anggota' },
-      { href: '/notifications', label: 'Notifikasi', icon: Bell, minRole: 'anggota' },
-      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: Megaphone, minRole: 'admin_ranting' },
-    ],
-  },
-  {
-    label: 'Laporan & Analitik',
-    items: [
-      { href: '/reports', label: 'Laporan Umum', icon: FileBarChart, minRole: 'admin_ranting' },
-      { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
-    ],
-  },
-  {
-    label: 'Konten Public',
-    items: [
-      { href: '/content/berita', label: 'Berita', icon: Newspaper, minRole: 'admin_wilayah' },
-      { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
-      { href: '/content/organisasi', label: 'Konten Web Organisasi', icon: Globe, minRole: 'superadmin' },
     ],
   },
   {
@@ -208,6 +166,15 @@ export const menuGroups: MenuGroup[] = [
       { href: '/settings/sessions', label: 'Manajemen Sesi', icon: MonitorCog, minRole: 'superadmin' },
       { href: '/settings/backup', label: 'Database Backup', icon: Database, minRole: 'superadmin' },
       { href: '/ws-monitor', label: 'WebSocket', icon: Radio, adminOnly: true },
+      { href: '/gamification', label: 'Dasbor Gamifikasi', icon: Trophy, minRole: 'admin_ranting' },
+      { href: '/gamification/admin', label: 'Admin', icon: ShieldCheck, minRole: 'admin_ranting' },
+      { href: '/gamification/scoreboard', label: 'Scoreboard', icon: TrendingUp, minRole: 'admin_kegiatan' },
+      { href: '/gamification/report', label: 'Laporan Gamifikasi', icon: ChartNoAxesColumn, minRole: 'admin_ranting' },
+      { href: '/gamification/settings', label: 'Pengaturan Gamifikasi', icon: Settings, minRole: 'admin_ranting' },
+      { href: '/scan-stats', label: 'Statistik Scan', icon: ScanLine, minRole: 'admin_ranting' },
+      { href: '/notifications/report', label: 'Lap. Notifikasi', icon: Megaphone, minRole: 'admin_ranting' },
+      { href: '/content/sejarah', label: 'Sejarah', icon: BookOpen, minRole: 'superadmin' },
+      { href: '/content/organisasi', label: 'Konten Web Organisasi', icon: Globe, minRole: 'superadmin' },
     ],
   },
 ];

@@ -2,8 +2,27 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode, useState, useEffect } from 'react';
-import { Menu, X, Globe, ChevronRight, Phone, Mail, MapPin } from 'lucide-react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
+import {
+  Menu,
+  X,
+  Globe,
+  ChevronRight,
+  ChevronDown,
+  Phone,
+  Mail,
+  MapPin,
+  Home,
+  BookOpen,
+  Landmark,
+  Users,
+  Building2,
+  Newspaper,
+  Image as ImageIcon,
+  ShieldCheck,
+  BadgeCheck,
+  Heart,
+} from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useI18n } from '@/i18n/context';
 
@@ -11,11 +30,31 @@ interface PublicLayoutProps {
   children: ReactNode;
 }
 
+interface DropdownItem {
+  href: string;
+  label: string;
+  desc?: string;
+  icon: React.ElementType;
+}
+
+interface NavDropdown {
+  id: string;
+  label: string;
+  items: DropdownItem[];
+}
+
 export default function PublicLayout({ children }: PublicLayoutProps) {
   const { locale, t, setLocale } = useI18n();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openMobileAccordions, setOpenMobileAccordions] = useState<Record<string, boolean>>({
+    tentang: true,
+    informasi: false,
+    layanan: false,
+  });
   const [scrolled, setScrolled] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -23,14 +62,94 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const NAV_LINKS = [
-    { href: '/sejarah', label: t.nav.sejarah },
-    { href: '/organisasi', label: t.nav.organisasi },
-    { href: '/kepengurusan', label: t.nav.kepengurusan },
-    { href: '/struktur-organisasi', label: t.nav.strukturOrganisasi || 'Struktur Organisasi' },
-    { href: '/berita', label: t.nav.berita },
-    { href: '/galeri', label: t.nav.galeri },
-    { href: '/donasi', label: t.nav.donasi },
+  // Close desktop dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setOpenDropdown(null);
+  }, [pathname]);
+
+  const toggleMobileAccordion = (key: string) => {
+    setOpenMobileAccordions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const DROPDOWNS: NavDropdown[] = [
+    {
+      id: 'tentang',
+      label: t.nav.tentang || 'Tentang Kami',
+      items: [
+        {
+          href: '/sejarah',
+          label: t.nav.sejarah || 'Sejarah',
+          desc: 'Kilas balik berdirinya THS-THM & para pendiri',
+          icon: BookOpen,
+        },
+        {
+          href: '/organisasi',
+          label: t.nav.organisasi || 'Visi & AD/ART',
+          desc: 'Prinsip organisasi, visi, misi, dan landasan iman',
+          icon: Landmark,
+        },
+        {
+          href: '/struktur-organisasi',
+          label: t.nav.strukturOrganisasi || 'Struktur Organisasi',
+          desc: 'Bagan tata kelola tingkat Nasional hingga Unit',
+          icon: Building2,
+        },
+        {
+          href: '/kepengurusan',
+          label: t.nav.kepengurusan || 'Kepengurusan',
+          desc: 'Jajaran dewan kepengurusan & koordinator distrik',
+          icon: Users,
+        },
+      ],
+    },
+    {
+      id: 'informasi',
+      label: t.nav.informasi || 'Informasi',
+      items: [
+        {
+          href: '/berita',
+          label: t.nav.berita || 'Warta & Berita',
+          desc: 'Kabar kegiatan terkini, pengumuman, dan artikel',
+          icon: Newspaper,
+        },
+        {
+          href: '/galeri',
+          label: t.nav.galeri || 'Galeri Foto & Video',
+          desc: 'Dokumentasi momen latihan dan acara bersama',
+          icon: ImageIcon,
+        },
+      ],
+    },
+    {
+      id: 'layanan',
+      label: t.nav.layanan || 'Layanan Publik',
+      items: [
+        {
+          href: '/verify',
+          label: t.nav.verifikasi || 'Verifikasi Dokumen / KTA',
+          desc: 'Cek keabsahan sertifikat, ijazah, atau kartu anggota via QR',
+          icon: ShieldCheck,
+        },
+        {
+          href: '/klaim',
+          label: t.nav.klaim || 'Klaim Akun Anggota',
+          desc: 'Aktivasi akun digital untuk anggota yang sudah terdaftar',
+          icon: BadgeCheck,
+        },
+      ],
+    },
   ];
 
   return (
@@ -98,23 +217,115 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden xl:flex xl:items-center xl:gap-1">
-              {NAV_LINKS.map((link) => {
-                const isActive = pathname === link.href;
+            <div className="hidden lg:flex lg:items-center lg:gap-1">
+              {/* Home */}
+              <Link
+                href="/"
+                className={`px-3 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  pathname === '/'
+                    ? 'bg-gold-400 text-navy-950 font-bold shadow-md'
+                    : 'text-white/85 hover:text-gold-300 hover:bg-white/10'
+                }`}
+              >
+                {t.nav.beranda || 'Beranda'}
+              </Link>
+
+              {/* Dropdowns */}
+              {DROPDOWNS.map((group) => {
+                const isGroupActive = group.items.some((item) => pathname === item.href);
+                const isOpen = openDropdown === group.id;
+
                 return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-3.5 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gold-400 text-navy-950 font-bold shadow-md'
-                        : 'text-white/85 hover:text-gold-300 hover:bg-white/10'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
+                  <div key={group.id} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenDropdown(isOpen ? null : group.id)}
+                      onMouseEnter={() => setOpenDropdown(group.id)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                        isGroupActive
+                          ? 'bg-white/15 text-gold-300 font-bold'
+                          : 'text-white/85 hover:text-gold-300 hover:bg-white/10'
+                      }`}
+                      aria-expanded={isOpen}
+                      aria-haspopup="true"
+                    >
+                      <span>{group.label}</span>
+                      <ChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-gold-400' : ''}`}
+                      />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isOpen && (
+                      <div
+                        onMouseLeave={() => setOpenDropdown(null)}
+                        className="absolute left-0 top-full pt-2 w-72 z-50 animate-slide-down"
+                      >
+                        <div className="bg-navy-950/95 backdrop-blur-xl border border-gold-400/30 rounded-2xl p-2 shadow-2xl space-y-1">
+                          {group.items.map((item) => {
+                            const isItemActive = pathname === item.href;
+                            const Icon = item.icon;
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setOpenDropdown(null)}
+                                className={`flex items-start gap-3 p-2.5 rounded-xl transition-all duration-150 group ${
+                                  isItemActive
+                                    ? 'bg-gold-400 text-navy-950'
+                                    : 'text-white/90 hover:bg-white/10 hover:text-gold-300'
+                                }`}
+                              >
+                                <div
+                                  className={`p-2 rounded-lg shrink-0 ${
+                                    isItemActive
+                                      ? 'bg-navy-950 text-gold-400'
+                                      : 'bg-white/10 text-gold-400 group-hover:bg-gold-400 group-hover:text-navy-950'
+                                  }`}
+                                >
+                                  <Icon size={16} />
+                                </div>
+                                <div className="min-w-0">
+                                  <div
+                                    className={`text-sm font-semibold leading-snug ${
+                                      isItemActive ? 'text-navy-950 font-bold' : 'text-white'
+                                    }`}
+                                  >
+                                    {item.label}
+                                  </div>
+                                  {item.desc && (
+                                    <div
+                                      className={`text-2xs leading-tight line-clamp-1 mt-0.5 ${
+                                        isItemActive ? 'text-navy-900/80' : 'text-white/60'
+                                      }`}
+                                    >
+                                      {item.desc}
+                                    </div>
+                                  )}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
+
+              {/* Donasi Link */}
+              <Link
+                href="/donasi"
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  pathname === '/donasi'
+                    ? 'bg-gold-400 text-navy-950 font-bold shadow-md'
+                    : 'text-white/85 hover:text-gold-300 hover:bg-white/10'
+                }`}
+              >
+                <Heart size={14} className="text-gold-400" />
+                <span>{t.nav.donasi || 'Donasi'}</span>
+              </Link>
             </div>
 
             {/* Right side: Search + CTA */}
@@ -141,29 +352,84 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* ── Mobile Navigation Drawer ── */}
         {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-white/10 bg-navy-900 text-white animate-slide-down shadow-2xl">
-            <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
-              {NAV_LINKS.map((link) => {
-                const isActive = pathname === link.href;
+          <div className="lg:hidden border-t border-white/10 bg-navy-950/98 backdrop-blur-xl text-white animate-slide-down shadow-2xl max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-2">
+              {/* Beranda */}
+              <Link
+                href="/"
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl font-semibold transition-colors ${
+                  pathname === '/' ? 'bg-gold-400 text-navy-950 font-bold' : 'text-white hover:bg-white/10'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Home size={18} />
+                <span>{t.nav.beranda || 'Beranda'}</span>
+              </Link>
+
+              {/* Accordion Groups */}
+              {DROPDOWNS.map((group) => {
+                const isOpen = openMobileAccordions[group.id] ?? false;
+                const isGroupActive = group.items.some((item) => pathname === item.href);
+
                 return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`block px-4 py-3 rounded-xl font-semibold transition-colors duration-200 ${
-                      isActive
-                        ? 'bg-gold-400 text-navy-950 font-bold'
-                        : 'text-white/90 hover:bg-white/10 hover:text-gold-300'
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
+                  <div key={group.id} className="rounded-xl border border-white/10 overflow-hidden bg-white/5">
+                    <button
+                      type="button"
+                      onClick={() => toggleMobileAccordion(group.id)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white/90 hover:text-white"
+                      aria-expanded={isOpen}
+                    >
+                      <span className={isGroupActive ? 'text-gold-300 font-bold' : ''}>{group.label}</span>
+                      <ChevronDown
+                        size={16}
+                        className={`text-gold-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-2 pb-2 space-y-1">
+                        {group.items.map((item) => {
+                          const isItemActive = pathname === item.href;
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                                isItemActive
+                                  ? 'bg-gold-400 text-navy-950 font-bold'
+                                  : 'text-white/80 hover:bg-white/10 hover:text-white'
+                              }`}
+                            >
+                              <Icon size={16} className={isItemActive ? 'text-navy-950' : 'text-gold-400'} />
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
+
+              {/* Donasi */}
+              <Link
+                href="/donasi"
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl font-semibold transition-colors ${
+                  pathname === '/donasi' ? 'bg-gold-400 text-navy-950 font-bold' : 'text-white hover:bg-white/10'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Heart size={18} className="text-gold-400" />
+                <span>{t.nav.donasi || 'Donasi'}</span>
+              </Link>
+
+              {/* Login & Daftar Actions */}
               <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg font-semibold transition-colors text-center border border-white/20"
+                  className="block px-4 py-3 text-white hover:bg-white/10 rounded-xl font-semibold transition-colors text-center border border-white/20"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.login}
@@ -206,21 +472,40 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               </p>
             </div>
 
-            {/* Column 2: Navigasi */}
+            {/* Column 2: Profil & Navigasi */}
             <div>
-              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Navigasi</h4>
+              <h4 className="font-bold text-gold-400 mb-4 text-xs uppercase tracking-widest">Tentang Organisasi</h4>
               <ul className="space-y-2">
-                {NAV_LINKS.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-white/60 hover:text-white transition-colors text-sm flex items-center gap-1"
-                    >
-                      <ChevronRight size={12} aria-hidden="true" />
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link href="/sejarah" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                    <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
+                    <span>Sejarah Pendirian</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/organisasi" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                    <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
+                    <span>Visi & AD/ART</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/struktur-organisasi" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                    <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
+                    <span>Struktur Organisasi</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/kepengurusan" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                    <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
+                    <span>Dewan Kepengurusan</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/berita" className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                    <ChevronRight size={12} className="text-gold-400" aria-hidden="true" />
+                    <span>Warta & Berita</span>
+                  </Link>
+                </li>
               </ul>
             </div>
 

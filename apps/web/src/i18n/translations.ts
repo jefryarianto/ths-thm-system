@@ -2,6 +2,10 @@ export const translations = {
   id: {
     // Navigation
     nav: {
+      beranda: 'Beranda',
+      tentang: 'Tentang Kami',
+      informasi: 'Informasi',
+      layanan: 'Layanan',
       sejarah: 'Sejarah',
       organisasi: 'Organisasi',
       kepengurusan: 'Kepengurusan',
@@ -9,6 +13,8 @@ export const translations = {
       berita: 'Berita',
       galeri: 'Galeri',
       donasi: 'Donasi',
+      verifikasi: 'Verifikasi Dokumen',
+      klaim: 'Klaim Anggota',
       login: 'Login',
       daftar: 'Daftar',
     },
@@ -107,6 +113,10 @@ export const translations = {
   en: {
     // Navigation
     nav: {
+      beranda: 'Home',
+      tentang: 'About Us',
+      informasi: 'Information',
+      layanan: 'Services',
       sejarah: 'History',
       organisasi: 'Organization',
       kepengurusan: 'Management',
@@ -114,6 +124,8 @@ export const translations = {
       berita: 'News',
       galeri: 'Gallery',
       donasi: 'Donation',
+      verifikasi: 'Document Verification',
+      klaim: 'Member Claim',
       login: 'Login',
       daftar: 'Register',
     },

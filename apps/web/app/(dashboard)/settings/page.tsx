@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '@/components/ui/confirm-modal';
 import apiClient, { unwrap } from '@/lib/api-client';
 import Link from 'next/link';
-import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Calendar, Shield, PenLine, Layers, Upload, ImagePlus, User, Lock, Bell, Settings as SettingsIcon, Mail, Smartphone, Database, FileText, Users } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, Save, Building2, ArrowRight, Shield, PenLine, Layers, Upload, ImagePlus, User, Lock, Settings as SettingsIcon, Mail, Smartphone, Database, FileText, Users } from 'lucide-react';
 import { PermissionGuard } from '@/components/auth/permission-guard';
 import Modal from '@/components/ui/modal';
 import JabatanSelect from '@/components/ui/jabatan-select';
@@ -111,11 +111,21 @@ function GoogleOAuthToggle() {
 export default function SettingsPage() {
   const { confirm, confirmModal } = useConfirm();
   const toast = useToast();
+  const [activeTab, setActiveTab] = useState<'organisasi' | 'autentikasi' | 'sistem' | 'pemeliharaan'>('organisasi');
   const [org, setOrg] = useState<OrgSettings | null>(null);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [signatures, setSignatures] = useState<Signature[]>([]);
   const [stamp, setStamp] = useState<Stamp | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash === '#autentikasi') setActiveTab('autentikasi');
+      else if (hash === '#sistem') setActiveTab('sistem');
+      else if (hash === '#pemeliharaan') setActiveTab('pemeliharaan');
+    }
+  }, []);
 
   // Org edit modal
   const [showOrgModal, setShowOrgModal] = useState(false);
@@ -354,103 +364,131 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <Breadcrumbs />
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Pengaturan Sistem</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Settings Hub</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Pusat konfigurasi tata kelola organisasi, integrasi, keamanan, dan pemeliharaan sistem
+          </p>
+        </div>
         <button
           onClick={fetchData}
-          className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition shadow-sm"
         >
           <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
-      {/* == Organisasi == */}
-      <SectionHeader icon={<Building2 size={20} className="text-blue-600 dark:text-blue-400" />} title="Organisasi" subtitle="Struktur organisasi, periode, dan pengaturan distrik" />
-      <Link
-        href="/settings/org-structure"
-        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950">
-            <Building2 size={20} className="text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-              Struktur Organisasi
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Kelola Distrik, Wilayah, dan Ranting
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={18} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition" />
-      </Link>
+      {/* Tabs Bar */}
+      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveTab('organisasi')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+            activeTab === 'organisasi'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+          }`}
+        >
+          <Building2 size={16} />
+          <span>Organisasi & Distrik</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('autentikasi')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+            activeTab === 'autentikasi'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+          }`}
+        >
+          <Lock size={16} />
+          <span>Autentikasi & Keamanan</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('sistem')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+            activeTab === 'sistem'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+          }`}
+        >
+          <SettingsIcon size={16} />
+          <span>Komunikasi & Dokumen</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('pemeliharaan')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-xl border-b-2 transition whitespace-nowrap ${
+            activeTab === 'pemeliharaan'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+              : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+          }`}
+        >
+          <Database size={16} />
+          <span>Pemeliharaan & Server</span>
+        </button>
+      </div>
 
-      <Link
-        href="/settings/periods"
-        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-green-300 dark:hover:border-green-700 transition group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950">
-            <Calendar size={20} className="text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition">
-              Periode Iuran
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Kelola periode dan tahun iuran anggota
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={18} className="text-gray-400 group-hover:text-green-500 group-hover:translate-x-0.5 transition" />
-      </Link>
+      {/* ── TAB 1: ORGANISASI & DISTRIK ── */}
+      {activeTab === 'organisasi' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Link
+              href="/settings/org-structure"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                    Struktur Distrik
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Distrik, Wilayah & Ranting</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
+            </Link>
 
-      <Link
-        href="/settings/penandatangan"
-        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950">
-            <PenLine size={20} className="text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-              Penandatangan
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Kelola penandatangan untuk kartu anggota digital
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={18} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition" />
-      </Link>
+            <Link
+              href="/settings/jabatan"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                    Daftar Jabatan
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Kelola hierarki jabatan</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition" />
+            </Link>
 
-      <Link
-        href="/settings/tingkatan"
-        className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-300 dark:hover:border-amber-700 transition group"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950">
-            <Layers size={20} className="text-amber-600 dark:text-amber-400" />
+            <Link
+              href="/settings/tingkatan"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-400 dark:hover:border-amber-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                  <Layers size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                    Tingkatan / Sabuk
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Strip & balok sabuk anggota</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition" />
+            </Link>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
-              Tingkatan
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Kelola strip/balok tingkatan pada kartu anggota
-            </p>
-          </div>
-        </div>
-        <ArrowRight size={18} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition" />
-      </Link>
-
-      {/* == Autentikasi == */}
-      <SectionHeader icon={<Lock size={20} className="text-blue-600 dark:text-blue-400" />} title="Autentikasi" subtitle="Pengaturan metode masuk pengguna" />
-      <GoogleOAuthToggle />
-
-      {/* == Sistem == */}
       <SectionHeader icon={<SettingsIcon size={20} className="text-purple-600 dark:text-purple-400" />} title="Sistem" subtitle="Pengaturan teknis, email, keamanan, dan cadangan data" />
 
       <Link
@@ -684,6 +722,214 @@ export default function SettingsPage() {
           )}
         </Card>
       </div>
+      </div>
+      )}
+
+      {/* ── TAB 2: AUTENTIKASI & KEAMANAN ── */}
+      {activeTab === 'autentikasi' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="space-y-4">
+            <SectionHeader icon={<Lock size={20} className="text-blue-600 dark:text-blue-400" />} title="Metode Masuk" subtitle="Konfigurasi autentikasi pihak ketiga dan single sign-on" />
+            <GoogleOAuthToggle />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <Link
+              href="/settings/sessions"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                  <User size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                    Manajemen Sesi Pengguna
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Sesi aktif dan cabut token login</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/audit-logs"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-purple-400 dark:hover:border-purple-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
+                    Audit Log & Keamanan
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Lacak jejak akses data & audit perubahan</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-1 transition" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 3: KOMUNIKASI & DOKUMEN ── */}
+      {activeTab === 'sistem' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              href="/settings/email"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                  <Mail size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                    Konfigurasi SMTP Email
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Server SMTP, kredensial & pengirim resmi</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/settings/email/logs"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition">
+                    Riwayat Pengiriman Email
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Log pesan terkirim, gagal & status antrean</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-sky-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/settings/fcm-test"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-amber-400 dark:hover:border-amber-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                  <Smartphone size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                    Pengujian Notifikasi FCM
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Uji push notification Firebase ke perangkat</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/settings/kartu"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                    Template Kartu Anggota
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Desain & layout kartu fisik/digital</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/settings/dokumen"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-teal-400 dark:hover:border-teal-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition">
+                    Template Surat & Dokumen
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Kop surat, format sertifikat & ijazah</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-teal-500 group-hover:translate-x-1 transition" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 4: PEMELIHARAAN & SERVER ── */}
+      {activeTab === 'pemeliharaan' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Link
+              href="/settings/backup"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                  <Database size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                    Database Backup
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Unduh & jadwalkan cadangan data</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/admin/queues"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-orange-400 dark:hover:border-orange-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400">
+                  <SettingsIcon size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
+                    Antrean Tugas (BullMQ)
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Monitor antrean background job</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition" />
+            </Link>
+
+            <Link
+              href="/ws-monitor"
+              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                  <RefreshCw size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                    WebSocket Monitor
+                  </p>
+                  <p className="text-2xs text-gray-500 dark:text-gray-400">Koneksi realtime & channel aktif</p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ─── Edit Org Modal ─── */}
       <Modal
