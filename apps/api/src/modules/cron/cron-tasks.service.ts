@@ -1,8 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GraduationsService } from '../graduations/graduations.service';
+import { PersistentAuditService } from '../../common/services/persistent-audit.service';
+
+/** Batas retensi sesi tidak aktif (hari). Bisa dioverride via env SESSION_RETENTION_DAYS. */
+const SESSION_RETENTION_DAYS = 14;
+/** Sesi yang sudah direvoke dihapus setelah berapa hari. */
+const SESSION_REVOKED_RETENTION_DAYS = 1;
 
 @Injectable()
 export class CronTasksService {
@@ -12,6 +18,7 @@ export class CronTasksService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly graduationsService: GraduationsService,
+    @Optional() private readonly persistentAudit?: PersistentAuditService,
   ) {}
 
   // ─────────────────────────────────────────────────────────
@@ -510,6 +517,53 @@ export class CronTasksService {
         );
       }
     }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  //  SESSION CLEANUP: hapus sesi kedaluwarsa (daily @ 2AM)
+  //  - Sesi tidak aktif > SESSION_RETENTION_DAYS hari (default 14) → dihapus
+  //  - Sesi yang sudah direvoke > SESSION_REVOKED_RETENTION_DAYS hari → dihapus
+  //  Tanpa ini, baris user_sessions menumpuk tanpa batas (kasus prod:
+  //  255 sesi aktif menumpuk untuk satu user).
+  // ─────────────────────────────────────────────────────────
+
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async cleanupStaleSessions(): Promise<void> {
+    const retentionDays =
+      Number(process.env.SESSION_RETENTION_DAYS) || SESSION_RETENTION_DAYS;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - retentionDays);
+
+    // Sesi tidak aktif melewati batas retensi → hapus permanen
+    const stale = await this.prisma.userSession.deleteMany({
+      where: { lastUsedAt: { lt: cutoff } },
+    });
+
+    // Sesi revoked lama tidak lagi berguna untuk riwayat → hapus juga
+    const revokedCutoff = new Date();
+    revokedCutoff.setDate(
+      revokedCutoff.getDate() - SESSION_REVOKED_RETENTION_DAYS,
+    );
+    const revoked = await this.prisma.userSession.deleteMany({
+      where: { revokedAt: { lt: revokedCutoff } },
+    });
+
+    const total = stale.count + revoked.count;
+    if (total === 0) return;
+
+    this.logger.log(
+      `Session cleanup: ${stale.count} stale (>${retentionDays} hari) + ${revoked.count} revoked dihapus`,
+    );
+
+    // Catat ke audit log (best-effort) agar eksekusi cron dapat diaudit
+    await this.persistentAudit?.log({
+      action: 'SESSION_CLEANUP',
+      entity: 'UserSession',
+      entityId: null,
+      userId: null,
+      details: { stale: stale.count, revoked: revoked.count, retentionDays },
+    });
   }
 
   // ─────────────────────────────────────────────────────────
