@@ -59,7 +59,6 @@ function safeNextParam(value: string | null | undefined): string | null {
   if (!/^\/([^/\\:]|$)/.test(decoded)) return null;
   return decoded;
 }
-import { useToast } from '@/components/ui/toast';
 
 function getOAuthErrorFromUrl(): string | null {
   if (typeof window === 'undefined') return null;
@@ -107,10 +106,10 @@ function BrandFeatureItem({
 }) {
   return (
     <div className="flex items-center gap-3.5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
-        <Icon size={20} className="stroke-[2]" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm ring-1 ring-white/20">
+        <Icon size={20} className="stroke-[2.2]" />
       </div>
-      <span className="text-[15px] font-medium leading-snug text-white/95">{text}</span>
+      <span className="text-[15px] font-medium leading-snug text-white">{text}</span>
     </div>
   );
 }
@@ -122,11 +121,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(true);
-  const toast = useToast();
 
   // AUTH-011: focus target for the global error banner so keyboard/screen-reader
   // users get immediate feedback after a failed submit.
@@ -162,10 +161,10 @@ export default function LoginPage() {
   useEffect(() => {
     if (!mounted) return;
     if (!isAuthenticated) return;
-    if (isSessionInvalid) return;
+    if (isSessionInvalid || sessionExpiredNotice) return;
     // Prefer the validated return-to (AUTH-010), else the role home.
     router.replace(resolvedNext ?? getHomePathForRole(user?.role));
-  }, [mounted, isAuthenticated, isSessionInvalid, resolvedNext, user?.role, router]);
+  }, [mounted, isAuthenticated, isSessionInvalid, sessionExpiredNotice, resolvedNext, user?.role, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -175,7 +174,7 @@ export default function LoginPage() {
     // and the AUTH-005 redirect loop is broken.
     if (typeof window !== 'undefined' && window.location.search.includes('session_invalid=1')) {
       sessionManager.logout();
-      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+      setSessionExpiredNotice(true);
       const url = new URL(window.location.href);
       url.searchParams.delete('session_invalid');
       window.history.replaceState({}, '', url.toString());
@@ -189,11 +188,12 @@ export default function LoginPage() {
         }
       })
       .catch(() => {});
+
     // Check if we were redirected here due to session expiry
     const isExpired = localStorage.getItem('session-expired') === 'true';
     if (isExpired) {
       localStorage.removeItem('session-expired');
-      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+      setSessionExpiredNotice(true);
     }
     const oauthError = getOAuthErrorFromUrl();
     if (oauthError) setError(oauthError);
@@ -210,11 +210,12 @@ export default function LoginPage() {
       setIdentifier(remembered);
       setRememberMe(true);
     }
-  }, [toast]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSessionExpiredNotice(false);
     setSuccessMessage('');
     setLoading(true);
 
@@ -263,16 +264,19 @@ export default function LoginPage() {
   // AUTH-005: an authenticated user is being redirected to their home — render
   // a neutral loading state instead of the login form so the form never flashes
   // for someone who is already signed in.
-  if (mounted && isAuthenticated) {
+  // Gated on NOT being an invalid/expired session redirect, otherwise the
+  // "Anda sudah masuk. Mengalihkan..." screen would flash before the client
+  // state is cleared on ?session_invalid=1 (and loop back into the dashboard).
+  if (mounted && isAuthenticated && !isSessionInvalid && !sessionExpiredNotice) {
     return (
       <div
         className="flex min-h-screen items-center justify-center bg-[#FAF9FF] font-sans"
         role="status"
         aria-label="Anda sudah masuk. Mengalihkan..."
       >
-        <div className="flex flex-col items-center gap-3 text-muted">
-          <Loader2 size={28} className="animate-spin" />
-          <p className="text-sm">Anda sudah masuk. Mengalihkan...</p>
+        <div className="flex flex-col items-center gap-3 text-surface-700">
+          <Loader2 size={28} className="animate-spin text-primary" />
+          <p className="text-sm font-semibold text-secondary">Anda sudah masuk. Mengalihkan...</p>
         </div>
       </div>
     );
@@ -286,7 +290,7 @@ export default function LoginPage() {
 
       {/* ── MOBILE COMPACT HEADER (< 1024px) ──
           Dipadatkan agar form login normal tidak perlu scroll di layar mobile wajar. */}
-      <div className="relative overflow-hidden bg-secondary px-5 py-3 text-center text-white sm:py-5 lg:hidden">
+      <div className="relative overflow-hidden bg-secondary px-5 py-3 text-center text-white sm:py-5 lg:hidden shadow-md">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/25 blur-3xl"
@@ -295,7 +299,7 @@ export default function LoginPage() {
           <img
             src="/logo.svg"
             alt="THS-THM Logo"
-            className="h-9 w-9 object-contain drop-shadow-md sm:h-14 sm:w-14"
+            className="h-10 w-10 object-contain drop-shadow-md sm:h-14 sm:w-14"
           />
           <h1 className="mt-1.5 text-lg font-bold tracking-tight text-white">
             THS-THM System
@@ -337,7 +341,7 @@ export default function LoginPage() {
           <p className="mt-2 text-base font-semibold text-primary-100 xl:text-lg">
             Satu Data THS-THM Indonesia
           </p>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-secondary-100/85">
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-white/90">
             Platform terpadu untuk pengelolaan data anggota, pelatihan, kegiatan, iuran, dan
             dokumen organisasi THS-THM di seluruh Indonesia.
           </p>
@@ -364,8 +368,8 @@ export default function LoginPage() {
         </div>
 
         {/* Quote */}
-        <div className="relative mt-8 border-t border-white/15 pt-5">
-          <p className="text-sm italic leading-relaxed text-primary-100/85">
+        <div className="relative mt-8 border-t border-white/20 pt-5">
+          <p className="text-sm italic leading-relaxed text-white/90">
             &ldquo;Bersama membangun organisasi yang lebih baik, transparan, dan efisien.&rdquo;
           </p>
         </div>
@@ -373,7 +377,7 @@ export default function LoginPage() {
 
       {/* ── RIGHT PANEL - LOGIN FORM (Desktop 60%, Clean Light Surface) ──
           Surface #FAF9FF sesuai spesifikasi. */}
-      <div className="flex w-full flex-1 flex-col justify-center overflow-y-auto bg-[#FAF9FF] px-5 py-4 sm:px-10 sm:py-8 lg:w-[60%] lg:px-12 xl:px-16">
+      <div className="flex w-full flex-1 flex-col justify-center overflow-y-auto bg-[#FAF9FF] px-5 py-6 sm:px-10 sm:py-8 lg:w-[60%] lg:px-12 xl:px-16">
         <div className="mx-auto w-full max-w-[460px]">
           {/* Login Header */}
           <div className="mb-4 sm:mb-6">
@@ -382,15 +386,29 @@ export default function LoginPage() {
                 <LogIn size={22} className="stroke-[2.5]" />
               </div>
               <div>
-                <h2 className="text-lg font-bold tracking-tight text-secondary sm:text-[28px]">
+                <h2 className="text-xl font-bold tracking-tight text-secondary sm:text-[28px]">
                   Masuk ke Akun
                 </h2>
-                <p className="mt-0.5 text-xs text-muted sm:text-sm">
+                <p className="mt-0.5 text-xs font-medium text-surface-700 sm:text-sm">
                   Masukkan kredensial Anda untuk mengakses dashboard
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Session Expired Notice (persistent inline feedback for ?session_invalid=1
+              or localStorage session-expired, instead of only a fleeting toast) */}
+          {sessionExpiredNotice && (
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-3 rounded-xl border border-warning-300 bg-warning-50 p-3.5 text-xs text-warning-900 shadow-sm animate-fade-in-up sm:text-sm"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning-700" />
+              <span className="flex-1 font-medium text-warning-900">
+                Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan ke dashboard.
+              </span>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -400,33 +418,33 @@ export default function LoginPage() {
               data-testid="login-error"
               role="alert"
               tabIndex={-1}
-              className="mb-4 flex items-start gap-3 rounded-xl border border-error-200 bg-error-50/90 p-3.5 text-xs text-error animate-fade-in-up focus:outline-none sm:text-sm"
+              className="mb-4 flex items-start gap-3 rounded-xl border border-error-300 bg-error-50 p-3.5 text-xs font-semibold shadow-sm animate-fade-in-up focus:outline-none sm:text-sm"
             >
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-error" />
-              <span className="flex-1 font-medium">{error}</span>
+              <span className="flex-1 font-medium text-error-900">{error}</span>
             </div>
           )}
 
           {/* Success Message */}
           {successMessage && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-success-200 bg-success-50/90 p-3.5 text-xs text-success animate-fade-in-up sm:text-sm">
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-success-300 bg-success-50 p-3.5 text-xs font-semibold shadow-sm animate-fade-in-up sm:text-sm">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              <span className="flex-1 font-medium">{successMessage}</span>
+              <span className="flex-1 font-medium text-success-900">{successMessage}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             {/* Email / No. HP Input */}
             <div>
               <label
                 htmlFor="identifier"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-secondary"
               >
                 Email / No. HP
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-surface-500">
                   <Mail size={18} />
                 </div>
                 <input
@@ -445,10 +463,10 @@ export default function LoginPage() {
                   aria-describedby={error ? 'login-error' : undefined}
                   autoComplete="username"
                   placeholder="nama@email.com / 08xxxxxxxxxx"
-                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-text placeholder:text-muted transition-all duration-200 focus:outline-none focus:ring-4 ${
+                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-4 text-sm font-medium text-text placeholder:text-surface-400 shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 ${
                     error
                       ? 'border-error focus:border-error focus:ring-error/15'
-                      : 'border-border hover:border-muted/60 focus:border-primary focus:ring-primary/15'
+                      : 'border-border hover:border-surface-400 focus:border-primary focus:ring-primary/15'
                   }`}
                 />
               </div>
@@ -458,12 +476,12 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-secondary"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-secondary"
               >
                 Password
               </label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-surface-500">
                   <Lock size={18} />
                 </div>
                 <input
@@ -482,10 +500,10 @@ export default function LoginPage() {
                   aria-describedby={error ? 'login-error' : undefined}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-11 text-sm text-text placeholder:text-muted transition-all duration-200 focus:outline-none focus:ring-4 ${
+                  className={`block h-[54px] w-full rounded-xl border bg-white pl-11 pr-11 text-sm font-medium text-text placeholder:text-surface-400 shadow-sm transition-all duration-200 focus:outline-none focus:ring-4 ${
                     error
                       ? 'border-error focus:border-error focus:ring-error/15'
-                      : 'border-border hover:border-muted/60 focus:border-primary focus:ring-primary/15'
+                      : 'border-border hover:border-surface-400 focus:border-primary focus:ring-primary/15'
                   }`}
                 />
                 <button
@@ -493,7 +511,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
                   className={`absolute inset-y-0 right-0 flex items-center pr-3.5 transition-colors ${
-                    error ? 'text-error' : 'text-muted hover:text-secondary'
+                    error ? 'text-error' : 'text-surface-500 hover:text-secondary'
                   }`}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -503,19 +521,19 @@ export default function LoginPage() {
 
             {/* Remember Me + Forgot Password in ONE Single Row */}
             <div className="flex items-center justify-between pt-0.5">
-              <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-text">
+              <label className="flex cursor-pointer select-none items-center gap-2 text-sm font-medium text-text">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
                 />
-                <span className="font-normal text-text">Ingat saya</span>
+                <span>Ingat saya</span>
               </label>
 
               <Link
                 href="/forgot-password"
-                className="text-sm font-semibold text-link transition-colors hover:text-link-dark hover:underline"
+                className="text-sm font-bold text-link transition-colors hover:text-link-dark hover:underline"
               >
                 Lupa Password?
               </Link>
@@ -527,7 +545,7 @@ export default function LoginPage() {
                 type="submit"
                 data-testid="login-submit"
                 disabled={loading}
-                className="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-white shadow-sm transition-all duration-200 hover:bg-[var(--primary-hover)] active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                className="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-white shadow-md transition-all duration-200 hover:bg-[var(--primary-hover)] active:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -543,10 +561,10 @@ export default function LoginPage() {
 
           {/* Google Login */}
           {googleOAuthEnabled && (
-            <div className="mt-3 sm:mt-4">
-              <div className="relative my-2.5 sm:my-3 flex items-center justify-center">
+            <div className="mt-4 sm:mt-5">
+              <div className="relative my-3 flex items-center justify-center">
                 <div className="h-px min-w-0 flex-1 border-t border-border" />
-                <span className="shrink-0 whitespace-nowrap bg-[#FAF9FF] px-3 text-xs font-medium uppercase tracking-wider text-muted select-none">
+                <span className="shrink-0 whitespace-nowrap bg-[#FAF9FF] px-3 text-xs font-bold uppercase tracking-wider text-surface-600 select-none">
                   Atau login dengan
                 </span>
                 <div className="h-px min-w-0 flex-1 border-t border-border" />
@@ -554,7 +572,7 @@ export default function LoginPage() {
 
               <a
                 href="/api/auth/google"
-                className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl border border-border bg-white text-sm font-semibold text-text shadow-sm transition-all duration-200 hover:bg-surface-variant active:bg-surface-variant"
+                className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl border border-border bg-white text-sm font-bold text-secondary shadow-sm transition-all duration-200 hover:bg-surface-variant hover:border-surface-400 active:bg-surface-variant"
               >
                 <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -580,30 +598,30 @@ export default function LoginPage() {
           )}
 
           {/* Membership Actions: Klaim & Daftar */}
-          <div className="mt-3 sm:mt-4">
-            <p className="mb-2 text-center text-xs font-medium text-muted">Belum punya akun?</p>
+          <div className="mt-4 sm:mt-5">
+            <p className="mb-2 text-center text-xs font-semibold text-surface-600">Belum punya akun?</p>
 
             <div className="space-y-2">
               {/* Klaim Keanggotaan */}
               <Link
                 href="/klaim"
-                className="group flex items-center justify-between rounded-xl border border-primary-100 bg-primary-50 p-2.5 transition-all duration-200 hover:bg-primary-container sm:p-3"
+                className="group flex items-center justify-between rounded-xl border border-primary-200 bg-white p-3 shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary-50/50"
               >
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm sm:h-9 sm:w-9">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
                     <UserCheck size={18} className="stroke-[2.5]" />
                   </div>
                   <div>
-                    <span className="block text-[13px] font-semibold text-secondary sm:text-sm">
+                    <span className="block text-sm font-bold text-secondary">
                       Klaim Keanggotaan
                     </span>
-                    <span className="hidden text-xs text-muted sm:block">
+                    <span className="block text-xs font-medium text-surface-600">
                       Sudah menjadi anggota tapi belum terdaftar di sistem
                     </span>
                   </div>
                 </div>
                 <ArrowRight
-                  size={16}
+                  size={18}
                   className="ml-2 shrink-0 text-primary transition-transform duration-200 group-hover:translate-x-1"
                 />
               </Link>
@@ -611,23 +629,23 @@ export default function LoginPage() {
               {/* Daftar Calon Anggota */}
               <Link
                 href="/daftar"
-                className="group flex items-center justify-between rounded-xl border border-primary-100 bg-primary-50 p-2.5 transition-all duration-200 hover:bg-primary-container sm:p-3"
+                className="group flex items-center justify-between rounded-xl border border-primary-200 bg-white p-3 shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary-50/50"
               >
-                <div className="flex items-center gap-2.5 sm:gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm sm:h-9 sm:w-9">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
                     <UserPlus size={18} className="stroke-[2.5]" />
                   </div>
                   <div>
-                    <span className="block text-[13px] font-semibold text-secondary sm:text-sm">
+                    <span className="block text-sm font-bold text-secondary">
                       Daftar Calon Anggota
                     </span>
-                    <span className="hidden text-xs text-muted sm:block">
+                    <span className="block text-xs font-medium text-surface-600">
                       Bergabung menjadi bagian dari THS-THM
                     </span>
                   </div>
                 </div>
                 <ArrowRight
-                  size={16}
+                  size={18}
                   className="ml-2 shrink-0 text-primary transition-transform duration-200 group-hover:translate-x-1"
                 />
               </Link>
@@ -637,7 +655,7 @@ export default function LoginPage() {
           {/* Dev credentials (only shown in development) */}
           {isDev && (
             <div className="mt-3.5 rounded-xl border border-warning-200 bg-warning-50/90 px-3.5 py-2.5 text-xs">
-              <p className="font-semibold text-warning-800">⚡ Development Mode</p>
+              <p className="font-bold text-warning-800">⚡ Development Mode</p>
               <p className="mt-0.5 text-warning-700">
                 Seed: <code className="font-mono font-bold">superadmin@ths-thm.org</code> /{' '}
                 <code className="font-mono font-bold">password123</code>
@@ -646,9 +664,9 @@ export default function LoginPage() {
           )}
 
           {/* Footer */}
-          <div className="mt-3 text-center sm:mt-5">
-            <p className="text-xs font-semibold text-secondary">Pro Patria et Ecclesia</p>
-            <p className="mt-0.5 text-2xs text-muted">
+          <div className="mt-4 text-center sm:mt-6">
+            <p className="text-xs font-bold tracking-wide text-secondary">Pro Patria et Ecclesia</p>
+            <p className="mt-0.5 text-xs font-medium text-surface-600">
               &copy; 2026 | Created by litbang_koornas 2026
             </p>
           </div>
