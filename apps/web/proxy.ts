@@ -58,6 +58,7 @@ export async function proxy(request: NextRequest) {
   // Jika tidak ada refreshToken, dianggap tidak terautentikasi.
   if (!refreshToken) {
     const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('session_invalid', '1');
     return NextResponse.redirect(loginUrl);
   }
 
@@ -81,11 +82,14 @@ export async function proxy(request: NextRequest) {
     }
 
     // Jika backend mengembalikan 401 (sesi tidak valid) atau status lain,
-    // anggap sesi tidak valid dan redirect ke login.
+    // anggap sesi tidak valid dan redirect ke login dengan flag untuk
+    // membersihkan auth state stale di client agar tidak terjadi infinite loop.
     loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('session_invalid', '1');
   } catch {
     // Jika terjadi error (timeout, network error, dll), fail closed.
     loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('session_invalid', '1');
   } finally {
     clearTimeout(timeoutId);
   }

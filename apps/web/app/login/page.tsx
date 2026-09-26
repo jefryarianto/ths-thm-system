@@ -23,6 +23,7 @@ import {
 import apiClient, { setTokens } from '@/lib/api-client';
 import { useAuth } from '@/hooks/use-auth';
 import { getHomePathForRole } from '@/lib/role-redirect';
+import { sessionManager } from '@/lib/session-manager';
 
 // AUTH-003: shared key between the login handoff and the force-change page.
 const FORCE_CHANGE_TOKEN_KEY = 'forceChangeToken';
@@ -145,6 +146,15 @@ export default function LoginPage() {
   // Gated on `mounted` so this never fires on the pre-hydration anonymous render
   // (which would both cause a hydration mismatch and false-redirect anonymous
   // users who genuinely belong here).
+  // Gated on NOT having `session_invalid` query param: if the Next.js proxy
+  // just bounced this user to /login because their server session was missing
+  // or rejected, client-side localStorage state is STALE. Pushing back to
+  // the dashboard would create an infinite redirect loop.
+  const isSessionInvalid =
+    mounted &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('session_invalid') === '1';
+
   const resolvedNext = mounted
     ? safeNextParam(new URLSearchParams(window.location.search).get('next'))
     : null;
@@ -152,12 +162,25 @@ export default function LoginPage() {
   useEffect(() => {
     if (!mounted) return;
     if (!isAuthenticated) return;
+    if (isSessionInvalid) return;
     // Prefer the validated return-to (AUTH-010), else the role home.
     router.replace(resolvedNext ?? getHomePathForRole(user?.role));
-  }, [mounted, isAuthenticated, resolvedNext, user?.role, router]);
+  }, [mounted, isAuthenticated, isSessionInvalid, resolvedNext, user?.role, router]);
 
   useEffect(() => {
     setMounted(true);
+
+    // If redirected here by proxy due to an invalid/expired server session,
+    // clear the stale client auth state immediately so useAuth becomes anonymous
+    // and the AUTH-005 redirect loop is broken.
+    if (typeof window !== 'undefined' && window.location.search.includes('session_invalid=1')) {
+      sessionManager.logout();
+      toast('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('session_invalid');
+      window.history.replaceState({}, '', url.toString());
+    }
+
     apiClient
       .get('/auth/providers')
       .then(({ data }) => {

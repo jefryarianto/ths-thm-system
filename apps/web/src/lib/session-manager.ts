@@ -190,6 +190,12 @@ class SessionManager {
     this.clearTokens();
     localStorage.removeItem('session-expired');
     localStorage.removeItem('user');
+    // Notify subscribers (e.g. useAuth) so any client-side "authenticated"
+    // state derived from a stale localStorage.user is cleared immediately.
+    // This breaks the login redirect loop where the server rejects a
+    // protected page (invalid refreshToken) but the client still believes
+    // it is signed in and keeps bouncing back to the dashboard.
+    this.listeners.forEach((l) => l());
   }
 
   reset() {

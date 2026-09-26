@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { Role, User } from '@/types';
+import { sessionManager } from '@/lib/session-manager';
 
 /**
  * Role hierarchy index - higher = more privilege.
@@ -122,8 +123,16 @@ export function useAuth() {
 
   // Load the stored user after hydration so the first client render
   // matches the server-rendered HTML (prevents hydration mismatch).
+  // Also re-read whenever the sessionManager notifies (e.g. after logout or expiry)
+  // so any stale client state is immediately cleared across all components.
   useEffect(() => {
     setState(createAuthState(readStoredUser()));
+    const unsubscribe = sessionManager.subscribe(() => {
+      setState(createAuthState(readStoredUser()));
+    });
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Memoize the public shape so consumers get a stable object per state change.
