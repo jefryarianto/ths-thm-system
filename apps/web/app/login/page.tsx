@@ -12,6 +12,8 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
+  ArrowLeft,
+  Home,
   Loader2,
   Users,
   CreditCard,
@@ -223,6 +225,8 @@ export default function LoginPage() {
       const { data } = await apiClient.post('/auth/login', { identifier: identifier.trim(), password });
 
       if (data.success) {
+        // Reset state session manager agar tidak ada flag expired yang tertinggal
+        sessionManager.reset();
         setTokens(data.data.accessToken, data.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.data.user));
 
@@ -245,14 +249,17 @@ export default function LoginPage() {
         // AUTH-010: return to the origin the user was sent from, when present
         // and safe. Falls back to the existing role-based home path otherwise.
         const next = safeNextParam(new URLSearchParams(window.location.search).get('next'));
+        const targetPath = next ?? getHomePathForRole(data.data.user.role);
 
-        setTimeout(() => router.push(next ?? getHomePathForRole(data.data.user.role)), 800);
+        // Langsung navigasi ke target dashboard/home tanpa delay berlebih
+        setTimeout(() => {
+          router.replace(targetPath);
+        }, 300);
       }
     } catch (err: unknown) {
       const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data
         ?.message;
       setError(apiError || 'Login gagal, periksa email dan password');
-    } finally {
       setLoading(false);
     }
   };
@@ -295,13 +302,25 @@ export default function LoginPage() {
           aria-hidden="true"
           className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/25 blur-3xl"
         />
+        <div className="relative flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={14} />
+            <span>Beranda</span>
+          </Link>
+          <span className="text-[11px] font-medium text-gold-300">THS-THM Indonesia</span>
+        </div>
         <div className="relative flex flex-col items-center">
-          <img
-            src="/logo.svg"
-            alt="THS-THM Logo"
-            className="h-10 w-10 object-contain drop-shadow-md sm:h-14 sm:w-14"
-          />
-          <h1 className="mt-1.5 text-lg font-bold tracking-tight text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 p-2 backdrop-blur-sm ring-1 ring-white/20 sm:h-16 sm:w-16">
+            <img
+              src="/logo.svg"
+              alt="THS-THM Logo"
+              className="h-full w-full object-contain drop-shadow-md"
+            />
+          </div>
+          <h1 className="mt-2 text-lg font-bold tracking-tight text-white">
             THS-THM System
           </h1>
           <p className="mt-0.5 text-xs font-semibold text-primary-100 sm:text-sm">
@@ -325,13 +344,26 @@ export default function LoginPage() {
 
         {/* Top & Brand Info */}
         <div className="relative">
+          {/* Back to Home Link */}
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 ring-1 ring-white/15"
+            >
+              <ArrowLeft size={14} />
+              <span>Kembali ke Beranda</span>
+            </Link>
+          </div>
+
           {/* Logo */}
           <div className="mb-6">
-            <img
-              src="/logo.svg"
-              alt="THS-THM Logo"
-              className="h-20 w-20 object-contain drop-shadow-lg xl:h-24 xl:w-24"
-            />
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 p-3 shadow-lg ring-1 ring-white/20 backdrop-blur-sm xl:h-24 xl:w-24">
+              <img
+                src="/logo.svg"
+                alt="THS-THM Logo"
+                className="h-full w-full object-contain drop-shadow-lg"
+              />
+            </div>
           </div>
 
           {/* Title, Tagline & Deskripsi Singkat */}
@@ -676,13 +708,17 @@ export default function LoginPage() {
       {/* Full-screen loading overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm">
-          <div className="relative">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-primary border-r-secondary" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img src="/logo.svg" alt="" className="h-8 w-8 animate-pulse object-contain" />
+          <div className="relative flex items-center justify-center">
+            <div className="h-20 w-20 animate-spin rounded-full border-[3px] border-primary-200 border-t-primary border-r-secondary sm:h-24 sm:w-24" />
+            <div className="absolute flex h-12 w-12 items-center justify-center rounded-full bg-white p-2 shadow-elegant-md ring-1 ring-primary-100 sm:h-14 sm:w-14">
+              <img
+                src="/logo.svg"
+                alt="THS-THM Logo"
+                className="h-full w-full object-contain animate-pulse"
+              />
             </div>
           </div>
-          <p className="mt-4 text-sm font-semibold text-secondary animate-pulse">
+          <p className="mt-5 text-sm font-semibold text-secondary animate-pulse">
             Memverifikasi kredensial...
           </p>
         </div>

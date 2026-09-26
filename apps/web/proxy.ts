@@ -67,7 +67,6 @@ export async function proxy(request: NextRequest) {
   const verifyUrl = new URL('/api/auth/session/verify', request.url);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
-  let loginUrl: URL;
   try {
     const verifyResp = await fetch(verifyUrl.toString(), {
       method: 'GET',
@@ -81,21 +80,39 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Jika backend mengembalikan 401 (sesi tidak valid) atau status lain,
-    // anggap sesi tidak valid dan redirect ke login dengan flag untuk
-    // membersihkan auth state stale di client agar tidak terjadi infinite loop.
-    loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('session_invalid', '1');
-  } catch {
-    // Jika terjadi error (timeout, network error, dll), fail closed.
-    loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('session_invalid', '1');
+    // Backend menjawab secara eksplisit 401 (sesi tidak valid) — sinyal pasti
+    // bahwa pengguna memang tidak terautentikasi. Redirect ke login.
+    if (verifyResp.status === 401) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('session_invalid', '1');
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Status lain (5xx, 429, 3xx, dll.) = backend bermasalah, BUKAN bukti sesi
+    // invalid. Fail-OPEN agar pengguna valid tidak terlempar ke login saat backend
+    // sibuk. Sesi sungguhan divalidasi di data-layer via apiClient interceptor.
+    return NextResponse.next();
+  } catch (error) {
+    // Timeout / network error (mis. hairpin NAT di Docker produksi: container
+    // web tidak bisa fetch balik ke https://ths-thm.cloud WAN IP — penyebab
+    // BUG login hang/loop). Fail-OPEN, bukan fail-closed: sesi yang valid
+    // tidak boleh dianggap invalid hanya karena backend tak terjangkau dari
+    // dalam proxy. Sesi asli divalidasi ulang oleh data-layer & apiClient.
+    return NextResponse.next();
   } finally {
     clearTimeout(timeoutId);
   }
-  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Matcher membiarkan SEMUA aset statis publik (gambar, font, dll) lewat tanpa
+  // dicegat proxy. Sebelumnya hanya _next/static|_next/image|favicon.ico yang
+  // dikecualikan — akibatnya request /logo.svg, /logo.png, /favicon.png,
+  // /peta-indonesia.png dll. ikut dicegat, lalu (tanpa refreshToken) di-redirect
+  // 307 ke /login?session_invalid=1 yang berisi HTML, bukan file gambar.
+  // Ini yang membuat logo pecah di landing page, loading spinner login & header.
+  // Ekstensi yang dikecualikan: gambar, ikon, font, CSS, JS, dokumen, dll.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|bmp|woff|woff2|ttf|otf|eot|css|js|map|json|webmanifest|txt|pdf|doc|docx|xls|xlsx|zip|mp4|webm|mp3|wav)).*)',
+  ],
 };
