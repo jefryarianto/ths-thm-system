@@ -66,9 +66,31 @@ const MAX_FAILED_ATTEMPTS = Math.max(
 /** Durasi kunci akun (ms) setelah melewati batas gagal login. */
 const LOCKOUT_MS = Math.max(60_000, parseInt(process.env.ACCOUNT_LOCKOUT_MS || '900000', 10) || 900_000);
 
+/**
+ * Grace window rotasi refresh token (anti race condition antar-tab/perangkat).
+ *
+ * Masalah: dua request refresh yang memakai token lama yang sama (dua tab,
+ * dua perangkat, retry axios) berlomba merotasi token yang sama. Yang kalah
+ * balapan mendapat 401 ("Token tidak valid atau kadaluarsa") → client
+ * menganggap sesi tamat → user di-kick/logout, padahal tidak ada yang salah.
+ *
+ * Solusi: setelah rotasi berhasil, token LAMA dipetakan sementara (30 detik)
+ * ke token BARU yang sudah dipersistenkan. Kembaran/replay yang datang
+ * terlambat dalam jendela ini menerima token baru milik pemenang, bukan 401.
+ */
+const REFRESH_GRACE_WINDOW_MS = 30_000;
+/** Batas ukuran map grace agar tidak tumbuh tak terkendali. */
+const REFRESH_GRACE_MAX_ENTRIES = 1000;
+interface RotatedTokenEntry {
+  tokens: { accessToken: string; refreshToken: string };
+  expiresAt: number;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  /** Map token-lama → token-baru (grace window anti race refresh). Lihat konstanta di atas. */
+  private readonly rotatedTokenGrace = new Map<string, RotatedTokenEntry>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -319,7 +341,10 @@ export class AuthService {
     return { user: await this.sanitizeUser(user), ...tokens };
   }
 
-  async refreshToken(refreshToken: string, meta?: AuthMeta) {
+  async refreshToken(
+    refreshToken: string,
+    meta?: AuthMeta,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       const payload = this.jwtService.verify(refreshToken, {
         secret: this.envConfig.jwtRefreshSecret,
@@ -337,15 +362,30 @@ export class AuthService {
       const isCurrentDenormalized = !session && user.refreshToken === refreshToken;
 
       if (!sessionValid && !isCurrentDenormalized) {
+        // Replay race: token ini kemungkinan BARU saja dirotasi oleh request
+        // kembaran (dua tab / dua perangkat / retry axios memakai token lama
+        // yang sama). Bila hasil rotasi pemenang sudah dipersistenkan dan
+        // masih dalam grace window, layankan token baru itu alih-alih 401 —
+        // kalau tidak, tab yang kalah balapan di-kick tanpa alasan.
+        const cached = this.consumeRotatedToken(refreshToken);
+        if (cached) {
+          this.logAuthAudit('REFRESH_TOKEN_GRACE', user.id, null, meta);
+          return cached;
+        }
         this.logAuthAudit('REFRESH_TOKEN_STALE', user.id, null, meta);
         throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
       }
 
-      const tokens = await this.generateTokens(user);
+      const tokens = await this.issueTokenPair(user);
 
       if (sessionValid) {
-        await this.prisma.userSession.update({
-          where: { id: session!.id },
+        // CAS (compare-and-swap): rotasi baris sesi hanya jika baris masih
+        // memegang token lama yang kita kirim. Dua request kembaran tidak
+        // mungkin sama-sama "menang" — yang kalah diarahkan ke jalur grace.
+        // Tanpa CAS, yang kalah menimpa token pemenang (rollback rantai
+        // rotasi) dan pemenang di-kick pada refresh BERIKUTNYA.
+        const winner = await this.prisma.userSession.updateMany({
+          where: { id: session!.id, refreshToken, revokedAt: null },
           data: {
             refreshToken: tokens.refreshToken,
             lastUsedAt: new Date(),
@@ -354,7 +394,57 @@ export class AuthService {
             deviceName: meta?.deviceName ?? session!.deviceName,
           },
         });
+        if (winner.count === 0) {
+          // Kalah CAS: pemenang mungkin sudah mencatat grace entry, atau baris
+          // sudah dirotasi. Kejar token terkini — JANGAN menimpa pemenang.
+          const fresh = this.consumeRotatedToken(refreshToken);
+          if (fresh) {
+            this.logAuthAudit('REFRESH_TOKEN_GRACE', user.id, null, meta);
+            return fresh;
+          }
+          const currentRow = await this.prisma.userSession.findUnique({
+            where: { id: session!.id },
+          });
+          if (
+            currentRow &&
+            !currentRow.revokedAt &&
+            currentRow.userId === user.id &&
+            currentRow.refreshToken &&
+            currentRow.refreshToken !== refreshToken
+          ) {
+            // Rekursi kedalaman 1: rotasi atas token TERKINI milik pemenang
+            // (token berbeda, sehingga tidak memungkinkan loop tanpa ujung).
+            return this.refreshToken(currentRow.refreshToken, meta);
+          }
+          this.logAuthAudit('REFRESH_TOKEN_STALE', user.id, null, meta);
+          throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
+        }
       } else {
+        // Jalur denormalized (tanpa baris sesi): CAS pada kolom
+        // user.refreshToken dengan prinsip yang sama.
+        const winner = await this.prisma.user.updateMany({
+          where: { id: user.id, refreshToken },
+          data: { refreshToken: tokens.refreshToken },
+        });
+        if (winner.count === 0) {
+          const fresh = this.consumeRotatedToken(refreshToken);
+          if (fresh) {
+            this.logAuthAudit('REFRESH_TOKEN_GRACE', user.id, null, meta);
+            return fresh;
+          }
+          const currentUser = await this.prisma.user.findUnique({
+            where: { id: user.id },
+          });
+          if (
+            currentUser &&
+            currentUser.refreshToken &&
+            currentUser.refreshToken !== refreshToken
+          ) {
+            return this.refreshToken(currentUser.refreshToken, meta);
+          }
+          this.logAuthAudit('REFRESH_TOKEN_STALE', user.id, null, meta);
+          throw new UnauthorizedException('Token tidak valid atau kadaluarsa');
+        }
         await this.prisma.userSession.create({
           data: {
             userId: user.id,
@@ -371,6 +461,9 @@ export class AuthService {
         data: { refreshToken: tokens.refreshToken },
       });
       this.logAuthAudit('REFRESH_TOKEN', user.id, null, meta);
+      // Persistensi sukses → catat pemetaan token-lama → token-baru untuk
+      // grace window (replay kembaran dalam 30 detik dilayani token ini).
+      this.rememberRotatedToken(refreshToken, tokens);
       return tokens;
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
@@ -1099,15 +1192,86 @@ export class AuthService {
     }
   }
 
-  async generateTokens(user: UserPayload & { refreshToken?: string | null }) {
+  /**
+   * Terbitkan pasangan token TANPA efek samping ke DB (tanpa user.update).
+   * Dipakai refreshToken() yang mengelola persistensinya sendiri via CAS,
+   * sehingga tidak ada double-write yang bisa menimpa hasil pemenang balapan.
+   */
+  private issueTokenPair(user: UserPayload): {
+    accessToken: string;
+    refreshToken: string;
+  } {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.envConfig.jwtRefreshSecret,
       expiresIn: this.envConfig.jwtRefreshExpiresIn,
     });
-    await this.prisma.user.update({ where: { id: user.id }, data: { refreshToken } });
     return { accessToken, refreshToken };
+  }
+
+  async generateTokens(user: UserPayload & { refreshToken?: string | null }) {
+    const tokens = this.issueTokenPair(user);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: tokens.refreshToken },
+    });
+    return tokens;
+  }
+
+  // ── Grace window rotasi refresh token (anti race antar-tab) ──────────
+
+  /**
+   * Catat pemetaan token-lama → token-baru setelah rotasi persisten sukses.
+   * Entra kadaluarsa otomatis setelah REFRESH_GRACE_WINDOW_MS dan map dibatasi
+   * REFRESH_GRACE_MAX_ENTRIES (buang tertua) agar memori tetap terkendali.
+   */
+  private rememberRotatedToken(
+    oldToken: string,
+    tokens: { accessToken: string; refreshToken: string },
+  ): void {
+    // Buat kunci sederhana namun aman-ukuran: token panjang, cukup hash ringan
+    // (map ini in-process, bukan penyimpanan rahasia — tujuannya dedup).
+    let key = oldToken;
+    if (key.length > 128) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const crypto = require('crypto');
+      key = crypto.createHash('sha256').update(oldToken).digest('hex');
+    }
+    if (this.rotatedTokenGrace.size >= REFRESH_GRACE_MAX_ENTRIES) {
+      const oldestKey = this.rotatedTokenGrace.keys().next().value;
+      if (oldestKey !== undefined) this.rotatedTokenGrace.delete(oldestKey);
+    }
+    this.rotatedTokenGrace.set(key, {
+      tokens,
+      expiresAt: Date.now() + REFRESH_GRACE_WINDOW_MS,
+    });
+  }
+
+  /**
+   * Ambil hasil rotasi pemenang balapan untuk token lama yang direplay,
+   * bila masih dalam grace window. Entri KADALUARSA dibuang; entri valid
+   * TIDAK dihapus — dua+ tab yang replay token sama dalam jendela grace
+   * sama-sama dilayani token baru pemenang.
+   */
+  private consumeRotatedToken(
+    oldToken: string,
+  ): { accessToken: string; refreshToken: string } | null {
+    if (this.rotatedTokenGrace.size === 0) return null;
+    // Kunci bisa berupa token mentah (≤128) atau hash — cocokkan keduanya.
+    let key = oldToken;
+    if (key.length > 128) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const crypto = require('crypto');
+      key = crypto.createHash('sha256').update(oldToken).digest('hex');
+    }
+    const entry = this.rotatedTokenGrace.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt <= Date.now()) {
+      this.rotatedTokenGrace.delete(key);
+      return null;
+    }
+    return entry.tokens;
   }
 
   private getCookieDomain(): string | undefined {

@@ -53,6 +53,7 @@ describe('AuthService', () => {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       count: jest.fn(),
     },
     anggota: {
@@ -656,7 +657,7 @@ describe('AuthService', () => {
   });
 
   describe('refreshToken', () => {
-    it('should return new tokens for valid refresh token', async () => {
+    it('should return new tokens for valid refresh token (rotasi via CAS)', async () => {
       mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', role: 'anggota' });
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-rt' });
       mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
@@ -669,17 +670,21 @@ describe('AuthService', () => {
         userAgent: null,
         deviceName: null,
       });
-      mockPrisma.userSession.update.mockResolvedValue({ id: 's1' });
+      // CAS berhasil (1 baris ter-update)
+      mockPrisma.userSession.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.refreshToken('valid-rt');
       expect(result.accessToken).toBe('mock-jwt-token');
-      // Sesi di-rotasi dengan token baru
-      expect(mockPrisma.userSession.update).toHaveBeenCalledWith(
+      // Sesi di-rotasi via CAS — hanya bila baris masih memegang token lama
+      expect(mockPrisma.userSession.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 's1' },
+          where: { id: 's1', refreshToken: 'valid-rt', revokedAt: null },
           data: expect.objectContaining({ refreshToken: 'mock-jwt-token' }),
         }),
       );
+      // Entri grace dicatat setelah persistensi (map private — indireksi via
+      // perilaku replay di test race di bawah).
+      expect(result.refreshToken).toBe('mock-jwt-token');
     });
 
     it('should reject a stale/reused token without revoking all sessions', async () => {
@@ -697,6 +702,88 @@ describe('AuthService', () => {
       expect(mockPrisma.userSession.updateMany).not.toHaveBeenCalled();
       expect(mockAudit.log).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'REFRESH_TOKEN_STALE', entityId: 'u1' }),
+      );
+    });
+
+    it('melayani replay token lama dalam grace window tanpa 401 (dua tab refresh bersamaan)', async () => {
+      mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', role: 'anggota' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-rt' });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
+      const oldRow = {
+        id: 's1',
+        userId: 'u1',
+        refreshToken: 'valid-rt',
+        revokedAt: null,
+        ipAddress: null,
+        userAgent: null,
+        deviceName: null,
+      };
+      // Tab A: validasi melihat baris lama; setelah rotasi, baris memegang token baru.
+      mockPrisma.userSession.findUnique
+        .mockResolvedValueOnce(oldRow)
+        .mockResolvedValue({ ...oldRow, refreshToken: 'mock-jwt-token' });
+      mockPrisma.userSession.updateMany.mockResolvedValue({ count: 1 });
+
+      // Mock CAS realistis: hanya call PERTAMA dengan token lama yang "menang"
+      // (baris ter-rotasi) — call berikutnya dengan token yang sama gagal
+      // (count: 0), seperti DB sungguhan setelah baris berisi token baru.
+      let rotated = false;
+      mockPrisma.userSession.updateMany.mockImplementation(async (args: {
+        where?: { refreshToken?: string };
+      }) => {
+        if (args.where?.refreshToken === 'valid-rt' && !rotated) {
+          rotated = true;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      });
+
+      // Tab A menang rotasi.
+      const winner = await service.refreshToken('valid-rt');
+      expect(winner.refreshToken).toBe('mock-jwt-token');
+
+      // Tab B mereplay token lama yang sama beberapa ms kemudian (row sudah
+      // ter-rotasi) — harus dilayani token pemenang lewat grace window,
+      // BUKAN 401 yang memicu kick/logout.
+      const loser = await service.refreshToken('valid-rt');
+      expect(loser).toEqual(winner);
+      expect(mockAudit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'REFRESH_TOKEN_GRACE', entityId: 'u1' }),
+      );
+      // 2 pemanggilan CAS: tab A sukses + tab B kalah CAS lalu di-grace.
+      expect(mockPrisma.userSession.updateMany).toHaveBeenCalledTimes(2);
+    });
+
+    it('CAS yang kalah mengejar token pemenang tanpa menimpanya (tanpa rollback rotasi)', async () => {
+      mockJwt.verify.mockReturnValue({ sub: 'u1', email: 'test@ths-thm.org', role: 'anggota' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-rt' });
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, refreshToken: 'new-rt' });
+      const oldRow = {
+        id: 's1',
+        userId: 'u1',
+        refreshToken: 'valid-rt',
+        revokedAt: null,
+        ipAddress: null,
+        userAgent: null,
+        deviceName: null,
+      };
+      mockPrisma.userSession.findUnique
+        .mockResolvedValueOnce(oldRow)
+        // Pemenang sudah merotasi baris ke 'winner-rt' sebelum yang kalah CAS.
+        .mockResolvedValue({ ...oldRow, refreshToken: 'winner-rt' });
+      // CAS pertama (yang kalah) gagal; CAS kedua (mengejar token pemenang) berhasil.
+      mockPrisma.userSession.updateMany
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValue({ count: 1 });
+
+      const result = await service.refreshToken('valid-rt');
+
+      expect(result.refreshToken).toBe('mock-jwt-token');
+      // CAS kedua harus di atas token TERKINI milik pemenang — bukan menimpa.
+      expect(mockPrisma.userSession.updateMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ refreshToken: 'winner-rt' }),
+        }),
       );
     });
 
@@ -816,6 +903,8 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, refreshToken: 'valid-refresh' });
       // Belum ada baris sesi → adopsi jadi sesi baru (create)
       mockPrisma.userSession.findUnique.mockResolvedValue(undefined);
+      // CAS denormalized pada user.refreshToken berhasil
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
 
       await service.refreshToken('valid-refresh', { ip: '1.2.3.4' });
 
