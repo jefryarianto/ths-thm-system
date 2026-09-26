@@ -39,10 +39,17 @@ import { TenantContextMiddleware } from './common/middleware/tenant-context.midd
   ],
   controllers: [HealthController],
   providers: [
-    { provide: APP_GUARD, useClass: RoleBasedThrottlerGuard },
+    // URUTAN GUARD PENTING (dieksekusi atas-ke-bawah):
+    // JwtAuthGuard harus berjalan SEBELUM RoleBasedThrottlerGuard agar
+    // `req.user` sudah terisi saat rate limit dihitung — kalau tidak, SEMUA
+    // request dihitung sebagai 'anonymous' (20 req/menit per IP) dan traffic
+    // dashboard yang me-lontarkan banyak request paralel kena 429 massal
+    // (termasuk /auth/session/verify yang dipakai proxy web → terlihat
+    // sebagai "di-kick" setelah login). Lihat role-throttler.guard.ts.
     ApiKeyStore,
     { provide: APP_GUARD, useClass: ApiKeyGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RoleBasedThrottlerGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ScopeGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },

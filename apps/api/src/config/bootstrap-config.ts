@@ -7,6 +7,13 @@ import { RedisIoAdapter } from '../common/adapters/redis-io.adapter';
 import { RequestContextMiddleware } from '../common/middleware/request-context.middleware';
 
 export function setupCors(app: NestExpressApplication): void {
+  // trust proxy: production berjalan di belakang nginx (reverse proxy).
+  // Tanpa ini `req.ip` = IP container nginx untuk SEMUA klien, sehingga:
+  // 1. rate limit per-IP menggabungkan seluruh user ke satu bucket, dan
+  // 2. lockout brute-force & audit mencatat IP yang salah.
+  // `1` = satu hop proxy (nginx) → req.ip membaca X-Forwarded-For terdepan.
+  app.set('trust proxy', 1);
+
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
     : ['http://localhost:3000'];

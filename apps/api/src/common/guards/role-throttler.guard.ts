@@ -9,8 +9,13 @@ import { ThrottlerGuard } from '@nestjs/throttler';
  * Values represent max requests per TTL window (default 60s).
  */
 const ROLE_RATE_LIMITS: Record<string, { limit: number; ttl: number }> = {
-  // Unauthenticated — strict limit by IP
-  anonymous: { limit: 20, ttl: 60 },
+  // Unauthenticated — per-IP. Limit lama (20/menit) terlalu ketat: endpoint
+  // publik /auth/session/verify dipanggil proxy Next.js di SETIAP navigasi
+  // halaman, dan beberapa tab user berbeda berbagi IP kantor/NAT yang sama,
+  // sehingga bucket mudah habis → 429 → user valid terlihat seperti
+  // "di-kick" setelah login. 60/menit masih membatasi brute-force login
+  // (dikombinasikan dengan nginx login_limit 5/menit + lockout akun).
+  anonymous: { limit: 60, ttl: 60 },
   // Low-privilege roles — standard limits
   anggota: { limit: 60, ttl: 60 },
   penguji: { limit: 80, ttl: 60 },

@@ -18,8 +18,19 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-// Web session inactivity timeout: 5 minutes
-const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+// Web session inactivity timeout.
+// Default 15 menit. Dapat dioverride via NEXT_PUBLIC_INACTIVITY_TIMEOUT_MINUTES
+// (integer menit, di-inline Next.js saat build). Min 1 menit; nilai tidak valid
+// diabaikan dan fallback ke default. Default lama 5 menit sering menendang
+// user yang hanya membaca halaman tanpa input — pesan "sesi berakhir" yang
+// datang tiba-tiba.
+const DEFAULT_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
+const INACTIVITY_TIMEOUT_MS = (() => {
+  if (typeof process === 'undefined') return DEFAULT_INACTIVITY_TIMEOUT_MS;
+  const raw = Number(process.env.NEXT_PUBLIC_INACTIVITY_TIMEOUT_MINUTES);
+  if (!Number.isFinite(raw) || raw < 1) return DEFAULT_INACTIVITY_TIMEOUT_MS;
+  return Math.floor(raw) * 60 * 1000;
+})();
 
 class SessionManager {
   private static instance: SessionManager;

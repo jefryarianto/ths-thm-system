@@ -57,6 +57,18 @@ describe('proxy (auth gate)', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it('allows /force-change-password through — putus loop kick akun must-change-password', async () => {
+    // Halaman ini diakses TANPA sesi (login tidak mengeluarkan token ketika
+    // mustChangePassword aktif), sehingga proxy tidak boleh menganggapnya
+    // protected — kalau tidak, user terjebak loop login → kick → login.
+    for (const pathname of ['/force-change-password', '/force-change-password/']) {
+      const req = makeRequest({ pathname, cookieValue: null });
+      const res = await proxy(req);
+      expect(res).toEqual({ type: 'next' });
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it('allows /api/* requests through (they are not page routes)', async () => {
     const req = makeRequest({ pathname: '/api/auth/login', cookieValue: null });
     const res = await proxy(req);

@@ -13,6 +13,7 @@ const publicPaths = [
   '/daftar',
   '/reset-password',
   '/forgot-password',
+  '/force-change-password',
   '/landing',
   '/sejarah',
   '/organisasi',

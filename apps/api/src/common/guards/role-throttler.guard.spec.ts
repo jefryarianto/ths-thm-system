@@ -83,7 +83,7 @@ describe('RoleBasedThrottlerGuard', () => {
       const props = createRequestProps(context);
       await getGuard(guard).handleRequest(props);
 
-      expect(props.limit).toBe(20);
+      expect(props.limit).toBe(60); // anonymous limit naik 20 → 60 (proxy Next.js memanggil /auth/session/verify di tiap navigasi)
       expect(props.ttl).toBe(60);
       expect(superSpy).toHaveBeenCalled();
       superSpy.mockRestore();
