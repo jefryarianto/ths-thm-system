@@ -13,7 +13,6 @@ import {
   Users,
   Award,
   Building2,
-  MapPin,
   Newspaper,
   BookOpen,
 } from 'lucide-react';
@@ -28,28 +27,44 @@ interface Berita {
   slug: string;
 }
 
+interface Stats {
+  totalDistrik: number;
+  totalWilayah: number;
+  totalRanting: number;
+  totalAnggota: number;
+}
+
 export function LandingPageContent() {
   const { t } = useI18n();
   const [news, setNews] = useState<Berita[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    async function fetchNews() {
+    async function fetchData() {
       try {
         setLoading(true);
-        const res = await fetch('/api/public/berita');
-        if (res.ok) {
-          const json = await res.json();
+        // Parallel fetch for news carousel and beranda statistics
+        const [newsRes, berandaRes] = await Promise.all([
+          fetch('/api/public/berita'),
+          fetch('/api/public/beranda'),
+        ]);
+        if (newsRes.ok) {
+          const json = await newsRes.json();
           setNews(json.data?.slice(0, 6) || []);
         }
+        if (berandaRes.ok) {
+          const json = await berandaRes.json();
+          setStats(json.stats || null);
+        }
       } catch (e) {
-        console.error('Failed to fetch news', e);
+        console.error('Failed to fetch landing data', e);
       } finally {
         setLoading(false);
       }
     }
-    fetchNews();
+    fetchData();
   }, []);
 
   const formatTanggal = (tanggal: string) =>
@@ -102,9 +117,23 @@ export function LandingPageContent() {
               TUNGGAL HATI SEMINARI &mdash; TUNGGAL HATI MARIA
             </h1>
 
-            <p className="mb-6 text-base sm:text-lg text-white/80 leading-relaxed font-light max-w-2xl">
+            <p className="mb-4 text-base sm:text-lg text-white/80 leading-relaxed font-light max-w-2xl">
               {t.home.description || 'Organisasi Seni Bela Diri Pencak Silat & Pembinaan Rohani Katolik'}
             </p>
+
+            {/* Motto */}
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5 border border-gold-400/20 mb-8 shadow-sm">
+              <span className="text-gold-400 text-xl leading-none">“</span>
+              <div>
+                <p className="text-gold-300 font-serif font-semibold text-sm sm:text-base italic">
+                  {t.home.motto || 'Fortiter in Re, Suaviter in Modo'}
+                </p>
+                <p className="text-white/60 text-xs sm:text-sm">
+                  {t.home.mottoMeaning || 'Kokoh kuat dalam prinsip, luwes dan lembut cara mencapainya'}
+                </p>
+              </div>
+              <span className="text-gold-400 text-xl leading-none">”</span>
+            </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <Link
@@ -129,106 +158,145 @@ export function LandingPageContent() {
       <section className="bg-navy-900 border-t border-white/10 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {/* Distrik */}
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
               <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gold-400/20 flex items-center justify-center text-gold-400">
                 <Building2 size={24} />
               </div>
-              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">30+</div>
-              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">Distrik</div>
+              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">
+                {stats?.totalDistrik ?? '—'}
+              </div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">
+                {t.home.stats?.distrik || 'Distrik'}
+              </div>
             </div>
 
+            {/* Anggota */}
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
               <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gold-400/20 flex items-center justify-center text-gold-400">
-                <MapPin size={24} />
+                <Heart size={24} />
               </div>
-              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">100+</div>
-              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">Wilayah</div>
+              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">
+                {stats?.totalAnggota ?? '—'}
+              </div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">
+                {t.home.stats?.anggota || 'Anggota'}
+              </div>
             </div>
 
+            {/* Ranting */}
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
               <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gold-400/20 flex items-center justify-center text-gold-400">
                 <Users size={24} />
               </div>
-              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">300+</div>
-              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">Ranting</div>
+              <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">
+                {stats?.totalRanting ?? '—'}
+              </div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">
+                {t.home.stats?.ranting || 'Ranting'}
+              </div>
             </div>
 
+            {/* Tahun Berdiri */}
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
               <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gold-400/20 flex items-center justify-center text-gold-400">
                 <Award size={24} />
               </div>
               <div className="text-3xl sm:text-4xl font-bold font-serif text-gold-400">1985</div>
-              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">Tahun Berdiri</div>
+              <div className="text-xs sm:text-sm text-white/70 mt-1 uppercase tracking-wider font-medium">
+                {t.home.stats?.tahunBerdiri || 'Tahun Berdiri'}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 4 Pilar Pembinaan THS-THM ── */}
+      {/* ── 1 Landasan 3 Pilar Pembinaan THS-THM ── */}
       <section className="py-20 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="text-center max-w-3xl mx-auto mb-12">
             <span className="text-gold-500 text-sm font-semibold uppercase tracking-widest">
               Prinsip Organisasi
             </span>
             <h2 className="text-3xl sm:text-4xl font-serif font-bold text-navy-800 dark:text-white mt-2">
-              {t.home.pilarsTitle || '4 Pilar Pembinaan THS-THM'}
+              {t.home.pilarsTitle || '1 Landasan 3 Pilar Pembinaan THS-THM'}
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mt-3 text-base">
-              {t.home.pilarsSub || 'Prinsip utama pendampingan anggota untuk membentuk pribadi yang beriman, tangguh, dan berjiwa pelayan.'}
+              {t.home.pilarsSub || 'Seluruh pembinaan berlandaskan Iman Katolik dalam Kasih Yesus Kristus, dijabarkan melalui tiga pilar pengembangan karakter.'}
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Pilar 1 */}
+          {/* Landasan — highlighted foundation card */}
+          <div className="max-w-3xl mx-auto mb-12">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-800 to-navy-900 text-white p-8 md:p-10 shadow-lg border border-gold-400/30">
+              <div className="absolute -top-10 -right-10 w-48 h-48 bg-gold-400/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-gold-400/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="relative flex items-start gap-4">
+                <div className="w-14 h-14 flex-shrink-0 rounded-2xl bg-gold-400/20 flex items-center justify-center text-gold-400 border border-gold-400/30">
+                  <BookOpen size={28} />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-400/10 border border-gold-400/30 text-gold-300 text-xs font-semibold uppercase tracking-wider mb-3">
+                    <Heart size={12} className="text-gold-400" />
+                    Landasan / Foundation
+                  </div>
+                  <h3 className="text-2xl font-bold font-serif mb-2">
+                    {t.home.landasanTitle || 'Landasan — Iman Katolik'}
+                  </h3>
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    {t.home.landasanDesc || 'Iman Katolik yang berlandaskan Kasih Yesus Kristus menjadi pusat dan sumber inspirasi utama dalam seluruh kegiatan THS-THM.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Pilar I: Spiritual */}
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
-              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-6 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-4 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
                 <BookOpen size={28} />
               </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gold-400/10 text-gold-600 dark:text-gold-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Pilar I
+              </span>
               <h3 className="text-xl font-bold text-navy-800 dark:text-white mb-3">
-                {t.home.pilars?.rohaniTitle || 'Olah Rohani'}
+                {t.home.pilars?.rohaniTitle || 'Segi Spiritual'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.rohaniDesc || 'Pendalaman iman Katolik, sakramen, dan doa sebagai fondasi kehidupan sehari-hari.'}
+                {t.home.pilars?.rohaniDesc || 'Pendalaman iman Katolik, sakramen, dan doa sebagai fondasi kehidupan beriman.'}
               </p>
             </div>
 
-            {/* Pilar 2 */}
+            {/* Pilar II: Beladiri & Fisik */}
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
-              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-6 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-4 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
                 <Shield size={28} />
               </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gold-400/10 text-gold-600 dark:text-gold-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Pilar II
+              </span>
               <h3 className="text-xl font-bold text-navy-800 dark:text-white mb-3">
-                {t.home.pilars?.beladiriTitle || 'Olah Raga Beladiri'}
+                {t.home.pilars?.beladiriTitle || 'Segi Beladiri & Fisik'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.beladiriDesc || 'Pelatihan fisik dan teknik pencak silat khas THS-THM untuk kesehatan dan ketangkasan.'}
+                {t.home.pilars?.beladiriDesc || 'Pelatihan fisik dan teknik pencak silat khas THS-THM untuk ketangkasan dan keberanian.'}
               </p>
             </div>
 
-            {/* Pilar 3 */}
+            {/* Pilar III: Organisasi & Persaudaraan */}
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
-              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-6 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-4 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
                 <Users size={28} />
               </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gold-400/10 text-gold-600 dark:text-gold-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                Pilar III
+              </span>
               <h3 className="text-xl font-bold text-navy-800 dark:text-white mb-3">
-                {t.home.pilars?.organisasiTitle || 'Keorganisasian'}
+                {t.home.pilars?.organisasiTitle || 'Segi Organisasi & Persaudaraan'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.organisasiDesc || 'Membentuk kepemimpinan, disiplin, rasa tanggung jawab, dan kerjasama antar anggota.'}
-              </p>
-            </div>
-
-            {/* Pilar 4 */}
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
-              <div className="w-14 h-14 rounded-2xl bg-navy-50 dark:bg-navy-900/50 flex items-center justify-center text-navy-800 dark:text-gold-400 mb-6 group-hover:bg-navy-800 group-hover:text-gold-400 transition-colors">
-                <Heart size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-navy-800 dark:text-white mb-3">
-                {t.home.pilars?.persaudaraanTitle || 'Persaudaraan Katolik'}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {t.home.pilars?.persaudaraanDesc || 'Menjalin ikatan kekeluargaan dan persaudaraan sejati dalam semangat kasih Kristus.'}
+                {t.home.pilars?.organisasiDesc || 'Membentuk kepemimpinan, disiplin, tanggung jawab, dan persaudaraan sejati.'}
               </p>
             </div>
           </div>

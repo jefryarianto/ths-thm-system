@@ -53,23 +53,39 @@ export class PublicService {
   }
 
   async getBeranda() {
-    const [sambutan, berita, donasi] = await Promise.all([
-      this.getSambutan(),
-      this.prisma.berita.findMany({
-        where: { isVisible: true },
-        orderBy: { tanggal: 'desc' },
-        take: 3,
-      }),
-      this.prisma.donasiProgram.findMany({
-        where: { isVisible: true },
-        take: 3,
-      }),
-    ]);
+    const [sambutan, berita, donasi, totalDistrik, totalWilayah, totalRanting, totalAnggota] =
+      await Promise.all([
+        this.getSambutan(),
+        this.prisma.berita.findMany({
+          where: { isVisible: true },
+          orderBy: { tanggal: 'desc' },
+          take: 3,
+        }),
+        this.prisma.donasiProgram.findMany({
+          where: { isVisible: true },
+          take: 3,
+        }),
+        this.prisma.distrik.count({ where: { isVisible: true } }),
+        this.prisma.wilayah.count({ where: { isVisible: true } }),
+        this.prisma.ranting.count({ where: { isVisible: true } }),
+        this.prisma.anggota.count({
+          where: {
+            statusKeanggotaan: 'aktif',
+            deletedAt: null,
+          },
+        }),
+      ]);
 
     return {
       sambutan,
       berita,
       donasi,
+      stats: {
+        totalDistrik,
+        totalWilayah,
+        totalRanting,
+        totalAnggota,
+      },
     };
   }
 
