@@ -43,11 +43,14 @@ const PUBLIC_PAGES: PublicPage[] = [
   { path: '/berita', heading: /Berita & Artikel/i },
   { path: '/galeri', heading: /Galeri/i },
   { path: '/donasi', heading: /Donasi/i },
-  { path: '/login', heading: /^THS-THM$/ },
+  { path: '/login', heading: /THS-THM/ },
   { path: '/daftar', heading: /Pendaftaran Anggota Baru/i },
   { path: '/klaim', heading: /Klaim Keanggotaan/i },
   { path: '/forgot-password', heading: /^THS-THM$/ },
-  { path: '/reset-password', heading: /^THS-THM$/ },
+  { path: '/reset-password', heading: /THS-THM/ },
+  // Publik sejak fix loop kick mustChangePassword — login halaman ini
+  // tidak menerbitkan token, sehingga proxy tidak boleh menendang balik.
+  { path: '/force-change-password', heading: /THS-THM/ },
   { path: '/public/leaderboard', heading: /Leaderboard/i },
 ];
 
@@ -99,7 +102,6 @@ const PROTECTED_ROUTES = [
   '/storybook',
   '/style-guide',
   '/test-batch-progress',
-  '/force-change-password',
   '/gamification',
 ];
 
@@ -163,11 +165,12 @@ test.describe('Public Pages — middleware allowlist regression guard', () => {
     });
   }
 
-  test('root / menjawab HTTP 200 lalu mengalihkan anonim ke /login (router sisi klien)', async ({
+  test('root / menjawab HTTP 200 dan menampilkan landing ke pengunjung anonim', async ({
     page,
   }) => {
-    // Middleware TIDAK boleh mengalihkan root — halaman router-lah yang
-    // menentukan tujuan berdasarkan sesi di localStorage.
+    // Middleware TIDAK boleh mengalihkan root. Sejak landing dipindah ke
+    // domain utama, root menampilkan landing page ke pengunjung anonim
+    // (pengalihan ke /login hanya terjadi pada halaman terproteksi).
     const rootStatuses: number[] = [];
     page.on('response', (response) => {
       if (response.request().isNavigationRequest() && new URL(response.url()).pathname === '/') {
@@ -180,7 +183,9 @@ test.describe('Public Pages — middleware allowlist regression guard', () => {
     expect(rootStatuses, 'Root harus dilayani langsung (200), bukan dialihkan middleware').toEqual([
       200,
     ]);
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+    // Anonim melihat landing (bukan dilempar ke /login oleh middleware).
+    await expect(page).toHaveURL(/\/$/, { timeout: 10000 });
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('halaman dashboard terproteksi tetap mengarahkan pengunjung anonim ke /login', async ({

@@ -164,31 +164,34 @@ test.describe('Settings — /settings/penandatangan', () => {
 
   test('upload tanda tangan flow posts multipart and shows toast', async ({ page }) => {
     await page.getByRole('button', { name: 'Upload Tanda Tangan' }).click();
-    const modal = page.locator('div.rounded-2xl, div.rounded-xl').filter({ hasText: 'Upload Tanda Tangan' });
-    await expect(page.getByText('Upload Tanda Tangan — Global (Nasional)')).toBeVisible({ timeout: 5000 });
+    // Modal kini memakai komponen Modal bersama (role="dialog", judul di h3) —
+    // bukan lagi div.rounded-lg — sehingga lokator diambil dari role dialog.
+    const modal = page.getByRole('dialog').filter({ hasText: 'Upload Tanda Tangan' });
+    await expect(modal).toBeVisible({ timeout: 5000 });
 
-    // Jabatan is a preset dropdown loaded from the jabatan table, pre-filled with Koordinator Distrik
-    const jabatanSelect = page
-      .locator('div.rounded-lg')
-      .filter({ hasText: 'Upload Tanda Tangan — Global (Nasional)' })
-      .locator('select');
+    // Dropdown jabatan (JabatanSelect): preset fallback dimuat sync dari
+    // cache modul, awalnya 'Koordinator Distrik' — plus opsi custom.
+    const jabatanSelect = modal.locator('select');
     await expect(jabatanSelect).toHaveValue('Koordinator Distrik', { timeout: 8000 });
-    // Presets from the jabatan table are available, plus the custom fallback
+    await expect(jabatanSelect.locator('option[value="Koordinator Distrik"]')).toHaveText('Koordinator Distrik');
     await expect(jabatanSelect.locator('option[value="Pastor Moderator"]')).toHaveText('Pastor Moderator');
     await expect(jabatanSelect.locator('option[value="Sekretaris"]')).toHaveText('Sekretaris');
     await expect(jabatanSelect.locator('option[value="__custom__"]')).toHaveText('Lainnya (tulis manual)…');
 
-    // Selecting a different preset updates the value
+    // Pilih preset lain lalu kembali — memastikan kontrol berfungsi
     await jabatanSelect.selectOption('Pastor Moderator');
     await expect(jabatanSelect).toHaveValue('Pastor Moderator');
     await jabatanSelect.selectOption('Koordinator Distrik');
 
-    await page.locator('input[type="file"]').first().setInputFiles({
+    // Nama wajib diisi agar tombol Upload aktif
+    await modal.locator('input[type="text"]').first().fill('Yoseph Pehan Betan');
+
+    await modal.locator('input[type="file"]').setInputFiles({
       name: 'sig.png',
       mimeType: 'image/png',
       buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
     });
-    await page.getByRole('button', { name: 'Upload' }).last().click();
+    await modal.getByRole('button', { name: 'Upload' }).click();
 
     // Toast + refetch should show the new row
     await expect(page.getByText('Tanda tangan tersimpan')).toBeVisible({ timeout: 5000 });
@@ -196,14 +199,15 @@ test.describe('Settings — /settings/penandatangan', () => {
 
   test('upload stempel flow posts multipart and shows toast', async ({ page }) => {
     await page.getByRole('button', { name: 'Upload Stempel' }).click();
-    await expect(page.getByText('Upload Stempel — Global (Nasional)')).toBeVisible({ timeout: 5000 });
+    const modal = page.getByRole('dialog').filter({ hasText: 'Upload Stempel' });
+    await expect(modal).toBeVisible({ timeout: 5000 });
 
-    await page.locator('input[type="file"]').last().setInputFiles({
+    await modal.locator('input[type="file"]').setInputFiles({
       name: 'stempel.png',
       mimeType: 'image/png',
       buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
     });
-    await page.getByRole('button', { name: 'Upload' }).last().click();
+    await modal.getByRole('button', { name: 'Upload' }).click();
 
     await expect(page.getByText('Stempel tersimpan')).toBeVisible({ timeout: 5000 });
   });

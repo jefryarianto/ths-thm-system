@@ -6,6 +6,11 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const isCI = !!process.env.CI;
 
+// Port webServer E2E bisa dioverride (E2E_PORT) agar run lokal terisolasi
+// dari dev server yang mungkin sedang berjalan di 3002.
+const E2E_PORT = process.env.E2E_PORT || '3002';
+const E2E_LOCAL_BASE = `http://localhost:${E2E_PORT}`;
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30 * 1000,
@@ -15,7 +20,7 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
   reporter: isCI ? [['blob', { outputDir: './blob-report' }]] : 'html',
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3002',
+    baseURL: process.env.E2E_BASE_URL || E2E_LOCAL_BASE,
     trace: 'on-first-retry',
     headless: true,
   },
@@ -26,16 +31,23 @@ export default defineConfig({
         // CI: server produksi (`next start` setelah `next build`) — tanpa
         // kompilasi per-halaman ala dev yang menyebabkan flake timeout
         // di runner CI yang lebih lambat.
-        command: 'npx next start -p 3002',
-        url: 'http://localhost:3002/login',
+        command: `npx next start -p ${E2E_PORT}`,
+        url: `${E2E_LOCAL_BASE}/login`,
         reuseExistingServer: false,
         timeout: 120 * 1000,
+        // proxy.ts memverifikasi sesi ke NEXT_PUBLIC_API_URL saat runtime.
+        // E2E full-mock (tanpa backend): arahkan ke port mati agar verify
+        // selalu network-error → fail-open (desain proxy), DETERMINISTIK.
+        // Tanpa ini, API dev lokal yang kebetulan jalan di :3001 membalas
+        // 401 untuk token mock → kick setiap soft-navigasi (artefak lokal).
+        env: { NEXT_PUBLIC_API_URL: 'http://127.0.0.1:59999' },
       }
     : {
-        command: 'npx next dev -p 3002',
-        url: 'http://localhost:3002/login',
+        command: `npx next dev -p ${E2E_PORT}`,
+        url: `${E2E_LOCAL_BASE}/login`,
         reuseExistingServer: true,
         timeout: 30000,
+        env: { NEXT_PUBLIC_API_URL: 'http://127.0.0.1:59999' },
       },
   projects: [
     {

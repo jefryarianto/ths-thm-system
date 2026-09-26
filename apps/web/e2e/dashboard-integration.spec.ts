@@ -110,10 +110,11 @@ test.describe('Dashboard Page Integration', () => {
     await expect(page.locator('table')).toBeVisible();
   });
 
-  test('settings page loads organization info', async ({ page }) => {
+  test('settings page loads Settings Hub', async ({ page }) => {
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('h1').first()).toContainText('Pengaturan');
+    // Halaman settings kini berupa hub kartu (restrukturisasi navigasi)
+    await expect(page.locator('h1').first()).toContainText('Settings Hub');
   });
 
   test('examiners page renders penguji data', async ({ page }) => {

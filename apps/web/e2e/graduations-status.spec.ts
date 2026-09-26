@@ -84,7 +84,8 @@ test.describe('Graduations — edit & status quick actions', () => {
     await expect(page.getByRole('heading', { name: 'Ubah Status Pendadaran' })).toBeVisible();
     await page.getByRole('button', { name: 'Simpan' }).click();
     await expect(page.locator('span:has-text("Dipublikasikan")')).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: 'Tutup' })).toBeVisible();
+    // exact:true — tanpa ini locator ikut mencocokkan "Tutup notifikasi" di header
+    await expect(page.getByRole('button', { name: 'Tutup', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
   });
 
@@ -93,7 +94,8 @@ test.describe('Graduations — edit & status quick actions', () => {
     await page.goto(`/graduations/${GRAD_ID}`);
     await expect(page.locator('h1')).toContainText('Pendadaran Uji', { timeout: 10000 });
 
-    const closeBtn = page.getByRole('button', { name: 'Tutup' });
+    // exact:true — tanpa ini locator ikut mencocokkan "Tutup notifikasi" di header
+    const closeBtn = page.getByRole('button', { name: 'Tutup', exact: true });
     await expect(closeBtn).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
 
@@ -109,7 +111,9 @@ test.describe('Graduations — edit & status quick actions', () => {
     await page.goto('/graduations');
     await expect(page.getByText('Pendadaran Uji').first()).toBeVisible({ timeout: 10000 });
 
-    await page.locator('button[title="Edit / Ubah Status"]').click();
+    // Navigasi programatik (router.push) — referrerPolicy mencegah proxy
+    // salah klasifikasi navigasi lintas situs → kick ke /login.
+    await page.locator('button[title="Edit / Ubah Status"]').click({ referrerPolicy: 'no-referrer' });
     await expect(page).toHaveURL(new RegExp(`/graduations/${GRAD_ID}/edit`));
     await expect(page.locator('h1')).toContainText('Edit Pendadaran', { timeout: 10000 });
   });

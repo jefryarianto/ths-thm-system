@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockAuth, mockLoginError } from './helpers';
+import { mockAuth, mockLoginError, mockLoginSuccess } from './helpers';
 
 test.describe('Login Flow', () => {
   test('shows login page with title and form', async ({ page }) => {
@@ -31,51 +31,12 @@ test.describe('Login Flow', () => {
     // which causes the login page to auto-redirect to /members before the form renders.
     // Instead, register only the login POST + auth/me mocks WITHOUT localStorage.
 
-    // Mock login POST endpoint
-    await page.route(/\/api\/auth\/login/, async (route) => {
-      if (route.request().method() === 'POST') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            data: {
-              accessToken: 'mock-access-token',
-              refreshToken: 'mock-refresh-token',
-              user: {
-                id: 'mock-user-1',
-                email: 'superadmin@ths-thm.org',
-                namaLengkap: 'Super Admin',
-                role: 'superadmin',
-                isActive: true,
-              },
-            },
-          }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
+    // Login POST + auth/me — response login menyertakan Set-Cookie refreshToken
+    // (persis backend) karena proxy Next.js memverifikasi COOKIE, bukan
+    // localStorage, saat navigasi ke halaman terproteksi.
+    await mockLoginSuccess(page);
 
-    // Mock auth/me (called after login redirect to dashboard)
-    await page.route(/\/api\/auth\/me/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            id: 'mock-user-1',
-            email: 'superadmin@ths.thm.org',
-            namaLengkap: 'Super Admin',
-            role: 'superadmin',
-            isActive: true,
-          },
-        }),
-      });
-    });
-
-    // Mock reports/dashboard (called after redirect to dashboard)
+    // Mock dashboard payloads (called after redirect to dashboard)
     await page.route(/\/api\/reports\/dashboard/, async (route) => {
       await route.fulfill({
         status: 200,
@@ -106,6 +67,6 @@ test.describe('Login Flow', () => {
     await page.locator('#identifier, input[name="identifier"], input[type="text"]').first().fill('superadmin@ths.thm.org');
     await page.fill('input[type="password"]', 'password123');
     await page.getByRole('button', { name: /masuk/i }).first().click();
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
   });
 });

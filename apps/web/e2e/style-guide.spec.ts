@@ -277,18 +277,18 @@ test.describe('Style Guide — /style-guide', () => {
   test('pagination component renders and responds to clicks', async ({ page }) => {
     const paginationSection = page.locator('section#pagination');
 
-    // The "Default" showcase has a working Pagination with 5 pages, 47 total
-    // It should show total count (DualThemePreview renders twice)
-    await expect(paginationSection.locator('text=47 total').first()).toBeVisible();
+    // The "Default" showcase has a working Pagination with 5 pages, 47 total.
+    // Pagination kini menampilkan "Showing 1-15 of 47" (bukan "47 total").
+    await expect(paginationSection.locator('text=of 47').first()).toBeVisible();
 
     // Click page 2 (first one — DualThemePreview)
     const page2Btn = paginationSection.locator('button:has-text("2")').first();
     await page2Btn.click();
     await page.waitForTimeout(100);
 
-    // Page 2 should now be active (highlighted)
-    // The active page button has bg-blue-600 class
-    const activePage = paginationSection.locator('button.bg-blue-600').first();
+    // Page 2 should now be active (highlighted) — komponen memakai token
+    // bg-primary (bukan bg-blue-600) dan aria-current="page".
+    const activePage = paginationSection.locator('button[aria-current="page"]').first();
     await expect(activePage).toContainText('2');
   });
 

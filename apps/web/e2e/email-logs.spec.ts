@@ -147,13 +147,18 @@ test.describe('Riwayat Email — /settings/email/logs', () => {
   test('sidebar link navigates to /settings/email/logs', async ({ page }) => {
     await page.goto('/dashboard');
 
-    // Grup "Sistem" default collapsed — expand dulu agar link terlihat & bisa diklik
-    const sistemGroup = page.getByRole('button', { name: 'Sistem', exact: true }).first();
-    await sistemGroup.click();
+    // Grup "Pengaturan" default collapsed — expand dulu agar link terlihat
+    // (grup lama bernama "Sistem", diganti saat restrukturisasi navigasi).
+    const pengaturanGroup = page.getByRole('button', { name: 'Pengaturan', exact: true }).first();
+    await pengaturanGroup.click();
 
     const sidebarLink = page.locator('a[href="/settings/email/logs"]').first();
     await expect(sidebarLink).toBeVisible();
-    await sidebarLink.click();
+    // referrerPolicy NO REFERRER: request RSC klik link tidak membawa referer
+    // yang membuat proxy salah menganggap navigasi lintas situs → kick ke /login.
+    // force:true melewati cek "stable" — transisi CSS group sidebar membuat
+    // elemen flaky "not stable" saat baru di-expand.
+    await sidebarLink.click({ referrerPolicy: 'no-referrer', force: true });
     await expect(page).toHaveURL(/\/settings\/email\/logs/);
     await expect(page.locator('h1')).toContainText('Riwayat Email');
   });

@@ -18,9 +18,10 @@ test.describe('Candidate Approve Flow', () => {
       timeout: 10000,
     });
     await expect(page.getByText('Calon Anggota 2', { exact: true })).toBeVisible();
-    // Summary bar should show total (exact match for the number, not '25 total')
-    const summaryValue = page.locator('strong').filter({ hasText: '25' });
-    await expect(summaryValue).toBeVisible();
+    // Summary bar shows total: "Total Calon: <strong>25</strong>" — scope ke
+    // span label agar tidak ambigu dengan angka 25 di bagian lain halaman.
+    const summaryValue = page.locator('span').filter({ hasText: 'Total Calon:' }).locator('strong');
+    await expect(summaryValue).toHaveText('25');
   });
 
   test('supports searching candidates', async ({ page }) => {

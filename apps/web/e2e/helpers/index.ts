@@ -7,7 +7,7 @@
  */
 
 // Core auth
-export { mockAuth, mockLoginError, mockAuthWithAll, MOCK_USER } from './auth';
+export { mockAuth, mockLoginError, mockLoginSuccess, mockAuthWithAll, MOCK_USER } from './auth';
 
 // Domain-specific mocks
 export { registerMembersMocks } from './members';

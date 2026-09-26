@@ -88,7 +88,8 @@ test.describe('Activities — edit & status quick actions', () => {
     await expect(page.getByRole('heading', { name: 'Ubah Status Kegiatan' })).toBeVisible();
     await page.getByRole('button', { name: 'Simpan' }).click();
     await expect(page.locator('span:has-text("published")')).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: 'Tutup' })).toBeVisible();
+    // exact:true — tanpa ini locator ikut mencocokkan "Tutup notifikasi" di header
+    await expect(page.getByRole('button', { name: 'Tutup', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
   });
 
@@ -100,7 +101,9 @@ test.describe('Activities — edit & status quick actions', () => {
     await expect(page.getByRole('button', { name: 'Tutup' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Tutup' }).click();
+    // Tombol Tutup quick-action — exact:true agar tidak bertabrakan dengan
+    // tombol tutup notifikasi di header ("Tutup notifikasi").
+    await page.getByRole('button', { name: 'Tutup', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Ubah Status Kegiatan' })).toBeVisible();
     await page.getByRole('button', { name: 'Simpan' }).click();
     await expect(page.locator('span:has-text("closed")')).toBeVisible({ timeout: 8000 });
@@ -112,9 +115,12 @@ test.describe('Activities — edit & status quick actions', () => {
     await page.goto('/activities');
     await expect(page.getByText('Kegiatan Uji').first()).toBeVisible({ timeout: 10000 });
 
-    // Open row action menu → Edit
-    await page.locator('td button').last().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
+    // Open row action menu (kebab, aria-label "Opsi <nama>") → Edit.
+    // Locator lama 'td button' tak lagi menunjuk menu opsi setelah baris
+    // tabel ditambah sel/kolom baru.
+    await page.locator('button[aria-label^="Opsi"]').last().click();
+    // Item menu memakai role="menuitem" (bukan button) di dalam role="menu".
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
 
     // Must land on the edit form — the old bug pushed to /activities/new?id=...
     await expect(page).toHaveURL(new RegExp(`/activities/${ACT_ID}/edit`));
@@ -152,7 +158,9 @@ test.describe('Activities — edit & status quick actions', () => {
     // Form punya 2 select (Tipe & Status) — pilih yang berisi opsi status
     const statusSelect = page.locator('select:has(option[value="published"])');
     await statusSelect.selectOption('published');
-    await page.getByRole('button', { name: 'Simpan' }).click();
+    // Tombol men-submit lalu router.push — referrerPolicy mencegah proxy
+    // salah klasifikasi navigasi lintas situs → kick ke /login.
+    await page.getByRole('button', { name: 'Simpan' }).click({ referrerPolicy: 'no-referrer' });
 
     await expect(page).toHaveURL(new RegExp(`/activities/${ACT_ID}$`));
     await expect(page.locator('span:has-text("published")')).toBeVisible({ timeout: 8000 });
