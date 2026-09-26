@@ -36,7 +36,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* ── Top Utility Bar ── */}
-      <div className="bg-navy-900 text-white text-xs">
+      <div className="bg-navy-950 text-white/80 text-xs border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-8">
           <div className="flex items-center gap-4">
             <a
@@ -44,7 +44,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               className="hidden sm:flex items-center gap-1 hover:text-gold-400 transition-colors"
               title="Hubungi Kontak THS-THM"
             >
-              <Phone size={11} aria-hidden="true" className="shrink-0" />
+              <Phone size={11} aria-hidden="true" className="shrink-0 text-gold-400" />
               <span>THS-THM Hotline</span>
             </a>
             <a
@@ -52,7 +52,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               className="hidden md:flex items-center gap-1 hover:text-gold-400 transition-colors"
               title="Kirim Email"
             >
-              <Mail size={11} aria-hidden="true" className="shrink-0" />
+              <Mail size={11} aria-hidden="true" className="shrink-0 text-gold-400" />
               <span>info@ths-thm.cloud</span>
             </a>
           </div>
@@ -63,7 +63,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               className="flex items-center gap-1 hover:text-gold-400 transition-colors"
               aria-label={locale === 'id' ? 'Ganti bahasa ke Inggris' : 'Ganti bahasa ke Bahasa Indonesia'}
             >
-              <Globe size={12} aria-hidden="true" />
+              <Globe size={12} aria-hidden="true" className="text-gold-400" />
               <span className="font-medium">{locale === 'id' ? 'EN' : 'ID'}</span>
             </button>
             <Link href="/login" className="hover:text-gold-400 transition-colors">
@@ -73,23 +73,25 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         </div>
       </div>
 
-      {/* ── Main Navbar ── */}
+      {/* ── Main Navbar (Navy Gelap Resmi THS-THM) ── */}
       <nav
         aria-label="Navigasi utama"
-        className={`bg-surface border-b border-border/40 sticky top-0 z-50 transition-shadow duration-300 ${
-          scrolled ? 'shadow-elegant-lg' : 'shadow-elegant-md'
+        className={`bg-navy-900 border-b border-gold-400/20 sticky top-0 z-50 transition-all duration-300 text-white ${
+          scrolled ? 'shadow-xl bg-navy-950/95 backdrop-blur-md' : 'shadow-lg'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0">
-              <img src="/logo.svg" alt="THS-THM Logo" className="w-10 h-10 rounded-lg object-contain shadow-md" />
+              <div className="w-10 h-10 rounded-full bg-white p-1 shadow-md shrink-0 flex items-center justify-center border border-white/20">
+                <img src="/logo.svg" alt="THS-THM Logo" className="w-full h-full object-contain" />
+              </div>
               <div className="hidden sm:block">
-                <span className="font-bold font-serif text-navy-900 dark:text-white text-lg leading-tight block tracking-tight">
+                <span className="font-bold font-serif text-white text-lg leading-tight block tracking-tight">
                   THS-THM
                 </span>
-                <span className="text-[10px] text-navy-600 dark:text-gray-400 leading-tight font-medium">
+                <span className="text-[10px] text-gold-300/90 leading-tight font-medium">
                   Tunggal Hati Seminari &mdash; Tunggal Hati Maria
                 </span>
               </div>
@@ -105,8 +107,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     href={link.href}
                     className={`px-3.5 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950 font-bold shadow-sm'
-                        : 'text-navy-800 dark:text-gray-200 hover:text-navy-950 dark:hover:text-white hover:bg-navy-50 dark:hover:bg-navy-900/60'
+                        ? 'bg-gold-400 text-navy-950 font-bold shadow-md'
+                        : 'text-white/85 hover:text-gold-300 hover:bg-white/10'
                     }`}
                   >
                     {link.label}
@@ -119,7 +121,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             <div className="flex items-center gap-3">
               <Link
                 href="/daftar"
-                className="hidden sm:inline-flex items-center gap-2 bg-gold-400 text-navy-950 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gold-300 shadow-elegant transition-all duration-200 shadow-sm"
+                className="hidden sm:inline-flex items-center gap-2 bg-gold-400 text-navy-950 px-5 py-2 rounded-xl text-sm font-bold hover:bg-gold-300 shadow-md transition-all duration-200"
               >
                 {t.nav.daftar}
               </Link>
@@ -127,7 +129,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="xl:hidden p-2 rounded-lg text-navy-800 dark:text-gray-200 hover:bg-navy-50 dark:hover:bg-navy-900/60 transition-colors duration-200"
+                className="xl:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors duration-200"
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
               >
@@ -139,7 +141,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
         {/* ── Mobile Navigation Drawer ── */}
         {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-border bg-surface animate-slide-down shadow-xl">
+          <div className="xl:hidden border-t border-white/10 bg-navy-900 text-white animate-slide-down shadow-2xl">
             <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
               {NAV_LINKS.map((link) => {
                 const isActive = pathname === link.href;
@@ -149,8 +151,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     href={link.href}
                     className={`block px-4 py-3 rounded-xl font-semibold transition-colors duration-200 ${
                       isActive
-                        ? 'bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950 font-bold'
-                        : 'text-navy-800 dark:text-gray-200 hover:bg-navy-50 dark:hover:bg-navy-900/60 hover:text-navy-950 dark:hover:text-white'
+                        ? 'bg-gold-400 text-navy-950 font-bold'
+                        : 'text-white/90 hover:bg-white/10 hover:text-gold-300'
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -158,10 +160,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   </Link>
                 );
               })}
-              <div className="pt-3 mt-3 border-t border-border space-y-2">
+              <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
                 <Link
                   href="/login"
-                  className="block px-4 py-3 text-navy-800 dark:text-white hover:bg-navy-50 dark:hover:bg-navy-900/60 rounded-lg font-semibold transition-colors text-center border border-navy-200 dark:border-navy-700"
+                  className="block px-4 py-3 text-white hover:bg-white/10 rounded-lg font-semibold transition-colors text-center border border-white/20"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {t.nav.login}
