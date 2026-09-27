@@ -141,6 +141,9 @@ export default function KartuSettingsPage() {
   const errMessage = (err: unknown, fallback: string) =>
     extractErrorMessage(err, fallback);
 
+  /** Batas ukuran per file, selaras dengan backend (multer) & nginx client_max_body_size. */
+  const MAX_IMAGE_MB = 10;
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast('error', 'Nama template wajib diisi (huruf kecil/angka/strip)');
@@ -155,14 +158,26 @@ export default function KartuSettingsPage() {
         return;
       }
     }
+    const front = frontRef.current?.files?.[0];
+    const back = backRef.current?.files?.[0];
+    // Validasi ukuran sebelum upload → pesan jelas, tanpa menunggu 413 dari server.
+    const oversized = [front, back].find(
+      (f) => f && f.size > MAX_IMAGE_MB * 1024 * 1024,
+    );
+    if (oversized) {
+      const name = oversized.name || 'file';
+      toast(
+        'error',
+        `"${name}" (${(oversized.size / (1024 * 1024)).toFixed(1)}MB) melebihi batas ${MAX_IMAGE_MB}MB per gambar. Perkecil resolusi file lalu coba lagi.`,
+      );
+      return;
+    }
     const fd = new FormData();
     fd.append('name', name.trim());
     if (label.trim()) fd.append('label', label.trim());
     fd.append('overlayConfig', JSON.stringify(overlay));
     // Superadmin memilih scope lewat selector; admin_distrik dikunci backend ke distriknya.
     if (isSuperadmin && scope) fd.append('distrikId', scope);
-    const front = frontRef.current?.files?.[0];
-    const back = backRef.current?.files?.[0];
     if (front) fd.append('front', front);
     if (back) fd.append('back', back);
 
@@ -328,6 +343,9 @@ export default function KartuSettingsPage() {
               accept="image/png,image/jpeg,image/webp,image/gif"
               className="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 file:text-xs"
             />
+            <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+              PNG / JPEG / WebP / GIF, maks 10MB per gambar.
+            </p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Sisi Belakang</label>
@@ -337,6 +355,9 @@ export default function KartuSettingsPage() {
               accept="image/png,image/jpeg,image/webp,image/gif"
               className="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 file:text-xs"
             />
+            <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+              PNG / JPEG / WebP / GIF, maks 10MB per gambar.
+            </p>
           </div>
         </div>
 

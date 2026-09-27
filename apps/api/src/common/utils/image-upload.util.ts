@@ -23,6 +23,18 @@ export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif
 /** Ambang batas piksel untuk mencegah decompression bomb (mis. 25 MP). */
 export const MAX_IMAGE_PIXELS = 25_000_000;
 
+/**
+ * Batas ukuran file upload gambar (byte). Default 10MB — cukup untuk desain
+ * template kartu resolusi tinggi (rasio 856×540 atau lebih besar). Dapat di-
+ * override lewat env `MAX_IMAGE_UPLOAD_MB`. Nginx (client_max_body_size)
+ * dan body-parser harus diset lebih besar dari nilai ini.
+ */
+export const MAX_IMAGE_UPLOAD_SIZE = (() => {
+  const mb = Number(process.env.MAX_IMAGE_UPLOAD_MB ?? 10);
+  const sanitized = Number.isFinite(mb) && mb > 0 ? mb : 10;
+  return sanitized * 1024 * 1024;
+})();
+
 /** Pemetaan ekstensi → format yang harus cocok dengan magic bytes. */
 const EXTENSION_TO_FORMAT: Record<string, string> = {
   '.jpg': 'jpeg',
@@ -104,8 +116,8 @@ export async function validateImageUploadSecurity(
 
 /**
  * Konfigurasi diskStorage untuk upload gambar via multer (FileInterceptor).
- * File disimpan ke UPLOAD_DIR dengan prefix unik, MIME gambar saja, max 5MB,
- * dan ekstensi wajib dari whitelist.
+ * File disimpan ke UPLOAD_DIR dengan prefix unik, MIME gambar saja, max
+ * MAX_IMAGE_UPLOAD_SIZE (default 10MB), dan ekstensi wajib dari whitelist.
  *
  * @param prefix Prefix nama file, mis. 'signature' → signature-<ts>-<rand>.png
  */
@@ -158,6 +170,6 @@ export function buildImageUploadOptions(prefix: string) {
       }
       cb(null, true);
     },
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: MAX_IMAGE_UPLOAD_SIZE },
   };
 }

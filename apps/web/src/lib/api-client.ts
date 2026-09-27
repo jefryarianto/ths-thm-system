@@ -267,10 +267,17 @@ function normalizeAxiosError(err: unknown): { status: number; message: string; d
   const e = err as
     | { response?: { status?: number; data?: { message?: string } }; message?: string }
     | null;
+  const status = e?.response?.status ?? 0;
+  // HTTP 413 (Payload Too Large): body ditolak (mis. file gambar terlalu besar)
+  // sebelum API sempat memberi pesan → berikan pesan yang jelas & ramah.
+  const is413 = status === 413;
   return {
-    status: e?.response?.status ?? 0,
+    status,
     message:
-      e?.response?.data?.message || e?.message || 'Terjadi kesalahan pada server.',
+      (is413 && 'File terlalu besar untuk diunggah. Maksimal 10MB per gambar.') ||
+      e?.response?.data?.message ||
+      e?.message ||
+      'Terjadi kesalahan pada server.',
     data: e?.response?.data ?? null,
   };
 }

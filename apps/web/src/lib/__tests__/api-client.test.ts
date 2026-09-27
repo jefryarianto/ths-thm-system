@@ -289,6 +289,28 @@ describe('api-client', () => {
         data: null,
       });
     });
+
+    it('translates HTTP 413 into a friendly oversized-payload message', async () => {
+      const { use } = (
+        apiClient as unknown as { interceptors: { response: { use: ReturnType<typeof vi.fn> } } }
+      ).interceptors.response;
+      const errorHandler = use.mock.calls[0][1] as (error: {
+        response?: { status: number };
+        config: { _retry?: boolean };
+      }) => Promise<unknown>;
+
+      const error = {
+        // Nginx default rejects bodies > 1MB → HTTP 413 tanpa body JSON.
+        response: { status: 413 },
+        config: {},
+      };
+
+      await expect(errorHandler(error)).rejects.toEqual({
+        status: 413,
+        message: 'File terlalu besar untuk diunggah. Maksimal 10MB per gambar.',
+        data: null,
+      });
+    });
   });
 
   // ─── Response Interceptor: semantik kegagalan refresh ───

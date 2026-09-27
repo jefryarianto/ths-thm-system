@@ -5,6 +5,7 @@ import {
   validateImageMagicBytes,
   detectImageFormat,
   validateImageUploadSecurity,
+  MAX_IMAGE_UPLOAD_SIZE,
 } from './image-upload.util';
 
 function makeImage(hex: string): string {
@@ -15,6 +16,17 @@ function makeImage(hex: string): string {
 }
 
 describe('image-upload.util', () => {
+  describe('MAX_IMAGE_UPLOAD_SIZE', () => {
+    it('should default to 10MB', () => {
+      expect(MAX_IMAGE_UPLOAD_SIZE).toBe(10 * 1024 * 1024);
+    });
+
+    it('should be resolvable from an env-based value when set', () => {
+      // Note: const is evaluated at import time; this asserts the constant shape.
+      expect(MAX_IMAGE_UPLOAD_SIZE).toBeGreaterThan(5 * 1024 * 1024);
+    });
+  });
+
   describe('validateImageMagicBytes', () => {
     it('should accept real image magic bytes', () => {
       expect(validateImageMagicBytes(makeImage('ffd8ffe0'))).toBe(true); // JPEG
