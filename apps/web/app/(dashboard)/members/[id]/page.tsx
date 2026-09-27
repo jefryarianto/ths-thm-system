@@ -178,22 +178,29 @@ function InfoPreview({ label, value, strong = false }: { label: string; value: s
       <div
         className="font-ocr"
         style={
-          strong
-            ? {
-                fontSize: FRONT.info.valueStrong.fontSize,
-                fontWeight: 900,
-                color: FRONT.info.valueStrong.color,
-                letterSpacing: FRONT.info.valueStrong.letterSpacing,
-                marginTop: FRONT.info.valueStrong.marginTop,
-                lineHeight: FRONT.info.value.lineHeight,
-              }
-            : {
-                fontSize: FRONT.info.value.fontSize,
-                fontWeight: 700,
-                color: FRONT.info.value.color,
-                marginTop: FRONT.info.value.marginTop,
-                lineHeight: FRONT.info.value.lineHeight,
-              }
+          {
+            ...(strong
+              ? {
+                  fontSize: FRONT.info.valueStrong.fontSize,
+                  fontWeight: 900,
+                  color: FRONT.info.valueStrong.color,
+                  letterSpacing: FRONT.info.valueStrong.letterSpacing,
+                  marginTop: FRONT.info.valueStrong.marginTop,
+                }
+              : {
+                  fontSize: FRONT.info.value.fontSize,
+                  fontWeight: 700,
+                  color: FRONT.info.value.color,
+                  marginTop: FRONT.info.value.marginTop,
+                }),
+            lineHeight: FRONT.info.value.lineHeight,
+            // Jaga satu baris (sama dgn renderer SVG resmi — text SVG tidak wrap) agar
+            // nilai panjang tidak mendorong baris berikutnya turun menimpa area
+            // penandatangan / "Berlaku sampai".
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }
         }
       >
         {value}
@@ -1395,7 +1402,7 @@ export default function MemberDetailPage() {
                               { t: 'TUNGGAL HATI SEMINARI - TUNGGAL HATI MARIA', sp: FRONT.header.row.spacing[2] },
                               { t: `DISTRIK KEUSKUPAN ${(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}`, sp: FRONT.header.row.spacing[3] },
                             ].map((row, i) => (
-                              <div key={i} className="font-bold" style={{ fontSize: FRONT.header.row.fontSize, fontFamily: 'Open Sans', fontWeight: 700, letterSpacing: row.sp, marginTop: i > 0 ? FRONT.header.row.rowGap : 0 }}>
+                              <div key={i} className="font-bold" style={{ fontSize: FRONT.header.row.fontSize, fontFamily: 'Open Sans', fontWeight: 700, letterSpacing: row.sp, marginTop: i > 0 ? FRONT.header.row.rowGap : 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {row.t}
                               </div>
                             ))}
@@ -1403,7 +1410,7 @@ export default function MemberDetailPage() {
                         </div>
 
                         {/* Photo besar kiri - TANPA bingkai; fallback siluet man/woman-icon (onError) */}
-                        <div className="absolute overflow-hidden" style={{ left: FRONT.photo.big.left, top: FRONT.photo.big.top, width: FRONT.photo.big.w, height: FRONT.photo.big.h }}>
+                        <div className="absolute overflow-hidden flex items-center justify-center" style={{ left: FRONT.photo.big.left, top: FRONT.photo.big.top, width: FRONT.photo.big.w, height: FRONT.photo.big.h }}>
                           <MemberPhotoWeb
                             src={member.fotoPath ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png` : null}
                             iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
@@ -1413,7 +1420,7 @@ export default function MemberDetailPage() {
                         </div>
 
                         {/* Photo kecil kanan atas - TANPA bingkai, sejajar label No. Anggota; rank di bawahnya */}
-                        <div className="absolute overflow-hidden" style={{ right: FRONT.photo.small.right, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h }}>
+                        <div className="absolute overflow-hidden flex items-center justify-center" style={{ right: FRONT.photo.small.right, top: FRONT.photo.small.top, width: FRONT.photo.small.w, height: FRONT.photo.small.h }}>
                           <MemberPhotoWeb
                             src={member.fotoPath ? `/api/uploads/${encodeURIComponent(member.fotoPath)}.bg.png` : null}
                             iconSrc={member.jenisKelamin === 'P' ? '/woman-icon.png' : '/man-icon.png'}
@@ -1427,7 +1434,7 @@ export default function MemberDetailPage() {
                           <div className="absolute" style={{ right: FRONT.rank.right, top: FRONT.rank.top, width: FRONT.rank.w }}>
                             <div
                               className="text-center font-black"
-                              style={{ fontSize: FRONT.rank.name.fontSize, color: COLORS.rankText, letterSpacing: FRONT.rank.name.letterSpacing, marginBottom: FRONT.rank.name.marginBottom }}
+                              style={{ fontSize: FRONT.rank.name.fontSize, color: COLORS.rankText, letterSpacing: FRONT.rank.name.letterSpacing, marginBottom: FRONT.rank.name.marginBottom, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                             >
                               {(member.tingkat || levelVisual.label || '').toUpperCase()}
                             </div>
@@ -1467,20 +1474,20 @@ export default function MemberDetailPage() {
 
                         {/* Bottom - jarak bawah sama dengan jarak atas header */}
                         <div className="absolute" style={{ left: FRONT.bottom.left, bottom: FRONT.bottom.bottom }}>
-                          <div style={{ fontSize: FRONT.bottom.label.fontSize, fontWeight: 700, color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom }}>
+                          <div style={{ fontSize: FRONT.bottom.label.fontSize, fontWeight: 700, color: FRONT.bottom.label.color, marginBottom: FRONT.bottom.label.marginBottom, whiteSpace: 'nowrap' }}>
                             Berlaku sampai
                           </div>
-                          <div className="font-['Roboto']" style={{ fontSize: FRONT.bottom.value.fontSize, fontWeight: 700, color: FRONT.bottom.value.color, marginTop: FRONT.bottom.value.marginTop }}>
+                          <div className="font-['Roboto']" style={{ fontSize: FRONT.bottom.value.fontSize, fontWeight: 700, color: FRONT.bottom.value.color, marginTop: FRONT.bottom.value.marginTop, whiteSpace: 'nowrap' }}>
                             {validUntilText}
                           </div>
                         </div>
 
                         {/* Signer - teks RATA-KIRI: batas kanan ditentukan baris terpanjang; stempel (tdk ditebalkan) + ttd di tengah, nama (underline) + jabatan menimpa bagian bawah stempel */}
                         <div className="absolute text-left" style={{ right: FRONT.signer.right, bottom: FRONT.signer.bottom, width: FRONT.signer.w, height: FRONT.signer.h, color: COLORS.value }}>
-                          <div className="absolute font-black font-['Roboto']" style={{ left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize }}>
+                          <div className="absolute font-black font-['Roboto']" style={{ left: FRONT.signer.title1.left, top: FRONT.signer.title1.top, fontSize: FRONT.signer.title1.fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             KOORDINATORAT DISTRIK THS-THM
                           </div>
-                          <div className="absolute font-bold font-['Roboto']" style={{ left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize }}>
+                          <div className="absolute font-bold font-['Roboto']" style={{ left: FRONT.signer.title2.left, top: FRONT.signer.title2.top, fontSize: FRONT.signer.title2.fontSize, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             KEUSKUPAN {(member.ranting?.wilayah?.distrik?.nama || 'THS-THM').replace(/^keuskupan\s*/i, '').toUpperCase()}
                           </div>
                           <div className="absolute" style={{ left: FRONT.signer.wrap.left, top: FRONT.signer.wrap.top, width: FRONT.signer.wrap.w, height: FRONT.signer.wrap.h }}>
@@ -1547,11 +1554,11 @@ export default function MemberDetailPage() {
                               : [{ signerName: cardData?.signerName || 'Koordinator Distrik', signerTitle: cardData?.signerTitle || 'THS-THM' }]
                             ).map((s, i) => (
                               <div key={i} className="absolute w-full text-left" style={{ left: 0, bottom: i * 34 }}>
-                                <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'left' }}>
+                                <div className="font-black underline" style={{ fontSize: FRONT.signer.name.fontSize, color: COLORS.value, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {(s.signerName || 'Koordinator Distrik').toUpperCase()}
                                 </div>
                                 {s.signerTitle ? (
-                                  <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'left' }}>
+                                  <div className="font-bold" style={{ fontSize: FRONT.signer.title.fontSize, color: COLORS.value, marginTop: FRONT.signer.title.marginTop, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {s.signerTitle.toUpperCase()}
                                   </div>
                                 ) : null}
