@@ -623,44 +623,135 @@ export default function SejarahPage() {
                         </div>
                       </div>
 
+                      {/* Hero Card Dokumen */}
+                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-950 to-navy-900 text-white p-6 sm:p-8 border border-gold-400/30 mb-8 shadow-md">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-gold-400/10 rounded-full blur-3xl pointer-events-none" />
+                        <div className="relative">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gold-400/20 border border-gold-400/40 text-gold-300 text-xs font-semibold tracking-wider uppercase mb-2">
+                            <Sparkles size={12} /> Dokumen Resmi Organisasi
+                          </div>
+                          <h3 className="text-2xl font-bold font-serif text-white mb-2">
+                            Naskah Sejarah &amp; Konstitusi Dasar THS-THM
+                          </h3>
+                          <p className="text-white/80 text-xs sm:text-sm font-light leading-relaxed max-w-3xl mb-5">
+                            Dokumen otentik yang memuat sejarah pendirian, landasan spiritualitas, serta perutusan organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria sebagai pedoman seluruh anggota di seluruh nusantara dan mancanegara.
+                          </p>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
+                            <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><BookOpen size={13} /> Kategori</span>
+                              <span className="font-semibold text-white">Sejarah Resmi</span>
+                            </div>
+                            <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><Cross size={13} /> Pelindung</span>
+                              <span className="font-semibold text-white">Hati Kudus Yesus &amp; Bunda Maria</span>
+                            </div>
+                            <div className="rounded-xl bg-white/5 border border-white/10 p-3 col-span-2 sm:col-span-1">
+                              <span className="flex items-center gap-1.5 text-gold-300 text-[11px] uppercase tracking-wider mb-1"><CheckCircle2 size={13} /> Penetapan</span>
+                              <span className="font-semibold text-white">10 November 1985 &amp; 1986</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {data?.konten && data.konten.trim().length > 0 ? (
-                        <article
-                          className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
-                            prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
-                            prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
-                          dangerouslySetInnerHTML={{ __html: data.konten }}
-                        />
+                        <div className="space-y-6">
+                          <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-all">
+                            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700/60">
+                              <BookOpen size={16} className="text-gold-500 shrink-0" />
+                              <h3 className="font-serif font-bold text-navy-900 dark:text-white text-lg">
+                                Narasi Resmi dari Arsip Organisasi
+                              </h3>
+                            </div>
+                            <article
+                              className="prose prose-navy dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed
+                                prose-headings:text-navy-900 dark:prose-headings:text-white prose-headings:font-serif
+                                prose-a:text-gold-600 dark:prose-a:text-gold-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
+                              dangerouslySetInnerHTML={{ __html: data.konten }}
+                            />
+                          </div>
+                        </div>
                       ) : (
-                        <div className="space-y-6 text-gray-700 dark:text-gray-300 leading-relaxed">
-                          <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 text-xs sm:text-sm text-blue-800 dark:text-blue-300">
-                            <strong>Catatan:</strong> Naskah resmi ini bersumber dari ringkasan Konstitusi dan Sejarah Pendirian THS-THM.
+                        <div className="space-y-6">
+                          {/* BAB I */}
+                          <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-all">
+                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950">
+                                Bab I
+                              </span>
+                              <span className="text-xs font-semibold text-gold-600 dark:text-gold-400 bg-gold-50 dark:bg-gold-950/40 px-2.5 py-0.5 rounded-md border border-gold-400/20">
+                                1983 &ndash; 1985
+                              </span>
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-bold font-serif text-navy-900 dark:text-white mb-3">
+                              Titik Awal &amp; Benih Perintisan
+                            </h3>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                              <MapPin size={13} className="text-gold-500 shrink-0" />
+                              <span>Seminari Menengah St. Petrus Canisius, Mertoyudan &amp; Paroki St. FX Tanjung Priok</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                              Organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria (THS-THM) lahir dari kerinduan mendalam untuk membina kaum muda Katolik melalui perpaduan harmonis antara kekayaan budaya bela diri pencak silat dan kedalaman rohani Katolik. Bermula pada tahun 1983, <strong>Rm. Martinus Hadiwijoyo, Pr.</strong> bersama para frater dan seminaris mulai merintis latihan pencak silat yang dipadukan dengan olah batin dan doa sebagai sarana melatih kedisiplinan raga dan ketahanan mental.
+                            </p>
                           </div>
 
-                          <h3 className="text-xl font-serif font-bold text-navy-900 dark:text-white">
-                            Kilas Balik Kelahiran Gerakan THS-THM
-                          </h3>
-                          <p>
-                            Organisasi Tunggal Hati Seminari &ndash; Tunggal Hati Maria (THS-THM) lahir dari kerinduan mendalam untuk membina kaum muda Katolik melalui perpaduan harmonis antara kekayaan budaya bela diri pencak silat dan kedalaman rohani Katolik.
-                          </p>
-                          <p>
-                            Bermula pada tahun 1983 di Seminari Menengah St. Petrus Canisius Mertoyudan, Jawa Tengah, Romo Martinus Hadiwijoyo, Pr. memperkenalkan latihan pencak silat bagi para siswa seminaris.
-                          </p>
+                          {/* BAB II */}
+                          <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-all">
+                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950">
+                                Bab II
+                              </span>
+                              <span className="text-xs font-semibold text-gold-600 dark:text-gold-400 bg-gold-50 dark:bg-gold-950/40 px-2.5 py-0.5 rounded-md border border-gold-400/20">
+                                Momentum Hari Pahlawan
+                              </span>
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-bold font-serif text-navy-900 dark:text-white mb-3">
+                              Kelahiran THS (1985) &amp; THM (1986)
+                            </h3>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                              <Calendar size={13} className="text-gold-500 shrink-0" />
+                              <span>10 November 1985 &amp; 10 November 1986</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                              Pada tanggal <strong>10 November 1985</strong>, bertepatan dengan Hari Pahlawan Nasional, organisasi dideklarasikan dengan nama <strong>Tunggal Hati Seminari (THS)</strong>. Setahun kemudian, pada tanggal <strong>10 November 1986</strong>, berdiri pula wadah saudari <strong>Tunggal Hati Maria (THM)</strong> bagi kaum puteri. Momentum Hari Pahlawan dipilih sebagai pengingat semangat kepahlawanan para pendekar yang siap membela Tanah Air dan Gereja.
+                            </p>
+                          </div>
 
-                          <h3 className="text-xl font-serif font-bold text-navy-900 dark:text-white">
-                            Momentum Hari Pahlawan 1985 &amp; 1986
-                          </h3>
-                          <p>
-                            Pada tanggal <strong>10 November 1985</strong>, bertepatan dengan Hari Pahlawan Nasional, organisasi dideklarasikan dengan nama <strong>Tunggal Hati Seminari (THS)</strong>. Setahun kemudian, pada tanggal <strong>10 November 1986</strong>, berdiri pula wadah saudari <strong>Tunggal Hati Maria (THM)</strong> bagi kaum puteri.
-                          </p>
-
-                          <h3 className="text-xl font-serif font-bold text-navy-900 dark:text-white">
-                            Kiprah dan Pengabdian Bagi Bangsa dan Gereja
-                          </h3>
-                          <p>
-                            Hingga kini, ribuan anggota THS-THM tersebar di puluhan keuskupan di Indonesia dan mancanegara. Seluruh anggota dipanggil menjadi saksi kasih Kristus yang membawa damai dan menjaga keutuhan NKRI.
-                          </p>
+                          {/* BAB III */}
+                          <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 p-6 sm:p-8 transition-all">
+                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-navy-800 text-white dark:bg-gold-400 dark:text-navy-950">
+                                Bab III
+                              </span>
+                              <span className="text-xs font-semibold text-gold-600 dark:text-gold-400 bg-gold-50 dark:bg-gold-950/40 px-2.5 py-0.5 rounded-md border border-gold-400/20">
+                                Perutusan &amp; Spiritualitas
+                              </span>
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-bold font-serif text-navy-900 dark:text-white mb-3">
+                              Kiprah &amp; Pengabdian bagi Bangsa dan Gereja
+                            </h3>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
+                              <Shield size={13} className="text-gold-500 shrink-0" />
+                              <span>Nasional &amp; Mancanegara</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                              Hingga kini, ribuan anggota THS-THM tersebar di puluhan keuskupan di Indonesia dan mancanegara. Seluruh anggota dipanggil menjadi saksi kasih Kristus yang membawa damai dan menjaga keutuhan NKRI, dengan senantiasa mengamalkan semangat <strong>Satu Hati, Satu Tekad, Satu Jiwa</strong> dalam setiap langkah pengabdian.
+                            </p>
+                          </div>
                         </div>
                       )}
+
+                      {/* Bottom Banner / Sesanti */}
+                      <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-navy-900 to-navy-950 text-white border border-gold-400/30">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div>
+                            <span className="text-xs text-gold-400 font-semibold uppercase tracking-widest block mb-1">Sesanti Utama</span>
+                            <h3 className="text-xl font-bold font-serif text-white">Pro Patria et Ecclesia</h3>
+                            <p className="text-sm text-white/80 font-light">Untuk Tanah Air dan Gereja &mdash; membela kebenaran demi kemuliaan Allah.</p>
+                          </div>
+                          <div className="shrink-0 px-4 py-2 rounded-xl bg-gold-400 text-navy-950 font-bold text-xs">Naskah Resmi</div>
+                        </div>
+                      </div>
                     </div>
                   </section>
                 )}
